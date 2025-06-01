@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>怪獸養成對戰 Demo - 前後端整合 (V17.3 - 多項修復)</title>
+    <title>怪獸養成對戰 Demo - 前後端整合 (V18 - 多項優化)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        /* CSS 樣式與您 V17.1 版本相同，此處為了簡潔省略，實際檔案中會包含完整樣式 */
+        /* CSS 樣式與您 V17.3 版本相同，此處為了簡潔省略大部分，實際檔案中會包含完整樣式 */
         :root {
             /* Dark Theme (Default) */
             --bg-primary-dark: #0d1117;
@@ -343,15 +343,17 @@
         .panel-title-hint { font-size: 0.875rem; color: var(--text-secondary); }
         @media (min-width: 768px) { .panel-title { font-size: 1.3rem; } }
 
-        .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button { /* 新增 .dna-draw-button */
+        .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button {
             border: 1px solid var(--border-color);
             border-radius: 5px; padding: 6px; text-align: center; font-size: 0.875rem;
             transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
             position: relative; min-height: 48px; display: flex;
             align-items: center; justify-content: center;
+            flex-direction: column; /* Allow text to wrap if needed */
+            box-sizing: border-box;
         }
         .dna-item { cursor: grab; }
-        .dna-slot, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button { cursor: pointer; } /* 新增 .dna-draw-button */
+        .dna-slot, .temp-backpack-slot { cursor: pointer; }
         .inventory-slot-empty, .temp-backpack-slot.empty { color: var(--text-secondary); border-style: dashed; cursor: default; background-color: var(--bg-panel); }
 
         .inventory-delete-slot {
@@ -359,6 +361,7 @@
             color: var(--text-primary-dark);
             border-style: dashed;
             border-color: var(--danger-hover-dark);
+            cursor: pointer;
         }
         body.light-theme .inventory-delete-slot {
             background-color: rgba(207, 34, 46, 0.5);
@@ -372,18 +375,19 @@
         body.light-theme .inventory-delete-slot.drag-over {
             background-color: rgba(164, 14, 38, 0.7) !important;
         }
-        /* 新增抽DNA按鈕樣式 */
+
         .dna-draw-button {
             background-color: var(--button-success-bg);
             color: var(--button-success-text);
             font-weight: 500;
+            cursor: pointer;
         }
         .dna-draw-button:hover {
             background-color: var(--button-success-hover-bg);
         }
 
 
-        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button { padding: 8px; font-size: 0.9rem; min-height: 55px;} } /* 新增 .dna-draw-button */
+        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button { padding: 8px; font-size: 0.9rem; min-height: 55px;} }
 
         .dna-item:hover, .dna-slot:hover:not(.occupied), .temp-backpack-slot:hover:not(.occupied):not(.empty) {
             border-color: var(--accent-color);
@@ -585,22 +589,16 @@
 
 
         .dna-combination-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
-        .inventory-grid { /* 修改：讓抽DNA按鈕和刪除區在同一行 */
+        .inventory-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* 自動填充，最小85px */
             gap: 8px;
+            align-items: stretch; /* 讓格子等高 */
         }
         .temp-backpack-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
             gap: 8px;
-        }
-        /* 新增：控制物品欄最後一行的特殊佈局 */
-        .inventory-last-row-control {
-            display: grid;
-            grid-template-columns: 1fr auto; /* 左邊填滿，右邊自適應 */
-            gap: 8px;
-            margin-top: 8px; /* 與上方DNA格子的間距 */
         }
 
 
@@ -876,6 +874,18 @@
             font-size: 1rem;
             margin-bottom: 10px;
         }
+        /* 新增：註冊按鈕高亮樣式 */
+        #show-register-form-btn.highlighted-register {
+            background-color: var(--button-success-bg) !important;
+            color: var(--button-success-text) !important;
+            border: 2px solid var(--button-success-hover-bg) !important;
+            box-shadow: 0 0 12px color-mix(in srgb, var(--button-success-bg) 60%, transparent) !important;
+            font-weight: bold !important;
+        }
+        #show-register-form-btn.highlighted-register:hover {
+            background-color: var(--button-success-hover-bg) !important;
+        }
+
         .auth-error-message {
             color: var(--danger-color);
             font-size: 0.875rem;
@@ -886,6 +896,7 @@
         #game-container {
             display: none; /* Initially hide game content */
             width: 100%;
+            /* flex-direction: column; align-items: center; */ /* This was causing issues with main-container width */
         }
         /* Battle Log Modal Specific Styles */
         #battle-log-modal .modal-content { max-width: 700px; }
@@ -966,7 +977,7 @@
         <div class="auth-container">
             <h1 class="auth-title">怪獸異世界</h1>
             <button id="show-login-form-btn" class="auth-button primary">使用暱稱/密碼登入</button>
-            <button id="show-register-form-btn" class="auth-button secondary">重新開始遊戲 (創建帳號)</button>
+            <button id="show-register-form-btn" class="auth-button secondary highlighted-register">重新開始遊戲 (創建帳號)</button>
         </div>
     </div>
 
@@ -996,14 +1007,23 @@
         </div>
     </div>
 
-    <div id="welcome-popup-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <h3 id="welcome-popup-title" class="modal-header text-center"></h3>
-            <div id="welcome-popup-body" class="modal-body text-center">
-                <p id="welcome-popup-message"></p>
+    <div id="official-announcement-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close" onclick="closeModal('official-announcement-modal');">&times;</span>
+            <h3 class="modal-header">📢 遊戲官方公告</h3>
+            <div class="modal-body">
+                <div id="announcement-ad-banner" style="background-color: var(--bg-slot); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
+                    -- 這裡是廣告欄位 (可放置圖片或文字) --
+                </div>
+                <div id="announcement-content">
+                    <p>親愛的<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>
+                    <p>感謝您參與怪獸異世界的冒險！遊戲目前仍在開發與測試階段，我們將持續努力帶來更多精彩內容與優化！</p>
+                    <p>若有任何建議或遇到問題，歡迎隨時透過遊戲內回饋系統與我們聯繫。</p>
+                    <p style="text-align: right; margin-top: 20px;">怪獸異世界營運團隊 敬上</p>
+                </div>
             </div>
             <div class="modal-footer">
-                <button id="welcome-popup-confirm-btn" class="primary">確認</button>
+                <button class="primary" onclick="closeModal('official-announcement-modal');">我知道了</button>
             </div>
         </div>
     </div>
@@ -1065,13 +1085,8 @@
                          <h2 class="panel-title dna-panel-title">🔬 DNA碎片</h2>
                          <span class="panel-title-hint dna-panel-hint">※DNA碎片可自由拖曳，拖曳至刪除區可刪除</span>
                     </div>
-                    <div id="inventory-items" class="inventory-grid">
+                    <div id="inventory-items" class="inventory-grid mt-2">
                         </div>
-                    <div id="inventory-controls-container" class="inventory-last-row-control">
-                        <button id="draw-dna-button" class="dna-draw-button">🧬 抽DNA</button>
-                        <div id="inventory-delete-slot-placeholder">
-                            </div>
-                    </div>
 
 
                     <div class="mt-4">
@@ -1298,7 +1313,6 @@
         </div>
     </div>
 
-
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
@@ -1334,10 +1348,11 @@
         const loginPasswordInput = document.getElementById('login-password');
         const loginSubmitBtn = document.getElementById('login-submit-btn');
         const loginErrorDiv = document.getElementById('login-error');
-        const welcomePopupModal = document.getElementById('welcome-popup-modal');
-        const welcomePopupTitle = document.getElementById('welcome-popup-title');
-        const welcomePopupMessage = document.getElementById('welcome-popup-message');
-        const welcomePopupConfirmBtn = document.getElementById('welcome-popup-confirm-btn');
+
+        // 新增：官方公告彈窗元素
+        const officialAnnouncementModal = document.getElementById('official-announcement-modal');
+        const announcementPlayerName = document.getElementById('announcement-player-name');
+
         const monsterImageElement = document.getElementById('monster-image');
         const snapshotAchievementTitle = document.getElementById('snapshot-achievement-title');
         const snapshotNickname = document.getElementById('snapshot-nickname');
@@ -1349,9 +1364,7 @@
         const monsterInfoButton = document.getElementById('monster-info-button');
         const playerInfoButton = document.getElementById('player-info-button');
         const inventoryItemsContainer = document.getElementById('inventory-items');
-        const inventoryControlsContainer = document.getElementById('inventory-controls-container'); // 新增：抽DNA按鈕和刪除區的容器
-        const drawDnaButton = document.getElementById('draw-dna-button'); // 新增：抽DNA按鈕
-        const inventoryDeleteSlotPlaceholder = document.getElementById('inventory-delete-slot-placeholder'); // 新增：刪除區的佔位符
+        // inventoryControlsContainer 和 inventoryDeleteSlotPlaceholder 已整合到 inventoryItemsContainer
         const temporaryBackpackItemsContainer = document.getElementById('temporary-backpack-items');
         const showMonsterLeaderboardBtn = document.getElementById('show-monster-leaderboard-btn');
         const showPlayerLeaderboardBtn = document.getElementById('show-player-leaderboard-btn');
@@ -1404,8 +1417,8 @@
         const reminderConfirmCloseBtn = document.getElementById('reminder-confirm-close-btn');
         const battleLogModal = document.getElementById('battle-log-modal');
         const battleLogArea = document.getElementById('battle-log-area');
-        const dnaDrawModal = document.getElementById('dna-draw-modal'); // 新增：抽DNA彈窗
-        const dnaDrawResultsGrid = document.getElementById('dna-draw-results-grid'); // 新增：抽DNA結果容器
+        const dnaDrawModal = document.getElementById('dna-draw-modal');
+        const dnaDrawResultsGrid = document.getElementById('dna-draw-results-grid');
 
 
         // --- Game State & Data ---
@@ -1428,9 +1441,7 @@
         let battlingMonsterId = null;
         let currentCultivationMonster = null;
         let itemsFromCurrentTraining = [];
-        const NUM_INVENTORY_SLOTS = 10; // 修改：主物品欄槽位數量 (不含刪除區和抽DNA按鈕)
-        const DELETE_SLOT_INDEX = 10;   // 修改：刪除區在視覺上的索引 (第11個槽，如果抽DNA按鈕也算一個槽位的話)
-                                        // 實際上，刪除區和抽DNA按鈕會被放在 inventory-controls-container 中
+        const NUM_INVENTORY_SLOTS = 10; // DNA 儲存槽數量 (不含抽DNA和刪除區)
         const NUM_TEMP_BACKPACK_SLOTS = 18;
         const NUM_COMBINATION_SLOTS = 5;
         let inventoryDisplaySlots = new Array(NUM_INVENTORY_SLOTS).fill(null);
@@ -1439,10 +1450,10 @@
         let itemToDeleteInfo = null;
         let monsterToReleaseInfo = null;
         let monsterToChallengeInfo = null;
-        let monsterLeaderboardData = []; // 修改：用於儲存真實排行榜資料
-        let playerLeaderboardData = [];  // 修改：用於儲存真實排行榜資料
+        let monsterLeaderboardData = [];
+        let playerLeaderboardData = [];
 
-        // --- Helper Functions ---
+        // --- Helper Functions (大部分保持不變，此處省略) ---
         function getContrastColor(hexColor) {
             const currentThemeIsLight = document.body.classList.contains('light-theme');
             if (!hexColor) {
@@ -1479,31 +1490,84 @@
             if (typeof populateTemporaryBackpack === 'function') populateTemporaryBackpack();
         }
 
+        // 修改：populateInventory 以整合抽DNA按鈕和刪除區
         function populateInventory() {
-            if (!inventoryItemsContainer || !inventoryDeleteSlotPlaceholder) {
-                console.error("populateInventory: 相關容器元素未找到!");
+            if (!inventoryItemsContainer) {
+                console.error("populateInventory: inventoryItemsContainer 元素未找到!");
                 return;
             }
-            inventoryItemsContainer.innerHTML = ''; // 清空物品槽
-            inventoryDeleteSlotPlaceholder.innerHTML = ''; // 清空刪除區佔位符
+            inventoryItemsContainer.innerHTML = ''; // 清空
 
-            // 渲染物品槽
+            // 渲染 DNA 儲存槽
             for (let i = 0; i < NUM_INVENTORY_SLOTS; i++) {
                 const item = inventoryDisplaySlots[i];
                 const slotDiv = createDnaElement(item, i, 'inventory');
                 inventoryItemsContainer.appendChild(slotDiv);
             }
 
-            // 創建並添加刪除區槽位到佔位符
+            // 創建並添加抽DNA按鈕
+            const drawDnaBtnElement = document.createElement('div'); // 改為 div 以符合格子外觀
+            drawDnaBtnElement.id = 'draw-dna-button-grid-item'; // 新 ID，避免與舊 const 衝突
+            drawDnaBtnElement.className = 'dna-draw-button'; // 保持樣式
+            drawDnaBtnElement.innerHTML = '🧬<br>抽DNA'; // 換行以適應格子
+            drawDnaBtnElement.addEventListener('click', handleDrawDnaButtonClick); // 添加事件監聽器
+            inventoryItemsContainer.appendChild(drawDnaBtnElement);
+
+            // 創建並添加刪除區槽位
             const deleteSlotDiv = document.createElement('div');
             deleteSlotDiv.className = 'inventory-delete-slot';
-            deleteSlotDiv.textContent = '🗑️ 刪除區';
+            deleteSlotDiv.innerHTML = '🗑️<br>刪除區'; // 換行以適應格子
             deleteSlotDiv.dataset.droptype = "delete";
-            // 刪除區不需要特定的 slotIndex 來追蹤物品，因為它不儲存物品
             deleteSlotDiv.addEventListener('dragover', handleDragOver);
             deleteSlotDiv.addEventListener('dragleave', handleDragLeave);
             deleteSlotDiv.addEventListener('drop', handleDropOnDeleteSlot);
-            inventoryDeleteSlotPlaceholder.appendChild(deleteSlotDiv);
+            inventoryItemsContainer.appendChild(deleteSlotDiv);
+        }
+
+        // 新增：抽DNA按鈕的處理函式
+        function handleDrawDnaButtonClick() {
+            console.log("抽DNA按鈕被點擊 (新版)");
+            const drawnDnaForModal = [];
+            if (gameSettings.dnaFragments && gameSettings.dnaFragments.length > 0) {
+                for (let i = 0; i < 5; i++) { // 模擬抽5個DNA
+                    const randomDnaTemplate = gameSettings.dnaFragments[Math.floor(Math.random() * gameSettings.dnaFragments.length)];
+                    const newDnaInstance = JSON.parse(JSON.stringify(randomDnaTemplate));
+                    newDnaInstance.tempId = `drawn_${Date.now()}_${i}`;
+                    drawnDnaForModal.push(newDnaInstance);
+                }
+            }
+
+            if (dnaDrawResultsGrid) {
+                dnaDrawResultsGrid.innerHTML = '';
+                if (drawnDnaForModal.length > 0) {
+                    drawnDnaForModal.forEach(dna => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'dna-draw-result-item';
+                        const rarityStyle = getRarityStyling(dna.rarity);
+                        const elementStyle = getElementStyling(dna.type);
+                        itemDiv.innerHTML = `
+                            <div class="dna-name" style="color: ${rarityStyle.text};">${dna.name}</div>
+                            <div class="dna-type" style="color: ${elementStyle.text}; background-color: ${elementStyle.bg}; padding: 1px 3px; border-radius: 3px; font-size: 0.75rem;">${dna.type}</div>
+                            <div class="dna-rarity" style="color: ${rarityStyle.text}; font-size: 0.75rem;">${dna.rarity}</div>
+                            <button class="add-drawn-to-temp-backpack-btn secondary text-xs p-1 mt-1" data-dna='${JSON.stringify(dna)}'>加入背包</button>
+                        `;
+                        dnaDrawResultsGrid.appendChild(itemDiv);
+                    });
+
+                    document.querySelectorAll('.add-drawn-to-temp-backpack-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            const dnaToAdd = JSON.parse(e.target.dataset.dna);
+                            addToTemporaryBackpack(dnaToAdd);
+                            e.target.textContent = '已加入';
+                            e.target.disabled = true;
+                            if (currentLoggedInUser) savePlayerData();
+                        };
+                    });
+                } else {
+                    dnaDrawResultsGrid.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)]">未能抽到任何DNA，請稍後再試。</p>';
+                }
+            }
+            openModal('dna-draw-modal');
         }
 
 
@@ -1659,7 +1723,6 @@
             };
         }
 
-        // --- Leaderboard Functions (Modified for real data) ---
         let currentMonsterSort = { column: 'score', order: 'desc' };
         let currentPlayerSort = { column: 'score', order: 'desc' };
 
@@ -1670,7 +1733,7 @@
                 if (typeof valA === 'string') valA = valA.toLowerCase();
                 if (typeof valB === 'string') valB = valB.toLowerCase();
 
-                if (column === 'rank') { // Rank is usually pre-sorted or should be numeric
+                if (column === 'rank') {
                     valA = parseInt(valA) || Infinity;
                     valB = parseInt(valB) || Infinity;
                 }
@@ -1682,8 +1745,6 @@
         }
 
         async function populateMonsterLeaderboard(filterElement = '所有') {
-            // TODO: Fetch real monster leaderboard data from backend
-            // For now, it will show "No data" or "Loading..."
             monsterLeaderboardTable.innerHTML = `<thead><tr>
                 <th data-sort="rank">排名</th>
                 <th data-sort="title">稱號</th>
@@ -1692,12 +1753,10 @@
                 <th data-sort="score">總評價</th>
                 <th class="challenge-btn-cell">挑戰</th>
             </tr></thead><tbody><tr><td colspan="6" class="text-center p-4 text-[var(--text-secondary)]">怪獸排行榜資料載入中或尚無資料...</td></tr></tbody>`;
-            // addSortListenersToTable(monsterLeaderboardTable, 'monster'); // Add listeners after data is fetched
             console.log("populateMonsterLeaderboard: 後端 API 尚未實作，將顯示提示訊息。");
         }
 
         async function populatePlayerLeaderboard() {
-            // TODO: Fetch real player leaderboard data from backend
             playerLeaderboardTable.innerHTML = `<thead><tr>
                 <th data-sort="rank">排名</th>
                 <th data-sort="nickname">暱稱</th>
@@ -1706,7 +1765,6 @@
                 <th data-sort="score">積分</th>
                 <th data-sort="representativeMonsterName">代表怪獸</th>
             </tr></thead><tbody><tr><td colspan="6" class="text-center p-4 text-[var(--text-secondary)]">玩家排行榜資料載入中或尚無資料...</td></tr></tbody>`;
-            // addSortListenersToTable(playerLeaderboardTable, 'player'); // Add listeners after data is fetched
             console.log("populatePlayerLeaderboard: 後端 API 尚未實作，將顯示提示訊息。");
         }
 
@@ -1871,7 +1929,6 @@
                 sD.style.backgroundColor = elementStyle.bg;
                 sD.style.color = rarityStyle.text;
                 sD.style.borderColor = elementStyle.text;
-                // 儲存原始DNA ID，如果有的話
                 const dnaInfoToStore = {...item, baseId: item.baseId || item.id.split('_')[0] + '_' + item.id.split('_')[1] + '_' + item.id.split('_')[2]};
                 sD.dataset.dnaInfo = JSON.stringify(dnaInfoToStore);
                 sD.addEventListener('dragstart', handleDragStart);
@@ -1892,7 +1949,7 @@
         function moveFromTempToInventory(tempSlotIndex) {
             const itemToMove = temporaryBackpackSlots[tempSlotIndex];
             if (!itemToMove) return;
-            const emptyMainSlot = inventoryDisplaySlots.findIndex((slot, index) => slot === null && index < NUM_INVENTORY_SLOTS); // 確保不放到刪除區
+            const emptyMainSlot = inventoryDisplaySlots.findIndex((slot, index) => slot === null && index < NUM_INVENTORY_SLOTS);
             if (emptyMainSlot !== -1) {
                 inventoryDisplaySlots[emptyMainSlot] = itemToMove;
                 temporaryBackpackSlots[tempSlotIndex] = null;
@@ -1936,15 +1993,13 @@
                 if (itemToDeleteInfo) {
                     if (itemToDeleteInfo.sourceType === 'inventory') {
                         inventoryDisplaySlots[itemToDeleteInfo.slotIndex] = null;
-                        // 從 playerOwnedDNA 中也移除
                         playerOwnedDNA = playerOwnedDNA.filter(dna => (dna.id || dna.tempId) !== itemToDeleteInfo.id);
                     } else if (itemToDeleteInfo.sourceType === 'temporary') {
                         temporaryBackpackSlots[itemToDeleteInfo.slotIndex] = null;
                     }
-                    // 從組合槽中移除 (如果存在)
                     combinationSlotsData.forEach((comboItem, comboIndex) => {
                         if (comboItem && ((comboItem.id && comboItem.id === itemToDeleteInfo.id) || (comboItem.tempId && comboItem.tempId === itemToDeleteInfo.id))) {
-                            clearCombinationSlot(comboIndex, false); // false 表示不返回物品欄
+                            clearCombinationSlot(comboIndex, false);
                         }
                     });
                     populateInventory();
@@ -2022,19 +2077,17 @@
                     combinationSlotsData[targetComboSlotIndex] = droppedDNA;
                     updateCombinationSlotUI(targetComboSlotIndex, droppedDNA);
                     if (sourceType === 'inventory') inventoryDisplaySlots[sourceIndex] = null;
-                    else if (sourceType === 'combination' && sourceIndex !== targetComboSlotIndex) clearCombinationSlotUI(sourceIndex); // 從原組合槽移除
+                    else if (sourceType === 'combination' && sourceIndex !== targetComboSlotIndex) clearCombinationSlotUI(sourceIndex);
                     else if (sourceType === 'temporary') temporaryBackpackSlots[sourceIndex] = null;
                     moved = true;
                 }
             } else if (targetDropType === "inventory") {
                 const targetInventorySlotIndex = parseInt(targetDropZone.dataset.inventorySlotIndex);
-                // 確保目標不是刪除區的索引 (雖然刪除區有自己的 drop handler)
-                if (targetInventorySlotIndex === DELETE_SLOT_INDEX) return;
                 if (!inventoryDisplaySlots[targetInventorySlotIndex]) {
                     inventoryDisplaySlots[targetInventorySlotIndex] = droppedDNA;
                     if (sourceType === 'combination') clearCombinationSlotUI(sourceIndex);
                     else if (sourceType === 'temporary') temporaryBackpackSlots[sourceIndex] = null;
-                    else if (sourceType === 'inventory' && sourceIndex !== targetInventorySlotIndex) inventoryDisplaySlots[sourceIndex] = null; // 從原物品欄槽移除
+                    else if (sourceType === 'inventory' && sourceIndex !== targetInventorySlotIndex) inventoryDisplaySlots[sourceIndex] = null;
                     moved = true;
                 }
             } else if (targetDropType === "temporary") {
@@ -2043,7 +2096,7 @@
                     temporaryBackpackSlots[targetTempSlotIndex] = droppedDNA;
                     if (sourceType === 'combination') clearCombinationSlotUI(sourceIndex);
                     else if (sourceType === 'inventory') inventoryDisplaySlots[sourceIndex] = null;
-                    else if (sourceType === 'temporary' && sourceIndex !== targetTempSlotIndex) temporaryBackpackSlots[sourceIndex] = null; // 從原臨時背包槽移除
+                    else if (sourceType === 'temporary' && sourceIndex !== targetTempSlotIndex) temporaryBackpackSlots[sourceIndex] = null;
                     moved = true;
                 }
             }
@@ -2068,8 +2121,7 @@
                 comboSlotElement.style.borderColor = elementStyle.text;
                 comboSlotElement.draggable = true;
                 comboSlotElement.dataset.dnaInfo = JSON.stringify(dnaItem);
-                // dataset.droptype 和 dataset.slotId 應該在創建時就設定好了
-                comboSlotElement.removeEventListener('dragstart', handleDragStart); // 避免重複綁定
+                comboSlotElement.removeEventListener('dragstart', handleDragStart);
                 comboSlotElement.addEventListener('dragstart', handleDragStart);
             } else {
                 clearCombinationSlotUI(comboSlotId);
@@ -2094,7 +2146,7 @@
             const comboSlotElement = dnaCombinationSlotsContainer?.querySelector(`.dna-slot[data-slot-id="${comboSlotId}"]`);
             if (!comboSlotElement || !combinationSlotsData[comboSlotId]) return;
             const returnedDNA = combinationSlotsData[comboSlotId];
-            clearCombinationSlotUI(comboSlotId); // 清除UI和數據
+            clearCombinationSlotUI(comboSlotId);
             if (returnToInventory && returnedDNA) {
                 const emptyInventorySlotIndex = inventoryDisplaySlots.findIndex((slot, index) => slot === null && index < NUM_INVENTORY_SLOTS);
                 if (emptyInventorySlotIndex !== -1) {
@@ -2105,12 +2157,12 @@
                         temporaryBackpackSlots[emptyTempSlotIndex] = returnedDNA;
                         populateTemporaryBackpack();
                     } else {
-                        playerOwnedDNA.push(returnedDNA); // 如果都滿了，直接加到 playerOwnedDNA
+                        playerOwnedDNA.push(returnedDNA);
                         showFeedbackModal("提示", `${returnedDNA.name} 已返回DNA庫，但背包和物品欄均已滿，請整理。`, false, true, false);
                     }
                 }
             }
-            populateInventory(); // 重新渲染物品欄
+            populateInventory();
             updateActionButtonsState();
             if (currentLoggedInUser) savePlayerData();
         }
@@ -2255,7 +2307,7 @@
             let debuffs = { attack: 0, defense: 0, speed: 0, hp: 0, mp: 0, crit: 0 };
             if (monster.healthConditions && monster.healthConditions.length > 0) {
                 monster.healthConditions.forEach(condition => {
-                    if(condition.effects) { // 確保 effects 存在
+                    if(condition.effects) {
                         for (const stat in condition.effects) {
                             debuffs[stat] = (debuffs[stat] || 0) + condition.effects[stat];
                         }
@@ -2396,11 +2448,11 @@
         function toggleBattleStatus(monsterIdToBattle) {
             let newBattlingMonster = null;
             farmedMonsters.forEach(m => {
-                if (!m.farmStatus) m.farmStatus = {}; // 初始化 farmStatus
+                if (!m.farmStatus) m.farmStatus = {};
                 if (m.id === monsterIdToBattle) {
                     if (m.farmStatus.isTraining || m.farmStatus.active) {
                         showFeedbackModal("提示", `${m.nickname} 正在${m.farmStatus.isTraining ? '修煉' : '拾荒'}中，無法出戰。`, false, true, false);
-                        return; // 從 forEach 的回調中 return，不會停止整個 toggleBattleStatus
+                        return;
                     }
                     m.farmStatus.isBattling = !m.farmStatus.isBattling;
                      addLogEntry(m, m.farmStatus.isBattling ? "🟢 進入出戰狀態。" : "🔴 解除出戰狀態，開始休息。");
@@ -2422,7 +2474,7 @@
             if (currentLoggedInUser) savePlayerData();
         }
         function updateFarmMonsterStatusDisplay(monster, statusDivElement) {
-            if (!monster.farmStatus) monster.farmStatus = {}; // 初始化
+            if (!monster.farmStatus) monster.farmStatus = {};
             if (monster.farmStatus.isBattling) {
                 statusDivElement.textContent = '出戰中';
                 statusDivElement.className = 'farm-monster-status battling';
@@ -2430,6 +2482,13 @@
                 const elapsed = Math.floor((Date.now() - (monster.farmStatus.trainingStartTime || Date.now())) / 1000);
                 statusDivElement.textContent = `修煉中... (${elapsed}秒)`;
                 statusDivElement.className = 'farm-monster-status active';
+                if (monster.farmStatus.timerId && elapsed < 0) { // Handle potential clock skew or reset
+                     clearInterval(monster.farmStatus.timerId);
+                     monster.farmStatus.timerId = null;
+                     monster.farmStatus.isTraining = false; // Reset state
+                     statusDivElement.textContent = '閒置中';
+                     statusDivElement.className = 'farm-monster-status';
+                }
             } else if (monster.farmStatus.active) {
                 const timeLeft = Math.max(0, Math.floor(((monster.farmStatus.endTime || 0) - Date.now()) / 1000));
                 const actionText = '🧺 拾荒中';
@@ -2536,8 +2595,8 @@
                         if (Math.random() < 0.4) {
                             const randomDnaIndex = Math.floor(Math.random() * gameSettings.dnaFragments.length);
                             const newItem = JSON.parse(JSON.stringify(gameSettings.dnaFragments[randomDnaIndex]));
-                            newItem.baseId = newItem.id; // 保存原始 ID
-                            newItem.id = `temp_train_${Date.now()}_${itemsFromCurrentTraining.length}`; // 給予唯一實例 ID
+                            newItem.baseId = newItem.id;
+                            newItem.id = `temp_train_${Date.now()}_${itemsFromCurrentTraining.length}`;
                             itemsFromCurrentTraining.push(newItem);
                         }
                     }
@@ -2622,14 +2681,14 @@
             let added = false;
             for (let i = 0; i < NUM_TEMP_BACKPACK_SLOTS; i++) {
                 if (temporaryBackpackSlots[i] === null) {
-                    const newItem = {...dnaItem}; // 淺拷貝
-                    newItem.baseId = dnaItem.baseId || dnaItem.id.split('_')[0] + '_' + dnaItem.id.split('_')[1] + '_' + dnaItem.id.split('_')[2]; // 確保有 baseId
-                    newItem.id = dnaItem.id || `temp_dna_${Date.now()}_${i}`; // 如果原先沒有 id，給一個臨時的
+                    const newItem = {...dnaItem};
+                    newItem.baseId = dnaItem.baseId || dnaItem.id.split('_')[0] + '_' + dnaItem.id.split('_')[1] + '_' + dnaItem.id.split('_')[2];
+                    newItem.id = dnaItem.id || `temp_dna_${Date.now()}_${i}`;
                     temporaryBackpackSlots[i] = newItem;
                     added = true; break;
                 }
             }
-            if (!added) { // 如果臨時背包滿了，覆蓋第一個
+            if (!added) {
                 const newItem = {...dnaItem};
                 newItem.baseId = dnaItem.baseId || dnaItem.id.split('_')[0] + '_' + dnaItem.id.split('_')[1] + '_' + dnaItem.id.split('_')[2];
                 newItem.id = dnaItem.id || `temp_dna_${Date.now()}_0`;
@@ -2881,7 +2940,7 @@
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
                 const modalId = event.target.id;
-                const nonAutoCloseModals = ['feedback-modal', 'confirmation-modal', 'reminder-modal'];
+                const nonAutoCloseModals = ['feedback-modal', 'confirmation-modal', 'reminder-modal', 'official-announcement-modal']; // 新增官方公告
                 if (!nonAutoCloseModals.includes(modalId)) {
                     closeModal(modalId);
                 }
@@ -2903,8 +2962,8 @@
             playerStats = { rank: 0, wins: 0, losses: 0, score: 0, titles: (gameSettings.titles && gameSettings.titles.length > 0 ? [gameSettings.titles[0]] : ["新手訓練家"]), achievements: [], medals: 0, nickname: currentPlayerNickname };
 
             combinationSlotsData.fill(null);
-            inventoryDisplaySlots.fill(null); // 清空物品欄追蹤陣列
-            temporaryBackpackSlots.fill(null); // 清空臨時背包追蹤陣列
+            inventoryDisplaySlots.fill(null);
+            temporaryBackpackSlots.fill(null);
 
             createCombinationSlots();
             populateInventory();
@@ -2917,10 +2976,9 @@
             updateActionButtonsState();
             closeAllModals();
         }
-        // 修正問題1: Uncaught (in promise) ReferenceError: modal is not defined
         function closeAllModals() {
             const modals = document.querySelectorAll('.modal');
-            modals.forEach(modalElement => { // 使用不同的參數名稱避免衝突
+            modals.forEach(modalElement => {
                 if (modalElement && modalElement.id) {
                     closeModal(modalElement.id);
                 }
@@ -2929,14 +2987,13 @@
         async function savePlayerData() {
             if (!currentLoggedInUser || !db) return;
             const userId = currentLoggedInUser.uid;
-            // 確保 playerOwnedDNA 中的每個 DNA 物件都有 baseId
             const processedPlayerOwnedDNA = playerOwnedDNA.map(dna => {
                 if (dna && typeof dna.id === 'string' && !dna.baseId) {
                     const parts = dna.id.split('_');
                     if (parts.length >=3 && parts[0] === 'dna' && parts[1] === 'frag') {
                         dna.baseId = `${parts[0]}_${parts[1]}_${parts[2]}`;
                     } else {
-                        dna.baseId = dna.id; // Fallback if parsing fails
+                        dna.baseId = dna.id;
                     }
                 }
                 return {...dna};
@@ -2978,7 +3035,7 @@
                         playerOwnedDNA = [];
                         farmedMonsters = [];
                         playerStats = { rank: 'N/A', wins: 0, losses: 0, score: 0, titles: (gameSettings.titles && gameSettings.titles.length > 0 ? [gameSettings.titles[0]] : ["新手訓練家"]), achievements: [], medals: 0, nickname: userNickname };
-                        await saveInitialPlayerDataToBackend(userId, userNickname, playerStats); // 這裡會給予初始DNA
+                        await saveInitialPlayerDataToBackend(userId, userNickname, playerStats);
                     } else {
                         const errorData = await response.json().catch(() => ({ message: "無法從後端讀取玩家數據。" }));
                         throw new Error(errorData.error || errorData.message);
@@ -2986,13 +3043,12 @@
                 } else {
                     const data = await response.json();
                     playerOwnedDNA = (data.playerOwnedDNA || []).map(dna => {
-                        // 確保從後端載入的 DNA 也有 baseId
                         if (dna && typeof dna.id === 'string' && !dna.baseId) {
                              const parts = dna.id.split('_');
                             if (parts.length >=3 && parts[0] === 'dna' && parts[1] === 'frag') {
                                 dna.baseId = `${parts[0]}_${parts[1]}_${parts[2]}`;
                             } else {
-                                dna.baseId = dna.id; // Fallback
+                                dna.baseId = dna.id;
                             }
                         }
                         return dna;
@@ -3009,65 +3065,65 @@
                 playerStats = { rank: 'N/A', wins: 0, losses: 0, score: 0, titles: (gameSettings.titles && gameSettings.titles.length > 0 ? [gameSettings.titles[0]] : ["新手訓練家"]), achievements: [], medals: 0, nickname: userNickname };
             }
 
-            initializeInventoryDisplay(); // 這裡會根據 playerOwnedDNA 填充 inventoryDisplaySlots
+            initializeInventoryDisplay();
             populateFarmList();
-            if(playerInfoModalBody) openAndPopulatePlayerInfoModal(playerStats, userId);
+            // 登入後不再自動彈出玩家資訊，而是公告
+            // if(playerInfoModalBody) openAndPopulatePlayerInfoModal(playerStats, userId);
             updateMonsterSnapshotDisplay(farmedMonsters.length > 0 ? farmedMonsters.find(m => m.farmStatus && m.farmStatus.isBattling) || farmedMonsters[0] : null);
             updateActionButtonsState();
-            closeModal('feedback-modal');
+            closeModal('feedback-modal'); // 關閉 "載入中"
         }
 
         async function saveInitialPlayerDataToBackend(userId, nickname, initialStats) {
-    if (!currentLoggedInUser || !db) return;
-    const userDocRef = db.collection('users').doc(userId);
-    const userProfileData = {
-        uid: userId,
-        nickname: nickname,
-        email: currentLoggedInUser.email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-    };
+            if (!currentLoggedInUser || !db) return;
+            const userDocRef = db.collection('users').doc(userId);
+            const userProfileData = {
+                uid: userId,
+                nickname: nickname,
+                email: currentLoggedInUser.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            };
 
-    // 產生初始 DNA
-    let initialOwnedDNA = [];
-    if (gameSettings.dnaFragments && gameSettings.dnaFragments.length > 0) {
-        const availableDnaForNewPlayer = gameSettings.dnaFragments.filter(
-            f => f.rarity === "普通" || f.rarity === "稀有"
-        );
-        if (availableDnaForNewPlayer.length > 0) {
-            for (let i = 0; i < 6; i++) {
-                const randomDnaTemplate = availableDnaForNewPlayer[Math.floor(Math.random() * availableDnaForNewPlayer.length)];
-                const newDnaInstance = JSON.parse(JSON.stringify(randomDnaTemplate));
-                newDnaInstance.baseId = newDnaInstance.id;
-                newDnaInstance.id = `${newDnaInstance.baseId}_initial_${Date.now()}_${i}`;
-                initialOwnedDNA.push(newDnaInstance);
+            let initialOwnedDNA = [];
+            if (gameSettings.dnaFragments && gameSettings.dnaFragments.length > 0) {
+                const availableDnaForNewPlayer = gameSettings.dnaFragments.filter(
+                    f => f.rarity === "普通" || f.rarity === "稀有"
+                );
+                if (availableDnaForNewPlayer.length > 0) {
+                    for (let i = 0; i < 6; i++) {
+                        const randomDnaTemplate = availableDnaForNewPlayer[Math.floor(Math.random() * availableDnaForNewPlayer.length)];
+                        const newDnaInstance = JSON.parse(JSON.stringify(randomDnaTemplate));
+                        newDnaInstance.baseId = newDnaInstance.id;
+                        newDnaInstance.id = `${newDnaInstance.baseId}_initial_${Date.now()}_${i}`;
+                        initialOwnedDNA.push(newDnaInstance);
+                    }
+                } else {
+                    console.warn("無法給予初始DNA，因為設定中沒有普通或稀有等級的DNA。");
+                }
             }
-        } else {
-            console.warn("無法給予初始DNA，因為設定中沒有普通或稀有等級的DNA。");
+            playerOwnedDNA = initialOwnedDNA;
+            inventoryDisplaySlots.fill(null);
+            initialOwnedDNA.slice(0, NUM_INVENTORY_SLOTS).forEach((dna, index) => {
+                inventoryDisplaySlots[index] = dna;
+            });
+
+            const initialGameData = {
+                playerOwnedDNA: initialOwnedDNA.map(dna => ({ ...dna })),
+                farmedMonsters: [],
+                playerStats: initialStats,
+                lastSave: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                await userDocRef.set(userProfileData, { merge: true });
+                const userGameDataRef = userDocRef.collection('gameData').doc('main');
+                await userGameDataRef.set(initialGameData);
+                console.log("新玩家初始資料已儲存到 Firestore。");
+            } catch (error) {
+                console.error("儲存新玩家初始資料到 Firestore 失敗:", error);
+            }
         }
-    }
-    playerOwnedDNA = initialOwnedDNA;
-    inventoryDisplaySlots.fill(null);
-    initialOwnedDNA.slice(0, NUM_INVENTORY_SLOTS).forEach((dna, index) => {
-        inventoryDisplaySlots[index] = dna;
-    });
-
-    const initialGameData = {
-        playerOwnedDNA: initialOwnedDNA.map(dna => ({ ...dna })),
-        farmedMonsters: [],
-        playerStats: initialStats,
-        lastSave: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    try {
-        await userDocRef.set(userProfileData, { merge: true });
-        const userGameDataRef = userDocRef.collection('gameData').doc('main');
-        await userGameDataRef.set(initialGameData);
-        console.log("新玩家初始資料已儲存到 Firestore。");
-    } catch (error) {
-        console.error("儲存新玩家初始資料到 Firestore 失敗:", error);
-    }
-}
 
 
         async function fetchGameConfigs() {
@@ -3078,27 +3134,28 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const configs = await response.json();
-                gameSettings = { 
+                gameSettings = {
                     dnaFragments: configs.dna_fragments || [],
                     rarities: configs.rarities || {},
                     skills: configs.skills || {},
                     personalities: configs.personalities || [],
                     titles: configs.titles || ["新手訓練家"],
                     healthConditions: configs.health_conditions || [],
-                    newbieGuide: configs.newbie_guide || newbieGuideData 
+                    newbieGuide: configs.newbie_guide || newbieGuideData
                 };
                 console.log("遊戲設定已成功從後端載入:", gameSettings);
-                newbieGuideData = gameSettings.newbieGuide; 
-                populateNewbieGuide(); 
+                newbieGuideData = gameSettings.newbieGuide;
+                populateNewbieGuide();
             } catch (error) {
                 console.error("獲取遊戲設定失敗:", error);
                 showFeedbackModal("錯誤", "無法載入遊戲核心設定，部分功能可能異常。", false, true, false);
-                gameSettings.rarities = { COMMON: { name: "普通", textVarKey: "--rarity-common-text", statMultiplier: 1.0 }, RARE: { name: "稀有", textVarKey: "--rarity-rare-text", statMultiplier: 1.1 }}; 
-                gameSettings.skills = { '無': [{ name: "猛撞", power: 20, type: "無"}]}; 
-                gameSettings.personalities = [{ name: "標準", description: "標準個性", colorDark: "#888", colorLight: "#AAA"}]; 
+                gameSettings.rarities = { COMMON: { name: "普通", textVarKey: "--rarity-common-text", statMultiplier: 1.0 }, RARE: { name: "稀有", textVarKey: "--rarity-rare-text", statMultiplier: 1.1 }};
+                gameSettings.skills = { '無': [{ name: "猛撞", power: 20, type: "無"}]};
+                gameSettings.personalities = [{ name: "標準", description: "標準個性", colorDark: "#888", colorLight: "#AAA"}];
             }
         }
-        
+
+        // 修改：combineDNA 函式，確保回饋視窗正確處理
         async function combineDNA() {
             const dnaToCombine = combinationSlotsData.filter(slot => slot !== null);
             if (dnaToCombine.length === 0) {
@@ -3110,15 +3167,9 @@
                 return;
             }
 
-            // 新增 console.log 來檢查 dnaToCombine 的內容
             console.log("combineDNA - 準備組合的 DNA 物件 (dnaToCombine):", JSON.parse(JSON.stringify(dnaToCombine)));
-
-            // 修正：確保使用 baseId (原始ID) 發送到後端
             const idsToSend = dnaToCombine.map(dna => {
-                if (dna.baseId) {
-                    return dna.baseId;
-                }
-                // Fallback: 如果沒有 baseId，嘗試從 instance id 解析 (這部分應盡量避免，確保所有 DNA 物件都有 baseId)
+                if (dna.baseId) return dna.baseId;
                 console.warn("警告: DNA 物件缺少 baseId，嘗試從 instance id 解析:", dna);
                 if (dna.id && typeof dna.id === 'string') {
                     const parts = dna.id.split('_');
@@ -3126,12 +3177,11 @@
                         return `${parts[0]}_${parts[1]}_${parts[2]}`;
                     }
                 }
-                return dna.id || dna.tempId; // 最後的 fallback
+                return dna.id || dna.tempId;
             });
+            console.log("combineDNA - 發送到後端的 DNA IDs (idsToSend):", JSON.stringify(idsToSend));
 
-            console.log("combineDNA - 發送到後端的 DNA IDs (idsToSend):", JSON.stringify(idsToSend)); // 檢查這個
-
-            showFeedbackModal("組合中...", "正在努力組合新的怪獸...", true, false);
+            showFeedbackModal("組合中...", "正在努力組合新的怪獸...", true, false); // 顯示 spinner
             try {
                 const idToken = await currentLoggedInUser.getIdToken();
                 const response = await fetch(`${API_BASE_URL}/combine`, {
@@ -3140,13 +3190,64 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${idToken}`
                     },
-                    body: JSON.stringify({ dna_ids: idsToSend }) // 確認這裡使用的是處理過的 idsToSend
+                    body: JSON.stringify({ dna_ids: idsToSend })
                 });
 
-                // ... (後續的程式碼不變) ...
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `伺服器錯誤 ${response.status}` }));
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const newMonster = await response.json();
+
+                if (newMonster && !newMonster.error) {
+                    if (farmedMonsters.length < MAX_FARM_SLOTS) {
+                        farmedMonsters.push(newMonster);
+                        addLogEntry(newMonster, "✨ 成功組合誕生！");
+                    } else {
+                        // 農場已滿，可以考慮放入臨時背包或提示玩家
+                        addToTemporaryBackpack(newMonster); // 假設怪獸也可以放入臨時背包
+                        showFeedbackModal("農場已滿", `${newMonster.nickname} 已放入您的臨時背包。`, false, true, false);
+                        // 延遲一下再顯示組合成功，避免被覆蓋
+                        setTimeout(() => {
+                            showFeedbackModal(
+                                `怪獸 "${newMonster.nickname}" 組合成功！`,
+                                `(因農場已滿，已放入臨時背包)`,
+                                false, true, true, newMonster
+                            );
+                        }, 2500);
+                    }
+                    populateFarmList();
+                    if (farmedMonsters.length <= MAX_FARM_SLOTS && (!currentMonster || currentMonster.id !== newMonster.id)) {
+                         // 如果農場未滿，或者新怪獸不在農場中（例如放入臨時背包了），則可以考慮是否更新當前顯示怪獸
+                        if (farmedMonsters.includes(newMonster)) { // 只有當它真的在農場裡才更新
+                            updateMonsterSnapshotDisplay(newMonster);
+                            if (monsterInfoButton) monsterInfoButton.disabled = false;
+                        }
+                    }
+                    if(playerStats.achievements && !playerStats.achievements.includes("首次組合怪獸")) {
+                        playerStats.achievements.push("首次組合怪獸");
+                    }
+                    savePlayerData();
+                    // 在成功後顯示怪獸資訊，而不是簡單的文字訊息
+                     showFeedbackModal(
+                        `怪獸 "${newMonster.nickname}" 組合成功！`,
+                        ``, // 清空訊息，讓怪獸詳情顯示
+                        false, // 隱藏 spinner
+                        true,  // 顯示關閉按鈕
+                        true,  // 顯示怪獸詳情
+                        newMonster // 傳遞怪獸資料
+                    );
+                } else {
+                    throw new Error(newMonster.error || "後端回傳組合錯誤但未提供詳細訊息。");
+                }
             } catch (error) {
                 console.error("DNA 組合失敗:", error);
-                showFeedbackModal("組合失敗", `DNA組合失敗：${error.message}`, false, true, false);
+                showFeedbackModal("組合失敗", `DNA組合失敗：${error.message}`, false, true, false); // 顯示錯誤，隱藏 spinner
+            } finally {
+                // 無論成功或失敗，都清空組合槽並更新按鈕狀態
+                combinationSlotsData.fill(null);
+                createCombinationSlots(); // 重新渲染以清除UI
+                updateActionButtonsState();
             }
         }
 
@@ -3160,9 +3261,12 @@
 
         function showGameScreen() {
             authScreen.style.display = 'none';
-            gameContainer.style.display = 'flex'; 
+            // 修改：確保 gameContainer 的 display 為 flex 以正確顯示內容
+            gameContainer.style.display = 'flex';
+            gameContainer.style.flexDirection = 'column';
+            gameContainer.style.alignItems = 'center';
         }
-        
+
         showRegisterFormBtn.addEventListener('click', () => openModal('register-modal'));
         showLoginFormBtn.addEventListener('click', () => openModal('login-modal'));
 
@@ -3181,30 +3285,29 @@
             try {
                 const userCredential = await auth.createUserWithEmailAndPassword(emailForAuth, password);
                 currentLoggedInUser = userCredential.user;
-                currentPlayerNickname = nickname; 
+                currentPlayerNickname = nickname;
 
                 const userDocRef = db.collection('users').doc(currentLoggedInUser.uid);
                 await userDocRef.set({
                     uid: currentLoggedInUser.uid,
-                    nickname: nickname, 
-                    email: currentLoggedInUser.email, 
+                    nickname: nickname,
+                    email: currentLoggedInUser.email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
-                
+
                 playerStats = { rank: 0, wins: 0, losses: 0, score: 0, titles: (gameSettings.titles || ["新手訓練家"]), achievements: [], medals: 0, nickname: nickname };
                 await saveInitialPlayerDataToBackend(currentLoggedInUser.uid, nickname, playerStats);
 
                 closeModal('register-modal');
                 closeModal('feedback-modal');
                 showGameScreen();
-                await loadGameDataForUser(currentLoggedInUser.uid, nickname); 
-                welcomePopupTitle.textContent = `歡迎，${nickname}！`;
-                welcomePopupMessage.textContent = "您已成功創建帳號並進入怪獸異世界！開始您的冒險吧！";
-                openModal('welcome-popup-modal');
+                await loadGameDataForUser(currentLoggedInUser.uid, nickname);
+                if (announcementPlayerName) announcementPlayerName.textContent = nickname;
+                openModal('official-announcement-modal'); // 顯示官方公告
             } catch (error) {
                 console.error("註冊失敗:", error);
-                registerErrorDiv.textContent = `註冊失敗：${error.message}`;
+                registerErrorDiv.textContent = `註冊失敗：${error.message}`; // 顯示 Firebase 原始錯誤，或自訂
                 closeModal('feedback-modal');
             }
         });
@@ -3221,14 +3324,14 @@
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(emailForAuth, password);
                 currentLoggedInUser = userCredential.user;
-                
+
                 const userDocRef = db.collection('users').doc(currentLoggedInUser.uid);
                 const userDocSnap = await userDocRef.get();
                 if (userDocSnap.exists) {
-                    currentPlayerNickname = userDocSnap.data().nickname || nickname; 
+                    currentPlayerNickname = userDocSnap.data().nickname || nickname;
                     await userDocRef.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() });
                 } else {
-                    currentPlayerNickname = nickname; 
+                    currentPlayerNickname = nickname;
                     await userDocRef.set({ nickname: nickname, uid: currentLoggedInUser.uid, email: currentLoggedInUser.email, lastLogin: firebase.firestore.FieldValue.serverTimestamp() }, {merge: true});
                 }
 
@@ -3236,23 +3339,26 @@
                 closeModal('feedback-modal');
                 showGameScreen();
                 await loadGameDataForUser(currentLoggedInUser.uid, currentPlayerNickname);
-                welcomePopupTitle.textContent = `歡迎回來，${currentPlayerNickname}！`;
-                welcomePopupMessage.textContent = "很高興再次見到您！";
-                openModal('welcome-popup-modal');
+                if (announcementPlayerName) announcementPlayerName.textContent = currentPlayerNickname;
+                openModal('official-announcement-modal'); // 顯示官方公告
             } catch (error) {
-                console.error("登入失敗:", error);
-                loginErrorDiv.textContent = `登入失敗：${error.message}`;
+                console.error("登入失敗 (原始錯誤):", error); // 保留原始錯誤日誌
+                // 修改：根據錯誤碼判斷是否為 INVALID_LOGIN_CREDENTIALS
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || (error.message && error.message.includes("INVALID_LOGIN_CREDENTIALS"))) {
+                    loginErrorDiv.textContent = '查無此帳號或密碼錯誤。';
+                } else {
+                    loginErrorDiv.textContent = `登入失敗：${error.message}`; // 其他錯誤仍顯示原始訊息
+                }
                 closeModal('feedback-modal');
             }
         });
-        
-        welcomePopupConfirmBtn.addEventListener('click', () => closeModal('welcome-popup-modal'));
 
         logoutBtn.addEventListener('click', async () => {
             showFeedbackModal("登出中...", "正在儲存您的進度並登出...", true, false);
-            await savePlayerData(); 
+            await savePlayerData();
             try {
                 await auth.signOut();
+                // onAuthStateChanged 會處理後續 UI 更新
             } catch (error) {
                 console.error("登出失敗:", error);
                 showFeedbackModal("錯誤", `登出時發生錯誤: ${error.message}`, false, true, false);
@@ -3265,95 +3371,66 @@
                 const userDocRef = db.collection('users').doc(user.uid);
                 const userDocSnap = await userDocRef.get();
                 if (userDocSnap.exists) {
-                    currentPlayerNickname = userDocSnap.data().nickname || user.email.split('@')[0]; 
+                    currentPlayerNickname = userDocSnap.data().nickname || user.email.split('@')[0];
                 } else {
-                    currentPlayerNickname = user.email.split('@')[0]; 
-                    await userDocRef.set({ 
-                        uid: user.uid, 
-                        nickname: currentPlayerNickname, 
+                    // 理論上註冊時已創建，此處為保險
+                    currentPlayerNickname = user.email.split('@')[0];
+                    await userDocRef.set({
+                        uid: user.uid,
+                        nickname: currentPlayerNickname,
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
                      await saveInitialPlayerDataToBackend(user.uid, currentPlayerNickname, { rank: 0, wins: 0, losses: 0, score: 0, titles: (gameSettings.titles || ["新手訓練家"]), achievements: [], medals: 0, nickname: currentPlayerNickname });
                 }
-                
+
                 console.log("用戶已登入:", currentLoggedInUser.uid, currentPlayerNickname);
-                showGameScreen();
-                await loadGameDataForUser(currentLoggedInUser.uid, currentPlayerNickname);
+                if (authScreen.style.display !== 'none') { // 只有在 authScreen 可見時才執行切換和載入
+                    showGameScreen();
+                    await loadGameDataForUser(currentLoggedInUser.uid, currentPlayerNickname);
+                    if (announcementPlayerName) announcementPlayerName.textContent = currentPlayerNickname;
+                    openModal('official-announcement-modal'); // 確保在 auth state change 後也彈公告
+                }
                 if(playerInfoButton) playerInfoButton.disabled = false;
 
             } else {
                 currentLoggedInUser = null;
                 currentPlayerNickname = "";
                 console.log("用戶已登出或未登入。");
-                resetGameDataForUI(); 
-                showAuthScreen();
+                resetGameDataForUI();
+                showAuthScreen(); // 確保登出後顯示登入畫面
                 if(playerInfoButton) playerInfoButton.disabled = true;
             }
-            closeModal('feedback-modal'); 
+            // 確保 feedback modal 在 auth state 改變後關閉 (如果之前是載入中)
+            if (feedbackModal.style.display === 'flex' && (feedbackModalTitle.textContent.includes("載入中") || feedbackModalTitle.textContent.includes("登入中") || feedbackModalTitle.textContent.includes("註冊中") || feedbackModalTitle.textContent.includes("登出中"))) {
+                closeModal('feedback-modal');
+            }
         });
 
 
         // --- Initialization ---
         async function initializeApp() {
-            showFeedbackModal("遊戲載入中...", "正在準備怪獸異世界...", true, false);
-            await fetchGameConfigs(); 
+            // 初始時不顯示 feedbackModal，讓 auth.onAuthStateChanged 先執行
+            // showFeedbackModal("遊戲載入中...", "正在準備怪獸異世界...", true, false);
+            await fetchGameConfigs();
 
             const preferredTheme = localStorage.getItem('theme') || 'dark';
-            applyTheme(preferredTheme); 
-            
+            applyTheme(preferredTheme);
+
             createCombinationSlots();
-            function generateMockLeaderboardData() {
-            monsterLeaderboardData = []; // <--- 注意變數名稱的統一
-            const mTs = ['炎龍王','海皇主宰','大地巨神','暴風領主','影夜魔君','聖光使徒', '虛空行者', '次元裂隙獸', '星界守護神', '混沌編織者'];
-            const mNs = ['烈焰','怒濤','巨岩','疾風','幽影','晨曦', '虛無', '裂空', '星塵', '暗流'];
-            const es = ['火','水','土','風','暗','光','木','金','毒', '無'];
-            for (let i = 0; i < 20; i++) {
-                const mainE = es[Math.floor(Math.random() * es.length)];
-                monsterLeaderboardData.push({ // <--- 注意變數名稱的統一
-                    rank: i + 1,
-                    title: mTs[Math.floor(Math.random() * mTs.length)],
-                    nickname: mNs[Math.floor(Math.random() * mNs.length)] + (Math.floor(Math.random() * 900) + 100),
-                    mainElement: mainE,
-                    elements: [mainE, es[Math.floor(Math.random() * es.length)]],
-                    score: Math.floor(Math.random() * 15000) + 5000,
-                    id: `leader_monster_${i}`,
-                    hp: Math.floor(Math.random() * 100) + 80,
-                    attack: Math.floor(Math.random() * 30) + 15,
-                    defense: Math.floor(Math.random() * 30) + 15,
-                    speed: Math.floor(Math.random() * 20) + 10,
-                    crit: Math.floor(Math.random() * 15) + 5,
-                    skills: gameSettings.skills && gameSettings.skills[mainE] && gameSettings.skills[mainE].length > 0 ?
-                            [gameSettings.skills[mainE][Math.floor(Math.random() * gameSettings.skills[mainE].length)]] :
-                            (gameSettings.skills && gameSettings.skills['無'] && gameSettings.skills['無'].length > 0 ?
-                                [gameSettings.skills['無'][Math.floor(Math.random() * gameSettings.skills['無'].length)]] :
-                                [{name: "猛撞", power: 20, type: "無"}])
-                });
-            }
-            playerLeaderboardData = []; // <--- 注意變數名稱的統一
-            const pNs = ['戰神阿明','法王小花','刺客老王','坦神莉莉','遊俠阿宏','智者小美', '幻影旅者', '雷霆主宰', '永恆守望', '深淵低語'];
-            for (let i = 0; i < 20; i++) {
-                const representativeMonster = monsterLeaderboardData[Math.floor(Math.random() * monsterLeaderboardData.length)]; // <--- 注意變數名稱的統一
-                playerLeaderboardData.push({ // <--- 注意變數名稱的統一
-                    rank: i + 1,
-                    nickname: pNs[Math.floor(Math.random() * pNs.length)] + (i + 1),
-                    wins: Math.floor(Math.random() * 200),
-                    losses: Math.floor(Math.random() * 100),
-                    score: Math.floor(Math.random() * 50000) + 10000,
-                    representativeMonsterName: representativeMonster.nickname,
-                    representativeMonsterElements: representativeMonster.elements
-                });
-            }
-        } 
+            // generateMockLeaderboardData(); // 移除模擬數據生成，後續應由後端提供
             setupDropZones();
-            updateActionButtonsState(); 
-            populateNewbieGuide(); 
-            
+            updateActionButtonsState();
+            populateNewbieGuide();
+
             const firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
             if (firstDnaFarmTab) {
                 openDnaFarmTab({currentTarget: firstDnaFarmTab}, 'dna-inventory-content');
             }
+            // 確保 authScreen 是初始顯示的
+            showAuthScreen();
+            // auth.onAuthStateChanged 會處理後續的 UI 切換和資料載入
         }
 
         // Event Listeners
@@ -3361,7 +3438,7 @@
             const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
             applyTheme(newTheme);
         });
-        
+
         // Start the application
         initializeApp();
 
