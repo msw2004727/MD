@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>怪獸養成對戰 Demo - V14 (UI與功能調整)</title>
+    <title>怪獸養成對戰 Demo - V15 (UI與功能調整)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -325,21 +325,40 @@
             color: var(--accent-color);
             margin-bottom: 0; border-bottom: none; padding-bottom: 0;
         }
-        .panel-title-hint { font-size: 0.875rem; color: var(--text-secondary); } /* Changed from text-xs */
+        .panel-title-hint { font-size: 0.875rem; color: var(--text-secondary); } 
         @media (min-width: 768px) { .panel-title { font-size: 1.3rem; } }
 
-        .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot {
+        .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
             border: 1px solid var(--border-color); 
-            border-radius: 5px; padding: 6px; text-align: center; font-size: 0.875rem; /* Changed from text-xs */
+            border-radius: 5px; padding: 6px; text-align: center; font-size: 0.875rem; 
             transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s; 
             position: relative; min-height: 48px; display: flex; 
             align-items: center; justify-content: center;
         }
         .dna-item { cursor: grab; }
-        .dna-slot, .temp-backpack-slot { cursor: pointer; }
+        .dna-slot, .temp-backpack-slot, .inventory-delete-slot { cursor: pointer; }
         .inventory-slot-empty, .temp-backpack-slot.empty { color: var(--text-secondary); border-style: dashed; cursor: default; background-color: var(--bg-panel); }
+        .inventory-delete-slot {
+            background-color: var(--danger-color-dark);
+            color: white;
+            border-style: dashed;
+            border-color: var(--danger-hover-dark);
+        }
+        body.light-theme .inventory-delete-slot {
+            background-color: var(--danger-color-light);
+            border-color: var(--danger-hover-light);
+        }
+        .inventory-delete-slot.drag-over {
+            background-color: var(--danger-hover-dark) !important;
+            border-color: white !important;
+        }
+        body.light-theme .inventory-delete-slot.drag-over {
+            background-color: var(--danger-hover-light) !important;
+        }
+
+
         
-        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot { padding: 8px; font-size: 0.9rem; min-height: 55px;} } /* Adjusted for base */
+        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot { padding: 8px; font-size: 0.9rem; min-height: 55px;} } 
         
         .dna-item:hover, .dna-slot:hover:not(.occupied), .temp-backpack-slot:hover:not(.occupied):not(.empty) { 
             border-color: var(--accent-color); 
@@ -369,7 +388,7 @@
 
         .snapshot-achievement-title {
             grid-column: 1 / -1; grid-row: 1 / 2; text-align: center;
-            font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); /* Changed from text-xs */
+            font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); 
             z-index: 1; margin-bottom: 2px; text-shadow: 1px 1px 1px color-mix(in srgb, var(--bg-primary) 50%, transparent);
             background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent);
             padding: 2px 6px; border-radius: 4px; display: inline-block; margin: 0 auto;
@@ -383,7 +402,7 @@
         }
         .snapshot-win-loss {
             position: absolute; top: 8px; right: 8px;
-            font-size: 0.875rem; color: var(--text-secondary); z-index: 2; /* Changed from text-xs */
+            font-size: 0.875rem; color: var(--text-secondary); z-index: 2; 
             text-align: right; padding: 3px 5px; background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent); border-radius: 4px;
         }
          .snapshot-win-loss span { display: block; }
@@ -489,20 +508,30 @@
 
         .top-nav-button { 
             width: auto;
-            padding: 0.5rem 0.5rem; /* Further reduced padding for 6 buttons */
+            padding: 0.5rem 0.5rem; 
             min-width: 0; 
-            font-size: 0.75rem; /* Keep small for more buttons */
+            font-size: 0.75rem; 
             height: 38px; 
             display: flex; align-items: center; justify-content: center; 
             flex-grow: 1; 
             text-align: center;
             line-height: 1.2; 
+            background-color: var(--accent-color); /* Uniform color */
+            color: var(--button-primary-text); /* Text color for accent */
+            border: 1px solid var(--accent-hover-dark);
         }
+        .top-nav-button:hover {
+            background-color: var(--accent-hover-dark);
+        }
+        .top-nav-button:disabled {
+             background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
+        }
+
          .top-buttons-container {
             display: flex;
             justify-content: center;
             align-items: stretch; 
-            gap: 0.2rem; /* Further reduced gap */
+            gap: 0.2rem; 
             margin-top: 0.5rem; 
         }
 
@@ -516,8 +545,8 @@
         .modal-content { background-color: var(--bg-panel); color: var(--text-primary); margin: auto; padding: 20px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); position: relative; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, color 0.3s;}
         .modal-content.large { max-width: 650px; }
         .modal-content.xlarge { max-width: 800px; } 
-        .modal-content.feedback-wide { max-width: 600px; } /* Wider feedback modal */
-        @media (max-width: 640px) { /* sm breakpoint */
+        .modal-content.feedback-wide { max-width: 600px; } 
+        @media (max-width: 640px) { 
             .modal-content.feedback-wide { max-width: 95%; }
         }
 
@@ -545,7 +574,7 @@
             margin-bottom: 0; border-bottom: none; padding-bottom: 0;
         }
         body.light-theme .dna-panel-title { color: #0550ae; } 
-        .dna-panel-hint { font-size: 0.875rem; color: var(--text-secondary); } /* Changed from text-xs */
+        .dna-panel-hint { font-size: 0.875rem; color: var(--text-secondary); } 
         body.light-theme .dna-panel-hint { color: #424a53; } 
 
 
@@ -557,12 +586,12 @@
         .details-value { color: var(--text-primary); font-weight: bold; text-align: right; font-size: 1rem; } 
         .details-value.boosted { color: var(--success-color); font-weight: bold; } 
         .details-value.debuffed { color: var(--danger-color); }
-        .creation-time-centered { text-align: center; font-size: 0.875rem; color: var(--text-secondary); margin-top: 10px; }  /* Changed from text-xs */
-        .element-composition-item { font-size: 0.875rem; }  /* Changed from text-xs */
+        .creation-time-centered { text-align: center; font-size: 0.875rem; color: var(--text-secondary); margin-top: 10px; }  
+        .element-composition-item { font-size: 0.875rem; }  
         .skill-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); } 
         .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
         .skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.95rem; } 
-        .skill-details { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px; } /* Changed from text-xs */
+        .skill-details { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px; } 
         .monster-info-header { text-align: center; margin-bottom: 15px; }
         .monster-info-name-styled {
             font-size: 1.6rem; font-weight: bold; color: var(--accent-color);
@@ -576,7 +605,7 @@
         .action-buttons-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
         
         .scrolling-hints-container { height: 22px; overflow: hidden; position: relative; background-color: var(--bg-primary); border-radius: 4px; padding: 0 10px; margin-top: 10px; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;}
-        .scrolling-hint-text { position: absolute; width: 100%; text-align: center; line-height: 22px; font-size: 0.875rem; color: var(--text-secondary); animation: scrollHint 15s linear infinite; opacity: 0; }  /* Changed from text-xs */
+        .scrolling-hint-text { position: absolute; width: 100%; text-align: center; line-height: 22px; font-size: 0.875rem; color: var(--text-secondary); animation: scrollHint 15s linear infinite; opacity: 0; }  
         .scrolling-hint-text:nth-child(1) { animation-delay: 0s; } .scrolling-hint-text:nth-child(2) { animation-delay: 5s; } .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
         @keyframes scrollHint { 0% { opacity: 0; transform: translateY(100%); } 10%, 23% { opacity: 1; transform: translateY(0); } 33% { opacity: 0; transform: translateY(-100%); } 100% { opacity: 0; transform: translateY(-100%); } }
 
@@ -585,9 +614,9 @@
         .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); font-weight: 500; }
         .tab-content { display: none; } .tab-content.active { display: block; }
 
-        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; } /* Increased base font size */
-        .leaderboard-table th, .leaderboard-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color); } /* Increased padding */
-        .leaderboard-table th { color: var(--accent-color); font-weight: 500; cursor: pointer; } /* Added cursor pointer for sorting */
+        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; } 
+        .leaderboard-table th, .leaderboard-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color); } 
+        .leaderboard-table th { color: var(--accent-color); font-weight: 500; cursor: pointer; } 
         .leaderboard-table th:hover { color: var(--accent-hover); }
         .leaderboard-table td { color: var(--text-primary); }
         .leaderboard-table .leaderboard-element-cell span { font-weight: bold; } 
@@ -598,7 +627,7 @@
 
         .titles-medals-section { margin-top: 15px; }
         .titles-list, .achievements-list, .owned-monsters-list { list-style: none; padding-left: 0; }
-        .titles-list li, .achievements-list li, .owned-monsters-list li { background-color: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 0.9rem; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;} /* Increased font size */
+        .titles-list li, .achievements-list li, .owned-monsters-list li { background-color: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 0.9rem; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;} 
         .owned-monsters-list li { display: flex; justify-content: space-between; align-items: center; }
         .owned-monsters-list .monster-name { font-weight: bold; }
         .owned-monsters-list .monster-score { color: var(--success-color); }
@@ -612,7 +641,7 @@
             gap: 8px;
             padding: 8px 8px 4px 8px;
             border-bottom: 2px solid var(--accent-color);
-            font-size: 0.875rem; /* Changed from text-xs */
+            font-size: 0.875rem; 
             font-weight: 600;
             color: var(--text-secondary);
         }
@@ -626,7 +655,7 @@
             align-items: center;
             padding: 10px 8px; 
             border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem; /* Increased base font size */
+            font-size: 0.9rem; 
         }
         .farm-monster-item:last-child { border-bottom: none; }
         .farm-monster-item > div, .farm-monster-item > button { text-align: left; }
@@ -636,7 +665,7 @@
         .farm-monster-item .farm-monster-status.battling { color: var(--danger-color); font-weight: bold; }
         .farm-monster-item .farm-monster-score { color: var(--success-color); }
         .farm-monster-item button {
-            padding: 6px 8px; font-size: 0.875rem; min-width: 60px; /* Changed from text-xs */
+            padding: 6px 8px; font-size: 0.875rem; min-width: 60px; 
             margin: 0; 
         }
         
@@ -648,14 +677,14 @@
             width: 100px; height: 75px; background-color: var(--bg-slot);
             border: 1px dashed var(--border-color); border-radius: 4px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.875rem; color: var(--text-secondary); margin: 10px auto; /* Changed from text-xs */
+            font-size: 0.875rem; color: var(--text-secondary); margin: 10px auto; 
         }
         #release-monster-image-placeholder img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         .log-entry {
             padding: 7px; 
             border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem; /* Increased base font size */
+            font-size: 0.9rem; 
             color: var(--text-secondary);
         }
         .log-entry:last-child { border-bottom: none; }
@@ -664,7 +693,7 @@
 
         .feedback-skill-entry { margin-bottom: 6px; } 
         .feedback-skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.9rem;} 
-        .feedback-skill-description { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px;} /* Changed from text-xs */
+        .feedback-skill-description { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px;} 
 
         /* Cultivation Modal Styles */
         #cultivation-setup-modal .modal-body, #training-results-modal .modal-body {
@@ -673,8 +702,12 @@
         #cultivation-setup-modal button, #training-results-modal button {
             margin-top: 10px;
         }
+        #start-cultivation-btn { /* Increased height for "開始修煉" button */
+            padding-top: 1rem; 
+            padding-bottom: 1rem;
+        }
         .cultivation-hint {
-            font-size: 0.875rem; /* Changed from text-xs */
+            font-size: 0.875rem; 
             color: var(--text-secondary);
             margin-top: 5px;
         }
@@ -706,7 +739,7 @@
         #add-all-to-temp-backpack-btn { 
             padding: 8px 10px; 
             height: auto; 
-            font-size: 0.9rem; /* Increased base font size */
+            font-size: 0.9rem; 
         }
         #newbie-guide-search-input {
             width: 100%;
@@ -756,7 +789,7 @@
             font-weight: 500;
         }
         .friend-item .friend-status {
-            font-size: 0.875rem; /* Changed from text-xs */
+            font-size: 0.875rem; 
             color: var(--text-secondary);
         }
         .friend-item .friend-status.online {
@@ -821,7 +854,7 @@
 
                 <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
                     <h2 class="panel-title dna-panel-title">🔬 DNA碎片</h2>
-                    <span class="panel-title-hint dna-panel-hint">※DNA碎片可自由拖曳</span>
+                    <span class="panel-title-hint dna-panel-hint">※DNA碎片可自由拖曳，拖曳至垃圾桶可刪除</span>
                 </div>
                 <div id="inventory-items" class="inventory-grid">
                 </div>
@@ -1148,10 +1181,11 @@
         ];
 
         let playerOwnedDNA = JSON.parse(JSON.stringify(initialPlayerDNA));
-        const NUM_INVENTORY_SLOTS = 15; 
+        const NUM_INVENTORY_SLOTS = 11; // 11 regular + 1 delete slot = 12 total
+        const DELETE_SLOT_INDEX = 11; // The 12th slot (index 11)
         const NUM_TEMP_BACKPACK_SLOTS = 18;
         const NUM_COMBINATION_SLOTS = 5;
-        let inventoryDisplaySlots = new Array(NUM_INVENTORY_SLOTS).fill(null);
+        let inventoryDisplaySlots = new Array(NUM_INVENTORY_SLOTS + 1).fill(null); // +1 for delete slot visual
         let temporaryBackpackSlots = new Array(NUM_TEMP_BACKPACK_SLOTS).fill(null);
         let combinationSlotsData = new Array(NUM_COMBINATION_SLOTS).fill(null);
         let itemToDeleteInfo = null; 
@@ -1222,9 +1256,11 @@
 
 
         function initializeInventoryDisplay() {
+            // Initialize main inventory slots (excluding the delete slot)
             playerOwnedDNA.slice(0, NUM_INVENTORY_SLOTS).forEach((dna, index) => {
                 inventoryDisplaySlots[index] = dna ? {...dna} : null;
             });
+            // The last slot (DELETE_SLOT_INDEX) is handled by populateInventory
             populateInventory();
             populateTemporaryBackpack(); 
         }
@@ -1331,9 +1367,9 @@
                     title: mTs[Math.floor(Math.random() * mTs.length)],
                     nickname: mNs[Math.floor(Math.random() * mNs.length)] + (Math.floor(Math.random() * 9000) + 1000),
                     mainElement: mainE,
-                    elements: [mainE, es[Math.floor(Math.random() * es.length)]], // For display in player leaderboard
+                    elements: [mainE, es[Math.floor(Math.random() * es.length)]], 
                     score: Math.floor(Math.random() * 15000) + 5000,
-                    id: `leader_monster_${i}` // Unique ID for challenge
+                    id: `leader_monster_${i}` 
                 });
             }
 
@@ -1477,7 +1513,7 @@
             });
         }
         
-        promptChallengeMonster = (monsterName, monsterScore) => { // Ensure this is defined before generateLeaderboards
+        promptChallengeMonster = (monsterName, monsterScore) => { 
             monsterToChallengeInfo = { name: monsterName, score: monsterScore };
             confirmationModalTitleEl.textContent = "挑戰確認";
             confirmationModalBodyEl.innerHTML = `確定要挑戰怪獸 <strong style="color:var(--accent-color);">${monsterName}</strong> (總評價: ${monsterScore})？<br><br><strong class="text-[var(--danger-color)]">注意：對戰後，戰敗的一方將會被勝方吞噬並吸收其力量！</strong>`;
@@ -1523,11 +1559,22 @@
 
 
         function populateInventory() {
-            inventoryItemsContainer.innerHTML='';
-            inventoryDisplaySlots.forEach((item,index)=>{
-                const sD = createDnaElement(item, index, 'inventory');
+            inventoryItemsContainer.innerHTML = '';
+            for (let i = 0; i < NUM_INVENTORY_SLOTS; i++) { // Iterate only for actual item slots
+                const item = inventoryDisplaySlots[i];
+                const sD = createDnaElement(item, i, 'inventory');
                 inventoryItemsContainer.appendChild(sD);
-            });
+            }
+            // Add the delete slot separately
+            const deleteSlotDiv = document.createElement('div');
+            deleteSlotDiv.className = 'inventory-delete-slot';
+            deleteSlotDiv.textContent = '🗑️ 刪除區';
+            deleteSlotDiv.dataset.droptype = "delete"; // Special droptype
+            deleteSlotDiv.dataset.slotIndex = DELETE_SLOT_INDEX; // Mark its index
+            deleteSlotDiv.addEventListener('dragover', handleDragOver);
+            deleteSlotDiv.addEventListener('dragleave', handleDragLeave);
+            deleteSlotDiv.addEventListener('drop', handleDropOnDeleteSlot); // Specific drop handler
+            inventoryItemsContainer.appendChild(deleteSlotDiv);
         }
         
         function populateTemporaryBackpack() {
@@ -1565,15 +1612,7 @@
                 sD.dataset.dnaInfo = JSON.stringify(item);
                 sD.addEventListener('dragstart', handleDragStart);
                 
-                const dB = document.createElement('button');
-                dB.className = 'dna-item-delete-btn';
-                dB.innerHTML = '&times;';
-                dB.title = "刪除此DNA";
-                dB.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    promptDeleteItem(item.id || item.tempId, index, sourceType); 
-                };
-                sD.appendChild(dB);
+                // Removed X delete button from here
 
             } else {
                 sD.id = `${sourceType}-empty-${index}`;
@@ -1594,7 +1633,7 @@
             const itemToMove = temporaryBackpackSlots[tempSlotIndex];
             if (!itemToMove) return;
 
-            const emptyMainSlot = inventoryDisplaySlots.findIndex(slot => slot === null);
+            const emptyMainSlot = inventoryDisplaySlots.findIndex((slot, index) => slot === null && index < DELETE_SLOT_INDEX); // Exclude delete slot
             if (emptyMainSlot !== -1) {
                 inventoryDisplaySlots[emptyMainSlot] = itemToMove;
                 temporaryBackpackSlots[tempSlotIndex] = null;
@@ -1605,12 +1644,30 @@
             }
         }
 
+        function handleDropOnDeleteSlot(e) {
+            e.preventDefault();
+            const targetDropZone = e.target.closest('[data-droptype="delete"]');
+            if (!targetDropZone) return;
+            targetDropZone.classList.remove('drag-over');
 
-        function promptDeleteItem(itemId, itemSlotIndex, itemSourceType) {
+            const dnaDataString = e.dataTransfer.getData('application/json');
+            const sourceType = e.dataTransfer.getData('text/source-type');
+            const sourceIndexString = e.dataTransfer.getData('text/source-index');
+
+            if (!dnaDataString || !sourceType || sourceIndexString === null || sourceIndexString === undefined) return;
+            
+            const sourceIndex = parseInt(sourceIndexString, 10);
+            const droppedDNA = JSON.parse(dnaDataString);
+
+            promptDeleteItem(droppedDNA.id || droppedDNA.tempId, sourceIndex, sourceType, droppedDNA.name);
+        }
+
+
+        function promptDeleteItem(itemId, itemSlotIndex, itemSourceType, itemNameOverride = null) {
             itemToDeleteInfo = { id: itemId, slotIndex: itemSlotIndex, sourceType: itemSourceType };
-            const itemName = itemSourceType === 'inventory' 
+            const itemName = itemNameOverride || (itemSourceType === 'inventory' 
                 ? (inventoryDisplaySlots[itemSlotIndex] ? inventoryDisplaySlots[itemSlotIndex].name : '該DNA')
-                : (temporaryBackpackSlots[itemSlotIndex] ? temporaryBackpackSlots[itemSlotIndex].name : '該DNA');
+                : (temporaryBackpackSlots[itemSlotIndex] ? temporaryBackpackSlots[itemSlotIndex].name : '該DNA'));
 
             confirmationModalBodyEl.innerHTML =`確定刪除DNA碎片 "${itemName}"？此動作無法復原。`; 
             releaseMonsterImagePlaceholder.style.display = 'none';
@@ -1642,7 +1699,7 @@
 
 
         function handleDragStart(e) {
-            if (e.target.classList.contains('dna-item-delete-btn')) {
+            if (e.target.classList.contains('dna-item-delete-btn')) { // Should not be needed anymore
                 e.preventDefault();
                 return;
             }
@@ -1688,10 +1745,14 @@
 
 
         function setupDropZones() {
-            document.querySelectorAll('[data-droptype="combination"], [data-droptype="inventory"], [data-droptype="temporary"]').forEach(s=>{ 
+            document.querySelectorAll('[data-droptype="combination"], [data-droptype="inventory"], [data-droptype="temporary"], [data-droptype="delete"]').forEach(s=>{ 
                 s.addEventListener('dragover',handleDragOver);
                 s.addEventListener('dragleave',handleDragLeave);
-                s.addEventListener('drop',handleDrop);
+                if (s.dataset.droptype === "delete") {
+                    s.addEventListener('drop', handleDropOnDeleteSlot);
+                } else {
+                    s.addEventListener('drop', handleDrop);
+                }
                 if(s.dataset.droptype==="combination"){s.addEventListener('click',handleComboSlotClick);}
             });
         }
@@ -1701,16 +1762,17 @@
             if(tS){
                 if(tS.dataset.droptype==="combination"&&!tS.classList.contains('occupied')){tS.classList.add('border-[var(--accent-color)]','bg-[#2f2f4a]');}
                 else if((tS.dataset.droptype==="inventory" || tS.dataset.droptype==="temporary") && (tS.classList.contains('inventory-slot-empty') || tS.classList.contains('empty'))){tS.classList.add('drag-over');}
+                else if (tS.dataset.droptype === "delete") { tS.classList.add('drag-over'); }
             }
         }
         function handleDragLeave(e) {
             const tS=e.target.closest('[data-droptype]');
             if(tS){tS.classList.remove('border-[var(--accent-color)]','bg-[#2f2f4a]','drag-over');}
         }
-        function handleDrop(e) {
+        function handleDrop(e) { // This handles drops on non-delete slots
             e.preventDefault();
             const targetDropZone = e.target.closest('[data-droptype]');
-            if (!targetDropZone) return;
+            if (!targetDropZone || targetDropZone.dataset.droptype === "delete") return; // Ignore drops on delete slot here
 
             targetDropZone.classList.remove('border-[var(--accent-color)]', 'bg-[#2f2f4a]', 'drag-over');
             const dnaDataString = e.dataTransfer.getData('application/json');
@@ -1746,6 +1808,8 @@
             
             } else if (targetDropType === "inventory") {
                 const targetInventorySlotIndex = parseInt(targetDropZone.dataset.inventorySlotIndex);
+                if (targetInventorySlotIndex === DELETE_SLOT_INDEX) return; // Should be handled by handleDropOnDeleteSlot
+
                 if (inventoryDisplaySlots[targetInventorySlotIndex]) { 
                     if (sourceType === 'combination' || sourceType === 'temporary') { 
                         const dnaFromInventory = inventoryDisplaySlots[targetInventorySlotIndex];
@@ -1832,7 +1896,7 @@
             clearCombinationSlotUI(comboSlotId); 
 
             if (returnToInventory) {
-                const emptyInventorySlotIndex = inventoryDisplaySlots.findIndex(slot => slot === null);
+                const emptyInventorySlotIndex = inventoryDisplaySlots.findIndex((slot, index) => slot === null && index < DELETE_SLOT_INDEX);
                 if (emptyInventorySlotIndex !== -1) {
                     inventoryDisplaySlots[emptyInventorySlotIndex] = returnedDNA;
                 } else {
@@ -2192,7 +2256,7 @@
                 monsterImageElement.alt = "預設怪獸圖片";
                 snapshotAchievementTitle.textContent = "尚未命名";
                 snapshotNickname.textContent = '-';
-                snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; // Show player's W/L
+                snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; 
                 snapshotEvaluation.textContent = '總評價: 0';
                 return;
             }
@@ -2206,7 +2270,7 @@
 
             snapshotAchievementTitle.textContent = monster.title || "新秀";
             snapshotNickname.textContent = monster.nickname;
-            snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; // Show player's W/L
+            snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; 
             snapshotEvaluation.textContent = `總評價: ${monster.score}`;
         }
 
@@ -2597,7 +2661,25 @@
                 }
             });
             battlingMonsterId = newBattlingMonster ? newBattlingMonster.id : null;
-            currentMonster = newBattlingMonster || (farmedMonsters.length > 0 ? farmedMonsters[0] : null) || playerOwnedMonsters[0] || null; 
+            
+            if (newBattlingMonster) {
+                currentMonster = newBattlingMonster;
+            } else if (farmedMonsters.length > 0 && !battlingMonsterId) {
+                // If no one is battling, but there are monsters in farm,
+                // currentMonster could be the last combined or the first in farm.
+                // For simplicity, if unsetting battle, and currentMonster was the one battling, set to null or first in farm.
+                if (currentMonster && currentMonster.id === monsterIdToBattle) {
+                     currentMonster = farmedMonsters.length > 0 ? farmedMonsters[0] : null;
+                }
+            } else if (farmedMonsters.length === 0 && playerOwnedMonsters.length === 0) {
+                currentMonster = null; // No monsters anywhere
+            }
+            // If currentMonster is null after above logic, and there are playerOwnedMonsters, pick the first.
+            if (!currentMonster && playerOwnedMonsters.length > 0) {
+                currentMonster = playerOwnedMonsters[0];
+            }
+
+
             updateMonsterSnapshotDisplay(currentMonster);
             monsterInfoButton.disabled = !currentMonster;
             if (currentMonster) {
@@ -3036,8 +3118,8 @@
                 event.target.id !== 'training-results-modal' &&
                 event.target.id !== 'newbie-guide-modal' && 
                 event.target.id !== 'friends-list-modal' && 
-                event.target.id !== 'monster-leaderboard-modal' && // Added
-                event.target.id !== 'player-leaderboard-modal' &&  // Added
+                event.target.id !== 'monster-leaderboard-modal' && 
+                event.target.id !== 'player-leaderboard-modal' &&  
                 event.target.id !== 'reminder-modal' 
                 ) {
                 closeModal(event.target.id);
@@ -3070,8 +3152,7 @@
             const preferredTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(preferredTheme);
             createCombinationSlots();
-            generateMockLeaderboardData(); // Generate mock data once
-            // generateLeaderboards(); // This function was for initial display, now handled by specific populate functions
+            generateMockLeaderboardData(); 
             initializeInventoryDisplay();
             setupDropZones();
             updateMonsterSnapshotDisplay(null); 
