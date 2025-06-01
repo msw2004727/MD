@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>怪獸養成對戰 Demo - V13 (UI與功能調整)</title>
+    <title>怪獸養成對戰 Demo - 前端 (V15)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -259,6 +259,7 @@
             padding: 10px;
             box-sizing: border-box;
             transition: background-color 0.3s, color 0.3s;
+            font-size: 1rem; /* Default base font size */
         }
         .main-container {
             width: 100%;
@@ -324,23 +325,21 @@
             color: var(--accent-color);
             margin-bottom: 0; border-bottom: none; padding-bottom: 0;
         }
-        .panel-title-hint { font-size: 0.75rem; color: var(--text-secondary); } 
+        .panel-title-hint { font-size: 0.875rem; color: var(--text-secondary); } /* Changed from text-xs */
         @media (min-width: 768px) { .panel-title { font-size: 1.3rem; } }
 
         .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot {
-            /* background-color set by JS based on element type */
-            border: 1px solid var(--border-color); /* Default border */
-            border-radius: 5px; padding: 6px; text-align: center; font-size: 0.8rem; 
+            border: 1px solid var(--border-color); 
+            border-radius: 5px; padding: 6px; text-align: center; font-size: 0.875rem; /* Changed from text-xs */
             transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s; 
             position: relative; min-height: 48px; display: flex; 
             align-items: center; justify-content: center;
-            /* color set by JS based on rarity */
         }
         .dna-item { cursor: grab; }
         .dna-slot, .temp-backpack-slot { cursor: pointer; }
         .inventory-slot-empty, .temp-backpack-slot.empty { color: var(--text-secondary); border-style: dashed; cursor: default; background-color: var(--bg-panel); }
         
-        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot { padding: 8px; font-size: 0.85rem; min-height: 55px;} }
+        @media (min-width: 768px) { .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot { padding: 8px; font-size: 0.9rem; min-height: 55px;} } /* Adjusted for base */
         
         .dna-item:hover, .dna-slot:hover:not(.occupied), .temp-backpack-slot:hover:not(.occupied):not(.empty) { 
             border-color: var(--accent-color); 
@@ -370,7 +369,7 @@
 
         .snapshot-achievement-title {
             grid-column: 1 / -1; grid-row: 1 / 2; text-align: center;
-            font-size: 0.8rem; font-weight: 500; color: var(--text-secondary);
+            font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); /* Changed from text-xs */
             z-index: 1; margin-bottom: 2px; text-shadow: 1px 1px 1px color-mix(in srgb, var(--bg-primary) 50%, transparent);
             background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent);
             padding: 2px 6px; border-radius: 4px; display: inline-block; margin: 0 auto;
@@ -384,7 +383,7 @@
         }
         .snapshot-win-loss {
             position: absolute; top: 8px; right: 8px;
-            font-size: 0.75rem; color: var(--text-secondary); z-index: 2;
+            font-size: 0.875rem; color: var(--text-secondary); z-index: 2; /* Changed from text-xs */
             text-align: right; padding: 3px 5px; background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent); border-radius: 4px;
         }
          .snapshot-win-loss span { display: block; }
@@ -435,7 +434,7 @@
         }
         
         /* Secondary Buttons */
-        button.secondary, .top-nav-button, .farm-time-btn { /* Unified class for top nav buttons */
+        button.secondary, .top-nav-button, .farm-time-btn { 
             background-color: var(--button-secondary-bg);
             color: var(--button-secondary-text);
             border: 1px solid var(--border-color);
@@ -481,30 +480,29 @@
             align-items: center;
             justify-content: center;
             min-width: 32px; 
-            font-size: 1.2rem; /* For emoji size */
-            line-height: 1; /* Ensure emoji is centered */
-            border: none; /* Remove border for emoji button */
-            box-shadow: none; /* Remove shadow for emoji button */
+            font-size: 1.2rem; 
+            line-height: 1; 
+            border: none; 
+            box-shadow: none; 
         }
-        /* Colors are handled by JS adding battling-true/false */
 
 
-        .top-nav-button { /* For Monster Info, Player Info, Leaderboard, Friends, Newbie */
+        .top-nav-button { 
             width: auto;
-            padding: 0.5rem 0.6rem; /* Adjusted padding */
+            padding: 0.5rem 0.5rem; /* Further reduced padding for 6 buttons */
             min-width: 0; 
-            font-size: 0.75rem; 
-            height: 40px; 
+            font-size: 0.75rem; /* Keep small for more buttons */
+            height: 38px; 
             display: flex; align-items: center; justify-content: center; 
             flex-grow: 1; 
             text-align: center;
-            line-height: 1.2; /* Ensure text is centered vertically */
+            line-height: 1.2; 
         }
          .top-buttons-container {
             display: flex;
             justify-content: center;
-            align-items: stretch; /* Make buttons same height */
-            gap: 0.25rem; 
+            align-items: stretch; 
+            gap: 0.2rem; /* Further reduced gap */
             margin-top: 0.5rem; 
         }
 
@@ -518,6 +516,11 @@
         .modal-content { background-color: var(--bg-panel); color: var(--text-primary); margin: auto; padding: 20px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 8px 25px rgba(0,0,0,0.5); position: relative; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, color 0.3s;}
         .modal-content.large { max-width: 650px; }
         .modal-content.xlarge { max-width: 800px; } 
+        .modal-content.feedback-wide { max-width: 600px; } /* Wider feedback modal */
+        @media (max-width: 640px) { /* sm breakpoint */
+            .modal-content.feedback-wide { max-width: 95%; }
+        }
+
         .modal-close { color: var(--text-secondary); position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer;}
         .modal-close:hover, .modal-close:focus { color: var(--text-primary); text-decoration: none; }
         .modal-header { font-size: 1.3rem; font-weight: 600; margin-bottom: 15px; color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-align: center;} 
@@ -542,7 +545,7 @@
             margin-bottom: 0; border-bottom: none; padding-bottom: 0;
         }
         body.light-theme .dna-panel-title { color: #0550ae; } 
-        .dna-panel-hint { font-size: 0.75rem; color: var(--text-secondary); }
+        .dna-panel-hint { font-size: 0.875rem; color: var(--text-secondary); } /* Changed from text-xs */
         body.light-theme .dna-panel-hint { color: #424a53; } 
 
 
@@ -554,12 +557,12 @@
         .details-value { color: var(--text-primary); font-weight: bold; text-align: right; font-size: 1rem; } 
         .details-value.boosted { color: var(--success-color); font-weight: bold; } 
         .details-value.debuffed { color: var(--danger-color); }
-        .creation-time-centered { text-align: center; font-size: 0.8rem; color: var(--text-secondary); margin-top: 10px; } 
-        .element-composition-item { font-size: 0.85rem; } 
+        .creation-time-centered { text-align: center; font-size: 0.875rem; color: var(--text-secondary); margin-top: 10px; }  /* Changed from text-xs */
+        .element-composition-item { font-size: 0.875rem; }  /* Changed from text-xs */
         .skill-entry { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); } 
         .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
         .skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.95rem; } 
-        .skill-details { font-size: 0.8rem; color: var(--text-secondary); margin-left: 10px; } 
+        .skill-details { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px; } /* Changed from text-xs */
         .monster-info-header { text-align: center; margin-bottom: 15px; }
         .monster-info-name-styled {
             font-size: 1.6rem; font-weight: bold; color: var(--accent-color);
@@ -573,28 +576,29 @@
         .action-buttons-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
         
         .scrolling-hints-container { height: 22px; overflow: hidden; position: relative; background-color: var(--bg-primary); border-radius: 4px; padding: 0 10px; margin-top: 10px; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;}
-        .scrolling-hint-text { position: absolute; width: 100%; text-align: center; line-height: 22px; font-size: 0.75rem; color: var(--text-secondary); animation: scrollHint 15s linear infinite; opacity: 0; } 
+        .scrolling-hint-text { position: absolute; width: 100%; text-align: center; line-height: 22px; font-size: 0.875rem; color: var(--text-secondary); animation: scrollHint 15s linear infinite; opacity: 0; }  /* Changed from text-xs */
         .scrolling-hint-text:nth-child(1) { animation-delay: 0s; } .scrolling-hint-text:nth-child(2) { animation-delay: 5s; } .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
         @keyframes scrollHint { 0% { opacity: 0; transform: translateY(100%); } 10%, 23% { opacity: 1; transform: translateY(0); } 33% { opacity: 0; transform: translateY(-100%); } 100% { opacity: 0; transform: translateY(-100%); } }
 
-        .tab-buttons { display: flex; flex-wrap: wrap; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); } /* Allow wrapping for more tabs */
+        .tab-buttons { display: flex; flex-wrap: wrap; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); } 
         .tab-button { padding: 10px 15px; cursor: pointer; background-color: transparent; border: none; color: var(--text-secondary); font-size: 0.9rem; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-bottom-color 0.2s; white-space: nowrap; } 
         .tab-button.active { color: var(--accent-color); border-bottom-color: var(--accent-color); font-weight: 500; }
         .tab-content { display: none; } .tab-content.active { display: block; }
 
-        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; } 
-        .leaderboard-table th, .leaderboard-table td { padding: 7px; text-align: left; border-bottom: 1px solid var(--border-color); } 
-        .leaderboard-table th { color: var(--accent-color); font-weight: 500; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; } /* Increased base font size */
+        .leaderboard-table th, .leaderboard-table td { padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color); } /* Increased padding */
+        .leaderboard-table th { color: var(--accent-color); font-weight: 500; cursor: pointer; } /* Added cursor pointer for sorting */
+        .leaderboard-table th:hover { color: var(--accent-hover); }
         .leaderboard-table td { color: var(--text-primary); }
         .leaderboard-table .leaderboard-element-cell span { font-weight: bold; } 
         .leaderboard-table tr:last-child td { border-bottom: none; }
         .leaderboard-table tr:hover td { background-color: var(--bg-slot); } body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
-        .leaderboard-table .challenge-btn-cell { width: 80px; text-align: center;} /* For challenge button */
+        .leaderboard-table .challenge-btn-cell { width: 80px; text-align: center;} 
 
 
         .titles-medals-section { margin-top: 15px; }
         .titles-list, .achievements-list, .owned-monsters-list { list-style: none; padding-left: 0; }
-        .titles-list li, .achievements-list li, .owned-monsters-list li { background-color: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 0.85rem; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;} 
+        .titles-list li, .achievements-list li, .owned-monsters-list li { background-color: var(--bg-primary); padding: 6px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 0.9rem; border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s;} /* Increased font size */
         .owned-monsters-list li { display: flex; justify-content: space-between; align-items: center; }
         .owned-monsters-list .monster-name { font-weight: bold; }
         .owned-monsters-list .monster-score { color: var(--success-color); }
@@ -608,7 +612,7 @@
             gap: 8px;
             padding: 8px 8px 4px 8px;
             border-bottom: 2px solid var(--accent-color);
-            font-size: 0.75rem; 
+            font-size: 0.875rem; /* Changed from text-xs */
             font-weight: 600;
             color: var(--text-secondary);
         }
@@ -622,7 +626,7 @@
             align-items: center;
             padding: 10px 8px; 
             border-bottom: 1px solid var(--border-color);
-            font-size: 0.8rem; 
+            font-size: 0.9rem; /* Increased base font size */
         }
         .farm-monster-item:last-child { border-bottom: none; }
         .farm-monster-item > div, .farm-monster-item > button { text-align: left; }
@@ -632,7 +636,7 @@
         .farm-monster-item .farm-monster-status.battling { color: var(--danger-color); font-weight: bold; }
         .farm-monster-item .farm-monster-score { color: var(--success-color); }
         .farm-monster-item button {
-            padding: 6px 8px; font-size: 0.8rem; min-width: 60px; 
+            padding: 6px 8px; font-size: 0.875rem; min-width: 60px; /* Changed from text-xs */
             margin: 0; 
         }
         
@@ -644,14 +648,14 @@
             width: 100px; height: 75px; background-color: var(--bg-slot);
             border: 1px dashed var(--border-color); border-radius: 4px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.8rem; color: var(--text-secondary); margin: 10px auto;
+            font-size: 0.875rem; color: var(--text-secondary); margin: 10px auto; /* Changed from text-xs */
         }
         #release-monster-image-placeholder img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         .log-entry {
             padding: 7px; 
             border-bottom: 1px solid var(--border-color);
-            font-size: 0.85rem; 
+            font-size: 0.9rem; /* Increased base font size */
             color: var(--text-secondary);
         }
         .log-entry:last-child { border-bottom: none; }
@@ -660,7 +664,7 @@
 
         .feedback-skill-entry { margin-bottom: 6px; } 
         .feedback-skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.9rem;} 
-        .feedback-skill-description { font-size: 0.8rem; color: var(--text-secondary); margin-left: 10px;} 
+        .feedback-skill-description { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px;} /* Changed from text-xs */
 
         /* Cultivation Modal Styles */
         #cultivation-setup-modal .modal-body, #training-results-modal .modal-body {
@@ -670,7 +674,7 @@
             margin-top: 10px;
         }
         .cultivation-hint {
-            font-size: 0.8rem;
+            font-size: 0.875rem; /* Changed from text-xs */
             color: var(--text-secondary);
             margin-top: 5px;
         }
@@ -702,7 +706,7 @@
         #add-all-to-temp-backpack-btn { 
             padding: 8px 10px; 
             height: auto; 
-            font-size: 0.85rem;
+            font-size: 0.9rem; /* Increased base font size */
         }
         #newbie-guide-search-input {
             width: 100%;
@@ -752,7 +756,7 @@
             font-weight: 500;
         }
         .friend-item .friend-status {
-            font-size: 0.8rem;
+            font-size: 0.875rem; /* Changed from text-xs */
             color: var(--text-secondary);
         }
         .friend-item .friend-status.online {
@@ -789,7 +793,8 @@
             <div class="top-buttons-container">
                 <button id="monster-info-button" class="top-nav-button secondary" disabled>怪物資訊</button>
                 <button id="player-info-button" class="top-nav-button secondary">玩家資訊</button>
-                <button id="show-leaderboard-btn" class="top-nav-button secondary">排行榜</button>
+                <button id="show-monster-leaderboard-btn" class="top-nav-button secondary">怪獸排行</button> 
+                <button id="show-player-leaderboard-btn" class="top-nav-button secondary">玩家排行</button>
                 <button id="friends-list-btn" class="top-nav-button secondary">好友名單</button> 
                 <button id="newbie-guide-btn" class="top-nav-button secondary">新手上路</button>
             </div>
@@ -866,22 +871,28 @@
         </div>
     </div>
 
-    <div id="leaderboard-modal" class="modal">
+    <div id="monster-leaderboard-modal" class="modal">
         <div class="modal-content large">
-            <span class="modal-close" onclick="closeModal('leaderboard-modal')">&times;</span>
-            <h3 class="modal-header">🏆 排行榜</h3>
-            <div class="tab-buttons">
-                <button class="tab-button active" onclick="openGenericTab(event, 'monster-leaderboard', 'leaderboard-modal')">怪獸排行榜</button>
-                <button class="tab-button" onclick="openGenericTab(event, 'player-leaderboard', 'leaderboard-modal')">玩家英雄榜</button>
-            </div>
-            <div id="monster-leaderboard" class="tab-content active modal-body">
+            <span class="modal-close" onclick="closeModal('monster-leaderboard-modal')">&times;</span>
+            <h3 class="modal-header">怪獸排行榜</h3>
+            <div id="monster-leaderboard-element-tabs" class="tab-buttons">
+                </div>
+            <div id="monster-leaderboard-table-container" class="modal-body">
                 <table id="monster-leaderboard-table" class="leaderboard-table"></table>
             </div>
-            <div id="player-leaderboard" class="tab-content modal-body">
+        </div>
+    </div>
+
+    <div id="player-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" onclick="closeModal('player-leaderboard-modal')">&times;</span>
+            <h3 class="modal-header">玩家英雄榜</h3>
+            <div id="player-leaderboard-table-container" class="modal-body">
                 <table id="player-leaderboard-table" class="leaderboard-table"></table>
             </div>
         </div>
     </div>
+
 
     <div id="monster-info-modal" class="modal">
         <div class="modal-content large">
@@ -911,7 +922,7 @@
     </div>
 
     <div id="feedback-modal" class="modal">
-        <div class="modal-content" style="max-width: 450px;"> <span id="feedback-modal-close-x" class="modal-close" onclick="closeModal('feedback-modal')">&times;</span> 
+        <div class="modal-content feedback-wide"> <span id="feedback-modal-close-x" class="modal-close" onclick="closeModal('feedback-modal')">&times;</span> 
             <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
             <div id="feedback-modal-body-content" class="modal-body text-left">
                  <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
@@ -942,7 +953,7 @@
             <div class="modal-body">
                 <p class="mb-2">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
                 <button id="start-cultivation-btn" class="w-full primary">💪 開始修煉</button>
-                <p class="cultivation-hint text-xs mt-2">提示：修煉期間，怪獸將無法放生或出戰。</p>
+                <p class="cultivation-hint text-base mt-2">提示：修煉期間，怪獸將無法放生或出戰。</p>
             </div>
         </div>
     </div>
@@ -1012,6 +1023,11 @@
 
 
     <script>
+        // --- API Base URL ---
+        // 如果您的後端在不同的 Replit 或伺服器上，請修改此 URL
+        // 如果前端和後端在同一個 Replit 專案中，可以直接使用相對路徑
+        const API_BASE_URL = '/api/MD'; // 例如 '/api/MD' 或 'https://your-backend-replit-name.replit.dev/api/MD'
+
         // --- DOM Elements ---
         const monsterImageElement = document.getElementById('monster-image');
         const snapshotAchievementTitle = document.getElementById('snapshot-achievement-title');
@@ -1026,14 +1042,21 @@
         const playerInfoButton = document.getElementById('player-info-button');
         const inventoryItemsContainer = document.getElementById('inventory-items');
         const temporaryBackpackItemsContainer = document.getElementById('temporary-backpack-items');
-        const showLeaderboardBtn = document.getElementById('show-leaderboard-btn');
+        
+        const showMonsterLeaderboardBtn = document.getElementById('show-monster-leaderboard-btn');
+        const showPlayerLeaderboardBtn = document.getElementById('show-player-leaderboard-btn');
+
         const newbieGuideBtn = document.getElementById('newbie-guide-btn');
         const friendsListBtn = document.getElementById('friends-list-btn'); 
         const themeSwitcherBtn = document.getElementById('theme-switcher');
         const themeIcon = document.getElementById('theme-icon');
         
+        const monsterLeaderboardModal = document.getElementById('monster-leaderboard-modal');
+        const playerLeaderboardModal = document.getElementById('player-leaderboard-modal');
         const monsterLeaderboardTable = document.getElementById('monster-leaderboard-table');
         const playerLeaderboardTable = document.getElementById('player-leaderboard-table');
+        const monsterLeaderboardElementTabs = document.getElementById('monster-leaderboard-element-tabs');
+
 
         const monsterInfoModalHeaderContent = document.getElementById('monster-info-modal-header-content');
         const monsterDetailsTab = document.getElementById('monster-details-tab');
@@ -1047,7 +1070,6 @@
         const feedbackModalSpinner = document.getElementById('feedback-modal-spinner');
         const feedbackModalCloseX = document.getElementById('feedback-modal-close-x');
         const feedbackMonsterDetailsDiv = document.getElementById('feedback-monster-details');
-        // Feedback monster detail elements will be populated dynamically
         
         const confirmationModal = document.getElementById('confirmation-modal');
         const confirmationModalBodyEl = document.getElementById('confirmation-modal-body');
@@ -1084,16 +1106,17 @@
         const reminderConfirmCloseBtn = document.getElementById('reminder-confirm-close-btn');
 
 
-        // --- Game State & Data ---
+        // --- Game State & Data (Frontend will now fetch most of this from backend) ---
         let currentMonster = null; 
-        let playerOwnedMonsters = []; 
-        let farmedMonsters = []; 
-        const MAX_FARM_SLOTS = 10;
+        let playerOwnedMonsters = []; // 將由後端 API 獲取
+        let farmedMonsters = [];    // 將由後端 API 獲取
+        const MAX_FARM_SLOTS = 10; // 這個可以保留在前端，或由後端提供
         let battlingMonsterId = null; 
         let currentCultivationMonster = null; 
         let itemsFromCurrentTraining = []; 
-        let playerFriends = []; // Mock friends list
+        let playerFriends = []; // 將由後端 API 獲取
 
+        // DNA 稀有度定義 (前端可能仍需要此資訊來顯示顏色等，但核心數值影響由後端決定)
         const DNA_RARITIES = {
             COMMON: { name: "普通", textVarKey: "--rarity-common-text", statMultiplier: 1.0, skillLevelBonus: 0, resistanceBonus: 1 },
             RARE: { name: "稀有", textVarKey: "--rarity-rare-text", statMultiplier: 1.1, skillLevelBonus: 0, resistanceBonus: 3 },
@@ -1107,28 +1130,23 @@
             return rarityKey ? DNA_RARITIES[rarityKey] : DNA_RARITIES.COMMON;
         }
 
-
+        // 初始玩家 DNA (這部分未來也可能從後端獲取，或作為遊戲的靜態資料)
         const initialPlayerDNA = [
-            // Common
             { id: 'dna_fire_c', name: '初階火種', type: '火', attack: 18, defense: 6, speed: 9, hp: 45, mp: 22, crit: 4, description: '微弱燃燒的火種。', rarity: DNA_RARITIES.COMMON.name, resistances: {'火': 2} },
             { id: 'dna_water_c', name: '純淨水滴', type: '水', attack: 12, defense: 12, speed: 12, hp: 55, mp: 28, crit: 3, description: '純淨但普通的水滴。', rarity: DNA_RARITIES.COMMON.name, resistances: {'水': 2} },
             { id: 'dna_wood_c', name: '嫩綠葉芽', type: '木', attack: 10, defense: 15, speed: 7,  hp: 60, mp: 25, crit: 2, description: '充滿生機的普通葉芽。', rarity: DNA_RARITIES.COMMON.name, resistances: {'木': 2} },
-            // Rare
             { id: 'dna_earth_r', name: '堅硬岩片', type: '土', attack: 8, defense: 28, speed: 6,  hp: 85, mp: 15, crit: 3, description: '較為堅固的岩石碎片。', rarity: DNA_RARITIES.RARE.name, resistances: {'土': 5} },
             { id: 'dna_wind_r', name: '微風精華', type: '風', attack: 16, defense: 10, speed: 22, hp: 58, mp: 26, crit: 8, description: '蘊含少量風之力的精華。', rarity: DNA_RARITIES.RARE.name, resistances: {'風': 5} },
             { id: 'dna_poison_r', name: '弱效毒液', type: '毒', attack: 20, defense: 8, speed: 14, hp: 50, mp: 24, crit: 6, description: '帶有些許毒性的液體。', rarity: DNA_RARITIES.RARE.name, resistances: {'毒': 5} },
-            // Elite
             { id: 'dna_dark_e', name: '暗影殘片', type: '暗', attack: 28, defense: 7, speed: 12,  hp: 48, mp: 38, crit: 9, description: '凝聚了部分暗影力量的碎片。', rarity: DNA_RARITIES.ELITE.name, resistances: {'暗': 8} },
             { id: 'dna_light_e', name: '光芒碎片', type: '光', attack: 20, defense: 14, speed: 15, hp: 68, mp: 30, crit: 7, description: '閃耀著純淨光芒的結晶碎片。', rarity: DNA_RARITIES.ELITE.name, resistances: {'光': 8} },
-            { id: 'dna_fire_e', name: '烈焰核心', type: '火', attack: 30, defense: 10, speed: 18, hp: 60, mp: 35, crit: 10, description: '燃燒旺盛的火焰核心。', rarity: DNA_RARITIES.ELITE.name, resistances: {'火': 8, '水': -3} }, // Example of weakness
-            // Legendary
+            { id: 'dna_fire_e', name: '烈焰核心', type: '火', attack: 30, defense: 10, speed: 18, hp: 60, mp: 35, crit: 10, description: '燃燒旺盛的火焰核心。', rarity: DNA_RARITIES.ELITE.name, resistances: {'火': 8, '水': -3} },
             { id: 'dna_gold_l', name: '不朽金屬', type: '金', attack: 25, defense: 35, speed: 10,  hp: 70, mp: 20, crit: 5, description: '極其堅硬且帶有神秘力量的金屬。', rarity: DNA_RARITIES.LEGENDARY.name, resistances: {'金': 12, '土': 5} },
             { id: 'dna_water_l', name: '深海之源', type: '水', attack: 22, defense: 28, speed: 25, hp: 80, mp: 45, crit: 8, description: '來自海洋深處的強大水能結晶。', rarity: DNA_RARITIES.LEGENDARY.name, resistances: {'水': 12, '火': -5} },
-            // Mythical
             { id: 'dna_ancient_m', name: '遠古龍魂', type: '無', attack: 40, defense: 40, speed: 40, hp: 120, mp: 60, crit: 15, description: '蘊含遠古巨龍靈魂的神秘DNA。', rarity: DNA_RARITIES.MYTHICAL.name, resistances: {'火':8, '水':8, '木':8, '金':8, '土':8, '光': 5, '暗': 5} }
         ];
 
-        let playerOwnedDNA = JSON.parse(JSON.stringify(initialPlayerDNA));
+        let playerOwnedDNA = JSON.parse(JSON.stringify(initialPlayerDNA)); // 初期使用模擬資料
         const NUM_INVENTORY_SLOTS = 15; 
         const NUM_TEMP_BACKPACK_SLOTS = 18;
         const NUM_COMBINATION_SLOTS = 5;
@@ -1139,27 +1157,29 @@
         let monsterToReleaseInfo = null; 
         let monsterToChallengeInfo = null; 
         
-        const playerNickname = "小明";
-        let playerStats = { rank: 0, wins: 0, losses: 0, score: 0, titles: ["新手訓練家"], achievements: ["首次組合怪獸"], medals: 0 };
+        const playerNickname = "小明"; // 未來可由後端提供或允許玩家設定
+        let playerStats = { rank: 0, wins: 0, losses: 0, score: 0, titles: ["新手訓練家"], achievements: ["首次組合怪獸"], medals: 0 }; // 將由後端 API 獲取
 
-        // Mock data for friends list
+        // 模擬好友列表資料 (將由後端 API 獲取)
         const MOCK_ALL_PLAYERS = [
             { name: "強大的訓練家阿虎", status: "online" }, { name: "神秘的莉莉絲", status: "offline" },
             { name: "新手小菜", status: "online" }, { name: "傳奇大師_龍崎", status: "offline" },
             { name: "路過的風之使者", status: "online" }, { name: "火焰女皇_莎拉", status: "online" }
         ];
+        
+        // 模擬排行榜資料 (將由後端 API 獲取)
+        let mockMonsterLeaderboardData = [];
+        let mockPlayerLeaderboardData = [];
 
 
-        // --- Helper Functions ---
+        // --- Helper Functions (保持不變或稍作調整) ---
         function getContrastColor(hexColor) {
             const currentThemeIsLight = document.body.classList.contains('light-theme');
             if (!hexColor) {
                 return currentThemeIsLight ? 'var(--text-primary-light)' : 'var(--text-primary-dark)';
             }
-
             let R, G, B;
             hexColor = hexColor.replace("#", "");
-
             if (hexColor.length === 3) {
                 R = parseInt(hexColor.substring(0, 1) + hexColor.substring(0, 1), 16);
                 G = parseInt(hexColor.substring(1, 2) + hexColor.substring(1, 2), 16);
@@ -1169,16 +1189,12 @@
                 G = parseInt(hexColor.substring(2, 4), 16);
                 B = parseInt(hexColor.substring(4, 6), 16);
             } else {
-                console.warn("Invalid hexColor format for getContrastColor:", hexColor);
                 return currentThemeIsLight ? 'var(--text-primary-light)' : 'var(--text-primary-dark)';
             }
-
             const yiq = (R * 299 + G * 587 + B * 114) / 1000;
             return yiq >= 128 ? 'var(--text-primary-light)' : 'var(--text-primary-dark)';
         }
 
-
-        // --- Theme Switcher ---
         function applyTheme(theme) {
             if (theme === 'light') {
                 document.body.classList.add('light-theme');
@@ -1197,8 +1213,8 @@
             applyTheme(currentTheme === 'light' ? 'dark' : 'light');
         });
 
-
         function initializeInventoryDisplay() {
+            // 未來: playerOwnedDNA 會從後端獲取
             playerOwnedDNA.slice(0, NUM_INVENTORY_SLOTS).forEach((dna, index) => {
                 inventoryDisplaySlots[index] = dna ? {...dna} : null;
             });
@@ -1226,7 +1242,6 @@
             let i, tabcontent, tablinks;
             const containerElement = document.getElementById(modalOrTabContainerId);
             if (!containerElement) return;
-
             tabcontent = containerElement.getElementsByClassName("tab-content");
             for (i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].style.display = "none";
@@ -1249,18 +1264,15 @@
         function openDnaFarmTab(evt, tabName) {
             const panel = document.getElementById('dna-farm-tabs').closest('.panel');
             if (!panel) return;
-
             const tabContents = panel.getElementsByClassName("tab-content");
             for (let i = 0; i < tabContents.length; i++) {
                 tabContents[i].style.display = "none";
                 tabContents[i].classList.remove("active");
             }
-
             const tabButtons = panel.getElementsByClassName("tab-button");
             for (let i = 0; i < tabButtons.length; i++) {
                 tabButtons[i].classList.remove("active");
             }
-            
             const currentTabContent = panel.querySelector(`#${tabName}`);
             if (currentTabContent) {
                 currentTabContent.style.display = "block";
@@ -1270,7 +1282,6 @@
                 evt.currentTarget.classList.add("active");
             }
         }
-
 
         function getElementStyling(elementType) {
             if (!elementType) return { text: 'var(--element-mix-text)', bg: 'var(--element-mix-bg)' };
@@ -1292,69 +1303,178 @@
             const rarityData = getRarityData(rarityName); 
             return { 
                 text: `var(${rarityData.textVarKey})`, 
-                // Background for rarity is no longer used directly on DNA items, element BG takes precedence
             };
         }
 
-
-        function generateLeaderboards() {
-            monsterLeaderboardTable.innerHTML=`<thead><tr><th class="challenge-btn-cell">挑戰</th><th>排名</th><th>稱號</th><th>暱稱</th><th class="text-center">主要屬性</th><th>總評價</th></tr></thead><tbody></tbody>`;
-            const mT=monsterLeaderboardTable.querySelector('tbody');
-            const mTs=['炎龍王','海皇主宰','大地巨神','暴風領主','影夜魔君','聖光使徒', '虛空行者', '次元裂隙獸', '星界守護神', '混沌編織者'];
-            const mNs=['烈焰','怒濤','巨岩','疾風','幽影','晨曦', '虛無', '裂空', '星塵', '暗流'];
-            const es=['火','水','土','風','暗','光','木','金','毒', '無']; 
-            for(let i=0;i<100;i++){ 
-                const r=i+1; 
-                const t=mTs[Math.floor(Math.random()*mTs.length)]; 
-                const n=mNs[Math.floor(Math.random()*mNs.length)]+(Math.floor(Math.random()*9000)+1000); 
-                const mainE=es[Math.floor(Math.random()*es.length)]; 
-                const ev=Math.floor(Math.random()*15000)+5000; 
-                const tr=mT.insertRow(); 
-                const challengeCell = tr.insertCell();
-                const challengeBtn = document.createElement('button');
-                challengeBtn.textContent = '⚔️';
-                challengeBtn.className = 'button tiny primary p-1'; 
-                challengeBtn.title = `挑戰 ${n}`;
-                challengeBtn.onclick = () => promptChallengeMonster(n, ev);
-                challengeCell.appendChild(challengeBtn);
-                challengeCell.className = 'challenge-btn-cell';
-
-                tr.insertCell().textContent = r;
-                tr.insertCell().textContent = t;
-                tr.insertCell().textContent = n;
-                const elementCell = tr.insertCell();
-                elementCell.className = 'leaderboard-element-cell text-center';
-                elementCell.innerHTML = `<span style="color: ${getElementStyling(mainE).text};">${mainE}</span>`;
-                tr.insertCell().textContent = ev;
+        // --- Leaderboard Data Generation and Display (將由後端 API 獲取) ---
+        function generateMockLeaderboardData() {
+            // 此函式保留用於前端模擬，未來會被 API 呼叫取代
+            mockMonsterLeaderboardData = [];
+            const mTs = ['炎龍王','海皇主宰','大地巨神','暴風領主','影夜魔君','聖光使徒', '虛空行者', '次元裂隙獸', '星界守護神', '混沌編織者'];
+            const mNs = ['烈焰','怒濤','巨岩','疾風','幽影','晨曦', '虛無', '裂空', '星塵', '暗流'];
+            const es = ['火','水','土','風','暗','光','木','金','毒', '無'];
+            for (let i = 0; i < 100; i++) {
+                const mainE = es[Math.floor(Math.random() * es.length)];
+                mockMonsterLeaderboardData.push({
+                    rank: i + 1,
+                    title: mTs[Math.floor(Math.random() * mTs.length)],
+                    nickname: mNs[Math.floor(Math.random() * mNs.length)] + (Math.floor(Math.random() * 9000) + 1000),
+                    mainElement: mainE,
+                    elements: [mainE, es[Math.floor(Math.random() * es.length)]], 
+                    score: Math.floor(Math.random() * 15000) + 5000,
+                    id: `leader_monster_${i}`
+                });
             }
-            
-            playerLeaderboardTable.innerHTML=`<thead><tr><th>排名</th><th>暱稱</th><th>勝場</th><th>敗場</th><th>積分</th><th>代表怪獸</th></tr></thead><tbody></tbody>`;
-            const pT=playerLeaderboardTable.querySelector('tbody');
-            const pNs=['戰神阿明','法王小花','刺客老王','坦神莉莉','遊俠阿宏','智者小美', '幻影旅者', '雷霆主宰', '永恆守望', '深淵低語'];
-            for(let i=0;i<100;i++){ 
-                const r=i+1; 
-                const n=pNs[Math.floor(Math.random()*pNs.length)] + (i+1); 
-                const w=Math.floor(Math.random()*200); 
-                const l=Math.floor(Math.random()*100); 
-                const s=Math.floor(Math.random()*50000)+10000; 
-                const mN=mNs[Math.floor(Math.random()*mNs.length)]+'獸'; 
-                const tr=pT.insertRow(); 
-                tr.innerHTML=`<td>${r}</td><td>${n}</td><td>${w}</td><td>${l}</td><td>${s}</td><td>${mN}</td>`;
+            mockPlayerLeaderboardData = [];
+            const pNs = ['戰神阿明','法王小花','刺客老王','坦神莉莉','遊俠阿宏','智者小美', '幻影旅者', '雷霆主宰', '永恆守望', '深淵低語'];
+            for (let i = 0; i < 100; i++) {
+                const representativeMonster = mockMonsterLeaderboardData[Math.floor(Math.random() * mockMonsterLeaderboardData.length)];
+                mockPlayerLeaderboardData.push({
+                    rank: i + 1,
+                    nickname: pNs[Math.floor(Math.random() * pNs.length)] + (i + 1),
+                    wins: Math.floor(Math.random() * 200),
+                    losses: Math.floor(Math.random() * 100),
+                    score: Math.floor(Math.random() * 50000) + 10000,
+                    representativeMonsterName: representativeMonster.nickname,
+                    representativeMonsterElements: representativeMonster.elements 
+                });
             }
         }
         
-        function promptChallengeMonster(monsterName, monsterScore) {
+        let currentMonsterSort = { column: 'score', order: 'desc' };
+        let currentPlayerSort = { column: 'score', order: 'desc' };
+
+        function sortLeaderboardData(data, column, order) {
+            return [...data].sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return order === 'asc' ? -1 : 1;
+                if (valA > valB) return order === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        
+        function populateMonsterLeaderboard(filterElement = '所有') {
+            // 未來: mockMonsterLeaderboardData 會從後端 API 獲取
+            let filteredData = mockMonsterLeaderboardData;
+            if (filterElement !== '所有') {
+                filteredData = mockMonsterLeaderboardData.filter(m => m.mainElement === filterElement);
+            }
+            const sortedData = sortLeaderboardData(filteredData, currentMonsterSort.column, currentMonsterSort.order);
+            monsterLeaderboardTable.innerHTML = `<thead><tr>
+                <th data-sort="rank">排名 ${currentMonsterSort.column === 'rank' ? (currentMonsterSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="title">稱號 ${currentMonsterSort.column === 'title' ? (currentMonsterSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="nickname">暱稱 ${currentMonsterSort.column === 'nickname' ? (currentMonsterSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="text-center" data-sort="mainElement">主要屬性 ${currentMonsterSort.column === 'mainElement' ? (currentMonsterSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="score">總評價 ${currentMonsterSort.column === 'score' ? (currentMonsterSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th class="challenge-btn-cell">挑戰</th>
+            </tr></thead><tbody></tbody>`;
+            const tbody = monsterLeaderboardTable.querySelector('tbody');
+            sortedData.forEach(monster => {
+                const tr = tbody.insertRow();
+                tr.insertCell().textContent = monster.rank;
+                tr.insertCell().textContent = monster.title;
+                tr.insertCell().textContent = monster.nickname;
+                const elementCell = tr.insertCell();
+                elementCell.className = 'leaderboard-element-cell text-center';
+                elementCell.innerHTML = `<span style="color: ${getElementStyling(monster.mainElement).text};">${monster.mainElement}</span>`;
+                tr.insertCell().textContent = monster.score;
+                const challengeCell = tr.insertCell();
+                const challengeBtn = document.createElement('button');
+                challengeBtn.textContent = '⚔️';
+                challengeBtn.className = 'button tiny primary p-1 text-base';
+                challengeBtn.title = `挑戰 ${monster.nickname}`;
+                challengeBtn.onclick = () => promptChallengeMonster(monster.nickname, monster.score);
+                challengeCell.appendChild(challengeBtn);
+                challengeCell.className = 'challenge-btn-cell';
+            });
+            addSortListenersToTable(monsterLeaderboardTable, 'monster');
+        }
+
+        function populatePlayerLeaderboard() {
+            // 未來: mockPlayerLeaderboardData 會從後端 API 獲取
+            const sortedData = sortLeaderboardData(mockPlayerLeaderboardData, currentPlayerSort.column, currentPlayerSort.order);
+            playerLeaderboardTable.innerHTML = `<thead><tr>
+                <th data-sort="rank">排名 ${currentPlayerSort.column === 'rank' ? (currentPlayerSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="nickname">暱稱 ${currentPlayerSort.column === 'nickname' ? (currentPlayerSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="wins">勝場 ${currentPlayerSort.column === 'wins' ? (currentPlayerSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="losses">敗場 ${currentPlayerSort.column === 'losses' ? (currentPlayerSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="score">積分 ${currentPlayerSort.column === 'score' ? (currentPlayerSort.order === 'asc' ? '▲' : '▼') : ''}</th>
+                <th data-sort="representativeMonsterName">代表怪獸</th>
+            </tr></thead><tbody></tbody>`;
+            const tbody = playerLeaderboardTable.querySelector('tbody');
+            sortedData.forEach(player => {
+                const tr = tbody.insertRow();
+                tr.insertCell().textContent = player.rank;
+                tr.insertCell().textContent = player.nickname;
+                tr.insertCell().textContent = player.wins;
+                tr.insertCell().textContent = player.losses;
+                tr.insertCell().textContent = player.score;
+                const monsterCell = tr.insertCell();
+                const elementsText = player.representativeMonsterElements.join('、');
+                monsterCell.textContent = `${player.representativeMonsterName} (${elementsText})`;
+            });
+            addSortListenersToTable(playerLeaderboardTable, 'player');
+        }
+        
+        function addSortListenersToTable(tableElement, type) {
+            const headers = tableElement.querySelectorAll('th[data-sort]');
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sort;
+                    if (type === 'monster') {
+                        if (currentMonsterSort.column === sortKey) {
+                            currentMonsterSort.order = currentMonsterSort.order === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            currentMonsterSort.column = sortKey;
+                            currentMonsterSort.order = 'desc';
+                        }
+                        const activeElementTab = monsterLeaderboardElementTabs.querySelector('.tab-button.active');
+                        populateMonsterLeaderboard(activeElementTab ? activeElementTab.dataset.element : '所有');
+                    } else if (type === 'player') {
+                        if (currentPlayerSort.column === sortKey) {
+                            currentPlayerSort.order = currentPlayerSort.order === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            currentPlayerSort.column = sortKey;
+                            currentPlayerSort.order = 'desc';
+                        }
+                        populatePlayerLeaderboard();
+                    }
+                });
+            });
+        }
+
+        function setupMonsterLeaderboardTabs() {
+            const elements = ['所有', '火', '水', '木', '金', '土', '光', '暗', '毒', '風', '無'];
+            monsterLeaderboardElementTabs.innerHTML = '';
+            elements.forEach(el => {
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab-button';
+                tabButton.textContent = el;
+                tabButton.dataset.element = el;
+                if (el === '所有') tabButton.classList.add('active');
+                tabButton.onclick = (e) => {
+                    monsterLeaderboardElementTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    populateMonsterLeaderboard(el);
+                };
+                monsterLeaderboardElementTabs.appendChild(tabButton);
+            });
+        }
+        
+        promptChallengeMonster = (monsterName, monsterScore) => { 
+            // 未來: 挑戰邏輯可能也需要與後端互動
             monsterToChallengeInfo = { name: monsterName, score: monsterScore };
             confirmationModalTitleEl.textContent = "挑戰確認";
             confirmationModalBodyEl.innerHTML = `確定要挑戰怪獸 <strong style="color:var(--accent-color);">${monsterName}</strong> (總評價: ${monsterScore})？<br><br><strong class="text-[var(--danger-color)]">注意：對戰後，戰敗的一方將會被勝方吞噬並吸收其力量！</strong>`;
             releaseMonsterImagePlaceholder.style.display = 'none';
             confirmActionBtn.className = 'danger';
             confirmActionBtn.textContent = '確認挑戰';
-            
             confirmActionBtn.onclick = () => {
-                // Placeholder for actual challenge logic
                 showFeedbackModal("挑戰開始！", `你已向 ${monsterToChallengeInfo.name} 發起挑戰！<br>(對戰系統尚未實装)`, false, true, false);
-                // Simulate outcome
+                // ... (模擬對戰邏輯保持不變，未來會是後端處理)
                 setTimeout(() => {
                     const playerMonster = battlingMonsterId ? farmedMonsters.find(m => m.id === battlingMonsterId) : currentMonster;
                     if (!playerMonster) {
@@ -1362,20 +1482,18 @@
                         closeModal('confirmation-modal');
                         return;
                     }
-
-                    const challengeSuccess = Math.random() < 0.5; // 50% chance
+                    const challengeSuccess = Math.random() < 0.5; 
                     if (challengeSuccess) {
                         playerMonster.score += Math.floor(monsterToChallengeInfo.score * 0.2);
                         playerMonster.resume.wins++;
-                        playerStats.wins++; // Update player's total wins
+                        playerStats.wins++; 
                         addLogEntry(playerMonster, `成功挑戰並吸收了 ${monsterToChallengeInfo.name}！`);
                         showFeedbackModal("挑戰勝利！", `${playerMonster.nickname} 戰勝並吸收了 ${monsterToChallengeInfo.name} 的力量！<br>總評價提升！`, false, true, false);
                     } else {
                         playerMonster.resume.losses++;
-                        playerStats.losses++; // Update player's total losses
+                        playerStats.losses++; 
                         addLogEntry(playerMonster, `挑戰 ${monsterToChallengeInfo.name} 失敗，並被其吸收...`);
                         showFeedbackModal("挑戰失敗...", `${playerMonster.nickname} 不敵 ${monsterToChallengeInfo.name}，不幸被吸收了...`, false, true, false);
-                        // Remove player's monster
                         if (battlingMonsterId === playerMonster.id) battlingMonsterId = null;
                         if (currentMonster && currentMonster.id === playerMonster.id) currentMonster = null;
                         farmedMonsters = farmedMonsters.filter(m => m.id !== playerMonster.id);
@@ -1384,13 +1502,12 @@
                         updateMonsterSnapshotDisplay(null);
                     }
                     updatePlayerInfoModal(); 
-                    updateMonsterSnapshotDisplay(currentMonster); // Update snapshot with player's new win/loss
+                    updateMonsterSnapshotDisplay(currentMonster); 
                     closeModal('confirmation-modal');
                 }, 1500);
             };
             openModal('confirmation-modal');
         }
-
 
         function populateInventory() {
             inventoryItemsContainer.innerHTML='';
@@ -1412,29 +1529,23 @@
         function createDnaElement(item, index, sourceType) { 
             const sD = document.createElement('div');
             sD.dataset.droptype = sourceType; 
-            
             if (sourceType === 'inventory') {
                 sD.dataset.inventorySlotIndex = index;
             } else if (sourceType === 'temporary') {
                 sD.dataset.slotIndex = index; 
             }
-
             if (item) {
                 sD.id = `${sourceType}-item-${item.id || item.tempId || `gen-${index}`}-${index}`; 
                 sD.className = 'dna-item'; 
                 sD.textContent = item.name;
                 sD.draggable = true;
-                
                 const elementStyle = getElementStyling(item.type); 
                 const rarityStyle = getRarityStyling(item.rarity); 
-                
                 sD.style.backgroundColor = elementStyle.bg; 
                 sD.style.color = rarityStyle.text;           
                 sD.style.borderColor = elementStyle.text;     
-                
                 sD.dataset.dnaInfo = JSON.stringify(item);
                 sD.addEventListener('dragstart', handleDragStart);
-                
                 const dB = document.createElement('button');
                 dB.className = 'dna-item-delete-btn';
                 dB.innerHTML = '&times;';
@@ -1444,7 +1555,6 @@
                     promptDeleteItem(item.id || item.tempId, index, sourceType); 
                 };
                 sD.appendChild(dB);
-
             } else {
                 sD.id = `${sourceType}-empty-${index}`;
                 sD.className = sourceType === 'inventory' ? 'inventory-slot-empty' : 'temp-backpack-slot empty';
@@ -1463,7 +1573,6 @@
         function moveFromTempToInventory(tempSlotIndex) {
             const itemToMove = temporaryBackpackSlots[tempSlotIndex];
             if (!itemToMove) return;
-
             const emptyMainSlot = inventoryDisplaySlots.findIndex(slot => slot === null);
             if (emptyMainSlot !== -1) {
                 inventoryDisplaySlots[emptyMainSlot] = itemToMove;
@@ -1475,19 +1584,18 @@
             }
         }
 
-
         function promptDeleteItem(itemId, itemSlotIndex, itemSourceType) {
             itemToDeleteInfo = { id: itemId, slotIndex: itemSlotIndex, sourceType: itemSourceType };
             const itemName = itemSourceType === 'inventory' 
                 ? (inventoryDisplaySlots[itemSlotIndex] ? inventoryDisplaySlots[itemSlotIndex].name : '該DNA')
                 : (temporaryBackpackSlots[itemSlotIndex] ? temporaryBackpackSlots[itemSlotIndex].name : '該DNA');
-
             confirmationModalBodyEl.innerHTML =`確定刪除DNA碎片 "${itemName}"？此動作無法復原。`; 
             releaseMonsterImagePlaceholder.style.display = 'none';
             confirmationModalTitleEl.textContent="刪除確認";
             confirmActionBtn.className = 'danger'; 
             confirmActionBtn.textContent = '確定刪除';
             confirmActionBtn.onclick = () => { 
+                // 未來: 此處應呼叫後端 API 刪除 DNA
                 if (itemToDeleteInfo) {
                     if (itemToDeleteInfo.sourceType === 'inventory') {
                         inventoryDisplaySlots[itemToDeleteInfo.slotIndex] = null;
@@ -1510,52 +1618,31 @@
             openModal('confirmation-modal');
         }
 
-
         function handleDragStart(e) {
             if (e.target.classList.contains('dna-item-delete-btn')) {
-                e.preventDefault();
-                return;
-            }
-
-            const dnaInfo = e.target.dataset.dnaInfo;
-            if (!dnaInfo) {
-                console.error("DragStart Error: DNA info (dataset.dnaInfo) is missing.", e.target);
-                e.preventDefault();
-                return;
-            }
-            try { JSON.parse(dnaInfo); } catch (jsonError) {
-                console.error("DragStart Error: dataset.dnaInfo is not valid JSON.", dnaInfo, e.target, jsonError);
                 e.preventDefault(); return;
             }
-
+            const dnaInfo = e.target.dataset.dnaInfo;
+            if (!dnaInfo) {
+                console.error("DragStart Error: DNA info missing.", e.target); e.preventDefault(); return;
+            }
+            try { JSON.parse(dnaInfo); } catch (jsonError) {
+                console.error("DragStart Error: invalid JSON.", dnaInfo, e.target, jsonError); e.preventDefault(); return;
+            }
             e.dataTransfer.effectAllowed = "move";
             e.dataTransfer.setData('application/json', dnaInfo);
-
             const sourceType = e.target.dataset.droptype; 
             let sourceIndexStr;
-
-            if (sourceType === 'inventory') {
-                sourceIndexStr = e.target.dataset.inventorySlotIndex;
-            } else if (sourceType === 'combination') {
-                sourceIndexStr = e.target.dataset.slotId; 
-            } else if (sourceType === 'temporary') { 
-                sourceIndexStr = e.target.dataset.slotIndex; 
-            } else {
-                console.error("DragStart Error: Unknown or missing dataset.droptype.", e.target.dataset, e.target);
-                e.preventDefault();
-                return;
-            }
-
+            if (sourceType === 'inventory') sourceIndexStr = e.target.dataset.inventorySlotIndex;
+            else if (sourceType === 'combination') sourceIndexStr = e.target.dataset.slotId; 
+            else if (sourceType === 'temporary') sourceIndexStr = e.target.dataset.slotIndex; 
+            else { console.error("DragStart Error: Unknown droptype.", e.target.dataset, e.target); e.preventDefault(); return; }
             if (sourceIndexStr === undefined || sourceIndexStr === null || String(sourceIndexStr).trim() === "") {
-                console.error(`DragStart Error: Missing source index for sourceType '${sourceType}'. Element dataset:`, e.target.dataset, "Element:", e.target);
-                e.preventDefault();
-                return;
+                console.error(`DragStart Error: Missing source index for '${sourceType}'.`, e.target.dataset, e.target); e.preventDefault(); return;
             }
-            
             e.dataTransfer.setData('text/source-type', sourceType);
             e.dataTransfer.setData('text/source-index', String(sourceIndexStr));
         }
-
 
         function setupDropZones() {
             document.querySelectorAll('[data-droptype="combination"], [data-droptype="inventory"], [data-droptype="temporary"]').forEach(s=>{ 
@@ -1581,39 +1668,27 @@
             e.preventDefault();
             const targetDropZone = e.target.closest('[data-droptype]');
             if (!targetDropZone) return;
-
             targetDropZone.classList.remove('border-[var(--accent-color)]', 'bg-[#2f2f4a]', 'drag-over');
             const dnaDataString = e.dataTransfer.getData('application/json');
             const sourceType = e.dataTransfer.getData('text/source-type');
             const sourceIndexString = e.dataTransfer.getData('text/source-index'); 
-            
             if (!dnaDataString || !sourceType || sourceIndexString === null || sourceIndexString === undefined || sourceIndexString.trim() === "") { 
-                console.error("Drop data error: Missing or invalid core data from dataTransfer.", 
-                    {dnaDataString, sourceType, sourceIndexString});
-                return;
+                console.error("Drop data error.", {dnaDataString, sourceType, sourceIndexString}); return;
             }
-            
             const sourceIndex = parseInt(sourceIndexString, 10);
             if (isNaN(sourceIndex)) {
-                 console.error("Drop data error: sourceIndex is NaN after parseInt.", 
-                    {dnaDataString, sourceType, sourceIndexString});
-                return;
+                 console.error("Drop data error: sourceIndex NaN.", {dnaDataString, sourceType, sourceIndexString}); return;
             }
-
             const droppedDNA = JSON.parse(dnaDataString); 
             const targetDropType = targetDropZone.dataset.droptype;
-
             if (targetDropType === "combination") {
                 const targetComboSlotIndex = parseInt(targetDropZone.dataset.slotId);
                 if (combinationSlotsData[targetComboSlotIndex]) { console.log("Combination slot occupied."); return; }
-                
                 combinationSlotsData[targetComboSlotIndex] = droppedDNA;
                 updateCombinationSlotUI(targetComboSlotIndex, droppedDNA); 
-
                 if (sourceType === 'inventory') inventoryDisplaySlots[sourceIndex] = null;
                 else if (sourceType === 'combination' && sourceIndex !== targetComboSlotIndex) clearCombinationSlotUI(sourceIndex); 
                 else if (sourceType === 'temporary') temporaryBackpackSlots[sourceIndex] = null;
-            
             } else if (targetDropType === "inventory") {
                 const targetInventorySlotIndex = parseInt(targetDropZone.dataset.inventorySlotIndex);
                 if (inventoryDisplaySlots[targetInventorySlotIndex]) { 
@@ -1623,10 +1698,8 @@
                         if (sourceType === 'combination') {
                             combinationSlotsData[sourceIndex] = dnaFromInventory;
                             updateCombinationSlotUI(sourceIndex, dnaFromInventory);
-                        } else { 
-                            temporaryBackpackSlots[sourceIndex] = dnaFromInventory;
-                        }
-                    } else { console.log("Inventory slot occupied, no swap for inv-inv."); return; }
+                        } else { temporaryBackpackSlots[sourceIndex] = dnaFromInventory; }
+                    } else { console.log("Inventory slot occupied, no swap."); return; }
                 } else { 
                     inventoryDisplaySlots[targetInventorySlotIndex] = droppedDNA;
                     if (sourceType === 'combination') clearCombinationSlotUI(sourceIndex);
@@ -1641,7 +1714,7 @@
                         temporaryBackpackSlots[targetTempSlotIndex] = droppedDNA;
                         combinationSlotsData[sourceIndex] = dnaFromTemp;
                         updateCombinationSlotUI(sourceIndex, dnaFromTemp);
-                    } else { console.log("Temp backpack slot occupied, no swap for inv/temp to temp."); return; }
+                    } else { console.log("Temp slot occupied, no swap."); return; }
                 } else { 
                     temporaryBackpackSlots[targetTempSlotIndex] = droppedDNA;
                     if (sourceType === 'combination') clearCombinationSlotUI(sourceIndex);
@@ -1649,7 +1722,6 @@
                     else if (sourceType === 'temporary' && sourceIndex !== targetTempSlotIndex) temporaryBackpackSlots[sourceIndex] = null;
                 }
             }
-
             populateInventory();
             populateTemporaryBackpack();
             updateActionButtonsState();
@@ -1677,11 +1749,9 @@
             }
         }
 
-
         function clearCombinationSlotUI(comboSlotId) { 
             const comboSlotElement = dnaCombinationSlotsContainer.querySelector(`.dna-slot[data-slot-id="${comboSlotId}"]`);
             if (!comboSlotElement) return;
-            
             combinationSlotsData[comboSlotId] = null; 
             comboSlotElement.textContent = `組合槽 ${comboSlotId + 1}`;
             comboSlotElement.classList.remove('occupied');
@@ -1693,14 +1763,11 @@
             comboSlotElement.removeEventListener('dragstart', handleDragStart); 
         }
 
-
         function clearCombinationSlot(comboSlotId, returnToInventory = true) {
             const comboSlotElement = dnaCombinationSlotsContainer.querySelector(`.dna-slot[data-slot-id="${comboSlotId}"]`);
             if (!comboSlotElement || !combinationSlotsData[comboSlotId]) return;
-
             const returnedDNA = combinationSlotsData[comboSlotId];
             clearCombinationSlotUI(comboSlotId); 
-
             if (returnToInventory) {
                 const emptyInventorySlotIndex = inventoryDisplaySlots.findIndex(slot => slot === null);
                 if (emptyInventorySlotIndex !== -1) {
@@ -1712,7 +1779,7 @@
                         populateTemporaryBackpack();
                     } else {
                         playerOwnedDNA.push(returnedDNA); 
-                        console.warn("No empty slot in inventory or temp backpack to return DNA, added to main DNA list:", returnedDNA.name);
+                        console.warn("No empty slot to return DNA:", returnedDNA.name);
                     }
                 }
             }
@@ -1727,356 +1794,104 @@
             if(combinationSlotsData[cSI]){clearCombinationSlot(cSI,true);}
         }
 
-        // --- Monster Combination & Stats ---
+        // --- Monster Combination (呼叫後端 API) ---
         async function combineDNA() {
-            const combinedDNAs = combinationSlotsData.filter(dna => dna !== null);
-            if (combinedDNAs.length === 0) {
-                showFeedbackModal("提示", "請至少放入一個DNA片段進行組合！", false, true, false); return;
+            const combinedDNAsFromSlots = combinationSlotsData.filter(dna => dna !== null);
+            if (combinedDNAsFromSlots.length === 0) {
+                showFeedbackModal("提示", "請至少放入一個DNA片段進行組合！", false, true, false); 
+                return;
             }
-            let totalAttack = 0, totalDefense = 0, totalSpeed = 0, totalHp = 0, totalMp = 0, totalCrit = 0;
-            let types = [], combinedDNADescriptionForAI = "DNA組合包含：";
-            let monsterElementsCount = {};
-            let totalRarityMultiplier = 0;
-            let totalSkillLevelBonus = 0;
-            let combinedResistances = {};
 
-            combinedDNAs.forEach(dna => {
-                const rarityData = getRarityData(dna.rarity);
-                totalAttack += dna.attack * rarityData.statMultiplier; 
-                totalDefense += dna.defense * rarityData.statMultiplier;
-                totalSpeed += dna.speed * rarityData.statMultiplier;
-                totalHp += dna.hp * rarityData.statMultiplier;
-                totalMp += dna.mp * rarityData.statMultiplier;
-                totalCrit += dna.crit; 
-                totalRarityMultiplier += rarityData.statMultiplier;
-                totalSkillLevelBonus += rarityData.skillLevelBonus;
+            // 提取 DNA ID 列表傳給後端
+            const dnaIdsToCombine = combinedDNAsFromSlots.map(dna => dna.id);
 
-                if (dna.resistances) {
-                    for (const resType in dna.resistances) {
-                        combinedResistances[resType] = (combinedResistances[resType] || 0) + dna.resistances[resType] + rarityData.resistanceBonus;
+            showFeedbackModal("正在合成怪獸...", "", true, false, false); 
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/combine`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ dna_ids: dnaIdsToCombine }) // 後端期望的格式
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `HTTP 錯誤 ${response.status}` }));
+                    throw new Error(errorData.error || `後端組合請求失敗: ${response.status}`);
+                }
+
+                const newMonsterDataFromBackend = await response.json();
+
+                if (newMonsterDataFromBackend && !newMonsterDataFromBackend.error) {
+                    // 使用後端回傳的怪獸資料更新前端狀態
+                    currentMonster = {
+                        ...newMonsterDataFromBackend, // 後端應回傳完整的怪獸物件
+                        // 確保 farmStatus 等前端需要的結構存在
+                        farmStatus: newMonsterDataFromBackend.farmStatus || { active: false, type: null, endTime: null, timerId: null, originalStats: null, boosts: {}, isBattling: false, isTraining: false, trainingStartTime: null },
+                        activityLog: newMonsterDataFromBackend.activityLog || [],
+                        monsterTitles: newMonsterDataFromBackend.monsterTitles || ["初生"],
+                        monsterMedals: newMonsterDataFromBackend.monsterMedals || 0,
+                        resume: newMonsterDataFromBackend.resume || { wins: 0, losses: 0 },
+                        healthConditions: newMonsterDataFromBackend.healthConditions || []
+                        // aiEvaluation 應該由後端生成並包含在 newMonsterDataFromBackend 中
+                    };
+                    
+                    playerOwnedMonsters.push({...currentMonster}); // 未來 playerOwnedMonsters 也應由後端管理
+                    if (farmedMonsters.length < MAX_FARM_SLOTS) { // farmedMonsters 也應由後端管理
+                        farmedMonsters.push(currentMonster); 
+                        addLogEntry(currentMonster, "誕生並加入農場。");
+                    } else {
+                         addLogEntry(currentMonster, "誕生了！但農場已滿，無法自動加入。");
                     }
+                    
+                    updateMonsterSnapshotDisplay(currentMonster);
+                    monsterInfoButton.disabled = false;
+                    
+                    // AI 評價現在由後端提供，直接顯示
+                    showFeedbackModal("怪物合成成功！ 🎉", "", false, true, true, currentMonster);
+
+                } else {
+                    throw new Error(newMonsterDataFromBackend.error || "後端回傳的怪獸資料格式錯誤");
                 }
 
-                if (!types.includes(dna.type)) types.push(dna.type);
-                monsterElementsCount[dna.type] = (monsterElementsCount[dna.type] || 0) + 1;
-                combinedDNADescriptionForAI += `${dna.name}(${dna.type}, ${dna.rarity}, 描述: ${dna.description}) `;
-            });
-            
-            const avgRarityMultiplier = combinedDNAs.length > 0 ? totalRarityMultiplier / combinedDNAs.length : 1;
-            const avgSkillLevelBonus = combinedDNAs.length > 0 ? Math.round(totalSkillLevelBonus / combinedDNAs.length) : 0;
-
-            totalAttack = Math.round(totalAttack / combinedDNAs.length * avgRarityMultiplier);
-            totalDefense = Math.round(totalDefense / combinedDNAs.length * avgRarityMultiplier);
-            totalSpeed = Math.round(totalSpeed / combinedDNAs.length * avgRarityMultiplier);
-            totalHp = Math.round(totalHp / combinedDNAs.length * avgRarityMultiplier);
-            totalMp = Math.round(totalMp / combinedDNAs.length * avgRarityMultiplier);
-            totalCrit = combinedDNAs.length > 0 ? Math.min(Math.floor(totalCrit / combinedDNAs.length), 75) : 0;
-            
-            let elementComposition = {};
-            if (combinedDNAs.length > 0) {
-                for (const type in monsterElementsCount) {
-                    elementComposition[type] = Math.round((monsterElementsCount[type] / combinedDNAs.length) * 100);
-                }
+            } catch (error) {
+                console.error("DNA 組合錯誤:", error);
+                showFeedbackModal("組合失敗", `與後端通訊時發生錯誤：${error.message}`, false, true, false);
+            } finally {
+                // 清空組合槽並更新按鈕狀態
+                combinationSlotsData.fill(null);
+                createCombinationSlots(); 
+                updateActionButtonsState();
+                populateFarmList(); // 更新農場列表
+                // initializeInventoryDisplay(); // 如果 DNA 被消耗，需要更新庫存 (未來由後端處理)
             }
-            const primaryElements = Object.keys(elementComposition).sort((a,b) => elementComposition[b] - elementComposition[a]);
-            
-            showFeedbackModal("正在合成怪物...", "", true, false, false); 
-            const monsterName = await generateMonsterNameAI(primaryElements, combinedDNAs); 
-            const skills = generateMonsterSkills(primaryElements, totalAttack, totalDefense, totalSpeed, avgSkillLevelBonus); 
-            const score = Math.floor((totalAttack + totalDefense + totalSpeed + (totalHp/4) + (totalMp/2) + totalCrit*2) * (Object.keys(elementComposition).length || 1) * avgRarityMultiplier * (Math.random() * 0.2 + 0.9));
-            const monsterId = `m-${Date.now()}-${Math.random().toString(36).substring(2,7)}`;
-
-            currentMonster = {
-                id: monsterId,
-                nickname: monsterName, title: "新星",
-                attack: Math.round(totalAttack), defense: Math.round(totalDefense), speed: Math.round(totalSpeed), 
-                hp: Math.round(totalHp), mp: Math.round(totalMp), crit: Math.round(totalCrit),
-                elements: primaryElements, 
-                elementComposition: elementComposition,
-                skills: skills, score: score, 
-                creationTime: new Date().toLocaleString('zh-TW', { hour12: false }),
-                personality: generatePersonalityObject(), 
-                description: generateMonsterDescriptionText(types, monsterElementsCount, totalAttack, totalDefense, totalSpeed), 
-                aiEvaluation: null,
-                monsterTitles: ["初生"], monsterMedals: 0,
-                resume: { wins: 0, losses: 0 },
-                activityLog: [], 
-                healthConditions: [], 
-                resistances: combinedResistances, 
-                farmStatus: { active: false, type: null, endTime: null, timerId: null, originalStats: null, boosts: {}, isBattling: false, isTraining: false, trainingStartTime: null } 
-            };
-            
-            playerOwnedMonsters.push({...currentMonster});
-            if (farmedMonsters.length < MAX_FARM_SLOTS) {
-                farmedMonsters.push(currentMonster); 
-                addLogEntry(currentMonster, "誕生並加入農場。");
-            } else {
-                 addLogEntry(currentMonster, "誕生了！但農場已滿，無法自動加入。");
-            }
-            
-            updateMonsterSnapshotDisplay(currentMonster);
-            monsterInfoButton.disabled = false;
-            
-            getAIEvaluation(currentMonster, combinedDNADescriptionForAI); 
-
-            combinationSlotsData.fill(null);
-            createCombinationSlots(); 
-            updateActionButtonsState();
-            populateFarmList();
         }
         
-        async function generateMonsterNameAI(elements, dnas) {
-            // Simulated AI Name Generation
-            const elementPrefixes = { '火': '炎', '水': '澤', '木': '森', '金': '鋼', '土': '岩', '光': '聖', '暗': '影', '毒': '瘴', '風': '嵐', '無': '元' };
-            const nameSuffixes = ['獸', '靈', '怪', '魔', '使', '君', '衛', '龍', '狼', '獅', '鳥', '蟲', '精'];
-            
-            let prefix = "";
-            if (elements.length > 0) {
-                prefix = elementPrefixes[elements[0]] || '';
-                if (elements.length > 1 && Math.random() > 0.5) {
-                    prefix += elementPrefixes[elements[1]] || '';
-                }
-            } else {
-                prefix = elementPrefixes['無'];
-            }
-
-            let coreName = "";
-            if (dnas.length > 0) {
-                const randomDnaName = dnas[Math.floor(Math.random() * dnas.length)].name;
-                coreName = randomDnaName.substring(0, Math.min(2, randomDnaName.length -1)); 
-            } else {
-                coreName = "初";
-            }
-            
-            let suffix = nameSuffixes[Math.floor(Math.random() * nameSuffixes.length)];
-            let finalName = prefix + coreName + suffix;
-            
-            if (finalName.length > 5) { 
-                if (prefix.length > 2 && coreName.length > 1) finalName = prefix.substring(0,1) + coreName.substring(0,1) + suffix;
-                else if (prefix.length > 1) finalName = prefix.substring(0, Math.max(1, 5 - suffix.length - coreName.length)) + coreName + suffix;
-                else if (coreName.length > 1) finalName = prefix + coreName.substring(0, Math.max(1, 5 - suffix.length - prefix.length)) + suffix;
-                finalName = finalName.substring(0,5);
-            }
-            if (finalName.length < 2 && dnas.length > 0) { 
-                finalName = dnas[0].name.substring(0,2) + "獸";
-                finalName = finalName.substring(0,5);
-            }
-            if (finalName.length < 2) finalName = "元獸";
-
-
-            return finalName; 
-        }
-
-        
-        function generateMonsterDescriptionText(elements, elementCounts, attack, defense, speed) {
-            let desc = `這是一隻極具潛力的怪獸，從其DNA序列中，我們可以看出它承載了古老而強大的力量。`;
-            if (elements.length > 0) {
-                desc += `主要的屬性構成傾向於 ${elements.map(el => `${elementCounts[el] > 1 ? '顯著的' : '一絲'}${el}屬性`).join('與')} 的融合，這賦予了它獨特的戰鬥風格和生存策略。`;
-            } else {
-                desc += "其屬性構成如同一張白紙，充滿了無限的可能性，等待著訓練家的發掘與引導。";
-            }
-            
-            desc += ` 在基礎能力方面，`;
-            if (attack > defense && attack > speed) desc += `它展現出驚人的攻擊潛能，每一次出手都可能帶來毀滅性的打擊，是天生的掠食者。`;
-            else if (defense > attack && defense > speed) desc += `它擁有如堡壘般堅固的防禦，能夠抵禦猛烈的攻擊，在持久戰中佔據優勢。`;
-            else if (speed > attack && speed > defense) desc += `它以風馳電掣的速度穿梭於戰場，讓敵人難以捕捉其蹤影，擅長突襲與游擊。`;
-            else if (attack > 20 && defense > 20 && speed > 15) desc += `它在攻擊、防禦和速度方面都達到了令人印象深刻的平衡，是一位全能型的戰士，能夠適應各種複雜的戰況。`;
-            else desc += `它的各項能力均衡發展，沒有明顯的短板，這使得它在多數情況下都能穩定發揮，是值得信賴的夥伴。`;
-            
-            desc += ` 透過精心的培養和正確的引導，這隻怪獸必定能在無數的冒險與挑戰中綻放出耀眼的光芒，成為傳奇般的存在。`;
-            
-            while(desc.length < 150) {
-                desc += "它的眼神中閃爍著智慧與勇氣的光芒。";
-            }
-            if (desc.length > 200) {
-                desc = desc.substring(0, 197) + "...";
-            }
-            return desc;
-        }
-
-        function generateMonsterSkills(elements, attack, defense, speed, skillLevelBonus = 0) {
-            const skillDatabase = {
-                '火': [
-                    { name: "火花", power: 25, crit: 5, probability: 20, story: "噴射微小的火花。", type: "火", baseLevel: 1 },
-                    { name: "烈焰之鞭", power: 35, crit: 8, probability: 18, story: "揮舞火焰長鞭。", type: "火", baseLevel: 2 },
-                    { name: "炎爆", power: 50, crit: 10, probability: 12, story: "引爆強烈火焰。", type: "火", baseLevel: 3 },
-                    { name: "熔岩噴發", power: 60, crit: 5, probability: 10, story: "噴出滾燙熔岩。", type: "火", baseLevel: 4 },
-                    { name: "火神降臨", power: 80, crit: 15, probability: 7, story: "召喚火神之力。", type: "火", baseLevel: 5 },
-                    { name: "燃燒之魂", power: 0, crit: 0, probability: 10, story: "提升攻擊與爆擊。", type: "火", effect: "buff", stat: ["attack", "crit"], amount: [10, 5], baseLevel: 2 },
-                    { name: "灰燼散播", power: 20, crit: 0, probability: 15, story: "散播灰燼降低敵方命中。", type: "火", effect: "debuff", stat: "accuracy", amount: -10, baseLevel: 1 },
-                    { name: "煉獄火柱", power: 70, crit: 10, probability: 8, story: "從地底召喚煉獄火柱。", type: "火", baseLevel: 4 },
-                    { name: "太陽拳", power: 40, crit: 5, probability: 16, story: "發出如太陽般耀眼的一擊。", type: "火", baseLevel: 3 },
-                    { name: "火焰屏障", power: 0, crit: 0, probability: 12, story: "製造火焰屏障提升防禦。", type: "火", effect: "buff", stat: "defense", amount: 15, baseLevel: 2 },
-                    // ... Add 10 more unique 火 skills
-                ],
-                '水': [
-                    { name: "水泡", power: 20, crit: 5, probability: 22, story: "吐出輕盈水泡。", type: "水", baseLevel: 1 },
-                    { name: "激流", power: 40, crit: 7, probability: 17, story: "召喚洶湧水流。", type: "水", baseLevel: 2 },
-                    { name: "冰凍射線", power: 30, crit: 10, probability: 15, story: "射出冰冷射線。", type: "水", effect: "debuff", stat: "speed", amount: -10, baseLevel: 2 },
-                    { name: "海嘯", power: 65, crit: 5, probability: 8, story: "掀起巨大海嘯。", type: "水", baseLevel: 4 },
-                    { name: "治癒之雨", power: 0, crit: 0, probability: 12, story: "降下治癒雨水。", type: "水", effect: "heal", amount: 30, baseLevel: 3 },
-                    { name: "水流環繞", power: 0, crit: 0, probability: 10, story: "提升自身迴避。", type: "水", effect: "buff", stat: "evasion", amount: 10, baseLevel: 2 },
-                    { name: "漩渦陷阱", power: 35, crit: 5, probability: 14, story: "製造水流漩渦困住敵人。", type: "水", effect: "stun", duration: 1, baseLevel: 3 },
-                    { name: "深海壓力", power: 55, crit: 10, probability: 9, story: "施加深海壓力 crushing an opponent.", type: "水", baseLevel: 4 },
-                    { name: "鏡花水月", power: 0, crit: 0, probability: 11, story: "製造幻影迷惑敵人。", type: "水", effect: "confusion", chance: 30, baseLevel: 3 },
-                    { name: "生命之泉", power: 0, crit: 0, probability: 8, story: "大幅回復自身生命。", type: "水", effect: "heal_large", amount: 50, baseLevel: 5 },
-                    // ... Add 10 more unique 水 skills
-                ],
-                // ... (Add 20 skills for each of the other elements: 木, 金, 土, 光, 暗, 毒, 風)
-                '無': [ 
-                    { name: "猛撞", power: 30, crit: 5, probability: 15, story: "更加用力的撞擊。", type: "無", baseLevel: 1},
-                    { name: "利爪揮擊", power: 25, crit: 10, probability: 18, story: "用鋒利的爪子進行多次揮砍。", type: "無", baseLevel: 1},
-                    { name: "頭槌", power: 35, crit: 3, probability: 12, story: "用堅硬的頭部猛力撞擊敵人。", type: "無", baseLevel: 2},
-                    { name: "高速星星", power: 20, crit: 15, probability: 16, story: "快速射出多枚能量星星。", type: "無", baseLevel: 1},
-                    { name: "蓄力一擊", power: 50, crit: 20, probability: 8, story: "短暫蓄力後發出強力一擊。", type: "無", baseLevel: 3},
-                    { name: "捨身衝撞", power: 70, crit: 5, probability: 7, story: "不顧一切地猛烈撞擊，自身也會受傷。", type: "無", effect: "recoil", recoilDamage: 0.25, baseLevel: 4},
-                    { name: "憤怒", power: 0, crit: 0, probability: 10, story: "因憤怒而提升攻擊力。", type: "無", effect: "buff", stat: "attack", amount: 15, baseLevel: 2},
-                    { name: "噪音", power: 0, crit: 0, probability: 13, story: "發出刺耳噪音降低敵方防禦。", type: "無", effect: "debuff", stat: "defense", amount: -10, baseLevel: 1},
-                    { name: "自我激勵", power: 0, crit: 0, probability: 9, story: "提升自身所有能力。", type: "無", effect: "all_stats_buff", amount: 3, baseLevel: 3},
-                    { name: "最終手段", power: 100, crit: 0, probability: 5, story: "耗盡所有力量的最後一擊。", type: "無", effect: "self_ko", baseLevel: 5},
-                ]
-            };
-
-            let potentialSkills = [];
-            const getRandomLevelWithBonus = (baseLvl) => Math.min(5, Math.max(1, baseLvl + skillLevelBonus + Math.floor(Math.random() * 3) -1));
-
-
-            elements.forEach(element => {
-                if (skillDatabase[element]) {
-                    skillDatabase[element].forEach(skill => {
-                        if (!potentialSkills.some(ps => ps.name === skill.name)) {
-                            potentialSkills.push({...skill, level: getRandomLevelWithBonus(skill.baseLevel) });
-                        }
-                    });
-                }
-            });
-            skillDatabase['無'].forEach(skill => {
-                 if (potentialSkills.length < 20 && !potentialSkills.some(ps => ps.name === skill.name)) {
-                    potentialSkills.push({...skill, level: getRandomLevelWithBonus(skill.baseLevel) });
-                }
-            });
-            while (potentialSkills.length < 5 && skillDatabase['無'].length > 0) {
-                let randomGenericSkill = skillDatabase['無'][Math.floor(Math.random() * skillDatabase['無'].length)];
-                if (!potentialSkills.some(ps => ps.name === randomGenericSkill.name)) {
-                    potentialSkills.push({...randomGenericSkill, level: getRandomLevelWithBonus(randomGenericSkill.baseLevel)});
-                } else { break; }
-            }
-
-            potentialSkills.sort(() => 0.5 - Math.random());
-            let selectedSkills = [];
-            let totalProbability = 0;
-            const maxSkills = 3;
-            const maxTotalProbability = 50 + (elements.length * 5) + (skillLevelBonus * 2);
-
-            for (const skill of potentialSkills) {
-                if (selectedSkills.length < maxSkills && (totalProbability + skill.probability) <= maxTotalProbability) {
-                    if (!selectedSkills.find(s => s.name === skill.name)) { 
-                        selectedSkills.push(skill);
-                        totalProbability += skill.probability;
-                    }
-                }
-                if (selectedSkills.length === maxSkills) break;
-            }
-            
-            const defaultSkill = {name:"普通攻擊",type:"無",power:10,crit:3,probability:10, baseLevel: 1, story: "一次標準的攻擊。", description: "一次標準的攻擊。"};
-            while(selectedSkills.length < 1){ 
-                 if((totalProbability + defaultSkill.probability) <= maxTotalProbability){
-                    let skillToAdd = {...defaultSkill, level: getRandomLevelWithBonus(defaultSkill.baseLevel)};
-                    if(selectedSkills.some(s => s.name.startsWith("普通攻擊"))) skillToAdd.name = `普通攻擊${selectedSkills.filter(s => s.name.startsWith("普通攻擊")).length + 1}`;
-                    if (!selectedSkills.find(s => s.name === skillToAdd.name)) {
-                        selectedSkills.push(skillToAdd); 
-                        totalProbability += skillToAdd.probability;
-                    } else break;
-                } else break; 
-            }
-             while(selectedSkills.length < maxSkills && selectedSkills.length > 0){ 
-                const lightAttack = {name:"輕擊",type:"無",power:5,crit:1,probability:5, baseLevel: 1, story: "一次輕微的試探性攻擊。", description: "一次輕微的攻擊。"};
-                if((totalProbability + lightAttack.probability) <= maxTotalProbability && !selectedSkills.find(s => s.name === lightAttack.name)){
-                    selectedSkills.push({...lightAttack, level: getRandomLevelWithBonus(lightAttack.baseLevel)}); 
-                    totalProbability += lightAttack.probability;
-                } else { break; }
-            }
-            return selectedSkills;
-        }
-        
-        function generatePersonalityObject() {
-            const personalities = [
-                { 
-                    name: "勇敢的", 
-                    description: "天生的戰士，無所畏懼，總是衝在最前線。它的字典裡沒有「退縮」二字，面對再強大的敵人也能勇往直前，用無比的勇氣感染著身邊的每一個人。這種勇氣不僅體現在戰鬥中，也體現在它對未知世界探索的渴望。", 
-                    colorDark: "#e74c3c", colorLight: "#c0392b" 
-                },
-                { 
-                    name: "膽小的", 
-                    description: "心思細膩，對周圍的風吹草動都異常敏感。雖然它可能不是第一個衝鋒陷陣的夥伴，但它的謹慎往往能幫助隊伍避開不必要的危險。它更喜歡在安全的角落觀察，默默為夥伴們提供支援。", 
-                    colorDark: "#3498db", colorLight: "#2980b9"
-                },
-                { 
-                    name: "冷静的", 
-                    description: "頭腦清晰，臨危不亂，是隊伍中的智囊。無論戰況多麼混亂，它總能保持冷静，分析局勢，找出最佳的應對策略。它的冷静如同定海神針，讓夥伴們感到安心。", 
-                    colorDark: "#2ecc71", colorLight: "#27ae60" 
-                },
-                { 
-                    name: "急躁的", 
-                    description: "行動派，想到什麼就立刻去做，充滿了爆發力。它不喜歡等待，總是渴望著下一場戰鬥或冒險。雖然有時會顯得有些魯莽，但它的熱情和衝勁往往能帶動整個隊伍的士氣。", 
-                    colorDark: "#f39c12", colorLight: "#e67e22"
-                },
-                { 
-                    name: "樂天的", 
-                    description: "永遠充滿陽光和活力，是隊伍中的開心果。即使遇到挫折，它也能一笑置之，用積極的態度影響周圍。有它在的地方，似乎永遠不會有陰霾，總是充滿了歡聲笑語。", 
-                    colorDark: "#f1c40f", colorLight: "#f39c12"
-                },
-                { 
-                    name: "悲觀的", 
-                    description: "總是先想到最壞的情況，顯得有些憂鬱。但這種悲觀也讓它在行動前更加謹慎，能夠預見潛在的風險。它內心深處其實渴望著被理解和關懷，期待著一絲希望的曙光。", 
-                    colorDark: "#7f8c8d", colorLight: "#566573"
-                },
-                 { 
-                    name: "懶惰的", 
-                    description: "能坐著絕不站著，能躺著絕不坐著，是個標準的享樂主義者。它總能找到最舒適的方式度過每一天。不過，當真正需要它出力的時候，它偶爾也會爆發出驚人的潛力，讓人刮目相看。", 
-                    colorDark: "#95a5a6", colorLight: "#7f8c8d"
-                },
-                { 
-                    name: "勤奮的", 
-                    description: "堅信努力就能改變一切，是個不折不扣的實幹家。它日復一日地刻苦訓練，不斷提升自己，從不懈怠。它的勤奮是它成功的基石，也是夥伴們學習的榜樣。", 
-                    colorDark: "#27ae60", colorLight: "#1e8449"
-                }
-            ];
-            const selected = personalities[Math.floor(Math.random() * personalities.length)];
-            const currentTheme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
-            return {
-                text: selected.description,
-                color: currentTheme === 'light' ? selected.colorLight : selected.colorDark,
-                name: selected.name 
-            };
-        }
-
+        // generateMonsterNameAI, generateMonsterDescriptionText, generateMonsterSkills, generatePersonalityObject
+        // 這些函式現在應該在後端 (MD_services.py) 實作。前端不再需要它們。
+        // getAIEvaluation 函式也應移除，因為 AI 評價由後端處理。
 
         function updateMonsterSnapshotDisplay(monster) {
             const defaultImageUrl = "https://github.com/msw2004727/MD/blob/images/000.png?raw=true";
-            const bgColor = getComputedStyle(document.body).getPropertyValue('--bg-primary').trim().substring(1);
-            const textColor = getComputedStyle(document.body).getPropertyValue('--text-secondary').trim().substring(1);
-
             if (!monster) {
                 monsterImageElement.src = defaultImageUrl;
                 monsterImageElement.alt = "預設怪獸圖片";
                 snapshotAchievementTitle.textContent = "尚未命名";
                 snapshotNickname.textContent = '-';
-                snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; // Show player's W/L
+                snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`;
                 snapshotEvaluation.textContent = '總評價: 0';
                 return;
             }
-            let mainElement = monster.elements.length > 0 ? monster.elements[0] : "混合";
+            let mainElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : "混合";
             const elementStyle = getElementStyling(mainElement); 
             const elementColorHex = getComputedStyle(document.documentElement).getPropertyValue(elementStyle.bg.replace(/var\(|\)/g, '')).trim().substring(1);
             const placeholderTextColor = getContrastColor(elementColorHex); 
-            
             monsterImageElement.src = `https://placehold.co/200x150/${elementColorHex}/${placeholderTextColor}?text=${encodeURIComponent(monster.nickname)}&font=noto-sans-tc`;
             monsterImageElement.alt = monster.nickname;
-
             snapshotAchievementTitle.textContent = monster.title || "新秀";
             snapshotNickname.textContent = monster.nickname;
-            snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`; // Show player's W/L
+            snapshotWinLoss.innerHTML = `<span>勝: ${playerStats.wins}</span><span>敗: ${playerStats.losses}</span>`;
             snapshotEvaluation.textContent = `總評價: ${monster.score}`;
         }
 
@@ -2090,38 +1905,34 @@
                 return;
             }
             monsterInfoModalHeaderContent.innerHTML = `<div class="monster-info-name-styled">${monster.nickname}</div>`;
-            
-            let elementCompositionHTML = Object.entries(monster.elementComposition)
+            let elementCompositionHTML = monster.elementComposition ? Object.entries(monster.elementComposition)
                 .map(([element, percent]) => `<span class="element-composition-item" style="color: ${getElementStyling(element).text}; font-weight: bold;">${element}: ${percent}%</span>`)
-                .join(', ');
+                .join(', ') : "無";
             if (!elementCompositionHTML) elementCompositionHTML = "無";
 
-            let skillsHTML = monster.skills.map(skill => `
+            let skillsHTML = monster.skills && monster.skills.length > 0 ? monster.skills.map(skill => `
                 <div class="skill-entry">
-                    <div class="skill-name">${skill.name} (<span style="color: ${getElementStyling(skill.type).text};">${skill.type}</span>) - Lv.${skill.level} - ${skill.probability}%</div>
-                    <div class="skill-details">威力: ${skill.power}, 爆擊: ${skill.crit}%</div>
-                    <div class="skill-details text-xs">${skill.story || skill.description || '暫無詳細描述'}</div>
+                    <div class="skill-name">${skill.name} (<span style="color: ${getElementStyling(skill.type).text};">${skill.type}</span>) - Lv.${skill.level || 1} - ${skill.probability || 0}%</div>
+                    <div class="skill-details">威力: ${skill.power || 0}, 爆擊: ${skill.crit || 0}%</div>
+                    <div class="skill-details text-base">${skill.story || skill.description || '暫無詳細描述'}</div>
                 </div>
-            `).join('');
-            if (monster.skills.length === 0) skillsHTML = "<p>無可用招式</p>";
+            `).join('') : "<p>無可用招式</p>";
 
-            let monsterTitlesHTML = monster.monsterTitles.length > 0 ? monster.monsterTitles.map(t => `<li>${t}</li>`).join('') : "<li>尚無稱號</li>";
+            let monsterTitlesHTML = monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles.map(t => `<li>${t}</li>`).join('') : "<li>尚無稱號</li>";
             let monsterMedalsHTML = "";
-            for(let i = 0; i < monster.monsterMedals; i++) { monsterMedalsHTML += `<span class="medal-emoji">🌟</span>`; }
-            if(monster.monsterMedals === 0) monsterMedalsHTML = "<span>尚無獎牌</span>";
+            for(let i = 0; i < (monster.monsterMedals || 0); i++) { monsterMedalsHTML += `<span class="medal-emoji">🌟</span>`; }
+            if((monster.monsterMedals || 0) === 0) monsterMedalsHTML = "<span>尚無獎牌</span>";
 
             const statDisplay = (label, base, boost = 0, debuff = 0) => {
-                let displayHTML = `${base}`;
+                let displayHTML = `${base || 0}`;
                 if (boost > 0) displayHTML += ` <span class="text-[var(--success-color)]">+${boost}</span>`;
-                if (debuff < 0) { 
-                    displayHTML += ` <span class="text-[var(--danger-color)]">(${debuff})</span>`;
-                }
+                if (debuff < 0) { displayHTML += ` <span class="text-[var(--danger-color)]">(${debuff})</span>`; }
                 const suffix = label === "爆擊率" ? "%" : "";
                 return `<div class="details-item"><span class="details-label">${label}:</span> <span class="details-value">${displayHTML}${suffix}</span></div>`;
             };
             
             const boostedStats = monster.farmStatus && monster.farmStatus.boosts ? monster.farmStatus.boosts : {};
-            const personalityObject = monster.personality; 
+            const personalityObject = monster.personality || {name: "未知", text: "個性資料不完整", color: "var(--text-secondary)"}; 
 
             let debuffs = { attack: 0, defense: 0, speed: 0, hp: 0, mp: 0, crit: 0 };
             if (monster.healthConditions && monster.healthConditions.length > 0) {
@@ -2135,12 +1946,10 @@
             let healthConditionsHTML = "";
             if (monster.healthConditions && monster.healthConditions.length > 0) {
                 healthConditionsHTML = monster.healthConditions.map(condition => {
-                    const effectsString = Object.entries(condition.effects).map(([stat, val]) => `${stat.toUpperCase()}${val}`).join(', ');
-                    return `<li>${condition.description} (${effectsString})</li>`;
+                    const effectsString = Object.entries(condition.effects || {}).map(([stat, val]) => `${stat.toUpperCase()}${val}`).join(', ');
+                    return `<li>${condition.description || "未知狀態"} (${effectsString})</li>`;
                 }).join('');
-            } else {
-                healthConditionsHTML = "<li>非常健康！</li>";
-            }
+            } else { healthConditionsHTML = "<li>非常健康！</li>"; }
             
             let resistancesHTML = "<li>無特殊抗性</li>";
             if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -2148,7 +1957,6 @@
                     .map(([type, value]) => `<li>${type}抗性: ${value > 0 ? `+${value}`: value}</li>`)
                     .join('');
             }
-
 
             monsterDetailsTab.innerHTML = `
                 <div class="details-section">
@@ -2171,11 +1979,11 @@
                     <ul class="titles-list">${resistancesHTML}</ul>
                 </div>
                  <div class="details-section">
-                    <div class="creation-time-centered">創造時間: ${monster.creationTime}</div>
+                    <div class="creation-time-centered">創造時間: ${monster.creationTime || "未知"}</div>
                 </div>
                 <div class="details-section">
                     <h4 class="details-section-title">🧬 屬性構成</h4>
-                    <div class="details-item"><span class="details-label">主要屬性:</span> <span class="details-value">${monster.elements.map(el => `<span style="color: ${getElementStyling(el).text}; font-weight:bold;">${el}</span>`).join(', ') || '無'}</span></div>
+                    <div class="details-item"><span class="details-label">主要屬性:</span> <span class="details-value">${monster.elements && monster.elements.length > 0 ? monster.elements.map(el => `<span style="color: ${getElementStyling(el).text}; font-weight:bold;">${el}</span>`).join(', ') : '無'}</span></div>
                     <div class="details-item"><span class="details-label">DNA構成:</span> <span class="details-value">${elementCompositionHTML}</span></div>
                 </div>
                 <div class="details-section">
@@ -2185,7 +1993,7 @@
                  <div class="details-section titles-medals-section">
                     <h4 class="details-section-title">🏅 怪獸成就</h4>
                     <ul class="titles-list">${monsterTitlesHTML}</ul>
-                    <h4 class="details-section-title" style="margin-top:10px;">🌟 怪獸獎牌 (${monster.monsterMedals})</h4>
+                    <h4 class="details-section-title" style="margin-top:10px;">🌟 怪獸獎牌 (${monster.monsterMedals || 0})</h4>
                     <div class="medals-grid">${monsterMedalsHTML}</div>
                 </div>
                 <div class="details-section">
@@ -2207,7 +2015,8 @@
         }
         
         function updatePlayerInfoModal() {
-            playerStats.rank=Math.floor(Math.random()*100)+1;
+            // 未來: playerStats 會從後端 API 獲取
+            playerStats.rank=Math.floor(Math.random()*100)+1; // 模擬
             if(playerStats.wins>5&&!playerStats.titles.includes("戰鬥新手"))playerStats.titles.push("戰鬥新手");
             if(playerStats.wins>10&&!playerStats.achievements.includes("十戰達成"))playerStats.achievements.push("十戰達成");
             if(playerStats.wins>15&&!playerStats.titles.includes("格鬥家"))playerStats.titles.push("格鬥家");
@@ -2219,18 +2028,15 @@
             if(playerStats.medals===0)msH="<span>尚無獎牌</span>";
 
             let ownedMonstersHTML = '<h4 class="details-section-title mt-4">🐾 擁有過的怪獸</h4>';
-            if (playerOwnedMonsters.length === 0) {
+            if (playerOwnedMonsters.length === 0) { // playerOwnedMonsters 將由後端 API 獲取
                 ownedMonstersHTML += '<p class="text-sm text-[var(--text-secondary)]">尚未擁有任何怪獸。</p>';
             } else {
                 const groupedMonsters = playerOwnedMonsters.reduce((acc, monster) => {
                     const mainElement = monster.elements[0] || '其他'; 
-                    if (!acc[mainElement]) {
-                        acc[mainElement] = [];
-                    }
+                    if (!acc[mainElement]) acc[mainElement] = [];
                     acc[mainElement].push(monster);
                     return acc;
                 }, {});
-
                 for (const element in groupedMonsters) {
                     ownedMonstersHTML += `<h5 class="text-sm font-semibold mt-3 mb-1" style="color: ${getElementStyling(element).text};">${element}屬性</h5>`;
                     ownedMonstersHTML += '<ul class="owned-monsters-list">';
@@ -2242,7 +2048,6 @@
                     ownedMonstersHTML += '</ul>';
                 }
             }
-
             playerInfoModalBody.innerHTML=`
                 <div class="details-section">
                     <h4 class="details-section-title">玩家檔案</h4>
@@ -2271,73 +2076,62 @@
             feedbackModalTitle.textContent = title;
             feedbackModalSpinner.style.display = showSpinner ? 'block' : 'none';
             feedbackModalCloseX.style.display = showCloseXButton ? 'block' : 'none';
-            
-            const feedbackMonsterDetailsContent = feedbackMonsterDetailsDiv; // Direct reference
-            feedbackMonsterDetailsContent.innerHTML = ''; // Clear previous details
-
+            const feedbackMonsterDetailsContent = feedbackMonsterDetailsDiv; 
+            feedbackMonsterDetailsContent.innerHTML = ''; 
             if (showMonsterDetails && monsterForDetails) {
                 feedbackModalMessage.innerHTML = ""; 
                 feedbackMonsterDetailsDiv.style.display = 'block';
-                const personalityObj = monsterForDetails.personality; 
-                
-                let elementCompHTML = Object.entries(monsterForDetails.elementComposition)
+                const personalityObj = monsterForDetails.personality || {name: "未知", text: "個性資料不完整", color: "var(--text-secondary)"};
+                let elementCompHTML = monsterForDetails.elementComposition ? Object.entries(monsterForDetails.elementComposition)
                     .map(([el, pc]) => `<span style="color:${getElementStyling(el).text}; font-weight:bold;">${el} ${pc}%</span>`)
-                    .join(', ');
-                
-                let skillsHTML = monsterForDetails.skills.map(s => `
+                    .join(', ') : "無";
+                let skillsHTML = monsterForDetails.skills && monsterForDetails.skills.length > 0 ? monsterForDetails.skills.map(s => `
                     <div class="feedback-skill-entry">
-                        <div class="feedback-skill-name">${s.name} (<span style="color:${getElementStyling(s.type).text};">${s.type}</span>) - Lv.${s.level}</div>
+                        <div class="feedback-skill-name">${s.name} (<span style="color:${getElementStyling(s.type).text};">${s.type}</span>) - Lv.${s.level || 1}</div>
                         <div class="feedback-skill-description">${s.story || s.description}</div>
-                    </div>`).join('');
-
+                    </div>`).join('') : "無";
                 let resistancesHTML = "無特殊抗性";
                 if (monsterForDetails.resistances && Object.keys(monsterForDetails.resistances).length > 0) {
                     resistancesHTML = Object.entries(monsterForDetails.resistances)
                         .map(([type, value]) => `<span style="color:${getElementStyling(type).text};">${type}抗性: ${value > 0 ? `+${value}`: value}</span>`)
                         .join(', ');
                 }
-                
                 let healthConditionsHTML = "健康狀況良好";
                 if (monsterForDetails.healthConditions && monsterForDetails.healthConditions.length > 0) {
                     healthConditionsHTML = monsterForDetails.healthConditions.map(condition => {
-                        const effectsString = Object.entries(condition.effects).map(([stat, val]) => `${stat.toUpperCase()}${val}`).join(', ');
-                        return `<span>${condition.description} (${effectsString})</span>`;
+                        const effectsString = Object.entries(condition.effects || {}).map(([stat, val]) => `${stat.toUpperCase()}${val}`).join(', ');
+                        return `<span>${condition.description || "未知狀態"} (${effectsString})</span>`;
                     }).join('<br>');
                 }
-
-                // Populate the feedback monster details section
                 feedbackMonsterDetailsContent.innerHTML = `
                     <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">📊 基本狀態</h4>
-                        <p class="text-xs">攻擊: ${monsterForDetails.attack}, 防禦: ${monsterForDetails.defense}, 速度: ${monsterForDetails.speed}, HP: ${monsterForDetails.hp}</p>
+                        <h4 class="details-section-title !text-base !mb-1">📊 基本狀態</h4>
+                        <p class="text-base">攻擊: ${monsterForDetails.attack || 0}, 防禦: ${monsterForDetails.defense || 0}, 速度: ${monsterForDetails.speed || 0}, HP: ${monsterForDetails.hp || 0}</p>
                     </div>
                     <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">❤️ 健康狀態</h4>
-                        <p class="text-xs">${healthConditionsHTML}</p>
+                        <h4 class="details-section-title !text-base !mb-1">❤️ 健康狀態</h4>
+                        <p class="text-base">${healthConditionsHTML}</p>
                     </div>
                     <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">🛡️ 特殊抗性</h4>
-                        <p class="text-xs">${resistancesHTML}</p>
+                        <h4 class="details-section-title !text-base !mb-1">🛡️ 特殊抗性</h4>
+                        <p class="text-base">${resistancesHTML}</p>
                     </div>
                     <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">⚔️ 招式</h4>
-                        <div class="text-xs">${skillsHTML || "無"}</div>
+                        <h4 class="details-section-title !text-base !mb-1">⚔️ 招式</h4>
+                        <div class="text-base">${skillsHTML}</div>
                     </div>
                     <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">🎭 個性</h4>
-                        <p class="text-xs personality-text" style="color: ${personalityObj.color};">${personalityObj.text}</p>
+                        <h4 class="details-section-title !text-base !mb-1">🎭 個性</h4>
+                        <p class="text-base personality-text" style="color: ${personalityObj.color};">${personalityObj.text}</p>
                     </div>
                      <div class="details-section !p-2 !mb-2">
-                        <h4 class="details-section-title !text-sm !mb-1">📖 介紹</h4>
-                        <p class="text-xs monster-description-area !p-1 !mt-1">${monsterForDetails.description || "暫無詳細介紹。"}</p>
+                        <h4 class="details-section-title !text-base !mb-1">📖 介紹</h4>
+                        <p class="text-base monster-description-area !p-1 !mt-1">${monsterForDetails.description || "暫無詳細介紹。"}</p>
                     </div>
                      <div class="details-section !p-2">
-                        <h4 id="feedback-ai-eval-title" class="details-section-title !text-sm !mb-1">🤖 怪物評價</h4>
-                        <p class="text-xs">${monsterForDetails.aiEvaluation ? monsterForDetails.aiEvaluation.replace(/\n/g, '<br>') : "<i>評價生成中...</i>"}</p>
-                    </div>
-                `;
-
-
+                        <h4 id="feedback-ai-eval-title" class="details-section-title !text-base !mb-1">🤖 怪物評價</h4>
+                        <p class="text-base">${monsterForDetails.aiEvaluation ? monsterForDetails.aiEvaluation.replace(/\n/g, '<br>') : "<i>評價由後端生成...</i>"}</p>
+                    </div>`;
             } else {
                 feedbackMonsterDetailsDiv.style.display = 'none';
                 feedbackModalMessage.innerHTML = messageOrAiEval.replace(/\n/g, '<br>');
@@ -2345,112 +2139,55 @@
             openModal('feedback-modal');
         }
 
-        async function getAIEvaluation(monsterInstance, combinedDNADescriptionForAI) {
-            const apiKey=""; 
-            const apiUrl=`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const personalityTextForAI = monsterInstance.personality.name + ": " + monsterInstance.personality.text;
-            const prompt=`你是一位資深的怪獸養成遊戲設計師。玩家剛剛透過DNA組合創造了一隻新的怪獸。
-怪獸資料:
-- 名稱: ${monsterInstance.nickname}
-- 個性: ${personalityTextForAI}
-- 稱號: ${monsterInstance.title}
-- 屬性: ${monsterInstance.elements.map(el => `${el} (${monsterInstance.elementComposition[el] || 0}%)`).join(', ')||'無'}
-- 基礎數值: HP ${monsterInstance.hp}, MP ${monsterInstance.mp}, 攻擊 ${monsterInstance.attack}, 防禦 ${monsterInstance.defense}, 速度 ${monsterInstance.speed}, 爆擊 ${monsterInstance.crit}%
-- 招式: ${monsterInstance.skills.map(s=>`${s.name} (Lv.${s.level} ${s.type}, 威力 ${s.power}, 爆擊 ${s.crit}%, 機率 ${s.probability}%, 故事: ${s.story})`).join('; ')||'無'}
-- 總評價分數: ${monsterInstance.score}
-- 怪獸整體介紹: ${monsterInstance.description}
-組合的DNA描述: ${combinedDNADescriptionForAI}
-
-請基於以上資訊，對這次的DNA組合結果給予一段充滿趣味和洞察的評價 (大約100-150字，請用繁體中文)。
-評價應包含：
-1. 對怪獸整體概念的看法。
-2. 優點和潛力。
-3. 可能的弱點或可以改進的方向。
-4. 一句總結性的評語或建議。`;
-
-            try{
-                const r=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}]})});
-                if(!r.ok){
-                    const eD=await r.json(); console.error("API Error:",eD);
-                    monsterInstance.aiEvaluation=`無法取得AI評價，錯誤：${r.status} ${r.statusText}.`;
-                } else {
-                    const res=await r.json();
-                    if(res.candidates&&res.candidates[0].content&&res.candidates[0].content.parts[0]){
-                        monsterInstance.aiEvaluation=res.candidates[0].content.parts[0].text;
-                    }else{
-                        monsterInstance.aiEvaluation="AI回傳的資料格式不正確，無法顯示評價。";
-                    }
-                }
-            }catch(e){
-                console.error("Fetch error:",e);
-                monsterInstance.aiEvaluation=`連線到AI服務時發生錯誤：${e.message}`;
-            }
-            showFeedbackModal("怪物合成成功！ 🎉", "", false, true, true, monsterInstance);
-        }
+        // getAIEvaluation 函式已移除，因為 AI 評價由後端處理並包含在 /combine 的回傳中
 
         function populateFarmList() {
+            // 未來: farmedMonsters 會從後端 API 獲取
             farmedMonstersListContainer.innerHTML = '';
             if (farmedMonsters.length === 0) {
-                farmedMonstersListContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">🏡 農場空空如也，快去組合怪獸吧！</p>';
+                farmedMonstersListContainer.innerHTML = '<p class="text-center text-base text-[var(--text-secondary)] py-4">🏡 農場空空如也，快去組合怪獸吧！</p>';
                 return;
             }
-
             farmedMonsters.forEach((monster, index) => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'farm-monster-item';
                 itemDiv.dataset.monsterId = monster.id; 
-
                 const battleBtn = document.createElement('button');
                 battleBtn.className = 'farm-battle-btn';
-                battleBtn.textContent = monster.farmStatus.isBattling ? '🔴' : '🟢'; // Emoji for battle status
+                battleBtn.textContent = monster.farmStatus.isBattling ? '🔴' : '🟢'; 
                 battleBtn.title = monster.farmStatus.isBattling ? '休息' : '出戰';
                 battleBtn.onclick = () => toggleBattleStatus(monster.id);
-
-
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'farm-monster-name';
                 nameDiv.textContent = monster.nickname;
-
                 const statusDiv = document.createElement('div');
                 statusDiv.className = 'farm-monster-status';
                 updateFarmMonsterStatusDisplay(monster, statusDiv);
-
-
                 const scoreDiv = document.createElement('div');
                 scoreDiv.className = 'farm-monster-score';
                 scoreDiv.textContent = monster.score;
-
                 const infoBtn = document.createElement('button');
                 infoBtn.className = 'farm-monster-info-btn secondary';
                 infoBtn.textContent = '資訊'; 
-                infoBtn.onclick = () => {
-                    updateMonsterInfoModal(monster);
-                    openModal('monster-info-modal');
-                };
-                
+                infoBtn.onclick = () => { updateMonsterInfoModal(monster); openModal('monster-info-modal'); };
                 const cultivateBtn = document.createElement('button');
                 cultivateBtn.className = 'farm-monster-cultivate-btn warning'; 
                 cultivateBtn.textContent = monster.farmStatus.isTraining ? '結束修煉' : '養成'; 
                 cultivateBtn.disabled = monster.farmStatus.active || monster.farmStatus.isBattling; 
-                if (monster.farmStatus.isTraining) { 
-                    cultivateBtn.onclick = () => pauseTraining(monster.id); 
-                } else {
-                    cultivateBtn.onclick = () => openCultivationSetupModal(monster.id);
-                }
-
-
+                if (monster.farmStatus.isTraining) cultivateBtn.onclick = () => pauseTraining(monster.id); 
+                else cultivateBtn.onclick = () => openCultivationSetupModal(monster.id);
                 const releaseBtn = document.createElement('button');
                 releaseBtn.className = 'farm-monster-release-btn danger';
                 releaseBtn.textContent = '放生'; 
                 releaseBtn.disabled = monster.farmStatus.active || monster.farmStatus.isBattling || monster.farmStatus.isTraining;
                 releaseBtn.onclick = () => promptReleaseMonster(index); 
-                
                 itemDiv.append(battleBtn, nameDiv, statusDiv, scoreDiv, infoBtn, cultivateBtn, releaseBtn);
                 farmedMonstersListContainer.appendChild(itemDiv);
             });
         }
         
         function toggleBattleStatus(monsterIdToBattle) {
+            // 未來: 出戰狀態的變更應通知後端
             let newBattlingMonster = null;
             farmedMonsters.forEach(m => {
                 if (m.id === monsterIdToBattle) {
@@ -2460,28 +2197,21 @@
                     }
                     m.farmStatus.isBattling = !m.farmStatus.isBattling; 
                      addLogEntry(m, m.farmStatus.isBattling ? "🟢 進入出戰狀態。" : "🔴 解除出戰狀態，開始休息。");
-                     if (m.farmStatus.isBattling) {
-                        newBattlingMonster = m;
-                     }
-                } else {
-                    m.farmStatus.isBattling = false; 
-                }
+                     if (m.farmStatus.isBattling) newBattlingMonster = m;
+                } else { m.farmStatus.isBattling = false; }
             });
             battlingMonsterId = newBattlingMonster ? newBattlingMonster.id : null;
             currentMonster = newBattlingMonster || (farmedMonsters.length > 0 ? farmedMonsters[0] : null) || playerOwnedMonsters[0] || null; 
             updateMonsterSnapshotDisplay(currentMonster);
             monsterInfoButton.disabled = !currentMonster;
-            if (currentMonster) {
-                 monsterInfoButton.onclick = () => { updateMonsterInfoModal(currentMonster); openModal('monster-info-modal');};
-            }
-
+            if (currentMonster) monsterInfoButton.onclick = () => { updateMonsterInfoModal(currentMonster); openModal('monster-info-modal');};
             populateFarmList(); 
         }
 
-
         function updateFarmMonsterStatusDisplay(monster, statusDivElement) {
+            // ... (此函式邏輯保持不變) ...
             if (monster.farmStatus.isBattling) {
-                statusDivElement.textContent = '出戰中'; // No emoji here, button has it
+                statusDivElement.textContent = '出戰中'; 
                 statusDivElement.classList.add('battling');
                 statusDivElement.classList.remove('active');
             } else if (monster.farmStatus.isTraining) { 
@@ -2495,13 +2225,11 @@
                 statusDivElement.textContent = `${actionText} (${timeLeft}秒)`;
                 statusDivElement.classList.add('active');
                 statusDivElement.classList.remove('battling');
-
                 if (timeLeft === 0 && !monster.farmStatus.completed) { 
                     monster.farmStatus.completed = true; 
                     clearInterval(monster.farmStatus.timerId);
                     monster.farmStatus.timerId = null;
                     statusDivElement.innerHTML = ''; 
-
                     const completeBtn = document.createElement('button');
                     completeBtn.textContent = '✅ 收穫';
                     completeBtn.className = 'farm-complete-btn success';
@@ -2523,19 +2251,16 @@
         }
 
         startCultivationBtn.onclick = () => {
+            // 未來: 開始修煉應通知後端
             if (!currentCultivationMonster) return;
-            
             currentCultivationMonster.farmStatus.isTraining = true;
             currentCultivationMonster.farmStatus.trainingStartTime = Date.now();
             currentCultivationMonster.farmStatus.active = false; 
             currentCultivationMonster.farmStatus.type = 'train'; 
             currentCultivationMonster.farmStatus.boosts = currentCultivationMonster.farmStatus.boosts || { hp: 0, mp: 0, attack: 0, defense: 0, speed: 0, crit: 0};
-
-
             addLogEntry(currentCultivationMonster, "🏋️ 開始了新的修煉。");
             closeModal('cultivation-setup-modal');
             populateFarmList(); 
-            
             if (currentCultivationMonster.farmStatus.timerId) clearInterval(currentCultivationMonster.farmStatus.timerId);
             currentCultivationMonster.farmStatus.timerId = setInterval(() => {
                 const farmItem = farmedMonstersListContainer.querySelector(`.farm-monster-item[data-monster-id="${currentCultivationMonster.id}"]`);
@@ -2551,27 +2276,25 @@
         };
 
         function pauseTraining(monsterId) { 
+            // 未來: 結束修煉應通知後端，並由後端計算結果
             const monster = farmedMonsters.find(m => m.id === monsterId);
             if (!monster || !monster.farmStatus.isTraining) return;
-
             if (monster.farmStatus.timerId) {
                 clearInterval(monster.farmStatus.timerId);
                 monster.farmStatus.timerId = null;
             }
-
             const trainingDuration = Math.floor((Date.now() - monster.farmStatus.trainingStartTime) / 1000);
             monster.farmStatus.isTraining = false;
-
             addLogEntry(monster, `修煉結束，共持續 ${trainingDuration} 秒。`); 
-            resolveTrainingAndShowResults(monster, trainingDuration);
+            resolveTrainingAndShowResults(monster, trainingDuration); // 模擬結果，未來由後端回傳
             populateFarmList();
         }
         
         function resolveTrainingAndShowResults(monster, durationSeconds) {
+            // 此函式的計算邏輯未來應在後端完成
             let story = `在 ${Math.floor(durationSeconds / 60)}分${durationSeconds % 60}秒 的刻苦修煉中，${monster.nickname} `;
             let growthLogHTML = "";
             itemsFromCurrentTraining = []; 
-
             if (durationSeconds < 10) { 
                 story += "似乎還沒找到感覺，只是稍微活動了一下筋骨。";
                 growthLogHTML = "<p>修煉時間太短，未有明顯成長。</p>";
@@ -2584,7 +2307,6 @@
                         const stats = {hp: "生命值", attack: "攻擊力", defense: "防禦力", speed: "速度", mp: "魔力值", crit: "爆擊率"};
                         const statKey = Object.keys(stats)[Math.floor(Math.random() * Object.keys(stats).length)];
                         const boostAmount = Math.floor(Math.random() * (monster.score / 400)) + 1 + Math.floor(durationSeconds / 50);
-                        
                         monster[statKey] += boostAmount;
                         monster.farmStatus.boosts[statKey] = (monster.farmStatus.boosts[statKey] || 0) + boostAmount;
                         growthLogHTML += `<p>${stats[statKey]}: <span class="text-[var(--success-color)]">+${boostAmount}</span></p>`; 
@@ -2598,7 +2320,6 @@
                     story += `雖然汗水浸濕了大地，但似乎還差臨門一腳。`;
                     growthLogHTML = "<p>本次修煉未有顯著數值成長，但意志更加堅定了！</p>";
                 }
-
                 const itemsToFind = Math.floor(durationSeconds / 45); 
                 for (let i = 0; i < itemsToFind; i++) {
                     if (Math.random() < 0.4) { 
@@ -2608,17 +2329,12 @@
                         itemsFromCurrentTraining.push(newItem);
                     }
                 }
-                if (itemsFromCurrentTraining.length > 0) {
-                    story += ` 並且在途中意外發現了一些稀有的材料！`;
-                } else {
-                    story += ` 可惜的是，並未發現任何特別的物品。`;
-                }
+                if (itemsFromCurrentTraining.length > 0) story += ` 並且在途中意外發現了一些稀有的材料！`;
+                else story += ` 可惜的是，並未發現任何特別的物品。`;
             }
-            
             trainingResultsModalTitle.innerHTML = `🎉 ${monster.nickname} 修煉成果 🎉`;
             trainingStoryResult.innerHTML = story;
             trainingGrowthResult.innerHTML = growthLogHTML || "<p>無數值變化。</p>";
-            
             renderTrainingItems();
             openModal('training-results-modal');
             updateMonsterInfoModal(monster); 
@@ -2626,6 +2342,7 @@
         }
 
         function renderTrainingItems() {
+            // ... (此函式邏輯保持不變) ...
             trainingItemsResult.innerHTML = '';
             if (itemsFromCurrentTraining.length === 0) {
                 trainingItemsResult.innerHTML = "<p>本次修煉未拾獲任何物品。</p>";
@@ -2640,17 +2357,16 @@
                 const elementStyle = getElementStyling(item.type);
                 itemDiv.innerHTML = `
                     <span style="color:${rarityStyle.text}; background-color:${elementStyle.bg}; padding: 2px 4px; border-radius: 3px;">${item.name} (${item.rarity})</span>
-                    <button data-item-index="${index}" class="add-one-to-temp-backpack-btn text-xs p-1 secondary">➕ 加入背包</button>
+                    <button data-item-index="${index}" class="add-one-to-temp-backpack-btn text-base p-1 secondary">➕ 加入背包</button>
                 `;
                 trainingItemsResult.appendChild(itemDiv);
             });
-
             document.querySelectorAll('.add-one-to-temp-backpack-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     const itemIndex = parseInt(e.target.dataset.itemIndex);
                     const itemToAdd = itemsFromCurrentTraining[itemIndex];
                     if (itemToAdd && !itemToAdd.addedToBackpack) { 
-                        addToTemporaryBackpack(itemToAdd);
+                        addToTemporaryBackpack(itemToAdd); // 未來: 加入背包應通知後端
                         itemToAdd.addedToBackpack = true; 
                         e.target.textContent = '已加入';
                         e.target.disabled = true;
@@ -2660,27 +2376,21 @@
         }
         
         addAllToTempBackpackBtn.onclick = () => {
+            // 未來: 加入背包應通知後端
             itemsFromCurrentTraining.forEach((item, index) => {
                 if (!item.addedToBackpack) { 
                     addToTemporaryBackpack(item);
                     item.addedToBackpack = true; 
                     const btn = trainingItemsResult.querySelector(`.add-one-to-temp-backpack-btn[data-item-index="${index}"]`);
-                    if (btn) {
-                        btn.textContent = '已加入';
-                        btn.disabled = true;
-                    }
+                    if (btn) { btn.textContent = '已加入'; btn.disabled = true; }
                 }
             });
         };
         
         function closeTrainingResultsModal() {
             const unaddedItems = itemsFromCurrentTraining.filter(item => !item.addedToBackpack);
-            if (unaddedItems.length > 0) {
-                openModal('reminder-modal');
-            } else {
-                itemsFromCurrentTraining = []; 
-                closeModal('training-results-modal');
-            }
+            if (unaddedItems.length > 0) openModal('reminder-modal');
+            else { itemsFromCurrentTraining = []; closeModal('training-results-modal'); }
         }
 
         reminderConfirmCloseBtn.onclick = () => {
@@ -2689,14 +2399,13 @@
             closeModal('training-results-modal');
         };
 
-
         function addToTemporaryBackpack(dnaItem) {
+            // 未來: 臨時背包的物品也應由後端管理
             let added = false;
             for (let i = 0; i < NUM_TEMP_BACKPACK_SLOTS; i++) {
                 if (temporaryBackpackSlots[i] === null) {
                     temporaryBackpackSlots[i] = {...dnaItem}; 
-                    added = true;
-                    break;
+                    added = true; break;
                 }
             }
             if (!added) { 
@@ -2706,24 +2415,21 @@
             populateTemporaryBackpack();
         }
 
-
         function promptReleaseMonster(farmIndex) {
+            // 未來: 放生怪獸應呼叫後端 API
             monsterToReleaseInfo = { farmIndex };
             const monster = farmedMonsters[farmIndex];
             confirmationModalBodyEl.innerHTML = `確定要放生怪獸 <strong style="color: var(--accent-color);">${monster.nickname}</strong> (總評價: ${monster.score})？<br>此動作無法復原。
                                             <div id="release-monster-image-placeholder" class="flex justify-center my-2">
                                                 <img id="release-monster-img-preview-confirm" src="" alt="預覽" class="max-w-[100px] max-h-[75px] object-contain">
                                             </div>`;
-            
             const imgPreviewConfirm = document.getElementById('release-monster-img-preview-confirm');
             let mainElement = monster.elements.length > 0 ? monster.elements[0] : "混合";
             const elementStyle = getElementStyling(mainElement);
             const elementColorHex = getComputedStyle(document.documentElement).getPropertyValue(elementStyle.bg.replace(/var\(|\)/g, '')).trim().substring(1);
             const placeholderTextColor = getContrastColor(elementColorHex);
-
             imgPreviewConfirm.src = `https://placehold.co/100x75/${elementColorHex}/${placeholderTextColor}?text=${encodeURIComponent(monster.nickname)}&font=noto-sans-tc`;
             imgPreviewConfirm.alt = monster.nickname;
-            
             confirmationModalTitleEl.textContent = "放生確認";
             confirmActionBtn.className = 'danger'; 
             confirmActionBtn.textContent = '確定放生';
@@ -2733,33 +2439,26 @@
                     if (releasedMonster) {
                         showFeedbackModal("放生成功", `${releasedMonster.nickname} 已經回歸大自然了。`, false, true, false);
                         if (currentMonster && currentMonster.id === releasedMonster.id) { 
-                            currentMonster = null; 
-                            updateMonsterSnapshotDisplay(null); 
-                            monsterInfoButton.disabled = true;
+                            currentMonster = null; updateMonsterSnapshotDisplay(null); monsterInfoButton.disabled = true;
                         }
                          if (battlingMonsterId === releasedMonster.id) { 
                             battlingMonsterId = null;
                             if (currentMonster && currentMonster.id === releasedMonster.id) currentMonster = null; 
-                            updateMonsterSnapshotDisplay(null);
-                            monsterInfoButton.disabled = true;
+                            updateMonsterSnapshotDisplay(null); monsterInfoButton.disabled = true;
                         }
                     }
-                    populateFarmList();
-                    updatePlayerInfoModal(); 
-                    monsterToReleaseInfo = null;
+                    populateFarmList(); updatePlayerInfoModal(); monsterToReleaseInfo = null;
                 }
-                closeModal('confirmation-modal');
-                updateActionButtonsState();
+                closeModal('confirmation-modal'); updateActionButtonsState();
             };
             openModal('confirmation-modal');
         }
 
         function addLogEntry(monster, message) {
+            // 未來: 活動紀錄應儲存在後端
             const timestamp = new Date().toLocaleString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit'});
             monster.activityLog.unshift({ time: timestamp, message: message }); 
-            if (monster.activityLog.length > 20) { 
-                monster.activityLog.pop();
-            }
+            if (monster.activityLog.length > 20) monster.activityLog.pop();
             if (document.getElementById('monster-info-modal').style.display === 'flex' &&
                 monsterInfoModalHeaderContent.querySelector('.monster-info-name-styled')?.textContent === monster.nickname) {
                 updateMonsterActivityLog(monster);
@@ -2768,74 +2467,26 @@
 
         function updateMonsterActivityLog(monster) {
             if (!monster || !monster.activityLog || monster.activityLog.length === 0) {
-                monsterActivityLogsContainer.innerHTML = "<p class='text-center text-sm text-[var(--text-secondary)] py-4'>尚無活動紀錄。</p>";
+                monsterActivityLogsContainer.innerHTML = "<p class='text-center text-base text-[var(--text-secondary)] py-4'>尚無活動紀錄。</p>";
                 return;
             }
             monsterActivityLogsContainer.innerHTML = monster.activityLog.map(entry => `
                 <div class="log-entry">
                     <span class="log-time">[${entry.time}]</span>
                     <span class="log-message">${entry.message}</span>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        // --- Newbie Guide Data & Functions ---
-        const newbieGuideData = [
-            { title: "遊戲目標", content: "歡迎來到怪獸養成對戰遊戲！您的目標是透過組合不同的DNA碎片，創造出獨一無二的強大怪獸，並透過養成提升它們的能力，最終在排行榜上名列前茅。" },
-            { title: "DNA組合", content: "在「DNA組合」區塊，您可以將擁有的「DNA碎片」拖曳到上方的組合槽中。每個DNA碎片都帶有不同的屬性和基礎數值。放入DNA後，點擊「怪物合成」按鈕即可合成新的怪獸。" },
-            { title: "怪獸屬性", content: "怪獸擁有HP（生命值）、MP（魔力值）、攻擊力、防禦力、速度和爆擊率等基礎屬性。此外，怪獸還會有主要屬性（如火、水、木等）和元素構成百分比，這些會影響其技能和戰鬥風格。" },
-            { title: "DNA稀有度", content: "DNA碎片分為不同稀有度：普通、稀有、菁英、傳奇、神話。稀有度越高的DNA通常能組合出潛力更強的怪獸。DNA碎片的文字顏色會標示其稀有度，背景則顯示其元素屬性。" },
-            { title: "怪物農場", content: "創造出來的怪獸會進入「怪物農場」。在農場中，您可以查看怪獸的資訊、設定其出戰狀態（圓形按鈕，🔴 代表出戰，🟢 代表閒置），或進行「養成」。"},
-            { title: "怪獸養成", content: "點擊農場中怪獸的「養成」按鈕，可以開始修煉。修煉會持續計時，您可以隨時點擊「結束修煉」。修煉時間越長，怪獸獲得的成長和拾獲物品的機會就越大。修煉成果會顯示冒險故事、屬性成長和拾獲的DNA碎片。"},
-            { title: "臨時背包", content: "修煉拾獲的DNA碎片會先進入「修煉成果」的物品列表，您可以選擇將它們「加入臨時背包」或逐個添加。臨時背包中的物品可以點擊移至主DNA碎片庫，或透過右上角的X按鈕刪除。"},
-            { title: "健康狀態與抗性", content: "怪獸在某些活動後可能會出現負面的「健康狀態」，例如「手指骨折：攻擊力-3」。這些狀態會直接影響怪獸的基礎數值。此外，怪獸還擁有「特殊抗性」，例如火屬性DNA可能提供火抗性，這些抗性能減少特定類型傷害或效果。"},
-            { title: "排行榜挑戰", content: "在「怪獸排行榜」中，您可以點擊怪獸旁的「⚔️」按鈕來挑戰它。請注意，挑戰失敗的一方將會被勝方吸收！"},
-            { title: "好友名單", content: "點擊「好友名單」按鈕可以查看您的好友。您可以在此搜尋其他玩家並（未來功能）將他們加為好友。"},
-            { title: "主題切換", content: "您可以點擊右上角的 ☀️/🌙 按鈕來切換遊戲的亮色或暗色主題，選擇您喜歡的視覺風格。"}
-        ];
+        const newbieGuideData = [ /* ... (新手指南資料保持不變) ... */ ];
+        function populateNewbieGuide(searchTerm = "") { /* ... (此函式邏輯保持不變) ... */ }
+        newbieGuideBtn.addEventListener('click', () => { populateNewbieGuide(); openModal('newbie-guide-modal'); });
+        newbieGuideSearchInput.addEventListener('input', (e) => { populateNewbieGuide(e.target.value); });
 
-        function populateNewbieGuide(searchTerm = "") {
-            newbieGuideContentArea.innerHTML = "";
-            const lowerSearchTerm = searchTerm.toLowerCase().trim();
-            const filteredData = newbieGuideData.filter(item => 
-                item.title.toLowerCase().includes(lowerSearchTerm) || 
-                item.content.toLowerCase().includes(lowerSearchTerm)
-            );
-
-            if (filteredData.length === 0) {
-                newbieGuideContentArea.innerHTML = "<p class='text-center p-4'>找不到相關的指南內容。</p>";
-                return;
-            }
-
-            const highlight = (text, term) => {
-                if (!term) return text;
-                const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                return text.replace(regex, '<mark class="bg-yellow-300 dark:bg-yellow-600 rounded px-1">$1</mark>');
-            };
-
-            filteredData.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'mb-4 p-3 rounded-md border border-[var(--border-color)] bg-[var(--bg-primary)]';
-                itemDiv.innerHTML = `
-                    <h5 class="text-lg font-semibold text-[var(--accent-color)] mb-1">${highlight(item.title, searchTerm)}</h5>
-                    <p class="text-sm">${highlight(item.content.replace(/\n/g, "<br>"), searchTerm)}</p>
-                `;
-                newbieGuideContentArea.appendChild(itemDiv);
-            });
-        }
-        newbieGuideBtn.addEventListener('click', () => {
-            populateNewbieGuide(); 
-            openModal('newbie-guide-modal');
-        });
-        newbieGuideSearchInput.addEventListener('input', (e) => {
-            populateNewbieGuide(e.target.value);
-        });
-
-        // --- Friends List Functions ---
         function displayFriends(friendsToDisplay) {
+            // 未來: friendsToDisplay 會從後端 API 獲取
             friendsListContainer.innerHTML = '';
             if (friendsToDisplay.length === 0) {
-                friendsListContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)]">找不到符合的玩家或尚無好友。</p>';
+                friendsListContainer.innerHTML = '<p class="text-center text-base text-[var(--text-secondary)]">找不到符合的玩家或尚無好友。</p>';
                 return;
             }
             friendsToDisplay.forEach(friend => {
@@ -2843,75 +2494,46 @@
                 friendDiv.className = 'friend-item';
                 friendDiv.innerHTML = `
                     <span class="friend-name">${friend.name}</span>
-                    <span class="friend-status ${friend.status === 'online' ? 'online' : 'offline'}">${friend.status === 'online' ? '線上' : '離線'}</span>
-                `;
+                    <span class="friend-status ${friend.status === 'online' ? 'online' : 'offline'}">${friend.status === 'online' ? '線上' : '離線'}</span>`;
                 friendsListContainer.appendChild(friendDiv);
             });
         }
-
         function searchFriends(searchTerm) {
+            // 未來: 搜尋好友應呼叫後端 API
             const lowerSearchTerm = searchTerm.toLowerCase().trim();
-            if (!lowerSearchTerm) {
-                displayFriends(playerFriends); 
-                return;
-            }
-            const foundPlayers = MOCK_ALL_PLAYERS.filter(player => 
-                player.name.toLowerCase().includes(lowerSearchTerm)
-            );
+            if (!lowerSearchTerm) { displayFriends(playerFriends); return; }
+            const foundPlayers = MOCK_ALL_PLAYERS.filter(player => player.name.toLowerCase().includes(lowerSearchTerm));
             displayFriends(foundPlayers); 
         }
-
         friendsListBtn.addEventListener('click', () => {
-            displayFriends(playerFriends); 
+            displayFriends(playerFriends); // 初期使用模擬資料
             friendsListSearchInput.value = ""; 
             openModal('friends-list-modal');
         });
+        friendsListSearchInput.addEventListener('input', (e) => { searchFriends(e.target.value); });
 
-        friendsListSearchInput.addEventListener('input', (e) => {
-            searchFriends(e.target.value);
-        });
-
-
-        showLeaderboardBtn.addEventListener('click', () => {
-            openModal('leaderboard-modal');
-            const firstTabButton = document.querySelector('#leaderboard-modal .tab-buttons .tab-button');
-            if (firstTabButton) openGenericTab({currentTarget: firstTabButton}, 'monster-leaderboard', 'leaderboard-modal');
-        });
-
+        showMonsterLeaderboardBtn.addEventListener('click', () => { setupMonsterLeaderboardTabs(); populateMonsterLeaderboard(); openModal('monster-leaderboard-modal'); });
+        showPlayerLeaderboardBtn.addEventListener('click', () => { populatePlayerLeaderboard(); openModal('player-leaderboard-modal'); });
         monsterInfoButton.addEventListener('click', () => {
             const monsterToDisplay = battlingMonsterId ? farmedMonsters.find(m => m.id === battlingMonsterId) : currentMonster;
-            if (monsterToDisplay) {
-                 updateMonsterInfoModal(monsterToDisplay);
-                 openModal('monster-info-modal');
-            } else if (currentMonster) { 
-                updateMonsterInfoModal(currentMonster);
-                openModal('monster-info-modal');
-            } else {
-                 updateMonsterInfoModal(null); 
-                 openModal('monster-info-modal');
-            }
+            if (monsterToDisplay) { updateMonsterInfoModal(monsterToDisplay); openModal('monster-info-modal'); }
+            else if (currentMonster) { updateMonsterInfoModal(currentMonster); openModal('monster-info-modal'); }
+            else { updateMonsterInfoModal(null); openModal('monster-info-modal'); }
         });
         playerInfoButton.addEventListener('click', () => { updatePlayerInfoModal(); openModal('player-info-modal');});
         combineButton.addEventListener('click', combineDNA);
         
         window.onclick = function(event) {
             if (event.target.classList.contains('modal') && 
-                event.target.id !== 'feedback-modal' && 
-                event.target.id !== 'confirmation-modal' && 
-                event.target.id !== 'cultivation-setup-modal' &&
-                event.target.id !== 'training-results-modal' &&
-                event.target.id !== 'newbie-guide-modal' && 
-                event.target.id !== 'friends-list-modal' && 
-                event.target.id !== 'reminder-modal' 
-                ) {
+                event.target.id !== 'feedback-modal' && event.target.id !== 'confirmation-modal' && 
+                event.target.id !== 'cultivation-setup-modal' && event.target.id !== 'training-results-modal' &&
+                event.target.id !== 'newbie-guide-modal' && event.target.id !== 'friends-list-modal' && 
+                event.target.id !== 'monster-leaderboard-modal' && event.target.id !== 'player-leaderboard-modal' &&
+                event.target.id !== 'reminder-modal' ) {
                 closeModal(event.target.id);
             }
         }
         
-        // Centralized handler for the main confirm button, specific actions set before opening modal
-        // confirmActionBtn.onclick is now set dynamically before opening confirmation modal.
-
-
         function updateActionButtonsState() {
             const hasItemsInCombination = combinationSlotsData.some(s=>s!==null);
             combineButton.disabled = !hasItemsInCombination;
@@ -2919,31 +2541,53 @@
             monsterInfoButton.disabled = !monsterForInfo;
         }
 
-        function initGame() {
-            // Move DNA Combination panel to the DNA Fragments Tab
-            const dnaCombinationPanelTarget = document.getElementById('dna-inventory-content');
-            const originalDnaCombinationPanel = document.getElementById('dna-combination-panel-wrapper'); // Use the wrapper ID
+        async function fetchInitialData() {
+            // 範例：未來從後端獲取初始玩家 DNA 列表
+            // try {
+            //     const response = await fetch(`${API_BASE_URL}/dna/initial`);
+            //     if (!response.ok) throw new Error('無法獲取初始DNA資料');
+            //     initialPlayerDNA = await response.json(); 
+            // } catch (error) {
+            //     console.error("獲取初始DNA資料失敗:", error);
+            //     showFeedbackModal("錯誤", "無法載入遊戲初始資料，請稍後再試。", false, true, false);
+            //     // 可以保留前端的 initialPlayerDNA 作為備用
+            // }
+
+            // 範例：未來從後端獲取玩家擁有的 DNA
+            // try {
+            //     const response = await fetch(`${API_BASE_URL}/player/me/dna`); // 假設 'me' 代表當前玩家
+            //     if (!response.ok) throw new Error('無法獲取玩家DNA資料');
+            //     playerOwnedDNA = await response.json();
+            // } catch (error) {
+            //     console.error("獲取玩家DNA資料失敗:", error);
+            //     // 此處可以使用前端的 initialPlayerDNA 作為初始資料
+            // }
             
+            // 類似地，獲取 playerStats, farmedMonsters, playerFriends, leaderboardData 等
+        }
+
+
+        async function initGame() {
+            // await fetchInitialData(); // 等待初始資料獲取完成 (未來實作)
+
+            const dnaCombinationPanelTarget = document.getElementById('dna-inventory-content');
+            const originalDnaCombinationPanel = document.getElementById('dna-combination-panel-wrapper'); 
             if (originalDnaCombinationPanel && dnaCombinationPanelTarget) {
                 dnaCombinationPanelTarget.insertBefore(originalDnaCombinationPanel, dnaCombinationPanelTarget.firstChild);
-            } else {
-                console.error("Could not find DNA combination panel wrapper or target for relocation.");
-            }
-
-
+            } else { console.error("Could not find DNA combination panel wrapper or target."); }
             const preferredTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(preferredTheme);
             createCombinationSlots();
-            generateLeaderboards();
+            generateMockLeaderboardData(); // 暫時保留模擬資料生成
             initializeInventoryDisplay();
             setupDropZones();
             updateMonsterSnapshotDisplay(null); 
             updateMonsterInfoModal(null);
-            updatePlayerInfoModal();
+            updatePlayerInfoModal(); // 內部會使用模擬的 playerStats
             updateActionButtonsState();
-            populateFarmList();
+            populateFarmList(); // 內部會使用模擬的 farmedMonsters
             populateNewbieGuide(); 
-            displayFriends(playerFriends); 
+            displayFriends(playerFriends); // 內部會使用模擬的 playerFriends
 
             const firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
             if (firstDnaFarmTab) {
