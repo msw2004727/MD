@@ -575,16 +575,11 @@
 
 
         .dna-combination-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 8px; }
-        .inventory-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 8px; 
-        }
-        .temp-backpack-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
-            gap: 8px; 
-        }
+        .inventory-grid, .temp-backpack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 8px;
+}
         
         .dna-panel-title { 
             font-size: 1.2rem; font-weight: 600; color: var(--accent-color);
