@@ -17,10 +17,6 @@ function initializeDOMReferences() {
     // 並且在某處被 Object.freeze(elements); 了，這裡會出問題。
     // 但如果只是普通的物件字面量，這行是防禦性的。
     // 如果 GameState.elements 已經是 Object.freeze() 的結果，這行不會改變它。
-    if (!GameState.elements || Object.isFrozen(GameState.elements)) {
-        // 如果 GameState.elements 不存在或已被凍結，重新初始化為一個新的空物件
-        // 這通常表示 GameState.js 中的定義方式有問題，或者有其他程式碼凍結了它
-        GameState.elements = {}; // 重新賦值為一個新的可擴展物件
     }
 
 
