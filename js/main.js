@@ -192,7 +192,7 @@ async function initializeApp() {
             // 確保 GameState.gameSettings 已經在 game-state.js 中被初始化為一個有效的物件
             // 這裡不再額外賦值，因為 GameState.js 已經提供了預設值
         }
-        
+
     } catch (error) {
         console.error("main.js: 無法載入初始遊戲設定。將使用預設值。", error);
         // **修正：即使載入失敗，也要確保 GameState.gameSettings 是一個物件**
@@ -238,8 +238,8 @@ async function initializeApp() {
 
     // 7. 初始化 Firebase 驗證狀態監聽器
     // initializeAuthListener 內部會根據登入狀態決定是顯示 authScreen 還是嘗試載入遊戲資料
-    Auth.initializeAuthListener(); // 來自 auth.js
-    console.log("main.js: Firebase 驗證監聽器已初始化。");
+    // Auth.initializeAuthListener(); // 暫時註釋掉，用於繞過登入
+    console.log("main.js: Firebase 驗證監聽器已初始化。(暫時註釋以繞過登入)");
 
 
     // 8. 設定初始顯示的頁籤 (如果需要)
@@ -249,10 +249,23 @@ async function initializeApp() {
         console.log("main.js: 初始頁籤顯示已設定。");
     }
 
-    // 9. 初始時，總是先嘗試顯示驗證畫面
-    // initializeAuthListener 中的邏輯會處理後續是否切換到遊戲畫面
-    UI.showAuthScreen(); // 來自 ui.js
-    console.log("main.js: 驗證畫面已初始顯示。");
+    // 9. 臨時繞過登入，直接進入遊戲畫面
+    // 在測試/開發期間使用，請在最終部署前移除或註釋掉
+    console.warn("--- 注意：已啟用登入繞過模式 (FOR DEV/TEST ONLY) ---");
+    // 模擬一個登入成功的用戶數據，讓 loadGameDataForUserLogic 有數據可操作
+    const tempUid = "test_user_id_123";
+    const tempNickname = "測試玩家";
+    GameState.currentLoggedInUser = { uid: tempUid, email: `${tempNickname}@game.system` };
+    GameState.currentPlayerNickname = tempNickname;
+
+    await GameLogic.loadGameDataForUserLogic(tempUid, tempNickname); // 載入預設或已有的測試數據
+    UI.showGameScreenAfterLogin(); // 直接顯示遊戲畫面
+    UI.openModal('official-announcement-modal'); // 也顯示公告，讓它看起來更像真實登入
+    if (GameState.elements.announcementPlayerName) GameState.elements.announcementPlayerName.textContent = tempNickname;
+
+
+    // UI.showAuthScreen(); // 暫時註釋掉，用於繞過登入
+    console.log("main.js: 驗證畫面已初始顯示。(已繞過，直接顯示遊戲畫面)");
 
     console.log("main.js: 應用程式初始化完成。");
 }
