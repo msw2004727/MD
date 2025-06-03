@@ -2,7 +2,7 @@
 
 // 實際導入所有必要的模組
 import { auth, db, firebaseApp } from './firebase-config.js'; // Firebase 實例已在此模組中初始化並導出
-import * as GameState from './game-state.js'; // 遊戲狀態和 DOM 元素引用
+import { GameState } from './game-state.js'; // **修正：直接導入 GameState 物件**
 import * as UI from './ui.js'; // UI 操作函式
 import * as GameLogic from './game-logic.js'; // 遊戲邏輯函式
 import * as ApiClient from './api-client.js'; // API 呼叫函式
@@ -12,14 +12,11 @@ import { initializeStaticEventListeners } from './event-handlers.js'; // 事件�
 // --- DOM 元素獲取與初始化 (通常在應用程式啟動早期執行) ---
 // 這個函式負責獲取所有在 index.html 中定義的 DOM 元素，並將它們儲存到 GameState.elements 中。
 function initializeDOMReferences() {
-    console.log("main.js: Before initializing GameState.elements.");
-    console.log("Is GameState extensible?", Object.isExtensible(GameState));
-    console.log("Is GameState.elements extensible?", Object.isExtensible(GameState.elements)); // 這應該為 true
-    GameState.elements = {}; // 第 18 行
-    console.log("main.js: After initializing GameState.elements.");
-    console.log("Is GameState.elements now extensible (after assignment)?", Object.isExtensible(GameState.elements)); // 這應該為 true
-    // ... (其他 DOM 元素賦值)
-}
+    // 在這裡明確地初始化 GameState.elements。
+    // 由於 GameState.js 不再初始化 elements，我們必須在此處確保它是一個物件，
+    // 以避免在為其屬性賦值時出現 TypeError。
+    GameState.elements = {};
+    console.log("main.js: GameState.elements 已被明確初始化。");
 
     // 主題切換
     GameState.elements.themeSwitcherBtn = document.getElementById('theme-switcher');
@@ -160,8 +157,9 @@ function initializeDOMReferences() {
 
     // 頁籤按鈕 (用於初始選擇)
     GameState.elements.firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
-    console.log("main.js: DOM 元素引用已初始化到 GameState.elements");
 
+    console.log("main.js: DOM 元素引用已初始化到 GameState.elements");
+}
 
 
 // --- 主要應用程式初始化函式 ---
