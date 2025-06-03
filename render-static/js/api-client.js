@@ -4,7 +4,7 @@ import { auth } from './firebase-config.js'; // 只需要 auth，db 在此模組
 import { loadDeepSeekApiKey } from './loadApiKey.js';
 
 // --- API Configuration ---
-const API_BASE_URL = 'https://your-backend-name.onrender.com/api/MD';
+const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-chat'; // DeepSeek 推薦使用 deepseek-chat 或 deepseek-coder
 
