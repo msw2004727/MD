@@ -13,6 +13,9 @@ const GameState = {
     // GameState.elements 將在 main.js 的 initializeDOMReferences 函數中被明確地創建和填充。
     elements: {}, // 將其初始化為一個空物件，但實際填充由 main.js 負責
 
+    // **修正：在 GameState 頂層明確定義 npcMonsters**
+    npcMonsters: [], // 確保這個屬性在 GameState 物件上是可寫的
+
     // --- 遊戲設定 ---
     gameSettings: {
         dna_fragments: [],
@@ -33,7 +36,7 @@ const GameState = {
             element_value_factors: {},
             dna_recharge_conversion_factor: 0.15
         },
-        npc_monsters: [], // **確保 npc_monsters 始終為陣列**
+        // npc_monsters: [], // 這個屬性現在移到頂層定義了
         absorption_config: {},
         cultivation_config: {},
         elemental_advantage_chart: {},
