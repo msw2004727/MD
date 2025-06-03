@@ -23,7 +23,7 @@ const firebaseConfig = {
 
 // 定義應用程式 ID，用於 Firestore 路徑
 // **請將 'YOUR_APP_ID_HERE' 替換為您實際的應用程式 ID**
-const __app_id = "YOUR_APP_ID_HERE";
+const __app_id = "1:932095431807:web:28aab493c770166102db4a"; // 已更新為您的實際 appId
 
 // 初始化 Firebase App（只執行一次）
 // 使用一個全局變數來檢查是否已初始化，以防止在某些環境下重複初始化
