@@ -148,19 +148,21 @@ export function initializeStaticEventListeners() {
         elements.showRegisterFormBtn.addEventListener('click', () => handleOpenModalWrapper('register-modal'));
     }
     if (elements.registerSubmitBtn) {
-    elements.registerSubmitBtn.addEventListener('click', async () => {
-        const nickname = elements.registerNicknameInput.value;
-        const password = elements.registerPasswordInput.value;
-        await handleRegister(nickname, password, elements.registerErrorDisplay);
-    });
-}
+        elements.registerSubmitBtn.addEventListener('click', async () => {
+            const nickname = elements.registerNicknameInput.value;
+            const password = elements.registerPasswordInput.value;
+            // 假設 handleRegister 處理 UI 反饋和錯誤顯示
+            await handleRegister(nickname, password, elements.registerErrorDisplay);
+        });
+    }
     if (elements.loginSubmitBtn) {
-    elements.loginSubmitBtn.addEventListener('click', async () => {
-        const nickname = elements.loginNicknameInput.value;
-        const password = elements.loginPasswordInput.value;
-        await handleLogin(nickname, password, elements.loginErrorDisplay);
-    });
-}
+        elements.loginSubmitBtn.addEventListener('click', async () => {
+            const nickname = elements.loginNicknameInput.value;
+            const password = elements.loginPasswordInput.value;
+            // 假設 handleLogin 處理 UI 反饋和錯誤顯示
+            await handleLogin(nickname, password, elements.loginErrorDisplay);
+        });
+    }
     if (elements.logoutBtn) {
         elements.logoutBtn.addEventListener('click', handleLogout);
     }
