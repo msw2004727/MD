@@ -1,21 +1,13 @@
 // api-client.js
 
-import { auth } from './firebase-config.js'; // 只需要 auth，db 在此模組中未使用
+import { auth } from './firebase-config.js';
 import { loadDeepSeekApiKey } from './loadApiKey.js';
 
 // --- API Configuration ---
-// **重要修正：將此處的 URL 設定為你後端實際部署的正確 URL**
-// 根據你提供的錯誤訊息，後端 URL 似乎是 'https://test-1-jnro.onrender.com'
-const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD'; // <-- 將這裡修改為你後端服務的正確 URL
+const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD'; // 確保這是你後端服務的正確 URL
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-chat';
 
-/**
- * 獲取包含認證 token 的 HTTP Headers。
- * 此函式會自動從 Firebase Auth 獲取當前使用者的 ID Token。
- * @param {boolean} includeContentType - 是否包含 'Content-Type': 'application/json'。
- * @returns {Promise<Object>} 包含 headers 的物件。
- */
 async function getAuthHeaders(includeContentType = true) {
     const headers = {};
     if (includeContentType) headers['Content-Type'] = 'application/json';
@@ -30,20 +22,12 @@ async function getAuthHeaders(includeContentType = true) {
     return headers;
 }
 
-/**
- * 處理 API 響應，如果響應不成功則拋出錯誤。
- * @param {Response} response - fetch API 的 Response 物件。
- * @param {string} errorMessagePrefix - 錯誤訊息前綴。
- * @returns {Promise<Object>} 解析後的 JSON 數據。
- * @throws {Error} 如果響應不成功。
- */
 async function handleApiResponse(response, errorMessagePrefix = "API 請求失敗") {
     if (!response.ok) {
         let errorData = {};
         try {
             errorData = await response.json();
         } catch (e) {
-            // 如果無法解析 JSON，則嘗試獲取文本
             const text = await response.text();
             throw new Error(`${errorMessagePrefix}，狀態碼: ${response.status}，響應: ${text}`);
         }
@@ -52,43 +36,23 @@ async function handleApiResponse(response, errorMessagePrefix = "API 請求失�
     return response.json();
 }
 
-// --- 遊戲後端 API ---
-
-/**
- * 獲取遊戲設定。
- * @returns {Promise<Object>} 遊戲設定數據。
- */
 export async function fetchGameConfigs() {
-    // 這裡不需要認證，因為是公開的遊戲設定
-    // **修正：使用 API_BASE_URL 來構建 URL**
     const response = await fetch(`${API_BASE_URL}/game-configs`);
     return handleApiResponse(response, "獲取遊戲設定失敗");
 }
 
-/**
- * 獲取玩家資料。
- * @param {string} userId - 玩家的 UID。
- * @returns {Promise<Object>} 玩家資料。
- */
 export async function getPlayer(userId) {
-    const headers = await getAuthHeaders(false); // 不需要 Content-Type
+    const headers = await getAuthHeaders(false);
     const res = await fetch(`${API_BASE_URL}/player/${userId}`, { headers });
-    // 對於 404 錯誤，如果沒有找到玩家，可能返回空對象或特定結構
     if (res.status === 404) {
         console.warn(`玩家 ${userId} 的資料未找到 (404)。`);
-        return null; // 或者返回一個表示未找到的特定值
+        return null;
     }
     return handleApiResponse(res, "獲取玩家資料失敗");
 }
 
-/**
- * 進行 DNA 組合。
- * 此函式會自動處理認證。
- * @param {string[]} dna_ids - 要組合的 DNA ID 陣列。
- * @returns {Promise<Object>} 組合後的新怪獸數據。
- */
 export async function combineDNA(dna_ids) {
-    const headers = await getAuthHeaders(); // 內部獲取認證頭
+    const headers = await getAuthHeaders();
     if (!headers['Authorization']) throw new Error("請先登入再進行 DNA 組合。");
 
     const res = await fetch(`${API_BASE_URL}/combine`, {
@@ -99,15 +63,8 @@ export async function combineDNA(dna_ids) {
     return handleApiResponse(res, "DNA 組合失敗");
 }
 
-/**
- * 模擬戰鬥。
- * 此函式會自動處理認證。
- * @param {Object} playerMonsterData - 玩家怪獸的數據。
- * @param {Object} opponentMonsterData - 對手怪獸的數據。
- * @returns {Promise<Object>} 戰鬥結果數據。
- */
 export async function simulateBattle(playerMonsterData, opponentMonsterData) {
-    const headers = await getAuthHeaders(); // 內部獲取認證頭
+    const headers = await getAuthHeaders();
     if (!headers['Authorization']) throw new Error("請先登入才能模擬戰鬥。");
 
     const res = await fetch(`${API_BASE_URL}/battle/simulate`, {
@@ -118,48 +75,26 @@ export async function simulateBattle(playerMonsterData, opponentMonsterData) {
     return handleApiResponse(res, "戰鬥模擬失敗");
 }
 
-/**
- * 搜尋玩家。
- * @param {string} nicknameQuery - 玩家暱稱的查詢字符串。
- * @param {number} [limit=10] - 返回結果的最大數量。
- * @returns {Promise<Object[]>} 匹配的玩家列表。
- */
 export async function searchPlayers(nicknameQuery, limit = 10) {
-    const headers = await getAuthHeaders(false); // 不需要 Content-Type
+    const headers = await getAuthHeaders(false);
     const res = await fetch(`${API_BASE_URL}/players/search?nickname=${encodeURIComponent(nicknameQuery)}&limit=${limit}`, { headers });
     return handleApiResponse(res, "搜尋玩家失敗");
 }
 
-/**
- * 保存玩家數據（包括初始數據）。
- * 此函式會自動處理認證。
- * @param {string} userId - 玩家的 UID。
- * @param {Object} playerData - 要保存的玩家數據。
- * @returns {Promise<Object>} 保存結果。
- */
 export async function savePlayerData(userId, playerData) {
-    const headers = await getAuthHeaders(); // 內部獲取認證頭
+    const headers = await getAuthHeaders();
     if (!headers['Authorization']) throw new Error("請先登入才能保存玩家數據。");
 
     const res = await fetch(`${API_BASE_URL}/player/${userId}`, {
-        method: 'POST', // 或 PUT，取決於後端設計
+        method: 'POST',
         headers,
         body: JSON.stringify(playerData)
     });
     return handleApiResponse(res, "保存玩家數據失敗");
 }
 
-
-// --- DeepSeek AI ---
-
-/**
- * 使用 DeepSeek AI 生成怪獸描述。
- * 此函式會自動處理 API Key 載入。
- * @param {Object} monsterData - 包含怪獸基本資料的物件。
- * @returns {Promise<Object>} 包含 personality, introduction, evaluation 的 JSON 物件。
- */
 export async function generateAIDescriptions(monsterData) {
-    const apiKey = await loadDeepSeekApiKey(); // 內部載入 DeepSeek API Key
+    const apiKey = await loadDeepSeekApiKey();
     if (!apiKey) throw new Error("DeepSeek API Key 載入失敗。");
 
     const prompt = `
@@ -188,14 +123,14 @@ export async function generateAIDescriptions(monsterData) {
             { role: "user", content: prompt }
         ],
         temperature: 0.8,
-        response_format: { type: "json_object" } // 要求返回 JSON 格式
+        response_format: { type: "json_object" }
     };
 
     const response = await fetch(DEEPSEEK_API_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}` // 使用 DeepSeek API Key
+            "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify(payload)
     });
@@ -214,7 +149,6 @@ export async function generateAIDescriptions(monsterData) {
 
     try {
         const parsedContent = JSON.parse(content);
-        // 簡單驗證返回的結構
         if (parsedContent.personality && parsedContent.introduction && parsedContent.evaluation) {
             return parsedContent;
         } else {
