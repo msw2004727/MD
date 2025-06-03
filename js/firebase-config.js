@@ -21,6 +21,10 @@ const firebaseConfig = {
     appId: "1:932095431807:web:28aab493c770166102db4a"
 };
 
+// 定義應用程式 ID，用於 Firestore 路徑
+// **請將 'YOUR_APP_ID_HERE' 替換為您實際的應用程式 ID**
+const __app_id = "YOUR_APP_ID_HERE";
+
 // 初始化 Firebase App（只執行一次）
 // 使用一個全局變數來檢查是否已初始化，以防止在某些環境下重複初始化
 let firebaseAppInstance;
@@ -39,4 +43,5 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const firebaseApp = firebaseAppInstance; // 導出初始化後的 app 實例
 
-export { firebaseApp, auth, db };
+// 導出所有必要的 Firebase 實例和應用程式 ID
+export { firebaseApp, auth, db, __app_id };
