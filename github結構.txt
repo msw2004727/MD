@@ -1,0 +1,18 @@
+MD/
+├── backend/
+│   ├── ... (所有後端 Python 檔案)
+├── css/
+│   ├── components.css
+│   ├── layout.css
+│   └── theme.css
+├── js/
+│   ├── api-client.js
+│   ├── auth.js
+│   ├── event-handlers.js
+│   ├── firebase-config.js
+│   ├── game-logic.js
+│   ├── game-state.js
+│   ├── loadApiKey.js
+│   ├── main.js
+│   └── ui.js
+└── index.html
