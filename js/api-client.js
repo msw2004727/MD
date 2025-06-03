@@ -4,7 +4,9 @@ import { auth } from './firebase-config.js'; // 只需要 auth，db 在此模組
 import { loadDeepSeekApiKey } from './loadApiKey.js';
 
 // --- API Configuration ---
-const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
+// **重要修正：將此處的 URL 設定為你後端實際部署的正確 URL**
+// 根據你提供的錯誤訊息，後端 URL 似乎是 'https://test-1-jnro.onrender.com'
+const API_BASE_URL = 'https://test-1-jnro.onrender.com/api/MD';
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEFAULT_MODEL = 'deepseek-chat'; // DeepSeek 推薦使用 deepseek-chat 或 deepseek-coder
 
@@ -58,7 +60,8 @@ async function handleApiResponse(response, errorMessagePrefix = "API 請求失�
  */
 export async function fetchGameConfigs() {
     // 這裡不需要認證，因為是公開的遊戲設定
-    const response = await fetch("https://test-1-jnro.onrender.com/api/MD/game-configs");
+    // **修正：使用 API_BASE_URL 來構建 URL**
+    const response = await fetch(`${API_BASE_URL}/game-configs`);
     return handleApiResponse(response, "獲取遊戲設定失敗");
 }
 
