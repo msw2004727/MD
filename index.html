@@ -342,21 +342,28 @@
             </div>
             <div id="monster-details-tab" class="tab-content active modal-body">
                 <h5 class="font-bold mb-2">基本屬性</h5>
-                <ul class="list-disc list-inside text-sm mb-4">
-                    <li>類型: 龍系</li>
-                    <li>元素: 火</li>
-                    <li>生命值(HP): 1500</li>
-                    <li>魔力值(MP): 500</li>
-                    <li>攻擊力: 200</li>
-                    <li>防禦力: 100</li>
-                    <li>速度: 80</li>
-                    <li>爆擊率: 15%</li>
-                    <li>個性: <span class="text-[var(--accent-color)]">熱血</span> - <span id="monster-personality-text">一段關於怪獸個性的詳細描述。</span></li>
-                </ul>
-                <h5 class="font-bold mb-2">背景故事</h5>
-                <p class="text-sm mb-4" id="monster-introduction-text">一段關於怪獸的背景故事或趣味介紹，包含其數值如何融入敘述。</p>
-                <h5 class="font-bold mb-2">綜合評價與培養建議</h5>
-                <p class="text-sm" id="monster-evaluation-text">一段針對怪獸的綜合評價與培養建議，指出優勢劣勢及戰術定位。</p>
+                <div class="details-grid">
+                    <div class="details-item"><span class="details-label">類型:</span> <span class="details-value">龍系</span></div>
+                    <div class="details-item"><span class="details-label">元素:</span> <span class="details-value">火</span></div>
+                    <div class="details-item"><span class="details-label">生命值(HP):</span> <span class="details-value">1500</span></div>
+                    <div class="details-item"><span class="details-label">魔力值(MP):</span> <span class="details-value">500</span></div>
+                    <div class="details-item"><span class="details-label">攻擊力:</span> <span class="details-value">200</span></div>
+                    <div class="details-item"><span class="details-label">防禦力:</span> <span class="details-value">100</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">80</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">15%</span></div>
+                    <div class="details-item"><span class="details-label">個性:</span> <span class="details-value">熱血</span></div>
+                </div>
+                <p class="personality-text mt-2">一段關於怪獸個性的詳細描述。</p> <h5 class="font-bold mb-2 mt-4">技能列表</h5>
+                <div class="skills-list">
+                    <div class="skill-entry">
+                        <span class="skill-name">火焰噴射</span>
+                        <span class="skill-details">對敵人造成大量火焰傷害。</span>
+                    </div>
+                </div>
+
+                <h5 class="font-bold mb-2 mt-4">背景故事</h5>
+                <p class="ai-generated-text">一段關於怪獸的背景故事或趣味介紹，包含其數值如何融入敘述。</p> <h5 class="font-bold mb-2 mt-4">綜合評價與培養建議</h5>
+                <p class="ai-generated-text">一段針對怪獸的綜合評價與培養建議，指出優勢劣勢及戰術定位。</p> <p class="creation-time-centered">創建時間: 未知</p>
             </div>
             <div id="monster-logs-tab" class="tab-content modal-body">
                 <div id="monster-activity-logs" class="max-h-[300px] overflow-y-auto">
