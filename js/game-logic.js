@@ -449,7 +449,7 @@ export async function generateAndStoreAIDescriptions(monster) {
             console.warn(`未能為 ${monster.nickname} 生成 AI 描述。`);
             monster.aiPersonality = { name: "未知", text: "AI描述生成失敗。", color: "var(--text-secondary)" };
             monster.aiIntroduction = "AI描述生成失敗。";
-            monster.aiEvaluation = "AI描述生成失敗。";
+            monster.aiEvaluation = "AI描述生成失敗.";
         }
     } catch (error) {
         console.error(`為 ${monster.nickname} 生成 AI 描述失敗:`, error);
@@ -947,7 +947,8 @@ export function initializeNpcMonsters() {
     // 這些數據通常是遊戲一開始就固定好的，或者從後端載入
     // 確保 GameState.gameSettings 和 GameState.gameSettings.npc_monsters 存在
     if (GameState.gameSettings && Array.isArray(GameState.gameSettings.npc_monsters)) {
-        GameState.npcMonsters = GameState.gameSettings.npc_monsters;
+        // 使用 slice() 創建一個新的陣列副本，確保它是可擴展的
+        GameState.npcMonsters = GameState.gameSettings.npc_monsters.slice();
         console.log(`NPC 怪獸已初始化：共 ${GameState.npcMonsters.length} 隻。`);
     } else {
         console.warn("遊戲設定中沒有 NPC 怪獸資料或 GameState.gameSettings 結構不完整。將使用空陣列。");
