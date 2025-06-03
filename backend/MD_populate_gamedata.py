@@ -77,23 +77,23 @@ def populate_game_configs():
         { "id": "dna_light_c01", "name": "微弱光塵", "type": "光", "attack": 14, "defense": 10, "speed": 11, "hp": 50, "mp": 26, "crit": 5, "description": "幾乎看不見的光粒子。", "rarity": "普通", "resistances": {'光': 2} },
         { "id": "dna_dark_c01", "name": "稀薄暗影", "type": "暗", "attack": 16, "defense": 8, "speed": 10,  "hp": 48, "mp": 27, "crit": 6, "description": "一絲難以察覺的暗影。", "rarity": "普通", "resistances": {'暗': 2} },
         { "id": "dna_poison_c01", "name": "淡綠毒霧", "type": "毒", "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": "幾乎無害的稀薄毒霧。", "rarity": "普通", "resistances": {'毒': 2} },
-        { "id": "dna_wind_c01", "name": "輕柔微風", "type": "風", "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": "幾乎感覺不到的微風。", "rarity": "普通", "resistances": {'風': 2} },
-        { "id": "dna_none_c01", "name": "中性細胞核", "type": "無", "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": "基礎的生命核心。", "rarity": "普通" },
-        { "id": "dna_earth_r01", "name": "堅硬岩片", "type": "土", "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": "較為堅固的岩石碎片。", "rarity": "稀有", "resistances": {'土': 5} },
-        { "id": "dna_wind_r01", "name": "微風精華", "type": "風", "attack": 16, "defense": 10, "speed": 22, "hp": 58, "mp": 26, "crit": 8, "description": "蘊含少量風之力的精華。", "rarity": "稀有", "resistances": {'風': 5} },
-        { "id": "dna_poison_r01", "name": "弱效毒液", "type": "毒", "attack": 20, "defense": 8, "speed": 14, "hp": 50, "mp": 24, "crit": 6, "description": "帶有些許毒性的液體。", "rarity": "稀有", "resistances": {'毒': 5} },
-        { "id": "dna_fire_r01", "name": "熾熱餘燼", "type": "火", "attack": 25, "defense": 12, "speed": 15, "hp": 60, "mp": 30, "crit": 7, "description": "尚有餘溫的熾熱灰燼。", "rarity": "稀有", "resistances": {'火': 5, '水': -1} },
-        { "id": "dna_water_r01", "name": "凝結水珠", "type": "水", "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": "蘊含純淨能量的凝結水珠。", "rarity": "稀有", "resistances": {'水': 5, '木': -1} },
-        { "id": "dna_wood_r01", "name": "硬化樹皮塊", "type": "木", "attack": 15, "defense": 22, "speed": 10, "hp": 75, "mp": 32, "crit": 4, "description": "經過硬化的堅韌樹皮。", "rarity": "稀有", "resistances": {'木': 5, '金': -1} },
-        { "id": "dna_dark_e01", "name": "暗影殘片", "type": "暗", "attack": 28, "defense": 7, "speed": 12,  "hp": 48, "mp": 38, "crit": 9, "description": "凝聚了部分暗影力量的碎片。", "rarity": "菁英", "resistances": {'暗': 8} },
-        { "id": "dna_light_e01", "name": "光芒碎片", "type": "光", "attack": 20, "defense": 14, "speed": 15, "hp": 68, "mp": 30, "crit": 7, "description": "閃耀著純淨光芒的結晶碎片。", "rarity": "菁英", "resistances": {'光': 8} },
-        { "id": "dna_fire_e01", "name": "烈焰核心", "type": "火", "attack": 30, "defense": 10, "speed": 18, "hp": 60, "mp": 35, "crit": 10, "description": "燃燒旺盛的火焰核心。", "rarity": "菁英", "resistances": {'火': 8, '水': -3} },
-        { "id": "dna_gold_e01", "name": "精煉金塊", "type": "金", "attack": 22, "defense": 30, "speed": 12, "hp": 65, "mp": 28, "crit": 6, "description": "經過提煉的純淨金屬塊。", "rarity": "菁英", "resistances": {'金': 8, '火': -3} },
-        { "id": "dna_gold_l01", "name": "不朽金屬", "type": "金", "attack": 25, "defense": 35, "speed": 10,  "hp": 70, "mp": 20, "crit": 5, "description": "極其堅硬且帶有神秘力量的金屬。", "rarity": "傳奇", "resistances": {'金': 12, '土': 5} },
-        { "id": "dna_water_l01", "name": "深海之源", "type": "水", "attack": 22, "defense": 28, "speed": 25, "hp": 80, "mp": 45, "crit": 8, "description": "來自海洋深處的強大水能結晶。", "rarity": "傳奇", "resistances": {'水': 12, '火': -5} },
-        { "id": "dna_earth_l01", "name": "大地龍脈結晶", "type": "土", "attack": 18, "defense": 40, "speed": 8, "hp": 100, "mp": 25, "crit": 4, "description": "蘊含大地龍脈力量的稀有結晶。", "rarity": "傳奇", "resistances": {'土': 12, '風': -5} },
-        { "id": "dna_ancient_m01", "name": "遠古龍魂", "type": "無", "attack": 40, "defense": 40, "speed": 40, "hp": 120, "mp": 60, "crit": 15, "description": "蘊含遠古巨龍靈魂的神秘DNA。", "rarity": "神話", "resistances": {'火':8, '水':8, '木':8, '金':8, '土':8, "光": 5, "暗": 5} },
-        { "id": "dna_chaos_m01", "name": "混沌原核", "type": "混", "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": "來自世界誕生之初的混沌能量核心。", "rarity": "神話", "resistances": {'毒':10, '風':10} }
+        { "id": 'dna_wind_c01', "name": '輕柔微風', "type': '風', "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": '幾乎感覺不到的微風。', "rarity": "普通", "resistances": {'風': 2} },
+        { "id": 'dna_none_c01', "name": '中性細胞核', "type': '無', "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": '基礎的生命核心。', "rarity": "普通" },
+        { "id": 'dna_earth_r01', "name": '堅硬岩片', "type': '土', "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": '較為堅固的岩石碎片。', "rarity": "稀有", "resistances": {'土': 5} },
+        { "id": 'dna_wind_r01', "name": '微風精華', "type': '風', "attack": 16, "defense": 10, "speed": 22, "hp": 58, "mp": 26, "crit": 8, "description": '蘊含少量風之力的精華。', "rarity": "稀有", "resistances": {'風': 5} },
+        { "id": 'dna_poison_r01', "name": '弱效毒液', "type': '毒', "attack": 20, "defense": 8, "speed": 14, "hp": 50, "mp": 24, "crit": 6, "description": '帶有些許毒性的液體。', "rarity": "稀有", "resistances": {'毒': 5} },
+        { "id": 'dna_fire_r01', "name": '熾熱餘燼', "type': '火', "attack": 25, "defense": 12, "speed": 15, "hp": 60, "mp": 30, "crit": 7, "description": '尚有餘溫的熾熱灰燼。', "rarity": "稀有", "resistances": {'火': 5, '水': -1} },
+        { "id": 'dna_water_r01', "name": '凝結水珠', "type': '水', "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": '蘊含純淨能量的凝結水珠。', "rarity": "稀有", "resistances": {'水': 5, '木': -1} },
+        { "id": 'dna_wood_r01', "name": '硬化樹皮塊', "type': '木', "attack": 15, "defense": 22, "speed": 10, "hp": 75, "mp": 32, "crit": 4, "description": '經過硬化的堅韌樹皮。', "rarity": "稀有", "resistances": {'木': 5, '金': -1} },
+        { "id": 'dna_dark_e01', "name": '暗影殘片', "type': '暗', "attack": 28, "defense": 7, "speed": 12,  "hp": 48, "mp": 38, "crit": 9, "description": '凝聚了部分暗影力量的碎片。', "rarity": "菁英", "resistances": {'暗': 8} },
+        { "id": 'dna_light_e01', "name": '光芒碎片', "type': '光', "attack": 20, "defense": 14, "speed": 15, "hp": 68, "mp": 30, "crit": 7, "description": '閃耀著純淨光芒的結晶碎片。', "rarity": "菁英", "resistances": {'光': 8} },
+        { "id": 'dna_fire_e01', "name": '烈焰核心', "type': '火', "attack": 30, "defense": 10, "speed": 18, "hp": 60, "mp": 35, "crit": 10, "description": '燃燒旺盛的火焰核心。', "rarity": "菁英", "resistances": {'火': 8, '水': -3} },
+        { "id": 'dna_gold_e01', "name": '精煉金塊', "type": '金', "attack": 22, "defense": 30, "speed": 12, "hp": 65, "mp": 28, "crit": 6, "description": '經過提煉的純淨金屬塊。', "rarity": "菁英", "resistances": {'金': 8, '火': -3} },
+        { "id": 'dna_gold_l01', "name": '不朽金屬', "type': '金', "attack": 25, "defense": 35, "speed": 10,  "hp": 70, "mp": 20, "crit": 5, "description": '極其堅硬且帶有神秘力量的金屬。', "rarity": "傳奇", "resistances": {'金': 12, '土': 5} },
+        { "id": 'dna_water_l01', "name': '深海之源', "type': '水', "attack': 22, "defense": 28, "speed": 25, "hp": 80, "mp": 45, "crit": 8, "description": '來自海洋深處的強大水能結晶。', "rarity": "傳奇", "resistances": {'水': 12, '火': -5} },
+        { "id": 'dna_earth_l01', "name": '大地龍脈結晶', "type': '土', "attack": 18, "defense": 40, "speed": 8, "hp": 100, "mp": 25, "crit": 4, "description": '蘊含大地龍脈力量的稀有結晶。', "rarity": "傳奇", "resistances": {'土': 12, '風': -5} },
+        { "id": 'dna_ancient_m01', "name": '遠古龍魂', "type': '無', "attack": 40, "defense": 40, "speed": 40, "hp": 120, "mp": 60, "crit": 15, "description": '蘊含遠古巨龍靈魂的神秘DNA。', "rarity": "神話", "resistances": {'火':8, '水':8, '木':8, '金':8, '土':8, "光": 5, "暗": 5} },
+        { "id": 'dna_chaos_m01', "name": '混沌原核', "type": '混', "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": '來自世界誕生之初的混沌能量核心。', "rarity": "神話", "resistances": {'毒':10, '風':10} }
     ]
     try:
         db.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
@@ -152,6 +152,48 @@ def populate_game_configs():
             { "name": "寄生種子", "power": 15, "crit": 0, "probability": 70, "story": "一顆奇異的種子從{attacker_name}手中飛出，鑽入{target_name}體內，不斷吸取其生命力反哺自身。", "type": "木", "effect": "leech", "damage_per_turn": 10, "heal_per_turn": 7, "duration": 3, "baseLevel": 1, "mp_cost": 8, "skill_category": "特殊" },
             { "name": "光合作用", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}靜靜地沐浴在能量之中，將自然之力轉化為生命力，緩慢恢復HP。", "type": "木", "effect": "heal_self_over_time", "amount_per_turn": 25, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
             { "name": "森林的憤怒", "power": 70, "crit": 8, "probability": 50, "story": "{attacker_name}引導大自然的磅礴力量，召喚無數巨大的藤蔓和樹木猛擊所有敵人！", "type": "木", "baseLevel": 4, "mp_cost": 19, "skill_category": "魔法", "target": "enemy_all" },
+        ],
+        # **新增：土系技能**
+        '土': [
+            { "name": "落石", "power": 30, "crit": 5, "probability": 75, "story": "{attacker_name}召喚數塊巨石從天而降，猛烈砸向{target_name}！", "type": "土", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
+            { "name": "堅壁", "power": 0, "crit": 0, "probability": 80, "story": "{attacker_name}凝聚土元素形成一道堅固的屏障，大幅提升自身防禦力。", "type": "土", "effect": "buff", "stat": "defense", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
+            { "name": "地震", "power": 55, "crit": 0, "probability": 60, "story": "{attacker_name}猛擊地面，引發一場小型地震，震動所有敵人！", "type": "土", "baseLevel": 3, "mp_cost": 15, "skill_category": "物理", "target": "enemy_all" },
+        ],
+        # **新增：金系技能**
+        '金': [
+            { "name": "鋼鐵衝擊", "power": 35, "crit": 10, "probability": 80, "story": "{attacker_name}全身化為鋼鐵，以驚人速度衝撞{target_name}！", "type": "金", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
+            { "name": "金屬風暴", "power": 40, "crit": 5, "probability": 70, "story": "{attacker_name}揮舞利爪，掀起一陣金屬碎片風暴，切割所有敵人。", "type": "金", "baseLevel": 2, "mp_cost": 12, "skill_category": "物理", "target": "enemy_all" },
+            { "name": "反射護盾", "power": 0, "crit": 0, "probability": 50, "story": "{attacker_name}召喚一面光滑的金屬護盾，能反射部分魔法攻擊。", "type": "金", "effect": "reflect_magic", "chance": 30, "duration": 2, "baseLevel": 3, "mp_cost": 15, "skill_category": "輔助", "target":"self" },
+        ],
+        # **新增：光系技能**
+        '光': [
+            { "name": "聖光彈", "power": 30, "crit": 8, "probability": 75, "story": "{attacker_name}凝聚聖潔的光芒，射出一枚光彈攻擊{target_name}。", "type": "光", "baseLevel": 1, "mp_cost": 6, "skill_category": "魔法" },
+            { "name": "淨化之光", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}釋放溫暖的淨化之光，移除我方一個怪獸的不良狀態。", "type": "光", "effect": "cure_debuff", "target": "team_single", "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助" },
+            { "name": "耀眼閃光", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}發出刺眼的光芒，大幅降低敵人的命中率。", "type": "光", "effect": "debuff", "stat": "accuracy", "amount": -20, "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "變化", "target": "enemy_all" },
+        ],
+        # **新增：暗系技能**
+        '暗': [
+            { "name": "暗影爪", "power": 32, "crit": 12, "probability": 70, "story": "{attacker_name}的利爪被暗影籠罩，悄無聲息地襲擊{target_name}！", "type": "暗", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
+            { "name": "虛無之境", "power": 0, "crit": 0, "probability": 55, "story": "{attacker_name}將自身隱沒於虛無，大幅提升閃避能力。", "type": "暗", "effect": "buff", "stat": "evasion", "amount": 25, "duration": 3, "baseLevel": 2, "mp_cost": 11, "skill_category": "輔助", "target":"self" },
+            { "name": "暗影爆破", "power": 60, "crit": 10, "probability": 50, "story": "{attacker_name}引爆一團黑暗能量，對所有敵人造成毀滅性打擊！", "type": "暗", "baseLevel": 4, "mp_cost": 18, "skill_category": "魔法", "target": "enemy_all" },
+        ],
+        # **新增：毒系技能**
+        '毒': [
+            { "name": "毒液噴射", "power": 28, "crit": 5, "probability": 75, "story": "{attacker_name}向{target_name}噴射出腐蝕性毒液！", "type": "毒", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
+            { "name": "劇毒之霧", "power": 10, "crit": 0, "probability": 65, "story": "{attacker_name}釋放一片劇毒之霧，使敵人中毒並持續掉血。", "type": "毒", "effect": "dot", "damage_per_turn": 10, "duration": 4, "chance": 70, "baseLevel": 2, "mp_cost": 9, "skill_category": "特殊", "target": "enemy_all" },
+            { "name": "腐蝕", "power": 0, "crit": 0, "probability": 50, "story": "{attacker_name}的毒素具有腐蝕性，降低{target_name}的防禦力。", "type": "毒", "effect": "debuff", "stat": "defense", "amount": -15, "duration": 3, "baseLevel": 3, "mp_cost": 10, "skill_category": "變化" },
+        ],
+        # **新增：風系技能**
+        '風': [
+            { "name": "風刃", "power": 25, "crit": 15, "probability": 80, "story": "{attacker_name}凝聚風元素形成鋒利刀刃，切割{target_name}！", "type": "風", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
+            { "name": "疾風步", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}身形化為疾風，速度大幅提升！", "type": "風", "effect": "buff", "stat": "speed", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 8, "skill_category": "輔助", "target":"self" },
+            { "name": "龍捲風", "power": 50, "crit": 5, "probability": 55, "story": "{attacker_name}召喚狂暴龍捲風，席捲所有敵人！", "type": "風", "baseLevel": 3, "mp_cost": 14, "skill_category": "魔法", "target": "enemy_all" },
+        ],
+        # **新增：混系技能**
+        '混': [
+            { "name": "元素爆發", "power": 40, "crit": 10, "probability": 70, "story": "{attacker_name}釋放體內混亂的元素能量，對{target_name}造成多重屬性傷害！", "type": "混", "baseLevel": 2, "mp_cost": 10, "skill_category": "魔法" },
+            { "name": "混沌護盾", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}周身環繞混沌能量，隨機提升自身數值。", "type": "混", "effect": "random_buff", "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "輔助", "target":"self" },
+            { "name": "萬物歸元", "power": 75, "crit": 5, "probability": 45, "story": "{attacker_name}引導萬物歸元之力，對所有敵人造成無差別打擊！", "type": "混", "baseLevel": 4, "mp_cost": 20, "skill_category": "特殊", "target": "enemy_all" },
         ],
         '無': [
             { "name": "猛撞", "power": 35, "crit": 5, "probability": 80, "story": "{attacker_name}集中全身力量，奮力撞向{target_name}。", "type": "無", "baseLevel": 1, "mp_cost": 4, "skill_category": "近戰"},
