@@ -229,7 +229,7 @@ export function populateInventory() {
     inventoryItemsContainer.innerHTML = '';
 
     for (let i = 0; i < GameState.NUM_INVENTORY_SLOTS; i++) {
-        const item = GameState.playerOwnedDNA[i]; // 從 GameState.playerOwnedDNA 獲取物品
+        const item = GameState.playerData.playerOwnedDNA[i]; // 從 GameState.playerOwnedDNA 獲取物品
         const slotDiv = createDnaElement(item, i, 'inventory');
         inventoryItemsContainer.appendChild(slotDiv);
     }
@@ -258,7 +258,7 @@ export function populateTemporaryBackpack() {
 
     for (let i = 0; i < GameState.NUM_TEMP_BACKPACK_SLOTS; i++) {
         const item = GameState.temporaryBackpackSlots[i];
-        const slotDiv = createDnaElement(item, i, 'temporary'); // 使用 createDnaElement 創建
+        const slotDiv = createDnaElement(item, i, 'temporary'); // 使用 createDnaElement 創建 
         slotDiv.classList.add('temp-backpack-slot'); // 添加臨時背包專用樣式
         if (item) {
             slotDiv.classList.remove('inventory-slot-empty'); // 如果有物品，移除空槽位樣式
@@ -365,6 +365,7 @@ export function updateMonsterSnapshotDisplay(monster) {
 }
 
 export function renderMonsterInfoModalContent(monster) {
+    // 這裡只解構實際用於直接操作的元素，AI描述的 <p> 標籤是動態生成的
     const { monsterInfoModalHeaderContent, monsterDetailsTab, monsterActivityLogs } = GameState.elements;
     if (!monsterInfoModalHeaderContent || !monsterDetailsTab || !monsterActivityLogs) {
         console.error("UI: Monster info modal content elements not found.");
@@ -394,6 +395,7 @@ export function renderMonsterInfoModalContent(monster) {
     `;
 
     // 渲染詳細資訊頁籤
+    // 這裡直接使用 monster.aiPersonality?.text 等，因為這些是動態生成的內容
     const personalityText = monster.aiPersonality?.text || '一段關於怪獸個性的詳細描述。';
     const introductionText = monster.aiIntroduction || '一段關於怪獸的背景故事或趣味介紹，包含其數值如何融入敘述。';
     const evaluationText = monster.aiEvaluation || '一段針對怪獸的綜合評價與培養建議，指出優勢劣勢及戰術定位。';
@@ -485,10 +487,14 @@ export function updateMonsterActivityLog(monster) {
                 `).join('')}
             </ul>
         `;
-        document.getElementById('monster-activity-logs-empty-message').style.display = 'none';
+        // 確保如果列表有內容，空訊息是隱藏的
+        const emptyMessageEl = document.getElementById('monster-activity-logs-empty-message');
+        if (emptyMessageEl) emptyMessageEl.style.display = 'none';
     } else {
         monsterActivityLogs.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4" id="monster-activity-logs-empty-message">尚無活動紀錄。</p>';
-        document.getElementById('monster-activity-logs-empty-message').style.display = 'block';
+        // 確保如果列表為空，空訊息是顯示的
+        const emptyMessageEl = document.getElementById('monster-activity-logs-empty-message');
+        if (emptyMessageEl) emptyMessageEl.style.display = 'block';
     }
     console.log(`UI: Monster activity log updated for ${monster ? monster.nickname : '無怪獸'}.`);
 }
@@ -510,14 +516,14 @@ export function populateFarmList() {
             monsterItemDiv.className = 'farm-monster-item farm-header-grid py-2 border-b border-gray-700 items-center';
             monsterItemDiv.dataset.monsterId = monster.id;
 
-            const isCultivating = monster.farmStatus && monster.farmStatus.isCultivating;
+            const isTraining = monster.farmStatus && monster.farmStatus.isTraining; // 修正為 isTraining
             const isBattling = monster.farmStatus && monster.farmStatus.isBattling;
-            const statusText = isCultivating ? `修煉中 (${monster.farmStatus.remainingTime}s)` : (isBattling ? '出戰中' : '活躍');
-            const statusClass = isCultivating ? 'text-yellow-400' : (isBattling ? 'text-red-400' : 'text-green-400');
+            const statusText = isTraining ? `修煉中 (${monster.farmStatus.remainingTime}s)` : (isBattling ? '出戰中' : '活躍');
+            const statusClass = isTraining ? 'text-yellow-400' : (isBattling ? 'text-red-400' : 'text-green-400');
 
             monsterItemDiv.innerHTML = `
                 <div>
-                    <input type="radio" name="active_monster" value="${monster.id}" id="active_monster_${monster.id}" ${isBattling ? 'checked' : ''} ${isCultivating ? 'disabled' : ''}>
+                    <input type="radio" name="active_monster" value="${monster.id}" id="active_monster_${monster.id}" ${isBattling ? 'checked' : ''} ${isTraining ? 'disabled' : ''}>
                     <label for="active_monster_${monster.id}" class="sr-only">選擇${monster.nickname}出戰</label>
                 </div>
                 <div class="flex items-center">
@@ -527,8 +533,8 @@ export function populateFarmList() {
                 <div class="${statusClass} farm-monster-status">${statusText}</div>
                 <div class="hidden sm:block farm-monster-score">${monster.totalEvaluation || 0}</div>
                 <div class="farm-monster-actions-group">
-                    <button class="text-xs secondary p-1 farm-monster-cultivate-btn" data-action="cultivate" data-monster-id="${monster.id}" ${isCultivating ? 'disabled' : ''}>養成</button>
-                    <button class="text-xs danger p-1 farm-monster-release-btn" data-action="release" data-monster-id="${monster.id}" ${isCultivating || isBattling ? 'disabled' : ''}>放生</button>
+                    <button class="text-xs secondary p-1 farm-monster-cultivate-btn" data-action="cultivate" data-monster-id="${monster.id}" ${isTraining ? 'disabled' : ''}>養成</button>
+                    <button class="text-xs danger p-1 farm-monster-release-btn" data-action="release" data-monster-id="${monster.id}" ${isTraining || isBattling ? 'disabled' : ''}>放生</button>
                 </div>
             `;
             farmedMonstersList.appendChild(monsterItemDiv);
@@ -540,10 +546,10 @@ export function populateFarmList() {
 export function updateFarmMonsterStatusDisplay(monster, statusDivElement) {
     if (!monster || !statusDivElement) return;
 
-    const isCultivating = monster.farmStatus && monster.farmStatus.isCultivating;
+    const isTraining = monster.farmStatus && monster.farmStatus.isTraining; // 修正為 isTraining
     const isBattling = monster.farmStatus && monster.farmStatus.isBattling;
-    const statusText = isCultivating ? `修煉中 (${monster.farmStatus.remainingTime}s)` : (isBattling ? '出戰中' : '活躍');
-    const statusClass = isCultivating ? 'text-yellow-400' : (isBattling ? 'text-red-400' : 'text-green-400');
+    const statusText = isTraining ? `修煉中 (${monster.farmStatus.remainingTime}s)` : (isBattling ? '出戰中' : '活躍');
+    const statusClass = isTraining ? 'text-yellow-400' : (isBattling ? 'text-red-400' : 'text-green-400');
 
     statusDivElement.className = `${statusClass} farm-monster-status`; // 更新 class
     statusDivElement.textContent = statusText; // 更新文字
@@ -555,9 +561,9 @@ export function updateFarmMonsterStatusDisplay(monster, statusDivElement) {
         const releaseBtn = parentItem.querySelector('.farm-monster-release-btn');
         const battleRadio = parentItem.querySelector('input[name="active_monster"]');
 
-        if (cultivateBtn) cultivateBtn.disabled = isCultivating;
-        if (releaseBtn) releaseBtn.disabled = isCultivating || isBattling;
-        if (battleRadio) battleRadio.disabled = isCultivating;
+        if (cultivateBtn) cultivateBtn.disabled = isTraining;
+        if (releaseBtn) releaseBtn.disabled = isTraining || isBattling;
+        if (battleRadio) battleRadio.disabled = isTraining;
         if (battleRadio && isBattling) battleRadio.checked = true;
     }
     console.log(`UI: Farm monster status display updated for ${monster.nickname}.`);
@@ -582,6 +588,15 @@ export function renderTrainingItems() {
             `;
             trainingItemsResult.appendChild(itemDiv);
         });
+        // 檢查是否所有物品都已加入，如果是，禁用「一鍵全數加入背包」按鈕
+        const allAdded = GameState.itemsFromCurrentTraining.every(item => item.addedToBackpack);
+        if (allAdded) {
+            addAllToTempBackpackBtn.disabled = true;
+            addAllToTempBackpackBtn.textContent = '所有物品已加入';
+        } else {
+            addAllToTempBackpackBtn.disabled = false;
+            addAllToTempBackpackBtn.textContent = '一鍵全數加入背包';
+        }
         addAllToTempBackpackBtn.style.display = 'block'; // 顯示一鍵加入按鈕
     } else {
         trainingItemsResult.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-2">本次修煉沒有拾獲任何物品。</p>';
@@ -591,8 +606,8 @@ export function renderTrainingItems() {
 }
 
 export function updateTrainingItemsDisplay() {
-    const { trainingItemsResult } = GameState.elements;
-    if (!trainingItemsResult) { console.error("UI: trainingItemsResult not found!"); return; }
+    const { trainingItemsResult, addAllToTempBackpackBtn } = GameState.elements;
+    if (!trainingItemsResult || !addAllToTempBackpackBtn) { console.error("UI: trainingResults elements not found!"); return; }
 
     GameState.itemsFromCurrentTraining.forEach((item, index) => {
         const btn = trainingItemsResult.querySelector(`.add-one-to-temp-backpack-btn[data-item-index="${index}"]`);
@@ -603,9 +618,12 @@ export function updateTrainingItemsDisplay() {
     });
     // 檢查是否所有物品都已加入，如果是，禁用「一鍵全數加入背包」按鈕
     const allAdded = GameState.itemsFromCurrentTraining.every(item => item.addedToBackpack);
-    if (allAdded && GameState.elements.addAllToTempBackpackBtn) {
-        GameState.elements.addAllToTempBackpackBtn.disabled = true;
-        GameState.elements.addAllToTempBackpackBtn.textContent = '所有物品已加入';
+    if (allAdded) {
+        addAllToTempBackpackBtn.disabled = true;
+        addAllToTempBackpackBtn.textContent = '所有物品已加入';
+    } else {
+        addAllToTempBackpackBtn.disabled = false;
+        addAllToTempBackpackBtn.textContent = '一鍵全數加入背包';
     }
     console.log("UI: Training items display (button states) updated.");
 }
@@ -741,7 +759,7 @@ export function updateFriendsListContainerWithMessage(message, isError = false) 
 }
 
 
-export function openAndPopulatePlayerInfoModal(playerGameData, targetPlayerUid) {
+export function openAndPopulatePlayerInfoModal(playerUid) { // 這裡只接收 UID
     const { playerInfoNickname, playerInfoUid, playerInfoWins, playerInfoLosses, playerInfoGold, playerInfoDiamond, playerInfoAchievements, playerInfoAchievementsEmptyMessage, playerInfoOwnedMonsters, playerInfoOwnedMonstersEmptyMessage } = GameState.elements;
 
     if (!playerInfoNickname || !playerInfoUid || !playerInfoWins || !playerInfoLosses || !playerInfoGold || !playerInfoDiamond || !playerInfoAchievements || !playerInfoAchievementsEmptyMessage || !playerInfoOwnedMonsters || !playerInfoOwnedMonstersEmptyMessage) {
@@ -749,8 +767,14 @@ export function openAndPopulatePlayerInfoModal(playerGameData, targetPlayerUid) 
         return;
     }
 
-    // 這裡假設 playerGameData 已經包含完整的玩家資料
-    const player = playerGameData; // 或者從 GameState.playerData 獲取
+    // 從 GameState.allPublicPlayers 中查找對應的玩家數據
+    const player = GameState.allPublicPlayers.find(p => p.uid === playerUid) || GameState.playerData; // 如果是查看自己，則使用 playerData
+
+    if (!player) {
+        console.error(`UI: Player data not found for UID: ${playerUid}`);
+        showFeedbackModal("錯誤", "找不到該玩家的資料。", false, true);
+        return;
+    }
 
     playerInfoNickname.textContent = player.nickname || '未知玩家';
     playerInfoUid.textContent = player.uid || '未知ID';
@@ -769,8 +793,11 @@ export function openAndPopulatePlayerInfoModal(playerGameData, targetPlayerUid) 
     }
 
     // 擁有怪獸列表
-    if (player.ownedMonsters && player.ownedMonsters.length > 0) {
-        playerInfoOwnedMonsters.innerHTML = player.ownedMonsters.map(monster => `
+    // 這裡需要判斷是自己的怪獸還是其他玩家的怪獸
+    const monstersToDisplay = (player.uid === GameState.playerData.uid) ? GameState.farmedMonsters : (player.ownedMonsters || []);
+
+    if (monstersToDisplay && monstersToDisplay.length > 0) {
+        playerInfoOwnedMonsters.innerHTML = monstersToDisplay.map(monster => `
             <li><span class="monster-name">${monster.nickname}</span> <span class="monster-score">總評價: ${monster.totalEvaluation || 0}</span></li>
         `).join('');
         playerInfoOwnedMonstersEmptyMessage.style.display = 'none';
@@ -780,7 +807,7 @@ export function openAndPopulatePlayerInfoModal(playerGameData, targetPlayerUid) 
     }
 
     openModal('player-info-modal');
-    console.log(`UI: Player info modal populated and opened for UID: ${targetPlayerUid}.`);
+    console.log(`UI: Player info modal populated and opened for UID: ${playerUid}.`);
 }
 
 export function displayBattleLog(logEntries) {
