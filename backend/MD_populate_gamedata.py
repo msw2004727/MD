@@ -1,19 +1,66 @@
 # MD_populate_gamedata.py
 # 用於將遊戲設定資料一次性匯入到 Firestore
 
-from MD_firebase_config import db
+# 導入必要的模組
+from MD_firebase_config import db # 這裡的 db 會在 initialize_firebase_for_script 設置後被更新
 import time
 import random
+import os # 導入 os 模組用於檢查文件路徑
+import json # 導入 json 模組用於解析 JSON
+
+# 導入 Firebase Admin SDK
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 # 輔助用列表 (與 MD_models.py 中的 Literal 一致)
 ELEMENT_TYPES = ["火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"]
 RARITY_NAMES = ["普通", "稀有", "菁英", "傳奇", "神話"]
 SKILL_CATEGORIES = ["近戰", "遠程", "魔法", "輔助", "物理", "特殊", "變化", "其他"]
 
+# 服務帳戶金鑰檔案的路徑
+# 請確保 'serviceAccountKey.json' 檔案與此腳本在同一目錄下
+SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
+
+def initialize_firebase_for_script():
+    """
+    為此腳本初始化 Firebase Admin SDK。
+    """
+    if not firebase_admin._apps: # 避免重複初始化
+        try:
+            # 檢查金鑰檔案是否存在
+            if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
+                cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
+                firebase_admin.initialize_app(cred)
+                print("Firebase Admin SDK 初始化成功。")
+                # 在這裡確保 MD_firebase_config.db 被設置
+                from MD_firebase_config import set_firestore_client
+                set_firestore_client(firestore.client())
+            else:
+                print(f"錯誤：找不到服務帳戶金鑰檔案：{SERVICE_ACCOUNT_KEY_PATH}")
+                print("請確認金鑰檔案已下載並重新命名為 serviceAccountKey.json，並放在 MD/backend/ 目錄下。")
+                return False # 初始化失敗
+        except Exception as e:
+            print(f"Firebase Admin SDK 初始化失敗: {e}")
+            return False # 初始化失敗
+    else:
+        # 如果已經初始化，確保 db client 已經設置
+        from MD_firebase_config import set_firestore_client
+        set_firestore_client(firestore.client())
+        print("Firebase Admin SDK 已初始化，跳過重複初始化。")
+    return True # 初始化成功
+
+
 def populate_game_configs():
     """
     將遊戲設定資料寫入 Firestore 的 MD_GameConfigs 集合。
     """
+    # 在執行資料填充前，先確保 Firebase 已初始化
+    if not initialize_firebase_for_script():
+        print("錯誤：Firebase 未成功初始化。無法執行資料填充。")
+        return
+
+    # 確保 db 實例已經被設置
+    from MD_firebase_config import db # 重新導入 db，確保它是最新設置的實例
     if not db:
         print("錯誤：Firestore 資料庫未初始化。無法執行資料填充。")
         return
@@ -29,24 +76,24 @@ def populate_game_configs():
         { "id": 'dna_earth_c01', "name": '鬆軟泥土', "type": '土', "attack": 9, "defense": 18, "speed": 5,  "hp": 65, "mp": 20, "crit": 2, "description": '普通的鬆軟泥土塊。', "rarity": "普通", "resistances": {'土': 2} },
         { "id": 'dna_light_c01', "name": '微弱光塵', "type": '光', "attack": 14, "defense": 10, "speed": 11, "hp": 50, "mp": 26, "crit": 5, "description": '幾乎看不見的光粒子。', "rarity": "普通", "resistances": {'光': 2} },
         { "id": 'dna_dark_c01', "name": '稀薄暗影', "type": '暗', "attack": 16, "defense": 8, "speed": 10,  "hp": 48, "mp": 27, "crit": 6, "description": '一絲難以察覺的暗影。', "rarity": "普通", "resistances": {'暗': 2} },
-        { "id": 'dna_poison_c01', "name": '淡綠毒霧', "type": '毒', "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": '幾乎無害的稀薄毒霧。', "rarity": "普通", "resistances": {'毒': 2} },
-        { "id": 'dna_wind_c01', "name": '輕柔微風', "type": '風', "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": '幾乎感覺不到的微風。', "rarity": "普通", "resistances": {'風': 2} },
-        { "id": 'dna_none_c01', "name": '中性細胞核', "type": '無', "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": '基礎的生命核心。', "rarity": "普通" },
-        { "id": 'dna_earth_r01', "name": '堅硬岩片', "type": '土', "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": '較為堅固的岩石碎片。', "rarity": "稀有", "resistances": {'土': 5} },
-        { "id": 'dna_wind_r01', "name": '微風精華', "type": '風', "attack": 16, "defense": 10, "speed": 22, "hp": 58, "mp": 26, "crit": 8, "description": '蘊含少量風之力的精華。', "rarity": "稀有", "resistances": {'風': 5} },
-        { "id": 'dna_poison_r01', "name": '弱效毒液', "type": '毒', "attack": 20, "defense": 8, "speed": 14, "hp": 50, "mp": 24, "crit": 6, "description": '帶有些許毒性的液體。', "rarity": "稀有", "resistances": {'毒': 5} },
-        { "id": 'dna_fire_r01', "name": '熾熱餘燼', "type": '火', "attack": 25, "defense": 12, "speed": 15, "hp": 60, "mp": 30, "crit": 7, "description": '尚有餘溫的熾熱灰燼。', "rarity": "稀有", "resistances": {'火': 5, '水': -1} },
-        { "id": 'dna_water_r01', "name": '凝結水珠', "type": '水', "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": '蘊含純淨能量的凝結水珠。', "rarity": "稀有", "resistances": {'水': 5, '木': -1} },
-        { "id": 'dna_wood_r01', "name": '硬化樹皮塊', "type": '木', "attack": 15, "defense": 22, "speed": 10, "hp": 75, "mp": 32, "crit": 4, "description": '經過硬化的堅韌樹皮。', "rarity": "稀有", "resistances": {'木': 5, '金': -1} },
-        { "id": 'dna_dark_e01', "name": '暗影殘片', "type": '暗', "attack": 28, "defense": 7, "speed": 12,  "hp": 48, "mp": 38, "crit": 9, "description": '凝聚了部分暗影力量的碎片。', "rarity": "菁英", "resistances": {'暗': 8} },
-        { "id": 'dna_light_e01', "name": '光芒碎片', "type": '光', "attack": 20, "defense": 14, "speed": 15, "hp": 68, "mp": 30, "crit": 7, "description": '閃耀著純淨光芒的結晶碎片。', "rarity": "菁英", "resistances": {'光': 8} },
-        { "id": 'dna_fire_e01', "name": '烈焰核心', "type": '火', "attack": 30, "defense": 10, "speed": 18, "hp": 60, "mp": 35, "crit": 10, "description": '燃燒旺盛的火焰核心。', "rarity": "菁英", "resistances": {'火': 8, '水': -3} },
-        { "id": 'dna_gold_e01', "name": '精煉金塊', "type": '金', "attack": 22, "defense": 30, "speed": 12, "hp": 65, "mp": 28, "crit": 6, "description": '經過提煉的純淨金屬塊。', "rarity": "菁英", "resistances": {'金': 8, '火': -3} },
-        { "id": 'dna_gold_l01', "name": '不朽金屬', "type": '金', "attack": 25, "defense": 35, "speed": 10,  "hp": 70, "mp": 20, "crit": 5, "description": '極其堅硬且帶有神秘力量的金屬。', "rarity": "傳奇", "resistances": {'金': 12, '土': 5} },
-        { "id": 'dna_water_l01', "name": '深海之源', "type": '水', "attack": 22, "defense": 28, "speed": 25, "hp": 80, "mp": 45, "crit": 8, "description": '來自海洋深處的強大水能結晶。', "rarity": "傳奇", "resistances": {'水': 12, '火': -5} },
-        { "id": 'dna_earth_l01', "name": '大地龍脈結晶', "type": '土', "attack": 18, "defense": 40, "speed": 8, "hp": 100, "mp": 25, "crit": 4, "description": '蘊含大地龍脈力量的稀有結晶。', "rarity": "傳奇", "resistances": {'土': 12, '風': -5} },
-        { "id": 'dna_ancient_m01', "name": '遠古龍魂', "type": '無', "attack": 40, "defense": 40, "speed": 40, "hp": 120, "mp": 60, "crit": 15, "description": '蘊含遠古巨龍靈魂的神秘DNA。', "rarity": "神話", "resistances": {'火':8, '水':8, '木':8, '金':8, '土':8, '光': 5, '暗': 5} },
-        { "id": 'dna_chaos_m01', "name": '混沌原核', "type": '混', "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": '來自世界誕生之初的混沌能量核心。', "rarity": "神話", "resistances": {'毒':10, '風':10} }
+        { "id": 'dna_poison_c01', "name": '淡綠毒霧', "type': '毒', "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": '幾乎無害的稀薄毒霧。', "rarity": "普通", "resistances": {'毒': 2} },
+        { "id": 'dna_wind_c01', "name": '輕柔微風', "type': '風', "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": '幾乎感覺不到的微風。', "rarity": "普通", "resistances": {'風': 2} },
+        { "id": 'dna_none_c01', "name": '中性細胞核', "type': '無', "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": '基礎的生命核心。', "rarity": "普通" },
+        { "id": 'dna_earth_r01', "name": '堅硬岩片', "type': '土', "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": '較為堅固的岩石碎片。', "rarity": "稀有", "resistances": {'土': 5} },
+        { "id": 'dna_wind_r01', "name": '微風精華', "type': '風', "attack": 16, "defense": 10, "speed": 22, "hp": 58, "mp": 26, "crit": 8, "description": '蘊含少量風之力的精華。', "rarity": "稀有", "resistances": {'風': 5} },
+        { "id": 'dna_poison_r01', "name": '弱效毒液', "type': '毒', "attack": 20, "defense": 8, "speed": 14, "hp": 50, "mp": 24, "crit": 6, "description": '帶有些許毒性的液體。', "rarity": "稀有", "resistances": {'毒': 5} },
+        { "id": 'dna_fire_r01', "name": '熾熱餘燼', "type': '火', "attack": 25, "defense": 12, "speed": 15, "hp": 60, "mp": 30, "crit": 7, "description": '尚有餘溫的熾熱灰燼。', "rarity": "稀有", "resistances": {'火': 5, '水': -1} },
+        { "id": 'dna_water_r01', "name": '凝結水珠', "type': '水', "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": '蘊含純淨能量的凝結水珠。', "rarity": "稀有", "resistances": {'水': 5, '木': -1} },
+        { "id": 'dna_wood_r01', "name": '硬化樹皮塊', "type': '木', "attack": 15, "defense": 22, "speed": 10, "hp": 75, "mp": 32, "crit": 4, "description": '經過硬化的堅韌樹皮。', "rarity": "稀有", "resistances": {'木': 5, '金': -1} },
+        { "id": 'dna_dark_e01', "name": '暗影殘片', "type': '暗', "attack": 28, "defense": 7, "speed": 12,  "hp": 48, "mp": 38, "crit": 9, "description": '凝聚了部分暗影力量的碎片。', "rarity": "菁英", "resistances": {'暗': 8} },
+        { "id": 'dna_light_e01', "name": '光芒碎片', "type': '光', "attack": 20, "defense": 14, "speed": 15, "hp": 68, "mp": 30, "crit": 7, "description": '閃耀著純淨光芒的結晶碎片。', "rarity": "菁英", "resistances": {'光': 8} },
+        { "id": 'dna_fire_e01', "name": '烈焰核心', "type': '火', "attack": 30, "defense": 10, "speed": 18, "hp": 60, "mp": 35, "crit": 10, "description": '燃燒旺盛的火焰核心。', "rarity": "菁英", "resistances": {'火': 8, '水': -3} },
+        { "id": 'dna_gold_e01', "name": '精煉金塊', "type': '金', "attack": 22, "defense": 30, "speed": 12, "hp": 65, "mp": 28, "crit": 6, "description": '經過提煉的純淨金屬塊。', "rarity": "菁英", "resistances": {'金': 8, '火': -3} },
+        { "id": 'dna_gold_l01', "name": '不朽金屬', "type': '金', "attack": 25, "defense": 35, "speed": 10,  "hp": 70, "mp": 20, "crit": 5, "description": '極其堅硬且帶有神秘力量的金屬。', "rarity": "傳奇", "resistances": {'金': 12, '土': 5} },
+        { "id": 'dna_water_l01', "name": '深海之源', "type': '水', "attack": 22, "defense": 28, "speed": 25, "hp": 80, "mp": 45, "crit": 8, "description": '來自海洋深處的強大水能結晶。', "rarity": "傳奇", "resistances": {'水': 12, '火': -5} },
+        { "id": 'dna_earth_l01', "name": '大地龍脈結晶', "type': '土', "attack": 18, "defense": 40, "speed": 8, "hp": 100, "mp": 25, "crit": 4, "description": '蘊含大地龍脈力量的稀有結晶。', "rarity": "傳奇", "resistances": {'土': 12, '風': -5} },
+        { "id": 'dna_ancient_m01', "name": '遠古龍魂', "type': '無', "attack": 40, "defense": 40, "speed": 40, "hp": 120, "mp": 60, "crit": 15, "description": '蘊含遠古巨龍靈魂的神秘DNA。', "rarity": "神話", "resistances": {'火':8, '水':8, '木':8, '金':8, '土':8, '光': 5, '暗': 5} },
+        { "id": 'dna_chaos_m01', "name": '混沌原核', "type': '混', "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": '來自世界誕生之初的混沌能量核心。', "rarity": "神話", "resistances": {'毒':10, '風':10} }
     ]
     try:
         db.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
@@ -340,4 +387,3 @@ if __name__ == '__main__':
         populate_game_configs()
     else:
         print("操作已取消。")
-
