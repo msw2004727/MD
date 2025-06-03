@@ -7,6 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import os
 import logging
+import json # **新增：導入 json 模組**
 
 # 導入你的藍圖
 from MD_routes import md_bp
