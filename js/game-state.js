@@ -2,156 +2,16 @@
 // 全域狀態集中管理，給所有模組匯入用
 
 // 導入 Firebase 實例和應用程式 ID
-import { auth, db, firebaseApp, __app_id } from './firebase-config.js';
+// 注意：GameState.auth, GameState.db, GameState.firebaseApp 將由 main.js 注入
+// 因此這裡不需要直接導入 auth, db, firebaseApp。
+// 但 __app_id 仍然需要導入，因為它被用於 Firestore 路徑。
+import { __app_id } from './firebase-config.js'; 
 
 const GameState = {
     // --- DOM 元素引用 ---
-    // 所有在 HTML 中有 ID 且需要被 JavaScript 頻繁訪問的元素都應該在這裡被引用
-    elements: {
-        // 主題切換
-        themeSwitcherBtn: null,
-        themeIcon: null, // 用於顯示月亮/太陽圖標
-
-        // 認證畫面
-        authScreen: null,
-        gameContainer: null, // 遊戲主內容容器
-        showLoginFormBtn: null,
-        showRegisterFormBtn: null,
-        registerNicknameInput: null,
-        registerPasswordInput: null,
-        registerErrorDisplay: null,
-        registerSubmitBtn: null,
-        loginNicknameInput: null,
-        loginPasswordInput: null,
-        loginErrorDisplay: null,
-        loginSubmitBtn: null,
-        logoutBtn: null,
-
-        // 頂部導航
-        monsterInfoButton: null,
-        playerInfoButton: null,
-        showMonsterLeaderboardBtn: null,
-        showPlayerLeaderboardBtn: null,
-        friendsListBtn: null,
-        newbieGuideBtn: null,
-
-        // 怪獸快照面板
-        monsterSnapshotArea: null,
-        monsterImageElement: null, // 快照中的怪獸圖片
-        snapshotAchievementTitle: null,
-        snapshotNickname: null,
-        snapshotWinLoss: null,
-        snapshotMainContent: null, // 快照中的屬性/等級/戰力/技能顯示區
-        snapshotEvaluation: null,
-
-        // DNA管理頁籤
-        dnaCombinationSlotsContainer: null, // DNA組合槽的父容器
-        combineButton: null,
-        inventoryItemsContainer: null, // DNA碎片庫存區
-        drawDnaBtn: null, // 抽DNA按鈕
-        inventoryDeleteSlot: null, // 刪除區
-        temporaryBackpackItemsContainer: null, // 臨時背包區
-
-        // 怪物農場頁籤
-        farmedMonstersList: null, // 怪物農場列表容器
-        farmEmptyMessage: null, // 農場空訊息
-
-        // 模態框通用元素 (feedbackModal, confirmationModal, etc. 應該在各自的 UI 函式中獲取或傳遞)
-        // 這裡只列出需要全域引用的模態框相關元素
-        feedbackModal: null,
-        feedbackModalTitle: null,
-        feedbackModalSpinner: null,
-        feedbackModalCloseX: null,
-        feedbackModalMessage: null,
-        feedbackMonsterDetailsDiv: null,
-
-        // 確認模態框
-        confirmationModal: null,
-        confirmationModalTitle: null,
-        confirmationModalBody: null,
-        confirmationMessage: null,
-        confirmActionBtn: null,
-        cancelActionBtn: null,
-        releaseMonsterImagePlaceholder: null, // 放生怪獸圖片預覽區
-        releaseMonsterImgPreview: null, // 放生怪獸圖片
-
-        // 修煉設定模態框
-        cultivationSetupModal: null,
-        cultivationSetupModalTitle: null,
-        cultivationMonsterName: null,
-        startCultivationBtn: null,
-        maxCultivationTime: null,
-
-        // 修煉成果模態框
-        trainingResultsModal: null,
-        trainingResultsModalTitle: null,
-        trainingStoryResult: null,
-        trainingGrowthResult: null,
-        trainingItemsResult: null,
-        addAllToTempBackpackBtn: null,
-        trainingResultsModalFinalCloseBtn: null, // 修煉成果模態框最終關閉按鈕
-
-        // 新手指南模態框
-        newbieGuideModal: null,
-        newbieGuideSearchInput: null,
-        newbieGuideContentArea: null,
-
-        // 提醒模態框 (修煉拾獲物品未領取)
-        reminderModal: null,
-        reminderModalTitle: null,
-        reminderModalBody: null,
-        reminderConfirmCloseBtn: null,
-        reminderCancelBtn: null,
-
-        // 好友名單模態框
-        friendsListModal: null,
-        friendsListSearchInput: null,
-        friendsListContainer: null, // 顯示好友列表的容器
-
-        // 戰鬥記錄模態框
-        battleLogModal: null,
-        battleLogArea: null,
-        battleLogEmptyMessage: null,
-
-        // DNA 抽取結果模態框
-        dnaDrawModal: null,
-        dnaDrawResultsGrid: null,
-
-        // 排行榜模態框
-        monsterLeaderboardModal: null,
-        monsterLeaderboardElementTabs: null, // 怪獸排行榜元素篩選頁籤容器
-        monsterLeaderboardTable: null,
-        monsterLeaderboardEmptyMessage: null,
-        playerLeaderboardModal: null,
-        playerLeaderboardTable: null,
-        playerLeaderboardEmptyMessage: null,
-
-        // 怪獸資訊模態框
-        monsterInfoModal: null,
-        monsterInfoModalHeaderContent: null,
-        monsterInfoTabs: null,
-        monsterDetailsTab: null,
-        monsterActivityLogs: null,
-        monsterPersonalityText: null,
-        monsterIntroductionText: null,
-        monsterEvaluationText: null,
-
-        // 玩家資訊模態框
-        playerInfoModal: null,
-        playerInfoNickname: null,
-        playerInfoUid: null,
-        playerInfoWins: null,
-        playerInfoLosses: null,
-        playerInfoGold: null,
-        playerInfoDiamond: null,
-        playerInfoAchievements: null,
-        playerInfoAchievementsEmptyMessage: null,
-        playerInfoOwnedMonsters: null,
-        playerInfoOwnedMonstersEmptyMessage: null,
-
-        // 頁籤按鈕 (用於初始選擇)
-        firstDnaFarmTab: null, // 初始 DNA/農場頁籤
-    },
+    // 移除 elements 物件的初始化。
+    // GameState.elements 將在 main.js 的 initializeDOMReferences 函數中被明確地創建和填充。
+    elements: {}, // 將其初始化為一個空物件，但實際填充由 main.js 負責
 
     // --- 遊戲設定 ---
     gameSettings: {
@@ -161,17 +21,16 @@ const GameState = {
         personalities: {},
         titles: [],
         healthConditions: [],
-        newbie_guide: [], // 這裡應該是 newbie_guide，與 API 返回的鍵名一致
+        newbie_guide: [], 
         value_settings: {
             max_farm_slots: 10,
             max_monster_skills: 3,
             max_battle_turns: 30,
-            max_temp_backpack_slots: 18, // 確保這裡有定義
-            max_inventory_slots: 10,    // 確保這裡有定義
-            max_combination_slots: 5,   // 確保這裡有定義
+            max_temp_backpack_slots: 18, 
+            max_inventory_slots: 10,    
+            max_combination_slots: 5,   
         },
         npc_monsters: [],
-        // ... 其他必要的預設設定鍵
     },
 
     // --- 玩家數據 ---
@@ -179,56 +38,60 @@ const GameState = {
     playerData: { // 玩家的遊戲數據，從 Firestore 載入
         uid: null,
         nickname: null,
-        email: null, // 如果使用 email 登入
+        email: null, 
         wins: 0,
         losses: 0,
         gold: 0,
         diamond: 0,
         achievements: [],
-        ownedMonsters: [], // 玩家擁有的怪獸列表
-        playerOwnedDNA: [], // 玩家擁有的 DNA 碎片列表
-        temporaryBackpackSlots: [], // 臨時背包物品列表
-        combinationSlotsData: [], // DNA組合槽的數據
-        // ... 其他玩家相關數據
+        ownedMonsters: [], 
+        playerOwnedDNA: [], 
+        temporaryBackpackSlots: [], 
+        combinationSlotsData: [], 
     },
 
     // --- 遊戲狀態數據 ---
-    currentMonster: null, // 當前在快照面板上顯示的怪獸
-    farmedMonsters: [], // 玩家農場中的怪獸列表
-    battlingMonsterId: null, // 當前出戰的怪獸 ID
-    itemsFromCurrentTraining: [], // 最近一次修煉獲得的物品
-    monsterToReleaseInfo: null, // 準備放生的怪獸資訊
-    monsterToChallengeInfo: null, // 準備挑戰的怪獸資訊
-    currentCultivationMonster: null, // 當前正在修煉的怪獸
+    currentMonster: null, 
+    farmedMonsters: [], 
+    battlingMonsterId: null, 
+    itemsFromCurrentTraining: [], 
+    monsterToReleaseInfo: null, 
+    monsterToChallengeInfo: null, 
+    currentCultivationMonster: null, 
 
     // 庫存和組合槽的顯示數據 (與 playerOwnedDNA 和 combinationSlotsData 同步)
-    // 這些是 UI 層次的數據，用於填充槽位
-    inventoryDisplaySlots: new Array(10).fill(null), // 庫存顯示槽位
-    temporaryBackpackSlots: new Array(18).fill(null), // 臨時背包顯示槽位
-    combinationSlotsData: new Array(5).fill(null), // DNA組合槽數據
+    inventoryDisplaySlots: new Array(10).fill(null), 
+    temporaryBackpackSlots: new Array(18).fill(null), 
+    combinationSlotsData: new Array(5).fill(null), 
 
     // 模態框相關狀態
-    itemToDeleteInfo: null, // 準備刪除的物品資訊
+    itemToDeleteInfo: null, 
 
     // Firebase 實例 (由 main.js 注入)
-    auth: null,
-    db: null,
-    firebaseApp: null, // Firebase App 實例
+    auth: null, // 將由 main.js 注入
+    db: null,   // 將由 main.js 注入
+    firebaseApp: null, // 將由 main.js 注入
 
     // 常量 (如果它們是固定不變的)
     MAX_FARM_SLOTS: 10,
     NUM_TEMP_BACKPACK_SLOTS: 18,
     NUM_INVENTORY_SLOTS: 10,
     NUM_COMBINATION_SLOTS: 5,
-    MAX_CULTIVATION_SECONDS: 999, // 修煉時長上限
-    newbieGuideData: [], // 新手指南數據 (從 gameSettings.newbie_guide 填充)
+    MAX_CULTIVATION_SECONDS: 999, 
+    newbieGuideData: [], 
 
     // --- 數據載入函式 (應該在 auth.js 登入成功後呼叫) ---
     async loadUserData(uid) {
         console.log(`GameState: 載入使用者數據 for UID: ${uid}`);
         try {
+            // 確保 auth 和 db 實例已在 GameState 中被注入
+            if (!GameState.db) {
+                console.error("GameState: Firestore DB 實例未初始化。無法載入數據。");
+                return;
+            }
+
             // 從 Firestore 載入玩家基本資料
-            const playerDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('profile');
+            const playerDocRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('profile');
             const playerDoc = await playerDocRef.get();
             if (playerDoc.exists) {
                 GameState.playerData = { uid: uid, ...playerDoc.data() };
@@ -244,15 +107,15 @@ const GameState = {
                     diamond: 10,
                     achievements: [],
                     ownedMonsters: [],
-                    playerOwnedDNA: [],
-                    temporaryBackpackSlots: new Array(GameState.NUM_TEMP_BACKPACK_SLOTS).fill(null),
-                    combinationSlotsData: new Array(GameState.NUM_COMBINATION_SLOTS).fill(null),
+                    playerOwnedDNA: new Array(GameState.NUM_INVENTORY_SLOTS).fill(null), // 使用常量
+                    temporaryBackpackSlots: new Array(GameState.NUM_TEMP_BACKPACK_SLOTS).fill(null), // 使用常量
+                    combinationSlotsData: new Array(GameState.NUM_COMBINATION_SLOTS).fill(null), // 使用常量
                 };
                 await playerDocRef.set(GameState.playerData); // 保存預設資料
             }
 
             // 載入玩家擁有的怪獸
-            const monstersCollectionRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('monsters');
+            const monstersCollectionRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('monsters');
             const monstersDoc = await monstersCollectionRef.get();
             if (monstersDoc.exists && monstersDoc.data().list) {
                 GameState.farmedMonsters = monstersDoc.data().list;
@@ -261,7 +124,7 @@ const GameState = {
             }
 
             // 載入玩家擁有的 DNA 碎片
-            const dnaCollectionRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('dna');
+            const dnaCollectionRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('dna');
             const dnaDoc = await dnaCollectionRef.get();
             if (dnaDoc.exists && dnaDoc.data().list) {
                 GameState.playerOwnedDNA = dnaDoc.data().list;
@@ -270,7 +133,7 @@ const GameState = {
             }
 
             // 載入臨時背包
-            const tempBackpackRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('tempBackpack');
+            const tempBackpackRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('tempBackpack');
             const tempBackpackDoc = await tempBackpackRef.get();
             if (tempBackpackDoc.exists && tempBackpackDoc.data().list) {
                 GameState.temporaryBackpackSlots = tempBackpackDoc.data().list;
@@ -279,7 +142,7 @@ const GameState = {
             }
 
             // 載入組合槽數據
-            const comboSlotsRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('combinationSlots');
+            const comboSlotsRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('combinationSlots');
             const comboSlotsDoc = await comboSlotsRef.get();
             if (comboSlotsDoc.exists && comboSlotsDoc.data().list) {
                 GameState.combinationSlotsData = comboSlotsDoc.data().list;
@@ -294,21 +157,20 @@ const GameState = {
             console.log("GameState: 使用者數據載入完成。", GameState.playerData);
         } catch (error) {
             console.error("GameState: 載入使用者數據失敗：", error);
-            // 可以在這裡顯示一個錯誤訊息給使用者
         }
     },
 
     // --- 數據保存函式 (用於將 GameState 中的數據保存到 Firestore) ---
     async saveUserData() {
-        // 現在 auth 和 db 是直接導入的，不需要從 GameState.auth 訪問
-        if (!auth || !auth.currentUser) {
-            console.warn("GameState: 無使用者登入，無法保存數據。");
+        // 確保 auth 和 db 實例已在 GameState 中被注入
+        if (!GameState.auth || !GameState.auth.currentUser || !GameState.db) {
+            console.warn("GameState: 無使用者登入或 DB 實例未初始化，無法保存數據。");
             return;
         }
-        const uid = auth.currentUser.uid;
+        const uid = GameState.auth.currentUser.uid;
         console.log(`GameState: 保存使用者數據 for UID: ${uid}`);
         try {
-            const userDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data');
+            const userDocRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data');
 
             // 保存玩家基本資料
             await userDocRef.doc('profile').set(GameState.playerData, { merge: true });
@@ -328,13 +190,8 @@ const GameState = {
             console.log("GameState: 使用者數據保存成功。");
         } catch (error) {
             console.error("GameState: 保存使用者數據失敗：", error);
-            // 可以在這裡顯示一個錯誤訊息給使用者
         }
     },
-
-    // --- 監聽數據變化並保存 (可選，但建議在 Firestore 應用中實現) ---
-    // 這部分通常會在 game-logic.js 或專門的 data-sync.js 中實現
-    // 例如，當 GameState.playerData 或 GameState.farmedMonsters 改變時觸發保存
 };
 
 // 導出 GameState 物件，供其他模組導入和使用
