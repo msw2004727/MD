@@ -25,9 +25,12 @@ async function savePlayerData() {
 export function handleDrawDnaButtonClick() {
     console.log("抽DNA按鈕被點擊");
     const drawnDnaForModal = [];
-    if (GameState.gameSettings.dnaFragments && GameState.gameSettings.dnaFragments.length > 0) {
+    // **修正：確保 GameState.gameSettings.dnaFragments 存在**
+    const dnaFragments = GameState.gameSettings.dnaFragments || [];
+
+    if (dnaFragments.length > 0) {
         // 篩選出可抽取的普通或稀有等級DNA
-        const drawableDna = GameState.gameSettings.dnaFragments.filter(
+        const drawableDna = dnaFragments.filter(
             f => f.rarity === "普通" || f.rarity === "稀有" || f.rarity === "精英" || f.rarity === "傳說" || f.rarity === "神話"
         );
         if (drawableDna.length > 0) {
@@ -389,8 +392,10 @@ export async function combineDNA() {
         UI.showFeedbackModal("錯誤", "請先登入才能組合怪獸。", false, true);
         return;
     }
-    if (GameState.farmedMonsters.length >= GameState.MAX_FARM_SLOTS) {
-        UI.showFeedbackModal("提示", `怪物農場已滿 (${GameState.MAX_FARM_SLOTS}隻)，無法組合新怪獸。請先放生部分怪獸。`, false, true);
+    // **修正：確保 GameState.gameSettings.value_settings 存在**
+    const MAX_FARM_SLOTS = GameState.gameSettings.value_settings?.max_farm_slots || 10;
+    if (GameState.farmedMonsters.length >= MAX_FARM_SLOTS) {
+        UI.showFeedbackModal("提示", `怪物農場已滿 (${MAX_FARM_SLOTS}隻)，無法組合新怪獸。請先放生部分怪獸。`, false, true);
         return;
     }
 
@@ -482,7 +487,12 @@ export async function generateAndStoreAIDescriptions(monster) {
         const aiDescriptions = await ApiClient.generateAIDescriptions(monster);
 
         if (aiDescriptions) {
-            monster.aiPersonality = aiDescriptions.personality;
+            // **修正：確保 aiPersonality 是一個物件，包含 name, text, color**
+            monster.aiPersonality = {
+                name: aiDescriptions.personality?.name || monster.personality?.name || "未知",
+                text: aiDescriptions.personality?.text || "AI個性描述生成失敗。",
+                color: aiDescriptions.personality?.color || "var(--text-secondary)"
+            };
             monster.aiIntroduction = aiDescriptions.introduction;
             monster.aiEvaluation = aiDescriptions.evaluation;
             console.log(`AI 描述為 ${monster.nickname} 生成成功。`);
@@ -496,7 +506,7 @@ export async function generateAndStoreAIDescriptions(monster) {
         console.error(`為 ${monster.nickname} 生成 AI 描述失敗:`, error);
         monster.aiPersonality = { name: "未知", text: "AI描述生成失敗。", color: "var(--text-secondary)" };
         monster.aiIntroduction = "AI描述生成失敗。";
-        monster.aiEvaluation = "AI描述生成失敗。";
+        monster.aiEvaluation = "AI描述生成失敗.";
     } finally {
         UI.closeModal('feedback-modal'); // 關閉生成中的提示
         // 如果怪獸資訊模態框是打開的，且顯示的是當前怪獸，則更新它
@@ -556,7 +566,8 @@ export function openCultivationSetupModal(monsterId) {
     const { cultivationMonsterName, maxCultivationTime } = GameState.elements;
     if (cultivationMonsterName && maxCultivationTime) {
         cultivationMonsterName.textContent = GameState.currentCultivationMonster.nickname;
-        maxCultivationTime.textContent = GameState.MAX_CULTIVATION_SECONDS;
+        // **修正：確保 GameState.MAX_CULTIVATION_SECONDS 存在**
+        maxCultivationTime.textContent = GameState.MAX_CULTIVATION_SECONDS || 999;
         UI.openModal('cultivation-setup-modal');
     } else {
         console.error("修煉設定模態框的必要元素未找到。");
@@ -585,6 +596,8 @@ export function startCultivation() {
     if (GameState.currentCultivationMonster.farmStatus.timerId) {
         clearInterval(GameState.currentCultivationMonster.farmStatus.timerId);
     }
+    // **修正：確保 GameState.MAX_CULTIVATION_SECONDS 存在**
+    const maxCultivationSeconds = GameState.MAX_CULTIVATION_SECONDS || 999;
     GameState.currentCultivationMonster.farmStatus.timerId = setInterval(() => {
         const monsterInFarm = GameState.farmedMonsters.find(m => m.id === GameState.currentCultivationMonster.id);
         if (!monsterInFarm || !monsterInFarm.farmStatus || !monsterInFarm.farmStatus.isTraining) {
@@ -593,7 +606,7 @@ export function startCultivation() {
              return;
         }
         const elapsedSeconds = Math.floor((Date.now() - (monsterInFarm.farmStatus.trainingStartTime || Date.now())) / 1000);
-        monsterInFarm.farmStatus.remainingTime = GameState.MAX_CULTIVATION_SECONDS - elapsedSeconds; // 更新剩餘時間
+        monsterInFarm.farmStatus.remainingTime = maxCultivationSeconds - elapsedSeconds; // 更新剩餘時間
 
         // 更新農場列表中該怪獸的狀態顯示
         const farmItem = GameState.elements.farmedMonstersList?.querySelector(`.farm-monster-item[data-monster-id="${monsterInFarm.id}"]`);
@@ -603,8 +616,8 @@ export function startCultivation() {
         }
 
         console.log(`修煉計時器：${monsterInFarm.nickname} 剩餘 ${monsterInFarm.farmStatus.remainingTime} 秒。`);
-        if (elapsedSeconds >= GameState.MAX_CULTIVATION_SECONDS) {
-            console.log(`${monsterInFarm.nickname} 修煉已達上限 ${GameState.MAX_CULTIVATION_SECONDS} 秒。自動結束。`);
+        if (elapsedSeconds >= maxCultivationSeconds) {
+            console.log(`${monsterInFarm.nickname} 修煉已達上限 ${maxCultivationSeconds} 秒。自動結束。`);
             pauseTraining(monsterInFarm.id);
         }
     }, 1000);
@@ -620,8 +633,9 @@ export function pauseTraining(monsterId) {
         clearInterval(monster.farmStatus.timerId);
         monster.farmStatus.timerId = null;
     }
+    // **修正：確保 GameState.MAX_CULTIVATION_SECONDS 存在**
     let trainingDuration = Math.floor((Date.now() - (monster.farmStatus.trainingStartTime || Date.now())) / 1000);
-    trainingDuration = Math.min(trainingDuration, GameState.MAX_CULTIVATION_SECONDS); // 確保不超過最大時長
+    trainingDuration = Math.min(trainingDuration, GameState.MAX_CULTIVATION_SECONDS || 999); // 確保不超過最大時長
 
     monster.farmStatus.isTraining = false;
     monster.farmStatus.remainingTime = 0; // 重置剩餘時間
@@ -657,18 +671,21 @@ export function resolveTrainingAndShowResults(monster, durationSeconds) {
     growthLogHTML += `</ul>`;
 
     // 隨機獲得物品 (簡化邏輯)
+    // **修正：確保 GameState.gameSettings.dnaFragments 存在**
+    const dnaFragments = GameState.gameSettings.dnaFragments || [];
+    if (Math.random() > 0.9) { // 10% 機率獲得稀有DNA碎片
+        const rareDna = dnaFragments.find(d => d.rarity === '稀有');
+        if (rareDna) {
+            GameState.itemsFromCurrentTraining.push({ name: rareDna.name, quantity: 1, type: "dna", addedToBackpack: false, ...rareDna });
+        }
+    }
     if (Math.random() > 0.5) { // 50% 機率獲得藥水
         GameState.itemsFromCurrentTraining.push({ name: "力量藥水", quantity: 1, type: "potion", addedToBackpack: false });
     }
     if (Math.random() > 0.7) { // 30% 機率獲得稀有礦石
         GameState.itemsFromCurrentTraining.push({ name: "稀有礦石", quantity: 1, type: "material", addedToBackpack: false });
     }
-    if (Math.random() > 0.9) { // 10% 機率獲得稀有DNA碎片
-        const rareDna = GameState.gameSettings.dnaFragments.find(d => d.rarity === '稀有');
-        if (rareDna) {
-            GameState.itemsFromCurrentTraining.push({ name: rareDna.name, quantity: 1, type: "dna", addedToBackpack: false, ...rareDna });
-        }
-    }
+
 
     // 更新修煉成果模態框的內容
     const { trainingResultsModalTitle, trainingStoryResult, trainingGrowthResult } = GameState.elements;
@@ -735,16 +752,22 @@ export function promptReleaseMonster(monsterIdToRelease) {
     const confirmationMessageEl = GameState.elements.confirmationMessage;
     const confirmActionBtnEl = GameState.elements.confirmActionBtn;
     const confirmationModalTitleEl = GameState.elements.confirmationModalTitle;
-    const releaseMonsterImagePlaceholder = GameState.elements.releaseMonsterImagePlaceholder;
-    const releaseMonsterImgPreview = GameState.elements.releaseMonsterImgPreview;
+    const releaseMonsterImagePlaceholder = GameState.elements.releaseMonsterImagePlaceholder; // 這裡重用這個元素
 
-    if (confirmationMessageEl && confirmActionBtnEl && confirmationModalTitleEl && releaseMonsterImagePlaceholder && releaseMonsterImgPreview) {
+    if (confirmationMessageEl && confirmActionBtnEl && confirmationModalTitleEl && releaseMonsterImagePlaceholder) {
         confirmationModalTitleEl.textContent = "放生確認";
         confirmationMessageEl.innerHTML = `您確定要放生怪獸 <strong class="text-[var(--danger-color)]">${monster.nickname}</strong> 嗎？此動作無法復原！`;
 
-        releaseMonsterImgPreview.src = monster.imageUrl || `https://placehold.co/100x100/161b22/8b949e?text=${monster.nickname}`;
-        releaseMonsterImgPreview.alt = `${monster.nickname}圖片`;
-        releaseMonsterImagePlaceholder.style.display = 'block'; // 顯示圖片
+        // 顯示對戰雙方的圖片 (簡化，只顯示一個)
+        const releaseMonsterImgPreview = GameState.elements.releaseMonsterImgPreview;
+        if (releaseMonsterImgPreview) { // defensive check
+            releaseMonsterImgPreview.src = monster.imageUrl || `https://placehold.co/100x100/161b22/8b949e?text=${monster.nickname}`;
+            releaseMonsterImgPreview.alt = `${monster.nickname}圖片`;
+            releaseMonsterImagePlaceholder.style.display = 'block'; // 顯示圖片
+        } else {
+            console.warn("UI: releaseMonsterImgPreview element not found for promptReleaseMonster.");
+        }
+
 
         confirmActionBtnEl.className = 'danger'; // 設置按鈕樣式為危險
         confirmActionBtnEl.textContent = '確定放生';
@@ -768,7 +791,7 @@ function releaseMonsterConfirmed() {
 
     // 從農場列表中移除怪獸
     GameState.farmedMonsters = GameState.farmedMonsters.filter(m => m.id !== releasedMonsterId);
-    addLogEntry(releasedMonster, "� 被訓獸師放生了。");
+    addLogEntry(releasedMonster, " 被訓獸師放生了。");
 
     // 更新當前顯示的怪獸和出戰怪獸
     if (GameState.currentMonster && GameState.currentMonster.id === releasedMonsterId) {
@@ -803,7 +826,7 @@ export function addLogEntry(monster, message) {
     monster.activityLogs.unshift({ timestamp: timestamp, message: message }); // 添加到最前面
 
     // 限制日誌條目數量
-    if (monster.activityLogs.length > 50) { // 限制為 50 條
+    if (monster.activityLogs.length > 50) { // 限制為 50 條 
         monster.activityLogs.pop();
     }
 
@@ -843,9 +866,14 @@ export async function promptChallengeMonster(opponentMonsterData) {
         confirmationMessageEl.innerHTML = `您確定要使用 <strong class="text-[var(--accent-color)]">${playerMonster.nickname}</strong> 挑戰 <strong class="text-[var(--danger-color)]">${opponentMonsterData.nickname}</strong> 嗎？`;
 
         // 顯示對戰雙方的圖片 (簡化，只顯示一個)
-        releaseMonsterImagePlaceholder.style.display = 'block';
-        GameState.elements.releaseMonsterImgPreview.src = opponentMonsterData.imageUrl || `https://placehold.co/100x100/161b22/8b949e?text=${opponentMonsterData.nickname}`;
-        GameState.elements.releaseMonsterImgPreview.alt = `${opponentMonsterData.nickname}圖片`;
+        const releaseMonsterImgPreview = GameState.elements.releaseMonsterImgPreview;
+        if (releaseMonsterImgPreview) { // defensive check
+            releaseMonsterImgPreview.src = opponentMonsterData.imageUrl || `https://placehold.co/100x100/161b22/8b949e?text=${opponentMonsterData.nickname}`;
+            releaseMonsterImgPreview.alt = `${opponentMonsterData.nickname}圖片`;
+            releaseMonsterImagePlaceholder.style.display = 'block';
+        } else {
+            console.warn("UI: releaseMonsterImgPreview element not found for promptChallengeMonster.");
+        }
 
 
         confirmActionBtnEl.className = 'primary'; // 挑戰是主要動作
@@ -1022,23 +1050,25 @@ export function getSortedPlayersForLeaderboard() {
 export function initializeNpcMonsters() {
     // 這裡根據 GameState.gameSettings.npc_monsters 來初始化 NPC 怪獸數據
     // 這些數據通常是遊戲一開始就固定好的，或者從後端載入
-    if (GameState.gameSettings.npc_monsters && GameState.gameSettings.npc_monsters.length > 0) {
+    // **修正：確保 GameState.gameSettings 及其 npc_monsters 屬性存在**
+    if (GameState.gameSettings && GameState.gameSettings.npc_monsters && GameState.gameSettings.npc_monsters.length > 0) {
         GameState.npcMonsters = GameState.gameSettings.npc_monsters;
         console.log(`NPC 怪獸已初始化：共 ${GameState.npcMonsters.length} 隻。`);
     } else {
-        console.warn("遊戲設定中沒有 NPC 怪獸資料。");
-        GameState.npcMonsters = [];
+        console.warn("遊戲設定中沒有 NPC 怪獸資料或 GameState.gameSettings 結構不完整。將使用空陣列。");
+        GameState.npcMonsters = []; // 確保為空陣列，避免 undefined
     }
 }
 
 // 輔助函式：獲取稀有度數據 (如果 gameSettings 中有定義)
 export function getRarityData(rarityName) {
-    return GameState.gameSettings.rarities[rarityName] || { name: rarityName, textVarKey: '--rarity-common-text' };
+    // **修正：確保 GameState.gameSettings.rarities 存在**
+    return GameState.gameSettings.rarities?.[rarityName] || { name: rarityName, textVarKey: '--rarity-common-text' };
 }
 
 // 載入遊戲數據 (在使用者登入後呼叫)
 export async function loadGameDataForUserLogic(uid, nickname) {
-    console.log(`GameLogic: 載入遊戲數據 for UID: ${uid}, Nickname: ${nickname}`);
+    console.log(`GameLogic: 載入使用者數據 for UID: ${uid}, Nickname: ${nickname}`);
     try {
         // 調用 GameState 中的載入數據函式
         await GameState.loadUserData(uid);
@@ -1076,6 +1106,11 @@ export async function saveInitialPlayerDataToBackendLogic(uid, nickname, gameSet
     console.log(`GameLogic: 保存初始玩家數據 for UID: ${uid}, Nickname: ${nickname}`);
     try {
         // 初始化玩家的基礎數據
+        // **修正：確保 gameSettings.value_settings 存在**
+        const maxInventorySlots = gameSettings.value_settings?.max_inventory_slots || 10;
+        const maxTempBackpackSlots = gameSettings.value_settings?.max_temp_backpack_slots || 18;
+        const maxCombinationSlots = gameSettings.value_settings?.max_combination_slots || 5;
+
         GameState.playerData = {
             uid: uid,
             nickname: nickname,
@@ -1085,9 +1120,9 @@ export async function saveInitialPlayerDataToBackendLogic(uid, nickname, gameSet
             diamond: 10, // 初始鑽石
             achievements: [],
             ownedMonsters: [], // 初始空怪獸列表
-            playerOwnedDNA: new Array(gameSettings.value_settings.max_inventory_slots).fill(null), // 初始空DNA庫存
-            temporaryBackpackSlots: new Array(gameSettings.value_settings.max_temp_backpack_slots).fill(null), // 初始空臨時背包
-            combinationSlotsData: new Array(gameSettings.value_settings.max_combination_slots).fill(null), // 初始空組合槽
+            playerOwnedDNA: new Array(maxInventorySlots).fill(null), // 初始空DNA庫存
+            temporaryBackpackSlots: new Array(maxTempBackpackSlots).fill(null), // 初始空臨時背包
+            combinationSlotsData: new Array(maxCombinationSlots).fill(null), // 初始空組合槽
         };
         GameState.farmedMonsters = []; // 初始農場空
         GameState.currentMonster = null; // 初始無當前怪獸
