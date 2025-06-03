@@ -6,9 +6,9 @@ import { loadDeepSeekApiKey } from './loadApiKey.js';
 // --- API Configuration ---
 // **重要修正：將此處的 URL 設定為你後端實際部署的正確 URL**
 // 根據你提供的錯誤訊息，後端 URL 似乎是 'https://test-1-jnro.onrender.com'
-const API_BASE_URL = 'https://test-1-jnro.onrender.com/api/MD';
+const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD'; // <-- 將這裡修改為你後端服務的正確 URL
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const DEFAULT_MODEL = 'deepseek-chat'; // DeepSeek 推薦使用 deepseek-chat 或 deepseek-coder
+const DEFAULT_MODEL = 'deepseek-chat';
 
 /**
  * 獲取包含認證 token 的 HTTP Headers。
