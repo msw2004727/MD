@@ -36,7 +36,7 @@ import {
     handleDropOnDeleteSlot // 假設這是處理刪除區拖放的函式
 } from './game-logic.js';
 
-import { handleRegister, handleLogin, handleLogout } from './auth.js';
+import { handleRegister, handleLogin } from './auth.js';
 import * as GameState from './game-state.js'; // 假設您有一個 game-state.js 來管理狀態和DOM元素引用
 import { auth } from './firebase-config.js'; // 從 Firebase 設定檔獲取 auth
 
@@ -148,7 +148,7 @@ export function initializeStaticEventListeners() {
         elements.showRegisterFormBtn.addEventListener('click', () => handleOpenModalWrapper('register-modal'));
     }
     if (elements.registerSubmitBtn) {
-        elements.registerSubmitBtn.addEventListener('click', async () => {
+        elements.registerSubmitBtn.addEventListener('click', handleRegister () => {
             const nickname = elements.registerNicknameInput.value;
             const password = elements.registerPasswordInput.value;
             // 假設 handleRegister 處理 UI 反饋和錯誤顯示
@@ -156,7 +156,7 @@ export function initializeStaticEventListeners() {
         });
     }
     if (elements.loginSubmitBtn) {
-        elements.loginSubmitBtn.addEventListener('click', async () => {
+        elements.loginSubmitBtn.addEventListener('click', handleLogin () => {
             const nickname = elements.loginNicknameInput.value;
             const password = elements.loginPasswordInput.value;
             // 假設 handleLogin 處理 UI 反饋和錯誤顯示
