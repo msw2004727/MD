@@ -15,12 +15,12 @@ const GameState = {
 
     // --- 遊戲設定 ---
     gameSettings: {
-        dnaFragments: [],
+        dna_fragments: [],
         rarities: {},
         skills: {},
         personalities: {},
         titles: [],
-        healthConditions: [],
+        health_conditions: [],
         newbie_guide: [], 
         value_settings: {
             max_farm_slots: 10,
@@ -29,8 +29,17 @@ const GameState = {
             max_temp_backpack_slots: 18, 
             max_inventory_slots: 10,    
             max_combination_slots: 5,   
+            // 確保這些預設值存在，以防後端載入失敗
+            element_value_factors: {},
+            dna_recharge_conversion_factor: 0.15
         },
-        npc_monsters: [],
+        npc_monsters: [], // **確保 npc_monsters 始終為陣列**
+        absorption_config: {},
+        cultivation_config: {},
+        elemental_advantage_chart: {},
+        monster_achievements_list: [],
+        element_nicknames: {},
+        naming_constraints: {},
     },
 
     // --- 玩家數據 ---
@@ -79,6 +88,10 @@ const GameState = {
     NUM_COMBINATION_SLOTS: 5,
     MAX_CULTIVATION_SECONDS: 999, 
     newbieGuideData: [], 
+
+    // **新增：用於排行榜的公開數據**
+    allPublicMonsters: [],
+    allPublicPlayers: [],
 
     // --- 數據載入函式 (應該在 auth.js 登入成功後呼叫) ---
     async loadUserData(uid) {
