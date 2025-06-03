@@ -1,6 +1,9 @@
 // game-state.js
 // 全域狀態集中管理，給所有模組匯入用
 
+// 導入 Firebase 實例和應用程式 ID
+import { auth, db, firebaseApp, __app_id } from './firebase-config.js';
+
 const GameState = {
     // --- DOM 元素引用 ---
     // 所有在 HTML 中有 ID 且需要被 JavaScript 頻繁訪問的元素都應該在這裡被引用
@@ -225,7 +228,7 @@ const GameState = {
         console.log(`GameState: 載入使用者數據 for UID: ${uid}`);
         try {
             // 從 Firestore 載入玩家基本資料
-            const playerDocRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('profile');
+            const playerDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('profile');
             const playerDoc = await playerDocRef.get();
             if (playerDoc.exists) {
                 GameState.playerData = { uid: uid, ...playerDoc.data() };
@@ -249,7 +252,7 @@ const GameState = {
             }
 
             // 載入玩家擁有的怪獸
-            const monstersCollectionRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('monsters');
+            const monstersCollectionRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('monsters');
             const monstersDoc = await monstersCollectionRef.get();
             if (monstersDoc.exists && monstersDoc.data().list) {
                 GameState.farmedMonsters = monstersDoc.data().list;
@@ -258,7 +261,7 @@ const GameState = {
             }
 
             // 載入玩家擁有的 DNA 碎片
-            const dnaCollectionRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('dna');
+            const dnaCollectionRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('dna');
             const dnaDoc = await dnaCollectionRef.get();
             if (dnaDoc.exists && dnaDoc.data().list) {
                 GameState.playerOwnedDNA = dnaDoc.data().list;
@@ -267,7 +270,7 @@ const GameState = {
             }
 
             // 載入臨時背包
-            const tempBackpackRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('tempBackpack');
+            const tempBackpackRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('tempBackpack');
             const tempBackpackDoc = await tempBackpackRef.get();
             if (tempBackpackDoc.exists && tempBackpackDoc.data().list) {
                 GameState.temporaryBackpackSlots = tempBackpackDoc.data().list;
@@ -276,7 +279,7 @@ const GameState = {
             }
 
             // 載入組合槽數據
-            const comboSlotsRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('combinationSlots');
+            const comboSlotsRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data').doc('combinationSlots');
             const comboSlotsDoc = await comboSlotsRef.get();
             if (comboSlotsDoc.exists && comboSlotsDoc.data().list) {
                 GameState.combinationSlotsData = comboSlotsDoc.data().list;
@@ -297,14 +300,15 @@ const GameState = {
 
     // --- 數據保存函式 (用於將 GameState 中的數據保存到 Firestore) ---
     async saveUserData() {
-        if (!GameState.auth || !GameState.auth.currentUser) {
+        // 現在 auth 和 db 是直接導入的，不需要從 GameState.auth 訪問
+        if (!auth || !auth.currentUser) {
             console.warn("GameState: 無使用者登入，無法保存數據。");
             return;
         }
-        const uid = GameState.auth.currentUser.uid;
+        const uid = auth.currentUser.uid;
         console.log(`GameState: 保存使用者數據 for UID: ${uid}`);
         try {
-            const userDocRef = GameState.db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data');
+            const userDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(uid).collection('data');
 
             // 保存玩家基本資料
             await userDocRef.doc('profile').set(GameState.playerData, { merge: true });
