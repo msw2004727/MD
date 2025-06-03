@@ -156,7 +156,7 @@ export function initializeStaticEventListeners() {
         });
     }
     if (elements.loginSubmitBtn) {
-        elements.loginSubmitBtn.addEventListener('click', handleLogin () => {
+        elements.loginSubmitBtn.addEventListener('click', handleLogin);
             const nickname = elements.loginNicknameInput.value;
             const password = elements.loginPasswordInput.value;
             // 假設 handleLogin 處理 UI 反饋和錯誤顯示
