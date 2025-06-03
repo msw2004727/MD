@@ -160,9 +160,8 @@ function initializeDOMReferences() {
 
     // 頁籤按鈕 (用於初始選擇)
     GameState.elements.firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
-
     console.log("main.js: DOM 元素引用已初始化到 GameState.elements");
-}
+
 
 
 // --- 主要應用程式初始化函式 ---
