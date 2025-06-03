@@ -71,12 +71,12 @@ def populate_game_configs():
     dna_fragments_data = [
         { "id": 'dna_fire_c01', "name": '初階火種', "type": '火', "attack": 18, "defense": 6, "speed": 9, "hp": 45, "mp": 22, "crit": 4, "description": '微弱燃燒的火種。', "rarity": "普通", "resistances": {'火': 2} },
         { "id": 'dna_water_c01', "name": '純淨水滴', "type": '水', "attack": 12, "defense": 12, "speed": 12, "hp": 55, "mp": 28, "crit": 3, "description": '純淨但普通的水滴。', "rarity": "普通", "resistances": {'水': 2} },
-        { "id": 'dna_wood_c01', "name": '嫩綠葉芽', "type": '木', "attack": 10, "defense": 15, "speed": 7,  "hp": 60, "mp": 25, "crit": 2, "description": '充滿生機的普通葉芽。', "rarity": "普通", "resistances": {'木': 2} },
-        { "id": 'dna_gold_c01', "name": '微光金屬', "type": '金', "attack": 15, "defense": 20, "speed": 8,  "hp": 50, "mp": 18, "crit": 3, "description": '帶有微弱光澤的金屬片。', "rarity": "普通", "resistances": {'金': 2} },
-        { "id": 'dna_earth_c01', "name": '鬆軟泥土', "type": '土', "attack": 9, "defense": 18, "speed": 5,  "hp": 65, "mp": 20, "crit": 2, "description": '普通的鬆軟泥土塊。', "rarity": "普通", "resistances": {'土': 2} },
-        { "id": 'dna_light_c01', "name": '微弱光塵', "type": '光', "attack": 14, "defense": 10, "speed": 11, "hp": 50, "mp": 26, "crit": 5, "description": '幾乎看不見的光粒子。', "rarity": "普通", "resistances": {'光': 2} },
-        { "id": 'dna_dark_c01', "name": '稀薄暗影', "type": '暗', "attack": 16, "defense": 8, "speed": 10,  "hp": 48, "mp": 27, "crit": 6, "description": '一絲難以察覺的暗影。', "rarity": "普通", "resistances": {'暗': 2} },
-        { "id": 'dna_poison_c01', "name": '淡綠毒霧', "type': '毒', "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": '幾乎無害的稀薄毒霧。', "rarity": "普通", "resistances": {'毒': 2} },
+        { "id": 'dna_wood_c01', "name": '嫩綠葉芽', "type': '木', "attack": 10, "defense": 15, "speed": 7,  "hp": 60, "mp": 25, "crit": 2, "description": '充滿生機的普通葉芽。', "rarity": "普通", "resistances": {'木': 2} },
+        { "id": 'dna_gold_c01', "name": '微光金屬', "type': '金', "attack": 15, "defense": 20, "speed": 8,  "hp": 50, "mp": 18, "crit": 3, "description": '帶有微弱光澤的金屬片。', "rarity": "普通", "resistances": {'金': 2} },
+        { "id": 'dna_earth_c01', "name": '鬆軟泥土', "type': '土', "attack": 9, "defense": 18, "speed": 5,  "hp": 65, "mp": 20, "crit": 2, "description": '普通的鬆軟泥土塊。', "rarity": "普通", "resistances": {'土': 2} },
+        { "id": 'dna_light_c01', "name": '微弱光塵', "type': '光', "attack": 14, "defense": 10, "speed": 11, "hp": 50, "mp": 26, "crit": 5, "description": '幾乎看不見的光粒子。', "rarity": "普通", "resistances": {'光': 2} },
+        { "id": 'dna_dark_c01', "name": '稀薄暗影', "type': '暗', "attack": 16, "defense": 8, "speed": 10,  "hp": 48, "mp": 27, "crit": 6, "description": '一絲難以察覺的暗影。', "rarity": "普通", "resistances": {'暗': 2} },
+        { "id": 'dna_poison_c01', "name": '淡綠毒霧', "type': '毒', "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": "幾乎無害的稀薄毒霧。", "rarity": "普通", "resistances": {'毒': 2} }, # **修正：description 字串改為雙引號**
         { "id": 'dna_wind_c01', "name": '輕柔微風', "type': '風', "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": '幾乎感覺不到的微風。', "rarity": "普通", "resistances": {'風': 2} },
         { "id": 'dna_none_c01', "name": '中性細胞核', "type': '無', "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": '基礎的生命核心。', "rarity": "普通" },
         { "id": 'dna_earth_r01', "name": '堅硬岩片', "type': '土', "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": '較為堅固的岩石碎片。', "rarity": "稀有", "resistances": {'土': 5} },
