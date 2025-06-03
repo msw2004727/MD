@@ -12,13 +12,15 @@ import { initializeStaticEventListeners } from './event-handlers.js'; // 事件�
 // --- DOM 元素獲取與初始化 (通常在應用程式啟動早期執行) ---
 // 這個函式負責獲取所有在 index.html 中定義的 DOM 元素，並將它們儲存到 GameState.elements 中。
 function initializeDOMReferences() {
-    // 確保 GameState.elements 物件存在且可擴展
-    // 如果它在 GameState.js 中被定義為 const elements = {};
-    // 並且在某處被 Object.freeze(elements); 了，這裡會出問題。
-    // 但如果只是普通的物件字面量，這行是防禦性的。
-    // 如果 GameState.elements 已經是 Object.freeze() 的結果，這行不會改變它。
+    // 移除以下防禦性程式碼，因為 GameState.elements 在 game-state.js 中已經是一個可擴展的物件。
+    // 嘗試重新賦值一個導入的 const 變數會導致 TypeError。
+    /*
+    if (!GameState.elements || Object.isFrozen(GameState.elements)) {
+        // 如果 GameState.elements 不存在或已被凍結，重新初始化為一個新的可擴展物件
+        // 這通常表示 GameState.js 中的定義方式有問題，或者有其他程式碼凍結了它
+        GameState.elements = {}; // 重新賦值為一個新的可擴展物件
     }
-
+    */
 
     // 主題切換
     GameState.elements.themeSwitcherBtn = document.getElementById('theme-switcher');
