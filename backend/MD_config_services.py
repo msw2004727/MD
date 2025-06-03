@@ -1,8 +1,11 @@
 # MD_config_services.py
 # 負責從 Firestore 載入遊戲核心設定資料
 
-from MD_firebase_config import db
+# 移除頂層的 from MD_firebase_config import db
+# 讓 db 的獲取在函數內部進行，確保它在 main.py 設置後才被使用
+
 import logging
+from firebase_admin import firestore # 僅用於類型提示或直接訪問 firestore 服務
 
 # 設定日誌記錄器
 config_logger = logging.getLogger(__name__)
@@ -82,7 +85,11 @@ def load_all_game_configs_from_firestore() -> dict: # 實際返回類型應為 G
     從 Firestore 的 'MD_GameConfigs' 集合中載入所有遊戲設定。
     如果特定設定文件不存在或讀取失敗，將使用預設值。
     """
-    if not db:
+    # **修正：在函數內部重新獲取 db 實例，確保它已經被 main.py 設置**
+    # 這是為了避免在模組加載時 db 還是 None 的情況
+    from MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
+
+    if not firestore_db_instance:
         config_logger.error("Firestore 資料庫未初始化 (load_all_game_configs_from_firestore)。將返回所有預設設定。")
         return DEFAULT_GAME_CONFIGS.copy()
 
@@ -91,7 +98,7 @@ def load_all_game_configs_from_firestore() -> dict: # 實際返回類型應為 G
 
     for doc_name, config_key in CONFIG_DOCUMENTS_MAP.items():
         try:
-            doc_ref = db.collection('MD_GameConfigs').document(doc_name)
+            doc_ref = firestore_db_instance.collection('MD_GameConfigs').document(doc_name)
             doc = doc_ref.get()
             if doc.exists:
                 doc_data = doc.to_dict()
@@ -142,6 +149,7 @@ def load_all_game_configs_from_firestore() -> dict: # 實際返回類型應為 G
     return loaded_configs
 
 # --- 單個設定獲取函式 (可選) ---
+# 這些函數也需要修改，以確保它們在調用 load_all_game_configs_from_firestore 時 db 已經設置
 def get_dna_fragments() -> list:
     return load_all_game_configs_from_firestore().get("dna_fragments", DEFAULT_GAME_CONFIGS["dna_fragments"])
 
@@ -186,8 +194,34 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     config_logger.info("正在測試 MD_config_services.py...")
 
-    if not db:
-        config_logger.warning("警告: Firestore db 未在 MD_firebase_config.py 中設定。")
+    # 為了在獨立運行時測試，需要模擬 db 的設置
+    try:
+        # 這裡假設在測試環境下可以這樣初始化
+        import firebase_admin
+        from firebase_admin import credentials
+        # 這裡需要一個有效的服務帳戶金鑰路徑或環境變數
+        # 為了測試方便，如果沒有實際憑證，可能會失敗
+        # 或者使用 Mock 對象
+        if not firebase_admin._apps: # 避免重複初始化
+            # 嘗試從環境變數獲取，或者使用一個測試用的憑證
+            test_firebase_credentials_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+            if test_firebase_credentials_json:
+                cred = credentials.Certificate(json.loads(test_firebase_credentials_json))
+                firebase_admin.initialize_app(cred)
+            else:
+                config_logger.warning("測試環境下未找到 FIREBASE_SERVICE_ACCOUNT_KEY，可能無法連接 Firestore。")
+                # 如果沒有憑證，這裡的測試會失敗，因為無法連接 Firestore
+                # 實際運行時由 main.py 負責初始化
+                # 為了讓測試不報錯，可以考慮 mock firestore_db_instance
+        
+        from MD_firebase_config import set_firestore_client, db as current_db_instance
+        if not current_db_instance: # 如果還沒設置，則設置
+            set_firestore_client(firestore.client())
+            config_logger.info("測試模式下 Firestore client 已設定。")
+
+    except Exception as e:
+        config_logger.error(f"測試模式下 Firebase 初始化失敗: {e}", exc_info=True)
+
 
     game_configurations = load_all_game_configs_from_firestore()
 
