@@ -37,10 +37,24 @@ export function closeAllModals() {
 }
 
 export function showFeedbackModal(title, messageOrContent, showSpinner, showCloseXButton = true, showMonsterDetails = false, monsterForDetails = null) {
-    const { feedbackModal, feedbackModalTitle, feedbackModalSpinner, feedbackModalCloseX, feedbackMonsterDetailsDiv, feedbackModalMessage } = GameState.elements;
+    // **修正：安全地獲取元素，避免解構 undefined**
+    const feedbackModal = GameState.elements.feedbackModal;
+    const feedbackModalTitle = GameState.elements.feedbackModalTitle;
+    const feedbackModalSpinner = GameState.elements.feedbackModalSpinner;
+    const feedbackModalCloseX = GameState.elements.feedbackModalCloseX;
+    const feedbackMonsterDetailsDiv = GameState.elements.feedbackMonsterDetailsDiv;
+    const feedbackModalMessage = GameState.elements.feedbackModalMessage;
 
-    if (!feedbackModalTitle || !feedbackModalSpinner || !feedbackModalCloseX || !feedbackMonsterDetailsDiv || !feedbackModalMessage) {
-        console.error("UI: Feedback modal elements not found in GameState.elements. Please ensure they are initialized.");
+    // 檢查所有必要的元素是否都已存在
+    if (!feedbackModal || !feedbackModalTitle || !feedbackModalSpinner || !feedbackModalCloseX || !feedbackMonsterDetailsDiv || !feedbackModalMessage) {
+        console.error("UI: Feedback modal elements not found in GameState.elements. Cannot show feedback modal.");
+        console.error("Missing elements check:", {
+            feedbackModal: !!feedbackModal, feedbackModalTitle: !!feedbackModalTitle,
+            feedbackModalSpinner: !!feedbackModalSpinner, feedbackModalCloseX: !!feedbackModalCloseX,
+            feedbackMonsterDetailsDiv: !!feedbackMonsterDetailsDiv, feedbackModalMessage: !!feedbackModalMessage
+        });
+        // 作為最終備援，使用瀏覽器原生的 alert
+        alert(`錯誤提示: ${title}\n${typeof messageOrContent === 'string' ? messageOrContent : '無法顯示詳細訊息。'}\n\n(UI元素未完全載入，請檢查控制台錯誤)`);
         return;
     }
 
@@ -89,16 +103,21 @@ export function showFeedbackModal(title, messageOrContent, showSpinner, showClos
         }
     }
     openModal('feedback-modal');
+    console.log("UI: Feedback modal showing.");
 }
 
 export function applyTheme(theme) {
     const { themeIcon } = GameState.elements;
-    if (theme === 'light') {
-        document.body.classList.add('light-theme');
-        if (themeIcon) themeIcon.textContent = '☀️';
+    if (themeIcon) { // defensive check
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+            themeIcon.textContent = '☀️';
+        } else {
+            document.body.classList.remove('light-theme');
+            themeIcon.textContent = '🌙';
+        }
     } else {
-        document.body.classList.remove('light-theme');
-        if (themeIcon) themeIcon.textContent = '🌙';
+        console.warn("UI: Theme icon element not found for applyTheme.");
     }
     localStorage.setItem('theme', theme);
     // 重新渲染需要主題樣式的 UI 部分
@@ -705,8 +724,10 @@ export function populateNewbieGuide(searchTerm = "") {
     const { newbieGuideContentArea } = GameState.elements;
     if (!newbieGuideContentArea) { console.error("UI: newbieGuideContentArea not found!"); return; }
 
-    newbieGuideContentArea.innerHTML = '';
-    const filteredGuide = GameState.gameSettings.newbie_guide.filter(item =>
+    // **修正：確保 GameState.gameSettings.newbie_guide 存在**
+    const guideEntries = GameState.gameSettings.newbie_guide || [];
+
+    const filteredGuide = guideEntries.filter(item =>
         item.title.includes(searchTerm) || item.content.includes(searchTerm)
     );
 
@@ -784,8 +805,10 @@ export function openAndPopulatePlayerInfoModal(playerUid) { // 這裡只接收 U
     playerInfoDiamond.textContent = player.diamond || 0;
 
     // 成就列表
-    if (player.achievements && player.achievements.length > 0) {
-        playerInfoAchievements.innerHTML = player.achievements.map(ach => `<li>${ach.title}: ${ach.description}</li>`).join('');
+    // **修正：確保 player.achievements 存在且為陣列**
+    const playerAchievements = player.achievements || [];
+    if (playerAchievements.length > 0) {
+        playerInfoAchievements.innerHTML = playerAchievements.map(ach => `<li>${ach.title}: ${ach.description}</li>`).join('');
         playerInfoAchievementsEmptyMessage.style.display = 'none';
     } else {
         playerInfoAchievements.innerHTML = '';
