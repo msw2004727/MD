@@ -1,0 +1,12 @@
+deepseek api key sk-19179bb0c0c94acaa53ca82dc1d28bbf
+
+
+// --- API Base URL ---
+        const API_BASE_URL = 'https://d1d5ef45-d04b-4a1c-be4b-64a0680c6847-00-xxpggv06ka2e.sisko.replit.dev/api/MD';
+
+
+apiKey: "AIzaSyCACjjC1S-9gj6hKCyfAedzH9kTf_JZwDE",
+
+
+const apiKey = ""; // Per instruction, leave API key empty
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
