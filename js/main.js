@@ -12,10 +12,11 @@ import { initializeStaticEventListeners } from './event-handlers.js'; // 事件�
 // --- DOM 元素獲取與初始化 (通常在應用程式啟動早期執行) ---
 // 這個函式負責獲取所有在 index.html 中定義的 DOM 元素，並將它們儲存到 GameState.elements 中。
 function initializeDOMReferences() {
-    // 在這裡明確地初始化 GameState.elements。
-    // 由於 GameState.js 不再初始化 elements，我們必須在此處確保它是一個物件，
-    // 以避免在為其屬性賦值時出現 TypeError。
-    GameState.elements = {};
+    // 確保 GameState.elements 是一個物件，即使 GameState.js 中的初始化有問題
+    if (typeof GameState.elements !== 'object' || GameState.elements === null) {
+        GameState.elements = {};
+        console.warn("main.js: GameState.elements 在初始化DOM引用前不是一個物件，已強制初始化為 {}。");
+    }
     console.log("main.js: GameState.elements 已被明確初始化。");
 
     // 主題切換
@@ -167,6 +168,7 @@ async function initializeApp() {
     console.log("main.js: Initializing application...");
 
     // 0. 初始化 DOM 元素引用
+    // 確保在任何 UI 函數被調用之前，DOM 元素引用已經被初始化
     initializeDOMReferences(); // 確保 GameState.elements 可用
 
     // 1. 初始化 Firebase 實例並存儲到 GameState
@@ -178,18 +180,44 @@ async function initializeApp() {
     console.log("main.js: Firebase 實例已存儲到 GameState。");
 
     // 2. 獲取遊戲核心設定
+    let fetchedConfigs = null;
     try {
-        const configs = await ApiClient.fetchGameConfigs(); // 來自 api-client.js (已改名)
-        GameState.gameSettings = configs; // 更新全域遊戲設定
-        GameLogic.initializeNpcMonsters(); // 如果 NPC 初始化依賴 gameSettings，則在此呼叫
-        console.log("main.js: 遊戲設定已獲取並存儲到 GameState。");
-        UI.populateNewbieGuide(); // 使用獲取的設定填充新手指南 (來自 ui.js)
+        fetchedConfigs = await ApiClient.fetchGameConfigs(); // 來自 api-client.js (已改名)
+        // **修正：確保 configs 是物件，否則使用預設結構**
+        if (fetchedConfigs && typeof fetchedConfigs === 'object') {
+            GameState.gameSettings = fetchedConfigs;
+            console.log("main.js: 遊戲設定已獲取並存儲到 GameState。", GameState.gameSettings);
+        } else {
+            console.warn("main.js: fetchGameConfigs 返回無效數據，將使用 GameState 中的預設 gameSettings。");
+            // 確保 GameState.gameSettings 已經在 game-state.js 中被初始化為一個有效的物件
+            // 這裡不再額外賦值，因為 GameState.js 已經提供了預設值
+        }
+        
     } catch (error) {
-        console.error("main.js: 無法載入初始遊戲設定。使用預設值。", error);
-        UI.showFeedbackModal("錯誤", "無法載入遊戲核心設定，部分功能可能異常。", false, true, false);
-        // GameState.gameSettings 會保留其預設值（如果在 game-state.js 中有定義）
-        GameLogic.initializeNpcMonsters(); // 即使設定失敗，也嘗試用預設值初始化NPC
+        console.error("main.js: 無法載入初始遊戲設定。將使用預設值。", error);
+        // **修正：即使載入失敗，也要確保 GameState.gameSettings 是一個物件**
+        // GameState.gameSettings 在 game-state.js 中已經有預設結構，這裡不應再覆蓋為空
+        // 確保 npc_monsters 屬性存在，即使是空陣列
+        if (!GameState.gameSettings || typeof GameState.gameSettings !== 'object') {
+             // 這應該不會發生，因為 GameState.js 已經初始化了 gameSettings
+             // 但作為防禦性編程，可以這樣寫
+             GameState.gameSettings = { npc_monsters: [] }; // 最小化初始化
+        }
+        if (!GameState.gameSettings.npc_monsters) {
+            GameState.gameSettings.npc_monsters = [];
+        }
+        // **修正：在調用 showFeedbackModal 之前，確保 DOM 元素已初始化**
+        // initializeDOMReferences() 已經在initializeApp開頭調用，所以這裡應該安全
+        UI.showFeedbackModal("錯誤", `無法載入遊戲核心設定：${error.message || '未知錯誤'}。部分功能可能異常。`, false, true, false);
     }
+
+    // **修正：無論是否成功載入配置，都確保 npc_monsters 存在並初始化 NPC**
+    if (!GameState.gameSettings.npc_monsters) {
+        GameState.gameSettings.npc_monsters = [];
+    }
+    GameLogic.initializeNpcMonsters(); // 如果 NPC 初始化依賴 gameSettings，則在此呼叫
+    UI.populateNewbieGuide(); // 使用獲取的設定填充新手指南 (來自 ui.js)
+
 
     // 3. 應用初始主題
     const preferredTheme = localStorage.getItem('theme') || 'dark';
