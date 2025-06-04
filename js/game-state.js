@@ -8,7 +8,8 @@ const GameState = {
     elements: {}, 
 
     // **修正：在 GameState 頂層明確定義 npcMonsters**
-    npcMonsters: [], // 確保這個屬性在 GameState 物件上是可寫的
+    // 確保這裡初始化為一個空陣列，並且是可寫的
+    npcMonsters: [], 
 
     // --- 遊戲設定 ---
     gameSettings: {
@@ -35,6 +36,8 @@ const GameState = {
         monster_achievements_list: [],
         element_nicknames: {},
         naming_constraints: {},
+        // 確保 npc_monsters 也在 gameSettings 中有預設值，即使為空
+        npc_monsters: [], 
     },
 
     // --- 玩家數據 ---
