@@ -42,13 +42,17 @@ app_logger.info(f"CORS configured to allow requests from: {allowed_origins}")
 # 註冊藍圖
 app.register_blueprint(md_bp)
 
-# --- Firebase Admin SDK 初始化 (再次修改) ---
+# --- Firebase Admin SDK 初始化 (增加除錯訊息) ---
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
 firebase_app_initialized = False
 cred = None # 初始化 cred 變數
 
+app_logger.info(f"目前工作目錄: {os.getcwd()}") # <--- 除錯訊息：目前工作目錄
+app_logger.info(f"檢查本地金鑰檔案路徑: {os.path.abspath(SERVICE_ACCOUNT_KEY_PATH)}") # <--- 除錯訊息：金鑰檔案的絕對路徑
+
 if not firebase_admin._apps:
     firebase_credentials_json_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+    app_logger.info(f"環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: {'已設定' if firebase_credentials_json_env else '未設定'}")
 
     if firebase_credentials_json_env:
         try:
@@ -57,21 +61,21 @@ if not firebase_admin._apps:
             app_logger.info("準備從環境變數初始化 Firebase Admin SDK...")
         except Exception as e:
             app_logger.error(f"解析環境變數中的 Firebase 憑證失敗: {e}", exc_info=True)
-            cred = None # 解析失敗，cred 設為 None
-    elif os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
+            cred = None
+    elif os.path.exists(SERVICE_ACCOUNT_KEY_PATH): # <--- 關鍵檢查點1
+        app_logger.info(f"本地金鑰檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 存在。") # <--- 除錯訊息
         try:
-            cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-            app_logger.info(f"準備從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 初始化 Firebase Admin SDK...")
+            cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH) # <--- 關鍵載入點
+            app_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入憑證物件。準備初始化 Firebase Admin SDK...")
         except Exception as e:
-            app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 Firebase 憑證失敗: {e}", exc_info=True)
-            cred = None # 載入失敗，cred 設為 None
+            app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 Firebase 憑證物件失敗: {e}", exc_info=True)
+            cred = None
     else:
-        app_logger.warning("未找到環境變數或本地服務帳戶金鑰檔案。對於本地開發，請確保 'serviceAccountKey.json' 存在或已設定環境變數。")
+        app_logger.warning(f"本地金鑰檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 不存在。也未找到環境變數憑證。")
         # 在本地開發中，如果沒有明確的憑證，我們不主動嘗試 ADC 以避免 DefaultCredentialsError
-        # 如果您確實希望在某些情況下使用 ADC，可以在此處添加 firebase_admin.initialize_app()
-        # 但那樣您就需要確保本地 ADC 已設定，否則仍會出錯。
 
-    if cred: # 只有在成功獲取到憑證時才嘗試初始化
+    if cred: # <--- 關鍵檢查點2：只有在 cred 有效時才初始化
+        app_logger.info("憑證物件 (cred) 已準備好，嘗試初始化 Firebase Admin SDK...")
         try:
             firebase_admin.initialize_app(cred)
             app_logger.info("Firebase Admin SDK 已成功初始化。")
@@ -80,7 +84,7 @@ if not firebase_admin._apps:
             app_logger.error(f"使用獲取的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
             firebase_app_initialized = False
     else:
-        app_logger.error("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
+        app_logger.error("未能獲取有效的 Firebase 憑證 (cred is None)，Firebase Admin SDK 未初始化。")
         firebase_app_initialized = False
 else:
     app_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
@@ -91,19 +95,18 @@ else:
 if firebase_app_initialized and firebase_admin._apps:
     try:
         db_client = firestore.client()
-        set_firestore_client(db_client) # 將客戶端實例傳遞給 MD_firebase_config
+        set_firestore_client(db_client)
         app_logger.info("Firestore 客戶端已成功獲取並注入到 MD_firebase_config。")
     except Exception as e:
         app_logger.error(f"獲取 Firestore 客戶端或注入時發生錯誤: {e}", exc_info=True)
-        firebase_app_initialized = False # 如果獲取客戶端失敗，也標記為初始化不成功
+        firebase_app_initialized = False
 else:
     app_logger.error("Firebase Admin SDK 未成功初始化或應用程式列表為空，Firestore 客戶端無法注入。")
-    firebase_app_initialized = False # 同上
+    firebase_app_initialized = False
 
 
 # 在應用程式啟動時載入遊戲設定
-# 確保在 Firestore 客戶端成功設定後才執行
-if firebase_app_initialized and firestore_db_instance_from_config is not None: # 檢查 MD_firebase_config.db 是否已設定
+if firebase_app_initialized and firestore_db_instance_from_config is not None:
     with app.app_context():
         app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
         if app.config.get('MD_GAME_CONFIGS'):
@@ -121,7 +124,6 @@ def index():
 
 # 如果直接運行此檔案，則啟動 Flask 開發伺服器
 if __name__ == '__main__':
-    # 確保 Firebase 初始化和 Firestore 客戶端設定成功才運行 app
     if firebase_app_initialized and firestore_db_instance_from_config is not None:
         app_logger.info("在開發模式下啟動 Flask 應用程式。")
         app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
