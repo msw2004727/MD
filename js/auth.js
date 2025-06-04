@@ -4,8 +4,8 @@ import { auth, db, firebaseApp, __app_id } from './firebase-config.js'; // Fireb
 import * as GameState from './game-state.js'; // 遊戲狀態和 DOM 元素引用
 import * as UI from './ui.js'; // UI 操作函式
 import * as GameLogic from './game-logic.js'; // 遊戲邏輯函式
-// 引入 firebase/app 確保可以訪問 firebase.firestore.FieldValue
-import firebase from 'firebase/app'; 
+// 移除對 firebase/app 的導入，因為 Firebase SDK v8 是透過 CDN 全域載入的
+// import firebase from 'firebase/app'; 
 
 // --- 驗證處理函式 ---
 
@@ -38,8 +38,8 @@ export async function handleRegister() {
             uid: GameState.currentLoggedInUser.uid,
             nickname: nickname,
             email: GameState.currentLoggedInUser.email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 修正點
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 修正點
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
         }, { merge: true });
 
         // 初始化玩家遊戲資料 (users/{uid}/gameData/main)
@@ -84,7 +84,7 @@ export async function handleLogin() {
 
         if (userDocSnap.exists) {
             GameState.currentPlayerNickname = userDocSnap.data().nickname || nickname; // 優先使用DB中的暱稱
-            await userProfileDocRef.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() }); // <--- 修正點
+            await userProfileDocRef.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() }); // <--- 這裡直接使用全域的 firebase 物件
         } else {
             // 理論上，如果能登入成功，users 文件應該存在。這是一個備援。
             GameState.currentPlayerNickname = nickname;
@@ -92,8 +92,8 @@ export async function handleLogin() {
                 uid: GameState.currentLoggedInUser.uid,
                 nickname: nickname,
                 email: GameState.currentLoggedInUser.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 修正點
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 修正點
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
             }, { merge: true });
             // 為防意外，也為這種情況初始化遊戲資料
             await GameLogic.saveInitialPlayerDataToBackendLogic(GameState.currentLoggedInUser.uid, nickname, GameState.gameSettings);
@@ -155,8 +155,8 @@ export function initializeAuthListener() {
                     uid: user.uid,
                     nickname: GameState.currentPlayerNickname,
                     email: user.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 修正點
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 修正點
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
                 }, { merge: true });
                 // 為此使用者初始化遊戲資料
                 await GameLogic.saveInitialPlayerDataToBackendLogic(user.uid, GameState.currentPlayerNickname, GameState.gameSettings);
