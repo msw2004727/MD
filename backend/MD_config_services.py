@@ -87,7 +87,7 @@ def load_all_game_configs_from_firestore() -> dict: # 實際返回類型應為 G
     """
     # **修正：在函數內部重新獲取 db 實例，確保它已經被 main.py 設置**
     # 這是為了避免在模組加載時 db 還是 None 的情況
-    from MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
+    from .MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
 
     if not firestore_db_instance:
         config_logger.error("Firestore 資料庫未初始化 (load_all_game_configs_from_firestore)。將返回所有預設設定。")
