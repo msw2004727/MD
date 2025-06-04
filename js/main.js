@@ -26,16 +26,24 @@ function initializeDOMReferences() {
     // 認證畫面
     GameState.elements.authScreen = document.getElementById('auth-screen');
     GameState.elements.gameContainer = document.getElementById('game-container');
-    GameState.elements.showLoginFormBtn = document.getElementById('show-login-form-btn');
-    GameState.elements.showRegisterFormBtn = document.getElementById('show-register-form-btn');
+    
+    // 這些按鈕已在 index.html 中被移除，所以不再需要獲取它們
+    // GameState.elements.showLoginFormBtn = document.getElementById('show-login-form-btn');
+    // GameState.elements.showRegisterFormBtn = document.getElementById('show-register-form-btn');
+    
+    // 登入/註冊表單的輸入框和提交按鈕
     GameState.elements.registerNicknameInput = document.getElementById('register-nickname');
     GameState.elements.registerPasswordInput = document.getElementById('register-password');
     GameState.elements.registerErrorDisplay = document.getElementById('register-error');
     GameState.elements.registerSubmitBtn = document.getElementById('register-submit-btn');
+    console.log("main.js: registerSubmitBtn 引用狀態:", !!GameState.elements.registerSubmitBtn); // 新增日誌
+
     GameState.elements.loginNicknameInput = document.getElementById('login-nickname');
     GameState.elements.loginPasswordInput = document.getElementById('login-password');
     GameState.elements.loginErrorDisplay = document.getElementById('login-error');
     GameState.elements.loginSubmitBtn = document.getElementById('login-submit-btn');
+    console.log("main.js: loginSubmitBtn 引用狀態:", !!GameState.elements.loginSubmitBtn); // 新增日誌
+    
     GameState.elements.logoutBtn = document.getElementById('logout-btn');
 
     // 頂部導航
@@ -170,6 +178,7 @@ async function initializeApp() {
     // 0. 初始化 DOM 元素引用
     // 確保在任何 UI 函數被調用之前，DOM 元素引用已經被初始化
     initializeDOMReferences(); // 確保 GameState.elements 可用
+    console.log("main.js: DOM 元素引用初始化完成。"); // 新增日誌
 
     // 1. 初始化 Firebase 實例並存儲到 GameState
     // firebase-config.js 已經在導入時執行了 firebase.initializeApp
@@ -229,8 +238,9 @@ async function initializeApp() {
     console.log("main.js: 初始 UI 元件 (如 DNA 槽) 已創建。");
 
     // 5. 註冊靜態事件監聽器
+    console.log("main.js: 準備呼叫 initializeStaticEventListeners..."); // 新增日誌
     initializeStaticEventListeners(); // 來自 event-handlers.js
-    console.log("main.js: 靜態事件監聽器已初始化。");
+    console.log("main.js: 靜態事件監聽器已初始化。"); // 新增日誌
 
     // 6. 更新操作按鈕的初始狀態
     UI.updateActionButtonsStateUI(); // 來自 ui.js (可能依賴 GameState)
