@@ -13,7 +13,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # 從 MD_firebase_config 導入 set_firestore_client，以便在初始化後設置 db
-from MD_firebase_config import set_firestore_client, db as current_db_instance # 導入 db 實例以檢查是否已設置
+# 這裡不再導入 db as current_db_instance，因為我們會在函數內部動態獲取
+from MD_firebase_config import set_firestore_client
 
 # 設定日誌記錄器
 script_logger = logging.getLogger(__name__)
@@ -82,8 +83,10 @@ def initialize_firebase_for_script():
             script_logger.critical("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
             return False # 初始化失敗
     else:
-        # 如果已經初始化，確保 db client 已經設置 (主要針對 main.py 已經初始化過的情況)
-        if current_db_instance is None: # 如果 db 還沒被設置過
+        # 如果已經初始化，確保 db client 已經設置
+        # 這裡需要從 MD_firebase_config 再次導入 db 變數來檢查其狀態
+        from MD_firebase_config import db as current_db_check
+        if current_db_check is None: # 如果 db 還沒被設置過
              set_firestore_client(firestore.client())
         script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
     return True # 初始化成功
@@ -99,13 +102,14 @@ def populate_game_configs():
         return
 
     # 確保 db 實例已經被設置
-    # 這裡直接使用從 MD_firebase_config 導入的 db 實例
-    # 由於 initialize_firebase_for_script 會調用 set_firestore_client，所以此時 current_db_instance 應該已被設置
-    if current_db_instance is None:
-        script_logger.error("錯誤：Firestore 資料庫未初始化。無法執行資料填充。")
+    # 從 MD_firebase_config 模組中直接獲取 db 的最新值
+    from MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
+
+    if firestore_db_instance is None:
+        script_logger.error("錯誤：Firestore 資料庫未初始化 (在 populate_game_configs 內部)。無法執行資料填充。")
         return
 
-    db_client = current_db_instance # 使用已設置的 db 實例
+    db_client = firestore_db_instance # 使用已設置的 db 實例
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
 
     # 1. DNA 碎片資料 (DNAFragments) - 沿用 v5 的擴充範例
@@ -314,7 +318,7 @@ def populate_game_configs():
         {"id": "confused", "name": "混亂", "description": "行動時有50%機率攻擊自己或隨機目標。", "effects": {}, "duration": 2, "icon": "😵", "confusion_chance": 0.5},
         {"id": "energized", "name": "精力充沛", "description": "狀態絕佳！所有能力微幅提升。", "effects": {"attack": 5, "defense": 5, "speed": 5, "crit": 3}, "duration": 3, "icon": "💪"},
         {"id": "weakened", "name": "虛弱", "description": "所有主要戰鬥數值大幅下降。", "effects": {"attack": -12, "defense": -12, "speed": -8, "crit": -5}, "duration": 2, "icon": "😩"},
-        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "🥶", "elemental_vulnerability": {"火": 2.0} }
+        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "�", "elemental_vulnerability": {"火": 2.0} }
     ]
     try:
         db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
