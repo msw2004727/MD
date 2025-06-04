@@ -54,7 +54,7 @@ export function showFeedbackModal(title, messageOrContent, showSpinner, showClos
             feedbackMonsterDetailsDiv: !!feedbackMonsterDetailsDiv, feedbackModalMessage: !!feedbackModalMessage
         });
         // 作為最終備援，使用瀏覽器原生的 alert
-        alert(`錯誤提示: ${title}\n${typeof messageOrContent === 'string' ? messageOrContent : '無法顯示詳細訊息。'}\n\n(UI元素未完全載入，請檢查控制台錯誤)`);
+        alert(`錯誤提示: ${title}\n${typeof messageOrContent === 'string' ? messageOrContent : '無法顯示詳細訊息。'}\n\n(UI元素未完全載入，請檢查控制台錯誤)`); // <--- 修正點：使用 alert 作為備用
         return;
     }
 
