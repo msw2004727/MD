@@ -26,11 +26,14 @@ from MD_services import (
 from MD_config_services import load_all_game_configs_from_firestore # 新增引入
 from MD_models import PlayerGameData, Monster # 引入類型以便註解
 
+# 引入 AI 服務模組
+from MD_ai_services import generate_monster_ai_details # <--- 新增引入
+
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__) # 為路由設定日誌
 
 # --- 輔助函式：獲取遊戲設定 ---
-# 遊戲設定現在將在應用程式啟動時載入一次，並儲存在 current_app.config 中
+# 遊戲設定現在將在應用程式啟動時載入一次，並儲存在 Flask 的 current_app.config 中
 # 或者，如果需要每次請求都重新載入（不建議用於不常變動的設定），則在此處呼叫
 def _get_game_configs_data_from_app_context():
     """
@@ -326,6 +329,26 @@ def simulate_battle_api_route():
 
 # --- 新增的路由 ---
 
+# 新增 AI 描述生成路由
+@md_bp.route('/generate-ai-descriptions', methods=['POST'])
+def generate_ai_descriptions_route():
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response: return error_response
+
+    data = request.json
+    monster_data = data.get('monster_data')
+    if not monster_data:
+        return jsonify({"error": "請求中缺少怪獸資料。"}), 400
+
+    try:
+        # 調用 AI 服務模組中的函式
+        ai_details = generate_monster_ai_details(monster_data)
+        return jsonify(ai_details), 200
+    except Exception as e:
+        routes_logger.error(f"生成AI描述時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "生成AI描述失敗。", "details": str(e)}), 500
+
+
 @md_bp.route('/monster/<monster_id>/update-nickname', methods=['POST'])
 def update_monster_nickname_route(monster_id: str):
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
@@ -573,4 +596,3 @@ def _get_authenticated_user_id():
     except Exception as e:
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403
-
