@@ -10,7 +10,7 @@ import logging
 import json
 
 # 導入你的藍圖
-from MD_routes import md_bp
+from .MD_routes import md_bp
 # 導入 Firebase 配置設定函式
 import MD_firebase_config # 只導入模組
 # 導入遊戲設定服務
