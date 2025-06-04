@@ -2,51 +2,90 @@
 # 用於將遊戲設定資料一次性匯入到 Firestore
 
 # 導入必要的模組
-from MD_firebase_config import db # 這裡的 db 會在 initialize_firebase_for_script 設置後被更新
 import time
 import random
-import os # 導入 os 模組用於檢查文件路徑
+import os # 導入 os 模組用於檢查文件路徑和讀取環境變數
 import json # 導入 json 模組用於解析 JSON
+import logging # 導入 logging 模組
 
 # 導入 Firebase Admin SDK
 import firebase_admin
 from firebase_admin import credentials, firestore
+
+# 從 MD_firebase_config 導入 set_firestore_client，以便在初始化後設置 db
+from MD_firebase_config import set_firestore_client, db as current_db_instance # 導入 db 實例以檢查是否已設置
+
+# 設定日誌記錄器
+script_logger = logging.getLogger(__name__)
+script_logger.setLevel(logging.INFO) # 預設日誌級別為 INFO，可以根據需要調整
+# 如果沒有處理器，添加一個 StreamHandler 以便在控制台輸出
+if not script_logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    script_logger.addHandler(handler)
+
 
 # 輔助用列表 (與 MD_models.py 中的 Literal 一致)
 ELEMENT_TYPES = ["火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"]
 RARITY_NAMES = ["普通", "稀有", "菁英", "傳奇", "神話"]
 SKILL_CATEGORIES = ["近戰", "遠程", "魔法", "輔助", "物理", "特殊", "變化", "其他"]
 
-# 服務帳戶金鑰檔案的路徑
-# 請確保 'serviceAccountKey.json' 檔案與此腳本在同一目錄下
+# 服務帳戶金鑰檔案的路徑 (作為本地開發的備用)
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
 
 def initialize_firebase_for_script():
     """
     為此腳本初始化 Firebase Admin SDK。
+    優先從環境變數 'FIREBASE_SERVICE_ACCOUNT_KEY' 載入憑證。
+    如果環境變數不存在，則嘗試從本地檔案 'serviceAccountKey.json' 載入。
     """
-    if not firebase_admin._apps: # 避免重複初始化
-        try:
-            # 檢查金鑰檔案是否存在
+    if not firebase_admin._apps: # 僅在尚未初始化時執行
+        cred = None
+        firebase_credentials_json_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+        script_logger.info(f"環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: {'已設定' if firebase_credentials_json_env else '未設定'}")
+
+        if firebase_credentials_json_env:
+            script_logger.info("嘗試從環境變數載入 Firebase 憑證...")
+            try:
+                cred_obj = json.loads(firebase_credentials_json_env)
+                cred = credentials.Certificate(cred_obj)
+                script_logger.info("成功從環境變數解析憑證物件。")
+            except Exception as e:
+                script_logger.error(f"從環境變數解析 Firebase 憑證失敗: {e}", exc_info=True)
+                cred = None
+        else:
+            # Fallback to local file for local development if env var is not set
+            script_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
             if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
-                cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-                firebase_admin.initialize_app(cred)
-                print("Firebase Admin SDK 初始化成功。")
-                # 在這裡確保 MD_firebase_config.db 被設置
-                from MD_firebase_config import set_firestore_client
-                set_firestore_client(firestore.client())
+                try:
+                    cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
+                    script_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
+                except Exception as e:
+                    script_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
+                    cred = None
             else:
-                print(f"錯誤：找不到服務帳戶金鑰檔案：{SERVICE_ACCOUNT_KEY_PATH}")
-                print("請確認金鑰檔案已下載並重新命名為 serviceAccountKey.json，並放在 MD/backend/ 目錄下。")
+                script_logger.warning(f"本地金鑰檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 不存在。")
+
+        if cred:
+            script_logger.info("獲得有效憑證物件，嘗試初始化 Firebase Admin SDK...")
+            try:
+                firebase_admin.initialize_app(cred)
+                script_logger.info("Firebase Admin SDK 已使用提供的憑證成功初始化。")
+                # 在這裡確保 MD_firebase_config.db 被設置
+                set_firestore_client(firestore.client())
+                return True # 初始化成功
+            except Exception as e:
+                script_logger.error(f"使用提供的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
                 return False # 初始化失敗
-        except Exception as e:
-            print(f"Firebase Admin SDK 初始化失敗: {e}")
+        else:
+            script_logger.critical("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
             return False # 初始化失敗
     else:
-        # 如果已經初始化，確保 db client 已經設置
-        from MD_firebase_config import set_firestore_client
-        set_firestore_client(firestore.client())
-        print("Firebase Admin SDK 已初始化，跳過重複初始化。")
+        # 如果已經初始化，確保 db client 已經設置 (主要針對 main.py 已經初始化過的情況)
+        if current_db_instance is None: # 如果 db 還沒被設置過
+             set_firestore_client(firestore.client())
+        script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
     return True # 初始化成功
 
 
@@ -56,16 +95,18 @@ def populate_game_configs():
     """
     # 在執行資料填充前，先確保 Firebase 已初始化
     if not initialize_firebase_for_script():
-        print("錯誤：Firebase 未成功初始化。無法執行資料填充。")
+        script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
         return
 
     # 確保 db 實例已經被設置
-    from MD_firebase_config import db # 重新導入 db，確保它是最新設置的實例
-    if not db:
-        print("錯誤：Firestore 資料庫未初始化。無法執行資料填充。")
+    # 這裡直接使用從 MD_firebase_config 導入的 db 實例
+    # 由於 initialize_firebase_for_script 會調用 set_firestore_client，所以此時 current_db_instance 應該已被設置
+    if current_db_instance is None:
+        script_logger.error("錯誤：Firestore 資料庫未初始化。無法執行資料填充。")
         return
 
-    print("開始填充/更新遊戲設定資料到 Firestore...")
+    db_client = current_db_instance # 使用已設置的 db 實例
+    script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
 
     # 1. DNA 碎片資料 (DNAFragments) - 沿用 v5 的擴充範例
     dna_fragments_data = [
@@ -96,10 +137,10 @@ def populate_game_configs():
         { "id": "dna_chaos_m01", "name": "混沌原核", "type": "混", "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": "來自世界誕生之初的混沌能量核心。", "rarity": "神話", "resistances": {'毒':10, '風':10} }
     ]
     try:
-        db.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
-        print(f"成功寫入 DNAFragments 資料 (共 {len(dna_fragments_data)} 種)。")
+        db_client.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
+        script_logger.info(f"成功寫入 DNAFragments 資料 (共 {len(dna_fragments_data)} 種)。")
     except Exception as e:
-        print(f"寫入 DNAFragments 資料失敗: {e}")
+        script_logger.error(f"寫入 DNAFragments 資料失敗: {e}")
 
     # 2. DNA 稀有度資料 (Rarities)
     dna_rarities_data = {
@@ -110,10 +151,10 @@ def populate_game_configs():
         "MYTHICAL": { "name": "神話", "textVarKey": "--rarity-mythical-text", "statMultiplier": 1.75, "skillLevelBonus": 3, "resistanceBonus": 12, "value_factor": 300 },
     }
     try:
-        db.collection('MD_GameConfigs').document('Rarities').set({'dna_rarities': dna_rarities_data})
-        print("成功寫入 Rarities 資料。")
+        db_client.collection('MD_GameConfigs').document('Rarities').set({'dna_rarities': dna_rarities_data})
+        script_logger.info("成功寫入 Rarities 資料。")
     except Exception as e:
-        print(f"寫入 Rarities 資料失敗: {e}")
+        script_logger.error(f"寫入 Rarities 資料失敗: {e}")
 
     # 3. 招式資料 (Skills) - 大幅擴充
     skill_database_data = {
@@ -204,10 +245,10 @@ def populate_game_configs():
         ]
     }
     try:
-        db.collection('MD_GameConfigs').document('Skills').set({'skill_database': skill_database_data})
-        print("成功寫入 Skills 資料 (已大幅擴充)。")
+        db_client.collection('MD_GameConfigs').document('Skills').set({'skill_database': skill_database_data})
+        script_logger.info("成功寫入 Skills 資料 (已大幅擴充)。")
     except Exception as e:
-        print(f"寫入 Skills 資料失敗: {e}")
+        script_logger.error(f"寫入 Skills 資料失敗: {e}")
 
     # 4. 個性資料 (Personalities)
     personalities_data = [
@@ -217,18 +258,18 @@ def populate_game_configs():
         { "name": "急躁的", "description": "如同上緊了發條的火山，一刻也停不下來，隨時都可能爆發出驚人的能量。它的行動總是比思考快上半拍，充滿了不確定性和破壞的衝動。戰鬥中，它極度渴望速戰速決，會不計後果地釋放自己所掌握的最強大、最具視覺衝擊力的技能，無論是近戰肉搏的物理重擊還是遠程施放的毀滅性魔法，只要能快速打倒對手就行。訓練師需要有足夠的技巧去引導和控制它這股狂暴的力量，避免因為急於求成而導致戰術失誤或誤傷友軍。", "colorDark": "#f39c12", "colorLight": "#e67e22", "skill_preferences": {"物理": 1.4, "魔法": 1.4, "近戰": 1.3, "遠程": 1.3, "特殊": 1.0, "輔助": 0.5, "變化": 0.7, "其他": 1.0}},
     ]
     try:
-        db.collection('MD_GameConfigs').document('Personalities').set({'types': personalities_data})
-        print("成功寫入 Personalities 資料。")
+        db_client.collection('MD_GameConfigs').document('Personalities').set({'types': personalities_data})
+        script_logger.info("成功寫入 Personalities 資料。")
     except Exception as e:
-        print(f"寫入 Personalities 資料失敗: {e}")
+        script_logger.error(f"寫入 Personalities 資料失敗: {e}")
 
     # 5. 稱號資料 (Titles)
     titles_data = ["新手", "見習士", "收藏家", "戰新星", "元素使", "傳奇者", "神締者", "吸星者", "技宗師", "勇者魂", "智多星", "守護者"]
     try:
-        db.collection('MD_GameConfigs').document('Titles').set({'player_titles': titles_data})
-        print("成功寫入 Titles 資料。")
+        db_client.collection('MD_GameConfigs').document('Titles').set({'player_titles': titles_data})
+        script_logger.info("成功寫入 Titles 資料。")
     except Exception as e:
-        print(f"寫入 Titles 資料失敗: {e}")
+        script_logger.error(f"寫入 Titles 資料失敗: {e}")
 
     # 6. 怪物成就列表 (MonsterAchievementsList)
     monster_achievements_data = [
@@ -236,10 +277,10 @@ def populate_game_configs():
         "稀有種", "菁英級", "傳奇級", "神話級", "無名者", "幸運星", "破壞王", "戰術家", "治癒者", "潛力股"
     ]
     try:
-        db.collection('MD_GameConfigs').document('MonsterAchievementsList').set({'achievements': monster_achievements_data})
-        print("成功寫入 MonsterAchievementsList 資料。")
+        db_client.collection('MD_GameConfigs').document('MonsterAchievementsList').set({'achievements': monster_achievements_data})
+        script_logger.info("成功寫入 MonsterAchievementsList 資料。")
     except Exception as e:
-        print(f"寫入 MonsterAchievementsList 資料失敗: {e}")
+        script_logger.error(f"寫入 MonsterAchievementsList 資料失敗: {e}")
 
     # 7. 元素預設名 (ElementNicknames)
     element_nicknames_data = {
@@ -247,10 +288,10 @@ def populate_game_configs():
         "光": "聖輝使", "暗": "影匿者", "毒": "毒牙獸", "風": "疾風行", "無": "元氣寶", "混": "混沌體"
     }
     try:
-        db.collection('MD_GameConfigs').document('ElementNicknames').set({'nicknames': element_nicknames_data})
-        print("成功寫入 ElementNicknames 資料。")
+        db_client.collection('MD_GameConfigs').document('ElementNicknames').set({'nicknames': element_nicknames_data})
+        script_logger.info("成功寫入 ElementNicknames 資料。")
     except Exception as e:
-        print(f"寫入 ElementNicknames 資料失敗: {e}")
+        script_logger.error(f"寫入 ElementNicknames 資料失敗: {e}")
 
     # 8. 命名限制設定 (NamingConstraints)
     naming_constraints_data = {
@@ -260,10 +301,10 @@ def populate_game_configs():
         "max_monster_full_nickname_len": 15
     }
     try:
-        db.collection('MD_GameConfigs').document('NamingConstraints').set(naming_constraints_data)
-        print("成功寫入 NamingConstraints 資料。")
+        db_client.collection('MD_GameConfigs').document('NamingConstraints').set(naming_constraints_data)
+        script_logger.info("成功寫入 NamingConstraints 資料。")
     except Exception as e:
-        print(f"寫入 NamingConstraints 資料失敗: {e}")
+        script_logger.error(f"寫入 NamingConstraints 資料失敗: {e}")
 
     # 9. 健康狀況資料 (HealthConditions)
     health_conditions_data = [
@@ -276,10 +317,10 @@ def populate_game_configs():
         {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "🥶", "elemental_vulnerability": {"火": 2.0} }
     ]
     try:
-        db.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
-        print("成功寫入 HealthConditions 資料。")
+        db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
+        script_logger.info("成功寫入 HealthConditions 資料。")
     except Exception as e:
-        print(f"寫入 HealthConditions 資料失敗: {e}")
+        script_logger.error(f"寫入 HealthConditions 資料失敗: {e}")
 
     # 10. 新手指南資料 (NewbieGuide)
     newbie_guide_data = [
@@ -292,10 +333,10 @@ def populate_game_configs():
         {"title": "屬性克制與技能類別", "content": "遊戲中存在屬性克制關係（詳見元素克制表）。此外，技能分為近戰、遠程、魔法、輔助等不同類別，怪獸的個性會影響它們使用不同類別技能的傾向。"},
     ]
     try:
-        db.collection('MD_GameConfigs').document('NewbieGuide').set({'guide_entries': newbie_guide_data})
-        print("成功寫入 NewbieGuide 資料。")
+        db_client.collection('MD_GameConfigs').document('NewbieGuide').set({'guide_entries': newbie_guide_data})
+        script_logger.info("成功寫入 NewbieGuide 資料。")
     except Exception as e:
-        print(f"寫入 NewbieGuide 資料失敗: {e}")
+        script_logger.error(f"寫入 NewbieGuide 資料失敗: {e}")
 
     # 11. 價值設定資料 (ValueSettings)
     value_settings_data = {
@@ -303,13 +344,16 @@ def populate_game_configs():
             "火": 1.2, "水": 1.1, "木": 1.0, "金": 1.3, "土": 0.9,
             "光": 1.5, "暗": 1.4, "毒": 0.8, "風": 1.0, "無": 0.7, "混": 0.6
         },
-        "dna_recharge_conversion_factor": 0.15
+        "dna_recharge_conversion_factor": 0.15,
+        "max_farm_slots": 10, # 新增農場上限
+        "max_monster_skills": 3, # 新增怪獸最大技能數
+        "max_battle_turns": 30 # 新增戰鬥最大回合數
     }
     try:
-        db.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
-        print("成功寫入 ValueSettings 資料。")
+        db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
+        script_logger.info("成功寫入 ValueSettings 資料。")
     except Exception as e:
-        print(f"寫入 ValueSettings 資料失敗: {e}")
+        script_logger.error(f"寫入 ValueSettings 資料失敗: {e}")
 
     # 12. 吸收效果設定 (AbsorptionSettings)
     absorption_settings_data = {
@@ -323,10 +367,10 @@ def populate_game_configs():
         }
     }
     try:
-        db.collection('MD_GameConfigs').document('AbsorptionSettings').set(absorption_settings_data)
-        print("成功寫入 AbsorptionSettings 資料。")
+        db_client.collection('MD_GameConfigs').document('AbsorptionSettings').set(absorption_settings_data)
+        script_logger.info("成功寫入 AbsorptionSettings 資料。")
     except Exception as e:
-        print(f"寫入 AbsorptionSettings 資料失敗: {e}")
+        script_logger.error(f"寫入 AbsorptionSettings 資料失敗: {e}")
 
     # 13. 修煉系統設定 (CultivationSettings)
     cultivation_settings_data = {
@@ -337,10 +381,10 @@ def populate_game_configs():
         "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 }
     }
     try:
-        db.collection('MD_GameConfigs').document('CultivationSettings').set(cultivation_settings_data)
-        print("成功寫入 CultivationSettings 資料。")
+        db_client.collection('MD_GameConfigs').document('CultivationSettings').set(cultivation_settings_data)
+        script_logger.info("成功寫入 CultivationSettings 資料。")
     except Exception as e:
-        print(f"寫入 CultivationSettings 資料失敗: {e}")
+        script_logger.error(f"寫入 CultivationSettings 資料失敗: {e}")
 
     # 14. 元素克制表 (ElementalAdvantageChart) - 新增
     elemental_advantage_chart_data = {
@@ -359,18 +403,18 @@ def populate_game_configs():
     }
     # 確保每個元素對其他所有元素都有定義 (預設為1.0)
     for attacker_el_str in ELEMENT_TYPES:
-        attacker_el: ElementTypes = attacker_el_str # type: ignore
+        attacker_el = attacker_el_str # type: ignore
         if attacker_el not in elemental_advantage_chart_data:
             elemental_advantage_chart_data[attacker_el] = {}
         for defender_el_str in ELEMENT_TYPES:
-            defender_el: ElementTypes = defender_el_str # type: ignore
+            defender_el = defender_el_str # type: ignore
             if defender_el not in elemental_advantage_chart_data[attacker_el]:
                 elemental_advantage_chart_data[attacker_el][defender_el] = 1.0
     try:
-        db.collection('MD_GameConfigs').document('ElementalAdvantageChart').set(elemental_advantage_chart_data)
-        print("成功寫入 ElementalAdvantageChart 資料。")
+        db_client.collection('MD_GameConfigs').document('ElementalAdvantageChart').set(elemental_advantage_chart_data)
+        script_logger.info("成功寫入 ElementalAdvantageChart 資料。")
     except Exception as e:
-        print(f"寫入 ElementalAdvantageChart 資料失敗: {e}")
+        script_logger.error(f"寫入 ElementalAdvantageChart 資料失敗: {e}")
 
 
     # 15. NPC 怪獸資料 (NPCMonsters)
@@ -416,16 +460,20 @@ def populate_game_configs():
         }
     ]
     try:
-        db.collection('MD_GameConfigs').document('NPCMonsters').set({'monsters': npc_monsters_data})
-        print("成功寫入 NPCMonsters 資料。")
+        db_client.collection('MD_GameConfigs').document('NPCMonsters').set({'monsters': npc_monsters_data})
+        script_logger.info("成功寫入 NPCMonsters 資料。")
     except Exception as e:
-        print(f"寫入 NPCMonsters 資料失敗: {e}")
+        script_logger.error(f"寫入 NPCMonsters 資料失敗: {e}")
 
-    print("遊戲設定資料填充/更新完畢。")
+    script_logger.info("遊戲設定資料填充/更新完畢。")
 
 if __name__ == '__main__':
+    # 為了在本地測試時能看到日誌輸出
+    # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # script_logger.info("正在直接執行 MD_populate_gamedata.py...")
+
     confirmation = input("您確定要執行此腳本並將遊戲設定資料填充/更新到 Firestore 嗎？此操作可能會覆蓋現有設定。(yes/no): ")
     if confirmation.lower() == 'yes':
         populate_game_configs()
     else:
-        print("操作已取消。")
+        script_logger.info("操作已取消。")
