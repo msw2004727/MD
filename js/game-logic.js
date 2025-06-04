@@ -336,8 +336,6 @@ export function clearCombinationSlot(comboSlotId, returnToInventory = true) {
             if (emptyTempSlotIndex !== -1) {
                 GameState.temporaryBackpackSlots[emptyTempSlotIndex] = returnedDNA;
                 UI.populateTemporaryBackpack();
-                UI.showFeedbackModal("成功", `${returnedDNA.name} 已返回臨時背包。`, true, false);
-            } else {
                 UI.showFeedbackModal("提示", `${returnedDNA.name} 已從組合槽移除，但背包和物品欄均已滿，請整理。`, false, true);
                 console.log(`${returnedDNA.name} 已返回DNA池，但背包和物品欄均已滿。`);
             }
@@ -711,7 +709,7 @@ export function promptReleaseMonster(monsterIdToRelease) {
         UI.openModal('confirmation-modal');
     } else {
         console.error("確認模態框的必要元素未找到。");
-        UI.showFeedbackModal("錯誤", "無法打開放生確認視窗。", false, true);
+        UI.showFeedbackModal("錯誤", "無法打開刪除確認視窗。", false, true);
     }
     console.log(`提示放生 ${monster.nickname}。`);
 }
