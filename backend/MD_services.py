@@ -201,7 +201,10 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，使用暱稱: {authoritative_nickname}。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
-        if save_player_data_service(player_id, new_player_data):
+        services_logger.debug(f"DEBUG: 初始化新玩家資料鍵值: {new_player_data.keys()}") # 添加此行
+        save_success = save_player_data_service(player_id, new_player_data)
+        services_logger.debug(f"DEBUG: 儲存新玩家資料結果 for {player_id}: {save_success}") # 添加此行
+        if save_success:
             services_logger.info(f"新玩家 {authoritative_nickname} 的初始資料已成功儲存。")
         else:
             services_logger.error(f"儲存新玩家 {authoritative_nickname} 的初始資料失敗。")
@@ -233,7 +236,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
-        services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
+        services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True) # 確保這裡有 exc_info=True
         return False
 
 # --- DNA 組合與怪獸生成服務 ---
@@ -841,12 +844,6 @@ def complete_cultivation_service(
         potential_new_skills: List[Skill] = [] # type: ignore
         current_skill_names = {s.get("name") for s in current_skills}
 
-        for el_str_learn in monster_elements:
-            el_learn: ElementTypes = el_str_learn # type: ignore
-            potential_new_skills.extend(all_skills_db.get(el_learn, [])) # type: ignore
-        if "無" not in monster_elements:
-            potential_new_skills.extend(all_skills_db.get("無", [])) # type: ignore
-
         learnable_skills = [s_template for s_template in potential_new_skills if s_template.get("name") not in current_skill_names]
 
         if learnable_skills:
@@ -1236,7 +1233,7 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
     loser_id: Optional[str] = None
 
     if m1_final_hp <= 0 and m2_final_hp > 0:
-        log.append(f"� {m2_name} 獲勝！")
+        log.append(f" {m2_name} 獲勝！")
         winner_id = monster2_data.get('id')
         loser_id = monster1_data.get('id')
     elif m2_final_hp <= 0 and m1_final_hp > 0:
