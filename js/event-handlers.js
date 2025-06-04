@@ -9,12 +9,12 @@ import {
     populateNewbieGuide,
     updateMonsterInfoModal,
     openAndPopulatePlayerInfoModal,
-    setupMonsterLeaderboardTabs, // 雖然這裡導入了，但實際邏輯可能在 UI 中處理
+    setupMonsterLeaderboardTabs, 
     populateMonsterLeaderboard,
     populatePlayerLeaderboard,
     openDnaFarmTab,
     openGenericTab,
-    setupDropZones // 拖放設置函式
+    setupDropZones 
 } from './ui.js';
 
 import {
@@ -29,26 +29,21 @@ import {
     promptChallengeMonster,
     moveFromTempToInventory,
     handleComboSlotClick,
-    handleDragStart, // 拖放開始
-    handleDragOver,  // 拖放經過
-    handleDragLeave, // 拖放離開
-    handleDrop,      // 拖放結束
-    handleDropOnDeleteSlot // 處理刪除區拖放的函式
+    handleDragStart, 
+    handleDragOver,  
+    handleDragLeave, 
+    handleDrop,      
+    handleDropOnDeleteSlot 
 } from './game-logic.js';
 
 import { handleRegister, handleLogin, handleLogout } from './auth.js';
 import * as GameState from './game-state.js'; // 遊戲狀態和 DOM 元素引用
-// import { auth } from './firebase-config.js'; // auth 實例已經在 GameState 中，無需再次導入
 
 // --- 事件處理函式 ---
 function handleThemeSwitch() {
     const currentTheme = localStorage.getItem('theme') || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     applyTheme(newTheme);
-}
-
-function handleOpenModalWrapper(modalId) {
-    openModal(modalId);
 }
 
 function handleCloseModalWrapper(event) {
@@ -65,56 +60,68 @@ function handleTabSwitch(event, tabName, containerQuerySelector) {
         return;
     }
 
-    // 根據父容器的 ID 或特定屬性來判斷呼叫哪個通用的頁籤開啟函式
     if (tabContainer.id === 'dna-farm-tabs') {
         openDnaFarmTab(event, tabName);
     } else if (tabContainer.id === 'monster-info-tabs') {
-        openGenericTab(event, tabName, '#' + tabContainer.id); // 傳遞正確的容器選擇器
+        openGenericTab(event, tabName, '#' + tabContainer.id); 
     } else {
-        openGenericTab(event, tabName, '#' + tabContainer.id); // 對於其他通用頁籤
+        openGenericTab(event, tabName, '#' + tabContainer.id); 
     }
 }
 
 // --- 主要函式：初始化所有靜態事件監聽器 ---
 export function initializeStaticEventListeners() {
-    // 直接從 GameState.elements 獲取 DOM 元素引用
+    console.log("event-handlers.js -> initializeStaticEventListeners: Function started."); // 新增日誌
+
     const elements = GameState.elements;
 
-    // 主題切換按鈕
     if (elements.themeSwitcherBtn) {
         elements.themeSwitcherBtn.addEventListener('click', handleThemeSwitch);
+        console.log("event-handlers.js: Theme switcher listener bound."); // 新增日誌
     }
 
-    // 認證相關按鈕
-    if (elements.showLoginFormBtn) {
-        elements.showLoginFormBtn.addEventListener('click', () => handleOpenModalWrapper('login-modal'));
-    }
-    if (elements.showRegisterFormBtn) {
-        elements.showRegisterFormBtn.addEventListener('click', () => handleOpenModalWrapper('register-modal'));
-    }
+    // 認證相關按鈕 (直接綁定到提交按鈕)
     if (elements.registerSubmitBtn) {
-        elements.registerSubmitBtn.addEventListener('click', handleRegister); // handleRegister 現在直接從 GameState.elements 獲取值
+        elements.registerSubmitBtn.addEventListener('click', function(event) {
+            console.log("event-handlers.js: Register button clicked, calling handleRegister."); // 新增點擊日誌
+            event.preventDefault(); // 防止表單默認提交，如果有表單包圍
+            handleRegister(); 
+        });
+        console.log("event-handlers.js: Register submit button listener bound."); // 新增日誌
+    } else {
+        console.warn("event-handlers.js: registerSubmitBtn not found in GameState.elements, cannot bind listener."); // 新增警告日誌
     }
+
     if (elements.loginSubmitBtn) {
-        elements.loginSubmitBtn.addEventListener('click', handleLogin); // handleLogin 現在直接從 GameState.elements 獲取值
+        elements.loginSubmitBtn.addEventListener('click', function(event) {
+            console.log("event-handlers.js: Login button clicked, calling handleLogin."); // 新增點擊日誌
+            event.preventDefault(); // 防止表單默認提交，如果有表單包圍
+            handleLogin();
+        });
+        console.log("event-handlers.js: Login submit button listener bound."); // 新增日誌
+    } else {
+        console.warn("event-handlers.js: loginSubmitBtn not found in GameState.elements, cannot bind listener."); // 新增警告日誌
     }
+    
     if (elements.logoutBtn) {
         elements.logoutBtn.addEventListener('click', handleLogout);
+        console.log("event-handlers.js: Logout button listener bound."); // 新增日誌
     }
 
     // 頂部導航按鈕
     if (elements.monsterInfoButton) {
         elements.monsterInfoButton.addEventListener('click', () => {
-            updateMonsterInfoModal(GameState.currentMonster); // 假設 GameState.currentMonster 儲存當前怪獸資訊
-            handleOpenModalWrapper('monster-info-modal');
+            console.log("event-handlers.js: Monster Info button clicked."); // 新增日誌
+            updateMonsterInfoModal(GameState.currentMonster); 
+            openModal('monster-info-modal'); 
         });
     }
     if (elements.playerInfoButton) {
         elements.playerInfoButton.addEventListener('click', () => {
-            // 確保 auth.currentUser 存在才傳遞 uid
+            console.log("event-handlers.js: Player Info button clicked."); // 新增日誌
             if (GameState.auth.currentUser) {
                 openAndPopulatePlayerInfoModal(GameState.auth.currentUser.uid);
-                handleOpenModalWrapper('player-info-modal');
+                openModal('player-info-modal');
             } else {
                 showFeedbackModal("提示", "請先登入以查看玩家資訊。", false, true);
             }
@@ -122,36 +129,42 @@ export function initializeStaticEventListeners() {
     }
     if (elements.showMonsterLeaderboardBtn) {
         elements.showMonsterLeaderboardBtn.addEventListener('click', () => {
-            setupMonsterLeaderboardTabs(); // 設置排行榜頁籤
-            populateMonsterLeaderboard('all'); // 預設顯示全部
-            handleOpenModalWrapper('monster-leaderboard-modal');
+            console.log("event-handlers.js: Monster Leaderboard button clicked."); // 新增日誌
+            setupMonsterLeaderboardTabs(); 
+            populateMonsterLeaderboard('all'); 
+            openModal('monster-leaderboard-modal'); 
         });
     }
     if (elements.showPlayerLeaderboardBtn) {
         elements.showPlayerLeaderboardBtn.addEventListener('click', () => {
+            console.log("event-handlers.js: Player Leaderboard button clicked."); // 新增日誌
             populatePlayerLeaderboard();
-            handleOpenModalWrapper('player-leaderboard-modal');
+            openModal('player-leaderboard-modal');
         });
     }
     if (elements.friendsListBtn) {
         elements.friendsListBtn.addEventListener('click', () => {
-            if (elements.friendsListSearchInput) elements.friendsListSearchInput.value = ''; // 清空搜尋輸入框
-            handleOpenModalWrapper('friends-list-modal');
+            console.log("event-handlers.js: Friends List button clicked."); // 新增日誌
+            if (elements.friendsListSearchInput) elements.friendsListSearchInput.value = ''; 
+            openModal('friends-list-modal'); 
         });
     }
     if (elements.newbieGuideBtn) {
         elements.newbieGuideBtn.addEventListener('click', () => {
-            populateNewbieGuide(); // 填充新手指南內容
-            handleOpenModalWrapper('newbie-guide-modal');
+            console.log("event-handlers.js: Newbie Guide button clicked."); // 新增日誌
+            populateNewbieGuide(); 
+            openModal('newbie-guide-modal'); 
         });
     }
 
     // DNA 操作按鈕
     if (elements.combineButton) {
-        elements.combineButton.addEventListener('click', combineDNA); // 呼叫 game-logic.js 中的 combineDNA
+        elements.combineButton.addEventListener('click', combineDNA); 
+        console.log("event-handlers.js: Combine DNA button listener bound."); // 新增日誌
     }
     if (elements.drawDnaBtn) {
-        elements.drawDnaBtn.addEventListener('click', handleDrawDnaButtonClick); // 呼叫 game-logic.js 中的 handleDrawDnaButtonClick
+        elements.drawDnaBtn.addEventListener('click', handleDrawDnaButtonClick); 
+        console.log("event-handlers.js: Draw DNA button listener bound."); // 新增日誌
     }
 
     // 頁籤按鈕 (使用事件委託或直接綁定)
@@ -164,30 +177,32 @@ export function initializeStaticEventListeners() {
     if (elements.monsterDetailsInfoTab) elements.monsterDetailsInfoTab.addEventListener('click', (event) => handleTabSwitch(event, 'monster-details-tab', '#monster-info-tabs'));
     if (elements.monsterLogsInfoTab) elements.monsterLogsInfoTab.addEventListener('click', (event) => handleTabSwitch(event, 'monster-logs-tab', '#monster-info-tabs'));
 
-    // 模態框關閉按鈕 (使用事件委託，因為它們可能在模態框內容動態載入後才出現)
-    if (elements.modalContainer) {
-        elements.modalContainer.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal-close') || event.target.dataset.modalCloseButton) {
-                handleCloseModalWrapper(event);
-            }
-        });
-    }
+    // 模態框關閉按鈕 (使用事件委託)
+    document.body.addEventListener('click', (event) => { 
+        if (event.target.classList.contains('modal-close') || event.target.dataset.modalCloseButton) {
+            handleCloseModalWrapper(event);
+        }
+    });
 
     // 確認模態框的取消按鈕
     if (elements.cancelActionBtn) {
-        elements.cancelActionBtn.addEventListener('click', () => closeModal('confirmation-modal')); // 取消按鈕應該關閉模態框
+        elements.cancelActionBtn.addEventListener('click', () => closeModal('confirmation-modal')); 
     }
-    // confirmActionBtn 的點擊事件通常是動態設定的，取決於確認的內容，因此不在這裡靜態綁定。
 
     // 其他靜態按鈕
     if (elements.startCultivationBtn) {
-        elements.startCultivationBtn.addEventListener('click', startCultivation); // 呼叫 game-logic.js 中的 startCultivation
+        elements.startCultivationBtn.addEventListener('click', startCultivation); 
     }
     if (elements.addAllToTempBackpackBtn) {
-        elements.addAllToTempBackpackBtn.addEventListener('click', addAllTrainingItemsToBackpack); // 呼叫 game-logic.js 中的 addAllTrainingItemsToBackpack
+        elements.addAllToTempBackpackBtn.addEventListener('click', addAllTrainingItemsToBackpack); 
     }
     if (elements.reminderConfirmCloseBtn) {
-        elements.reminderConfirmCloseBtn.addEventListener('click', closeTrainingResultsAndCheckReminder); // 呼叫 game-logic.js 中的 closeTrainingResultsAndCheckReminder
+        elements.reminderConfirmCloseBtn.addEventListener('click', () => {
+            closeModal('reminder-modal'); 
+            closeModal('training-results-modal'); 
+            showFeedbackModal("提示", "未加入的物品已丟棄。", true, false); 
+            GameState.itemsFromCurrentTraining = []; 
+        });
     }
     if (elements.trainingResultsModalFinalCloseBtn) {
         elements.trainingResultsModalFinalCloseBtn.addEventListener('click', () => closeModal('training-results-modal'));
@@ -202,24 +217,24 @@ export function initializeStaticEventListeners() {
         elements.friendsListSearchInput.addEventListener('input', (e) => {
             clearTimeout(friendsSearchDebounceTimer);
             friendsSearchDebounceTimer = setTimeout(() => {
-                searchFriends(e.target.value); // 呼叫 game-logic.js 中的 searchFriends
+                searchFriends(e.target.value); 
             }, 300);
         });
     }
 
-    // 初始化拖放監聽器 (這個函式已經在 UI 模組中)
+    // 初始化拖放監聽器
     setupDropZones();
+    console.log("event-handlers.js: Drop zones setup called."); // 新增日誌
 
     // 針對動態生成的 DNA 碎片和臨時背包物品添加事件委託，處理拖放和點擊
-    // 這些事件監聽器已經在 ui.js 的 setupDropZones 中處理，不需要在這裡重複綁定
-    // 這裡只保留了針對特定點擊事件的處理，例如臨時背包點擊移動到庫存
     if (elements.temporaryBackpackItemsContainer) {
         elements.temporaryBackpackItemsContainer.addEventListener('click', (event) => {
-            const item = event.target.closest('.dna-item[data-source-type="temporary"]'); // 使用更精確的選擇器
+            const item = event.target.closest('.dna-item[data-source-type="temporary"]'); 
             if (item && item.dataset.slotIndex) {
-                moveFromTempToInventory(parseInt(item.dataset.slotIndex)); // 呼叫 game-logic.js 中的 moveFromTempToInventory
+                moveFromTempToInventory(parseInt(item.dataset.slotIndex)); 
             }
         });
+        console.log("event-handlers.js: Temporary backpack click listener bound."); // 新增日誌
     }
 
     if (elements.dnaDrawResultsGrid) {
@@ -227,12 +242,13 @@ export function initializeStaticEventListeners() {
             const addButton = event.target.closest('.add-drawn-to-temp-backpack-btn');
             if (addButton && addButton.dataset.dna) {
                 const dnaInfo = JSON.parse(addButton.dataset.dna);
-                GameLogic.addToTemporaryBackpack(dnaInfo); // 呼叫 GameLogic 中的 addToTemporaryBackpack
-                showFeedbackModal("成功", `${dnaInfo.name} 已加入臨時背包！`, true, false); // 顯示成功訊息
-                addButton.disabled = true; // 防止重複添加
-                addButton.textContent = '已加入'; // 更新按鈕文字
+                GameLogic.addToTemporaryBackpack(dnaInfo); 
+                showFeedbackModal("成功", `${dnaInfo.name} 已加入臨時背包！`, true, false); 
+                addButton.disabled = true; 
+                addButton.textContent = '已加入'; 
             }
         });
+        console.log("event-handlers.js: DNA draw results grid click listener bound."); // 新增日誌
     }
 
 
@@ -244,13 +260,14 @@ export function initializeStaticEventListeners() {
             const activeMonsterRadio = event.target.closest('input[name="active_monster"][type="radio"]');
 
             if (cultivateBtn && cultivateBtn.dataset.monsterId) {
-                GameLogic.openCultivationSetupModal(cultivateBtn.dataset.monsterId); // 呼叫 game-logic.js 中的 openCultivationSetupModal
+                GameLogic.openCultivationSetupModal(cultivateBtn.dataset.monsterId); 
             } else if (releaseBtn && releaseBtn.dataset.monsterId) {
-                promptReleaseMonster(releaseBtn.dataset.monsterId); // 呼叫 game-logic.js 中的 promptReleaseMonster
+                promptReleaseMonster(releaseBtn.dataset.monsterId); 
             } else if (activeMonsterRadio && activeMonsterRadio.value) {
-                toggleBattleStatus(activeMonsterRadio.value); // 呼叫 game-logic.js 中的 toggleBattleStatus
+                toggleBattleStatus(activeMonsterRadio.value); 
             }
         });
+        console.log("event-handlers.js: Farmed monsters list click listener bound."); // 新增日誌
     }
 
     // 排行榜中的挑戰按鈕和玩家暱稱連結
@@ -260,18 +277,18 @@ export function initializeStaticEventListeners() {
             const playerNicknameLink = event.target.closest('.player-nickname-link');
 
             if (challengeBtn && challengeBtn.dataset.monsterId) {
-                // 需要從 GameState.allPublicMonsters 中找到對應的怪獸數據
                 const opponentMonster = GameState.allPublicMonsters.find(m => m.id === challengeBtn.dataset.monsterId);
                 if (opponentMonster) {
-                    promptChallengeMonster(opponentMonster); // 呼叫 game-logic.js 中的 promptChallengeMonster，傳遞完整物件
+                    promptChallengeMonster(opponentMonster); 
                 } else {
                     showFeedbackModal("錯誤", "找不到要挑戰的怪獸數據。", false, true);
                 }
             } else if (playerNicknameLink && playerNicknameLink.dataset.playerUid) {
                 openAndPopulatePlayerInfoModal(playerNicknameLink.dataset.playerUid);
-                handleOpenModalWrapper('player-info-modal');
+                openModal('player-info-modal'); 
             }
         });
+        console.log("event-handlers.js: Monster leaderboard click listener bound."); // 新增日誌
     }
 
     if (elements.playerLeaderboardTable) {
@@ -279,25 +296,25 @@ export function initializeStaticEventListeners() {
             const viewPlayerBtn = event.target.closest('button[data-action="view-player"]');
             if (viewPlayerBtn && viewPlayerBtn.dataset.playerUid) {
                 openAndPopulatePlayerInfoModal(viewPlayerBtn.dataset.playerUid);
-                handleOpenModalWrapper('player-info-modal');
+                openModal('player-info-modal'); 
             }
         });
+        console.log("event-handlers.js: Player leaderboard click listener bound."); // 新增日誌
     }
 
     // 怪獸排行榜元素篩選頁籤
-    const monsterLeaderboardElementTabs = elements.monsterLeaderboardElementTabs; // 直接從 GameState.elements 獲取
+    const monsterLeaderboardElementTabs = elements.monsterLeaderboardElementTabs; 
     if (monsterLeaderboardElementTabs) {
         monsterLeaderboardElementTabs.addEventListener('click', (event) => {
             const tabButton = event.target.closest('.tab-button[data-element-filter]');
             if (tabButton) {
-                // 移除所有按鈕的 active 類別
                 monsterLeaderboardElementTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-                // 為被點擊的按鈕添加 active 類別
                 tabButton.classList.add('active');
-                populateMonsterLeaderboard(tabButton.dataset.elementFilter); // 呼叫 ui.js 中的 populateMonsterLeaderboard
+                populateMonsterLeaderboard(tabButton.dataset.elementFilter); 
             }
         });
+        console.log("event-handlers.js: Monster leaderboard element tabs listener bound."); // 新增日誌
     }
 
-    console.log('Static and delegated event listeners initialized from event-handlers.js');
+    console.log('event-handlers.js -> initializeStaticEventListeners: Function complete.'); // 新增日誌
 }
