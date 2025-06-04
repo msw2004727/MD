@@ -8,8 +8,11 @@ from typing import List, Dict, Optional, Union, Tuple, Literal, Any
 from collections import Counter
 import copy # 用於深拷貝戰鬥狀態
 
-from firebase_admin import firestore # 引入 firestore 以便使用 FieldFilter 等
-from .MD_firebase_config import db
+# 這裡不再直接從 .MD_firebase_config 導入 db，而是在函數內部動態獲取
+# from .MD_firebase_config import db 
+import firebase_admin # 僅用於類型提示或檢查 firebase_admin._apps
+from firebase_admin import firestore # 僅用於類型提示或 FieldFilter 等
+
 from .MD_models import (
     PlayerGameData, PlayerStats, PlayerOwnedDNA,
     Monster, Skill, DNAFragment, RarityDetail, Personality,
@@ -153,9 +156,14 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
     """獲取玩家遊戲資料，如果不存在則初始化。"""
-    if not db:
-        services_logger.error("Firestore 資料庫未初始化 (get_player_data_service)。")
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
         return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     try:
         user_profile_ref = db.collection('users').document(player_id)
         user_profile_doc = user_profile_ref.get()
@@ -208,7 +216,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
-                    "lastSave": player_game_data_dict.get("lastSave", int(time.time()))
+                    "lastSave": int(time.time())
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -231,9 +239,14 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     """儲存玩家遊戲資料到 Firestore。"""
-    if not db:
-        services_logger.error("Firestore 資料庫未初始化 (save_player_data_service)。")
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     try:
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
@@ -260,6 +273,14 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
     根據提供的 DNA ID 列表、遊戲設定和玩家資料來組合生成新的怪獸。
     此函式不再負責儲存玩家資料。
     """
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (combine_dna_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not dna_ids_from_request:
         services_logger.warning("DNA 組合請求中的 DNA ID 列表為空。")
         return None
@@ -436,6 +457,14 @@ def update_monster_custom_element_nickname_service(
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
     """更新怪獸的自定義屬性名，並重新計算完整暱稱。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (update_monster_custom_element_nickname_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters"):
         services_logger.error(f"更新屬性名失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
@@ -487,6 +516,14 @@ def absorb_defeated_monster_service(
     player_data: PlayerGameData
 ) -> Optional[Dict[str, Any]]:
     """處理勝利怪獸吸收被擊敗怪獸的邏輯。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters"):
         return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
 
@@ -588,6 +625,14 @@ def absorb_defeated_monster_service(
 # --- 醫療站相關服務 ---
 def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
     """計算 DNA 碎片的價值，用於充能等。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not dna_instance: return 0
     base_rarity_value = 0
     rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", {}) # type: ignore
@@ -619,6 +664,14 @@ def heal_monster_service(
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
     """治療怪獸。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters"):
         services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
@@ -664,6 +717,14 @@ def disassemble_monster_service(
     player_data: PlayerGameData
 ) -> Optional[Dict[str, any]]:
     """分解怪獸，返回分解出的 DNA 模板列表。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters"):
         return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
 
@@ -726,6 +787,14 @@ def recharge_monster_with_dna_service(
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
     """使用指定的 DNA 碎片為怪獸充能 HP 或 MP。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (recharge_monster_with_dna_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters") or not player_data.get("playerOwnedDNA"):
         services_logger.error(f"充能失敗：找不到玩家 {player_id} 或其無怪獸/DNA庫。")
         return None
@@ -796,6 +865,14 @@ def complete_cultivation_service(
     game_configs: GameConfigs
 ) -> Optional[Dict[str, Any]]:
     """完成怪獸修煉，計算經驗、潛在新技能等。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (complete_cultivation_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。", "status_code": 500}
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     player_data = get_player_data_service(player_id, None, game_configs)
     if not player_data or not player_data.get("farmedMonsters"):
         services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
@@ -878,7 +955,10 @@ def complete_cultivation_service(
             # 創建一個加權列表
             weighted_learnable_skills = []
             for skill_template in learnable_skills:
-                skill_rarity = skill_template.get("rarity", "普通") # 假設技能模板有 rarity 屬性
+                # 假設技能模板有 rarity 屬性，如果沒有，這裡需要安全處理或從別處獲取
+                # 目前的 Skill TypedDict 沒有 rarity 屬性，這可能會導致 KeyError 或類型不匹配
+                # 這裡暫時假設 skill_template.get("rarity") 會返回有效值
+                skill_rarity = skill_template.get("rarity", "普通") # type: ignore
                 bias_factor = new_skill_rarity_bias.get(skill_rarity, 1.0) if new_skill_rarity_bias else 1.0 # type: ignore
                 # 將技能模板加入列表多次，次數由 bias_factor 決定 (例如 bias_factor=0.6，加入6次)
                 # 為了避免浮點數問題，可以將所有 bias_factor 乘以一個大數變成整數
@@ -918,6 +998,14 @@ def replace_monster_skill_service(
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
     """替換或學習怪獸的技能。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (replace_monster_skill_service 內部)。")
+        return None
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not player_data or not player_data.get("farmedMonsters"):
         services_logger.error(f"替換技能失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
@@ -965,6 +1053,14 @@ def replace_monster_skill_service(
 # --- 戰鬥模擬服務 (核心邏輯深化) ---
 def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game_configs: GameConfigs) -> Dict:
     """模擬兩隻怪獸之間的戰鬥，包含詳細技能效果和元素克制。"""
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (simulate_battle_service 內部)。")
+        # 這裡不返回 None，因為戰鬥模擬本身不依賴 Firestore，但日誌會記錄問題
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     log: List[str] = []
 
     m1_battle_state = copy.deepcopy(monster1_data)
@@ -1324,9 +1420,13 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
 # --- 排行榜與玩家搜尋服務 ---
 def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[Monster]:
     """獲取怪獸排行榜。"""
-    if not db:
-        services_logger.error("Firestore未初始化 (get_monster_leaderboard_service)。")
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (get_monster_leaderboard_service 內部)。")
         return []
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     all_monsters: List[Monster] = []
     try:
@@ -1354,9 +1454,13 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) 
 
 def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[PlayerStats]:
     """獲取玩家排行榜。"""
-    if not db:
-        services_logger.error("Firestore未初始化 (get_player_leaderboard_service)。")
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (get_player_leaderboard_service 內部)。")
         return []
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     all_player_stats: List[PlayerStats] = []
     try:
@@ -1380,9 +1484,14 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
 
 def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[str, str]]:
     """根據暱稱搜尋玩家。"""
-    if not db:
-        services_logger.error("Firestore未初始化 (search_players_service)。")
+    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        services_logger.error("Firestore 資料庫未初始化 (search_players_service 內部)。")
         return []
+    
+    db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
+
     if not nickname_query:
         return []
 
