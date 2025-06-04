@@ -406,16 +406,26 @@
         </div>
     </div>
 
-    <!-- 根據 github結構.txt 連結到外部 JavaScript 檔案 -->
-    <!-- 注意：檔案順序可能需要根據依賴關係調整 -->
+    <!-- JavaScript 檔案 -->
+    <!-- 外部函式庫 (已在 head 中) -->
+
+    <!-- 應用程式配置 -->
     <script src="js/firebase-config.js" defer></script>
-    <script src="js/loadApiKey.js" defer></script> 
+    <script src="js/config.js" defer></script> <!-- 已新增並調整順序 -->
+
+    <!-- 核心狀態與邏輯 -->
     <script src="js/game-state.js" defer></script>
     <script src="js/api-client.js" defer></script>
-    <script src="js/game-logic.js" defer></script>
     <script src="js/auth.js" defer></script>
+    <script src="js/game-logic.js" defer></script>
+
+    <!-- UI 與事件處理 -->
     <script src="js/ui.js" defer></script>
     <script src="js/event-handlers.js" defer></script>
+
+    <!-- 主應用程式入口 -->
     <script src="js/main.js" defer></script>
+    
+    <!-- <script src="js/loadApiKey.js" defer></script>  已移除此行 -->
 </body>
 </html>
