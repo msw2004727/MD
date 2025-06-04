@@ -31,7 +31,7 @@ async function registerUser(nickname, password) {
     if (typeof firebase === 'undefined' || !firebase.auth) {
         throw new Error("Firebase Auth SDK 尚未載入或初始化。");
     }
-    // 為了符合 Firebase email 格式，我們將 nickname 轉換
+    // 為了符合 Firebase email 格式，我們將 nickname 轉換 
     // 實際應用中，後端可能需要更複雜的處理來支持純暱稱登入
     const email = `${nickname.trim().toLowerCase()}@monstergame.dev`; // 使用一個虛構的域名
 
@@ -63,11 +63,26 @@ async function loginUser(nickname, password) {
     const email = `${nickname.trim().toLowerCase()}@monstergame.dev`;
 
     try {
+        console.log("嘗試使用 Firebase 登入..."); // 新增日誌
         const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-        console.log("用戶登入成功:", userCredential.user.uid);
+        
+        console.log("Firebase 登入成功。User UID:", userCredential.user.uid); // 新增日誌
+        console.log("Firebase User 物件:", userCredential.user); // 新增日誌
+
+        // 嘗試獲取 ID Token 並觀察是否在此處卡住或觸發錯誤
+        try {
+            console.log("嘗試獲取 ID Token..."); // 新增日誌
+            const idToken = await userCredential.user.getIdToken(true); // 嘗試強制刷新 token
+            console.log("成功獲取 ID Token:", idToken); // 新增日誌
+        } catch (tokenError) {
+            console.error("獲取 ID Token 失敗 (loginUser 內部):", tokenError.code, tokenError.message); // 新增日誌
+            // 這裡的錯誤會被外層的 catch 捕獲並映射
+            throw tokenError; // 重新拋出以讓外層處理
+        }
+
         return userCredential.user;
     } catch (error) {
-        console.error("登入錯誤:", error.code, error.message);
+        console.error("登入錯誤 (loginUser):", error.code, error.message); // 新增日誌
         throw mapAuthError(error);
     }
 }
@@ -104,7 +119,7 @@ async function getCurrentUserToken(forceRefresh = false) {
         const token = await firebase.auth().currentUser.getIdToken(forceRefresh);
         return token;
     } catch (error) {
-        console.error("獲取 ID Token 錯誤:", error);
+        console.error("獲取 ID Token 錯誤 (getCurrentUserToken):", error); // 新增日誌
         // 如果是 token 過期等問題，可能需要引導用戶重新登入
         if (error.code === 'auth/user-token-expired' || error.code === 'auth/invalid-user-token') {
             // 可以觸發一個事件或調用一個函數來處理重新登入邏
