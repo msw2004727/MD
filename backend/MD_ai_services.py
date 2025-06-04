@@ -3,7 +3,7 @@
 
 import os
 import json
-import requests # 用於發送 HTTP 請求
+import requests # 用於發送 HTTP 請求 
 import logging
 import time
 from typing import Dict, Any # 用於類型提示
@@ -12,9 +12,10 @@ from typing import Dict, Any # 用於類型提示
 ai_logger = logging.getLogger(__name__)
 
 # Gemini API 設定
-GEMINI_API_KEY = "" # 將由 Canvas 環境提供或留空
+# 從環境變數中獲取 API 金鑰
+GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("API_KEY") or "" 
 GEMINI_API_URL_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
-DEFAULT_MODEL = "gemini-2.0-flash"
+DEFAULT_MODEL = "gemini-2.0-flash" # 預設使用 Gemini Flash 模型
 
 # 預設的 AI 生成內容，以防 API 呼叫失敗
 DEFAULT_AI_RESPONSES = {
@@ -54,8 +55,10 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     monster_nickname = monster_data.get('nickname', '一隻神秘怪獸')
     ai_logger.info(f"開始為怪獸 '{monster_nickname}' 生成 AI 詳細資訊。")
 
-    if not GEMINI_API_KEY and "GOOGLE_API_KEY" not in os.environ and not os.getenv("API_KEY"):
-        ai_logger.warning("Gemini API 金鑰未在程式碼中設定，亦未找到 GOOGLE_API_KEY 或 API_KEY 環境變數。依賴 Canvas 環境注入或外部設定。")
+    # 檢查 API 金鑰是否可用
+    if not GEMINI_API_KEY:
+        ai_logger.error("Gemini API 金鑰未設定。無法呼叫 AI 服務。請確保已設置 GOOGLE_API_KEY 或 API_KEY 環境變數。")
+        return DEFAULT_AI_RESPONSES.copy()
 
     elements_str = "、".join(monster_data.get('elements', ['無']))
     hp = monster_data.get('hp', 50)
@@ -197,42 +200,3 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
 
     ai_logger.error(f"所有重試均失敗，無法為 '{monster_nickname}' 生成 AI 詳細資訊。")
     return DEFAULT_AI_RESPONSES.copy()
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ai_logger.info("正在測試 MD_ai_services.py...")
-
-    mock_monster_1 = {
-        "nickname": "烈焰幼龍", "elements": ["火", "龍"], "rarity": "稀有",
-        "hp": 120, "mp": 60, "attack": 25, "defense": 18, "speed": 22, "crit": 8,
-        "personality_name": "勇敢的",
-        "personality_description": "天生的戰士，無所畏懼。" # 基礎描述，AI會擴寫
-    }
-    mock_monster_2 = {
-        "nickname": "深海巨龜", "elements": ["水", "土"], "rarity": "菁英",
-        "hp": 200, "mp": 40, "attack": 15, "defense": 40, "speed": 5, "crit": 3,
-        "personality_name": "冷静的",
-        "personality_description": "頭腦清晰，臨危不亂。"
-    }
-
-    if not GEMINI_API_KEY and "GOOGLE_API_KEY" not in os.environ and not os.getenv("API_KEY"):
-        ai_logger.warning("警告：未偵測到 Gemini API 金鑰。測試將依賴 Canvas 環境或可能失敗。")
-        ai_logger.warning("若在本地測試，請設定 GOOGLE_API_KEY 環境變數或臨時在程式碼中提供金鑰。")
-
-    print(f"\n--- 測試怪獸 1: {mock_monster_1['nickname']} ---")
-    ai_details_1 = generate_monster_ai_details(mock_monster_1)
-    print(f"個性 (長度 {len(ai_details_1.get('aiPersonality', ''))}):\n{ai_details_1.get('aiPersonality')}\n")
-    print(f"介紹 (長度 {len(ai_details_1.get('aiIntroduction', ''))}):\n{ai_details_1.get('aiIntroduction')}\n")
-    print(f"評價 (長度 {len(ai_details_1.get('aiEvaluation', ''))}):\n{ai_details_1.get('aiEvaluation')}\n")
-
-    time.sleep(10) # 增加API請求間隔
-
-    print(f"\n--- 測試怪獸 2: {mock_monster_2['nickname']} ---")
-    ai_details_2 = generate_monster_ai_details(mock_monster_2)
-    print(f"個性 (長度 {len(ai_details_2.get('aiPersonality', ''))}):\n{ai_details_2.get('aiPersonality')}\n")
-    print(f"介紹 (長度 {len(ai_details_2.get('aiIntroduction', ''))}):\n{ai_details_2.get('aiIntroduction')}\n")
-    print(f"評價 (長度 {len(ai_details_2.get('aiEvaluation', ''))}):\n{ai_details_2.get('aiEvaluation')}\n")
-
-    ai_logger.info("MD_ai_services.py 測試完畢。")
-
