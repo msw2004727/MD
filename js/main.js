@@ -1,276 +1,88 @@
-// main.js - 應用程式主進入點與協調器
+# MD/backend/main.py
+# Flask 應用程式主啟動點
 
-// 實際導入所有必要的模組
-import { auth, db, firebaseApp } from './firebase-config.js'; // Firebase 實例已在此模組中初始化並導出
-import { GameState } from './game-state.js'; // **修正：直接導入 GameState 物件**
-import * as UI from './ui.js'; // UI 操作函式
-import * as GameLogic from './game-logic.js'; // 遊戲邏輯函式
-import * as ApiClient from './api-client.js'; // API 呼叫函式
-import * as Auth from './auth.js'; // 使用者驗證函式
-import { initializeStaticEventListeners } from './event-handlers.js'; // 事件處理註冊
+from flask import Flask, jsonify
+from flask_cors import CORS
+import firebase_admin
+from firebase_admin import credentials, firestore
+import os
+import logging
+import json # **新增：導入 json 模組**
 
-// --- DOM 元素獲取與初始化 (通常在應用程式啟動早期執行) ---
-// 這個函式負責獲取所有在 index.html 中定義的 DOM 元素，並將它們儲存到 GameState.elements 中。
-function initializeDOMReferences() {
-    // 確保 GameState.elements 是一個物件，即使 GameState.js 中的初始化有問題
-    if (typeof GameState.elements !== 'object' || GameState.elements === null) {
-        GameState.elements = {};
-        console.warn("main.js: GameState.elements 在初始化DOM引用前不是一個物件，已強制初始化為 {}。");
-    }
-    console.log("main.js: GameState.elements 已被明確初始化。");
+# 導入你的藍圖
+from MD_routes import md_bp
+# 導入 Firebase 配置設定函式
+from MD_firebase_config import set_firestore_client
+# 導入遊戲設定服務
+from MD_config_services import load_all_game_configs_from_firestore
 
-    // 主題切換
-    GameState.elements.themeSwitcherBtn = document.getElementById('theme-switcher');
-    GameState.elements.themeIcon = document.getElementById('theme-icon');
+# 設定日誌
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+app_logger = logging.getLogger(__name__)
 
-    // 認證畫面
-    GameState.elements.authScreen = document.getElementById('auth-screen');
-    GameState.elements.gameContainer = document.getElementById('game-container');
-    
-    // 這些按鈕已在 index.html 中被移除，所以不再需要獲取它們
-    // GameState.elements.showLoginFormBtn = document.getElementById('show-login-form-btn');
-    // GameState.elements.showRegisterFormBtn = document.getElementById('show-register-form-btn');
-    
-    // 登入/註冊表單的輸入框和提交按鈕
-    GameState.elements.registerNicknameInput = document.getElementById('register-nickname');
-    GameState.elements.registerPasswordInput = document.getElementById('register-password');
-    GameState.elements.registerErrorDisplay = document.getElementById('register-error');
-    GameState.elements.registerSubmitBtn = document.getElementById('register-submit-btn');
-    console.log("main.js: registerSubmitBtn 引用狀態:", !!GameState.elements.registerSubmitBtn); // 新增日誌
+# 初始化 Flask 應用程式
+app = Flask(__name__)
 
-    GameState.elements.loginNicknameInput = document.getElementById('login-nickname');
-    GameState.elements.loginPasswordInput = document.getElementById('login-password');
-    GameState.elements.loginErrorDisplay = document.getElementById('login-error');
-    GameState.elements.loginSubmitBtn = document.getElementById('login-submit-btn');
-    console.log("main.js: loginSubmitBtn 引用狀態:", !!GameState.elements.loginSubmitBtn); // 新增日誌
-    
-    GameState.elements.logoutBtn = document.getElementById('logout-btn');
+# 配置 CORS
+# 這將允許來自任何來源的跨域請求。在生產環境中，你可能需要限制為特定的前端網域。
+# 例如：CORS(app, resources={r"/api/*": {"origins": "https://msw2004727.github.io"}})
+# 確保 CORS 允許您的前端網域。
+# 這裡將允許所有來源，但在生產環境中建議限制為您實際的前端網域。
+CORS(app, resources={r"/api/*": {"origins": ["https://msw2004727.github.io", "http://localhost:8080", "http://127.0.0.1:5500"]}}) # <--- 修正點：明確允許您的前端網域
+# 如果您不確定所有可能的前端開發或部署網域，可以暫時使用 CORS(app) 允許所有來源，但這不安全。
+# 更安全的做法是明確列出所有允許的 origins。
 
-    // 頂部導航
-    GameState.elements.monsterInfoButton = document.getElementById('monster-info-button');
-    GameState.elements.playerInfoButton = document.getElementById('player-info-button');
-    GameState.elements.showMonsterLeaderboardBtn = document.getElementById('show-monster-leaderboard-btn');
-    GameState.elements.showPlayerLeaderboardBtn = document.getElementById('show-player-leaderboard-btn');
-    GameState.elements.friendsListBtn = document.getElementById('friends-list-btn');
-    GameState.elements.newbieGuideBtn = document.getElementById('newbie-guide-btn');
+# 註冊藍圖
+app.register_blueprint(md_bp)
 
-    // 怪獸快照面板
-    GameState.elements.monsterSnapshotArea = document.getElementById('monster-snapshot-area');
-    GameState.elements.monsterImageElement = document.getElementById('monster-image');
-    GameState.elements.snapshotAchievementTitle = document.getElementById('snapshot-achievement-title');
-    GameState.elements.snapshotNickname = document.getElementById('snapshot-nickname');
-    GameState.elements.snapshotWinLoss = document.getElementById('snapshot-win-loss');
-    GameState.elements.snapshotMainContent = document.getElementById('snapshot-main-content');
-    GameState.elements.snapshotEvaluation = document.getElementById('snapshot-evaluation');
+# Firebase Admin SDK 初始化
+# 嘗試從環境變數獲取 Firebase 服務帳戶金鑰
+# 在 Render.com 上，你可以將整個 JSON 內容作為一個環境變數 (例如 FIREBASE_SERVICE_ACCOUNT_KEY)
+# 或者將其路徑指向一個文件。這裡假設直接從環境變數獲取 JSON 字串。
+firebase_credentials_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
 
-    // DNA管理頁籤
-    GameState.elements.dnaCombinationSlotsContainer = document.getElementById('dna-combination-slots');
-    GameState.elements.combineButton = document.getElementById('combine-button');
-    GameState.elements.inventoryItemsContainer = document.getElementById('inventory-items');
-    GameState.elements.drawDnaBtn = document.getElementById('draw-dna-btn');
-    GameState.elements.inventoryDeleteSlot = document.querySelector('[data-droptype="delete"]'); // 刪除區可能沒有 ID，使用 data 屬性
-    GameState.elements.temporaryBackpackItemsContainer = document.getElementById('temporary-backpack-items');
+if firebase_credentials_json:
+    try:
+        # 如果是 JSON 字串，直接從字串載入憑證
+        cred = credentials.Certificate(json.loads(firebase_credentials_json))
+        firebase_admin.initialize_app(cred)
+        app_logger.info("Firebase Admin SDK 已從環境變數成功初始化。")
+    except Exception as e:
+        app_logger.error(f"Firebase Admin SDK 初始化失敗 (從環境變數): {e}", exc_info=True)
+else:
+    # 如果環境變數中沒有，嘗試使用預設憑證 (例如在 Google Cloud Platform 上運行時)
+    try:
+        firebase_admin.initialize_app()
+        app_logger.info("Firebase Admin SDK 已使用預設憑證初始化。")
+    except Exception as e:
+        app_logger.error(f"Firebase Admin SDK 初始化失敗 (使用預設憑證): {e}", exc_info=True)
 
-    // 怪物農場頁籤
-    GameState.elements.farmedMonstersList = document.getElementById('farmed-monsters-list');
-    GameState.elements.farmEmptyMessage = document.getElementById('farm-empty-message');
-
-    // 模態框通用元素
-    GameState.elements.feedbackModal = document.getElementById('feedback-modal');
-    GameState.elements.feedbackModalTitle = document.getElementById('feedback-modal-title');
-    GameState.elements.feedbackModalSpinner = document.getElementById('feedback-modal-spinner');
-    GameState.elements.feedbackModalCloseX = document.getElementById('feedback-modal-close-x');
-    GameState.elements.feedbackModalMessage = document.getElementById('feedback-modal-message');
-    GameState.elements.feedbackMonsterDetailsDiv = document.getElementById('feedback-monster-details');
-
-    // 確認模態框
-    GameState.elements.confirmationModal = document.getElementById('confirmation-modal');
-    GameState.elements.confirmationModalTitle = document.getElementById('confirmation-modal-title');
-    GameState.elements.confirmationModalBody = document.getElementById('confirmation-modal-body');
-    GameState.elements.confirmationMessage = document.getElementById('confirmation-message');
-    GameState.elements.confirmActionBtn = document.getElementById('confirm-action-btn');
-    GameState.elements.cancelActionBtn = document.getElementById('cancel-action-btn');
-    GameState.elements.releaseMonsterImagePlaceholder = document.getElementById('release-monster-image-placeholder');
-    GameState.elements.releaseMonsterImgPreview = document.getElementById('release-monster-img-preview');
-
-    // 修煉設定模態框
-    GameState.elements.cultivationSetupModal = document.getElementById('cultivation-setup-modal');
-    GameState.elements.cultivationSetupModalTitle = document.getElementById('cultivation-setup-modal-title');
-    GameState.elements.cultivationMonsterName = document.getElementById('cultivation-monster-name');
-    GameState.elements.startCultivationBtn = document.getElementById('start-cultivation-btn');
-    GameState.elements.maxCultivationTime = document.getElementById('max-cultivation-time');
-
-    // 修煉成果模態框
-    GameState.elements.trainingResultsModal = document.getElementById('training-results-modal');
-    GameState.elements.trainingResultsModalTitle = document.getElementById('training-results-modal-title');
-    GameState.elements.trainingStoryResult = document.getElementById('training-story-result');
-    GameState.elements.trainingGrowthResult = document.getElementById('training-growth-result');
-    GameState.elements.trainingItemsResult = document.getElementById('training-items-result');
-    GameState.elements.addAllToTempBackpackBtn = document.getElementById('add-all-to-temp-backpack-btn');
-    GameState.elements.trainingResultsModalFinalCloseBtn = document.getElementById('training-results-modal-final-close-btn');
-
-    // 新手指南模態框
-    GameState.elements.newbieGuideModal = document.getElementById('newbie-guide-modal');
-    GameState.elements.newbieGuideSearchInput = document.getElementById('newbie-guide-search-input');
-    GameState.elements.newbieGuideContentArea = document.getElementById('newbie-guide-content-area');
-
-    // 提醒模態框 (修煉拾獲物品未領取)
-    GameState.elements.reminderModal = document.getElementById('reminder-modal');
-    GameState.elements.reminderModalTitle = document.getElementById('reminder-modal-title');
-    GameState.elements.reminderModalBody = document.getElementById('reminder-modal-body');
-    GameState.elements.reminderConfirmCloseBtn = document.getElementById('reminder-confirm-close-btn');
-    GameState.elements.reminderCancelBtn = document.getElementById('reminder-cancel-btn');
-
-    // 好友名單模態框
-    GameState.elements.friendsListModal = document.getElementById('friends-list-modal');
-    GameState.elements.friendsListSearchInput = document.getElementById('friends-list-search-input');
-    GameState.elements.friendsListContainer = document.getElementById('friends-list-container');
-
-    // 戰鬥記錄模態框
-    GameState.elements.battleLogModal = document.getElementById('battle-log-modal');
-    GameState.elements.battleLogArea = document.getElementById('battle-log-area');
-    GameState.elements.battleLogEmptyMessage = document.getElementById('battle-log-empty-message');
-
-    // DNA 抽取結果模態框
-    GameState.elements.dnaDrawModal = document.getElementById('dna-draw-modal');
-    GameState.elements.dnaDrawResultsGrid = document.getElementById('dna-draw-results-grid');
-
-    // 排行榜模態框
-    GameState.elements.monsterLeaderboardModal = document.getElementById('monster-leaderboard-modal');
-    GameState.elements.monsterLeaderboardElementTabs = document.getElementById('monster-leaderboard-element-tabs');
-    GameState.elements.monsterLeaderboardTable = document.getElementById('monster-leaderboard-table');
-    GameState.elements.monsterLeaderboardEmptyMessage = document.getElementById('monster-leaderboard-empty-message');
-    GameState.elements.playerLeaderboardModal = document.getElementById('player-leaderboard-modal');
-    GameState.elements.playerLeaderboardTable = document.getElementById('player-leaderboard-table');
-    GameState.elements.playerLeaderboardEmptyMessage = document.getElementById('player-leaderboard-empty-message');
-
-    // 怪獸資訊模態框
-    GameState.elements.monsterInfoModal = document.getElementById('monster-info-modal');
-    GameState.elements.monsterInfoModalHeaderContent = document.getElementById('monster-info-modal-header-content');
-    GameState.elements.monsterInfoTabs = document.getElementById('monster-info-tabs');
-    GameState.elements.monsterDetailsTab = document.getElementById('monster-details-tab');
-    GameState.elements.monsterActivityLogs = document.getElementById('monster-activity-logs');
-
-    // 玩家資訊模態框
-    GameState.elements.playerInfoModal = document.getElementById('player-info-modal');
-    GameState.elements.playerInfoNickname = document.getElementById('player-info-nickname');
-    GameState.elements.playerInfoUid = document.getElementById('player-info-uid');
-    GameState.elements.playerInfoWins = document.getElementById('player-info-wins');
-    GameState.elements.playerInfoLosses = document.getElementById('player-info-losses');
-    GameState.elements.playerInfoGold = document.getElementById('player-info-gold');
-    GameState.elements.playerInfoDiamond = document.getElementById('player-info-diamond');
-    GameState.elements.playerInfoAchievements = document.getElementById('player-info-achievements');
-    GameState.elements.playerInfoAchievementsEmptyMessage = document.getElementById('player-info-achievements-empty-message');
-    GameState.elements.playerInfoOwnedMonsters = document.getElementById('player-info-owned-monsters');
-    GameState.elements.playerInfoOwnedMonstersEmptyMessage = document.getElementById('player-info-owned-monsters-empty-message');
-
-    // 頁籤按鈕 (用於初始選擇)
-    GameState.elements.firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
-
-    console.log("main.js: DOM 元素引用已初始化到 GameState.elements");
-}
+# 獲取 Firestore 客戶端並注入到 MD_firebase_config 模組
+if firebase_admin._apps: # 檢查 Firebase app 是否已成功初始化
+    db_client = firestore.client()
+    set_firestore_client(db_client)
+    app_logger.info("Firestore 客戶端已注入到 MD_firebase_config。")
+else:
+    app_logger.error("Firebase Admin SDK 未成功初始化，Firestore 客戶端無法注入。")
 
 
-// --- 主要應用程式初始化函式 ---
-async function initializeApp() {
-    console.log("main.js: Initializing application...");
+# 在應用程式啟動時載入遊戲設定
+# 這些設定將儲存在 Flask 的 current_app.config 中，供路由使用
+with app.app_context():
+    app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
+    if app.config['MD_GAME_CONFIGS']:
+        app_logger.info("遊戲設定已成功載入到 Flask 應用程式配置中。")
+    else:
+        app_logger.error("遊戲設定載入失敗。")
 
-    // 0. 初始化 DOM 元素引用
-    // 確保在任何 UI 函數被調用之前，DOM 元素引用已經被初始化
-    initializeDOMReferences(); // 確保 GameState.elements 可用
-    console.log("main.js: DOM 元素引用初始化完成。"); // 新增日誌
+# 定義一個根路由，用於健康檢查或基本資訊
+@app.route('/')
+def index():
+    return jsonify({"message": "怪獸養成後端服務運行中！訪問 /api/MD/health 檢查 API 狀態。"}), 200
 
-    // 1. 初始化 Firebase 實例並存儲到 GameState
-    // firebase-config.js 已經在導入時執行了 firebase.initializeApp
-    // 我們需要確保 auth 和 db 實例已從 firebase-config.js 正確導出並在此可用。
-    GameState.auth = auth;
-    GameState.db = db;
-    GameState.firebaseApp = firebaseApp; // 如果其他地方需要 firebase app 實例
-    console.log("main.js: Firebase 實例已存儲到 GameState。");
-
-    // 2. 獲取遊戲核心設定
-    let fetchedConfigs = null;
-    try {
-        fetchedConfigs = await ApiClient.fetchGameConfigs(); // 來自 api-client.js (已改名)
-        // **修正：確保 configs 是物件，否則使用預設結構**
-        if (fetchedConfigs && typeof fetchedConfigs === 'object') {
-            GameState.gameSettings = fetchedConfigs;
-            console.log("main.js: 遊戲設定已獲取並存儲到 GameState。", GameState.gameSettings);
-        } else {
-            console.warn("main.js: fetchGameConfigs 返回無效數據，將使用 GameState 中的預設 gameSettings。");
-            // 確保 GameState.gameSettings 已經在 game-state.js 中被初始化為一個有效的物件
-            // 這裡不再額外賦值，因為 GameState.js 已經提供了預設值
-        }
-        
-    } catch (error) {
-        console.error("main.js: 無法載入初始遊戲設定。將使用預設值。", error);
-        // **修正：即使載入失敗，也要確保 GameState.gameSettings 是一個物件**
-        // GameState.gameSettings 在 game-state.js 中已經有預設結構，這裡不應再覆蓋為空
-        // 確保 npc_monsters 屬性存在，即使是空陣列
-        if (!GameState.gameSettings || typeof GameState.gameSettings !== 'object') {
-             // 這應該不會發生，因為 GameState.js 已經初始化了 gameSettings
-             // 但作為防禦性編程，可以這樣寫
-             GameState.gameSettings = { npc_monsters: [] }; // 最小化初始化
-        }
-        if (!GameState.gameSettings.npc_monsters) {
-            GameState.gameSettings.npc_monsters = [];
-        }
-        // **修正：在調用 showFeedbackModal 之前，確保 DOM 元素已初始化**
-        // initializeDOMReferences() 已經在initializeApp開頭調用，所以這裡應該安全
-        UI.showFeedbackModal("錯誤", `無法載入遊戲核心設定：${error.message || '未知錯誤'}。部分功能可能異常。`, false, true, false);
-    }
-
-    // **修正：無論是否成功載入配置，都確保 npc_monsters 存在並初始化 NPC**
-    if (!GameState.gameSettings.npc_monsters) {
-        GameState.gameSettings.npc_monsters = [];
-    }
-    GameLogic.initializeNpcMonsters(); // 如果 NPC 初始化依賴 gameSettings，則在此呼叫
-    UI.populateNewbieGuide(); // 使用獲取的設定填充新手指南 (來自 ui.js)
-
-
-    // 3. 應用初始主題
-    const preferredTheme = localStorage.getItem('theme') || 'dark';
-    UI.applyTheme(preferredTheme); // 來自 ui.js
-    console.log("main.js: 初始主題已應用。");
-
-    // 4. 初始化 UI 元件 (例如組合槽)
-    UI.createCombinationSlots(); // 來自 ui.js
-    console.log("main.js: 初始 UI 元件 (如 DNA 槽) 已創建。");
-
-    // 5. 註冊靜態事件監聽器
-    console.log("main.js: 準備呼叫 initializeStaticEventListeners..."); // 新增日誌
-    initializeStaticEventListeners(); // 來自 event-handlers.js
-    console.log("main.js: 靜態事件監聽器已初始化。"); // 新增日誌
-
-    // 6. 更新操作按鈕的初始狀態
-    UI.updateActionButtonsStateUI(); // 來自 ui.js (可能依賴 GameState)
-    console.log("main.js: 操作按鈕的初始狀態已更新。");
-
-    // 7. 初始化 Firebase 驗證狀態監聽器
-    // initializeAuthListener 內部會根據登入狀態決定是顯示 authScreen 還是嘗試載入遊戲資料
-    Auth.initializeAuthListener(); // 來自 auth.js
-    console.log("main.js: Firebase 驗證監聽器已初始化。");
-
-
-    // 8. 設定初始顯示的頁籤 (如果需要)
-    if (GameState.elements.firstDnaFarmTab) {
-        // 模擬點擊第一個頁籤，以確保其內容被正確顯示和初始化
-        UI.openDnaFarmTab({ currentTarget: GameState.elements.firstDnaFarmTab }, 'dna-inventory-content'); // 來自 ui.js
-        console.log("main.js: 初始頁籤顯示已設定。");
-    }
-
-    // 9. 初始時，總是先嘗試顯示驗證畫面
-    // initializeAuthListener 中的邏輯會處理後續是否切換到遊戲畫面
-    UI.showAuthScreen(); // 來自 ui.js
-    console.log("main.js: 驗證畫面已初始顯示。");
-
-    console.log("main.js: 應用程式初始化完成。");
-}
-
-// --- 啟動應用程式 ---
-// 確保在 DOM 完全載入後執行，或者因為是 ES6 模組，通常會自動延遲執行
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    initializeApp();
-}
+# 如果直接運行此檔案，則啟動 Flask 開發伺服器
+if __name__ == '__main__':
+    # 在生產環境中，應使用 Gunicorn 等 WSGI 伺服器來運行
+    # 例如：gunicorn main:app -b 0.0.0.0:$PORT
+    app_logger.info("在開發模式下啟動 Flask 應用程式。")
+    app.run(debug=True, host='0.0.0.0', port=os.environ.get('PORT', 5000))
