@@ -1,38 +1,30 @@
-/* layout.css */
-/* 包含所有主要佈局相關的 CSS 樣式 */
+/* css/layout.css */
 
-body {
-    font-family: 'Noto Sans TC', 'Inter', sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    padding: 10px;
-    box-sizing: border-box;
-    transition: background-color 0.3s, color 0.3s;
-    font-size: 1rem; /* Default base font size */
-}
-
+/* Main container for the game interface */
 .main-container {
     width: 100%;
-    max-width: 700px;
+    max-width: 700px; /* Max width for larger screens */
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    padding: 15px;
+    padding: 15px; /* Default padding */
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 15px; /* Default gap */
     border: 1px solid var(--border-color);
     position: relative;
     transition: background-color 0.3s, border-color 0.3s;
 }
+
+/* Responsive adjustments for main-container */
 @media (min-width: 768px) {
-    .main-container { padding: 20px; gap: 20px; }
+    .main-container {
+        padding: 20px; /* Increased padding for medium screens and up */
+        gap: 20px; /* Increased gap */
+    }
 }
 
+/* Panel base style */
 .panel {
     background-color: var(--bg-slot);
     border-radius: 8px;
@@ -42,88 +34,78 @@ body {
     transition: background-color 0.3s, border-color 0.3s;
 }
 
-.panel-title-container {
-    display: flex;
-    justify-content: space-between;
+/* Modal base styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.75); /* Semi-transparent background */
     align-items: center;
-    margin-bottom: 10px;
-    border-bottom: 2px solid var(--accent-color);
-    padding-bottom: 5px;
+    justify-content: center;
+    padding: 10px; /* Padding for modal itself to not touch screen edges */
 }
 
-.panel-title {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 0; border-bottom: none; padding-bottom: 0;
+.modal-content {
+    background-color: var(--bg-panel);
+    color: var(--text-primary);
+    margin: auto; /* Centering */
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%; /* Full width on small screens */
+    max-width: 500px; /* Default max-width */
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    position: relative;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
 }
 
-.panel-title-hint {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+/* Modal size variants */
+.modal-content.large { max-width: 650px; }
+.modal-content.xlarge { max-width: 800px; }
+.modal-content.feedback-wide { max-width: 600px; }
+
+@media (max-width: 640px) {
+    .modal-content.feedback-wide { max-width: 95%; } /* More width on small screens */
 }
 
-@media (min-width: 768px) {
-    .panel-title { font-size: 1.3rem; }
-}
 
+/* Grid for DNA combination slots */
 .dna-combination-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(5, 1fr); /* 5 columns */
+    gap: 5px; /* Small gap */
     margin-bottom: 8px;
 }
 
+/* Grid for inventory items */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* 自動填充，最小85px */
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* Responsive columns */
     gap: 8px;
-    align-items: stretch; /* 讓格子等高 */
+    align-items: stretch; /* Make grid items same height */
 }
 
+/* Grid for temporary backpack items */
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* Responsive columns */
     gap: 8px;
 }
 
+/* Grid for action buttons (e.g., under DNA combination) */
 .action-buttons-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Single column */
     gap: 8px;
     margin-top: 10px;
 }
 
-.tab-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.tab-button {
-    padding: 10px 15px;
-    cursor: pointer;
-    background-color: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
-    transition: color 0.2s, border-bottom-color 0.2s;
-    white-space: nowrap;
-}
-
-.tab-button.active {
-    color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-    font-weight: 500;
-}
-
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-
-/* Monster Farm Layout */
+/* Layout for monster farm headers and items */
 .farm-header-grid, .farm-monster-item {
     display: grid;
     gap: 0.5rem; /* Reduced gap for mobile */
@@ -132,7 +114,7 @@ body {
     align-items: center;
 }
 
-/* Desktop and larger screens: Original grid for Farm */
+/* Desktop and larger screens: Original farm grid */
 @media (min-width: 640px) {
     .farm-header-grid {
         grid-template-columns: minmax(50px, auto) minmax(80px, 1.5fr) minmax(100px, 1.8fr) minmax(50px, 0.7fr) minmax(60px, auto) minmax(60px, auto);
@@ -151,10 +133,10 @@ body {
     .farm-monster-item:last-child { border-bottom: none; }
 }
 
-/* Mobile screens: Stacked or more compact grid for Farm */
+/* Mobile screens: Stacked or more compact farm grid */
 @media (max-width: 639px) {
     .farm-header-grid {
-        grid-template-columns: 40px 1fr 1fr 50px; /*出戰, 怪獸, 狀態, 養成/放生區 */
+        grid-template-columns: 40px 1fr 1fr 50px; /* 出戰, 怪獸, 狀態, 養成/放生區 */
         font-size: 0.75rem; /* Even smaller font for headers on mobile */
     }
     .farm-header-grid > div:nth-child(4), /* 總評價 Header */
@@ -175,9 +157,9 @@ body {
         font-size: 0.8rem;
     }
     .farm-monster-item .farm-battle-btn { grid-area: battle; }
-    .farm-monster-item .farm-monster-name { grid-area: name; }
-    .farm-monster-item .farm-monster-status { grid-area: status; }
-    .farm-monster-item .farm-monster-score { grid-area: score; }
+    .farm-monster-item .farm-monster-name { grid-area: name; font-weight: bold; color: var(--accent-hover); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+    .farm-monster-item .farm-monster-status { grid-area: status; font-style: italic; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+    .farm-monster-item .farm-monster-score { grid-area: score; font-size: 0.75rem; color: var(--success-color); padding-left: 5px;}
     .farm-monster-actions-group {
         grid-area: actions;
         display: flex;
@@ -185,9 +167,36 @@ body {
         gap: 0.25rem; /* Small gap between buttons */
         align-items: stretch; /* Make buttons take full width of their cell */
     }
+    .farm-monster-item button {
+        padding: 4px 6px; /* Smaller padding for mobile buttons */
+        font-size: 0.75rem; /* Smaller font for mobile buttons */
+        min-width: auto; /* Allow buttons to be smaller */
+        width: 100%; /* Make buttons fill their container in the column */
+    }
+     .farm-monster-item .farm-monster-info-btn { /* This button is being removed per point 4 */
+        display: none;
+    }
 }
 
-/* Auth Screen Layout */
+/* Grid for medals */
+.medals-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+/* Grid for DNA draw results */
+#dna-draw-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    max-height: 300px; /* Limit height for scrolling */
+    overflow-y: auto; /* Enable scrolling for many items */
+}
+
+/* Auth screen layout */
 #auth-screen {
     display: flex; /* Initially show auth screen */
     flex-direction: column;
@@ -197,6 +206,7 @@ body {
     height: 100vh; /* Full viewport height */
     background-color: var(--bg-primary);
 }
+
 .auth-container {
     background-color: var(--bg-panel);
     padding: 30px 40px;
@@ -208,97 +218,16 @@ body {
     border: 1px solid var(--border-color);
 }
 
+/* Game container (hidden initially) */
 #game-container {
     display: none; /* Initially hide game content */
     width: 100%;
-    display:flex; /* Ensure it's flex for main-container alignment */
-    flex-direction:column;
-    align-items:center;
+    /* flex-direction: column; align-items: center; */ /* This was causing issues with main-container width */
 }
 
-/* Modal Layouts */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.75);
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-}
-.modal-content {
-    background-color: var(--bg-panel);
-    color: var(--text-primary);
-    margin: auto;
-    padding: 20px;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 500px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-    position: relative;
-    border: 1px solid var(--border-color);
-    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
-}
-.modal-content.large { max-width: 650px; }
-.modal-content.xlarge { max-width: 800px; }
-.modal-content.feedback-wide { max-width: 600px; }
-@media (max-width: 640px) {
-    .modal-content.feedback-wide { max-width: 95%; }
-}
-
-.modal-footer {
-    margin-top: 20px;
-    display:flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-/* DNA Draw Modal Grid Layout */
-#dna-draw-results-grid {
+/* Details grid for monster info, player info etc. */
+.details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-    max-height: 300px; /* Limit height for scrolling */
-    overflow-y: auto; /* Enable scrolling for many items */
-}
-
-/* Top Buttons Container Layout */
-.top-buttons-container {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    gap: 0.2rem;
-    margin-top: 0.5rem;
-}
-
-/* Monster Snapshot Area Grid Layout */
-.monster-snapshot-area {
-    width: 100%; height: 220px; background-color: var(--bg-primary);
-    border-radius: 8px; display: grid;
-    grid-template-columns: 1fr auto; grid-template-rows: auto auto 1fr auto;
-    position: relative; overflow: hidden; border: 1px solid var(--border-color);
-    padding: 8px; box-sizing: border-box;
-    transition: background-color 0.3s, border-color 0.3s;
-}
- @media (min-width: 768px) { .monster-snapshot-area { height: 260px; padding: 12px; } }
-
-.monster-snapshot-img-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 0; }
-
-.snapshot-achievement-title {
-    grid-column: 1 / -1; grid-row: 1 / 2;
-    /* ... other styling ... */
-}
-.snapshot-nickname {
-    grid-column: 1 / -1; grid-row: 2 / 3;
-    /* ... other styling ... */
-}
-.snapshot-main-content {
-    grid-column: 1 / -1; grid-row: 3 / 4;
-    display: flex; align-items: center; justify-content: center; position: relative; z-index: 1;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
+    gap: 8px 14px; /* row-gap column-gap */
 }
