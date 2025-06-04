@@ -1,19 +1,11 @@
-// firebase-config.js - 最終修正版
+// js/firebase-config.js
 
-// 在 Firebase v8 中，這些 SDK 會在全局範圍內創建 'firebase' 物件
-// 確保這些 CDN 已在 index.html 載入：
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-// 檢查全局的 firebase 物件是否已載入
-if (typeof firebase === 'undefined') {
-    throw new Error("❌ Firebase SDK 未載入。請確認 index.html 已正確引入 CDN。");
-}
-
-// 初始化設定
+// --- Firebase 設定 ---
+// 重要：請將下面的 apiKey 替換成您自己的 Firebase Web API 金鑰。
+// 這是您在 Firebase 控制台中為您的專案設定 Web 應用程式時取得的金鑰。
+// 保持其他欄位不變，除非您確定它們也需要更改以匹配您的 Firebase 專案。
 const firebaseConfig = {
-    apiKey: "AIzaSyCACjjC1S-9gj6hKCyfAedzH9kTf_JZwDE",
+    apiKey: "YOUR_API_KEY", // 請替換成您自己的金鑰 (例如 "AIzaSy...")
     authDomain: "aigame-fb578.firebaseapp.com",
     projectId: "aigame-fb578",
     storageBucket: "aigame-fb578.appspot.com",
@@ -21,27 +13,24 @@ const firebaseConfig = {
     appId: "1:932095431807:web:28aab493c770166102db4a"
 };
 
-// 定義應用程式 ID，用於 Firestore 路徑
-// **請將 'YOUR_APP_ID_HERE' 替換為您實際的應用程式 ID**
-const __app_id = "1:932095431807:web:28aab493c770166102db4a"; // 已更新為您的實際 appId
+// 初始化 Firebase
+// firebase.initializeApp(firebaseConfig); // 這行會在 main.js 或 auth.js 中更合適地調用，以確保 DOM 完全載入
+// const auth = firebase.auth();
+// const db = firebase.firestore();
 
-// 初始化 Firebase App（只執行一次）
-// 使用一個全局變數來檢查是否已初始化，以防止在某些環境下重複初始化
-let firebaseAppInstance;
-if (!window._firebaseAppInstance) {
-    firebaseAppInstance = firebase.initializeApp(firebaseConfig);
-    window._firebaseAppInstance = firebaseAppInstance; // 儲存實例
-    console.log("✅ Firebase 初始化完成");
-} else {
-    firebaseAppInstance = window._firebaseAppInstance;
-    console.log("ℹ️ Firebase 已初始化，略過重複初始化");
-}
+// 為了讓其他 JS 檔案可以存取 firebaseConfig，我們將其匯出 (如果使用模組系統)
+// 或者使其成為全域變數 (如果未使用模組系統，則此檔案載入後 firebaseConfig 即為全域)
 
-// 獲取並匯出 auth 與 db 實例，以及 firebaseApp 實例
-// 在 Firebase v8 中，是通過全局的 firebase 物件來訪問這些服務
-const auth = firebase.auth();
-const db = firebase.firestore();
-const firebaseApp = firebaseAppInstance; // 導出初始化後的 app 實例
+// 在這個拆分結構中，firebaseConfig 變數會被其他檔案（如 auth.js 或 main.js）
+// 在初始化 Firebase App 時使用。
+// 初始化 Firebase App (firebase.initializeApp) 和獲取 auth、db 實例的動作，
+// 通常會在主腳本 (main.js) 或身份驗證相關的腳本 (auth.js) 中進行，
+// 以確保在嘗試使用 Firebase 服務之前，相關的 HTML 結構和 Firebase SDK 已載入。
+// 此處僅定義設定物件。
 
-// 導出所有必要的 Firebase 實例和應用程式 ID
-export { firebaseApp, auth, db, __app_id };
+// 如果您不使用 ES6 模組 (import/export)，firebaseConfig 將自動成為全域變數，
+// 只要此檔案在其他使用它的 JS 檔案之前被載入。
+// 例如，在 HTML 中：
+// <script src="js/firebase-config.js"></script>
+// <script src="js/auth.js"></script> 
+// <script src="js/main.js"></script>
