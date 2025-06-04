@@ -39,7 +39,7 @@ async function registerUser(nickname, password) {
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         // 更新用戶的 displayName (如果需要，但我們主要依賴後端存儲的 nickname)
         await userCredential.user.updateProfile({
-            displayName: nickname 
+            displayName: nickname
         });
         console.log("用戶註冊成功:", userCredential.user.uid, "暱稱:", nickname);
         return userCredential.user;
@@ -138,7 +138,8 @@ function mapAuthError(error) {
             message = "此暱稱已被註冊。請嘗試其他暱稱。";
             break;
         case "auth/invalid-email":
-            message = "暱稱格式無效 (可能包含不允許的字符)。";
+            // 這個錯誤碼在我們的上下文中，因為 email 是從 nickname 轉換來的，所以可以解釋為暱稱格式問題
+            message = "暱稱格式無效 (可能包含不允許的字元，或長度不符)。";
             break;
         case "auth/operation-not-allowed":
             message = "此操作未被允許。請聯繫管理員。";
@@ -150,10 +151,13 @@ function mapAuthError(error) {
             message = "此帳號已被禁用。";
             break;
         case "auth/user-not-found":
-            message = "找不到此暱稱對應的帳號。";
+            message = "找不到此暱稱對應的帳號，請確認輸入是否正確。";
             break;
         case "auth/wrong-password":
             message = "密碼錯誤，請重新輸入。";
+            break;
+        case "auth/invalid-credential": // **<-- 新增此案例來處理 "INVALID_LOGIN_CREDENTIALS"**
+            message = "登入憑證無效。請檢查您的暱稱和密碼是否正確。";
             break;
         case "auth/network-request-failed":
             message = "網路請求失敗，請檢查您的網路連線。";
@@ -162,8 +166,12 @@ function mapAuthError(error) {
             message = "操作過於頻繁，請稍後再試。";
             break;
         default:
-            if (error.message) { // 如果有原始錯誤訊息，也附加上
-                message = `操作失敗: ${error.message}`;
+            // 對於其他未明確處理的 Firebase 錯誤，或者如果 error.message 包含 "INVALID_LOGIN_CREDENTIALS"
+            if (error.message && typeof error.message === 'string' && error.message.includes("INVALID_LOGIN_CREDENTIALS")) {
+                message = "登入憑證無效。請檢查您的暱稱和密碼。";
+            } else if (error.message) {
+                message = `操作失敗，請稍後再試。(${error.code || '未知錯誤'})`; // 提供一個更通用的後備訊息
+                console.warn("未明確處理的 Firebase Auth 錯誤:", error.code, error.message);
             }
     }
     const newError = new Error(message);
