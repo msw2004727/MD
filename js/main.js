@@ -1,264 +1,226 @@
-// main.js - 應用程式主進入點與協調器
+// js/main.js
 
-// 實際導入所有必要的模組
-import { auth, db, firebaseApp } from './firebase-config.js'; // Firebase 實例已在此模組中初始化並導出
-import { GameState } from './game-state.js'; // **修正：直接導入 GameState 物件**
-import * as UI from './ui.js'; // UI 操作函式
-import * as GameLogic from './game-logic.js'; // 遊戲邏輯函式
-import * as ApiClient from './api-client.js'; // API 呼叫函式
-import * as Auth from './auth.js'; // 使用者驗證函式
-import { initializeStaticEventListeners } from './event-handlers.js'; // 事件處理註冊
+// --- Global Variables and Initial Setup ---
+// gameState, DOMElements, api-client functions, auth functions, ui functions, game-logic functions, event-handler functions
+// 這些通常會通過 <script> 標籤的順序在全局作用域中可用。
+// 如果使用模塊系統 (ES6 Modules)，則需要 import。
+// 為了簡化，這裡假設它們已在全局作用域。
 
-// --- DOM 元素獲取與初始化 (通常在應用程式啟動早期執行) ---
-// 這個函式負責獲取所有在 index.html 中定義的 DOM 元素，並將它們儲存到 GameState.elements 中。
-function initializeDOMReferences() {
-    console.log("main.js -> initializeDOMReferences: Start DOM elements initialization."); // 新增日誌
-    // 確保 GameState.elements 是一個物件，即使 GameState.js 中的初始化有問題
-    if (typeof GameState.elements !== 'object' || GameState.elements === null) {
-        GameState.elements = {};
-        console.warn("main.js: GameState.elements 在初始化DOM引用前不是一個物件，已強制初始化為 {}。");
+/**
+ * 初始化 Firebase 應用。
+ */
+function initializeFirebaseApp() {
+    // firebaseConfig 來自 firebase-config.js
+    // 確認 firebase 和 firebaseConfig 是否已定義
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+        try {
+            if (!firebase.apps.length) { // 避免重複初始化
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase App initialized successfully.");
+            } else {
+                console.log("Firebase App already initialized.");
+            }
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showFeedbackModal('嚴重錯誤', '無法初始化遊戲核心服務，請稍後再試或聯繫管理員。');
+        }
+    } else {
+        console.error("Firebase or firebaseConfig is not defined. Ensure firebase-config.js is loaded before main.js and Firebase SDKs are included.");
+        // 顯示一個更用戶友好的錯誤
+        document.body.innerHTML = '<div style="padding: 20px; text-align: center; color: red; font-size: 1.2em;">遊戲載入失敗：缺少必要的 Firebase 設定。請檢查控制台以獲取更多資訊。</div>';
     }
-    console.log("main.js: GameState.elements 已被明確初始化。");
-
-    // 主題切換
-    GameState.elements.themeSwitcherBtn = document.getElementById('theme-switcher');
-    GameState.elements.themeIcon = document.getElementById('theme-icon');
-
-    // 認證畫面
-    GameState.elements.authScreen = document.getElementById('auth-screen');
-    GameState.elements.gameContainer = document.getElementById('game-container');
-    
-    // 登入/註冊表單的輸入框和提交按鈕
-    GameState.elements.registerNicknameInput = document.getElementById('register-nickname');
-    GameState.elements.registerPasswordInput = document.getElementById('register-password');
-    GameState.elements.registerErrorDisplay = document.getElementById('register-error');
-    GameState.elements.registerSubmitBtn = document.getElementById('register-submit-btn');
-    console.log("main.js -> initializeDOMReferences: registerSubmitBtn 引用狀態:", !!GameState.elements.registerSubmitBtn, GameState.elements.registerSubmitBtn); // 新增詳細日誌
-
-    GameState.elements.loginNicknameInput = document.getElementById('login-nickname');
-    GameState.elements.loginPasswordInput = document.getElementById('login-password');
-    GameState.elements.loginErrorDisplay = document.getElementById('login-error');
-    GameState.elements.loginSubmitBtn = document.getElementById('login-submit-btn');
-    console.log("main.js -> initializeDOMReferences: loginSubmitBtn 引用狀態:", !!GameState.elements.loginSubmitBtn, GameState.elements.loginSubmitBtn); // 新增詳細日誌
-    
-    GameState.elements.logoutBtn = document.getElementById('logout-btn');
-
-    // 頂部導航
-    GameState.elements.monsterInfoButton = document.getElementById('monster-info-button');
-    GameState.elements.playerInfoButton = document.getElementById('player-info-button');
-    GameState.elements.showMonsterLeaderboardBtn = document.getElementById('show-monster-leaderboard-btn');
-    GameState.elements.showPlayerLeaderboardBtn = document.getElementById('show-player-leaderboard-btn');
-    GameState.elements.friendsListBtn = document.getElementById('friends-list-btn');
-    GameState.elements.newbieGuideBtn = document.getElementById('newbie-guide-btn');
-
-    // 怪獸快照面板
-    GameState.elements.monsterSnapshotArea = document.getElementById('monster-snapshot-area');
-    GameState.elements.monsterImageElement = document.getElementById('monster-image');
-    GameState.elements.snapshotAchievementTitle = document.getElementById('snapshot-achievement-title');
-    GameState.elements.snapshotNickname = document.getElementById('snapshot-nickname');
-    GameState.elements.snapshotWinLoss = document.getElementById('snapshot-win-loss');
-    GameState.elements.snapshotMainContent = document.getElementById('snapshot-main-content');
-    GameState.elements.snapshotEvaluation = document.getElementById('snapshot-evaluation');
-
-    // DNA管理頁籤
-    GameState.elements.dnaCombinationSlotsContainer = document.getElementById('dna-combination-slots');
-    GameState.elements.combineButton = document.getElementById('combine-button');
-    GameState.elements.inventoryItemsContainer = document.getElementById('inventory-items');
-    // 注意：drawDnaBtn 是在 populateInventory 中動態創建的，這裡先獲取，但綁定會在 populateInventory 後進行
-    GameState.elements.drawDnaBtn = document.getElementById('draw-dna-btn'); 
-    GameState.elements.inventoryDeleteSlot = document.querySelector('[data-droptype="delete"]'); // 刪除區可能沒有 ID，使用 data 屬性
-    GameState.elements.temporaryBackpackItemsContainer = document.getElementById('temporary-backpack-items');
-
-    // 怪物農場頁籤
-    GameState.elements.farmedMonstersList = document.getElementById('farmed-monsters-list');
-    GameState.elements.farmEmptyMessage = document.getElementById('farm-empty-message');
-
-    // 模態框通用元素
-    GameState.elements.feedbackModal = document.getElementById('feedback-modal');
-    GameState.elements.feedbackModalTitle = document.getElementById('feedback-modal-title');
-    GameState.elements.feedbackModalSpinner = document.getElementById('feedback-modal-spinner');
-    GameState.elements.feedbackModalCloseX = document.getElementById('feedback-modal-close-x');
-    GameState.elements.feedbackModalMessage = document.getElementById('feedback-modal-message');
-    GameState.elements.feedbackMonsterDetailsDiv = document.getElementById('feedback-monster-details');
-
-    // 確認模態框
-    GameState.elements.confirmationModal = document.getElementById('confirmation-modal');
-    GameState.elements.confirmationModalTitle = document.getElementById('confirmation-modal-title');
-    GameState.elements.confirmationModalBody = document.getElementById('confirmation-modal-body');
-    GameState.elements.confirmationMessage = document.getElementById('confirmation-message');
-    GameState.elements.confirmActionBtn = document.getElementById('confirm-action-btn');
-    GameState.elements.cancelActionBtn = document.getElementById('cancel-action-btn');
-    GameState.elements.releaseMonsterImagePlaceholder = document.getElementById('release-monster-image-placeholder');
-    GameState.elements.releaseMonsterImgPreview = document.getElementById('release-monster-img-preview');
-
-    // 修煉設定模態框
-    GameState.elements.cultivationSetupModal = document.getElementById('cultivation-setup-modal');
-    GameState.elements.cultivationSetupModalTitle = document.getElementById('cultivation-setup-modal-title');
-    GameState.elements.cultivationMonsterName = document.getElementById('cultivation-monster-name');
-    GameState.elements.startCultivationBtn = document.getElementById('start-cultivation-btn');
-    GameState.elements.maxCultivationTime = document.getElementById('max-cultivation-time');
-
-    // 修煉成果模態框
-    GameState.elements.trainingResultsModal = document.getElementById('training-results-modal');
-    GameState.elements.trainingResultsModalTitle = document.getElementById('training-results-modal-title');
-    GameState.elements.trainingStoryResult = document.getElementById('training-story-result');
-    GameState.elements.trainingGrowthResult = document.getElementById('training-growth-result');
-    GameState.elements.trainingItemsResult = document.getElementById('training-items-result');
-    GameState.elements.addAllToTempBackpackBtn = document.getElementById('add-all-to-temp-backpack-btn');
-    GameState.elements.trainingResultsModalFinalCloseBtn = document.getElementById('training-results-modal-final-close-btn');
-
-    // 新手指南模態框
-    GameState.elements.newbieGuideModal = document.getElementById('newbie-guide-modal');
-    GameState.elements.newbieGuideSearchInput = document.getElementById('newbie-guide-search-input');
-    GameState.elements.newbieGuideContentArea = document.getElementById('newbie-guide-content-area');
-
-    // 提醒模態框 (修煉拾獲物品未領取)
-    GameState.elements.reminderModal = document.getElementById('reminder-modal');
-    GameState.elements.reminderModalTitle = document.getElementById('reminder-modal-title');
-    GameState.elements.reminderModalBody = document.getElementById('reminder-modal-body');
-    GameState.elements.reminderConfirmCloseBtn = document.getElementById('reminder-confirm-close-btn');
-    GameState.elements.reminderCancelBtn = document.getElementById('reminder-cancel-btn');
-
-    // 好友名單模態框
-    GameState.elements.friendsListModal = document.getElementById('friends-list-modal');
-    GameState.elements.friendsListSearchInput = document.getElementById('friends-list-search-input');
-    GameState.elements.friendsListContainer = document.getElementById('friends-list-container');
-
-    // 戰鬥記錄模態框
-    GameState.elements.battleLogModal = document.getElementById('battle-log-modal');
-    GameState.elements.battleLogArea = document.getElementById('battle-log-area');
-    GameState.elements.battleLogEmptyMessage = document.getElementById('battle-log-empty-message');
-
-    // DNA 抽取結果模態框
-    GameState.elements.dnaDrawModal = document.getElementById('dna-draw-modal');
-    GameState.elements.dnaDrawResultsGrid = document.getElementById('dna-draw-results-grid');
-
-    // 排行榜模態框
-    GameState.elements.monsterLeaderboardModal = document.getElementById('monster-leaderboard-modal');
-    GameState.elements.monsterLeaderboardElementTabs = document.getElementById('monster-leaderboard-element-tabs');
-    GameState.elements.monsterLeaderboardTable = document.getElementById('monster-leaderboard-table');
-    GameState.elements.monsterLeaderboardEmptyMessage = document.getElementById('monster-leaderboard-empty-message');
-    GameState.elements.playerLeaderboardModal = document.getElementById('player-leaderboard-modal');
-    GameState.elements.playerLeaderboardTable = document.getElementById('player-leaderboard-table');
-    GameState.elements.playerLeaderboardEmptyMessage = document.getElementById('player-leaderboard-empty-message');
-
-    // 怪獸資訊模態框
-    GameState.elements.monsterInfoModal = document.getElementById('monster-info-modal');
-    GameState.elements.monsterInfoModalHeaderContent = document.getElementById('monster-info-modal-header-content');
-    GameState.elements.monsterInfoTabs = document.getElementById('monster-info-tabs');
-    GameState.elements.monsterDetailsTab = document.getElementById('monster-details-tab');
-    GameState.elements.monsterActivityLogs = document.getElementById('monster-activity-logs');
-
-    // 玩家資訊模態框
-    GameState.elements.playerInfoModal = document.getElementById('player-info-modal');
-    GameState.elements.playerInfoNickname = document.getElementById('player-info-nickname');
-    GameState.elements.playerInfoUid = document.getElementById('player-info-uid');
-    GameState.elements.playerInfoWins = document.getElementById('player-info-wins');
-    GameState.elements.playerInfoLosses = document.getElementById('player-info-losses');
-    GameState.elements.playerInfoGold = document.getElementById('player-info-gold');
-    GameState.elements.playerInfoDiamond = document.getElementById('player-info-diamond');
-    GameState.elements.playerInfoAchievements = document.getElementById('player-info-achievements');
-    GameState.elements.playerInfoAchievementsEmptyMessage = document.getElementById('player-info-achievements-empty-message');
-    GameState.elements.playerInfoOwnedMonsters = document.getElementById('player-info-owned-monsters');
-    GameState.elements.playerInfoOwnedMonstersEmptyMessage = document.getElementById('player-info-owned-monsters-empty-message');
-
-    // 頁籤按鈕 (用於初始選擇)
-    GameState.elements.firstDnaFarmTab = document.querySelector('#dna-farm-tabs .tab-button');
-
-    console.log("main.js -> initializeDOMReferences: DOM elements initialization complete."); // 新增日誌
 }
 
 
-// --- 主要應用程式初始化函式 ---
-async function initializeApp() {
-    console.log("main.js -> initializeApp: Initializing application..."); // 新增日誌
+/**
+ * 遊戲初始化函數
+ * 當 DOMContentLoaded 和 Firebase Auth 狀態確認後調用
+ */
+async function initializeGame() {
+    console.log("Initializing game...");
+    showFeedbackModal('遊戲載入中...', '正在準備您的怪獸異世界...', true);
 
-    // 0. 初始化 DOM 元素引用
-    // 確保在任何 UI 函數被調用之前，DOM 元素引用已經被初始化
-    initializeDOMReferences(); // 確保 GameState.elements 可用
-
-    // 1. 初始化 Firebase 實例並存儲到 GameState
-    GameState.auth = auth;
-    GameState.db = db;
-    GameState.firebaseApp = firebaseApp; // 如果其他地方需要 firebase app 實例
-    console.log("main.js -> initializeApp: Firebase instances stored in GameState."); // 新增日誌
-
-    // 2. 獲取遊戲核心設定
-    let fetchedConfigs = null;
     try {
-        console.log("main.js -> initializeApp: Attempting to fetch game configs."); // 新增日誌
-        fetchedConfigs = await ApiClient.fetchGameConfigs(); // 來自 api-client.js
-        
-        if (fetchedConfigs && typeof fetchedConfigs === 'object') {
-            GameState.gameSettings = fetchedConfigs;
-            console.log("main.js -> initializeApp: Game configs fetched and stored.", GameState.gameSettings);
+        // 1. 初始化主題
+        initializeTheme(); // ui.js
+
+        // 2. 獲取遊戲核心設定
+        const configs = await getGameConfigs(); // api-client.js
+        if (configs && Object.keys(configs).length > 0) {
+            updateGameState({ gameConfigs: configs }); // game-state.js
+            console.log("Game configs loaded and saved to gameState.");
+            // 使用遊戲設定更新UI（例如，最大修煉時間等）
+            if (DOMElements.maxCultivationTimeText && configs.value_settings) {
+                DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
+            }
+            // 更新滾動提示
+            const gameHints = [
+                `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
+                "💡 稀有度越高的DNA，基礎能力越強！",
+                "💡 嘗試不同的DNA組合，發掘隱藏的強力怪獸！",
+                "💡 完成修煉有機會領悟新技能！",
+                "💡 記得查看新手指南，了解更多遊戲訣竅！"
+            ];
+            if (configs.newbie_guide && configs.newbie_guide.length > 0) {
+                gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0,20)}...`);
+            }
+            updateScrollingHints(gameHints);
+
         } else {
-            console.warn("main.js -> initializeApp: fetchGameConfigs returned invalid data, using default gameSettings.");
+            throw new Error("無法獲取遊戲核心設定。");
         }
-        
+
+        // 3. 處理玩家數據 (這部分會在 onAuthStateChanged 回調中處理)
+        // 如果沒有用戶登入，則停留在登入畫面
+        if (!gameState.currentUser) {
+            console.log("No user logged in. Staying on auth screen.");
+            toggleElementDisplay(DOMElements.authScreen, true, 'flex');
+            toggleElementDisplay(DOMElements.gameContainer, false);
+            hideModal('feedback-modal');
+            // 檢查是否需要顯示官方公告 (即使未登入)
+            // if (localStorage.getItem('announcementShown_v1') !== 'true') {
+            //     showModal('official-announcement-modal');
+            // }
+            return; // 等待用戶登入
+        }
+
+        // 如果已有用戶 (通常是 onAuthStateChanged 觸發後)
+        await loadPlayerDataAndInitializeUI(gameState.currentUser);
+
+        hideModal('feedback-modal');
     } catch (error) {
-        console.error("main.js -> initializeApp: Failed to load initial game configs. Using default values.", error);
-        if (!GameState.gameSettings || typeof GameState.gameSettings !== 'object') {
-             GameState.gameSettings = { npc_monsters: [] };
-        }
-        if (!GameState.gameSettings.npc_monsters) {
-            GameState.gameSettings.npc_monsters = [];
-        }
-        // 確保 DOM 元素已載入，以便 showFeedbackModal 能夠工作
-        // 這裡不再需要 alert 作為備用，因為 UI.js 已經修正
-        UI.showFeedbackModal("錯誤", `無法載入遊戲核心設定：${error.message || '未知錯誤'}。部分功能可能異常。`, false, true, false);
+        console.error("Game initialization failed:", error);
+        showFeedbackModal('遊戲載入失敗', `初始化過程中發生錯誤：${error.message}。請嘗試刷新頁面。`);
+        // 保持 Auth Screen 顯示或顯示一個全局錯誤頁面
+        toggleElementDisplay(DOMElements.authScreen, true, 'flex');
+        toggleElementDisplay(DOMElements.gameContainer, false);
     }
-
-    if (!GameState.gameSettings.npc_monsters) {
-        GameState.gameSettings.npc_monsters = [];
-    }
-    GameLogic.initializeNpcMonsters(); // 如果 NPC 初始化依賴 gameSettings，則在此呼叫
-    UI.populateNewbieGuide(); // 使用獲取的設定填充新手指南 (來自 ui.js)
-    console.log("main.js -> initializeApp: NPC monsters and Newbie Guide initialized."); // 新增日誌
-
-
-    // 3. 應用初始主題
-    const preferredTheme = localStorage.getItem('theme') || 'dark';
-    UI.applyTheme(preferredTheme); // 來自 ui.js
-    console.log("main.js -> initializeApp: Initial theme applied."); // 新增日誌
-
-    // 4. 初始化 UI 元件 (例如組合槽)
-    UI.createCombinationSlots(); // 來自 ui.js
-    console.log("main.js -> initializeApp: Initial UI components (e.g., DNA slots) created."); // 新增日誌
-
-    // 5. 註冊靜態事件監聽器
-    console.log("main.js -> initializeApp: Preparing to call initializeStaticEventListeners..."); // 新增日誌
-    initializeStaticEventListeners(); // 來自 event-handlers.js
-    console.log("main.js -> initializeApp: Static event listeners initialized."); // 新增日誌
-
-    // 6. 更新操作按鈕的初始狀態
-    UI.updateActionButtonsStateUI(); // 來自 ui.js (可能依賴 GameState)
-    console.log("main.js -> initializeApp: Initial action button states updated."); // 新增日誌
-
-    // 7. 初始化 Firebase 驗證狀態監聽器
-    Auth.initializeAuthListener(); // 來自 auth.js
-    console.log("main.js -> initializeApp: Firebase authentication listener initialized."); // 新增日誌
-
-
-    // 8. 設定初始顯示的頁籤 (如果需要)
-    if (GameState.elements.firstDnaFarmTab) {
-        // 模擬點擊第一個頁籤，以確保其內容被正確顯示和初始化
-        UI.openDnaFarmTab({ currentTarget: GameState.elements.firstDnaFarmTab }, 'dna-inventory-content'); // 來自 ui.js
-        console.log("main.js -> initializeApp: Initial tab display set."); // 新增日誌
-    }
-
-    // 9. 初始時，總是先嘗試顯示驗證畫面
-    UI.showAuthScreen(); // 來自 ui.js
-    console.log("main.js -> initializeApp: Auth screen initially shown."); // 新增日誌
-
-    console.log("main.js -> initializeApp: Application initialization complete."); // 新增日誌
 }
 
-// --- 啟動應用程式 ---
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-    console.log("main.js: DOMContentLoaded listener added."); // 新增日誌
-} else {
-    initializeApp();
-    console.log("main.js: DOM already loaded, calling initializeApp directly."); // 新增日誌
+/**
+ * 當 Firebase Auth 狀態改變時的回調函數
+ * @param {firebase.User | null} user Firebase User 對象，或 null (如果未登入)
+ */
+async function onAuthStateChangedHandler(user) {
+    if (user) {
+        // 用戶已登入
+        console.log("User is signed in:", user.uid);
+        updateGameState({ currentUser: user, playerId: user.uid, playerNickname: user.displayName || user.email.split('@')[0] || "玩家" });
+        
+        // 如果遊戲容器尚未顯示，表示這是初次登入或刷新後的自動登入
+        if (DOMElements.gameContainer.style.display === 'none') {
+            await initializeGame(); // 確保遊戲設定已載入，然後載入玩家數據
+        } else {
+            // 如果遊戲容器已顯示 (例如，玩家剛完成註冊/登入操作)，直接載入玩家數據
+            await loadPlayerDataAndInitializeUI(user);
+        }
+         // 顯示官方公告 (如果尚未顯示過)
+        if (localStorage.getItem('announcementShown_v1') !== 'true') {
+            updateAnnouncementPlayerName(gameState.playerNickname);
+            showModal('official-announcement-modal');
+        }
+
+    } else {
+        // 用戶已登出或未登入
+        console.log("User is signed out or not yet signed in.");
+        updateGameState({ currentUser: null, playerId: null });
+        toggleElementDisplay(DOMElements.authScreen, true, 'flex');
+        toggleElementDisplay(DOMElements.gameContainer, false);
+        updateMonsterSnapshot(null); // 清空快照
+        // 清理可能存在的遊戲狀態
+        resetDNACombinationSlots();
+        renderDNACombinationSlots();
+        renderPlayerDNAInventory();
+        renderMonsterFarm();
+        // 確保在登出時隱藏所有 modals
+        hideAllModals();
+    }
 }
+
+/**
+ * 載入玩家數據並初始化相關 UI。
+ * @param {firebase.User} user Firebase User 對象。
+ */
+async function loadPlayerDataAndInitializeUI(user) {
+    if (!user) return;
+    
+    showFeedbackModal('載入中...', '正在獲取您的玩家資料...', true);
+    try {
+        const playerData = await getPlayerData(user.uid); // api-client.js
+        if (playerData) {
+            updateGameState({ 
+                playerData: playerData, 
+                playerNickname: playerData.nickname || user.displayName || user.email.split('@')[0] || "玩家" 
+            });
+            console.log("Player data loaded for:", user.uid, playerData);
+
+            // 初始化 UI 組件
+            renderPlayerDNAInventory();
+            renderDNACombinationSlots();
+            renderMonsterFarm();
+            renderTemporaryBackpack(); // 初始化臨時背包
+
+            // 選擇預設怪獸顯示在快照
+            const defaultMonster = getDefaultSelectedMonster(); // game-state.js
+            if (defaultMonster) {
+                updateMonsterSnapshot(defaultMonster); // ui.js
+            } else {
+                updateMonsterSnapshot(null); // 如果沒有怪獸，顯示空狀態
+            }
+
+            // 顯示遊戲主容器，隱藏認證畫面
+            toggleElementDisplay(DOMElements.authScreen, false);
+            toggleElementDisplay(DOMElements.gameContainer, true, 'flex'); // main-container 使用 flex
+            
+            // 更新公告中的玩家名稱
+            updateAnnouncementPlayerName(gameState.playerNickname);
+
+        } else {
+            throw new Error("無法獲取玩家遊戲資料。");
+        }
+        hideModal('feedback-modal');
+    } catch (error) {
+        console.error("Failed to load player data and initialize UI:", error);
+        showFeedbackModal('資料載入失敗', `獲取玩家資料時發生錯誤：${error.message}。您可以嘗試重新登入。`, false, null, [
+            { text: '重新登入', class: 'primary', onClick: async () => { await logoutUser(); /* onAuthStateChanged 會處理後續 */ } },
+            { text: '關閉', class: 'secondary' }
+        ]);
+        // 如果載入玩家數據失敗，可能需要將用戶登出或顯示錯誤頁面
+        // toggleElementDisplay(DOMElements.authScreen, true, 'flex');
+        // toggleElementDisplay(DOMElements.gameContainer, false);
+    }
+}
+
+
+// --- Application Entry Point ---
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded and parsed.");
+
+    // 1. 初始化 Firebase App
+    initializeFirebaseApp();
+
+    // 2. 設置 Firebase Auth 狀態監聽器
+    // RosterAuthListener 來自 auth.js
+    if (typeof RosterAuthListener === 'function') {
+        RosterAuthListener(onAuthStateChangedHandler);
+    } else {
+        console.error("RosterAuthListener is not defined. Ensure auth.js is loaded correctly.");
+        showFeedbackModal('嚴重錯誤', '遊戲認證服務載入失敗，請刷新頁面。');
+        return;
+    }
+    
+    // 3. 初始化事件監聽器 (來自 event-handlers.js)
+    if (typeof initializeEventListeners === 'function') {
+        initializeEventListeners();
+    } else {
+        console.error("initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
+    }
+
+    // 4. 初始遊戲化 (部分邏輯移到 onAuthStateChangedHandler 中，確保在用戶登入後執行)
+    // initializeGame(); // initializeGame 會在 onAuthStateChangedHandler 中被適時調用
+
+    // 預設顯示第一個頁籤 (DNA管理)
+    switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+});
+
+console.log("Main.js script loaded.");

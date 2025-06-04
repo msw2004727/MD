@@ -1,47 +1,27 @@
-// firebase-config.js - 最終修正版
+// js/firebase-config.js
 
-// 在 Firebase v8 中，這些 SDK 會在全局範圍內創建 'firebase' 物件
-// 確保這些 CDN 已在 index.html 載入：
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-// <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+// Firebase App (auto-initialized by the SDK script in index.html)
+// This file is primarily to confirm and potentially export the firebase app instance if needed by other modules.
+// However, since firebase is globally available after SDK load, direct usage is also common.
 
-// 檢查全局的 firebase 物件是否已載入
-if (typeof firebase === 'undefined') {
-    throw new Error("❌ Firebase SDK 未載入。請確認 index.html 已正確引入 CDN。");
-}
-
-// 初始化設定
+// Your web app's Firebase configuration (來自 index.html)
 const firebaseConfig = {
-    apiKey: "AIzaSyCACjjC1S-9gj6hKCyfAedzH9kTf_JZwDE",
-    authDomain: "aigame-fb578.firebaseapp.com",
-    projectId: "aigame-fb578",
-    storageBucket: "aigame-fb578.appspot.com",
-    messagingSenderId: "932095431807",
-    appId: "1:932095431807:web:28aab493c770166102db4a"
+  apiKey: "AIzaSyCACjjC1S-9gj6hKCyfAedzH9kTf_JZwDE", // 請確認這是您正確的 API 金鑰
+  authDomain: "aigame-fb578.firebaseapp.com",
+  projectId: "aigame-fb578",
+  storageBucket: "aigame-fb578.firebasestorage.app",
+  messagingSenderId: "932095431807",
+  appId: "1:932095431807:web:28aab493c770166102db4a"
 };
 
-// 定義應用程式 ID，用於 Firestore 路徑
-// **請將 'YOUR_APP_ID_HERE' 替換為您實際的應用程式 ID**
-const __app_id = "1:932095431807:web:28aab493c770166102db4a"; // 已更新為您的實際 appId
+// Initialize Firebase
+// firebase.initializeApp(firebaseConfig); // 這行通常由 index.html 中的 SDK 自動處理或在 main.js 中明確調用
 
-// 初始化 Firebase App（只執行一次）
-// 使用一個全局變數來檢查是否已初始化，以防止在某些環境下重複初始化
-let firebaseAppInstance;
-if (!window._firebaseAppInstance) {
-    firebaseAppInstance = firebase.initializeApp(firebaseConfig);
-    window._firebaseAppInstance = firebaseAppInstance; // 儲存實例
-    console.log("✅ Firebase 初始化完成");
-} else {
-    firebaseAppInstance = window._firebaseAppInstance;
-    console.log("ℹ️ Firebase 已初始化，略過重複初始化");
-}
+// 方便起見，導出 firebase 實例 (如果其他模組需要 import)
+// 雖然 firebase SDK 會將 firebase 掛載到 window 對象，但顯式導入/導出是良好的模塊化實踐。
+// 注意：如果 index.html 中的 SDK 已經初始化，這裡再次調用 initializeApp 可能會出錯或被忽略。
+// 最好是在一個地方統一初始化，例如 main.js。
+// 此處僅定義配置，實際初始化在 main.js 中處理。
 
-// 獲取並匯出 auth 與 db 實例，以及 firebaseApp 實例
-// 在 Firebase v8 中，是通過全局的 firebase 物件來訪問這些服務
-const auth = firebase.auth();
-const db = firebase.firestore();
-const firebaseApp = firebaseAppInstance; // 導出初始化後的 app 實例
-
-// 導出所有必要的 Firebase 實例和應用程式 ID
-export { firebaseApp, auth, db, __app_id };
+console.log("Firebase config loaded.");
+// 實際的 firebase.initializeApp(firebaseConfig); 建議放在 main.js 的最前面。

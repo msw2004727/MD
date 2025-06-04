@@ -1,194 +1,177 @@
-// auth.js - 使用者驗證模組
+// js/auth.js
 
-import { auth, db, firebaseApp, __app_id } from './firebase-config.js'; // Firebase 實例和 __app_id
-import * as GameState from './game-state.js'; // 遊戲狀態和 DOM 元素引用
-import * as UI from './ui.js'; // UI 操作函式
-import * as GameLogic from './game-logic.js'; // 遊戲邏輯函式
-// 移除對 firebase/app 的導入，因為 Firebase SDK v8 是透過 CDN 全域載入的
-// import firebase from 'firebase/app'; 
+// 注意：這個檔案依賴於 js/firebase-config.js 中定義的 firebaseConfig
+// 以及在 main.js 中進行的 firebase.initializeApp(firebaseConfig);
 
-// --- 驗證處理函式 ---
-
-export async function handleRegister() {
-    const { registerNicknameInput, registerPasswordInput, registerErrorDisplay } = GameState.elements;
-    const nickname = registerNicknameInput.value.trim();
-    const password = registerPasswordInput.value;
-    registerErrorDisplay.textContent = '';
-
-    if (!nickname || !password) {
-        registerErrorDisplay.textContent = '暱稱和密碼不能為空。';
+/**
+ * 監聽 Firebase Auth 狀態變化。
+ * @param {function} onAuthStateChangedCallback 當身份驗證狀態改變時調用的回調函數，接收 user 對象作為參數。
+ */
+function RosterAuthListener(onAuthStateChangedCallback) {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        console.error("Firebase Auth SDK 尚未載入或初始化。");
+        // 可以在此處添加一個延遲重試機制或更明確的錯誤處理
+        setTimeout(() => RosterAuthListener(onAuthStateChangedCallback), 1000);
         return;
     }
-    if (password.length < 6) {
-        registerErrorDisplay.textContent = '密碼長度至少需要6位。';
-        return;
-    }
+    firebase.auth().onAuthStateChanged(onAuthStateChangedCallback);
+}
 
-    const emailForAuth = `${nickname.replace(/\s+/g, '_').toLowerCase()}@game.system`;
-    UI.showFeedbackModal("註冊中...", "正在為您創建帳號...", true, false); // UI 模組函式
+/**
+ * 使用暱稱和密碼（實際上是電子郵件和密碼）註冊新用戶。
+ * Firebase 的 createUserWithEmailAndPassword 需要 email 格式。
+ * 我們將使用 "nickname@yourdomain.com" 的形式來適應，或者後端可以處理自定義聲明。
+ * 為了簡化前端，我們假設 nickname 直接作為 email 的用戶名部分。
+ * @param {string} nickname 玩家選擇的暱稱
+ * @param {string} password 玩家設定的密碼
+ * @returns {Promise<firebase.User>} 成功註冊後的 Firebase User 對象
+ * @throws {Error} 如果註冊失敗
+ */
+async function registerUser(nickname, password) {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        throw new Error("Firebase Auth SDK 尚未載入或初始化。");
+    }
+    // 為了符合 Firebase email 格式，我們將 nickname 轉換
+    // 實際應用中，後端可能需要更複雜的處理來支持純暱稱登入
+    const email = `${nickname.trim().toLowerCase()}@monstergame.dev`; // 使用一個虛構的域名
 
     try {
-        const userCredential = await auth.createUserWithEmailAndPassword(emailForAuth, password);
-        GameState.currentLoggedInUser = userCredential.user;
-        GameState.currentPlayerNickname = nickname;
-
-        // 在 Firestore 中創建使用者設定檔 (artifacts/__app_id/users/{uid}/data/profile)
-        const userProfileDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(GameState.currentLoggedInUser.uid).collection('data').doc('profile');
-        await userProfileDocRef.set({
-            uid: GameState.currentLoggedInUser.uid,
-            nickname: nickname,
-            email: GameState.currentLoggedInUser.email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
-        }, { merge: true });
-
-        // 初始化玩家遊戲資料 (users/{uid}/gameData/main)
-        await GameLogic.saveInitialPlayerDataToBackendLogic(GameState.currentLoggedInUser.uid, nickname, GameState.gameSettings); // gameSettings 來自 GameState
-
-        UI.closeModal('register-modal');
-        UI.closeModal('feedback-modal');
-        UI.showGameScreenAfterLogin(); // 切換畫面
-
-        await GameLogic.loadGameDataForUserLogic(GameState.currentLoggedInUser.uid, nickname); // 載入/確認遊戲資料
-
-        if (GameState.elements.announcementPlayerName) GameState.elements.announcementPlayerName.textContent = nickname;
-        UI.openModal('official-announcement-modal'); // 顯示官方公告
-
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+        // 更新用戶的 displayName (如果需要，但我們主要依賴後端存儲的 nickname)
+        await userCredential.user.updateProfile({
+            displayName: nickname 
+        });
+        console.log("用戶註冊成功:", userCredential.user.uid, "暱稱:", nickname);
+        return userCredential.user;
     } catch (error) {
-        console.error("註冊失敗:", error);
-        registerErrorDisplay.textContent = `註冊失敗：${error.code === 'auth/email-already-in-use' ? '此暱稱已被使用。' : error.message}`;
-        UI.closeModal('feedback-modal');
+        console.error("註冊錯誤:", error.code, error.message);
+        throw mapAuthError(error);
     }
 }
 
-export async function handleLogin() {
-    const { loginNicknameInput, loginPasswordInput, loginErrorDisplay } = GameState.elements;
-    const nickname = loginNicknameInput.value.trim();
-    const password = loginPasswordInput.value;
-    loginErrorDisplay.textContent = '';
-
-    if (!nickname || !password) {
-        loginErrorDisplay.textContent = '暱稱和密碼不能為空。';
-        return;
+/**
+ * 使用暱稱和密碼（轉換為 email 和密碼）登入用戶。
+ * @param {string} nickname 玩家的暱稱
+ * @param {string} password 玩家的密碼
+ * @returns {Promise<firebase.User>} 成功登入後的 Firebase User 對象
+ * @throws {Error} 如果登入失敗
+ */
+async function loginUser(nickname, password) {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        throw new Error("Firebase Auth SDK 尚未載入或初始化。");
     }
-    const emailForAuth = `${nickname.replace(/\s+/g, '_').toLowerCase()}@game.system`;
-    UI.showFeedbackModal("登入中...", "正在驗證您的身份...", true, false);
+    const email = `${nickname.trim().toLowerCase()}@monstergame.dev`;
 
     try {
-        const userCredential = await auth.signInWithEmailAndPassword(emailForAuth, password);
-        GameState.currentLoggedInUser = userCredential.user;
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        console.log("用戶登入成功:", userCredential.user.uid);
+        return userCredential.user;
+    } catch (error) {
+        console.error("登入錯誤:", error.code, error.message);
+        throw mapAuthError(error);
+    }
+}
 
-        // 從 Firestore 獲取或確認暱稱，並更新 lastLogin
-        const userProfileDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(GameState.currentLoggedInUser.uid).collection('data').doc('profile');
-        const userDocSnap = await userProfileDocRef.get();
+/**
+ * 登出當前用戶。
+ * @returns {Promise<void>}
+ */
+async function logoutUser() {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        console.warn("Firebase Auth SDK 尚未載入或初始化，無法登出。");
+        return;
+    }
+    try {
+        await firebase.auth().signOut();
+        console.log("用戶已登出。");
+    } catch (error) {
+        console.error("登出錯誤:", error);
+        throw error; // 可以選擇是否向上拋出
+    }
+}
 
-        if (userDocSnap.exists) {
-            GameState.currentPlayerNickname = userDocSnap.data().nickname || nickname; // 優先使用DB中的暱稱
-            await userProfileDocRef.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() }); // <--- 這裡直接使用全域的 firebase 物件
-        } else {
-            // 理論上，如果能登入成功，users 文件應該存在。這是一個備援。
-            GameState.currentPlayerNickname = nickname;
-            await userProfileDocRef.set({
-                uid: GameState.currentLoggedInUser.uid,
-                nickname: nickname,
-                email: GameState.currentLoggedInUser.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
-            }, { merge: true });
-            // 為防意外，也為這種情況初始化遊戲資料
-            await GameLogic.saveInitialPlayerDataToBackendLogic(GameState.currentLoggedInUser.uid, nickname, GameState.gameSettings);
+/**
+ * 獲取當前登入用戶的 ID Token。
+ * @param {boolean} forceRefresh 是否強制刷新 token (預設為 false)
+ * @returns {Promise<string|null>} ID Token 字串，如果沒有用戶登入則為 null。
+ */
+async function getCurrentUserToken(forceRefresh = false) {
+    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.auth().currentUser) {
+        // console.log("獲取 Token 失敗：無當前用戶或 Firebase 未初始化。");
+        return null;
+    }
+    try {
+        const token = await firebase.auth().currentUser.getIdToken(forceRefresh);
+        return token;
+    } catch (error) {
+        console.error("獲取 ID Token 錯誤:", error);
+        // 如果是 token 過期等問題，可能需要引導用戶重新登入
+        if (error.code === 'auth/user-token-expired' || error.code === 'auth/invalid-user-token') {
+            // 可以觸發一個事件或調用一個函數來處理重新登入邏
+            console.warn("用戶 Token 已過期或無效，可能需要重新登入。");
         }
-
-        UI.closeModal('login-modal');
-        UI.closeModal('feedback-modal');
-        UI.showGameScreenAfterLogin();
-
-        await GameLogic.loadGameDataForUserLogic(GameState.currentLoggedInUser.uid, GameState.currentPlayerNickname);
-
-        if (GameState.elements.announcementPlayerName) GameState.elements.announcementPlayerName.textContent = GameState.currentPlayerNickname;
-        UI.openModal('official-announcement-modal');
-
-    } catch (error) {
-        console.error("登入失敗 (原始錯誤):", error);
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || (error.message && error.message.includes("INVALID_LOGIN_CREDENTIALS"))) {
-            loginErrorDisplay.textContent = '查無此帳號或密碼錯誤。';
-        } else {
-            loginErrorDisplay.textContent = `登入失敗：${error.message}`;
-        }
-        UI.closeModal('feedback-modal');
+        return null;
     }
 }
 
-export async function handleLogout() {
-    UI.showFeedbackModal("登出中...", "正在儲存您的進度並登出...", true, false);
-    await GameLogic.savePlayerDataLogic(); // 確保遊戲資料已儲存
-
-    try {
-        await auth.signOut();
-        // onAuthStateChanged 會處理後續的 UI 重設
-        console.log("使用者已登出。");
-    } catch (error) {
-        console.error("登出失敗:", error);
-        UI.showFeedbackModal("錯誤", `登出時發生錯誤: ${error.message}`, false, true, false);
-    } finally {
-        // UI.closeModal('feedback-modal'); // onAuthStateChanged 之後 feedback modal 可能已被關閉
+/**
+ * 獲取當前 Firebase Auth 用戶對象。
+ * @returns {firebase.User | null} 當前用戶對象，或 null。
+ */
+function getCurrentAuthUser() {
+    if (typeof firebase === 'undefined' || !firebase.auth) {
+        return null;
     }
+    return firebase.auth().currentUser;
 }
 
-// --- Firebase Auth State Listener ---
-export function initializeAuthListener() {
-    auth.onAuthStateChanged(async (user) => {
-        const { feedbackModal, feedbackModalTitle } = GameState.elements;
-        if (user) {
-            GameState.currentLoggedInUser = user;
-            const userProfileDocRef = db.collection('artifacts').doc(__app_id).collection('users').doc(user.uid).collection('data').doc('profile');
-            const userDocSnap = await userProfileDocRef.get();
 
-            if (userDocSnap.exists) {
-                GameState.currentPlayerNickname = userDocSnap.data().nickname || user.email.split('@')[0];
-            } else {
-                // 如果使用者在 Firebase Auth 中存在，但在 Firestore users 集合中不存在
-                // (例如，資料庫被手動刪除但 Auth 記錄仍在)，則創建基本 profile 並初始化遊戲資料
-                console.warn(`使用者 ${user.uid} 在 Auth 中存在，但在 Firestore users 集合中不存在。將創建 profile 並初始化遊戲資料。`);
-                GameState.currentPlayerNickname = user.email.split('@')[0]; // 使用 email 前綴作為臨時暱稱
-                await userProfileDocRef.set({
-                    uid: user.uid,
-                    nickname: GameState.currentPlayerNickname,
-                    email: user.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), // <--- 這裡直接使用全域的 firebase 物件
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()  // <--- 這裡直接使用全域的 firebase 物件
-                }, { merge: true });
-                // 為此使用者初始化遊戲資料
-                await GameLogic.saveInitialPlayerDataToBackendLogic(user.uid, GameState.currentPlayerNickname, GameState.gameSettings);
-                // 由於是新初始化的，直接載入這些新資料
-                await GameLogic.loadGameDataForUserLogic(user.uid, GameState.currentPlayerNickname);
+/**
+ * 將 Firebase Auth 錯誤映射為更友好的中文提示。
+ * @param {Error & {code?: string}} error Firebase Auth 拋出的錯誤對象
+ * @returns {Error} 包含中文訊息的新錯誤對象
+ */
+function mapAuthError(error) {
+    let message = "發生未知錯誤，請稍後再試。";
+    switch (error.code) {
+        case "auth/email-already-in-use":
+            message = "此暱稱已被註冊。請嘗試其他暱稱。";
+            break;
+        case "auth/invalid-email":
+            message = "暱稱格式無效 (可能包含不允許的字符)。";
+            break;
+        case "auth/operation-not-allowed":
+            message = "此操作未被允許。請聯繫管理員。";
+            break;
+        case "auth/weak-password":
+            message = "密碼強度不足，請設定更複雜的密碼 (至少6位)。";
+            break;
+        case "auth/user-disabled":
+            message = "此帳號已被禁用。";
+            break;
+        case "auth/user-not-found":
+            message = "找不到此暱稱對應的帳號。";
+            break;
+        case "auth/wrong-password":
+            message = "密碼錯誤，請重新輸入。";
+            break;
+        case "auth/network-request-failed":
+            message = "網路請求失敗，請檢查您的網路連線。";
+            break;
+        case "auth/too-many-requests":
+            message = "操作過於頻繁，請稍後再試。";
+            break;
+        default:
+            if (error.message) { // 如果有原始錯誤訊息，也附加上
+                message = `操作失敗: ${error.message}`;
             }
-            console.log("Firebase 使用者已登入 (onAuthStateChanged):", GameState.currentLoggedInUser.uid, GameState.currentPlayerNickname);
-            // UI.updatePlayerInfoButtonState(true); // 啟用玩家資訊按鈕
-
-            // 檢查遊戲是否已經顯示，如果沒有（例如頁面刷新時），則不自動顯示遊戲畫面，
-            // 而是等待使用者明確的登入/註冊操作。
-            // 如果 gameContainer 已經可見 (display !== 'none')，則表示是剛完成登入/註冊流程，不需要切回 authScreen。
-            if (GameState.elements.gameContainer.style.display === 'none') {
-                 UI.showAuthScreen(); // 確保在沒有明確登入操作前顯示驗證畫面
-            }
-
-        } else {
-            GameState.currentLoggedInUser = null;
-            GameState.currentPlayerNickname = "";
-            console.log("Firebase 使用者已登出或未登入 (onAuthStateChanged)。");
-            GameLogic.resetGameDataForUI(); // 重設遊戲狀態
-            UI.showAuthScreen(); // 顯示驗證畫面
-            // UI.updatePlayerInfoButtonState(false); // 禁用玩家資訊按鈕
-        }
-
-        // 關閉可能還在顯示的載入中/登入中彈窗
-        if (feedbackModal && feedbackModal.style.display === 'flex' &&
-            (feedbackModalTitle.textContent.includes("載入中") ||
-             feedbackModalTitle.textContent.includes("登入中") ||
-             feedbackModalTitle.textContent.includes("註冊中") ||
-             feedbackModalTitle.textContent.includes("登出中"))) {
-            UI.closeModal('feedback-modal');
-        }
-    });
+    }
+    const newError = new Error(message);
+    newError.code = error.code; // 保留原始錯誤碼
+    return newError;
 }
+
+console.log("Auth module loaded.");
+
+// 導出 (如果使用 ES6 模塊)
+// export { RosterAuthListener, registerUser, loginUser, logoutUser, getCurrentUserToken, getCurrentAuthUser, mapAuthError };
