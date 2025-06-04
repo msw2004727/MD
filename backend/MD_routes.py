@@ -23,7 +23,7 @@ from .MD_services import (
     get_monster_leaderboard_service, # 新增引入
     get_player_leaderboard_service # 新增引入
 )
-from MD_config_services import load_all_game_configs_from_firestore # 新增引入
+from .MD_config_services import load_all_game_configs_from_firestore # 新增引入
 from MD_models import PlayerGameData, Monster # 引入類型以便註解
 
 # 引入 AI 服務模組
