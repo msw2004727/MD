@@ -7,7 +7,7 @@ from firebase_admin import auth
 import logging # 新增 logging
 
 # 從服務和設定模組引入函式
-from MD_services import (
+from .MD_services import (
     get_player_data_service,
     save_player_data_service,
     combine_dna_service,
