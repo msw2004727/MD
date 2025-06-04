@@ -1,3 +1,4 @@
-flask
+Flask
 firebase-admin
-flask-cors
+Flask-CORS
+gunicorn  # Render.com 需要這個來運行您的應用
