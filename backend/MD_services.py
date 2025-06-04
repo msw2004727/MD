@@ -17,7 +17,7 @@ from .MD_models import (
     HealthCondition, AbsorptionConfig, CultivationConfig, SkillCategory, NamingConstraints,
     ValueSettings, RarityNames # 確保 RarityNames 也被引入
 )
-from MD_ai_services import generate_monster_ai_details
+from .MD_ai_services import generate_monster_ai_details
 
 services_logger = logging.getLogger(__name__)
 
