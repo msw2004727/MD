@@ -67,6 +67,8 @@ async function initializeGame() {
             updateScrollingHints(gameHints);
 
         } else {
+            // 如果 getGameConfigs 內部拋出錯誤，這裡可能不會執行，錯誤會在 catch 塊中處理
+            // 但如果 getGameConfigs 返回了 null 或空對象，則執行這裡
             throw new Error("無法獲取遊戲核心設定。");
         }
 
@@ -76,7 +78,7 @@ async function initializeGame() {
             console.log("No user logged in. Staying on auth screen.");
             toggleElementDisplay(DOMElements.authScreen, true, 'flex');
             toggleElementDisplay(DOMElements.gameContainer, false);
-            hideModal('feedback-modal');
+            hideModal('feedback-modal'); // 隱藏 "遊戲載入中"
             // 檢查是否需要顯示官方公告 (即使未登入)
             // if (localStorage.getItem('announcementShown_v1') !== 'true') {
             //     showModal('official-announcement-modal');
@@ -87,9 +89,17 @@ async function initializeGame() {
         // 如果已有用戶 (通常是 onAuthStateChanged 觸發後)
         await loadPlayerDataAndInitializeUI(gameState.currentUser);
 
-        hideModal('feedback-modal');
+        // 如果 loadPlayerDataAndInitializeUI 成功，它內部會 hide feedback modal
+        // 如果它失敗，它內部會顯示錯誤 modal
+        // 所以這裡不需要再 hideModal('feedback-modal')，除非 loadPlayerDataAndInitializeUI 沒有處理
+        // 為了確保，如果前面的步驟都成功，且 loadPlayerDataAndInitializeUI 也成功執行完畢，
+        // 我們可以再次確認 feedback-modal 是隱藏的。
+        // 但通常情況下，最後一個異步操作完成後處理 modal 狀態更佳。
+        // 此處的 hideModal 移至 loadPlayerDataAndInitializeUI 成功時執行。
+
     } catch (error) {
         console.error("Game initialization failed:", error);
+        hideModal('feedback-modal'); // <--- 確保在拋出錯誤時隱藏載入提示
         showFeedbackModal('遊戲載入失敗', `初始化過程中發生錯誤：${error.message}。請嘗試刷新頁面。`);
         // 保持 Auth Screen 顯示或顯示一個全局錯誤頁面
         toggleElementDisplay(DOMElements.authScreen, true, 'flex');
@@ -106,16 +116,16 @@ async function onAuthStateChangedHandler(user) {
         // 用戶已登入
         console.log("User is signed in:", user.uid);
         updateGameState({ currentUser: user, playerId: user.uid, playerNickname: user.displayName || user.email.split('@')[0] || "玩家" });
-        
+
         // 如果遊戲容器尚未顯示，表示這是初次登入或刷新後的自動登入
-        if (DOMElements.gameContainer.style.display === 'none') {
-            await initializeGame(); // 確保遊戲設定已載入，然後載入玩家數據
+        if (DOMElements.gameContainer.style.display === 'none' || DOMElements.gameContainer.style.display === '') {
+            await initializeGame(); // initializeGame 會處理載入提示和錯誤
         } else {
             // 如果遊戲容器已顯示 (例如，玩家剛完成註冊/登入操作)，直接載入玩家數據
-            await loadPlayerDataAndInitializeUI(user);
+            await loadPlayerDataAndInitializeUI(user); // loadPlayerDataAndInitializeUI 會處理載入提示和錯誤
         }
          // 顯示官方公告 (如果尚未顯示過)
-        if (localStorage.getItem('announcementShown_v1') !== 'true') {
+        if (localStorage.getItem('announcementShown_v1') !== 'true' && gameState.currentUser) { // 確保用戶已登入才顯示公告
             updateAnnouncementPlayerName(gameState.playerNickname);
             showModal('official-announcement-modal');
         }
@@ -123,7 +133,7 @@ async function onAuthStateChangedHandler(user) {
     } else {
         // 用戶已登出或未登入
         console.log("User is signed out or not yet signed in.");
-        updateGameState({ currentUser: null, playerId: null });
+        updateGameState({ currentUser: null, playerId: null, playerNickname: "玩家" }); // 重置暱稱
         toggleElementDisplay(DOMElements.authScreen, true, 'flex');
         toggleElementDisplay(DOMElements.gameContainer, false);
         updateMonsterSnapshot(null); // 清空快照
@@ -132,6 +142,7 @@ async function onAuthStateChangedHandler(user) {
         renderDNACombinationSlots();
         renderPlayerDNAInventory();
         renderMonsterFarm();
+        renderTemporaryBackpack(); // 清空臨時背包
         // 確保在登出時隱藏所有 modals
         hideAllModals();
     }
@@ -143,14 +154,14 @@ async function onAuthStateChangedHandler(user) {
  */
 async function loadPlayerDataAndInitializeUI(user) {
     if (!user) return;
-    
+
     showFeedbackModal('載入中...', '正在獲取您的玩家資料...', true);
     try {
         const playerData = await getPlayerData(user.uid); // api-client.js
         if (playerData) {
-            updateGameState({ 
-                playerData: playerData, 
-                playerNickname: playerData.nickname || user.displayName || user.email.split('@')[0] || "玩家" 
+            updateGameState({
+                playerData: playerData,
+                playerNickname: playerData.nickname || user.displayName || (user.email ? user.email.split('@')[0] : "玩家")
             });
             console.log("Player data loaded for:", user.uid, playerData);
 
@@ -171,16 +182,18 @@ async function loadPlayerDataAndInitializeUI(user) {
             // 顯示遊戲主容器，隱藏認證畫面
             toggleElementDisplay(DOMElements.authScreen, false);
             toggleElementDisplay(DOMElements.gameContainer, true, 'flex'); // main-container 使用 flex
-            
+
             // 更新公告中的玩家名稱
             updateAnnouncementPlayerName(gameState.playerNickname);
+            hideModal('feedback-modal'); // <--- 成功載入後隱藏 "載入中"
 
         } else {
-            throw new Error("無法獲取玩家遊戲資料。");
+            // 如果 getPlayerData 返回 null 或 undefined 但未拋出錯誤
+            throw new Error("無法獲取玩家遊戲資料，後端未返回有效數據。");
         }
-        hideModal('feedback-modal');
     } catch (error) {
         console.error("Failed to load player data and initialize UI:", error);
+        hideModal('feedback-modal'); // <--- 確保在拋出錯誤時隱藏載入提示
         showFeedbackModal('資料載入失敗', `獲取玩家資料時發生錯誤：${error.message}。您可以嘗試重新登入。`, false, null, [
             { text: '重新登入', class: 'primary', onClick: async () => { await logoutUser(); /* onAuthStateChanged 會處理後續 */ } },
             { text: '關閉', class: 'secondary' }
@@ -208,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showFeedbackModal('嚴重錯誤', '遊戲認證服務載入失敗，請刷新頁面。');
         return;
     }
-    
+
     // 3. 初始化事件監聽器 (來自 event-handlers.js)
     if (typeof initializeEventListeners === 'function') {
         initializeEventListeners();
@@ -220,7 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // initializeGame(); // initializeGame 會在 onAuthStateChangedHandler 中被適時調用
 
     // 預設顯示第一個頁籤 (DNA管理)
-    switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+    if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
+        switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+    } else {
+        console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch.");
+    }
 });
 
 console.log("Main.js script loaded.");
