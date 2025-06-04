@@ -9,12 +9,12 @@ import os
 import logging
 import json
 
-# 導入你的藍圖
+# 導入你的藍圖 (使用相對導入，修正)
 from .MD_routes import md_bp
-# 導入 Firebase 配置設定函式
-import MD_firebase_config # 只導入模組
-# 導入遊戲設定服務
-from MD_config_services import load_all_game_configs_from_firestore
+# 導入 Firebase 配置設定函式 (使用相對導入，修正)
+from . import MD_firebase_config # 這是導入同層級模組的標準相對方式
+# 導入遊戲設定服務 (使用相對導入，修正)
+from .MD_config_services import load_all_game_configs_from_firestore
 
 # 設定日誌
 # 建議在 Render.com 上，日誌會自動導向標準輸出，平台會收集它們
@@ -105,7 +105,7 @@ app_logger.info(f"--- Firebase Admin SDK 初始化結束 ---")
 if firebase_app_initialized and firebase_admin._apps:
     try:
         db_client = firestore.client()
-        MD_firebase_config.set_firestore_client(db_client)
+        MD_firebase_config.set_firestore_client(db_client) # 使用絕對路徑調用 set_firestore_client，正確
         app_logger.info("Firestore 客戶端已成功獲取並注入到 MD_firebase_config。")
     except Exception as e:
         app_logger.error(f"獲取 Firestore 客戶端或注入時發生錯誤: {e}", exc_info=True)
@@ -116,7 +116,7 @@ else:
 
 # 在應用程式啟動時載入遊戲設定
 # 確保在 Firestore 客戶端成功設定後才執行
-if firebase_app_initialized and MD_firebase_config.db is not None:
+if firebase_app_initialized and MD_firebase_config.db is not None: # 使用絕對路徑檢查 db，正確
     with app.app_context(): # 確保在應用程式上下文中操作 app.config
         app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
         if app.config.get('MD_GAME_CONFIGS'):
