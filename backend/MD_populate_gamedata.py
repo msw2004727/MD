@@ -468,12 +468,13 @@ def populate_game_configs():
     script_logger.info("遊戲設定資料填充/更新完畢。")
 
 if __name__ == '__main__':
-    # 為了在本地測試時能看到日誌輸出
-    # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    # script_logger.info("正在直接執行 MD_populate_gamedata.py...")
+    # 配置日誌，以便在本地直接運行時也能看到輸出
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    script_logger.info("正在直接執行 MD_populate_gamedata.py 腳本...")
 
-    confirmation = input("您確定要執行此腳本並將遊戲設定資料填充/更新到 Firestore 嗎？此操作可能會覆蓋現有設定。(yes/no): ")
-    if confirmation.lower() == 'yes':
-        populate_game_configs()
-    else:
-        script_logger.info("操作已取消。")
+    # 在自動化環境中，直接執行資料填充，不再需要用戶確認
+    # confirmation = input("您確定要執行此腳本並將遊戲設定資料填充/更新到 Firestore 嗎？此操作可能會覆蓋現有設定。(yes/no): ")
+    # if confirmation.lower() == 'yes':
+    populate_game_configs()
+    # else:
+    #     script_logger.info("操作已取消。")
