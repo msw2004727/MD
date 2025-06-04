@@ -1,28 +1,6 @@
-/* components.css */
-/* 包含所有 UI 元件相關的 CSS 樣式 */
+/* css/components.css */
 
-/* Helper classes for element text colors (already in theme.css, but good to have if theme.css is not loaded for some reason, or can be removed if theme.css is guaranteed) */
-/* Consider removing these if theme.css is always loaded first, to avoid duplication */
-.text-element-fire { color: var(--element-fire-text); }
-.text-element-water { color: var(--element-water-text); }
-.text-element-wood { color: var(--element-wood-text); }
-.text-element-gold { color: var(--element-gold-text); }
-.text-element-earth { color: var(--element-earth-text); }
-.text-element-light { color: var(--element-light-text); }
-.text-element-dark { color: var(--element-dark-text); }
-.text-element-poison { color: var(--element-poison-text); }
-.text-element-wind { color: var(--element-wind-text); }
-.text-element-mix { color: var(--element-mix-text); }
-.text-element-無 { color: var(--element-無-text); }
-
-/* Helper classes for rarity text colors (similar to above, consider removal if theme.css is guaranteed) */
-.text-rarity-common { color: var(--rarity-common-text); }
-.text-rarity-rare { color: var(--rarity-rare-text); }
-.text-rarity-elite { color: var(--rarity-elite-text); }
-.text-rarity-legendary { color: var(--rarity-legendary-text); }
-.text-rarity-mythical { color: var(--rarity-mythical-text); }
-
-/* Theme Switcher Component */
+/* Theme switcher button */
 #theme-switcher {
     position: absolute;
     top: 10px;
@@ -46,23 +24,59 @@
     border-color: var(--accent-color);
 }
 
-/* DNA Items, Slots, Inventory Components */
+/* Panel title styles */
+.panel-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 5px;
+}
+.panel-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0; 
+    border-bottom: none; 
+    padding-bottom: 0;
+}
+.panel-title-hint {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+@media (min-width: 768px) {
+    .panel-title { font-size: 1.3rem; }
+}
+
+/* DNA items, slots, and related elements */
 .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button {
     border: 1px solid var(--border-color);
-    border-radius: 5px; padding: 6px; text-align: center; font-size: 0.875rem;
+    border-radius: 5px;
+    padding: 6px;
+    text-align: center;
+    font-size: 0.875rem;
     transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
-    position: relative; min-height: 48px; display: flex;
-    align-items: center; justify-content: center;
+    position: relative;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-direction: column; /* Allow text to wrap if needed */
     box-sizing: border-box;
 }
-.dna-item { cursor: grab; }
-.dna-slot, .temp-backpack-slot { cursor: pointer; }
-.inventory-slot-empty, .temp-backpack-slot.empty { color: var(--text-secondary); border-style: dashed; cursor: default; background-color: var(--bg-panel); }
+.dna-item { cursor: grab; } /* Draggable DNA item */
+.dna-slot, .temp-backpack-slot { cursor: pointer; } /* Clickable slots */
+.inventory-slot-empty, .temp-backpack-slot.empty {
+    color: var(--text-secondary);
+    border-style: dashed;
+    cursor: default;
+    background-color: var(--bg-panel);
+}
 
 .inventory-delete-slot {
-    background-color: rgba(248, 81, 73, 0.5);
-    color: var(--text-primary-dark);
+    background-color: rgba(248, 81, 73, 0.5); /* Semi-transparent red */
+    color: var(--text-primary-dark); /* Ensure text is visible on dark themes */
     border-style: dashed;
     border-color: var(--danger-hover-dark);
     cursor: pointer;
@@ -72,7 +86,7 @@ body.light-theme .inventory-delete-slot {
     color: var(--text-primary-light);
     border-color: var(--danger-hover-light);
 }
-.inventory-delete-slot.drag-over {
+.inventory-delete-slot.drag-over { /* Highlight when dragging over */
     background-color: rgba(218, 54, 51, 0.7) !important;
     border-color: white !important;
 }
@@ -92,42 +106,84 @@ body.light-theme .inventory-delete-slot.drag-over {
 
 @media (min-width: 768px) {
     .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button {
-        padding: 8px; font-size: 0.9rem; min-height: 55px;
+        padding: 8px;
+        font-size: 0.9rem;
+        min-height: 55px;
     }
 }
 
-.dna-item:hover, .dna-slot:hover:not(.occupied), .temp-backpack-slot:hover:not(.occupied):not(.empty) {
+.dna-item:hover,
+.dna-slot:hover:not(.occupied), /* Empty combination slots */
+.temp-backpack-slot:hover:not(.occupied):not(.empty) { /* Occupied temp slots that are not empty placeholders */
     border-color: var(--accent-color);
     box-shadow: 0 0 6px color-mix(in srgb, var(--accent-color) 30%, transparent);
 }
-.temp-backpack-slot.empty:hover {
-     background-color: var(--accent-hover); border-color: var(--accent-color);
+.temp-backpack-slot.empty:hover { /* Empty temp backpack slots */
+     background-color: var(--accent-hover);
+     border-color: var(--accent-color);
 }
-.dna-slot.occupied, .temp-backpack-slot.occupied { border-style: solid; }
+.dna-slot.occupied, .temp-backpack-slot.occupied {
+    border-style: solid; /* Solid border for occupied slots */
+}
 .inventory-slot-empty.drag-over, .temp-backpack-slot.empty.drag-over {
     border-color: var(--accent-color);
     background-color: var(--accent-hover);
 }
 
-/* Monster Snapshot Panel Components */
+
+/* Monster Snapshot Area */
 .monster-snapshot-panel {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
 }
-/* .monster-snapshot-area is in layout.css */
-/* .monster-snapshot-img-bg is in layout.css */
+.monster-snapshot-area {
+    width: 100%;
+    height: 220px; /* Default height */
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto; /* Name/Content and Win/Loss */
+    grid-template-rows: auto auto 1fr auto; /* Title, Nickname, Image Area, Evaluation */
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    box-sizing: border-box;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+@media (min-width: 768px) {
+    .monster-snapshot-area {
+        height: 260px; /* Taller on larger screens */
+        padding: 12px;
+    }
+}
+
+.monster-snapshot-img-bg { /* Background image container */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0; /* Behind other content */
+}
 .monster-snapshot-img-bg img {
     max-width: 75%;
     max-height: 75%;
     object-fit: contain;
-    opacity: 0.7;
+    opacity: 0.7; /* Slightly transparent */
 }
-body.light-theme .monster-snapshot-img-bg img { opacity: 0.9; }
+body.light-theme .monster-snapshot-img-bg img {
+    opacity: 0.9; /* More opaque on light theme */
+}
 
-/* .snapshot-achievement-title is in layout.css */
 .snapshot-achievement-title {
+    grid-column: 1 / -1; /* Span all columns */
+    grid-row: 1 / 2;
     text-align: center;
     font-size: 0.875rem;
     font-weight: 500;
@@ -135,14 +191,15 @@ body.light-theme .monster-snapshot-img-bg img { opacity: 0.9; }
     z-index: 1;
     margin-bottom: 2px;
     text-shadow: 1px 1px 1px color-mix(in srgb, var(--bg-primary) 50%, transparent);
-    background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent);
+    background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent); /* Semi-transparent background */
     padding: 2px 6px;
     border-radius: 4px;
-    display: inline-block;
+    display: inline-block; /* To center with margin auto */
     margin: 0 auto;
 }
-/* .snapshot-nickname is in layout.css */
 .snapshot-nickname {
+    grid-column: 1 / -1;
+    grid-row: 2 / 3;
     text-align: center;
     font-size: 1.3rem;
     font-weight: bold;
@@ -158,22 +215,30 @@ body.light-theme .monster-snapshot-img-bg img { opacity: 0.9; }
     margin: 0 auto;
 }
 .snapshot-win-loss {
-    position: absolute;
+    position: absolute; /* Positioned top-right */
     top: 8px;
     right: 8px;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    z-index: 2;
+    z-index: 2; /* Above image */
     text-align: right;
     padding: 3px 5px;
     background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
     border-radius: 4px;
 }
-.snapshot-win-loss span { display: block; }
+ .snapshot-win-loss span { display: block; } /* Wins and losses on separate lines */
 
-/* .snapshot-main-content is in layout.css */
+.snapshot-main-content { /* Area for the monster image itself (via img-bg) or other central content */
+    grid-column: 1 / -1;
+    grid-row: 3 / 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
 .snapshot-evaluation {
-    position: absolute;
+    position: absolute; /* Positioned bottom-right */
     bottom: 8px;
     right: 8px;
     font-size: 1.1rem;
@@ -187,7 +252,11 @@ body.light-theme .monster-snapshot-img-bg img { opacity: 0.9; }
     border: 1px solid var(--border-color);
 }
 @media (min-width: 768px) {
-    .snapshot-evaluation { font-size: 1.2rem; bottom: 12px; right: 12px; }
+    .snapshot-evaluation {
+        font-size: 1.2rem;
+        bottom: 12px;
+        right: 12px;
+    }
 }
 
 /* General Button Styling */
@@ -201,8 +270,13 @@ button {
     transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
-@media (min-width: 768px) { button { padding: 12px 16px; font-size: 0.95rem; } }
-button:active { transform: translateY(1px); }
+@media (min-width: 768px) {
+    button {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+}
+button:active { transform: translateY(1px); } /* Slight press effect */
 button:disabled {
     background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important;
     color: var(--text-secondary) !important;
@@ -210,14 +284,17 @@ button:disabled {
     box-shadow: none !important;
     border: 1px solid color-mix(in srgb, var(--border-color, #555555) 50%, var(--bg-primary, #111111)) !important;
 }
-button:disabled:hover { background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important;  }
+button:disabled:hover {
+    background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important; 
+}
+
 
 /* Primary Action Buttons (Accent Color) */
-button.primary, #theme-switcher /* Theme switcher uses accent */ {
+button.primary {
     background-color: var(--button-primary-bg);
     color: var(--button-primary-text);
 }
-button.primary:hover, #theme-switcher:hover {
+button.primary:hover {
     background-color: var(--button-primary-hover-bg);
 }
 
@@ -262,7 +339,7 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
 .farm-monster-item button.farm-battle-btn {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    border-radius: 50%; /* Circular button */
     padding: 0;
     display: flex;
     align-items: center;
@@ -274,20 +351,29 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
     box-shadow: none;
 }
 
-/* Top Navigation Buttons */
+/* Top navigation buttons (under snapshot) */
+.top-buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: stretch; /* Make buttons same height */
+    gap: 0.2rem; /* Small gap */
+    margin-top: 0.5rem;
+}
 .top-nav-button {
     width: auto;
     padding: 0.5rem 0.5rem;
     min-width: 0;
     font-size: 0.75rem;
     height: 38px;
-    display: flex; align-items: center; justify-content: center;
-    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1; /* Distribute space evenly */
     text-align: center;
     line-height: 1.2;
-    background-color: var(--accent-color); /* Uniform color */
-    color: var(--button-primary-text); /* Text color for accent */
-    border: 1px solid var(--accent-hover-dark);
+    background-color: var(--accent-color); /* Uniform color for these buttons */
+    color: var(--button-primary-text); /* Text color for accent background */
+    border: 1px solid var(--accent-hover-dark); /* Slightly darker border */
 }
 .top-nav-button:hover {
     background-color: var(--accent-hover-dark);
@@ -296,13 +382,17 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
 }
 
+/* Combine button specific styling */
 #combine-button {
-    width: auto; min-width:110px; max-width: 160px; margin: 0 auto; display: block;
+    width: auto;
+    min-width:110px;
+    max-width: 160px;
+    margin: 0 auto; /* Center the button */
+    display: block;
     font-weight: bold;
 }
 
-/* Modal Components */
-/* .modal, .modal-content, .modal-footer are in layout.css */
+/* Modal specific components */
 .modal-close {
     color: var(--text-secondary);
     position: absolute;
@@ -328,37 +418,51 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
 .modal-body {
     font-size: 0.95rem;
     line-height: 1.6;
-    max-height: 70vh;
-    overflow-y: auto;
+    max-height: 70vh; /* Prevent modal from being too tall */
+    overflow-y: auto; /* Scroll if content overflows */
+}
+.modal-footer {
+    margin-top: 20px;
+    display:flex;
+    justify-content: center; /* Center footer buttons by default */
+    gap: 15px;
 }
 .modal-footer button {
-    padding: 12px 25px;
+    padding: 12px 25px; /* Larger padding for footer buttons */
     font-size: 1rem;
 }
+
+/* Loading spinner */
 .loading-spinner {
     border:4px solid var(--border-color);
-    border-top:4px solid var(--accent-color);
+    border-top:4px solid var(--accent-color); /* Accent color for spinner top */
     border-radius:50%;
     width:30px;
     height:30px;
     animation:spin 1s linear infinite;
-    margin:20px auto;
+    margin:20px auto; /* Center spinner */
 }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-
-/* DNA Panel Specific Title Styling */
+/* DNA Panel specific title styles (if different from general panel-title) */
 .dna-panel-title {
-    font-size: 1.2rem; font-weight: 600; color: var(--accent-color);
-    margin-bottom: 0; border-bottom: none; padding-bottom: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
 }
-body.light-theme .dna-panel-title { color: #0550ae; }
-.dna-panel-hint { font-size: 0.875rem; color: var(--text-secondary); }
+body.light-theme .dna-panel-title { color: #0550ae; } /* Specific for light theme if needed */
+
+.dna-panel-hint {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
 body.light-theme .dna-panel-hint { color: #424a53; }
 
-/* Details Section Components (Monster Info, Player Info Modals) */
+/* Monster/Player Info Modal Details Section */
 .details-section {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-primary); /* Slightly different background for contrast */
     padding: 12px;
     border-radius: 6px;
     margin-bottom: 15px;
@@ -373,11 +477,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     padding-bottom: 5px;
     border-bottom: 1px dashed var(--border-color);
 }
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px 14px;
-}
 .details-item {
     display: flex;
     justify-content: space-between;
@@ -389,7 +488,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-weight: 500;
     color: var(--text-secondary);
     margin-right: 10px;
-    white-space: nowrap;
+    white-space: nowrap; /* Prevent label from wrapping */
 }
 .details-value {
     color: var(--text-primary);
@@ -399,6 +498,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .details-value.boosted { color: var(--success-color); font-weight: bold; }
 .details-value.debuffed { color: var(--danger-color); }
+
 .creation-time-centered {
     text-align: center;
     font-size: 0.875rem;
@@ -406,51 +506,114 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     margin-top: 10px;
 }
 .element-composition-item { font-size: 0.875rem; }
+
 .skill-entry {
     margin-bottom: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
 }
 .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
-.skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.95rem; }
-.skill-details { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px; }
-.monster-info-header { text-align: center; margin-bottom: 15px; }
-.monster-info-name-styled {
-    font-size: 1.6rem; font-weight: bold; color: var(--accent-color);
-    padding: 6px 18px; background-color: var(--bg-slot); border-radius: 8px;
-    display: inline-block; border: 1px solid var(--border-color);
+.skill-name {
+    font-weight: bold;
+    color: var(--accent-hover); /* Slightly different from accent for emphasis */
+    font-size: 0.95rem;
 }
-.monster-description-area {
-    font-size: 0.9rem; margin-top: 10px; padding: 10px;
-    background-color: var(--bg-primary); border-radius: 6px;
-    border: 1px solid var(--border-color); line-height: 1.6;
+.skill-details {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-left: 10px; /* Indent skill details */
 }
-.personality-text { font-style: italic; line-height: 1.6; font-size: 0.9rem;}
-.ai-generated-text { margin-top: 5px; font-size: 0.9rem; line-height: 1.5; }
 
-/* Scrolling Hints Component */
+.monster-info-header { /* For Monster Info Modal */
+    text-align: center;
+    margin-bottom: 15px;
+}
+.monster-info-name-styled { /* Styled monster name in modal header */
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    padding: 6px 18px;
+    background-color: var(--bg-slot);
+    border-radius: 8px;
+    display: inline-block;
+    border: 1px solid var(--border-color);
+}
+.monster-description-area { /* For AI generated descriptions */
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    line-height: 1.6;
+}
+.personality-text {
+    font-style: italic;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+.ai-generated-text { /* For AI personality, intro, eval */
+    margin-top: 5px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Scrolling Hints Container */
 .scrolling-hints-container {
-    height: 22px; overflow: hidden; position: relative;
-    background-color: var(--bg-primary); border-radius: 4px;
-    padding: 0 10px; margin-top: 10px; border: 1px solid var(--border-color);
+    height: 22px; /* Fixed height for one line of text */
+    overflow: hidden;
+    position: relative;
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    padding: 0 10px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
 .scrolling-hint-text {
-    position: absolute; width: 100%; text-align: center;
-    line-height: 22px; font-size: 0.875rem; color: var(--text-secondary);
-    animation: scrollHint 15s linear infinite; opacity: 0;
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    animation: scrollHint 15s linear infinite;
+    opacity: 0; /* Start invisible */
 }
+/* Animation delays for multiple hints */
 .scrolling-hint-text:nth-child(1) { animation-delay: 0s; }
 .scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
 .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
-@keyframes scrollHint {
-    0% { opacity: 0; transform: translateY(100%); }
-    10%, 23% { opacity: 1; transform: translateY(0); }
-    33% { opacity: 0; transform: translateY(-100%); }
-    100% { opacity: 0; transform: translateY(-100%); }
-}
 
-/* Leaderboard Table Component */
+
+/* Tab Button Styling */
+.tab-buttons {
+    display: flex;
+    flex-wrap: wrap; /* Allow tabs to wrap on small screens */
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+.tab-button {
+    padding: 10px 15px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-bottom: 3px solid transparent; /* For active state indicator */
+    margin-bottom: -1px; /* Align with container's border */
+    transition: color 0.2s, border-bottom-color 0.2s;
+    white-space: nowrap; /* Prevent text wrapping in tab button */
+}
+.tab-button.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+    font-weight: 500;
+}
+.tab-content { display: none; } /* Hide tab content by default */
+.tab-content.active { display: block; } /* Show active tab content */
+
+/* Leaderboard Table Styling */
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
@@ -464,17 +627,24 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .leaderboard-table th {
     color: var(--accent-color);
     font-weight: 500;
-    cursor: pointer;
+    cursor: pointer; /* Indicate sortable columns */
 }
 .leaderboard-table th:hover { color: var(--accent-hover); }
 .leaderboard-table td { color: var(--text-primary); }
-.leaderboard-table .leaderboard-element-cell span { font-weight: bold; }
-.leaderboard-table tr:last-child td { border-bottom: none; }
-.leaderboard-table tr:hover td { background-color: var(--bg-slot); }
-body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
-.leaderboard-table .challenge-btn-cell { width: 80px; text-align: center;}
+.leaderboard-table .leaderboard-element-cell span { font-weight: bold; } /* Element styling in table */
+.leaderboard-table tr:last-child td { border-bottom: none; } /* Remove border from last row */
+.leaderboard-table tr:hover td {
+    background-color: var(--bg-slot);
+}
+body.light-theme .leaderboard-table tr:hover td {
+    background-color: #f8f9fa; /* Lighter hover for light theme */
+}
+.leaderboard-table .challenge-btn-cell {
+    width: 80px; /* Fixed width for challenge button cell */
+    text-align: center;
+}
 
-/* Titles, Medals, Lists Components (Player Info Modal) */
+/* Titles, Medals, Achievements Lists */
 .titles-medals-section { margin-top: 15px; }
 .titles-list, .achievements-list, .owned-monsters-list {
     list-style: none;
@@ -489,59 +659,46 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
-.owned-monsters-list li {
+.owned-monsters-list li { /* Specific for player info modal's monster list */
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 .owned-monsters-list .monster-name { font-weight: bold; }
 .owned-monsters-list .monster-score { color: var(--success-color); }
-.medals-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-}
 .medal-emoji { font-size: 1.3rem; }
 
-/* Farm List Item Components */
-/* .farm-header-grid, .farm-monster-item are in layout.css (base grid structure) */
-/* Mobile specific button/text styling within farm items */
-@media (max-width: 639px) {
-    .farm-monster-item .farm-monster-name {
-        font-weight: bold; color: var(--accent-hover);
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .farm-monster-item .farm-monster-status {
-        font-style: italic; color: var(--text-secondary);
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .farm-monster-item .farm-monster-score {
-        font-size: 0.75rem; color: var(--success-color); padding-left: 5px;
-    }
-    .farm-monster-item button {
-        padding: 4px 6px; /* Smaller padding for mobile buttons */
-        font-size: 0.75rem; /* Smaller font for mobile buttons */
-        min-width: auto; /* Allow buttons to be smaller */
-        width: 100%; /* Make buttons fill their container in the column */
-    }
-     .farm-monster-item .farm-monster-info-btn { /* This button is being removed per point 4 */
-        display: none;
-    }
+
+/* Farm Monster Item Specifics (Status, Buttons) */
+.farm-monster-item .farm-monster-status.active {
+    color: var(--warning-color); /* Active/Training status color */
+    font-weight: bold;
+}
+.farm-monster-item .farm-monster-status.battling {
+    color: var(--danger-color); /* Battling status color */
+    font-weight: bold;
+}
+.farm-monster-item .farm-monster-cultivate-btn {
+    background-color: var(--button-warning-bg);
+    color: var(--button-warning-text);
+}
+.farm-monster-item .farm-monster-cultivate-btn:hover {
+    background-color: var(--button-warning-hover-bg);
 }
 
-.farm-monster-item .farm-monster-status.active { color: var(--warning-color); font-weight: bold; }
-.farm-monster-item .farm-monster-status.battling { color: var(--danger-color); font-weight: bold; }
-
-.farm-monster-item .farm-monster-cultivate-btn { background-color: var(--button-warning-bg); color: var(--button-warning-text); }
-.farm-monster-item .farm-monster-cultivate-btn:hover { background-color: var(--button-warning-hover-bg); }
-
-/* Release Monster Image Placeholder Component */
+/* Image placeholder for release confirmation */
 #release-monster-image-placeholder {
-    width: 100px; height: 75px; background-color: var(--bg-slot);
-    border: 1px dashed var(--border-color); border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.875rem; color: var(--text-secondary); margin: 10px auto;
+    width: 100px;
+    height: 75px;
+    background-color: var(--bg-slot);
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 10px auto; /* Center placeholder */
 }
 #release-monster-image-placeholder img {
     max-width: 100%;
@@ -549,7 +706,7 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     object-fit: contain;
 }
 
-/* Log Entry Component */
+/* Log Entry Styling (e.g., monster activity log) */
 .log-entry {
     padding: 7px;
     border-bottom: 1px solid var(--border-color);
@@ -557,30 +714,46 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     color: var(--text-secondary);
 }
 .log-entry:last-child { border-bottom: none; }
-.log-entry .log-time { font-weight: bold; color: var(--text-primary); margin-right: 8px; }
-.log-entry .log-message {}
+.log-entry .log-time {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-right: 8px;
+}
+.log-entry .log-message {} /* Placeholder for specific message styling if needed */
 
-/* Feedback Modal Skill Entry Component */
+/* Feedback Modal Skill Entry (if showing monster details in feedback) */
 .feedback-skill-entry { margin-bottom: 6px; }
-.feedback-skill-name { font-weight: bold; color: var(--accent-hover); font-size: 0.9rem;}
-.feedback-skill-description { font-size: 0.875rem; color: var(--text-secondary); margin-left: 10px;}
+.feedback-skill-name {
+    font-weight: bold;
+    color: var(--accent-hover);
+    font-size: 0.9rem;
+}
+.feedback-skill-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-left: 10px;
+}
 
-/* Cultivation & Training Results Modal Components */
-#cultivation-setup-modal .modal-body, #training-results-modal .modal-body {
-    text-align: left;
+/* Cultivation Modal Styles */
+#cultivation-setup-modal .modal-body,
+#training-results-modal .modal-body {
+    text-align: left; /* Ensure content is left-aligned */
 }
-#cultivation-setup-modal button, #training-results-modal button {
-    margin-top: 10px;
+#cultivation-setup-modal button,
+#training-results-modal button {
+    margin-top: 10px; /* Spacing for buttons in these modals */
 }
-#start-cultivation-btn { /* Increased height for "開始修煉" button */
+#start-cultivation-btn { /* Specific style for "開始修煉" button */
     padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 1rem; /* Taller button */
 }
 .cultivation-hint {
     font-size: 0.875rem;
     color: var(--text-secondary);
     margin-top: 5px;
 }
+
+/* Training Results Modal Sections */
 .training-result-section {
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -590,7 +763,7 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     border-bottom: none;
     margin-bottom: 0;
 }
-.training-result-section h5 {
+.training-result-section h5 { /* Section titles like "冒險故事" */
     font-size: 1rem;
     font-weight: 600;
     color: var(--accent-color);
@@ -600,19 +773,19 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     font-size: 0.9rem;
     margin-bottom: 4px;
 }
-.temp-backpack-item-container {
+.temp-backpack-item-container { /* For items listed in training results */
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
 }
-#add-all-to-temp-backpack-btn {
+#add-all-to-temp-backpack-btn { /* "一鍵全數加入背包" button */
     padding: 8px 10px;
-    height: auto;
+    height: auto; /* Auto height based on padding */
     font-size: 0.9rem;
 }
 
-/* Newbie Guide Search Input & Results Components */
+/* Newbie Guide Search Input & Results */
 #newbie-guide-search-input {
     width: 100%;
     padding: 8px;
@@ -622,15 +795,15 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
-#newbie-guide-search-results p {
+#newbie-guide-search-results p { /* Example if results are simple paragraphs */
     padding: 5px;
-    border-bottom: 1px solid var(--border-color-dark); /* Note: Explicitly dark, might need var */
+    border-bottom: 1px solid var(--border-color-dark); /* Using dark for contrast, adjust if needed */
 }
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
 }
 
-/* Friends List Search & Item Components */
+/* Friends List Modal Components */
 #friends-list-search-input {
     width: 100%;
     padding: 8px 12px;
@@ -640,8 +813,8 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
-#friends-list-container { /* Container for items */
-    max-height: 250px;
+#friends-list-container {
+    max-height: 250px; /* Limit height and allow scroll */
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -664,15 +837,10 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     font-size: 0.875rem;
     color: var(--text-secondary);
 }
-.friend-item .friend-status.online {
-    color: var(--success-color);
-}
-.friend-item .friend-status.offline {
-    color: var(--text-secondary);
-}
+.friend-item .friend-status.online { color: var(--success-color); }
+.friend-item .friend-status.offline { color: var(--text-secondary); }
 
-/* Auth Screen Input & Button Components */
-/* .auth-container is in layout.css */
+/* Auth Screen Components */
 .auth-title {
     font-size: 1.8rem;
     font-weight: 700;
@@ -689,12 +857,13 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     color: var(--text-primary);
     font-size: 0.95rem;
 }
-.auth-button { /* Specific styling for auth buttons if different from general */
+.auth-button { /* Buttons on auth screen */
     width: 100%;
     padding: 12px;
     font-size: 1rem;
     margin-bottom: 10px;
 }
+/* Highlighted register button */
 #show-register-form-btn.highlighted-register {
     background-color: var(--button-success-bg) !important;
     color: var(--button-success-text) !important;
@@ -708,27 +877,27 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
 .auth-error-message {
     color: var(--danger-color);
     font-size: 0.875rem;
-    margin-top: -10px;
+    margin-top: -10px; /* Pull up slightly */
     margin-bottom: 15px;
     min-height: 1.2em; /* Reserve space to prevent layout shift */
 }
 
-/* Battle Log Area & Entry Components */
-/* #battle-log-modal .modal-content is in layout.css (modal sizing) */
+/* Battle Log Modal Specific Styles */
+#battle-log-modal .modal-content { max-width: 700px; } /* Wider modal for logs */
 #battle-log-area {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
-    height: 400px;
-    overflow-y: auto;
-    font-family: 'Courier New', Courier, monospace;
+    height: 400px; /* Fixed height for log area */
+    overflow-y: auto; /* Scrollable */
+    font-family: 'Courier New', Courier, monospace; /* Monospace font for logs */
     font-size: 0.9rem;
     line-height: 1.5;
-    white-space: pre-wrap;
+    white-space: pre-wrap; /* Allows line breaks and preserves spaces from JS */
     color: var(--text-primary);
 }
-#battle-log-area p { margin-bottom: 5px; }
+#battle-log-area p { margin-bottom: 5px; } /* Spacing between log entries */
 #battle-log-area .turn-divider {
     border-top: 1px dashed var(--accent-color);
     margin-top: 10px;
@@ -737,9 +906,10 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     font-weight: bold;
     color: var(--accent-color);
 }
-#battle-log-area .battle-start, #battle-log-area .battle-end {
+#battle-log-area .battle-start,
+#battle-log-area .battle-end {
     font-weight: bold;
-    color: var(--success-color);
+    color: var(--success-color); /* Default to success, override for loser/draw */
     text-align: center;
     padding: 5px 0;
     border-top: 1px solid var(--success-color);
@@ -747,16 +917,15 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     margin: 10px 0;
 }
  #battle-log-area .battle-end.winner { color: var(--success-color); }
- #battle-log-area .battle-end.loser { color: var(--danger-color); }
- #battle-log-area .battle-end.draw { color: var(--warning-color); }
+ #battle-log-area .battle-end.loser { color: var(--danger-color); border-color: var(--danger-color); }
+ #battle-log-area .battle-end.draw { color: var(--warning-color); border-color: var(--warning-color); }
 
 #battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
 #battle-log-area .heal-action { color: var(--success-color); }
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
 
-/* DNA Draw Modal Item Components */
-/* #dna-draw-modal .modal-content is in layout.css (modal sizing) */
-/* #dna-draw-results-grid is in layout.css (grid structure) */
+/* DNA Draw Modal Styles */
+#dna-draw-modal .modal-content { max-width: 600px; } /* Wider modal for DNA draw results */
 .dna-draw-result-item {
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -766,13 +935,13 @@ body.light-theme .leaderboard-table tr:hover td { background-color: #f8f9fa; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    min-height: 70px;
+    justify-content: space-between; /* Space out content vertically */
+    min-height: 70px; /* Minimum height for consistency */
 }
 .dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
 .dna-draw-result-item .dna-type { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;}
 .dna-draw-result-item .dna-rarity { font-size: 0.8rem; }
-.dna-draw-result-item button {
+.dna-draw-result-item button { /* "Add to backpack" button within drawn item */
     margin-top: 8px;
     padding: 5px 8px;
     font-size: 0.8rem;
