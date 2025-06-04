@@ -169,16 +169,31 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if not authoritative_nickname:
                 authoritative_nickname = "未知玩家"
 
+        # --- 新增的 try-except 區塊，用於偵錯 users/{UID} 文件建立 ---
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
             if profile_data and profile_data.get("nickname") != authoritative_nickname:
-                user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
+                try:
+                    user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                    services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
+                except Exception as e:
+                    services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
             else: # 即使暱稱相同，也更新 lastLogin
-                user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                try:
+                    user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                    services_logger.info(f"已更新玩家 {player_id} 的最後登入時間。")
+                except Exception as e:
+                    services_logger.error(f"更新玩家 {player_id} 的最後登入時間失敗: {e}", exc_info=True)
         else:
-             user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-             services_logger.info(f"已為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
+            services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
+            try:
+                user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
+            except Exception as e:
+                services_logger.error(f"建立玩家 {player_id} 的 Firestore users 集合 profile 失敗: {e}", exc_info=True)
+                # 如果建立 profile 失敗，則後續的遊戲資料儲存也會失敗，直接返回 None
+                return None
+        # --- 結束新增的 try-except 區塊 ---
 
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
@@ -844,12 +859,39 @@ def complete_cultivation_service(
         potential_new_skills: List[Skill] = [] # type: ignore
         current_skill_names = {s.get("name") for s in current_skills}
 
+        # 這裡需要遍歷所有元素，從 all_skills_db 中獲取技能
+        for el_str_learn in monster_elements:
+            el_learn: ElementTypes = el_str_learn # type: ignore
+            potential_new_skills.extend(all_skills_db.get(el_learn, [])) # type: ignore
+        # 如果怪獸沒有「無」屬性，但「無」屬性技能存在，則也考慮「無」屬性技能
+        if "無" not in monster_elements and "無" in all_skills_db:
+            potential_new_skills.extend(all_skills_db.get("無", [])) # type: ignore
+
+
         learnable_skills = [s_template for s_template in potential_new_skills if s_template.get("name") not in current_skill_names]
 
         if learnable_skills:
+            # 根據稀有度偏好選擇新技能 (如果 new_skill_rarity_bias 存在)
+            # 這裡簡化為隨機選擇，但可以根據 new_skill_rarity_bias 實現加權隨機
             new_skill_rarity_bias = cultivation_cfg.get("new_skill_rarity_bias") # type: ignore
-            learned_new_skill_template = random.choice(learnable_skills)
-            skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！") # type: ignore
+            
+            # 創建一個加權列表
+            weighted_learnable_skills = []
+            for skill_template in learnable_skills:
+                skill_rarity = skill_template.get("rarity", "普通") # 假設技能模板有 rarity 屬性
+                bias_factor = new_skill_rarity_bias.get(skill_rarity, 1.0) if new_skill_rarity_bias else 1.0 # type: ignore
+                # 將技能模板加入列表多次，次數由 bias_factor 決定 (例如 bias_factor=0.6，加入6次)
+                # 為了避免浮點數問題，可以將所有 bias_factor 乘以一個大數變成整數
+                # 這裡簡化處理，直接用 bias_factor 作為權重
+                for _ in range(int(bias_factor * 100)): # 乘以100以處理小數權重
+                    weighted_learnable_skills.append(skill_template)
+
+            if weighted_learnable_skills:
+                learned_new_skill_template = random.choice(weighted_learnable_skills)
+                skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！") # type: ignore
+            else:
+                services_logger.info(f"怪獸 {monster_id} 有機會領悟新技能，但沒有可學習的技能。")
+
 
     player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
 
