@@ -4,10 +4,10 @@
 // 請根據您的後端部署情況修改此 URL
 
 // 當您要連接到部署在 Render.com 上的後端時，請使用下面這行：
-// const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
+const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
 
-// 當您要在本地測試，連接到本地運行的後端時，請使用下面這行：
-const API_BASE_URL = 'http://127.0.0.1:5000/api/MD'; // 指向本地後端
+// 當您要在本地測試，連接到本地運行的後端時，可以註解掉上面那行，並取消註解下面這行：
+// const API_BASE_URL = 'http://127.0.0.1:5000/api/MD'; // 指向本地後端
 // 或者如果您習慣用 localhost:
 // const API_BASE_URL = 'http://localhost:5000/api/MD';
 
