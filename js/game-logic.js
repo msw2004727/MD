@@ -159,7 +159,7 @@ export function handleDragStart(e) {
     try {
         JSON.parse(dnaInfoStr);
     } catch (jsonError) {
-        console.error("無效的 DNA 資訊 JSON:", jsonError);
+        console.error("無效的 DNA 資訊JSON:", jsonError);
         e.preventDefault();
         return;
     }
@@ -857,7 +857,7 @@ async function simulateBattle(playerMonster, opponentMonster) {
 }
 
 
-export async function searchFriends(searchTerm) {
+export function searchFriends(searchTerm) {
     const lowerSearchTerm = searchTerm.toLowerCase().trim();
     if (!lowerSearchTerm || lowerSearchTerm.length < 1) {
         UI.updateFriendsListContainerWithMessage("請輸入至少一個字元進行搜尋。");
@@ -948,14 +948,14 @@ export function initializeNpcMonsters() {
     // 確保 GameState.gameSettings 和 GameState.gameSettings.npc_monsters 存在
     if (GameState.gameSettings && Array.isArray(GameState.gameSettings.npc_monsters)) {
         // 使用 slice() 創建一個新的陣列副本，確保它是可擴展的
-        GameState.npcMonsters = GameState.gameSettings.npc_monsters.slice();
+        // 修正：確保 GameState.npcMonsters 是一個可擴展的陣列
+        GameState.npcMonsters = GameState.gameSettings.npc_monsters.slice(); 
         console.log(`NPC 怪獸已初始化：共 ${GameState.npcMonsters.length} 隻。`);
     } else {
         console.warn("遊戲設定中沒有 NPC 怪獸資料或 GameState.gameSettings 結構不完整。將使用空陣列。");
         // 確保 GameState.npcMonsters 即使沒有從 GameSettings 複製也能是一個陣列
-        if (!Array.isArray(GameState.npcMonsters)) {
-            GameState.npcMonsters = [];
-        }
+        // 修正：確保這裡也初始化為一個可擴展的陣列
+        GameState.npcMonsters = []; 
     }
 }
 
