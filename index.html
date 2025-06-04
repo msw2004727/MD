@@ -19,38 +19,31 @@
     <div id="auth-screen" class="auth-screen">
         <div class="auth-container">
             <h1 class="auth-title">怪獸異世界</h1>
-            <button id="show-login-form-btn" class="auth-button primary">使用暱稱/密碼登入</button>
-            <button id="show-register-form-btn" class="auth-button secondary highlighted-register">重新開始遊戲 (創建帳號)</button>
-        </div>
-    </div>
-
-    <div id="register-modal" class="modal">
-        <div class="modal-content" style="max-width: 420px;">
-            <span class="modal-close" data-modal-id="register-modal" aria-label="關閉註冊視窗">&times;</span>
-            <h3 class="modal-header">創建您的訓獸師帳號</h3>
-            <div class="modal-body">
-                <label for="register-nickname" class="sr-only">暱稱</label>
-                <input type="text" id="register-nickname" class="auth-input" placeholder="請輸入您的暱稱" required aria-required="true">
-                <label for="register-password" class="sr-only">密碼</label>
-                <input type="password" id="register-password" class="auth-input" placeholder="請設定您的密碼" required aria-required="true">
-                <div id="register-error" class="auth-error-message" role="alert" aria-live="polite"></div>
-                <button id="register-submit-btn" class="auth-button success">創建並進入異世界</button>
+            
+            <div id="register-form-section" class="form-section">
+                <h3 class="modal-header">創建您的訓獸師帳號</h3>
+                <div class="modal-body">
+                    <label for="register-nickname" class="sr-only">暱稱</label>
+                    <input type="text" id="register-nickname" class="auth-input" placeholder="請輸入您的暱稱" required aria-required="true">
+                    <label for="register-password" class="sr-only">密碼</label>
+                    <input type="password" id="register-password" class="auth-input" placeholder="請設定您的密碼 (至少6位)" required aria-required="true">
+                    <div id="register-error" class="auth-error-message" role="alert" aria-live="polite"></div>
+                    <button id="register-submit-btn" class="auth-button success">創建並進入異世界</button>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div id="login-modal" class="modal">
-        <div class="modal-content" style="max-width: 420px;">
-            <span class="modal-close" data-modal-id="login-modal" aria-label="關閉登入視窗">&times;</span>
-            <h3 class="modal-header">訓獸師登入</h3>
-            <div class="modal-body">
-                <label for="login-nickname" class="sr-only">暱稱</label>
-                <input type="text" id="login-nickname" class="auth-input" placeholder="您的暱稱" required aria-required="true">
-                <label for="login-password" class="sr-only">密碼</label>
-                <input type="password" id="login-password" class="auth-input" placeholder="您的密碼" required aria-required="true">
-                <div id="login-error" class="auth-error-message" role="alert" aria-live="polite"></div>
-                <button id="login-submit-btn" class="auth-button primary">登入異世界</button>
+            <hr style="border-color: var(--border-color); margin: 20px 0;"> <div id="login-form-section" class="form-section">
+                <h3 class="modal-header">訓獸師登入</h3>
+                <div class="modal-body">
+                    <label for="login-nickname" class="sr-only">暱稱</label>
+                    <input type="text" id="login-nickname" class="auth-input" placeholder="您的暱稱" required aria-required="true">
+                    <label for="login-password" class="sr-only">密碼</label>
+                    <input type="password" id="login-password" class="auth-input" placeholder="您的密碼" required aria-required="true">
+                    <div id="login-error" class="auth-error-message" role="alert" aria-live="polite"></div>
+                    <button id="login-submit-btn" class="auth-button primary">登入異世界</button>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -389,7 +382,7 @@
                 <p class="text-sm mb-1">總勝場: <span class="font-bold" id="player-info-wins">120</span></p>
                 <p class="text-sm mb-1">總敗場: <span class="font-bold" id="player-info-losses">15</span></p>
                 <p class="text-sm mb-1">當前金幣: <span class="font-bold" id="player-info-gold">5000</span></p>
-                <p class="text-sm mb-4">當前鑽石: <span class="font-bold" id="player-info-diamond">100</span></p>
+                <p class="text-sm mb-1">當前鑽石: <span class="font-bold" id="player-info-diamond">100</span></p>
 
                 <h5 class="font-bold mb-2">成就列表</h5>
                 <ul id="player-info-achievements" class="list-disc list-inside text-sm">
@@ -465,7 +458,7 @@
             <h3 id="training-results-modal-title" class="modal-header">🎉 修煉成果 🎉</h3>
             <div class="modal-body">
                 <div class="training-result-section">
-                    <h5>📜 冒險故事</h5>
+                    <h5>� 冒險故事</h5>
                     <p id="training-story-result">您的怪獸「小火龍」在森林深處進行了艱苦的修煉，牠克服了重重困難，擊敗了強大的野獸，最終領悟了新的力量！</p>
                 </div>
                 <div class="training-result-section">
