@@ -1,6 +1,4 @@
-/* theme.css */
-/* 包含所有主題相關的 CSS 自訂變數 */
-
+/* css/theme.css */
 :root {
     /* Dark Theme (Default) */
     --bg-primary-dark: #0d1117;
@@ -228,4 +226,54 @@ body.light-theme {
     --rarity-elite-text: var(--rarity-elite-text-light);
     --rarity-legendary-text: var(--rarity-legendary-text-light);
     --rarity-mythical-text: var(--rarity-mythical-text-light);
+}
+
+/* Helper classes for element text colors */
+.text-element-fire { color: var(--element-fire-text); }
+.text-element-water { color: var(--element-water-text); }
+.text-element-wood { color: var(--element-wood-text); }
+.text-element-gold { color: var(--element-gold-text); }
+.text-element-earth { color: var(--element-earth-text); }
+.text-element-light { color: var(--element-light-text); }
+.text-element-dark { color: var(--element-dark-text); }
+.text-element-poison { color: var(--element-poison-text); }
+.text-element-wind { color: var(--element-wind-text); }
+.text-element-mix { color: var(--element-mix-text); }
+.text-element-無 { color: var(--element-無-text); }
+
+
+/* Helper classes for rarity text colors */
+.text-rarity-common { color: var(--rarity-common-text); }
+.text-rarity-rare { color: var(--rarity-rare-text); }
+.text-rarity-elite { color: var(--rarity-elite-text); }
+.text-rarity-legendary { color: var(--rarity-legendary-text); }
+.text-rarity-mythical { color: var(--rarity-mythical-text); }
+
+/* Global body styles */
+body {
+    font-family: 'Noto Sans TC', 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px; /* Reduced padding for small screens */
+    box-sizing: border-box;
+    transition: background-color 0.3s, color 0.3s;
+    font-size: 1rem; /* Default base font size */
+}
+
+/* Loading Spinner Animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrolling Hints Animation */
+@keyframes scrollHint {
+    0% { opacity: 0; transform: translateY(100%); }
+    10%, 23% { opacity: 1; transform: translateY(0); }
+    33% { opacity: 0; transform: translateY(-100%); }
+    100% { opacity: 0; transform: translateY(-100%); }
 }
