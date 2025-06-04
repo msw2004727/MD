@@ -9,7 +9,7 @@ from collections import Counter
 import copy # 用於深拷貝戰鬥狀態
 
 from firebase_admin import firestore # 引入 firestore 以便使用 FieldFilter 等
-from MD_firebase_config import db
+from .MD_firebase_config import db
 from MD_models import (
     PlayerGameData, PlayerStats, PlayerOwnedDNA,
     Monster, Skill, DNAFragment, RarityDetail, Personality,
