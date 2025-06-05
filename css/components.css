@@ -1,28 +1,85 @@
 /* css/components.css */
 
-/* Theme switcher button */
-#theme-switcher {
+/* Corner buttons (Theme switcher and New Logout button) */
+.corner-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
     background: none;
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    font-size: 1.2rem;
+    width: 32px; /* Slightly larger */
+    height: 32px; /* Slightly larger */
+    font-size: 1.1rem; /* Adjusted icon size */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    box-shadow: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    z-index: 10; /* Ensure they are above other content */
 }
-#theme-switcher:hover {
+.corner-button:hover {
     color: var(--accent-color);
     border-color: var(--accent-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
+
+/* Specific positioning for corner buttons */
+.top-left-button {
+    top: 12px;
+    left: 12px;
+}
+.top-right-button {
+    top: 12px;
+    right: 12px;
+}
+
+
+/* Theme switcher button background (Item 13) */
+#theme-switcher {
+    /* Dark theme (default) - Moon icon, light background */
+    background-color: var(--bg-panel-light); /* Use light panel color for contrast */
+    color: var(--text-primary-dark);
+    border-color: var(--border-color-light);
+}
+body.light-theme #theme-switcher {
+    /* Light theme - Sun icon, dark background */
+    background-color: var(--bg-panel-dark); /* Use dark panel color for contrast */
+    color: var(--text-primary-light);
+    border-color: var(--border-color-dark);
+}
+#theme-switcher:hover {
+    background-color: var(--accent-hover);
+    color: var(--button-primary-text);
+    border-color: var(--accent-color);
+}
+
+
+/* Logout button style (Item 14, matches theme switcher) */
+#main-logout-btn {
+    /* Dark theme (default) - Light background for button */
+    background-color: var(--bg-panel-light);
+    color: var(--text-primary-dark);
+    border-color: var(--border-color-light);
+}
+body.light-theme #main-logout-btn {
+    /* Light theme - Dark background for button */
+    background-color: var(--bg-panel-dark);
+    color: var(--text-primary-light);
+    border-color: var(--border-color-dark);
+}
+#main-logout-btn:hover {
+    background-color: var(--danger-hover-dark); /* Use danger color for logout hover */
+    color: var(--button-danger-text-dark);
+    border-color: var(--danger-color-dark);
+}
+body.light-theme #main-logout-btn:hover {
+    background-color: var(--danger-hover-light);
+    color: var(--button-danger-text-light);
+    border-color: var(--danger-color-light);
+}
+
 
 /* Panel title styles */
 .panel-title-container {
@@ -50,80 +107,105 @@
 }
 
 /* DNA items, slots, and related elements */
-.dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button {
+.dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
     border: 1px solid var(--border-color);
-    border-radius: 5px;
-    padding: 6px;
+    border-radius: 8px; /* Slightly more rounded */
+    padding: 8px; /* Increased padding */
     text-align: center;
-    font-size: 0.875rem;
+    font-size: 0.8rem; /* Slightly smaller base font for content */
     transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
     position: relative;
-    min-height: 48px;
+    min-height: 60px; /* Increased min-height */
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-direction: column; /* Allow text to wrap if needed */
+    flex-direction: column;
     box-sizing: border-box;
+    word-break: break-all; /* Allow long DNA names to break */
 }
-.dna-item { cursor: grab; } /* Draggable DNA item */
+
+/* Item 6: DNA item styling - Rarity based background with opacity, element based text color */
+.dna-item {
+    cursor: grab;
+    /* Background color will be set by JS based on rarity, e.g., background-color: rgba(var(--rarity-rare-rgb), 0.7); */
+    /* Text color will be set by JS based on element, e.g., color: var(--element-fire-text); */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.05);
+    font-weight: 500;
+}
+.dna-item .dna-rarity-badge { /* For potential rarity badge, if added by JS */
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    text-transform: uppercase;
+    font-weight: bold;
+    /* Badge color and background would also be rarity-dependent */
+}
+
+
 .dna-slot, .temp-backpack-slot { cursor: pointer; } /* Clickable slots */
 .inventory-slot-empty, .temp-backpack-slot.empty {
     color: var(--text-secondary);
     border-style: dashed;
+    border-width: 2px; /* Thicker dashed border */
     cursor: default;
-    background-color: var(--bg-panel);
+    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent); /* More subtle empty slot */
 }
 
 .inventory-delete-slot {
-    background-color: rgba(248, 81, 73, 0.5); /* Semi-transparent red */
-    color: var(--text-primary-dark); /* Ensure text is visible on dark themes */
-    border-style: dashed;
-    border-color: var(--danger-hover-dark);
+    background-color: color-mix(in srgb, var(--danger-color) 20%, transparent) !important;
+    color: var(--danger-color) !important;
+    border: 2px dashed var(--danger-color) !important;
     cursor: pointer;
+    font-weight: bold;
 }
-body.light-theme .inventory-delete-slot {
-    background-color: rgba(207, 34, 46, 0.5);
-    color: var(--text-primary-light);
-    border-color: var(--danger-hover-light);
+.inventory-delete-slot .delete-slot-main-text {
+    font-size: 0.9rem;
+    display: block;
 }
-.inventory-delete-slot.drag-over { /* Highlight when dragging over */
-    background-color: rgba(218, 54, 51, 0.7) !important;
-    border-color: white !important;
+.inventory-delete-slot .delete-slot-sub-text {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+
+.inventory-delete-slot.drag-over {
+    background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
+    border-color: var(--danger-hover-dark) !important; /* Use a darker danger color for hover */
+    color: var(--button-danger-text-dark) !important;
 }
 body.light-theme .inventory-delete-slot.drag-over {
-    background-color: rgba(164, 14, 38, 0.7) !important;
+    border-color: var(--danger-hover-light) !important;
+    color: var(--button-danger-text-light) !important;
 }
 
-.dna-draw-button {
-    background-color: var(--button-success-bg);
-    color: var(--button-success-text);
-    font-weight: 500;
-    cursor: pointer;
-}
-.dna-draw-button:hover {
-    background-color: var(--button-success-hover-bg);
-}
+
+/* Removed .dna-draw-button from here, it's now an .action-button-main */
 
 @media (min-width: 768px) {
-    .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot, .dna-draw-button {
-        padding: 8px;
-        font-size: 0.9rem;
-        min-height: 55px;
+    .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
+        padding: 10px;
+        font-size: 0.85rem;
+        min-height: 65px;
     }
 }
 
 .dna-item:hover,
-.dna-slot:hover:not(.occupied), /* Empty combination slots */
-.temp-backpack-slot:hover:not(.occupied):not(.empty) { /* Occupied temp slots that are not empty placeholders */
+.dna-slot:hover:not(.occupied),
+.temp-backpack-slot:hover:not(.occupied):not(.empty) {
     border-color: var(--accent-color);
-    box-shadow: 0 0 6px color-mix(in srgb, var(--accent-color) 30%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
-.temp-backpack-slot.empty:hover { /* Empty temp backpack slots */
+.temp-backpack-slot.empty:hover {
      background-color: var(--accent-hover);
      border-color: var(--accent-color);
 }
 .dna-slot.occupied, .temp-backpack-slot.occupied {
-    border-style: solid; /* Solid border for occupied slots */
+    border-style: solid;
 }
 .inventory-slot-empty.drag-over, .temp-backpack-slot.empty.drag-over {
     border-color: var(--accent-color);
@@ -140,12 +222,12 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 .monster-snapshot-area {
     width: 100%;
-    height: 220px; /* Default height */
+    height: 220px; 
     background-color: var(--bg-primary);
     border-radius: 8px;
     display: grid;
-    grid-template-columns: 1fr auto; /* Name/Content and Win/Loss */
-    grid-template-rows: auto auto 1fr auto; /* Title, Nickname, Image Area, Evaluation */
+    grid-template-columns: 1fr auto; 
+    grid-template-rows: auto auto 1fr auto; 
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border-color);
@@ -155,12 +237,12 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 @media (min-width: 768px) {
     .monster-snapshot-area {
-        height: 260px; /* Taller on larger screens */
+        height: 260px; 
         padding: 12px;
     }
 }
 
-.monster-snapshot-img-bg { /* Background image container */
+.monster-snapshot-img-bg { 
     position: absolute;
     top: 0;
     left: 0;
@@ -169,20 +251,20 @@ body.light-theme .inventory-delete-slot.drag-over {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 0; /* Behind other content */
+    z-index: 0; 
 }
 .monster-snapshot-img-bg img {
     max-width: 75%;
     max-height: 75%;
     object-fit: contain;
-    opacity: 0.7; /* Slightly transparent */
+    opacity: 0.7; 
 }
 body.light-theme .monster-snapshot-img-bg img {
-    opacity: 0.9; /* More opaque on light theme */
+    opacity: 0.9; 
 }
 
 .snapshot-achievement-title {
-    grid-column: 1 / -1; /* Span all columns */
+    grid-column: 1 / -1; 
     grid-row: 1 / 2;
     text-align: center;
     font-size: 0.875rem;
@@ -191,10 +273,10 @@ body.light-theme .monster-snapshot-img-bg img {
     z-index: 1;
     margin-bottom: 2px;
     text-shadow: 1px 1px 1px color-mix(in srgb, var(--bg-primary) 50%, transparent);
-    background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent); /* Semi-transparent background */
+    background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent); 
     padding: 2px 6px;
     border-radius: 4px;
-    display: inline-block; /* To center with margin auto */
+    display: inline-block; 
     margin: 0 auto;
 }
 .snapshot-nickname {
@@ -215,20 +297,20 @@ body.light-theme .monster-snapshot-img-bg img {
     margin: 0 auto;
 }
 .snapshot-win-loss {
-    position: absolute; /* Positioned top-right */
+    position: absolute; 
     top: 8px;
     right: 8px;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    z-index: 2; /* Above image */
+    z-index: 2; 
     text-align: right;
     padding: 3px 5px;
     background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
     border-radius: 4px;
 }
- .snapshot-win-loss span { display: block; } /* Wins and losses on separate lines */
+ .snapshot-win-loss span { display: block; } 
 
-.snapshot-main-content { /* Area for the monster image itself (via img-bg) or other central content */
+.snapshot-main-content { 
     grid-column: 1 / -1;
     grid-row: 3 / 4;
     display: flex;
@@ -238,7 +320,7 @@ body.light-theme .monster-snapshot-img-bg img {
     z-index: 1;
 }
 .snapshot-evaluation {
-    position: absolute; /* Positioned bottom-right */
+    position: absolute; 
     bottom: 8px;
     right: 8px;
     font-size: 1.1rem;
@@ -260,86 +342,122 @@ body.light-theme .monster-snapshot-img-bg img {
 }
 
 /* General Button Styling */
-button {
+button, .button { /* Added .button for semantic consistency if needed */
     padding: 10px 14px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1); /* Base shadow for depth */
+    border-bottom: 2px solid rgba(0,0,0,0.2); /* Darker bottom border for 3D effect */
+    position: relative; /* For pseudo-elements if needed */
 }
 @media (min-width: 768px) {
-    button {
+    button, .button {
         padding: 12px 16px;
         font-size: 0.95rem;
     }
 }
-button:active { transform: translateY(1px); } /* Slight press effect */
-button:disabled {
+button:active, .button:active { 
+    transform: translateY(1px); 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Reduced shadow on press */
+    border-bottom-width: 1px;
+}
+button:disabled, .button:disabled {
     background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important;
     color: var(--text-secondary) !important;
     cursor: not-allowed !important;
     box-shadow: none !important;
     border: 1px solid color-mix(in srgb, var(--border-color, #555555) 50%, var(--bg-primary, #111111)) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color, #555555) 50%, var(--bg-primary, #111111)) !important;
 }
-button:disabled:hover {
+button:disabled:hover, .button:disabled:hover {
     background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important; 
 }
 
 
 /* Primary Action Buttons (Accent Color) */
-button.primary {
+button.primary, .button.primary {
     background-color: var(--button-primary-bg);
     color: var(--button-primary-text);
+    border-bottom-color: color-mix(in srgb, var(--button-primary-bg) 70%, black);
 }
-button.primary:hover {
+button.primary:hover, .button.primary:hover {
     background-color: var(--button-primary-hover-bg);
 }
 
 /* Secondary Buttons */
-button.secondary, .top-nav-button, .farm-time-btn {
+button.secondary, .button.secondary, .top-nav-button, .farm-time-btn {
     background-color: var(--button-secondary-bg);
     color: var(--button-secondary-text);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-color); /* Keep thin border for secondary */
+    border-bottom: 2px solid var(--border-color); /* Slightly darker bottom for depth */
 }
-button.secondary:hover, .top-nav-button:hover, .farm-time-btn:hover {
+button.secondary:hover, .button.secondary:hover, .top-nav-button:hover, .farm-time-btn:hover {
     background-color: var(--button-secondary-hover-bg);
 }
 
 /* Danger Buttons */
-button.danger, .farm-monster-item button.farm-monster-release-btn, #confirm-action-btn.danger {
+button.danger, .button.danger, .farm-monster-item button.farm-monster-release-btn, #confirm-action-btn.danger {
     background-color: var(--button-danger-bg);
     color: var(--button-danger-text);
+    border-bottom-color: color-mix(in srgb, var(--button-danger-bg) 70%, black);
 }
-button.danger:hover, .farm-monster-item button.farm-monster-release-btn:hover, #confirm-action-btn.danger:hover {
+button.danger:hover, .button.danger:hover, .farm-monster-item button.farm-monster-release-btn:hover, #confirm-action-btn.danger:hover {
     background-color: var(--button-danger-hover-bg);
 }
 
 /* Success Buttons */
-button.success, #combine-button, .farm-monster-item button.farm-complete-btn {
+button.success, .button.success, #combine-button, .farm-monster-item button.farm-complete-btn {
     background-color: var(--button-success-bg);
     color: var(--button-success-text);
+    border-bottom-color: color-mix(in srgb, var(--button-success-bg) 70%, black);
 }
-button.success:hover, #combine-button:hover, .farm-monster-item button.farm-complete-btn:hover {
+button.success:hover, .button.success:hover, #combine-button:hover, .farm-monster-item button.farm-complete-btn:hover {
     background-color: var(--button-success-hover-bg);
 }
 
 /* Warning Buttons */
-button.warning, .farm-monster-item button.farm-monster-cultivate-btn {
+button.warning, .button.warning, .farm-monster-item button.farm-monster-cultivate-btn {
     background-color: var(--button-warning-bg);
     color: var(--button-warning-text);
+    border-bottom-color: color-mix(in srgb, var(--button-warning-bg) 70%, black);
 }
-button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover {
+button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover {
     background-color: var(--button-warning-hover-bg);
 }
+
+/* Item 1: 立體感 for "怪物合成" and "抽取DNA" (which are now .action-button-main) */
+.action-button-main {
+    padding: 12px 20px !important; /* Make them a bit larger */
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2), /* Stronger base shadow */
+                0 2px 3px rgba(0,0,0,0.15), /* Softer inner shadow */
+                inset 0 -2px 1px rgba(255,255,255,0.1); /* Subtle highlight from bottom */
+    border-bottom-width: 3px !important; /* Thicker bottom border */
+}
+.action-button-main:active {
+    transform: translateY(2px) !important; /* More pronounced press effect */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
+    border-bottom-width: 1px !important;
+}
+/* Apply to specific buttons */
+#combine-button.action-button-main,
+#dna-draw-button.action-button-main {
+    /* Inherits .action-button-main styles */
+}
+
 
 /* Farm Battle Button Specific */
 .farm-monster-item button.farm-battle-btn {
     width: 32px;
     height: 32px;
-    border-radius: 50%; /* Circular button */
+    border-radius: 50%; 
     padding: 0;
     display: flex;
     align-items: center;
@@ -347,16 +465,21 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
     min-width: 32px;
     font-size: 1.2rem;
     line-height: 1;
-    border: none;
-    box-shadow: none;
+    border: none; /* Overrides general button border for this specific case */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Maintain a light shadow */
+    border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle bottom border */
 }
+.farm-monster-item button.farm-battle-btn:active {
+    border-bottom-width: 0;
+}
+
 
 /* Top navigation buttons (under snapshot) */
 .top-buttons-container {
     display: flex;
     justify-content: center;
-    align-items: stretch; /* Make buttons same height */
-    gap: 0.2rem; /* Small gap */
+    align-items: stretch; 
+    gap: 0.2rem; 
     margin-top: 0.5rem;
 }
 .top-nav-button {
@@ -368,28 +491,19 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-grow: 1; /* Distribute space evenly */
+    flex-grow: 1; 
     text-align: center;
     line-height: 1.2;
-    background-color: var(--accent-color); /* Uniform color for these buttons */
-    color: var(--button-primary-text); /* Text color for accent background */
-    border: 1px solid var(--accent-hover-dark); /* Slightly darker border */
+    background-color: var(--accent-color); 
+    color: var(--button-primary-text); 
+    border: 1px solid var(--accent-hover-dark);
+    border-bottom-width: 2px; /* Consistent with other buttons */
 }
 .top-nav-button:hover {
     background-color: var(--accent-hover-dark);
 }
 .top-nav-button:disabled {
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
-}
-
-/* Combine button specific styling */
-#combine-button {
-    width: auto;
-    min-width:110px;
-    max-width: 160px;
-    margin: 0 auto; /* Center the button */
-    display: block;
-    font-weight: bold;
 }
 
 /* Modal specific components */
@@ -418,29 +532,29 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
 .modal-body {
     font-size: 0.95rem;
     line-height: 1.6;
-    max-height: 70vh; /* Prevent modal from being too tall */
-    overflow-y: auto; /* Scroll if content overflows */
+    max-height: 70vh; 
+    overflow-y: auto; 
 }
 .modal-footer {
     margin-top: 20px;
     display:flex;
-    justify-content: center; /* Center footer buttons by default */
+    justify-content: center; 
     gap: 15px;
 }
 .modal-footer button {
-    padding: 12px 25px; /* Larger padding for footer buttons */
+    padding: 12px 25px; 
     font-size: 1rem;
 }
 
 /* Loading spinner */
 .loading-spinner {
     border:4px solid var(--border-color);
-    border-top:4px solid var(--accent-color); /* Accent color for spinner top */
+    border-top:4px solid var(--accent-color); 
     border-radius:50%;
     width:30px;
     height:30px;
     animation:spin 1s linear infinite;
-    margin:20px auto; /* Center spinner */
+    margin:20px auto; 
 }
 
 /* DNA Panel specific title styles (if different from general panel-title) */
@@ -452,7 +566,7 @@ button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover
     border-bottom: none;
     padding-bottom: 0;
 }
-body.light-theme .dna-panel-title { color: #0550ae; } /* Specific for light theme if needed */
+body.light-theme .dna-panel-title { color: #0550ae; } 
 
 .dna-panel-hint {
     font-size: 0.875rem;
@@ -462,7 +576,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 /* Monster/Player Info Modal Details Section */
 .details-section {
-    background-color: var(--bg-primary); /* Slightly different background for contrast */
+    background-color: var(--bg-primary); 
     padding: 12px;
     border-radius: 6px;
     margin-bottom: 15px;
@@ -488,7 +602,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-weight: 500;
     color: var(--text-secondary);
     margin-right: 10px;
-    white-space: nowrap; /* Prevent label from wrapping */
+    white-space: nowrap; 
 }
 .details-value {
     color: var(--text-primary);
@@ -515,20 +629,20 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
 .skill-name {
     font-weight: bold;
-    color: var(--accent-hover); /* Slightly different from accent for emphasis */
+    color: var(--accent-hover); 
     font-size: 0.95rem;
 }
 .skill-details {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-left: 10px; /* Indent skill details */
+    margin-left: 10px; 
 }
 
-.monster-info-header { /* For Monster Info Modal */
+.monster-info-header { 
     text-align: center;
     margin-bottom: 15px;
 }
-.monster-info-name-styled { /* Styled monster name in modal header */
+.monster-info-name-styled { 
     font-size: 1.6rem;
     font-weight: bold;
     color: var(--accent-color);
@@ -538,7 +652,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     display: inline-block;
     border: 1px solid var(--border-color);
 }
-.monster-description-area { /* For AI generated descriptions */
+.monster-description-area { 
     font-size: 0.9rem;
     margin-top: 10px;
     padding: 10px;
@@ -552,7 +666,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     line-height: 1.6;
     font-size: 0.9rem;
 }
-.ai-generated-text { /* For AI personality, intro, eval */
+.ai-generated-text { 
     margin-top: 5px;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -560,7 +674,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 /* Scrolling Hints Container */
 .scrolling-hints-container {
-    height: 22px; /* Fixed height for one line of text */
+    height: 22px; 
     overflow: hidden;
     position: relative;
     background-color: var(--bg-primary);
@@ -578,9 +692,9 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-size: 0.875rem;
     color: var(--text-secondary);
     animation: scrollHint 15s linear infinite;
-    opacity: 0; /* Start invisible */
+    opacity: 0; 
 }
-/* Animation delays for multiple hints */
+
 .scrolling-hint-text:nth-child(1) { animation-delay: 0s; }
 .scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
 .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
@@ -589,29 +703,38 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 /* Tab Button Styling */
 .tab-buttons {
     display: flex;
-    flex-wrap: wrap; /* Allow tabs to wrap on small screens */
+    flex-wrap: wrap; 
     margin-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
 }
 .tab-button {
-    padding: 10px 15px;
+    padding: 10px 12px; /* Slightly reduced padding for more tabs */
     cursor: pointer;
     background-color: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 0.9rem;
-    border-bottom: 3px solid transparent; /* For active state indicator */
-    margin-bottom: -1px; /* Align with container's border */
+    font-size: 0.85rem; /* Slightly smaller for more tabs */
+    border-bottom: 3px solid transparent; 
+    margin-bottom: -1px; 
     transition: color 0.2s, border-bottom-color 0.2s;
-    white-space: nowrap; /* Prevent text wrapping in tab button */
+    white-space: nowrap; 
+    flex-grow: 1; /* Allow tabs to grow to fill space if few */
+    text-align: center; /* Center text in tab */
+}
+@media (min-width: 768px) { /* On larger screens, tabs don't need to grow as much */
+    .tab-button {
+        flex-grow: 0;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
 }
 .tab-button.active {
     color: var(--accent-color);
     border-bottom-color: var(--accent-color);
     font-weight: 500;
 }
-.tab-content { display: none; } /* Hide tab content by default */
-.tab-content.active { display: block; } /* Show active tab content */
+.tab-content { display: none; } 
+.tab-content.active { display: block; } 
 
 /* Leaderboard Table Styling */
 .leaderboard-table {
@@ -627,22 +750,31 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .leaderboard-table th {
     color: var(--accent-color);
     font-weight: 500;
-    cursor: pointer; /* Indicate sortable columns */
+    cursor: pointer; 
 }
 .leaderboard-table th:hover { color: var(--accent-hover); }
 .leaderboard-table td { color: var(--text-primary); }
-.leaderboard-table .leaderboard-element-cell span { font-weight: bold; } /* Element styling in table */
-.leaderboard-table tr:last-child td { border-bottom: none; } /* Remove border from last row */
+.leaderboard-table .leaderboard-element-cell span { font-weight: bold; } 
+.leaderboard-table tr:last-child td { border-bottom: none; } 
 .leaderboard-table tr:hover td {
     background-color: var(--bg-slot);
 }
 body.light-theme .leaderboard-table tr:hover td {
-    background-color: #f8f9fa; /* Lighter hover for light theme */
+    background-color: #f8f9fa; 
 }
 .leaderboard-table .challenge-btn-cell {
-    width: 80px; /* Fixed width for challenge button cell */
+    width: 80px; 
     text-align: center;
 }
+.leaderboard-table th .sort-arrow { /* For sort arrows */
+    margin-left: 5px;
+    opacity: 0.5;
+}
+.leaderboard-table th .sort-arrow.active {
+    opacity: 1;
+    color: var(--accent-hover);
+}
+
 
 /* Titles, Medals, Achievements Lists */
 .titles-medals-section { margin-top: 15px; }
@@ -659,7 +791,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
-.owned-monsters-list li { /* Specific for player info modal's monster list */
+.owned-monsters-list li { 
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -671,11 +803,11 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* Farm Monster Item Specifics (Status, Buttons) */
 .farm-monster-item .farm-monster-status.active {
-    color: var(--warning-color); /* Active/Training status color */
+    color: var(--warning-color); 
     font-weight: bold;
 }
 .farm-monster-item .farm-monster-status.battling {
-    color: var(--danger-color); /* Battling status color */
+    color: var(--danger-color); 
     font-weight: bold;
 }
 .farm-monster-item .farm-monster-cultivate-btn {
@@ -698,7 +830,7 @@ body.light-theme .leaderboard-table tr:hover td {
     justify-content: center;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin: 10px auto; /* Center placeholder */
+    margin: 10px auto; 
 }
 #release-monster-image-placeholder img {
     max-width: 100%;
@@ -719,7 +851,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
     margin-right: 8px;
 }
-.log-entry .log-message {} /* Placeholder for specific message styling if needed */
+.log-entry .log-message {} 
 
 /* Feedback Modal Skill Entry (if showing monster details in feedback) */
 .feedback-skill-entry { margin-bottom: 6px; }
@@ -737,15 +869,15 @@ body.light-theme .leaderboard-table tr:hover td {
 /* Cultivation Modal Styles */
 #cultivation-setup-modal .modal-body,
 #training-results-modal .modal-body {
-    text-align: left; /* Ensure content is left-aligned */
+    text-align: left; 
 }
 #cultivation-setup-modal button,
 #training-results-modal button {
-    margin-top: 10px; /* Spacing for buttons in these modals */
+    margin-top: 10px; 
 }
-#start-cultivation-btn { /* Specific style for "開始修煉" button */
+#start-cultivation-btn { 
     padding-top: 1rem;
-    padding-bottom: 1rem; /* Taller button */
+    padding-bottom: 1rem; 
 }
 .cultivation-hint {
     font-size: 0.875rem;
@@ -763,7 +895,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-bottom: none;
     margin-bottom: 0;
 }
-.training-result-section h5 { /* Section titles like "冒險故事" */
+.training-result-section h5 { 
     font-size: 1rem;
     font-weight: 600;
     color: var(--accent-color);
@@ -773,15 +905,15 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.9rem;
     margin-bottom: 4px;
 }
-.temp-backpack-item-container { /* For items listed in training results */
+.temp-backpack-item-container { 
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
 }
-#add-all-to-temp-backpack-btn { /* "一鍵全數加入背包" button */
+#add-all-to-temp-backpack-btn { 
     padding: 8px 10px;
-    height: auto; /* Auto height based on padding */
+    height: auto; 
     font-size: 0.9rem;
 }
 
@@ -795,9 +927,9 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
-#newbie-guide-search-results p { /* Example if results are simple paragraphs */
+#newbie-guide-search-results p { 
     padding: 5px;
-    border-bottom: 1px solid var(--border-color-dark); /* Using dark for contrast, adjust if needed */
+    border-bottom: 1px solid var(--border-color-dark); 
 }
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
@@ -814,7 +946,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
 }
 #friends-list-container {
-    max-height: 250px; /* Limit height and allow scroll */
+    max-height: 250px; 
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -857,19 +989,20 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
     font-size: 0.95rem;
 }
-.auth-button { /* Buttons on auth screen */
+.auth-button { 
     width: 100%;
     padding: 12px;
     font-size: 1rem;
     margin-bottom: 10px;
 }
-/* Highlighted register button */
+
 #show-register-form-btn.highlighted-register {
     background-color: var(--button-success-bg) !important;
     color: var(--button-success-text) !important;
     border: 2px solid var(--button-success-hover-bg) !important;
     box-shadow: 0 0 12px color-mix(in srgb, var(--button-success-bg) 60%, transparent) !important;
     font-weight: bold !important;
+    border-bottom-color: color-mix(in srgb, var(--button-success-bg) 60%, black) !important;
 }
 #show-register-form-btn.highlighted-register:hover {
     background-color: var(--button-success-hover-bg) !important;
@@ -877,27 +1010,27 @@ body.light-theme .leaderboard-table tr:hover td {
 .auth-error-message {
     color: var(--danger-color);
     font-size: 0.875rem;
-    margin-top: -10px; /* Pull up slightly */
+    margin-top: -10px; 
     margin-bottom: 15px;
-    min-height: 1.2em; /* Reserve space to prevent layout shift */
+    min-height: 1.2em; 
 }
 
 /* Battle Log Modal Specific Styles */
-#battle-log-modal .modal-content { max-width: 700px; } /* Wider modal for logs */
+#battle-log-modal .modal-content { max-width: 700px; } 
 #battle-log-area {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
-    height: 400px; /* Fixed height for log area */
-    overflow-y: auto; /* Scrollable */
-    font-family: 'Courier New', Courier, monospace; /* Monospace font for logs */
+    height: 400px; 
+    overflow-y: auto; 
+    font-family: 'Courier New', Courier, monospace; 
     font-size: 0.9rem;
     line-height: 1.5;
-    white-space: pre-wrap; /* Allows line breaks and preserves spaces from JS */
+    white-space: pre-wrap; 
     color: var(--text-primary);
 }
-#battle-log-area p { margin-bottom: 5px; } /* Spacing between log entries */
+#battle-log-area p { margin-bottom: 5px; } 
 #battle-log-area .turn-divider {
     border-top: 1px dashed var(--accent-color);
     margin-top: 10px;
@@ -909,7 +1042,7 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .battle-start,
 #battle-log-area .battle-end {
     font-weight: bold;
-    color: var(--success-color); /* Default to success, override for loser/draw */
+    color: var(--success-color); 
     text-align: center;
     padding: 5px 0;
     border-top: 1px solid var(--success-color);
@@ -925,7 +1058,7 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
 
 /* DNA Draw Modal Styles */
-#dna-draw-modal .modal-content { max-width: 600px; } /* Wider modal for DNA draw results */
+#dna-draw-modal .modal-content { max-width: 600px; } 
 .dna-draw-result-item {
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -935,13 +1068,14 @@ body.light-theme .leaderboard-table tr:hover td {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between; /* Space out content vertically */
-    min-height: 70px; /* Minimum height for consistency */
+    justify-content: space-between; 
+    min-height: 80px; /* Increased min-height for button */
+    /* Background and text color will be set by JS based on rarity and element */
 }
 .dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
 .dna-draw-result-item .dna-type { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;}
 .dna-draw-result-item .dna-rarity { font-size: 0.8rem; }
-.dna-draw-result-item button { /* "Add to backpack" button within drawn item */
+.dna-draw-result-item button { 
     margin-top: 8px;
     padding: 5px 8px;
     font-size: 0.8rem;
