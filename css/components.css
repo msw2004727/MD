@@ -240,82 +240,94 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 #monster-parts-container {
-    /* Adjusted based on user's image. */
-    /* Make it a grid to place the 5 parts */
-    width: 180px; /* Adjusted to be slightly larger for better spacing, still within 190px silhouette */
-    height: 180px; /* Make it more square */
+    /* NEW: Adjusted based on user's red box image. */
+    width: 150px; /* 調整為更緊湊的區域 */
+    height: 150px; /* 調整為更緊湊的區域 */
     z-index: 30;
     display: grid;
-    /* Define grid areas for each part based on your red box diagram */
-    grid-template-columns: 1fr 1fr 1fr; /* 3 columns */
-    grid-template-rows: 1fr 1fr 1fr;    /* 3 rows */
+    /* 根據您的紅框圖 重新定義 grid areas */
+    grid-template-columns: 1fr 1fr 1fr; /* 三列 */
+    grid-template-rows: 1fr 1fr 1fr;    /* 三行 */
     grid-template-areas:
-        ". head ."
-        "leftArm center rightArm"
-        "leftLeg center rightLeg"; /* 'center' can be empty or used for body visuals */
-    /* Adjust gap to bring parts closer to the center */
-    gap: 0px; /* Start with no gap, fine-tune with part sizes and margins */
+        ".     head    ."
+        "leftArm body  rightArm"
+        "leftLeg body  rightLeg"; /* 讓 'body' 區域可以佔據中心，保持部位靠近 */
+    gap: 0px; /* 移除間隙，通過 margin 調整具體位置 */
 }
 
 /* Precise positioning for monster parts based on your red box image */
 .monster-part {
     background-color: transparent; 
-    /* border: 1px solid var(--accent-color); /* Keep this border for debugging positioning, then remove */
+    /* border: 1px solid var(--accent-color); /* 移除調試邊框或在完成後註釋掉 */
+    background-image: none; /* 確保不使用背景圖片，將由 JS 直接設置背景色和文字 */
     background-size: contain; 
     background-repeat: no-repeat;
     background-position: center center;
-    transition: background-image 0.2s ease-in-out, border-color 0.2s;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s; /* 過渡顏色變化 */
     border-radius: 4px; 
     overflow: hidden; 
     image-rendering: pixelated; 
-    display: flex; /* To center content within the part if needed */
+    display: flex; /* 確保內容（文字）居中 */
     align-items: center;
     justify-content: center;
+    font-size: 0.75rem; /* 確保文字可見 */
+    font-weight: bold;
+    color: var(--text-primary); /* 預設文字顏色，會被 JS 覆蓋 */
+    border: 1px solid var(--border-color); /* 預設邊框 */
 }
 /* Specific grid areas for each part */
 #monster-part-head {
     grid-area: head;
-    width: 55px; /* approx 30% of 180px container */
-    height: 45px; /* Make it slightly horizontal */
-    justify-self: center; /* Center horizontally within grid area */
-    align-self: center; /* Center vertically within grid area */
-    margin-top: 15px; /* Push slightly down from the very top of the grid area */
+    width: 50px; /* 約 33% 容器寬度 */
+    height: 40px; /* 偏橫向 */
+    justify-self: center;
+    align-self: center;
+    margin-top: -5px; /* 微調靠近中心 */
 }
 #monster-part-left-arm {
     grid-area: leftArm;
-    width: 55px;
-    height: 45px;
-    justify-self: end; /* Align to the right edge of its grid cell */
+    width: 50px;
+    height: 40px;
+    justify-self: end; /* 靠近中間 */
     align-self: center;
-    margin-right: -10px; /* Pull it slightly left to overlap center */
-    margin-top: -5px; /* Pull slightly up */
+    margin-right: -10px; /* 靠近中間 */
+    margin-top: 5px; /* 微調靠近中心 */
 }
 #monster-part-right-arm {
     grid-area: rightArm;
-    width: 55px;
-    height: 45px;
-    justify-self: start; /* Align to the left edge of its grid cell */
+    width: 50px;
+    height: 40px;
+    justify-self: start; /* 靠近中間 */
     align-self: center;
-    margin-left: -10px; /* Pull it slightly right to overlap center */
-    margin-top: -5px; /* Pull slightly up */
+    margin-left: -10px; /* 靠近中間 */
+    margin-top: 5px; /* 微調靠近中心 */
 }
 #monster-part-left-leg {
     grid-area: leftLeg;
-    width: 55px;
-    height: 45px;
+    width: 50px;
+    height: 40px;
     justify-self: end;
-    align-self: start; /* Align to the top of its grid cell */
+    align-self: start; /* 靠近中間 */
     margin-right: -10px;
-    margin-bottom: 20px; /* Push slightly up from the very bottom of the grid area */
+    margin-bottom: 5px; /* 微調靠近中心 */
 }
 #monster-part-right-leg {
     grid-area: rightLeg;
-    width: 55px;
-    height: 45px;
+    width: 50px;
+    height: 40px;
     justify-self: start;
     align-self: start;
     margin-left: -10px;
-    margin-bottom: 20px; /* Push slightly up from the very bottom of the grid area */
+    margin-bottom: 5px; /* 微調靠近中心 */
+}
+
+.monster-part.empty-part { /* 當沒有 DNA 圖案時，顯示為透明虛線框，文字為 ??. */
+    background-image: none !important;
+    background-color: transparent !important;
+    border: 1px dashed var(--border-color) !important;
+    color: var(--text-secondary); /* 顏色偏淡 */
+    font-size: 1.5rem; /* 大問號 */
+    font-weight: bold;
 }
 
 
@@ -372,7 +384,7 @@ body.light-theme .inventory-delete-slot.drag-over {
     text-align: right;
     padding: 3px 6px; /* Adjusted */
     background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-    border-radius: 44px;
+    border-radius: 4px;
 }
 .snapshot-win-loss span { display: block; } 
 
@@ -484,7 +496,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 .action-button-main:active {
     transform: translateY(1px) !important; 
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
     border-bottom-width: 1px !important;
 }
 
