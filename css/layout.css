@@ -150,7 +150,7 @@
 /* Action buttons grid (for Combine and Draw DNA buttons) */
 .action-buttons-grid.dual-buttons {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 1fr auto; /* Changed from 3fr 1fr to 1fr auto */
     gap: 12px;
     align-items: stretch;
 }
