@@ -7,11 +7,13 @@ const gameState = {
     playerNickname: "玩家", // 玩家暱稱
     
     // 定義最大庫存槽位數，與 UI/數據庫保持一致
-    MAX_INVENTORY_SLOTS: 24, // 新增：玩家DNA庫存的最大槽位數，這裡設置為24
+    // 修改點: 將最大庫存槽位數從 24 改為 12 (其中第9個位置是刪除區)
+    MAX_INVENTORY_SLOTS: 12, 
 
     playerData: { // 玩家的遊戲進度資料
         // playerOwnedDNA 現在是一個固定大小的陣列，空槽位為 null
-        playerOwnedDNA: Array(24).fill(null), // 玩家擁有的 DNA 碎片 (固定 24 格)
+        // 修改點: 初始化 playerOwnedDNA 為 12 個 None 槽位
+        playerOwnedDNA: Array(12).fill(null), // 玩家擁有的 DNA 碎片 (固定 12 格)
         farmedMonsters: [], // 玩家農場中的怪獸
         playerStats: { // 玩家統計數據
             rank: "N/A",
@@ -46,6 +48,7 @@ const gameState = {
     },
 
     // 臨時背包 (用於存放修煉拾取物等)
+    // 修改點: 臨時背包的顯示格數將在 ui.js 中設定為 9 格
     temporaryBackpack: [], // 存放臨時物品，例如 { type: 'dna', data: {...dnaFragment}, quantity: 1 }
 
     // 其他可能需要的狀態
