@@ -47,9 +47,9 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     Returns:
         Dict[str, str]: 包含 AI 生成的內容的字典:
             {
-                "aiPersonality": "生成的個性描述 (至少100字)",
-                "aiIntroduction": "生成的介紹 (至少150字，包含各項數值)",
-                "aiEvaluation": "生成的評價 (至少200字，結合個性與數值)"
+                "aiPersonality": "生成的個性描述 (至少40字)",
+                "aiIntroduction": "生成的介紹 (至少60字，包含各項數值)",
+                "aiEvaluation": "生成的評價 (至少80字，結合個性與數值)"
             }
             如果 API 呼叫失敗或發生錯誤，則返回 DEFAULT_AI_RESPONSES。
     """
@@ -85,20 +85,20 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
 請嚴格按照以下JSON格式提供回應，不要添加任何額外的解釋或開頭/結尾文字，並確保每個欄位的文本長度符合要求：
 
 {{
-  "personality_text": "一段關於「{monster_nickname}」個性的詳細描述。這段描述應基於其個性名稱「{personality_name}」，進行生動、形象的闡述，深入挖掘其性格特點、行為傾向以及與訓練師可能的互動方式。請確保文本長度至少100個中文字元。",
-  "introduction_text": "一段關於「{monster_nickname}」的背景故事或趣味介紹。這段介紹應至少150個中文字元，並巧妙地將其所有基礎數值（HP: {hp}, MP: {mp}, 攻擊力: {attack}, 防禦力: {defense}, 速度: {speed}, 爆擊率: {crit}%, 屬性: {elements_str}, 稀有度: {rarity}）自然地融入到敘述中，讓讀者對它的能力有一個全面的初步印象。例如，可以描述它的體型、外貌特徵如何反映其HP和防禦，它的敏捷程度如何體現其速度，它的攻擊方式如何展現其攻擊力和元素特性等。",
-  "evaluation_text": "一段針對「{monster_nickname}」的綜合評價與培養建議。此評價應至少200個中文字元，必須結合其「{personality_name}」的個性特點，以及其全部數值（HP: {hp}, MP: {mp}, 攻擊力: {attack}, 防禦力: {defense}, 速度: {speed}, 爆擊率: {crit}%, 屬性: {elements_str}, 稀有度: {rarity}）進行全面分析。請指出它的優勢與劣勢，並給出具體的培養方向建議或在隊伍中的戰術定位。"
+  "personality_text": "一段關於「{monster_nickname}」個性的簡短活潑描述。這段描述應基於其個性名稱「{personality_name}」，約 40 字左右，生動精簡。",
+  "introduction_text": "一段關於「{monster_nickname}」的活潑精簡背景故事或趣味介紹。這段介紹應約 60 字左右，巧妙地融入其所有基礎數值（HP: {hp}, MP: {mp}, 攻擊力: {attack}, 防禦力: {defense}, 速度: {speed}, 爆擊率: {crit}%, 屬性: {elements_str}, 稀有度: {rarity}）。",
+  "evaluation_text": "一段針對「{monster_nickname}」的活潑精簡綜合評價與培養建議。此評價應約 80 字左右，必須結合其「{personality_name}」的個性特點及其所有數值，指出它的優勢與劣勢，並給出具體的培養方向建議或戰術定位。"
 }}
 """
 
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一個樂於助人的AI助手，你會嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記。"},
+            {"role": "system", "content": "你是一個樂於助人的AI助手，你會嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記，並以活潑精簡的風格生成文本。"},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7, # 可以根據需要調整
-        "max_tokens": 2000, # 根據預期輸出長度設定，確保足夠
+        "max_tokens": 500, # 減少 max_tokens 以鼓勵更短的回應
         # DeepSeek 可能有 "response_format": {"type": "json_object"} 這樣的參數來強制JSON輸出，請查閱官方文件
     }
 
@@ -108,7 +108,7 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     }
 
     ai_logger.debug(f"DEBUG AI: 請求 DeepSeek URL: {DEEPSEEK_API_URL}, 模型: {DEEPSEEK_MODEL}")
-    ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}") # 打印完整的請求體
+    ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
 
     max_retries = 3
     retry_delay = 5 # 秒
@@ -131,7 +131,7 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                 response_json["choices"][0]["message"].get("content")):
 
                 generated_text_json_str = response_json["choices"][0]["message"]["content"]
-                ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - AI 生成的內容字串 (前200字): {generated_text_json_str[:200]}...") # 打印部分內容
+                ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - AI 生成的內容字串 (前200字): {generated_text_json_str[:200]}...")
 
                 # 清理 AI 可能添加的 markdown 標記
                 cleaned_json_str = generated_text_json_str.strip()
@@ -153,11 +153,12 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                     }
 
                     # 檢查長度 (可選)
-                    for key, min_len in [("aiPersonality", 100), ("aiIntroduction", 150), ("aiEvaluation", 200)]:
+                    # 這裡將 min_len 調整為新的大約值，以配合提示詞的縮減
+                    for key, min_len in [("aiPersonality", 30), ("aiIntroduction", 50), ("aiEvaluation", 70)]:
                         if len(ai_details[key]) < min_len and ai_details[key] == DEFAULT_AI_RESPONSES[key]:
                              pass # 如果是預設回應，則不警告長度不足
                         elif len(ai_details[key]) < min_len:
-                            ai_logger.warning(f"AI (DeepSeek) 生成的 '{key}' 長度為 {len(ai_details[key])}，未達到要求的 {min_len} 字元。內容: '{ai_details[key][:50]}...'")
+                            ai_logger.warning(f"AI (DeepSeek) 生成的 '{key}' 長度為 {len(ai_details[key])}，可能未達到要求的 {min_len} 字元。內容: '{ai_details[key][:50]}...'")
 
                     ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
                     return ai_details
