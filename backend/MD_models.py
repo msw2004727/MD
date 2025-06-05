@@ -348,4 +348,3 @@ if __name__ == '__main__':
     }
     print(f"\n怪獸配方範例: 組合鍵 '{test_recipe['combinationKey']}'")
     print(f"  配方產生的怪獸暱稱: '{test_recipe['resultingMonsterData']['nickname']}'")
-</immersive>
