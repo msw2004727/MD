@@ -91,7 +91,10 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
         gameState.dnaCombinationSlots[sourceInfo.id] = null; // 清空組合槽
     } else if (sourceInfo.type === 'temporaryBackpack') {
         // 從臨時背包移除，並為其生成新的實例 ID 以便加入主庫存
-        gameState.temporaryBackpack.splice(sourceInfo.id, 1); 
+        // 修改點：這裡不再 splice，因為臨時背包現在也是固定槽位
+        if (sourceInfo.id !== null && sourceInfo.id !== undefined) {
+            gameState.temporaryBackpack[sourceInfo.id] = null; // 清空臨時背包的源槽位
+        }
         const baseIdForNewInstance = dnaToMove.baseId || dnaToMove.id || `temp_template_${Date.now()}`;
         dnaToMove = { 
             ...dnaToMove, 
@@ -440,27 +443,38 @@ function addDnaToTemporaryBackpack(dnaTemplate) {
         console.warn("addDnaToTemporaryBackpack: 無效的 dnaTemplate 或缺少 id。", dnaTemplate);
         return;
     }
-    // 修改點：如果臨時背包已滿，則不添加
+    // 修改點：如果臨時背包已滿，則不添加，並尋找第一個空位放置
     const MAX_TEMP_SLOTS = 9; // 與 ui.js 中的 MAX_TEMP_SLOTS 保持一致
-    if (gameState.temporaryBackpack.length >= MAX_TEMP_SLOTS) {
-        showFeedbackModal('背包已滿', '臨時背包已滿，無法再拾取物品。請清理後再試。');
-        console.warn("Temporary backpack is full. Cannot add new item.");
-        return;
+    
+    let freeSlotIndex = -1;
+    for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
+        // 檢查槽位是否為 null (空閒)
+        if (gameState.temporaryBackpack[i] === null || gameState.temporaryBackpack[i] === undefined) {
+            freeSlotIndex = i;
+            break;
+        }
     }
 
-    gameState.temporaryBackpack.push({
-        type: 'dna', // 標記物品類型
-        data: { ...dnaTemplate }, // 儲存 DNA 模板的完整數據
-    });
-    renderTemporaryBackpack(); // 更新臨時背包的 UI
-    console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包。`);
+    if (freeSlotIndex !== -1) {
+        gameState.temporaryBackpack[freeSlotIndex] = {
+            type: 'dna', // 標記物品類型
+            data: { ...dnaTemplate }, // 儲存 DNA 模板的完整數據
+        };
+        renderTemporaryBackpack(); // 更新臨時背包的 UI
+        console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包槽位 ${freeSlotIndex}。`);
+    } else {
+        showFeedbackModal('背包已滿', '臨時背包已滿，無法再拾取物品。請清理後再試。');
+        console.warn("Temporary backpack is full. Cannot add new item.");
+    }
 }
 
 /**
  * 清空臨時背包。
  */
 function clearTemporaryBackpack() {
-    gameState.temporaryBackpack = [];
+    // 修改點：清空臨時背包現在是將所有槽位設置為 null
+    const MAX_TEMP_SLOTS = 9; // 與 ui.js 中的 MAX_TEMP_SLOTS 保持一致
+    gameState.temporaryBackpack = Array(MAX_TEMP_SLOTS).fill(null);
     renderTemporaryBackpack();
     console.log("臨時背包已清空。");
 }
@@ -477,7 +491,8 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
     }
 
     const itemToMove = gameState.temporaryBackpack[tempBackpackIndex];
-    if (itemToMove.type === 'dna' && itemToMove.data) {
+    // 修改點：檢查物品是否存在於槽位
+    if (itemToMove && itemToMove.type === 'dna' && itemToMove.data) {
         // 尋找第一個空位來放置，如果沒有空位則提示庫存滿
         const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
         // 修改點：刪除區的固定索引改為 11 (第12格)
@@ -492,8 +507,8 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
         }
 
         if (freeSlotIndex !== -1) {
-            // 從臨時背包移除該物品
-            gameState.temporaryBackpack.splice(tempBackpackIndex, 1);
+            // 從臨時背包移除該物品 (設置為 null)
+            gameState.temporaryBackpack[tempBackpackIndex] = null;
             
             // 將物品放入主庫存的空位
             gameState.playerData.playerOwnedDNA[freeSlotIndex] = { 
@@ -517,8 +532,13 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
             showFeedbackModal('庫存已滿', '您的 DNA 庫存已滿，無法再從臨時背包移動物品。請清理後再試。');
         }
     } else {
-        showFeedbackModal('錯誤', '無法移動未知類型或資料不完整的物品。');
-        console.error("handleMoveFromTempBackpackToInventory: 物品類型不是 'dna' 或缺少 data 屬性。", itemToMove);
+        // 修改點：當槽位為 null 時，不進行錯誤日誌，因為這是預期行為
+        if (itemToMove === null) {
+            console.log(`handleMoveFromTempBackpackToInventory: 槽位 ${tempBackpackIndex} 為空。`);
+        } else {
+            showFeedbackModal('錯誤', '無法移動未知類型或資料不完整的物品。');
+            console.error("handleMoveFromTempBackpackToInventory: 物品類型不是 'dna' 或缺少 data 屬性。", itemToMove);
+        }
     }
 }
 
