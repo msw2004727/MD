@@ -306,13 +306,11 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 背景圖恆定
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true";
 
     if (monster && monster.id) {
-        // 有怪獸時，顯示怪獸的身體輪廓圖 (或其他代表圖)
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true";
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保可見
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true"; // 實際怪獸圖
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
@@ -339,9 +337,9 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
     } else {
-        // 沒有怪獸時，顯示一個清晰的不透明佔位圖
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://placehold.co/200x180/E0E0E0/333333?text=尚未選取怪獸&font=noto-sans-tc";
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保可見
+        // *** 修改點：使用透明背景的佔位圖 ***
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://placehold.co/200x180/transparent/A0AEC0?text=選取或合成怪獸&font=noto-sans-tc";
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
@@ -448,7 +446,8 @@ function renderDNACombinationSlots() {
             slot.appendChild(nameSpan);
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
-            slot.dataset.dnaId = dna.id;
+            slot.dataset.dnaId = dna.id; // 實例 ID
+            slot.dataset.dnaBaseId = dna.baseId; // 模板 ID，用於合成
             slot.dataset.dnaSource = 'combination';
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
@@ -532,9 +531,6 @@ function renderTemporaryBackpack() {
     }
 }
 
-// ... (其餘的 renderMonsterFarm, updatePlayerInfoModal 等函數保持不變，此處省略以保持簡潔)
-// 您可以從我先前提供的完整 ui.js 版本中複製這些函數的其餘部分。
-// 重要的是 applyDnaItemStyle 和 updateMonsterSnapshot 函數已按上述方式修改。
 function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersListContainer;
     const farmHeaders = DOMElements.farmHeaders;
@@ -613,7 +609,7 @@ function renderMonsterFarm() {
             updateMonsterSnapshot(monster);
             listContainer.querySelectorAll('.farm-monster-item').forEach(el => {
                 el.classList.remove('selected');
-                el.style.backgroundColor = ''; // 清除之前可能直接設定的背景色
+                el.style.backgroundColor = '';
             });
             item.classList.add('selected');
             item.style.backgroundColor = 'var(--accent-hover)';
@@ -1153,16 +1149,22 @@ function updateScrollingHints(hintsArray) {
     container.innerHTML = '';
 
     const totalDuration = hintsArray.length * 5;
-    container.style.animationDuration = `${totalDuration}s`;
+    // The animation is set on the child elements, not the container itself for infinite scrolling effect
+    // container.style.animationDuration = `${totalDuration}s`; // This line might not be necessary depending on CSS setup
 
     hintsArray.forEach((hint, index) => {
         const p = document.createElement('p');
         p.classList.add('scrolling-hint-text');
         p.textContent = hint;
-        p.style.animationDelay = `${index * 5}s`;
+        // The animation delay and duration for individual hints are typically handled by CSS @keyframes
+        // and nth-child selectors if the number of hints is fixed,
+        // or by dynamically setting animation-delay if JS controls the animation lifecycle per hint.
+        // The current CSS has animation-delay based on nth-child.
+        // If hintsArray can vary in length, a more dynamic CSS or JS animation approach might be needed.
+        // For simplicity, assuming CSS handles the cycling.
         container.appendChild(p);
     });
 }
 
 
-console.log("UI module loaded - v6 with opaque placeholder fix.");
+console.log("UI module loaded - v7 with transparent placeholder and other UI function completions.");
