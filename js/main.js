@@ -131,7 +131,6 @@ async function onAuthStateChangedHandler(user) {
         if (typeof resetDNACombinationSlots === 'function') resetDNACombinationSlots();
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
-        if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
         if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack(); 
         if (typeof hideAllModals === 'function') hideAllModals();
     }
@@ -217,10 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. 初始化事件監聽器
+    // 檢查 initializeEventListeners 是否是 function，如果不是，則可能文件載入順序有問題
     if (typeof initializeEventListeners === 'function') {
         initializeEventListeners();
     } else {
-        console.error("initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
+        // 如果 initializeEventListeners 未定義，這可能是因為 event-handlers.js 未能正確載入或執行。
+        // 這會導致按鈕點擊等所有事件無法被處理。
+        console.error("CRITICAL: initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
+        // 可以選擇在這裡顯示一個更嚴重的錯誤訊息給用戶
+        if (typeof showFeedbackModal === 'function') {
+            showFeedbackModal('初始化錯誤', '核心遊戲功能未載入，請刷新頁面或檢查控制台錯誤。');
+        }
     }
 
     // 6. 預設顯示第一個頁籤 (DNA管理)
