@@ -154,4 +154,3 @@ if __name__ == '__main__':
         app.run(debug=True, host='0.0.0.0', port=port)
     else:
         app_logger.critical("Firebase 未能成功初始化或 Firestore 客戶端未設定，Flask 應用程式無法啟動。請檢查日誌。")
-
