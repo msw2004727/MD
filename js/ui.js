@@ -485,12 +485,12 @@ function renderPlayerDNAInventory() {
     const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS; // 從 gameState 中獲取最大槽位數
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
 
-    // 修改點：調整 DNA 庫存的渲染邏輯，第9個位置固定為刪除區
+    // 修改點：調整 DNA 庫存的渲染邏輯，第12個位置固定為刪除區 (索引 11)
     for (let index = 0; index < MAX_INVENTORY_SLOTS; index++) {
         const item = document.createElement('div');
         item.classList.add('dna-item');
         
-        if (index === 8) { // 第9個位置 (索引為8) 為刪除區
+        if (index === 11) { // 第12個位置 (索引為11) 為刪除區
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
             item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
