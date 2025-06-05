@@ -283,14 +283,15 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     try:
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
-            "farmedMonsters": game_data.get("farmedMonsters", []),
+            "farmedMonsters": game_data.get("farmedMonsters", []), # 這裡應該包含新怪獸
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
             "lastSave": int(time.time())
         }
-        # 過濾掉 playerOwnedDNA 中的 None 值，Firestore 會將其視為 null
-        # 但在 TypedDict 中 List[Optional[PlayerOwnedDNA]] 允許 None
-        # data_to_save["playerOwnedDNA"] = [item for item in data_to_save["playerOwnedDNA"] if item is not None]
+
+        # ====== 新增這行來打印即將保存的 farmedMonsters 內容 ======
+        services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
+        # ==========================================================
 
         if isinstance(data_to_save["playerStats"], dict) and \
            data_to_save["playerStats"].get("nickname") != data_to_save["nickname"]:
@@ -750,7 +751,7 @@ def absorb_defeated_monster_service(
         # 修改點：找到第一個空位來放置新的 DNA
         free_slot_index = -1
         for i, dna_item in enumerate(current_owned_dna):
-            if dna_item is None:
+            if dna_item is None: # 找到第一個 None 槽位
                 free_slot_index = i
                 break
 
@@ -776,8 +777,6 @@ def absorb_defeated_monster_service(
                 services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
             else:
                 services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
-                # 這部分邏輯只在後端運行，前端會再次刷新數據，所以可能不會直接看到此警告
-                # 但理論上前端應該處理庫存滿的提示
                 pass # DNA 被丟棄
 
 
@@ -1032,6 +1031,10 @@ def recharge_monster_with_dna_service(
             monster_to_recharge = m
             monster_index = idx
             break
+
+    if not monster_to_recharge or monster_index == -1:
+        services_logger.error(f"充能失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
 
     dna_to_consume: Optional[PlayerOwnedDNA] = None
     dna_index = -1
@@ -1622,12 +1625,12 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
                     if current_lvl < max_skill_level: # type: ignore
                         skill_obj["current_exp"] = skill_obj.get("current_exp", 0) + exp_val
                         while skill_obj.get("level",1) < max_skill_level and \
-                              skill_obj.get("current_exp",0) >= skill_obj.get("exp_to_next_level", _calculate_exp_to_next_level(skill_obj.get("level",1), skill_exp_multiplier)): # type: ignore
+                              skill_obj.get("current_exp",0) >= skill_obj.get("exp_to_next_level", _calculate_exp_to_next_level(skill_obj.get("level",1), exp_multiplier)): # type: ignore
 
                             needed_exp = skill_obj.get("exp_to_next_level",9999) # type: ignore
                             skill_obj["current_exp"] -= needed_exp # type: ignore
                             skill_obj["level"] = skill_obj.get("level",1) + 1 # type: ignore
-                            skill_obj["exp_to_next_level"] = _calculate_exp_to_next_level(skill_obj["level"], skill_exp_multiplier) # type: ignore
+                            skill_obj["exp_to_next_level"] = _calculate_exp_to_next_level(skill_obj["level"], exp_multiplier) # type: ignore
                             log.append(f"戰後技能升級: {owner_name_log} 的 [{skill_name_exp}] 升至 {skill_obj['level']}級！")
                     break
 
