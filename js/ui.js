@@ -505,9 +505,16 @@ function updateMonsterSnapshot(monster) {
                     if (imagePath) {
                         partElement.style.backgroundImage = `url('${imagePath}')`;
                         partElement.classList.remove('empty-part');
+                        // 確保文字顯示在圖案上方 (為了調試)
+                        const dnaTemplate = gameState.gameConfigs.dna_fragments.find(d => d.id === dnaBaseId);
+                        if (dnaTemplate) {
+                            partElement.textContent = dnaTemplate.name.substring(0,2); // 顯示 DNA 名稱前兩個字
+                            partElement.style.color = 'white'; // 確保文字可見
+                        }
                     } else {
                         partElement.style.backgroundImage = 'none';
                         partElement.classList.add('empty-part');
+                        partElement.textContent = ''; // 清除文字
                     }
                 }
             });
@@ -534,7 +541,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterInfoButton.disabled = true;
         gameState.selectedMonsterId = null;
         clearMonsterBodyPartsDisplay(); // 如果沒有怪獸，則清空所有部位顯示
-        DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
+        DOMEElements.monsterPartsContainer.classList.add('empty-snapshot');
     }
 
     // 移除舊的 hasAnyDnaInSlots 邏輯，現在由 monster.constituent_dna_ids 決定
@@ -751,24 +758,23 @@ function renderMonsterFarm() {
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
-        let statusClass = "text-[var(--text-secondary)]";
+        let statusClass = "text-[var(--text-secondary)]"; // 預設灰色
         if (monster.farmStatus) {
             if (monster.farmStatus.isBattling) {
-                statusText = "戰鬥中"; statusClass = "farm-monster-status battling";
+                statusText = "戰鬥中"; statusClass = "farm-monster-status battling"; // 紅色
             } else if (monster.farmStatus.isTraining) {
-                statusText = "修煉中"; statusClass = "farm-monster-status active";
-                if (monster.farmStatus.trainingStartTime && monster.farmStatus.trainingDuration) {
-                    const endTime = monster.farmStatus.trainingStartTime + monster.farmStatus.trainingDuration;
-                    const now = Date.now();
-                    if (now < endTime) {
-                        const remainingTime = Math.max(0, Math.ceil((endTime - now) / 1000));
-                        statusText += ` (${remainingTime}秒)`;
-                    } else {
-                        statusText = "修煉完成!"; statusClass = "text-[var(--success-color)] font-bold";
-                    }
+                // 如果是修煉中，需要讀秒並顯示
+                const endTime = monster.farmStatus.trainingStartTime + monster.farmStatus.trainingDuration;
+                const now = Date.now();
+                if (now < endTime) {
+                    const remainingTime = Math.max(0, Math.ceil((endTime - now) / 1000));
+                    statusText = `修煉中 (${remainingTime}秒)`; 
+                    statusClass = "farm-monster-status active"; // 黃色
+                } else {
+                    statusText = "修煉完成!"; statusClass = "text-[var(--success-color)] font-bold"; // 綠色
                 }
             } else if (monster.farmStatus.completed) {
-                 statusText = "已完成"; statusClass = "text-[var(--success-color)]";
+                 statusText = "已完成"; statusClass = "text-[var(--success-color)]"; // 綠色
             }
         }
 
@@ -778,15 +784,14 @@ function renderMonsterFarm() {
 
         item.innerHTML = `
             <div class="text-center">
-                <button class="farm-monster-item button farm-battle-btn ${monster.farmStatus?.isBattling || monster.farmStatus?.isTraining ? 'secondary' : 'success'}"
+                <button class="farm-monster-item button farm-battle-btn ${monster.farmStatus?.isBattling ? 'danger' : 'success'}"
                         data-monster-id="${monster.id}"
-                        title="${monster.farmStatus?.isBattling || monster.farmStatus?.isTraining ? '忙碌中' : '挑戰對手'}"
-                        ${monster.farmStatus?.isBattling || monster.farmStatus?.isTraining ? 'disabled' : ''}>
+                        title="${monster.farmStatus?.isBattling ? '戰鬥中' : '挑戰對手'}"
+                        ${monster.farmStatus?.isBattling ? 'disabled' : ''}>
                     ⚔️
                 </button>
             </div>
-            <div>
-                <strong class="block text-sm text-[var(--text-primary)]">${monster.nickname}</strong>
+            <div class="text-center"> <strong class="block text-sm text-[var(--text-primary)]">${monster.nickname}</strong>
                 <div class="text-xs">${elementsDisplay} <span class="text-rarity-${monster.rarity.toLowerCase()}">${monster.rarity}</span></div>
                 <div class="farm-monster-score sm:hidden">評價: ${monster.score || 0}</div>
             </div>
@@ -794,8 +799,13 @@ function renderMonsterFarm() {
                 ${statusText}
             </div>
             <div class="farm-monster-score hidden sm:block text-center text-[var(--success-color)]">${monster.score || 0}</div>
-            <div class="farm-monster-actions-group">
-                <button class="farm-monster-cultivate-btn button text-xs" data-monster-id="${monster.id}" ${monster.farmStatus?.isTraining || monster.farmStatus?.isBattling ? 'disabled' : ''}>修煉</button>
+            <div class="farm-monster-actions-group text-center"> <button class="farm-monster-info-btn button secondary text-xs" data-monster-id="${monster.id}">資訊</button>
+                <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
+                        data-monster-id="${monster.id}" 
+                        title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
+                        ${monster.farmStatus?.isBattling ? 'disabled' : ''}>
+                    ${monster.farmStatus?.isTraining ? '結束' : '修煉'}
+                </button>
                 <button class="farm-monster-release-btn button danger text-xs" data-monster-id="${monster.id}" ${monster.farmStatus?.isTraining || monster.farmStatus?.isBattling ? 'disabled' : ''}>放生</button>
             </div>
         `;
@@ -815,8 +825,24 @@ function renderMonsterFarm() {
             }
         });
 
+        // 綁定新的「資訊」按鈕事件
+        item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止事件冒泡到父級的 item.addEventListener
+            updateMonsterInfoModal(monster, gameState.gameConfigs);
+            showModal('monster-info-modal');
+        });
+
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => handleChallengeMonsterClick(e, monster.id));
-        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
+        
+        // 修正修煉按鈕邏輯：根據狀態呼叫不同處理函數
+        const cultivateButton = item.querySelector('.farm-monster-cultivate-btn');
+        if (cultivateButton) {
+            if (monster.farmStatus?.isTraining) {
+                cultivateButton.addEventListener('click', (e) => handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration));
+            } else {
+                cultivateButton.addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
+            }
+        }
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => handleReleaseMonsterClick(e, monster.id));
 
         listContainer.appendChild(item);
@@ -1163,17 +1189,11 @@ function updateLeaderboardTable(tableType, data) {
             row.insertCell().textContent = item.owner_nickname || 'N/A';
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.isNPC) { // Only challenge if it's an NPC or another player's monster
+            if (item.owner_id !== gameState.playerId && !item.isNPC) {
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, null, item.id); // For NPC, pass npcId
-                actionsCell.appendChild(challengeBtn);
-            } else if (item.owner_id && item.owner_id !== gameState.playerId) {
-                const challengeBtn = document.createElement('button');
-                challengeBtn.textContent = '挑戰';
-                challengeBtn.className = 'button primary text-xs py-1 px-2';
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null); // For player monster
+                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id);
                 actionsCell.appendChild(challengeBtn);
             }
         } else {
