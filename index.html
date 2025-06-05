@@ -17,62 +17,63 @@
     <style>
         /* 怪獸快照區域特定樣式 */
         .monster-snapshot-area {
-            position: relative; /* 作為子元素絕對定位的基準 */
-            display: grid; /* 使用 Grid 簡化一些內部佈局 */
-            grid-template-columns: 1fr auto 1fr; /* 讓中間部分可以容納主要內容 */
-            grid-template-rows: auto 1fr auto; /* 頂部(勝敗)、中間(圖片/部位)、底部(資訊) */
-            align-items: center; /* 垂直居中對齊 Grid items */
-            justify-items: center; /* 水平居中對齊 Grid items */
-            overflow: hidden; /* 避免內容溢出 */
-            padding: 8px; /* 內部邊距 */
+            position: relative; 
+            display: flex; /* 改為 flex 以方便居中圖片 */
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 8px; 
+            min-height: 220px; /* 確保有一個最小高度 */
         }
+         @media (min-width: 768px) {
+            .monster-snapshot-area {
+                min-height: 260px;
+            }
+        }
+
 
         /* 圖層樣式 */
         #monster-snapshot-base-bg,
         #monster-snapshot-body-silhouette,
         #monster-parts-container {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            top: 50%; /* 定位到中心 */
+            left: 50%;
+            transform: translate(-50%, -50%); /* 確保圖片本身居中 */
+            max-width: 90%; /* 限制圖片最大寬度，避免溢出 */
+            max-height: 90%; /* 限制圖片最大高度 */
+            object-fit: contain; /* 保持圖片比例 */
         }
 
         #monster-snapshot-base-bg {
-            z-index: 1; /* 圖層1: 背景圖 */
-            object-fit: cover; /* 或者 contain, 根據您的圖片調整 */
-            opacity: 0.7; /* 讓背景稍微柔和一點 */
+            z-index: 1; 
+            opacity: 0.6; 
         }
         body.light-theme #monster-snapshot-base-bg {
-            opacity: 0.9;
+            opacity: 0.8;
         }
 
         #monster-snapshot-body-silhouette {
-            z-index: 2; /* 圖層2: 怪獸全身圖 */
-            object-fit: contain;
+            z-index: 2; 
         }
 
         #monster-parts-container {
-            z-index: 3; /* 圖層3: 部位圖 */
-            display: grid; /* 使用 grid 來放置部位 */
+            z-index: 3; 
+            display: grid; 
             grid-template-areas:
                 ". head ."
                 "leftArm body rightArm"
                 "leftLeg . rightLeg";
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: 1fr 1fr 1fr;
-            width: 100%; /* 確保部位容器佔滿快照區域 */
-            height: 100%;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); /* 確保列可以縮小 */
+            grid-template-rows: repeat(3, minmax(0, 1fr));    /* 確保行可以縮小 */
+            width: 80%; /* 相對於父容器的寬度，可以調整 */
+            height: 80%; /* 相對於父容器的高度，可以調整 */
         }
-        /* 為 monster-parts-container 內部的 .monster-part 定義基本樣式 */
         .monster-part {
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            border: 1px dashed transparent; /* 預設透明邊框 */
+            /* border: 1px dashed rgba(255,255,255,0.1); */ /* 測試用邊框 */
         }
         #monster-part-head { grid-area: head; }
         #monster-part-left-arm { grid-area: leftArm; }
@@ -81,16 +82,17 @@
         #monster-part-right-leg { grid-area: rightLeg; }
 
 
-        /* 文字資訊圖層，確保在圖片之上 */
+        /* 文字資訊疊加層 */
         .snapshot-info-overlay {
             position: absolute;
-            bottom: 8px; /* 調整與底部的距離 */
-            left: 8px;
-            right: 8px;
+            bottom: 10px; /* 調整與底部的距離 */
+            left: 10px;
+            right: 10px;
             z-index: 4;
             display: flex;
-            justify-content: space-between; /* 讓左右內容分開 */
-            align-items: flex-end; /* 底部對齊 */
+            justify-content: space-between;
+            align-items: flex-end; 
+            pointer-events: none; /* 避免遮擋下方元素的點擊 */
         }
 
         .snapshot-info-left {
@@ -100,48 +102,44 @@
             text-align: right;
         }
         
+        /* 稱號在前，名字在後 */
         #snapshot-achievement-title {
-            font-size: 0.8rem; /* 調整字體大小 */
-            color: var(--text-secondary);
-            display: block; /* 讓稱號在新一行 */
-            margin-top: 2px; /* 與暱稱間距 */
+            font-size: 1.1rem; 
+            font-weight: bold;
+            color: var(--accent-color); /* 稱號使用主題強調色 */
+            display: block; 
         }
         #snapshot-nickname {
-            font-size: 1.1rem; /* 調整字體大小 */
-            font-weight: bold;
-            color: var(--accent-color);
-            display: block; /* 確保獨佔一行 */
+            font-size: 0.8rem; 
+            color: var(--text-secondary); /* 暱稱使用次要文字顏色 */
+            display: block; 
+            margin-top: 2px; 
         }
         #snapshot-evaluation {
-            font-size: 1.1rem; /* 調整字體大小 */
+            font-size: 1.1rem; 
             font-weight: bold;
             color: var(--success-color);
         }
 
-        /* 勝敗資訊放在右上角 */
         #snapshot-win-loss {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 10px;
+            right: 10px;
             font-size: 0.8rem;
             color: var(--text-secondary);
             z-index: 4;
             background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-            padding: 2px 5px;
-            border-radius: 3px;
+            padding: 3px 6px;
+            border-radius: 4px;
         }
          #snapshot-win-loss span { display: block; }
 
-        /* 屬性圖標等主要內容區，放在中間偏上或根據實際內容調整 */
-        #snapshot-main-content {
+        #snapshot-main-content { /* 屬性顯示區 */
             position: absolute;
-            top: 8px; /* 原本在右上角，現在調整到頂部中間 */
+            top: 10px; 
             left: 50%;
             transform: translateX(-50%);
             z-index: 4;
-            /* background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent); */
-            /* padding: 3px 6px; */
-            /* border-radius: 4px; */
         }
     </style>
 </head>
@@ -214,10 +212,10 @@
             <div class="monster-snapshot-panel panel">
                 <div id="monster-snapshot-area" class="monster-snapshot-area">
                     <!-- 圖層1: 背景圖 -->
-                    <img id="monster-snapshot-base-bg" src="https://placehold.co/300x220/1a202c/4a5568?text=背景圖&font=noto-sans-tc" alt="怪獸快照背景">
+                    <img id="monster-snapshot-base-bg" src="https://placehold.co/320x240/1a202c/30363d?text=背景圖&font=noto-sans-tc" alt="怪獸快照背景">
                     
                     <!-- 圖層2: 怪獸全身圖 (預留) -->
-                    <img id="monster-snapshot-body-silhouette" src="https://placehold.co/200x150/00000000/cccccc?text=怪獸全身&font=noto-sans-tc" alt="怪獸全身輪廓" style="display: block;"> <!-- 預設顯示一個透明背景的占位符 -->
+                    <img id="monster-snapshot-body-silhouette" src="https://placehold.co/200x180/00000000/cccccc?text=怪獸全身&font=noto-sans-tc" alt="怪獸全身輪廓">
 
                     <!-- 圖層3: 部位圖 -->
                     <div id="monster-parts-container">
@@ -238,8 +236,8 @@
                     </div>
                     <div class="snapshot-info-overlay">
                         <div class="snapshot-info-left">
-                            <span id="snapshot-nickname">-</span>
                             <span id="snapshot-achievement-title">初出茅廬</span>
+                            <span id="snapshot-nickname">-</span>
                         </div>
                         <div class="snapshot-info-right">
                             <span id="snapshot-evaluation">總評價: 0</span>
@@ -333,7 +331,7 @@
             <span class="modal-close" id="confirmation-modal-close-x" data-modal-id="confirmation-modal">&times;</span>
             <h3 id="confirmation-modal-title" class="modal-header text-center">⚠️ 提示</h3> 
             <div id="confirmation-modal-body" class="modal-body">
-                <div id="release-monster-image-placeholder" style="display:none; width:120px; height:90px; margin:10px auto;"> <!-- 調整預覽圖大小 -->
+                <div id="release-monster-image-placeholder" style="display:none; width:120px; height:90px; margin:10px auto;">
                     <img id="release-monster-img-preview" src="https://placehold.co/120x90/4a5568/a0aec0?text=預覽&font=noto-sans-tc" alt="預覽">
                 </div>
             </div>
@@ -541,7 +539,7 @@
     <script src="js/api-client.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/game-logic.js" defer></script>
-    <script src="js/ui.js" defer></script>
+    <script src="js/ui.js" defer></script> <!-- ui.js 應在 game-state.js 之後 -->
     <script src="js/event-handlers.js" defer></script>
     <script src="js/main.js" defer></script>
 </body>
