@@ -199,9 +199,9 @@ class Monster(TypedDict):
     custom_element_nickname: NotRequired[str] # 新增：玩家自定義的屬性名字 (<=5字)
     description: str
     personality: Personality
-    aiPersonality: NotRequired[str]
-    aiIntroduction: NotRequired[str]
-    aiEvaluation: NotRequired[str]
+    aiPersonality: NotRequired[str] # AI 生成的個性描述
+    aiIntroduction: NotRequired[str] # AI 生成的背景介紹
+    aiEvaluation: NotRequired[str] # AI 生成的綜合評價
     creationTime: int
     monsterTitles: NotRequired[List[str]] # 與上面的 title 欄位用途相似，選擇一個使用或整合
     monsterMedals: NotRequired[int]
@@ -237,6 +237,18 @@ class PlayerGameData(TypedDict):
     playerStats: PlayerStats
     lastSave: NotRequired[int]
     nickname: NotRequired[str]
+
+
+# --- 新增的組合配方模型 (MonsterRecipes) ---
+class MonsterRecipe(TypedDict):
+    """
+    用於存儲已發現的 DNA 組合配方及其產生的標準怪獸數據。
+    每個文檔的 ID 應為 combinationKey。
+    """
+    combinationKey: str # 根據 DNA 模板 ID 列表生成的唯一標識碼
+    resultingMonsterData: Monster # 此配方產生的怪獸的完整且固定的數據
+    creationTimestamp: int # 配方首次被發現並記錄的時間
+    discoveredByPlayerId: NotRequired[str] # 記錄首次發現此配方的玩家 ID (可選)
 
 
 # --- 完整的遊戲設定檔模型 ---
@@ -286,11 +298,15 @@ if __name__ == '__main__':
         "description": "...", "personality": {"name":"勇敢的", "description":"...", "colorDark":"...", "colorLight":"..."},
         "creationTime": int(time.time()),
         "farmStatus": {"active": False, "isBattling": False, "isTraining": False, "completed": False, "boosts": {}}, # 添加缺失的鍵
-        "resistances": {"火": 5}
+        "resistances": {"火": 5},
+        "aiPersonality": "這隻怪獸的個性活潑開朗...",
+        "aiIntroduction": "牠是一隻火焰構成的生物...",
+        "aiEvaluation": "烈焰幼龍適合擔任隊伍的先鋒..."
     }
     print(f"\n帶自定義屬性名的怪獸範例: {test_monster_with_custom_name['nickname']}")
     print(f"  其自定義屬性名: {test_monster_with_custom_name.get('custom_element_nickname')}")
     print(f"  其怪物成就/稱號: {test_monster_with_custom_name.get('title')}")
+    print(f"  AI 個性: {test_monster_with_custom_name.get('aiPersonality')[:20]}...")
 
     # 測試 ValueSettings
     test_value_settings: ValueSettings = {
@@ -323,3 +339,13 @@ if __name__ == '__main__':
     print(f"\n玩家遊戲數據範例: 持有DNA數量 (包括空槽位) {len(test_player_game_data['playerOwnedDNA'])}")
     print(f"  第一個DNA: {test_player_game_data['playerOwnedDNA'][0].get('name') if test_player_game_data['playerOwnedDNA'][0] else '空'}")
 
+    # 測試 MonsterRecipe
+    test_recipe: MonsterRecipe = {
+        "combinationKey": "dna_fire_c01_dna_water_r01",
+        "resultingMonsterData": test_monster_with_custom_name,
+        "creationTimestamp": int(time.time()),
+        "discoveredByPlayerId": "test_player_id_123"
+    }
+    print(f"\n怪獸配方範例: 組合鍵 '{test_recipe['combinationKey']}'")
+    print(f"  配方產生的怪獸暱稱: '{test_recipe['resultingMonsterData']['nickname']}'")
+</immersive>
