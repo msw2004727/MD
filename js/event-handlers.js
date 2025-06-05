@@ -685,9 +685,9 @@ function handleLeaderboardSorting() {
                     updateLeaderboardSortIcons(table, sortKey, newSortOrder);
                 });
             }
-        });
-    }
-}
+        }
+    });
+} // 這是 handleLeaderboardSorting 函數的結束括號，沒有多餘的括號了
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
