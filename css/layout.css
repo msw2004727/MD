@@ -3,40 +3,54 @@
 /* Main container for the game interface */
 .main-container {
     width: 100%;
-    max-width: 700px; /* Max width for larger screens */
+    max-width: 768px; /* Slightly increased max-width for better desktop layout */
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    padding: 15px; /* Default padding */
+    padding: 10px; /* Reduced base padding for better mobile fit */
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Default gap */
+    gap: 12px; /* Reduced base gap */
     border: 1px solid var(--border-color);
-    position: relative;
+    position: relative; /* For absolute positioned children like corner buttons */
     transition: background-color 0.3s, border-color 0.3s;
+    margin: 10px auto; /* Add some margin for very small screens */
 }
 
 /* Responsive adjustments for main-container */
-@media (min-width: 768px) {
+@media (min-width: 640px) { /* sm breakpoint */
     .main-container {
-        padding: 20px; /* Increased padding for medium screens and up */
-        gap: 20px; /* Increased gap */
+        padding: 15px;
+        gap: 15px;
     }
 }
+@media (min-width: 768px) { /* md breakpoint */
+    .main-container {
+        padding: 20px;
+        gap: 20px;
+    }
+}
+
 
 /* Panel base style */
 .panel {
     background-color: var(--bg-slot);
     border-radius: 8px;
-    padding: 15px;
+    padding: 12px; /* Adjusted padding */
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
+@media (min-width: 640px) {
+    .panel {
+        padding: 15px;
+    }
+}
+
 
 /* Modal base styles */
 .modal {
-    display: none; /* Hidden by default */
+    display: none; 
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -44,139 +58,188 @@
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.75); /* Semi-transparent background */
+    background-color: rgba(0,0,0,0.75); 
     align-items: center;
     justify-content: center;
-    padding: 10px; /* Padding for modal itself to not touch screen edges */
+    padding: 10px; 
 }
 
 .modal-content {
     background-color: var(--bg-panel);
     color: var(--text-primary);
-    margin: auto; /* Centering */
-    padding: 20px;
+    margin: auto; 
+    padding: 15px; /* Adjusted padding */
     border-radius: 8px;
-    width: 100%; /* Full width on small screens */
-    max-width: 500px; /* Default max-width */
+    width: 95%; /* More responsive width for small screens */
+    max-width: 500px; 
     box-shadow: 0 8px 25px rgba(0,0,0,0.5);
     position: relative;
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s, color 0.3s;
 }
+@media (min-width: 640px) {
+    .modal-content {
+        padding: 20px;
+        width: 100%; /* Allow it to use max-width on larger screens */
+    }
+}
+
 
 /* Modal size variants */
-.modal-content.large { max-width: 650px; }
-.modal-content.xlarge { max-width: 800px; }
+.modal-content.large { max-width: 700px; } /* Adjusted for better readability */
+.modal-content.xlarge { max-width: 850px; }
 .modal-content.feedback-wide { max-width: 600px; }
 
 @media (max-width: 640px) {
-    .modal-content.feedback-wide { max-width: 95%; } /* More width on small screens */
+    .modal-content.large, .modal-content.xlarge, .modal-content.feedback-wide {
+        max-width: 95%; 
+    }
 }
 
 
-/* Grid for DNA combination slots */
+/* Grid for DNA combination slots (5 slots) */
 .dna-combination-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columns */
-    gap: 5px; /* Small gap */
-    margin-bottom: 8px;
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 6px; /* Slightly increased gap */
+    margin-bottom: 10px; /* Increased margin */
 }
 
-/* Grid for inventory items */
+/* Item 3: DNA碎片欄位要有12格位置 (11 DNA + 1 Delete Slot) */
+/* Item 5: Responsive grid for inventory items */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* Responsive columns */
+    /* Mobile: 3 columns, allowing for 4 rows to make 12 slots */
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    align-items: stretch; /* Make grid items same height */
+    align-items: stretch;
+}
+@media (min-width: 480px) { /* Slightly wider screens, can fit 4 columns */
+    .inventory-grid {
+        grid-template-columns: repeat(4, 1fr); /* 3 rows for 12 slots */
+    }
+}
+@media (min-width: 768px) { /* Desktop: can fit 6 columns */
+    .inventory-grid {
+        grid-template-columns: repeat(6, 1fr); /* 2 rows for 12 slots */
+    }
 }
 
-/* Grid for temporary backpack items */
+
+/* Item 4: 臨時背包要有24格空位 */
+/* Item 5: Responsive grid for temporary backpack */
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); /* Responsive columns */
+    /* Mobile: 3 columns */
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
 }
+@media (min-width: 480px) { /* Slightly wider: 4 columns */
+    .temp-backpack-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (min-width: 768px) { /* Desktop: 6 columns */
+    .temp-backpack-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+@media (min-width: 1024px) { /* Larger Desktop: 8 columns */
+    .temp-backpack-grid {
+        grid-template-columns: repeat(8, 1fr); /* 3 rows for 24 slots */
+    }
+}
 
-/* Grid for action buttons (e.g., under DNA combination) */
-.action-buttons-grid {
+
+/* Item 2: "怪物合成"按鈕與"抽取DNA"按鈕對稱擺放 */
+.action-buttons-grid.dual-buttons {
     display: grid;
-    grid-template-columns: 1fr; /* Single column */
-    gap: 8px;
-    margin-top: 10px;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 10px; /* Gap between buttons */
+    align-items: stretch; /* Make buttons same height */
+}
+@media (max-width: 480px) { /* On very small screens, stack them */
+    .action-buttons-grid.dual-buttons {
+        grid-template-columns: 1fr; /* Single column */
+    }
 }
 
-/* Layout for monster farm headers and items */
+
+/* Layout for monster farm headers and items (Item 5: Responsive) */
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    gap: 0.5rem; /* Reduced gap for mobile */
-    padding: 0.5rem;
-    font-size: 0.8rem; /* Smaller font for mobile */
+    gap: 0.5rem;
+    padding: 0.5rem 0.25rem; /* Reduced horizontal padding for mobile */
+    font-size: 0.75rem; /* Smaller base font for mobile */
     align-items: center;
+    border-bottom: 1px solid var(--border-color);
 }
+.farm-header-grid {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary); /* Add a slight background to header */
+    border-bottom-width: 2px;
+    border-bottom-color: var(--accent-color);
+}
+.farm-monster-item:last-child { border-bottom: none; }
 
-/* Desktop and larger screens: Original farm grid */
+/* Farm Grid Columns - Mobile First (Default) */
+.farm-header-grid, .farm-monster-item {
+    /* Columns: Battle Icon, Name, Status, Actions Group */
+    grid-template-columns: minmax(36px, auto) 1fr minmax(60px, auto) minmax(60px, auto);
+}
+.farm-monster-item .farm-monster-score { /* Score specific for mobile */
+    display: block; /* Show score */
+    grid-column: 2 / 3; /* Span under name */
+    font-size: 0.7rem;
+    color: var(--success-color);
+    padding-left: 2px;
+    margin-top: -4px; /* Pull up slightly */
+}
+.farm-monster-actions-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: stretch;
+}
+.farm-monster-item button.farm-monster-cultivate-btn,
+.farm-monster-item button.farm-monster-release-btn {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+    min-width: auto;
+    width: 100%;
+}
+.farm-header-grid .hidden-on-mobile { display: none; } /* Hide elements not needed on mobile header */
+
+
+/* Farm Grid Columns - Small screens and up (e.g., sm: in Tailwind) */
 @media (min-width: 640px) {
-    .farm-header-grid {
-        grid-template-columns: minmax(50px, auto) minmax(80px, 1.5fr) minmax(100px, 1.8fr) minmax(50px, 0.7fr) minmax(60px, auto) minmax(60px, auto);
-        font-size: 0.875rem;
-        padding: 8px 8px 4px 8px;
-        border-bottom: 2px solid var(--accent-color);
-        font-weight: 600;
-        color: var(--text-secondary);
+    .farm-header-grid, .farm-monster-item {
+        /* Columns: Battle Icon, Name, Status, Score, Actions Group */
+        grid-template-columns: minmax(40px, auto) 1.5fr 1fr minmax(50px,0.7fr) minmax(70px, auto);
+        padding: 0.6rem 0.5rem;
+        font-size: 0.85rem;
     }
-    .farm-monster-item {
-        grid-template-columns: minmax(50px, auto) minmax(80px, 1.5fr) minmax(100px, 1.8fr) minmax(50px, 0.7fr) minmax(60px, auto) minmax(60px, auto);
-        font-size: 0.9rem;
-        padding: 10px 8px;
-        border-bottom: 1px solid var(--border-color);
+    .farm-header-grid .hidden-on-mobile { display: block; } /* Show score header */
+    .farm-monster-item .farm-monster-score {
+        display: block; /* Ensure it's block for grid cell */
+        grid-column: auto; /* Reset grid column span */
+        font-size: 0.85rem;
+        margin-top: 0;
+        text-align: center;
     }
-    .farm-monster-item:last-child { border-bottom: none; }
-}
-
-/* Mobile screens: Stacked or more compact farm grid */
-@media (max-width: 639px) {
-    .farm-header-grid {
-        grid-template-columns: 40px 1fr 1fr 50px; /* 出戰, 怪獸, 狀態, 養成/放生區 */
-        font-size: 0.75rem; /* Even smaller font for headers on mobile */
-    }
-    .farm-header-grid > div:nth-child(4), /* 總評價 Header */
-    .farm-header-grid > div:nth-child(5)  /* 原資訊 Header (已移除) */
-     {
-        display: none; /* Hide score header on mobile */
-    }
-     .farm-header-grid > div:nth-child(6) { /* 原放生 Header */
-        display: none; /* Hide original release header, actions will be combined */
-    }
-
-    .farm-monster-item {
-        grid-template-columns: 40px 1fr 1fr 70px; /* 出戰, 怪獸名, 狀態, 動作按鈕組 */
-        grid-template-areas:
-            "battle name status actions"
-            ". score score actions"; /* Score below name/status */
-        row-gap: 0.25rem;
-        font-size: 0.8rem;
-    }
-    .farm-monster-item .farm-battle-btn { grid-area: battle; }
-    .farm-monster-item .farm-monster-name { grid-area: name; font-weight: bold; color: var(--accent-hover); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-    .farm-monster-item .farm-monster-status { grid-area: status; font-style: italic; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
-    .farm-monster-item .farm-monster-score { grid-area: score; font-size: 0.75rem; color: var(--success-color); padding-left: 5px;}
     .farm-monster-actions-group {
-        grid-area: actions;
-        display: flex;
-        flex-direction: column; /* Stack buttons vertically */
-        gap: 0.25rem; /* Small gap between buttons */
-        align-items: stretch; /* Make buttons take full width of their cell */
+        flex-direction: row; /* Buttons side-by-side on larger screens */
+        justify-content: space-around;
     }
-    .farm-monster-item button {
-        padding: 4px 6px; /* Smaller padding for mobile buttons */
-        font-size: 0.75rem; /* Smaller font for mobile buttons */
-        min-width: auto; /* Allow buttons to be smaller */
-        width: 100%; /* Make buttons fill their container in the column */
-    }
-     .farm-monster-item .farm-monster-info-btn { /* This button is being removed per point 4 */
-        display: none;
+    .farm-monster-item button.farm-monster-cultivate-btn,
+    .farm-monster-item button.farm-monster-release-btn {
+        width: auto; /* Allow buttons to size based on content */
+        padding: 5px 8px;
+        font-size: 0.75rem;
     }
 }
+
 
 /* Grid for medals */
 .medals-grid {
@@ -192,42 +255,43 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
     margin-bottom: 15px;
-    max-height: 300px; /* Limit height for scrolling */
-    overflow-y: auto; /* Enable scrolling for many items */
+    max-height: 300px; 
+    overflow-y: auto; 
 }
 
 /* Auth screen layout */
 #auth-screen {
-    display: flex; /* Initially show auth screen */
+    display: flex; 
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100vh; /* Full viewport height */
+    min-height: 100vh; /* Use min-height to ensure it covers viewport */
     background-color: var(--bg-primary);
+    padding: 20px; /* Add padding for small screens */
+    box-sizing: border-box;
 }
 
 .auth-container {
     background-color: var(--bg-panel);
-    padding: 30px 40px;
+    padding: 25px 30px; /* Adjusted padding */
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     text-align: center;
     width: 100%;
-    max-width: 400px;
+    max-width: 380px; /* Slightly reduced max-width */
     border: 1px solid var(--border-color);
 }
 
-/* Game container (hidden initially) */
-#game-container {
-    display: none; /* Initially hide game content */
-    width: 100%;
-    /* flex-direction: column; align-items: center; */ /* This was causing issues with main-container width */
-}
 
 /* Details grid for monster info, player info etc. */
 .details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
-    gap: 8px 14px; /* row-gap column-gap */
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 10px 16px; 
+}
+@media (min-width: 540px) { /* Two columns for slightly larger screens */
+    .details-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
 }
