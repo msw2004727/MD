@@ -31,6 +31,15 @@ const gameState = {
     // DNA 組合相關狀態
     dnaCombinationSlots: [null, null, null, null, null], // DNA 組合槽中的 DNA (可以是 DNAFragment 對象或其 ID)
     
+    // 新增：DNA組合槽與身體部位的映射關係
+    dnaSlotToBodyPartMapping: {
+        0: 'head',    // 槽位0 對應 頭部
+        1: 'leftArm', // 槽位1 對應 左手
+        2: 'rightArm',// 槽位2 對應 右手
+        3: 'leftLeg', // 槽位3 對應 左腳
+        4: 'rightLeg' // 槽位4 對應 右腳
+    },
+
     // 臨時背包 (用於存放修煉拾取物等)
     temporaryBackpack: [], // 存放臨時物品，例如 { type: 'dna', data: {...dnaFragment}, quantity: 1 }
 
@@ -44,7 +53,7 @@ const gameState = {
     playerLeaderboard: [],
     currentMonsterLeaderboardElementFilter: 'all', // 當前怪獸排行榜的元素篩選
 
-    // 排行榜排序設定 (項目10 新增)
+    // 排行榜排序設定
     leaderboardSortConfig: {
         monster: { key: 'score', order: 'desc' }, // 預設怪獸排行榜按評價降序
         player: { key: 'score', order: 'desc' }   // 預設玩家排行榜按積分降序
@@ -68,11 +77,7 @@ const gameState = {
 
 // 函數：更新遊戲狀態並觸發 UI 更新 (如果需要)
 function updateGameState(newState) {
-    // 簡單合併，更複雜的應用可能需要深度合併或使用狀態管理庫
     Object.assign(gameState, newState);
-    
-    // 可以在這裡觸發一個自定義事件，讓 UI 模塊監聽並更新
-    // 例如：document.dispatchEvent(new CustomEvent('gameStateChanged', { detail: gameState }));
     // console.log("Game state updated:", gameState);
 }
 
@@ -87,8 +92,6 @@ function getSelectedMonster() {
 // 函數：獲取玩家農場中的第一隻怪獸作為預設選中
 function getDefaultSelectedMonster() {
     if (gameState.playerData && gameState.playerData.farmedMonsters && gameState.playerData.farmedMonsters.length > 0) {
-        // 可以根據某種排序邏輯選擇，例如按評價高低或創建時間
-        // 暫時還是返回第一隻
         return gameState.playerData.farmedMonsters[0];
     }
     return null;
@@ -97,9 +100,12 @@ function getDefaultSelectedMonster() {
 // 函數：重設 DNA 組合槽
 function resetDNACombinationSlots() {
     gameState.dnaCombinationSlots = [null, null, null, null, null];
-    // 可能還需要更新 UI
-    if (typeof renderDNACombinationSlots === 'function') { // 確保函數存在
+    if (typeof renderDNACombinationSlots === 'function') { 
         renderDNACombinationSlots();
+    }
+     // 當組合槽重設時，也嘗試更新快照中的身體部位
+    if (typeof updateMonsterSnapshot === 'function') {
+        updateMonsterSnapshot(getSelectedMonster()); // 或者傳遞null如果只想更新部位
     }
 }
 
@@ -119,8 +125,4 @@ function getValidDNAIdsFromCombinationSlots() {
 }
 
 
-console.log("Game state module loaded.");
-
-// 導出 (如果使用 ES6 模塊)
-// export { gameState, updateGameState, getSelectedMonster, getDefaultSelectedMonster, resetDNACombinationSlots, areCombinationSlotsFull, areCombinationSlotsEmpty, getValidDNAIdsFromCombinationSlots };
-
+console.log("Game state module loaded with body part mapping and sort config.");
