@@ -134,6 +134,13 @@ class CultivationConfig(TypedDict):
 class ValueSettings(TypedDict):
     element_value_factors: Dict[ElementTypes, float]
     dna_recharge_conversion_factor: float
+    max_farm_slots: NotRequired[int] # 新增農場上限
+    max_monster_skills: NotRequired[int] # 新增怪獸最大技能數
+    max_battle_turns: NotRequired[int] # 新增戰鬥最大回合數
+    # 修改點：新增 DNA 庫存和臨時背包的最大槽位數設定
+    max_inventory_slots: NotRequired[int]
+    max_temp_backpack_slots: NotRequired[int]
+
 
 class NamingConstraints(TypedDict): # 新增：命名限制設定
     max_player_title_len: int         # 玩家稱號最大長度 (需求3)
@@ -225,7 +232,7 @@ class PlayerOwnedDNA(DNAFragment):
 
 
 class PlayerGameData(TypedDict):
-    playerOwnedDNA: List[PlayerOwnedDNA]
+    playerOwnedDNA: List[Optional[PlayerOwnedDNA]] # 修改為 Optional[PlayerOwnedDNA] 允許 None
     farmedMonsters: List[Monster]
     playerStats: PlayerStats
     lastSave: NotRequired[int]
@@ -253,9 +260,11 @@ class GameConfigs(TypedDict):
     value_settings: NotRequired[ValueSettings]
     absorption_config: NotRequired[AbsorptionConfig]
     cultivation_config: NotRequired[CultivationConfig]
+    elemental_advantage_chart: NotRequired[Dict[ElementTypes, Dict[ElementTypes, float]]] # 新增：元素克制表
 
 
 if __name__ == '__main__':
+    import time
     print("MD_models.py 已執行。TypedDict 定義可用。")
 
     # 範例 (僅供說明，非實際測試)
@@ -276,10 +285,41 @@ if __name__ == '__main__':
         "custom_element_nickname": "赤炎魂", # 玩家自定義的屬性名
         "description": "...", "personality": {"name":"勇敢的", "description":"...", "colorDark":"...", "colorLight":"..."},
         "creationTime": int(time.time()),
-        "farmStatus": {"active": False, "isBattling": False, "isTraining": False, "completed": False},
+        "farmStatus": {"active": False, "isBattling": False, "isTraining": False, "completed": False, "boosts": {}}, # 添加缺失的鍵
         "resistances": {"火": 5}
     }
     print(f"\n帶自定義屬性名的怪獸範例: {test_monster_with_custom_name['nickname']}")
     print(f"  其自定義屬性名: {test_monster_with_custom_name.get('custom_element_nickname')}")
     print(f"  其怪物成就/稱號: {test_monster_with_custom_name.get('title')}")
+
+    # 測試 ValueSettings
+    test_value_settings: ValueSettings = {
+        "element_value_factors": {"火": 1.2, "水": 1.1},
+        "dna_recharge_conversion_factor": 0.15,
+        "max_inventory_slots": 12,
+        "max_temp_backpack_slots": 9
+    }
+    print(f"\nValueSettings 範例: 最大庫存槽位 {test_value_settings['max_inventory_slots']}")
+    print(f"ValueSettings 範例: 最大臨時背包槽位 {test_value_settings['max_temp_backpack_slots']}")
+
+    # 測試 PlayerGameData
+    test_player_owned_dna: List[Optional[PlayerOwnedDNA]] = [
+        {"id": "dna_fire_c01_inst1", "name": "初階火種", "type": "火", "attack": 18, "defense": 6, "speed": 9, "hp": 45, "mp": 22, "crit": 4, "description": "微弱燃燒的火種。", "rarity": "普通", "resistances": {'火': 2}, "baseId": "dna_fire_c01"},
+        None, # 空槽位
+        {"id": "dna_water_r01_inst1", "name": "凝結水珠", "type": "水", "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": "蘊含純淨能量的凝結水珠。", "rarity": "稀有", "resistances": {'水': 5, '木': -1}, "baseId": "dna_water_r01"},
+        # 繼續填充到 12 個
+        None, None, None, None, None, None, None, None
+    ]
+    test_player_game_data: PlayerGameData = {
+        "playerOwnedDNA": test_player_owned_dna,
+        "farmedMonsters": [],
+        "playerStats": {
+            "rank": "B", "wins": 5, "losses": 2, "score": 1000,
+            "titles": ["新手", "戰新星"], "achievements": ["首次登入異世界"], "medals": 1, "nickname": "測試玩家"
+        },
+        "lastSave": int(time.time()),
+        "nickname": "測試玩家"
+    }
+    print(f"\n玩家遊戲數據範例: 持有DNA數量 (包括空槽位) {len(test_player_game_data['playerOwnedDNA'])}")
+    print(f"  第一個DNA: {test_player_game_data['playerOwnedDNA'][0].get('name') if test_player_game_data['playerOwnedDNA'][0] else '空'}")
 
