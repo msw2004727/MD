@@ -48,14 +48,16 @@
             z-index: 1; /* 最底層 */
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            opacity: 0.6;
+            object-fit: cover; /* 改為 cover 以填充 */
+            opacity: 0.6 !important; /* 確保透明度 */
+            display: block !important; /* 強制顯示 */
         }
 
         #monster-snapshot-body-silhouette {
             z-index: 2; /* 中間層：怪獸圖 */
             max-width: 65%;
             max-height: 65%;
+            display: block !important; /* 強制顯示，JS會控制透明度 */
         }
 
         #monster-parts-container {
@@ -253,7 +255,7 @@
             <div class="modal-body">
                 <div id="announcement-ad-banner" style="background-color: var(--bg-slot); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
                     <!-- 這裡是廣告欄位 (可放置圖片或文字) -->
-                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true" alt="活動廣告" style="width:100%; border-radius: 4px;">
+                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true" alt="活動廣告" style="width:100%; border-radius: 4px;" onerror="this.style.display='none'; this.parentElement.innerHTML+='<p>廣告圖片加載失敗</p>';">
                 </div>
                 <div id="announcement-content">
                     <p>親愛的<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>
@@ -277,10 +279,16 @@
             <div class="monster-snapshot-panel panel">
                 <div id="monster-snapshot-area" class="monster-snapshot-area">
                     <!-- 圖層1: 背景圖 -->
-                    <img id="monster-snapshot-base-bg" src="https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true" alt="怪獸快照背景">
+                    <img id="monster-snapshot-base-bg" 
+                         src="https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true" 
+                         alt="怪獸快照背景" 
+                         onerror="this.style.display='none'; console.error('背景圖片 a001.png 加載失敗'); this.parentElement.innerHTML+='<p style=\'color:red; z-index: 5;\'>背景圖加載失敗</p>';">
 
                     <!-- 圖層2: 怪獸全身圖 (由JS更新src) -->
-                    <img id="monster-snapshot-body-silhouette" src="https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true" alt="怪獸全身輪廓">
+                    <img id="monster-snapshot-body-silhouette" 
+                         src="https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true" 
+                         alt="怪獸全身輪廓"
+                         onerror="this.style.display='none'; console.error('輪廓圖片 mb01.png 加載失敗');">
 
                     <!-- 圖層3: 部位圖框框 (由JS更新內容和樣式) -->
                     <div id="monster-parts-container">
@@ -518,7 +526,7 @@
             <h3 id="training-results-modal-title" class="modal-header">🎉 修煉成果 🎉</h3>
             <div class="modal-body">
                 <div class="training-result-section">
-                    <h5>📜 冒險故事</h5>
+                    <h5>� 冒險故事</h5>
                     <p id="training-story-result"></p>
                 </div>
                 <div class="training-result-section">
