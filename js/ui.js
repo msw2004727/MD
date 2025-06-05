@@ -294,9 +294,8 @@ function clearMonsterBodyPartsDisplay() {
             partElement.classList.add('empty-part'); // 確保空部位有虛線框
         }
     }
-    // 如果部位容器本身需要根據是否有內容來改變樣式，可以在這裡處理
     if (DOMElements.monsterPartsContainer) {
-      DOMElements.monsterPartsContainer.classList.add('empty-snapshot'); // 假設有此 class 控制整體空狀態
+      DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
     }
 }
 
@@ -310,17 +309,17 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 確保背景圖總是可見 (z-index: 1)
-    DOMElements.monsterSnapshotBaseBg.style.display = 'block';
+    // 確保背景圖總是可見
+    DOMElements.monsterSnapshotBaseBg.style.display = 'block'; // 已有 !important
+    // JS 設定的 src 會覆蓋 HTML 中的 src
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true";
 
     if (monster && monster.id) {
-        // 有怪獸數據，顯示怪獸的身體輪廓圖 (z-index: 2)
+        // 有怪獸數據
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true";
-        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '1'; // 確保怪獸圖完全可見
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
+        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '1'; // 顯示怪獸輪廓
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保顯示
 
-        // 更新怪獸資訊文本
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         const resume = monster.resume || { wins: 0, losses: 0 };
@@ -336,7 +335,7 @@ function updateMonsterSnapshot(monster) {
         } else {
             elementsHtml += `<span class="text-xs px-1.5 py-0.5 rounded-full text-element-無 bg-element-無-bg">無</span>`;
         }
-        if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = elementsHtml; // 元素圖標等
+        if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = elementsHtml;
 
         const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -345,36 +344,31 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
 
-        // 有怪獸時，確保部位容器不是空的快照樣式
         if (DOMElements.monsterPartsContainer) {
             DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
         }
 
     } else { // 沒有選擇怪獸
-        // *** 修改：沒有怪獸時，怪獸輪廓圖使用透明背景，避免遮擋背景圖 ***
-        // 使用一個1x1的透明GIF作為src，或者完全設為空並隱藏
-        DOMElements.monsterSnapshotBodySilhouette.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 1x1 透明 GIF
-        // DOMElements.monsterSnapshotBodySilhouette.style.display = 'none'; // 或者直接隱藏
-        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '0'; // 或者設為完全透明
+        // 修改：顯示預設的灰色輪廓圖
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"; // 預設輪廓圖
+        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '0.3'; // 半透明，使其看起來像占位符
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保顯示
 
-        // 重設文本信息
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
-        if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = ''; // 清空元素圖標
+        if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
         DOMElements.monsterSnapshotArea.style.borderColor = 'var(--border-color)';
         DOMElements.monsterSnapshotArea.style.boxShadow = 'none';
         DOMElements.monsterInfoButton.disabled = true;
         gameState.selectedMonsterId = null;
 
-        // 沒有怪獸時，確保部位容器是空的快照樣式
         if (DOMElements.monsterPartsContainer) {
             DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
         }
     }
 
-    // 更新身體部位顯示 (這部分邏輯不變，依賴組合槽中的DNA)
     let hasAnyDnaInSlots = false;
     if (gameState.dnaSlotToBodyPartMapping && DOMElements.monsterPartsContainer) {
         Object.entries(gameState.dnaSlotToBodyPartMapping).forEach(([slotIndexStr, partNameKey]) => {
@@ -386,30 +380,26 @@ function updateMonsterSnapshot(monster) {
                 const imagePath = getMonsterPartImagePath(dnaInSlot, partNameKey);
                 if (imagePath === 'transparent') {
                     partElement.style.backgroundImage = 'none';
-                    partElement.classList.add('empty-part'); // 確保有虛線框
+                    partElement.classList.add('empty-part');
                 } else {
                     partElement.style.backgroundImage = `url('${imagePath}')`;
-                    partElement.classList.remove('empty-part'); // 移除虛線框，顯示圖片
+                    partElement.classList.remove('empty-part');
                 }
             }
             if (dnaInSlot) {
                 hasAnyDnaInSlots = true;
             }
         });
-        // 如果沒有怪獸，但 DNA 槽中有東西，部位容器也不應是 empty-snapshot
         if (hasAnyDnaInSlots && DOMElements.monsterPartsContainer) {
              DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
-        } else if (!monster && !hasAnyDnaInSlots && DOMElements.monsterPartsContainer){ // 僅當沒有怪獸且沒有DNA時才清除
-            clearMonsterBodyPartsDisplay(); // 會添加 empty-snapshot
+        } else if (!monster && !hasAnyDnaInSlots && DOMElements.monsterPartsContainer){
+            clearMonsterBodyPartsDisplay();
         }
-    } else if (!monster) { // 如果沒有部位映射容器，且沒有怪獸，也執行清除
+    } else if (!monster) {
         clearMonsterBodyPartsDisplay();
     }
 }
 
-
-// (applyDnaItemStyle, renderDNACombinationSlots, 等其他函數保持不變)
-// ... 您可以從我之前提供的 ui.js 完整版複製其餘的函數 ...
 function applyDnaItemStyle(element, dnaData) {
     if (!element) return;
 
@@ -471,8 +461,8 @@ function renderDNACombinationSlots() {
             slot.appendChild(nameSpan);
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
-            slot.dataset.dnaId = dna.id; // 實例 ID
-            slot.dataset.dnaBaseId = dna.baseId; // 模板 ID，用於合成
+            slot.dataset.dnaId = dna.id;
+            slot.dataset.dnaBaseId = dna.baseId;
             slot.dataset.dnaSource = 'combination';
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
