@@ -65,7 +65,8 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
     }
     // 修改點：使用 gameState.MAX_INVENTORY_SLOTS 來獲取最大槽位數
     const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
-    const DELETE_SLOT_INDEX = 8; // 刪除區的固定索引
+    // 修改點：刪除區的固定索引改為 11 (第12格)
+    const DELETE_SLOT_INDEX = 11;
 
     if (targetInventoryIndex < 0 || targetInventoryIndex >= MAX_INVENTORY_SLOTS) {
         console.warn(`handleDnaMoveIntoInventory: 無效的目標庫存索引 ${targetInventoryIndex}。`);
@@ -479,7 +480,8 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
     if (itemToMove.type === 'dna' && itemToMove.data) {
         // 尋找第一個空位來放置，如果沒有空位則提示庫存滿
         const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
-        const DELETE_SLOT_INDEX = 8; // 刪除區的固定索引
+        // 修改點：刪除區的固定索引改為 11 (第12格)
+        const DELETE_SLOT_INDEX = 11; 
         let freeSlotIndex = -1;
         for (let i = 0; i < MAX_INVENTORY_SLOTS; i++) {
             if (i === DELETE_SLOT_INDEX) continue; // 跳過刪除區
