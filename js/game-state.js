@@ -44,6 +44,12 @@ const gameState = {
     playerLeaderboard: [],
     currentMonsterLeaderboardElementFilter: 'all', // 當前怪獸排行榜的元素篩選
 
+    // 排行榜排序設定 (項目10 新增)
+    leaderboardSortConfig: {
+        monster: { key: 'score', order: 'desc' }, // 預設怪獸排行榜按評價降序
+        player: { key: 'score', order: 'desc' }   // 預設玩家排行榜按積分降序
+    },
+
     // 好友/搜尋相關
     searchedPlayers: [], // 搜尋到的玩家列表
 
@@ -51,9 +57,13 @@ const gameState = {
     cultivationMonsterId: null, // 正在進行修煉設定的怪獸ID
     cultivationStartTime: null, // 修煉開始時間戳
     cultivationDurationSet: 0, // 設定的修煉時長 (秒)
+    lastCultivationResult: null, // 保存上次修煉結果以便加入背包
     
     // 戰鬥相關
     battleTargetMonster: null, // 玩家選擇挑戰的對手怪獸資料
+
+    // DNA 抽卡相關
+    lastDnaDrawResult: null, // 保存上次抽卡結果，以便加入背包
 };
 
 // 函數：更新遊戲狀態並觸發 UI 更新 (如果需要)
@@ -77,6 +87,8 @@ function getSelectedMonster() {
 // 函數：獲取玩家農場中的第一隻怪獸作為預設選中
 function getDefaultSelectedMonster() {
     if (gameState.playerData && gameState.playerData.farmedMonsters && gameState.playerData.farmedMonsters.length > 0) {
+        // 可以根據某種排序邏輯選擇，例如按評價高低或創建時間
+        // 暫時還是返回第一隻
         return gameState.playerData.farmedMonsters[0];
     }
     return null;
@@ -86,6 +98,9 @@ function getDefaultSelectedMonster() {
 function resetDNACombinationSlots() {
     gameState.dnaCombinationSlots = [null, null, null, null, null];
     // 可能還需要更新 UI
+    if (typeof renderDNACombinationSlots === 'function') { // 確保函數存在
+        renderDNACombinationSlots();
+    }
 }
 
 // 函數：檢查 DNA 組合槽是否已滿
@@ -108,3 +123,4 @@ console.log("Game state module loaded.");
 
 // 導出 (如果使用 ES6 模塊)
 // export { gameState, updateGameState, getSelectedMonster, getDefaultSelectedMonster, resetDNACombinationSlots, areCombinationSlotsFull, areCombinationSlotsEmpty, getValidDNAIdsFromCombinationSlots };
+
