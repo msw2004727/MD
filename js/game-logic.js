@@ -60,17 +60,15 @@ function deleteDNAFromInventory(dnaInstanceId) {
         console.warn("deleteDNAFromInventory: dnaInstanceId 不可為空。");
         return;
     }
-    if (gameState.playerData && gameState.playerData.playerOwnedDNA) {
-        const initialLength = gameState.playerData.playerOwnedDNA.length;
-        gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.filter(dna => dna.id !== dnaInstanceId);
-        if (gameState.playerData.playerOwnedDNA.length < initialLength) {
-            console.log(`DNA 實例 ${dnaInstanceId} 已從 gameState.playerData.playerOwnedDNA 中移除。`);
-        } else {
-            console.warn(`嘗試刪除 DNA 實例 ${dnaInstanceId}，但在 gameState.playerData.playerOwnedDNA 中未找到。`);
-        }
+    // 在固定大小的 playerOwnedDNA 陣列中找到並設置為 null
+    const dnaIndex = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === dnaInstanceId);
+    if (dnaIndex !== -1) {
+        gameState.playerData.playerOwnedDNA[dnaIndex] = null;
+        console.log(`DNA 實例 ${dnaInstanceId} 已從 gameState.playerData.playerOwnedDNA 中移除 (設為 null)。`);
     } else {
-        console.warn("deleteDNAFromInventory: playerData 或 playerOwnedDNA 未定義。");
+        console.warn(`嘗試刪除 DNA 實例 ${dnaInstanceId}，但在 gameState.playerData.playerOwnedDNA 中未找到。`);
     }
+    renderPlayerDNAInventory(); // 重新渲染庫存
     // 注意：這裡只處理前端狀態。實際應用中，還需要呼叫後端 API 持久化刪除。
 }
 
@@ -278,7 +276,8 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
             'success', // confirmButtonClass
             '學習'     // confirmButtonText
         );
-    } else {
+    }
+     else {
         message += `但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
 
         let skillOptionsHtml = '<div class="my-2 space-y-1">'; // 使用 space-y-1 增加按鈕間距
@@ -349,13 +348,15 @@ function addAllCultivationItemsToTempBackpack() {
  * @param {object} dnaTemplate DNA 模板對象。
  */
 function addDnaToTemporaryBackpack(dnaTemplate) {
-    if (!dnaTemplate || !dnaTemplate.id) { // 確保 dnaTemplate 和其 id 存在
+    if (!dnaTemplate || !dnaTemplate.id) { // 確保 dnaTemplate 和其 id 存在 
         console.warn("addDnaToTemporaryBackpack: 無效的 dnaTemplate 或缺少 id。", dnaTemplate);
         return;
     }
     gameState.temporaryBackpack.push({
         type: 'dna', // 標記物品類型
         data: { ...dnaTemplate }, // 儲存 DNA 模板的完整數據
+        // 為臨時背包的 DNA 實例生成一個唯一ID，用於區分。這個 ID 僅限前端臨時使用。
+        instanceId: `temp_dna_${Date.now()}_${Math.floor(Math.random() * 100000)}` 
     });
     renderTemporaryBackpack(); // 更新臨時背包的 UI
     console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包。`);
@@ -373,8 +374,9 @@ function clearTemporaryBackpack() {
 /**
  * 處理從臨時背包移動物品到主 DNA 庫存。
  * @param {number} tempBackpackIndex 物品在臨時背包中的索引。
+ * @param {number | null} targetInventoryIndex 可選，如果拖曳到特定空位，則為該空位的索引
  */
-async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
+async function handleMoveFromTempBackpackToInventory(tempBackpackIndex, targetInventoryIndex = null) {
     if (tempBackpackIndex < 0 || tempBackpackIndex >= gameState.temporaryBackpack.length) {
         console.warn("handleMoveFromTempBackpackToInventory: 索引越界。");
         return;
@@ -392,24 +394,39 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
             baseId: itemToMove.data.id // 保留原始模板 ID 作為 baseId
         };
 
-        if (!gameState.playerData.playerOwnedDNA) { // 初始化 playerOwnedDNA (如果尚未存在)
-            gameState.playerData.playerOwnedDNA = [];
+        let placed = false;
+        if (targetInventoryIndex !== null && gameState.playerData.playerOwnedDNA[targetInventoryIndex] === null) {
+            // 如果指定了目標空位且該位置確實是空的
+            gameState.playerData.playerOwnedDNA[targetInventoryIndex] = newOwnedDna;
+            placed = true;
+        } else {
+            // 尋找第一個空位
+            const firstEmptySlotIndex = gameState.playerData.playerOwnedDNA.findIndex(slot => slot === null);
+            if (firstEmptySlotIndex !== -1) {
+                gameState.playerData.playerOwnedDNA[firstEmptySlotIndex] = newOwnedDna;
+                placed = true;
+            } else {
+                // 如果庫存已滿，彈出提示
+                showFeedbackModal('庫存已滿', '您的 DNA 庫存已滿，無法將物品從臨時背包移入。請整理您的庫存。');
+                return;
+            }
         }
-        gameState.playerData.playerOwnedDNA.push(newOwnedDna);
 
-        // 從臨時背包中移除該物品
-        gameState.temporaryBackpack.splice(tempBackpackIndex, 1);
+        if (placed) {
+            // 從臨時背包中移除該物品
+            gameState.temporaryBackpack.splice(tempBackpackIndex, 1);
 
-        // 更新 UI
-        renderPlayerDNAInventory();
-        renderTemporaryBackpack();
+            // 更新 UI
+            renderPlayerDNAInventory();
+            renderTemporaryBackpack();
 
-        showFeedbackModal(
-            '物品已移動',
-            `${itemToMove.data.name} 已成功移至您的 DNA 庫存。建議盡快保存遊戲進度以確保資料同步。`,
-            false, null,
-            [{ text: '好的', class: 'primary' }]
-        );
+            showFeedbackModal(
+                '物品已移動',
+                `${itemToMove.data.name} 已成功移至您的 DNA 庫存。建議盡快保存遊戲進度以確保資料同步。`,
+                false, null,
+                [{ text: '好的', class: 'primary' }]
+            );
+        }
     } else {
         showFeedbackModal('錯誤', '無法移動未知類型或資料不完整的物品。');
         console.error("handleMoveFromTempBackpackToInventory: 物品類型不是 'dna' 或缺少 data 屬性。", itemToMove);
@@ -588,6 +605,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                             }
                              // 更新玩家的DNA庫存 (如果吸收時有返回新DNA)
                             if (battleResult.absorption_details.updated_player_owned_dna) {
+                                // 注意：這裡如果 playerOwnedDNA 已轉為固定大小陣列，需要確保合併邏輯正確
+                                // 服務端應該返回固定大小的 playerOwnedDNA
                                 gameState.playerData.playerOwnedDNA = battleResult.absorption_details.updated_player_owned_dna;
                                 renderPlayerDNAInventory();
                             }
@@ -682,4 +701,3 @@ function sortAndRenderLeaderboard(tableType, dataToRender = null) {
 
 
 console.log("Game logic module loaded with updated drag-drop logic and other enhancements.");
-
