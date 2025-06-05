@@ -81,12 +81,20 @@
     <!-- 遊戲主容器 -->
     <div id="game-container" style="display: none; width:100%; display:flex; flex-direction:column; align-items:center;">
         <div class="main-container">
-            <!-- 主題切換按鈕 -->
-            <button id="theme-switcher" title="切換主題">
+            <!-- 左上角登出按鈕 (新增) -->
+            <button id="main-logout-btn" class="corner-button top-left-button" title="登出">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2.146a.5.5 0 0 0 1 0V3.5a1.5 1.5 0 0 0-1.5-1.5h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5V10a.5.5 0 0 0-1 0v2.5z"/>
+                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                </svg>
+            </button>
+
+            <!-- 右上角主題切換按鈕 (調整 class 以便CSS定位) -->
+            <button id="theme-switcher" class="corner-button top-right-button" title="切換主題">
                 <span id="theme-icon">🌙</span>
             </button>
-            <!-- 登出按鈕 -->
-            <button id="logout-btn" class="absolute top-10 right-10 mt-10 text-xs secondary p-1">登出</button>
+            <!-- 原登出按鈕 (移除，已移到左上角) -->
+            <!-- <button id="logout-btn" class="absolute top-10 right-10 mt-10 text-xs secondary p-1">登出</button> -->
 
             <!-- 怪獸快照面板 -->
             <div class="monster-snapshot-panel panel">
@@ -118,10 +126,11 @@
 
             <!-- 主要功能面板 (DNA管理, 怪物農場等) -->
             <div class="panel">
-                <!-- 頁籤按鈕 -->
+                <!-- 頁籤按鈕 (新增訓練場) -->
                 <div class="tab-buttons" id="dna-farm-tabs">
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
                     <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪物農場</button>
+                    <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> <!-- 新增訓練場頁籤 -->
                     <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
                     <button class="tab-button" data-tab-target="homestead-content">🛠️ 家園建設</button>
                     <button class="tab-button" data-tab-target="guild-content">🛡️ 工會系統</button>
@@ -134,8 +143,10 @@
                         <div id="dna-combination-slots" class="dna-combination-grid mt-2">
                             <!-- DNA 組合槽由 JS 動態生成 -->
                         </div>
-                        <div class="action-buttons-grid mt-3">
-                            <button id="combine-button" class="success" disabled>怪物合成</button>
+                        <!-- 修改按鈕佈局: 怪物合成與抽取DNA對稱擺放 -->
+                        <div class="action-buttons-grid dual-buttons mt-3">
+                            <button id="combine-button" class="success action-button-main" disabled>怪物合成</button>
+                            <button id="dna-draw-button" class="primary action-button-main">抽取DNA (1次)</button> <!-- 移至此處 -->
                         </div>
                     </div>
 
@@ -145,6 +156,7 @@
                     </div>
                     <div id="inventory-items" class="inventory-grid mt-2">
                         <!-- DNA 碎片庫由 JS 動態生成 -->
+                        <!-- 刪除區和原來的抽卡按鈕會由JS的renderPlayerDNAInventory和addDeleteAndDrawSlots處理 -->
                     </div>
 
                     <div class="mt-4">
@@ -167,12 +179,19 @@
                         <div>狀態</div>
                         <div class="hidden sm:block">總評價</div> 
                         <div>養成</div>
-                        <div>放生</div>
+                        <!-- 移除了原放生標題，將與養成動作整合 -->
                     </div>
                     <div id="farmed-monsters-list">
                         <p class="text-center text-sm text-[var(--text-secondary)] py-4">農場空空如也，快去組合怪獸吧！</p>
                     </div>
                 </div>
+                
+                <!-- 訓練場內容 (新增) -->
+                <div id="training-ground-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練場功能銳意開發中，敬請期待！</p>
+                    <!-- 之後可以在這裡加入訓練相關的UI -->
+                </div>
+
 
                 <!-- 交易所內容 -->
                 <div id="exchange-content" class="tab-content">
