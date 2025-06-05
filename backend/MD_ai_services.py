@@ -47,9 +47,9 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     Returns:
         Dict[str, str]: 包含 AI 生成的內容的字典:
             {
-                "aiPersonality": "生成的個性描述 (至少40字)",
-                "aiIntroduction": "生成的介紹 (至少60字，包含各項數值)",
-                "aiEvaluation": "生成的評價 (至少80字，結合個性與數值)"
+                "aiPersonality": "生成的個性描述 (至少10字)",
+                "aiIntroduction": "生成的介紹 (至少30字，包含各項數值)",
+                "aiEvaluation": "生成的評價 (至少30字，結合個性與數值)"
             }
             如果 API 呼叫失敗或發生錯誤，則返回 DEFAULT_AI_RESPONSES。
     """
@@ -85,9 +85,9 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
 請嚴格按照以下JSON格式提供回應，不要添加任何額外的解釋或開頭/結尾文字，並確保每個欄位的文本長度符合要求：
 
 {{
-  "personality_text": "一段關於「{monster_nickname}」個性的簡短活潑描述。這段描述應基於其個性名稱「{personality_name}」，約 40 字左右，生動精簡。",
-  "introduction_text": "一段關於「{monster_nickname}」的活潑精簡背景故事或趣味介紹。這段介紹應約 60 字左右，巧妙地融入其所有基礎數值（HP: {hp}, MP: {mp}, 攻擊力: {attack}, 防禦力: {defense}, 速度: {speed}, 爆擊率: {crit}%, 屬性: {elements_str}, 稀有度: {rarity}）。",
-  "evaluation_text": "一段針對「{monster_nickname}」的活潑精簡綜合評價與培養建議。此評價應約 80 字左右，必須結合其「{personality_name}」的個性特點及其所有數值，指出它的優勢與劣勢，並給出具體的培養方向建議或戰術定位。"
+  "personality_text": "一段關於「{monster_nickname}」個性的簡短活潑描述。這段描述應基於其個性名稱「{personality_name}」，約 20 字左右，生動精簡。",
+  "introduction_text": "一段關於「{monster_nickname}」的活潑精簡背景故事或趣味介紹。這段介紹應約 50 字左右，巧妙地融入其所有基礎數值（HP: {hp}, MP: {mp}, 攻擊力: {attack}, 防禦力: {defense}, 速度: {speed}, 爆擊率: {crit}%, 屬性: {elements_str}, 稀有度: {rarity}）。",
+  "evaluation_text": "一段針對「{monster_nickname}」的活潑精簡綜合評價與培養建議。此評價應約 50 字左右，必須結合其「{personality_name}」的個性特點及其所有數值，指出它的優勢與劣勢，並給出具體的培養方向建議或戰術定位。"
 }}
 """
 
