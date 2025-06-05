@@ -228,7 +228,6 @@ def populate_game_configs():
             { "name": "劇毒之霧", "power": 10, "crit": 0, "probability": 65, "story": "{attacker_name}釋放一片劇毒之霧，使敵人中毒並持續掉血。", "type": "毒", "effect": "dot", "damage_per_turn": 10, "duration": 4, "chance": 70, "baseLevel": 2, "mp_cost": 9, "skill_category": "特殊", "target": "enemy_all" },
             { "name": "腐蝕", "power": 0, "crit": 0, "probability": 50, "story": "{attacker_name}的毒素具有腐蝕性，降低{target_name}的防禦力。", "type": "毒", "effect": "debuff", "stat": "defense", "amount": -15, "duration": 3, "baseLevel": 3, "mp_cost": 10, "skill_category": "變化" },
         ],
-        # **新增：風系技能**
         '風': [
             { "name": "風刃", "power": 25, "crit": 15, "probability": 80, "story": "{attacker_name}凝聚風元素形成鋒利刀刃，切割{target_name}！", "type": "風", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
             { "name": "疾風步", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}身形化為疾風，速度大幅提升！", "type": "風", "effect": "buff", "stat": "speed", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 8, "skill_category": "輔助", "target":"self" },
@@ -318,7 +317,7 @@ def populate_game_configs():
         {"id": "confused", "name": "混亂", "description": "行動時有50%機率攻擊自己或隨機目標。", "effects": {}, "duration": 2, "icon": "😵", "confusion_chance": 0.5},
         {"id": "energized", "name": "精力充沛", "description": "狀態絕佳！所有能力微幅提升。", "effects": {"attack": 5, "defense": 5, "speed": 5, "crit": 3}, "duration": 3, "icon": "💪"},
         {"id": "weakened", "name": "虛弱", "description": "所有主要戰鬥數值大幅下降。", "effects": {"attack": -12, "defense": -12, "speed": -8, "crit": -5}, "duration": 2, "icon": "😩"},
-        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "�", "elemental_vulnerability": {"火": 2.0} }
+        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "🧊", "elemental_vulnerability": {"火": 2.0} }
     ]
     try:
         db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
@@ -349,9 +348,12 @@ def populate_game_configs():
             "光": 1.5, "暗": 1.4, "毒": 0.8, "風": 1.0, "無": 0.7, "混": 0.6
         },
         "dna_recharge_conversion_factor": 0.15,
-        "max_farm_slots": 10, # 新增農場上限
-        "max_monster_skills": 3, # 新增怪獸最大技能數
-        "max_battle_turns": 30 # 新增戰鬥最大回合數
+        "max_farm_slots": 10, # 農場上限
+        "max_monster_skills": 3, # 怪獸最大技能數
+        "max_battle_turns": 30, # 戰鬥最大回合數
+        # 修改點：增加 DNA 庫存和臨時背包的最大槽位數設定
+        "max_inventory_slots": 12, # DNA 庫存格數設定
+        "max_temp_backpack_slots": 9 # 臨時背包格數設定
     }
     try:
         db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
