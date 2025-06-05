@@ -455,8 +455,8 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 .action-button-main {
     /* 將高度降低70%：假設基礎高度約為 48px，降低 70% 意味著剩下 30% 的高度，即 14.4px。
-       但為了確保可點擊性和文字可讀性，我們將其設定為 35px，同時調整內距。 */
-    height: 20px !important; /* 新的高度 */
+       但為了確保可點擊性和文字可讀性，我們將其設定為 30px，同時調整內距。 */
+    height: 30px !important; /* 新的高度 */
     padding: 0 15px !important; /* 垂直內距設為0，依靠 height 和 line-height 居中 */
     font-size: 0.95rem !important; 
     font-weight: bold !important;
