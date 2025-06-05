@@ -165,15 +165,13 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
 
     if (monsterDetails) {
-        // 此處可以根據 monsterDetails 內容來更新 DOMElements.feedbackMonsterDetails
-        // 例如: DOMElements.feedbackMonsterDetails.innerHTML = `怪獸: ${monsterDetails.name}`;
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true);
     } else {
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
 
     const footer = DOMElements.feedbackModal.querySelector('.modal-footer');
-    if (footer) footer.remove(); // 移除舊的 footer
+    if (footer) footer.remove();
 
     if (actionButtons && actionButtons.length > 0) {
         const newFooter = document.createElement('div');
@@ -184,15 +182,14 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             button.className = `button ${btnConfig.class || 'secondary'}`;
             button.onclick = () => {
                 if (btnConfig.onClick) btnConfig.onClick();
-                hideModal('feedback-modal'); // 默認點擊按鈕後關閉 feedback-modal
+                hideModal('feedback-modal');
             };
             newFooter.appendChild(button);
         });
         const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
         if (modalContent) modalContent.appendChild(newFooter);
     } else {
-        // 如果沒有提供 actionButtons，確保X按鈕可以關閉
-        if (DOMElements.feedbackModalCloseX) { // 檢查元素是否存在
+        if (DOMElements.feedbackModalCloseX) {
             DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
         }
     }
@@ -205,17 +202,14 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
         return;
     }
     DOMElements.confirmationModalTitle.textContent = title;
-    DOMElements.confirmationModalBody.innerHTML = `<p>${message}</p>`; // 使用 innerHTML 以便支持 HTML 標籤
+    DOMElements.confirmationModalBody.innerHTML = `<p>${message}</p>`;
 
-    // 更新怪獸圖片預覽 (如果提供了怪獸資料)
-    if (monsterToRelease && monsterToRelease.id) { // 假設 monsterToRelease 有 id 才是有意義的怪獸物件
+    if (monsterToRelease && monsterToRelease.id) {
         const imgPlaceholder = DOMElements.releaseMonsterImagePlaceholder;
         const imgPreview = DOMElements.releaseMonsterImgPreview;
         if (imgPlaceholder && imgPreview) {
-            // 假設怪獸物件中有 elements 和 rarity 屬性
             const monsterPrimaryElement = monsterToRelease.elements && monsterToRelease.elements.length > 0 ? monsterToRelease.elements[0] : '無';
-            // 這裡需要一個函數來獲取怪獸圖片路徑，如果沒有實際圖片，可以用占位符
-            imgPreview.src = getMonsterImagePathForSnapshot(monsterPrimaryElement, monsterToRelease.rarity); // 假設有此函數
+            imgPreview.src = getMonsterImagePathForSnapshot(monsterPrimaryElement, monsterToRelease.rarity);
             imgPreview.alt = monsterToRelease.nickname || '怪獸圖片';
             toggleElementDisplay(imgPlaceholder, true, 'flex');
         }
@@ -226,24 +220,21 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     }
 
     DOMElements.confirmActionBtn.textContent = confirmButtonText;
-    DOMElements.confirmActionBtn.className = `button ${confirmButtonClass}`; // 確保 class 正確應用
+    DOMElements.confirmActionBtn.className = `button ${confirmButtonClass}`;
 
-    // 為了避免重複綁定事件，先移除舊的監聽器，再添加新的
-    // 更好的做法是 cloneNode 來替換按鈕
     const newConfirmBtn = DOMElements.confirmActionBtn.cloneNode(true);
     if (DOMElements.confirmActionBtn.parentNode) {
       DOMElements.confirmActionBtn.parentNode.replaceChild(newConfirmBtn, DOMElements.confirmActionBtn);
     }
-    DOMElements.confirmActionBtn = newConfirmBtn; // 更新 DOM 引用
+    DOMElements.confirmActionBtn = newConfirmBtn;
 
     DOMElements.confirmActionBtn.onclick = () => {
         onConfirm();
-        hideModal('confirmation-modal'); // 確認後關閉彈窗
+        hideModal('confirmation-modal');
     };
 
-    // 確保X按鈕可以關閉
-    if(DOMElements.confirmationModalCloseX) { // 檢查元素是否存在
-        DOMElements.confirmationModalCloseX.setAttribute('data-modal-id', 'confirmation-modal'); // 確保 modal-close 事件能找到它
+    if(DOMElements.confirmationModalCloseX) {
+        DOMElements.confirmationModalCloseX.setAttribute('data-modal-id', 'confirmation-modal');
         DOMElements.confirmationModalCloseX.onclick = () => hideModal('confirmation-modal');
     }
     showModal('confirmation-modal');
@@ -258,54 +249,36 @@ function updateTheme(themeName) {
         DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '🌙';
     }
     gameState.currentTheme = themeName;
-    localStorage.setItem('theme', themeName); // 保存主題偏好
+    localStorage.setItem('theme', themeName);
 }
 
 function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark'; // 預設為暗色主題
+    const savedTheme = localStorage.getItem('theme') || 'dark';
     updateTheme(savedTheme);
 }
 
 function getMonsterImagePathForSnapshot(primaryElement, rarity) {
-    // 這裡可以根據元素和稀有度返回不同的圖片路徑
-    // 目前使用 placehold.co 作為占位符
-    // 您可以替換為您的實際圖片資源路徑
     const colors = {
-        '火': 'FF6347/FFFFFF', // 番茄紅/白字
-        '水': '1E90FF/FFFFFF', // 道奇藍/白字
-        '木': '228B22/FFFFFF', // 森林綠/白字
-        '金': 'FFD700/000000', // 金色/黑字
-        '土': 'D2B48C/000000', // 褐色/黑字
-        '光': 'F8F8FF/000000', // 幽靈白/黑字
-        '暗': 'A9A9A9/FFFFFF', // 深灰/白字
-        '毒': '9932CC/FFFFFF', // 深蘭紫/白字
-        '風': '87CEEB/000000', // 天藍/黑字
-        '混': '778899/FFFFFF', // 淺石板灰/白字
-        '無': 'D3D3D3/000000'  // 淺灰/黑字
+        '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
+        '金': 'FFD700/000000', '土': 'D2B48C/000000', '光': 'F8F8FF/000000',
+        '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
+        '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
     const colorPair = colors[primaryElement] || colors['無'];
     return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
-// 部位圖片的獲取邏輯
 function getMonsterPartImagePath(dnaFragment, bodyPartName) {
     if (!dnaFragment || !dnaFragment.type || !dnaFragment.rarity) {
         return 'transparent';
     }
-    // 這裡應該有更複雜的邏輯來決定身體部位的圖片
-    // 例如，根據 dnaFragment 的 type, rarity 和 bodyPartName
-    // const basePath = 'images/monster_parts/';
-    // return `${basePath}${dnaFragment.type.toLowerCase()}/${bodyPartName.toLowerCase()}_${dnaFragment.rarity.toLowerCase()}.png`;
-
-    // 目前使用占位符，顯示 DNA 類型和部位首字母
-    const dnaTypeInitial = dnaFragment.type[0]; // 取元素中文的第一個字
-    const partInitial = bodyPartName[0].toUpperCase(); // 部位名首字母大寫
+    const dnaTypeInitial = dnaFragment.type[0];
+    const partInitial = bodyPartName[0].toUpperCase();
     return `https://placehold.co/80x80/2d3748/e2e8f0?text=${dnaTypeInitial}${partInitial}&font=inter`;
 }
 
 
 function clearMonsterBodyPartsDisplay() {
-    // 清除所有部位的背景圖片
     const partsMap = {
         Head: DOMElements.monsterPartHead,
         LeftArm: DOMElements.monsterPartLeftArm,
@@ -316,15 +289,14 @@ function clearMonsterBodyPartsDisplay() {
     for (const partName in partsMap) {
         const partElement = partsMap[partName];
         if (partElement) {
-            partElement.style.backgroundImage = 'none'; // 清除背景圖
-            partElement.classList.add('empty-part');    // 確保有此 class 以顯示虛線框
+            partElement.style.backgroundImage = 'none';
+            partElement.classList.add('empty-part');
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
 }
 
 function updateMonsterSnapshot(monster) {
-    // 確保所有需要的 DOM 元素都已獲取
     if (!DOMElements.monsterSnapshotArea || !DOMElements.snapshotAchievementTitle ||
         !DOMElements.snapshotNickname || !DOMElements.snapshotWinLoss ||
         !DOMElements.snapshotEvaluation || !DOMElements.monsterInfoButton ||
@@ -334,29 +306,23 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 設定固定的背景圖和預設的全身圖
-    DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true"; // 背景圖路徑
-    if (monster && monster.id) { // 如果有選定怪獸，顯示怪獸全身圖
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true"; // 全身圖路徑
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
-    } else { // 沒有選定怪獸，顯示預設占位圖
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://placehold.co/200x180/00000000/cccccc?text=怪獸&font=noto-sans-tc"; // 預設占位圖
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
-    }
+    // 背景圖恆定
+    DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true";
 
+    if (monster && monster.id) {
+        // 有怪獸時，顯示怪獸的身體輪廓圖 (或其他代表圖)
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true";
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保可見
 
-    if (monster && monster.id && gameState.playerData) { // 如果有選擇的怪獸且玩家資料存在
-        DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀'); // 稱號在前
-        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸'; // 名字在後
+        DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
+        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
-        // 更新元素顯示
         let elementsHtml = '<div class="flex justify-center items-center space-x-1">';
         if (monster.elements && monster.elements.length > 0) {
             monster.elements.forEach(element => {
-                // 確保 element 是字串，並轉換為小寫以匹配 CSS class
                 const elementClass = typeof element === 'string' ? element.toLowerCase() : '無';
                 elementsHtml += `<span class="text-xs px-1.5 py-0.5 rounded-full text-element-${elementClass} bg-element-${elementClass}-bg">${element}</span>`;
             });
@@ -366,16 +332,19 @@ function updateMonsterSnapshot(monster) {
         elementsHtml += '</div>';
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = elementsHtml;
 
-        // 更新邊框和陰影顏色
         const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
-        const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`; // 添加預設值
+        const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
-    } else { // 如果沒有選擇怪獸
-        DOMElements.snapshotAchievementTitle.textContent = '初出茅廬'; // 預設稱號
-        DOMElements.snapshotNickname.textContent = '尚無怪獸'; // 預設名字
+    } else {
+        // 沒有怪獸時，顯示一個清晰的不透明佔位圖
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://placehold.co/200x180/E0E0E0/333333?text=尚未選取怪獸&font=noto-sans-tc";
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保可見
+
+        DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
+        DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
@@ -385,17 +354,16 @@ function updateMonsterSnapshot(monster) {
         gameState.selectedMonsterId = null;
     }
 
-    // 更新身體部位顯示
     let hasAnyDnaInSlots = false;
     if (gameState.dnaSlotToBodyPartMapping && DOMElements.monsterPartsContainer) {
         Object.entries(gameState.dnaSlotToBodyPartMapping).forEach(([slotIndexStr, partNameKey]) => {
             const slotIndex = parseInt(slotIndexStr, 10);
-            const dnaInSlot = gameState.dnaCombinationSlots[slotIndex]; // 從組合槽獲取 DNA
+            const dnaInSlot = gameState.dnaCombinationSlots[slotIndex];
             const partElement = DOMElements[`monsterPart${partNameKey.charAt(0).toUpperCase() + partNameKey.slice(1)}`];
 
             if (partElement) {
                 const imagePath = getMonsterPartImagePath(dnaInSlot, partNameKey);
-                if (imagePath === 'transparent') { // 如果沒有圖片，清除背景並添加 empty-part class
+                if (imagePath === 'transparent') {
                     partElement.style.backgroundImage = 'none';
                     partElement.classList.add('empty-part');
                 } else {
@@ -407,25 +375,18 @@ function updateMonsterSnapshot(monster) {
                 hasAnyDnaInSlots = true;
             }
         });
-        // 根據是否有DNA在槽中，或是否有選定怪獸，來決定是否顯示部位的容器
-        if (hasAnyDnaInSlots || monster) { // 如果有DNA在槽中，或有選定怪獸，則不添加 empty-snapshot
+        if (hasAnyDnaInSlots || monster) {
             DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
-        } else { // 否則添加 empty-snapshot 並清除部位
+        } else {
             DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
-            clearMonsterBodyPartsDisplay(); // 清除部位顯示
+            clearMonsterBodyPartsDisplay();
         }
-    } else { // 如果沒有映射或容器，且沒有選定怪獸，則清除部位顯示
+    } else {
         if (!monster) clearMonsterBodyPartsDisplay();
     }
 }
 
 
-/**
- * 修正後的 applyDnaItemStyle 函數
- * 根據 DNA 的元素和稀有度來設定樣式。
- * @param {HTMLElement} element 要應用樣式的 DOM 元素。
- * @param {object | null} dnaData DNA 數據對象，包含 type 和 rarity。
- */
 function applyDnaItemStyle(element, dnaData) {
     if (!element) return;
 
@@ -440,7 +401,6 @@ function applyDnaItemStyle(element, dnaData) {
         return;
     }
 
-    // 映射中文元素到英文鍵 (用於CSS變數)
     const elementTypeMap = {
         '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
         '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
@@ -449,7 +409,6 @@ function applyDnaItemStyle(element, dnaData) {
     const elementBgVarName = `--element-${typeKey}-bg`;
     element.style.backgroundColor = `var(${elementBgVarName}, var(--bg-slot))`;
 
-    // 映射中文稀有度到英文鍵 (用於CSS變數和switch判斷)
     const rarityMap = {
         '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical'
     };
@@ -457,22 +416,14 @@ function applyDnaItemStyle(element, dnaData) {
 
     let rarityTextColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
 
-    // 根據 theme.css 中的稀有度顏色定義來設定文字和邊框顏色
-    // 移除 switch 語句中對 --success-color 和 --danger-color 的直接使用，
-    // 而是依賴 theme.css 中為稀有度定義的顏色變數。
-    // 例如：--rarity-rare-text-dark: var(--accent-color-dark);
-    //       --rarity-elite-text-dark: #ff704d;
-    // 如果 theme.css 中沒有為特定稀有度定義文字顏色，則會退回到 --text-primary
-
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
         nameSpan.style.color = rarityTextColorVar;
     } else {
         element.style.color = rarityTextColorVar;
     }
-    element.style.borderColor = rarityTextColorVar; // 邊框顏色也使用稀有度對應的文字顏色
+    element.style.borderColor = rarityTextColorVar;
 
-    // 確保稀有度徽章（如果存在）不顯示，因為顏色已直接應用於項目本身
     const rarityBadge = element.querySelector('.dna-rarity-badge');
     if (rarityBadge) {
         rarityBadge.style.display = 'none';
@@ -483,76 +434,71 @@ function applyDnaItemStyle(element, dnaData) {
 function renderDNACombinationSlots() {
     const container = DOMElements.dnaCombinationSlotsContainer;
     if (!container) return;
-    container.innerHTML = ''; // 清空現有槽位
+    container.innerHTML = '';
     gameState.dnaCombinationSlots.forEach((dna, index) => {
         const slot = document.createElement('div');
         slot.classList.add('dna-slot');
         slot.dataset.slotIndex = index;
-        const nameSpan = document.createElement('span'); // 為 DNA 名稱創建一個 span
-        nameSpan.classList.add('dna-name-text'); // 給予 class 以便 applyDnaItemStyle 可以定位
+        const nameSpan = document.createElement('span');
+        nameSpan.classList.add('dna-name-text');
 
-        if (dna && dna.id) { // 檢查 dna 是否為有效物件且有 id
+        if (dna && dna.id) {
             slot.classList.add('occupied');
             nameSpan.textContent = dna.name || '未知DNA';
-            slot.appendChild(nameSpan); // 將名稱 span 加入 slot
-            applyDnaItemStyle(slot, dna); // 應用樣式
-            slot.draggable = true; // 允許拖動
-            slot.dataset.dnaId = dna.id; // 存儲 DNA ID
-            slot.dataset.dnaSource = 'combination'; // 標記來源
+            slot.appendChild(nameSpan);
+            applyDnaItemStyle(slot, dna);
+            slot.draggable = true;
+            slot.dataset.dnaId = dna.id;
+            slot.dataset.dnaSource = 'combination';
         } else {
-            nameSpan.textContent = `組合槽 ${index + 1}`; // 空槽位提示
+            nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.appendChild(nameSpan);
             slot.classList.add('empty');
-            applyDnaItemStyle(slot, null); // 應用空槽樣式
+            applyDnaItemStyle(slot, null);
         }
         container.appendChild(slot);
     });
-    // 更新合成按鈕狀態
-    if(DOMElements.combineButton) DOMElements.combineButton.disabled = gameState.dnaCombinationSlots.filter(s => s !== null).length < 2; // 至少需要2個DNA才能組合
+    if(DOMElements.combineButton) DOMElements.combineButton.disabled = gameState.dnaCombinationSlots.filter(s => s !== null).length < 2;
 
-    // 組合槽變化後，也更新怪獸快照中的身體部位顯示
     if (typeof updateMonsterSnapshot === 'function') {
-        updateMonsterSnapshot(getSelectedMonster()); // 使用當前選中的怪獸，或者如果沒有則為null
+        updateMonsterSnapshot(getSelectedMonster());
     }
 }
 
 function renderPlayerDNAInventory() {
     const container = DOMElements.inventoryItemsContainer;
     if (!container) return;
-    container.innerHTML = ''; // 清空現有物品
-    const MAX_INVENTORY_SLOTS = 11; // 最大庫存槽位數量（不含刪除區）
+    container.innerHTML = '';
+    const MAX_INVENTORY_SLOTS = 11;
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
 
-    // 渲染已擁有的 DNA
     ownedDna.slice(0, MAX_INVENTORY_SLOTS).forEach(dna => {
         const item = document.createElement('div');
         item.classList.add('dna-item');
         const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text'); // 給予 class
+        nameSpan.classList.add('dna-name-text');
         nameSpan.textContent = dna.name || '未知DNA';
         item.appendChild(nameSpan);
-        applyDnaItemStyle(item, dna); // 應用樣式
+        applyDnaItemStyle(item, dna);
         item.draggable = true;
-        item.dataset.dnaId = dna.id; // 存儲 DNA 實例 ID
-        item.dataset.dnaBaseId = dna.baseId; // 存儲 DNA 模板 ID
-        item.dataset.dnaSource = 'inventory'; // 標記來源
+        item.dataset.dnaId = dna.id;
+        item.dataset.dnaBaseId = dna.baseId;
+        item.dataset.dnaSource = 'inventory';
         container.appendChild(item);
     });
 
-    // 渲染空的庫存槽位
     const emptySlotsToRender = MAX_INVENTORY_SLOTS - ownedDna.length;
     for (let i = 0; i < emptySlotsToRender; i++) {
         const emptySlot = document.createElement('div');
-        emptySlot.classList.add('inventory-slot-empty', 'dna-item'); // dna-item 確保樣式一致性
-        emptySlot.textContent = "空位"; // 提示文字
-        applyDnaItemStyle(emptySlot, null); // 應用空槽樣式
+        emptySlot.classList.add('inventory-slot-empty', 'dna-item');
+        emptySlot.textContent = "空位";
+        applyDnaItemStyle(emptySlot, null);
         container.appendChild(emptySlot);
     }
 
-    // 添加刪除區
     const deleteSlot = document.createElement('div');
     deleteSlot.id = 'inventory-delete-slot';
-    deleteSlot.classList.add('inventory-delete-slot', 'dna-item'); // dna-item 確保樣式一致性
+    deleteSlot.classList.add('inventory-delete-slot', 'dna-item');
     deleteSlot.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
     container.appendChild(deleteSlot);
 }
@@ -561,53 +507,54 @@ function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = 24; // 臨時背包最大槽位
+    const MAX_TEMP_SLOTS = 24;
     const currentTempItems = gameState.temporaryBackpack || [];
 
     currentTempItems.slice(0, MAX_TEMP_SLOTS).forEach((item, index) => {
         const slot = document.createElement('div');
-        // 添加 'dna-item' class 以便共用 dna-item 的基礎樣式，同時保留 'temp-backpack-slot'
         slot.classList.add('temp-backpack-slot', 'occupied', 'dna-item');
         const nameSpan = document.createElement('span');
         nameSpan.classList.add('dna-name-text');
         nameSpan.textContent = item.data.name || '未知物品';
         slot.appendChild(nameSpan);
-        applyDnaItemStyle(slot, item.data); // 假設物品數據結構與DNA相似
-        slot.onclick = () => handleMoveFromTempBackpackToInventory(index); // 綁定點擊事件
+        applyDnaItemStyle(slot, item.data);
+        slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
         container.appendChild(slot);
     });
 
     const emptyTempSlotsToRender = MAX_TEMP_SLOTS - currentTempItems.length;
     for (let i = 0; i < emptyTempSlotsToRender; i++) {
         const emptySlot = document.createElement('div');
-        emptySlot.classList.add('temp-backpack-slot', 'empty', 'dna-item'); // 添加 'dna-item'
-        emptySlot.textContent = `空位`; // 保持原樣或改為空
-        applyDnaItemStyle(emptySlot, null); // 應用空槽樣式
+        emptySlot.classList.add('temp-backpack-slot', 'empty', 'dna-item');
+        emptySlot.textContent = `空位`;
+        applyDnaItemStyle(emptySlot, null);
         container.appendChild(emptySlot);
     }
 }
 
-
+// ... (其餘的 renderMonsterFarm, updatePlayerInfoModal 等函數保持不變，此處省略以保持簡潔)
+// 您可以從我先前提供的完整 ui.js 版本中複製這些函數的其餘部分。
+// 重要的是 applyDnaItemStyle 和 updateMonsterSnapshot 函數已按上述方式修改。
 function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersListContainer;
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = ''; // 清空列表
+    listContainer.innerHTML = '';
 
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
-        farmHeaders.style.display = 'none'; // 如果沒有怪獸，隱藏表頭
+        farmHeaders.style.display = 'none';
         return;
     }
-    farmHeaders.style.display = 'grid'; // 如果有怪獸，顯示表頭
+    farmHeaders.style.display = 'grid';
 
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
         if (gameState.selectedMonsterId === monster.id) {
-            item.classList.add('selected'); // 可以添加選中樣式
-            item.style.backgroundColor = 'var(--accent-hover)'; // 簡單高亮
+            item.classList.add('selected');
+            item.style.backgroundColor = 'var(--accent-hover)';
         }
         item.dataset.monsterId = monster.id;
 
@@ -664,18 +611,18 @@ function renderMonsterFarm() {
         item.addEventListener('click', () => {
             gameState.selectedMonsterId = monster.id;
             updateMonsterSnapshot(monster);
-            // 移除其他怪獸的選中樣式，並為當前怪獸添加
-            listContainer.querySelectorAll('.farm-monster-item').forEach(el => el.classList.remove('selected'));
+            listContainer.querySelectorAll('.farm-monster-item').forEach(el => {
+                el.classList.remove('selected');
+                el.style.backgroundColor = ''; // 清除之前可能直接設定的背景色
+            });
             item.classList.add('selected');
             item.style.backgroundColor = 'var(--accent-hover)';
-             // 點擊農場怪獸時，切換到 "怪獸管理" 页签
             if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
                 const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
                 if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
             }
         });
 
-        // 為按鈕綁定事件
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => handleChallengeMonsterClick(e, monster.id));
         item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => handleReleaseMonsterClick(e, monster.id));
@@ -691,7 +638,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         return;
     }
     const stats = playerData.playerStats;
-    const nickname = playerData.nickname || stats.nickname || "未知玩家"; // 優先使用頂層 nickname
+    const nickname = playerData.nickname || stats.nickname || "未知玩家";
 
     let titlesHtml = '<p>尚無稱號</p>';
     if (stats.titles && stats.titles.length > 0) {
@@ -706,7 +653,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     let ownedMonstersHtml = '<p>尚無怪獸</p>';
     if (playerData.farmedMonsters && playerData.farmedMonsters.length > 0) {
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">`;
-        playerData.farmedMonsters.slice(0, 5).forEach(m => { // 最多顯示5隻
+        playerData.farmedMonsters.slice(0, 5).forEach(m => {
             ownedMonstersHtml += `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
         });
         if (playerData.farmedMonsters.length > 5) {
@@ -766,9 +713,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return;
     }
 
-    // 使用怪獸的稀有度來決定標題顏色
     const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
-    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--accent-color))`; // 添加預設
+    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--accent-color))`;
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <h4 class="monster-info-name-styled" style="color: ${rarityColorVar}; border-color: ${rarityColorVar};">
             ${monster.nickname}
@@ -777,18 +723,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
-    // 元素顯示
     let elementsDisplay = monster.elements.map(el => {
         const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
         return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
     }).join('');
 
-    // 抗性顯示
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
         resistancesHtml = '<ul class="list-disc list-inside text-sm">';
         for (const [element, value] of Object.entries(monster.resistances)) {
-            if (value === 0) continue; // 跳過值為0的抗性
+            if (value === 0) continue;
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             resistancesHtml += `<li>${element}: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
@@ -796,7 +740,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         resistancesHtml += '</ul>';
     }
 
-    // 技能顯示
     let skillsHtml = '<p class="text-sm">尚無技能</p>';
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
@@ -857,7 +800,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
 
-    // 更新活動紀錄
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
         logsContainer.innerHTML = monster.activityLog.map(log =>
@@ -867,7 +809,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         logsContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>';
     }
 
-    // 預設顯示第一個 tab
     if (DOMElements.monsterInfoTabs) {
         const firstTabButton = DOMElements.monsterInfoTabs.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
         if (firstTabButton) {
@@ -876,39 +817,34 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 }
 
-
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
     let tabButtonsContainer, tabContentsContainer;
 
-    if (modalId) { // 如果在彈窗內切換頁籤
+    if (modalId) {
         const modalElement = document.getElementById(modalId);
         if (!modalElement) return;
         tabButtonsContainer = modalElement.querySelector('.tab-buttons');
-        tabContentsContainer = modalElement; // 彈窗本身作為內容容器
-    } else { // 主畫面的頁籤切換
-        tabButtonsContainer = DOMElements.dnaFarmTabs; // 假設主畫面的頁籤容器是這個
-        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode; // 假設內容在頁籤容器的父節點下
+        tabContentsContainer = modalElement;
+    } else {
+        tabButtonsContainer = DOMElements.dnaFarmTabs;
+        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
     }
 
     if (!tabButtonsContainer || !tabContentsContainer) return;
 
-    // 移除所有按鈕的 active class
     tabButtonsContainer.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('active');
     });
-    // 為被點擊的按鈕添加 active class
     clickedButton.classList.add('active');
 
-    // 隱藏所有頁籤內容
     tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
-        content.style.display = 'none'; // 確保隱藏
+        content.style.display = 'none';
     });
-    // 顯示目標頁籤內容
     const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
     if (targetContent) {
         targetContent.classList.add('active');
-        targetContent.style.display = 'block'; // 確保顯示
+        targetContent.style.display = 'block';
     }
 }
 
@@ -946,13 +882,13 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
         thead = document.createElement('thead');
         table.appendChild(thead);
     }
-    thead.innerHTML = ''; // 清空現有表頭
+    thead.innerHTML = '';
     const headerRow = document.createElement('tr');
     headersConfig.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header.text;
-        th.dataset.sortKey = header.key; // 用於排序
-        th.innerHTML += ' <span class="sort-arrow"></span>'; // 用於顯示排序圖示
+        th.dataset.sortKey = header.key;
+        th.innerHTML += ' <span class="sort-arrow"></span>';
         if(header.align) th.style.textAlign = header.align;
         headerRow.appendChild(th);
     });
@@ -963,7 +899,7 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
         tbody = document.createElement('tbody');
         table.appendChild(tbody);
     }
-    tbody.innerHTML = ''; // 確保 tbody 也被清空，準備填充數據
+    tbody.innerHTML = '';
 }
 
 function updateLeaderboardTable(tableType, data) {
@@ -983,7 +919,7 @@ function updateLeaderboardTable(tableType, data) {
             { text: '擁有者', key: 'owner_nickname' },
             { text: '操作', key: 'actions', align: 'center' }
         ];
-    } else { // player
+    } else {
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
             { text: '玩家暱稱', key: 'nickname' },
@@ -993,10 +929,10 @@ function updateLeaderboardTable(tableType, data) {
             { text: '稱號', key: 'titles' }
         ];
     }
-    setupLeaderboardTableHeaders(tableId, headersConfig); // 重新設置表頭以應用 sortKey
+    setupLeaderboardTableHeaders(tableId, headersConfig);
 
     const tbody = table.querySelector('tbody');
-    tbody.innerHTML = ''; // 清空現有行
+    tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
         const colSpan = headersConfig.length;
@@ -1006,7 +942,7 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
-        row.insertCell().textContent = index + 1; // 排名
+        row.insertCell().textContent = index + 1;
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
@@ -1035,14 +971,14 @@ function updateLeaderboardTable(tableType, data) {
             row.insertCell().textContent = item.owner_nickname || 'N/A';
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.owner_id !== gameState.playerId && !item.isNPC) { // 不能挑戰自己的怪獸或NPC (除非有特別的NPC挑戰機制)
+            if (item.owner_id !== gameState.playerId && !item.isNPC) {
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
                 challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id);
                 actionsCell.appendChild(challengeBtn);
             }
-        } else { // player
+        } else {
             row.insertCell().textContent = item.nickname;
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
@@ -1071,7 +1007,7 @@ function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
                 arrowSpan.textContent = activeOrder === 'asc' ? '▲' : '▼';
                 arrowSpan.classList.add('active');
             } else {
-                arrowSpan.textContent = ''; // 清除非活動列的箭頭
+                arrowSpan.textContent = '';
                 arrowSpan.classList.remove('active');
             }
         }
@@ -1081,7 +1017,7 @@ function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
 function updateMonsterLeaderboardElementTabs(elements) {
     const tabsContainer = DOMElements.monsterLeaderboardElementTabs;
     if (!tabsContainer) return;
-    tabsContainer.innerHTML = ''; // 清空現有頁籤
+    tabsContainer.innerHTML = '';
 
     const elementTypeMap = {
         'fire':'火','water':'水','wood':'木','gold':'金','earth':'土',
@@ -1091,7 +1027,6 @@ function updateMonsterLeaderboardElementTabs(elements) {
     elements.forEach(elementKey => {
         const button = document.createElement('button');
         button.classList.add('tab-button');
-        // 將英文 key 轉換回中文顯示，如果找不到映射則直接顯示 key
         button.textContent = elementKey === 'all' ? '全部' : (elementTypeMap[elementKey.toLowerCase()] || elementKey);
         button.dataset.elementFilter = elementKey;
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
@@ -1114,7 +1049,7 @@ function updateFriendsListModal(players) {
     players.forEach(player => {
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('friend-item');
-        const status = player.status || (Math.random() > 0.5 ? 'online' : 'offline'); // 模擬狀態
+        const status = player.status || (Math.random() > 0.5 ? 'online' : 'offline');
         const statusClass = status === 'online' ? 'online' : 'offline';
 
         itemDiv.innerHTML = `
@@ -1126,13 +1061,12 @@ function updateFriendsListModal(players) {
         `;
         container.appendChild(itemDiv);
 
-        // 為新添加的按鈕綁定事件
         itemDiv.querySelector('.view-player-btn').addEventListener('click', async (e) => {
             const playerId = e.target.dataset.playerId;
             const playerNickname = e.target.dataset.playerNickname;
             showFeedbackModal('載入中...', `正在獲取玩家 ${playerNickname} 的資訊...`, true);
             try {
-                const playerData = await getPlayerData(playerId); // 從API獲取資料
+                const playerData = await getPlayerData(playerId);
                 hideModal('feedback-modal');
                 if (playerData) {
                     updatePlayerInfoModal(playerData, gameState.gameConfigs);
@@ -1149,7 +1083,7 @@ function updateFriendsListModal(players) {
 
 function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) return;
-    DOMElements.battleLogArea.innerHTML = ''; // 清空舊日誌
+    DOMElements.battleLogArea.innerHTML = '';
 
     logEntries.forEach(entry => {
         const p = document.createElement('p');
@@ -1173,29 +1107,27 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
         winnerP.className = 'battle-end winner mt-3';
         winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
         DOMElements.battleLogArea.appendChild(winnerP);
-    } else if (loserName && logEntries.some(l => l.includes("平手"))) { // 檢查是否平手
+    } else if (loserName && logEntries.some(l => l.includes("平手"))) {
          const drawP = document.createElement('p');
         drawP.className = 'battle-end draw mt-3';
         drawP.textContent = `🤝 平手！🤝`;
         DOMElements.battleLogArea.appendChild(drawP);
     }
-
-
     showModal('battle-log-modal');
 }
 
 function showDnaDrawModal(drawnItems) {
     if (!DOMElements.dnaDrawResultsGrid || !DOMElements.dnaDrawModal) return;
     const grid = DOMElements.dnaDrawResultsGrid;
-    grid.innerHTML = ''; // 清空舊結果
+    grid.innerHTML = '';
 
     if (!drawnItems || drawnItems.length === 0) {
         grid.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)]">本次未抽到任何DNA。</p>';
     } else {
         drawnItems.forEach((dna, index) => {
             const itemDiv = document.createElement('div');
-            itemDiv.classList.add('dna-draw-result-item'); // 使用定義的class
-            applyDnaItemStyle(itemDiv, dna); // 應用顏色
+            itemDiv.classList.add('dna-draw-result-item');
+            applyDnaItemStyle(itemDiv, dna);
 
             itemDiv.innerHTML = `
                 <span class="dna-name">${dna.name}</span>
@@ -1218,19 +1150,19 @@ function updateAnnouncementPlayerName(playerName) {
 function updateScrollingHints(hintsArray) {
     const container = DOMElements.scrollingHintsContainer;
     if (!container || !hintsArray || hintsArray.length === 0) return;
-    container.innerHTML = ''; // 清空舊提示
+    container.innerHTML = '';
 
-    const totalDuration = hintsArray.length * 5; // 每條提示顯示5秒
-    container.style.animationDuration = `${totalDuration}s`; // 更新容器的總動畫時長 (如果需要的話)
+    const totalDuration = hintsArray.length * 5;
+    container.style.animationDuration = `${totalDuration}s`;
 
     hintsArray.forEach((hint, index) => {
         const p = document.createElement('p');
         p.classList.add('scrolling-hint-text');
         p.textContent = hint;
-        p.style.animationDelay = `${index * 5}s`; // 每條提示延遲5秒出現
+        p.style.animationDelay = `${index * 5}s`;
         container.appendChild(p);
     });
 }
 
 
-console.log("UI module loaded - v5 with corrected DNA styling and more modal handling.");
+console.log("UI module loaded - v6 with opaque placeholder fix.");
