@@ -108,18 +108,18 @@
 /* DNA碎片欄位 (Inventory Grid) */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* 手機: 3格 */
     gap: 8px;
     align-items: stretch;
 }
 @media (min-width: 480px) {
     .inventory-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, 1fr); /* 中等螢幕: 4格 (可選調整) */
     }
 }
 @media (min-width: 768px) {
     .inventory-grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(6, 1fr); /* PC: 6格 */
     }
 }
 
@@ -127,22 +127,22 @@
 /* 臨時背包 (Temporary Backpack Grid) */
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* 手機: 3格 */
     gap: 8px;
 }
 @media (min-width: 480px) {
     .temp-backpack-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, 1fr); /* 中等螢幕: 4格 (與DNA碎片欄同步) */
     }
 }
-@media (min-width: 600px) {
+/* @media (min-width: 600px) {
     .temp-backpack-grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(6, 1fr); // 如果需要在 600px 時就變6格可以保留
     }
-}
+} */
 @media (min-width: 768px) {
     .temp-backpack-grid {
-        grid-template-columns: repeat(8, 1fr);
+        grid-template-columns: repeat(6, 1fr); /* PC: 6格 (與DNA碎片欄同步) */
     }
 }
 
@@ -150,8 +150,7 @@
 /* Action buttons grid (for Combine and Draw DNA buttons) */
 .action-buttons-grid.dual-buttons {
     display: grid;
-    /* OLD: grid-template-columns: 1fr 1fr; */
-    grid-template-columns: 3fr 1fr; /* NEW: Combine button (left) takes 3 parts, Draw DNA (right) takes 1 part */
+    grid-template-columns: 3fr 1fr;
     gap: 12px;
     align-items: stretch;
 }
@@ -166,7 +165,7 @@
 
 @media (max-width: 480px) {
     .action-buttons-grid.dual-buttons {
-        grid-template-columns: 1fr; /* Stack on small screens */
+        grid-template-columns: 1fr;
         gap: 8px;
     }
 }
@@ -249,9 +248,6 @@
 /* Monster Snapshot Area Layout - display:flex is in components.css */
 #monster-snapshot-area {
     /* Ensure it can contain absolutely positioned children */
-    /* display: flex; already handled */
-    /* align-items: center; already handled */
-    /* justify-content: center; already handled */
 }
 
 /* Grid for medals */
