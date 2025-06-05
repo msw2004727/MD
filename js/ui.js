@@ -71,7 +71,7 @@ function initializeDOMElements() {
         feedbackModalTitle: document.getElementById('feedback-modal-title'),
         feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
         feedbackModalMessage: document.getElementById('feedback-modal-message'),
-        feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
+        feedbackMonsterDetails: document.getElementById('feedback-monster-details'), // 將用於顯示怪獸詳細資訊
         confirmationModal: document.getElementById('confirmation-modal'),
         confirmationModalTitle: document.getElementById('confirmation-modal-title'),
         confirmationModalBody: document.getElementById('confirmation-modal-body'),
@@ -155,27 +155,72 @@ function hideAllModals() {
     gameState.activeModalId = null;
 }
 
+// 修改 showFeedbackModal 函數以顯示怪獸詳細資訊和調整按鈕
 function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null) {
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
     DOMElements.feedbackModalTitle.textContent = title;
-    DOMElements.feedbackModalMessage.innerHTML = message;
+    // 將 message 設置為空或只顯示主要訊息，詳細內容由 monsterDetails 生成
+    DOMElements.feedbackModalMessage.innerHTML = message; 
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
 
-    if (monsterDetails) {
-        toggleElementDisplay(DOMElements.feedbackMonsterDetails, true);
-    } else {
+    const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
+    // 清除舊的怪獸詳細內容
+    if (DOMElements.feedbackMonsterDetails) {
+        DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
 
-    const footer = DOMElements.feedbackModal.querySelector('.modal-footer');
-    if (footer) footer.remove();
+    if (monsterDetails) {
+        toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
+        
+        let elementsDisplay = monsterDetails.elements.map(el => {
+            const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
+            return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
+        }).join('');
+
+        DOMElements.feedbackMonsterDetails.innerHTML = `
+            <div class="feedback-monster-info-grid">
+                <div class="feedback-monster-info-section">
+                    <h5 class="feedback-monster-info-title">基礎屬性</h5>
+                    <p><strong>暱稱:</strong> ${monsterDetails.nickname || '未知怪獸'}</p>
+                    <p><strong>元素:</strong> ${elementsDisplay || '無'}</p>
+                    <p><strong>稀有度:</strong> <span class="text-rarity-${(monsterDetails.rarity || 'common').toLowerCase()}">${monsterDetails.rarity || '普通'}</span></p>
+                    <p><strong>HP:</strong> ${monsterDetails.hp || 0}</p>
+                    <p><strong>MP:</strong> ${monsterDetails.mp || 0}</p>
+                    <p><strong>攻擊:</strong> ${monsterDetails.attack || 0}</p>
+                    <p><strong>防禦:</strong> ${monsterDetails.defense || 0}</p>
+                    <p><strong>速度:</strong> ${monsterDetails.speed || 0}</p>
+                    <p><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</p>
+                    <p><strong>總評價:</strong> <span class="text-[var(--success-color)]">${monsterDetails.score || 0}</span></p>
+                </div>
+                <div class="feedback-monster-info-section">
+                    <h5 class="feedback-monster-info-title">AI 描述</h5>
+                    <div class="mt-2">
+                        <p class="font-semibold text-[var(--accent-color)]">個性分析:</p>
+                        <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
+                        <p class="font-semibold text-[var(--accent-color)] mt-2">背景介紹:</p>
+                        <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
+                        <p class="font-semibold text-[var(--accent-color)] mt-2">綜合評價:</p>
+                        <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
+                    </div>
+                </div>
+            </div>
+            <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
+        `;
+    }
+
+    // 處理 modal-footer，移除舊的或創建新的
+    let footer = DOMElements.feedbackModal.querySelector('.modal-footer');
+    if (footer) footer.remove(); // 移除所有 footer
+
+    // 創建新的 footer，並根據 actionButtons 決定是否添加按鈕
+    const newFooter = document.createElement('div');
+    newFooter.className = 'modal-footer';
 
     if (actionButtons && actionButtons.length > 0) {
-        const newFooter = document.createElement('div');
-        newFooter.className = 'modal-footer';
         actionButtons.forEach(btnConfig => {
             const button = document.createElement('button');
             button.textContent = btnConfig.text;
@@ -186,15 +231,28 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             };
             newFooter.appendChild(button);
         });
-        const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
-        if (modalContent) modalContent.appendChild(newFooter);
     } else {
-        if (DOMElements.feedbackModalCloseX) {
-            DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
-        }
+        // 如果沒有指定 actionButtons，則不添加任何按鈕 (符合刪除關閉按鈕的要求)
+        // 但由於您要求刪除 "視窗的關閉按鈕" (彈窗底部的按鈕)，所以這裡不添加任何按鈕是正確的。
+        // 右上角的 X 關閉按鈕不受這裡的控制，它會一直存在。
     }
+    const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
+    if (modalContent) modalContent.appendChild(newFooter);
+
+
+    // 處理右上角的 X 關閉按鈕的樣式和行為
+    if (DOMElements.feedbackModalCloseX) {
+        DOMElements.feedbackModalCloseX.setAttribute('data-modal-id', 'feedback-modal');
+        DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
+        // CSS 樣式將在 components.css 中定義為紅色圈圈帶 X
+    }
+    
+    // 確保 modal-content 類別調整以適應新的寬度
+    DOMElements.feedbackModal.querySelector('.modal-content').classList.add('large-feedback-modal'); // 添加一個新的類來擴展寬度
+
     showModal('feedback-modal');
 }
+
 
 function showConfirmationModal(title, message, onConfirm, confirmButtonClass = 'danger', confirmButtonText = '確定', monsterToRelease = null) {
     if (!DOMElements.confirmationModal || !DOMElements.confirmationModalTitle || !DOMElements.confirmationModalBody || !DOMElements.confirmActionBtn) {
@@ -846,37 +904,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 }
 
-function switchTabContent(targetTabId, clickedButton, modalId = null) {
-    let tabButtonsContainer, tabContentsContainer;
-
-    if (modalId) {
-        const modalElement = document.getElementById(modalId);
-        if (!modalElement) return;
-        tabButtonsContainer = modalElement.querySelector('.tab-buttons');
-        tabContentsContainer = modalElement;
-    } else {
-        tabButtonsContainer = DOMElements.dnaFarmTabs;
-        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
-    }
-
-    if (!tabButtonsContainer || !tabContentsContainer) return;
-
-    tabButtonsContainer.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    clickedButton.classList.add('active');
-
-    tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-        content.style.display = 'none';
-    });
-    const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
-    if (targetContent) {
-        targetContent.classList.add('active');
-        targetContent.style.display = 'block';
-    }
-}
-
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
     if (!container) return;
@@ -1024,23 +1051,6 @@ function updateLeaderboardTable(tableType, data) {
         }
     });
     updateLeaderboardSortIcons(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
-}
-
-function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
-    if (!tableElement) return;
-    const headers = tableElement.querySelectorAll('thead th');
-    headers.forEach(th => {
-        const arrowSpan = th.querySelector('.sort-arrow');
-        if (arrowSpan) {
-            if (th.dataset.sortKey === activeKey) {
-                arrowSpan.textContent = activeOrder === 'asc' ? '▲' : '▼';
-                arrowSpan.classList.add('active');
-            } else {
-                arrowSpan.textContent = '';
-                arrowSpan.classList.remove('active');
-            }
-        }
-    });
 }
 
 function updateMonsterLeaderboardElementTabs(elements) {
