@@ -91,8 +91,9 @@ function handleDragLeave(event) {
 
 async function handleDrop(event) {
     event.preventDefault();
-    const dropTargetElement = event.target.closest('.dna-slot, .dna-item, #inventory-delete-slot'); // 簡化查找
-    // .dna-item 包含 .inventory-slot-empty 和 .temp-backpack-slot (以及 .dna-item 本身)
+    const dropTargetElement = event.target.closest('.dna-slot, .dna-item, #inventory-delete-slot, .temp-backpack-slot'); 
+    // .dna-item 包含 .inventory-slot-empty 和 .dna-item.occupied
+    // .temp-backpack-slot 包含 .temp-backpack-slot.empty 和 .temp-backpack-slot.occupied
 
     if (!draggedDnaObject || !dropTargetElement) {
         console.warn("Drop: No dragged DNA object or invalid drop target.", { draggedDnaObject, dropTargetElement });
@@ -194,10 +195,10 @@ async function handleDrop(event) {
     }
     // --- D. 處理拖曳到臨時背包區 (包括空槽和已佔用槽) ---
     else if (dropTargetElement.classList.contains('temp-backpack-slot') || dropTargetElement.id === 'temporary-backpack-items') {
-        let targetTempIndex = -1;
+        let targetTempIndex;
         if (dropTargetElement.dataset.tempItemIndex) { // 如果拖曳到特定的槽位
             targetTempIndex = parseInt(dropTargetElement.dataset.tempItemIndex, 10);
-        } else if (dropTargetElement.id === 'temporary-backpack-items') { // 如果拖曳到容器本身，則加到末尾
+        } else if (dropTargetElement.id === 'temporary-backpack-items') { // 如果拖曳到容器本身，則加到末尾的空位
             targetTempIndex = gameState.temporaryBackpack.length;
         }
 
@@ -213,14 +214,15 @@ async function handleDrop(event) {
         }
         delete itemToAddToTemp.data.originalInstanceIdIfFromInventory; // 清理臨時屬性
 
-        let itemInTargetTempSlot = null;
+
+        let itemCurrentlyInTargetTempSlot = null;
         if (targetTempIndex < gameState.temporaryBackpack.length) {
-            itemInTargetTempSlot = gameState.temporaryBackpack[targetTempIndex];
+            itemCurrentlyInTargetTempSlot = gameState.temporaryBackpack[targetTempIndex];
         }
 
         // 1. 從原始來源移除被拖曳的 DNA
         if (sourceInfo.type === 'inventory') {
-            deleteDNAFromInventory(sourceInfo.id);
+            deleteDNAFromInventory(sourceInfo.id); // 從庫存中移除
         } else if (sourceInfo.type === 'combination') {
             gameState.dnaCombinationSlots[sourceInfo.id] = null;
             renderDNACombinationSlots();
@@ -228,35 +230,40 @@ async function handleDrop(event) {
         } else if (sourceInfo.type === 'temporaryBackpack') {
             // 如果是從臨時背包內部拖曳，則先從原位置移除
             gameState.temporaryBackpack.splice(sourceInfo.id, 1);
-            // 重新計算目標索引，因為列表長度已變
+            // 由於移除了源項目，如果目標索引在源索引之後，則目標索引需要減1
             if (targetTempIndex > sourceInfo.id) {
-                targetTempIndex--; // 如果目標索引在源索引之後，則目標索引需要減1
+                targetTempIndex--; 
             }
         }
         
-        // 2. 將物品插入到目標位置
-        if (targetTempIndex < gameState.temporaryBackpack.length) {
-            gameState.temporaryBackpack.splice(targetTempIndex, 0, itemToAddToTemp);
-        } else {
-            gameState.temporaryBackpack.push(itemToAddToTemp);
-        }
-
-        // 3. 如果目標槽原本有物品，且來源不是臨時背包（即發生了替換），則將被替換的物品退回到主庫存末尾
-        if (itemInTargetTempSlot && sourceInfo.type !== 'temporaryBackpack') {
-            if (!itemInTargetTempSlot.data || !itemInTargetTempSlot.instanceId) {
+        // 2. 處理被替換的物品（如果存在且不是內部拖曳）
+        if (itemCurrentlyInTargetTempSlot && sourceInfo.type !== 'temporaryBackpack') {
+            // 被替換的物品（itemCurrentlyInTargetTempSlot）將被退回到主庫存
+            if (!itemCurrentlyInTargetTempSlot.data || !itemCurrentlyInTargetTempSlot.instanceId) {
                 console.warn("Temporary backpack target slot item had no valid data, not returning to inventory.");
-            } else if (!gameState.playerData.playerOwnedDNA.find(d => d.id === itemInTargetTempSlot.instanceId)) {
-                // 如果被替換的物品有原始實例ID，則用那個ID來重新創建它
+            } else {
                 const dnaToReturn = {
-                    ...itemInTargetTempSlot.data,
-                    id: itemInTargetTempSlot.instanceId,
-                    baseId: itemInTargetTempSlot.data.baseId || itemInTargetTempSlot.data.id // 確保 baseId 也存在
+                    ...itemCurrentlyInTargetTempSlot.data,
+                    id: itemCurrentlyInTargetTempSlot.instanceId,
+                    baseId: itemCurrentlyInTargetTempSlot.data.baseId || itemCurrentlyInTargetTempSlot.data.id 
                 };
-                gameState.playerData.playerOwnedDNA.push(dnaToReturn);
+                // 確保物品不在庫存中才添加，避免重複
+                if (!gameState.playerData.playerOwnedDNA.find(d => d.id === dnaToReturn.id)) {
+                    gameState.playerData.playerOwnedDNA.push(dnaToReturn);
+                }
             }
         }
 
-        renderPlayerDNAInventory(); // 更新庫存UI
+        // 3. 將物品插入到目標位置
+        // 如果目標索引超過當前背包實際長度，則直接推入（append）
+        if (targetTempIndex > gameState.temporaryBackpack.length) {
+            gameState.temporaryBackpack.push(itemToAddToTemp);
+        } else {
+            gameState.temporaryBackpack.splice(targetTempIndex, 0, itemToAddToTemp);
+        }
+
+        // 重新渲染所有受影響的 UI 組件
+        renderPlayerDNAInventory(); // 更新庫存UI（因為可能從臨時背包退回了物品）
         renderTemporaryBackpack(); // 更新臨時背包UI
     } else {
         console.log("Drop: Unhandled drop target or scenario.", dropTargetElement.id, dropTargetElement.className);
@@ -713,6 +720,11 @@ function initializeEventListeners() {
         DOMElements.temporaryBackpackContainer
     ];
 
+    // Note: Temporary Backpack items (slots) are now also direct drop targets.
+    // Ensure that DOMElements.temporaryBackpackContainer is covering all children elements.
+    // If you need to drop precisely on empty/occupied temp slots, the `closest` logic in handleDrop needs to find them correctly.
+    // The current `dropTargetElement` correctly identifies `.temp-backpack-slot`.
+
     dropZones.forEach(zone => {
         if (zone) {
             zone.addEventListener('dragover', handleDragOver);
@@ -730,5 +742,5 @@ function initializeEventListeners() {
     handleDnaDrawModal();
     handleAnnouncementModalClose();
 
-    console.log("All event listeners initialized with v4 drag-drop logic (precise placement focus).");
+    console.log("All event listeners initialized with enhanced drag-drop logic for temporary backpack.");
 }
