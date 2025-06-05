@@ -188,57 +188,90 @@ function hideAllModals() {
     gameState.activeModalId = null;
 }
 
-// 修改 showFeedbackModal 函數以顯示怪獸詳細資訊和調整按鈕
+// 修正後的 showFeedbackModal 函數，針對合成成功進行優化排版
 function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null) {
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
     DOMElements.feedbackModalTitle.textContent = title;
-    // 將 message 設置為空或只顯示主要訊息，詳細內容由 monsterDetails 生成
+    // 初始訊息，在有 monsterDetails 時會被覆蓋或補充
     DOMElements.feedbackModalMessage.innerHTML = message; 
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
 
     const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    // 清除舊的怪獸詳細內容
+    // 清除舊的怪獸詳細內容區域的內容
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
+    
+    // 移除現有的圖片橫幅和基本數值容器，避免重複添加
+    const existingBanner = DOMElements.feedbackModal.querySelector('#monster-banner-container');
+    if (existingBanner) existingBanner.remove();
+    const existingBasicStats = DOMElements.feedbackModal.querySelector('.feedback-monster-basic-stats');
+    if (existingBasicStats) existingBasicStats.remove();
+
 
     if (monsterDetails) {
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
-        
+
+        const primaryElement = monsterDetails.elements && monsterDetails.elements.length > 0 ? monsterDetails.elements[0] : '無';
+        const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
+        const monsterBannerPath = `https://placehold.co/700x150/4a5568/a0aec0?text=${encodeURIComponent(monsterDetails.nickname || '新怪獸')}+Banner&font=noto-sans-tc`; // 佔位圖橫幅
+        const monsterSilhouettePath = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"; // 輪廓圖，用於基本數值背景
+
+        // 創建怪獸橫幅圖片容器
+        const bannerContainer = document.createElement('div');
+        bannerContainer.id = 'monster-banner-container';
+        bannerContainer.innerHTML = `
+            <img src="${monsterBannerPath}" alt="${monsterDetails.nickname || '新怪獸'} Banner" class="w-full h-auto rounded-md object-cover">
+        `;
+        feedbackModalBody.insertBefore(bannerContainer, DOMElements.feedbackModalMessage.nextSibling); // 插入到消息下方
+
+        // 創建怪獸基本數值區塊
+        const basicStatsContainer = document.createElement('div');
+        basicStatsContainer.className = 'feedback-monster-basic-stats text-center py-3';
         let elementsDisplay = monsterDetails.elements.map(el => {
             const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
             return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
         }).join('');
 
+        basicStatsContainer.innerHTML = `
+            <div class="feedback-monster-stats-grid">
+                <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
+                <div><strong>MP:</strong> ${monsterDetails.mp || 0}</div>
+                <div><strong>攻擊:</strong> ${monsterDetails.attack || 0}</div>
+                <div><strong>防禦:</strong> ${monsterDetails.defense || 0}</div>
+                <div><strong>速度:</strong> ${monsterDetails.speed || 0}</div>
+                <div><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</div>
+            </div>
+            <p class="text-sm mt-2"><strong>元素:</strong> ${elementsDisplay || '無'}</p>
+            <p class="text-sm"><strong>稀有度:</strong> <span class="text-rarity-${rarityKey}">${monsterDetails.rarity || '普通'}</span></p>
+            <p class="text-base mt-2"><strong>總評價:</strong> <span class="text-[var(--success-color)] text-lg font-bold">${monsterDetails.score || 0}</span></p>
+        `;
+        feedbackModalBody.insertBefore(basicStatsContainer, bannerContainer.nextSibling); // 插入到橫幅下方
+
+
+        DOMElements.feedbackModalMessage.innerHTML = `
+            <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
+            ${message} `;
+
+
+        // 重新組織 AI 描述和其他詳細資訊到 feedbackMonsterDetails 容器
         DOMElements.feedbackMonsterDetails.innerHTML = `
-            <div class="feedback-monster-info-grid">
+            <div class="feedback-monster-ai-grid mt-4">
                 <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">基礎屬性</h5>
-                    <p><strong>暱稱:</strong> ${monsterDetails.nickname || '未知怪獸'}</p>
-                    <p><strong>元素:</strong> ${elementsDisplay || '無'}</p>
-                    <p><strong>稀有度:</strong> <span class="text-rarity-${(monsterDetails.rarity || 'common').toLowerCase()}">${monsterDetails.rarity || '普通'}</span></p>
-                    <p><strong>HP:</strong> ${monsterDetails.hp || 0}</p>
-                    <p><strong>MP:</strong> ${monsterDetails.mp || 0}</p>
-                    <p><strong>攻擊:</strong> ${monsterDetails.attack || 0}</p>
-                    <p><strong>防禦:</strong> ${monsterDetails.defense || 0}</p>
-                    <p><strong>速度:</strong> ${monsterDetails.speed || 0}</p>
-                    <p><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</p>
-                    <p><strong>總評價:</strong> <span class="text-[var(--success-color)]">${monsterDetails.score || 0}</span></p>
+                    <h5 class="feedback-monster-info-title">AI 個性分析</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
                 </div>
                 <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">AI 描述</h5>
-                    <div class="mt-2">
-                        <p class="font-semibold text-[var(--accent-color)]">個性分析:</p>
-                        <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
-                        <p class="font-semibold text-[var(--accent-color)] mt-2">背景介紹:</p>
-                        <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
-                        <p class="font-semibold text-[var(--accent-color)] mt-2">綜合評價:</p>
-                        <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
-                    </div>
+                    <h5 class="feedback-monster-info-title">AI 背景介紹</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
+                </div>
+                <div class="feedback-monster-info-section col-span-full">
+                    <h5 class="feedback-monster-info-title">AI 綜合評價與培養建議</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
                 </div>
             </div>
             <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
@@ -249,7 +282,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     let footer = DOMElements.feedbackModal.querySelector('.modal-footer');
     if (footer) footer.remove(); // 移除所有 footer
 
-    // 創建新的 footer，並根據 actionButtons 決定是否添加按鈕
+    // 創建新的 footer (只包含 actionButtons，如果傳入的話)
     const newFooter = document.createElement('div');
     newFooter.className = 'modal-footer';
 
@@ -266,7 +299,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         });
     } else {
         // 如果沒有指定 actionButtons，則不添加任何按鈕 (符合刪除關閉按鈕的要求)
-        // 但由於您要求刪除 "視窗的關閉按鈕" (彈窗底部的按鈕)，所以這裡不添加任何按鈕是正確的。
         // 右上角的 X 關閉按鈕不受這裡的控制，它會一直存在。
     }
     const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
@@ -400,7 +432,7 @@ function updateMonsterSnapshot(monster) {
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
 
     if (monster && monster.id) {
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true"; // 實際怪獸圖
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"; // 實際怪獸圖
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
@@ -937,6 +969,37 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 }
 
+function switchTabContent(targetTabId, clickedButton, modalId = null) {
+    let tabButtonsContainer, tabContentsContainer;
+
+    if (modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) return;
+        tabButtonsContainer = modalElement.querySelector('.tab-buttons');
+        tabContentsContainer = modalElement;
+    } else {
+        tabButtonsContainer = DOMElements.dnaFarmTabs;
+        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
+    }
+
+    if (!tabButtonsContainer || !tabContentsContainer) return;
+
+    tabButtonsContainer.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    clickedButton.classList.add('active');
+
+    tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        content.style.display = 'none';
+    });
+    const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        targetContent.style.display = 'block';
+    }
+}
+
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
     if (!container) return;
@@ -1060,11 +1123,17 @@ function updateLeaderboardTable(tableType, data) {
             row.insertCell().textContent = item.owner_nickname || 'N/A';
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.owner_id !== gameState.playerId && !item.isNPC) {
+            if (item.isNPC) { // Only challenge if it's an NPC or another player's monster
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id);
+                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, null, item.id); // For NPC, pass npcId
+                actionsCell.appendChild(challengeBtn);
+            } else if (item.owner_id && item.owner_id !== gameState.playerId) {
+                const challengeBtn = document.createElement('button');
+                challengeBtn.textContent = '挑戰';
+                challengeBtn.className = 'button primary text-xs py-1 px-2';
+                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null); // For player monster
                 actionsCell.appendChild(challengeBtn);
             }
         } else {
