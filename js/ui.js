@@ -338,7 +338,7 @@ function updateMonsterSnapshot(monster) {
         gameState.selectedMonsterId = monster.id;
     } else {
         // *** 修改點：使用透明背景的佔位圖 ***
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb001.png?raw=true";
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
