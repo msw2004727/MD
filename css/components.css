@@ -556,12 +556,36 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     justify-content: center;
     border-radius: 50%; 
     transition: background-color 0.2s, color 0.2s;
+    z-index: 1; /* 確保在其他內容之上 */
 }
 .modal-close:hover, .modal-close:focus { 
     color: var(--text-primary);
     background-color: var(--border-color); 
     text-decoration: none;
 }
+/* 新增：右上角關閉按鈕樣式 */
+#feedback-modal-close-x {
+    background-color: var(--danger-color); /* 紅色背景 */
+    color: var(--button-danger-text); /* 白色 X */
+    width: 28px; /* 調整大小 */
+    height: 28px;
+    font-size: 20px; /* X 的大小 */
+    line-height: 28px; /* 垂直居中 X */
+    text-align: center;
+    border-radius: 50%; /* 圓形 */
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* 小陰影 */
+    border: 1px solid var(--danger-hover-dark); /* 邊框 */
+}
+#feedback-modal-close-x:hover {
+    background-color: var(--danger-hover-dark); /* 懸停時顏色變深 */
+    color: var(--button-danger-text);
+}
+body.light-theme #feedback-modal-close-x:hover {
+    background-color: var(--danger-hover-light);
+}
+
+
 #confirmation-modal-close-x.modal-close { 
     background-color: var(--danger-color);
     color: var(--button-danger-text); 
@@ -1128,13 +1152,55 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.8rem;
 }
 
-/* Styles for DNA text within items/slots to ensure visibility */
-.dna-name-text {
-    display: block; /* Ensure it takes up space */
-    /* color is set by applyDnaItemStyle via parent */
+/* New styles for large feedback modal content */
+.modal-content.large-feedback-modal {
+    max-width: 750px; /* 給予更大的寬度 */
+    padding: 20px 25px; /* 增加內邊距 */
+}
+@media (max-width: 768px) { /* 響應式調整 */
+    .modal-content.large-feedback-modal {
+        max-width: 95%; /* 小螢幕上保持比例 */
+    }
 }
 
-/* Ensure rarity badge in DNA items has high enough z-index if overlapping */
-.dna-item .dna-rarity-badge {
-    z-index: 1;
+.feedback-monster-info-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* 默認單列 */
+    gap: 15px;
+    margin-top: 15px;
+}
+@media (min-width: 600px) { /* 較大螢幕上分為兩列 */
+    .feedback-monster-info-grid {
+        grid-template-columns: 1fr 1.5fr; /* 左邊基礎屬性，右邊 AI 描述 */
+    }
+}
+
+.feedback-monster-info-section {
+    background-color: var(--bg-primary);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    max-height: 350px; /* 限制高度，內部可滾動 */
+    overflow-y: auto;
+}
+.feedback-monster-info-section:last-child {
+    max-height: 450px; /* AI 描述部分可以更高 */
+}
+
+.feedback-monster-info-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border-color);
+}
+.feedback-monster-info-section p {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+.feedback-monster-info-section strong {
+    color: var(--text-secondary);
+    margin-right: 5px;
 }
