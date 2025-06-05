@@ -4,54 +4,66 @@
 
 /**
  * 將 DNA 從來源（庫存或另一個組合槽）移動到指定的組合槽。
- * @param {string} dnaInstanceId 要移動的 DNA 實例 ID。
+ * @param {string | null} dnaInstanceId 要移動的 DNA 實例 ID (來自庫存) 或 null (如果拖曳的是組合槽本身)。
+ * @param {object | null} draggedDnaObject 被拖曳的 DNA 物件 (如果從組合槽拖曳)。
  * @param {'inventory' | 'combination'} source 來源 ('inventory' 或 'combination')。
  * @param {number | null} sourceSlotIndex 如果來源是組合槽，則為其索引。
  * @param {number} targetSlotIndex 目標組合槽的索引。
  */
-function moveDnaToCombinationSlot(dnaInstanceId, source, sourceSlotIndex, targetSlotIndex) {
+function moveDnaToCombinationSlot(dnaInstanceId, draggedDnaObject, source, sourceSlotIndex, targetSlotIndex) {
     let dnaToMove = null;
 
-    if (source === 'inventory') {
+    if (source === 'inventory' && dnaInstanceId) {
         const playerDna = gameState.playerData.playerOwnedDNA.find(d => d.id === dnaInstanceId);
         if (playerDna) {
-            dnaToMove = { ...playerDna }; // 複製一份，確保組合槽中的是獨立物件
+            dnaToMove = { ...playerDna }; // 從庫存拖曳，創建副本
         }
-    } else if (source === 'combination' && sourceSlotIndex !== null && sourceSlotIndex !== targetSlotIndex) {
-        // 從一個組合槽移動到另一個組合槽
-        dnaToMove = gameState.dnaCombinationSlots[sourceSlotIndex];
-        if (dnaToMove) {
-            gameState.dnaCombinationSlots[sourceSlotIndex] = null; // 清除來源槽
-        }
-    } else if (source === 'combination' && sourceSlotIndex !== null && sourceSlotIndex === targetSlotIndex) {
-        // 拖曳到自身，不執行任何操作
-        renderDNACombinationSlots();
-        return;
+    } else if (source === 'combination' && draggedDnaObject && sourceSlotIndex !== null) {
+        dnaToMove = draggedDnaObject; // 從組合槽拖曳，直接使用物件
+        // 清除來源槽的操作將在後面判斷是否成功放置後進行，或在交換時處理
     }
 
     if (!dnaToMove) {
-        console.warn(`moveDnaToCombinationSlot: 無法找到 ID 為 ${dnaInstanceId} 的 DNA。來源: ${source}`);
-        renderDNACombinationSlots();
+        console.warn(`moveDnaToCombinationSlot: 無法找到要移動的 DNA。實例ID: ${dnaInstanceId}, 來源: ${source}`);
+        renderDNACombinationSlots(); // 保持UI一致
         return;
     }
 
-    // 檢查目標槽位是否是有效的組合槽索引
+    // 檢查目標槽位索引的有效性
     if (targetSlotIndex < 0 || targetSlotIndex >= gameState.dnaCombinationSlots.length) {
         console.warn(`moveDnaToCombinationSlot: 無效的目標槽位索引 ${targetSlotIndex}。`);
-        // 如果來源是組合槽，且移動失敗，則將物品放回原位 (如果原位仍然是 null)
-        if (source === 'combination' && sourceSlotIndex !== null && gameState.dnaCombinationSlots[sourceSlotIndex] === null) {
-            gameState.dnaCombinationSlots[sourceSlotIndex] = dnaToMove;
-        }
+        // 注意：如果拖曳失敗且是從組合槽拖出，物品會停留在原位（因為還沒清除來源槽）
         renderDNACombinationSlots();
         return;
     }
 
-    // *** 修正重點：直接將拖曳的物品賦值給目標槽位，這會自動覆蓋（清除）目標槽原有的物品 ***
-    // gameState.dnaCombinationSlots[targetSlotIndex] 中原有的物品（如果存在）會被 dnaToMove 替換。
-    gameState.dnaCombinationSlots[targetSlotIndex] = dnaToMove;
+    // 如果拖曳到自身，不執行任何操作
+    if (source === 'combination' && sourceSlotIndex === targetSlotIndex) {
+        renderDNACombinationSlots();
+        return;
+    }
 
-    renderDNACombinationSlots();
+    const itemCurrentlyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex];
+
+    if (source === 'inventory') {
+        // 從庫存拖曳到組合槽 (無論目標槽是否已佔用，都直接覆蓋)
+        gameState.dnaCombinationSlots[targetSlotIndex] = dnaToMove;
+    } else if (source === 'combination' && sourceSlotIndex !== null) {
+        // 從一個組合槽拖曳到另一個組合槽
+        if (itemCurrentlyInTargetSlot) {
+            // 目標槽已佔用，執行交換
+            gameState.dnaCombinationSlots[targetSlotIndex] = dnaToMove;
+            gameState.dnaCombinationSlots[sourceSlotIndex] = itemCurrentlyInTargetSlot; // 將原目標槽物品移回來源槽
+        } else {
+            // 目標槽為空，直接移動
+            gameState.dnaCombinationSlots[targetSlotIndex] = dnaToMove;
+            gameState.dnaCombinationSlots[sourceSlotIndex] = null; // 清空來源槽
+        }
+    }
+
+    renderDNACombinationSlots(); // 重新渲染所有組合槽
 }
+
 
 /**
  * 從玩家庫存中刪除指定的 DNA。
@@ -324,7 +336,7 @@ function addAllCultivationItemsToTempBackpack() {
  * @param {object} dnaTemplate DNA 模板對象。
  */
 function addDnaToTemporaryBackpack(dnaTemplate) {
-    if (!dnaTemplate || !dnaTemplate.id) return; // 確保 dnaTemplate 和 id 存在
+    if (!dnaTemplate || !dnaTemplate.id) return;
     gameState.temporaryBackpack.push({
         type: 'dna',
         data: { ...dnaTemplate },
@@ -351,15 +363,14 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
 
     const itemToMove = gameState.temporaryBackpack[tempBackpackIndex];
     if (itemToMove.type === 'dna') {
-        // 為移入庫存的 DNA 生成一個新的實例 ID
         const newInstanceId = `dna_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
         const newOwnedDna = {
-            ...itemToMove.data, // 複製模板數據
-            id: newInstanceId,  // 賦予新的實例 ID
-            baseId: itemToMove.data.id // 保留原始模板 ID 作為 baseId
+            ...itemToMove.data,
+            id: newInstanceId,
+            baseId: itemToMove.data.id
         };
         gameState.playerData.playerOwnedDNA.push(newOwnedDna);
-        gameState.temporaryBackpack.splice(tempBackpackIndex, 1); // 從臨時背包移除
+        gameState.temporaryBackpack.splice(tempBackpackIndex, 1);
 
         renderPlayerDNAInventory();
         renderTemporaryBackpack();
@@ -586,4 +597,4 @@ function sortAndRenderLeaderboard(tableType, dataToRender = null) {
 }
 
 
-console.log("Game logic module loaded with drag-drop fix.");
+console.log("Game logic module loaded with updated drag-drop logic.");
