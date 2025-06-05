@@ -46,7 +46,8 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS: GameConfigs = {
         "dna_recharge_conversion_factor": 0.15,
         "max_farm_slots": 10, # 新增農場上限的預設值
         "max_monster_skills": 3, # 新增怪獸最大技能數的預設值
-        "max_battle_turns": 30 # 新增戰鬥最大回合數
+        "max_battle_turns": 30, # 新增戰鬥最大回合數
+        "max_inventory_slots": 24 # 新增：預設庫存槽位數
     },
     "absorption_config": {
         "base_stat_gain_factor": 0.03, "score_diff_exponent": 0.3,
@@ -125,7 +126,10 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname
     }
 
-    initial_dna_owned: List[PlayerOwnedDNA] = []
+    # 修改點：初始化 playerOwnedDNA 為固定大小的 None 陣列
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+    initial_dna_owned: List[Optional[PlayerOwnedDNA]] = [None] * max_inventory_slots # 初始化為指定數量的 None
+
     dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", []) # type: ignore
     num_initial_dna = 6 # 可以考慮也放入 game_configs
 
@@ -134,24 +138,25 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         if not eligible_dna_templates:
             eligible_dna_templates = list(dna_fragments_templates) # 如果沒有普通/稀有，則從所有DNA中選
 
-        for i in range(min(num_initial_dna, len(eligible_dna_templates))):
+        for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)): # 確保不超過庫存上限
             if not eligible_dna_templates: break # 避免在空列表上 random.choice
             template = random.choice(eligible_dna_templates)
             instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
             # 確保 PlayerOwnedDNA 包含 DNAFragment 的所有欄位，並加上實例特定的 id 和 baseId
             owned_dna_item: PlayerOwnedDNA = {**template, "id": instance_id, "baseId": template["id"]} # type: ignore
-            initial_dna_owned.append(owned_dna_item)
+            initial_dna_owned[i] = owned_dna_item # 將 DNA 放置到指定索引
+
             if template in eligible_dna_templates: # 檢查 template 是否仍在列表中
                 eligible_dna_templates.remove(template) # 避免重複選取
 
     new_player_data: PlayerGameData = {
-        "playerOwnedDNA": initial_dna_owned,
+        "playerOwnedDNA": initial_dna_owned, # 使用固定大小的陣列
         "farmedMonsters": [],
         "playerStats": player_stats,
         "nickname": nickname, # 頂層 nickname
         "lastSave": int(time.time())
     }
-    services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {len(initial_dna_owned)} 個初始 DNA。")
+    services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
@@ -211,8 +216,20 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             player_game_data_dict = game_data_doc.to_dict()
             if player_game_data_dict:
                 services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
+                
+                # 修改點：確保從 Firestore 載入的 playerOwnedDNA 補齊到最大槽位數
+                loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
+                max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+                
+                # 如果載入的 DNA 陣列長度不足，用 None 填充
+                if len(loaded_dna) < max_inventory_slots:
+                    loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
+                # 如果載入的 DNA 陣列長度超過，則截斷
+                elif len(loaded_dna) > max_inventory_slots:
+                    loaded_dna = loaded_dna[:max_inventory_slots]
+
                 player_game_data: PlayerGameData = {
-                    "playerOwnedDNA": player_game_data_dict.get("playerOwnedDNA", []),
+                    "playerOwnedDNA": loaded_dna, # 使用處理後的 DNA 列表
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
@@ -295,14 +312,26 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
 
     combined_dnas_data: List[DNAFragment] = []
     constituent_dna_template_ids: List[str] = []
+    consumed_dna_instance_ids: List[str] = [] # 新增：記錄被消耗的 DNA 實例 ID
 
     for req_dna_id in dna_ids_from_request:
-        found_dna_template = next((f for f in all_dna_fragments_templates if f.get("id") == req_dna_id), None)
-        if found_dna_template:
-            combined_dnas_data.append(found_dna_template)
-            constituent_dna_template_ids.append(found_dna_template["id"])
+        # 從 player_data.playerOwnedDNA 中找到對應的 DNA 實例
+        found_dna_instance_index = -1
+        for idx, dna_item in enumerate(player_data.get("playerOwnedDNA", [])):
+            if dna_item and dna_item.get("id") == req_dna_id:
+                found_dna_instance_index = idx
+                break
+        
+        if found_dna_instance_index != -1:
+            dna_instance = player_data["playerOwnedDNA"][found_dna_instance_index] # type: ignore
+            combined_dnas_data.append(dna_instance) # type: ignore
+            constituent_dna_template_ids.append(dna_instance["baseId"]) # type: ignore
+            consumed_dna_instance_ids.append(dna_instance["id"]) # 記錄被消耗的實例 ID
+            # 修改點：將被消耗的 DNA 槽位設置為 None
+            player_data["playerOwnedDNA"][found_dna_instance_index] = None
         else:
-            services_logger.warning(f"在遊戲設定中找不到 ID 為 {req_dna_id} 的 DNA 片段模板。")
+            services_logger.warning(f"在玩家庫存中找不到 ID 為 {req_dna_id} 的 DNA 實例，無法用於組合。")
+
 
     if not combined_dnas_data:
         services_logger.error("提供的 DNA IDs 無效或在設定中均未找到。")
@@ -420,7 +449,8 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         el_key_present: ElementTypes = el_str_present # type: ignore
         base_resistances[el_key_present] = base_resistances.get(el_key_present, 0) + resistance_bonus_from_rarity
     new_monster_base["resistances"] = base_resistances
-
+    
+    # AI 描述生成部分 (保持不變)
     services_logger.info(f"為新怪獸 '{new_monster_base['nickname']}' 調用 AI 生成詳細描述。")
     ai_input_data_for_generation = {
         "nickname": new_monster_base["nickname"],
@@ -520,7 +550,7 @@ def absorb_defeated_monster_service(
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
-        return None
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
     
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
@@ -594,10 +624,33 @@ def absorb_defeated_monster_service(
     player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
 
     current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
     for dna_template in extracted_dna_templates:
-        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{len(current_owned_dna)}"
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
         owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
-        current_owned_dna.append(owned_dna_item)
+        
+        # 修改點：找到第一個空位來放置新的 DNA，如果沒有空位則添加到末尾
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果沒有空位，或空位超過了最大限制，則添加到末尾 (會導致陣列長度增加)
+            # 實際應用中，如果固定槽位模式，這裡需要處理滿倉邏輯，例如掉落
+            current_owned_dna.append(owned_dna_item) 
+
+    # 確保 final current_owned_dna 不會超過 max_inventory_slots，且保留 None
+    if len(current_owned_dna) > max_inventory_slots:
+        # 這裡需要決定是截斷，還是提示玩家庫存滿。
+        # 為了保持固定長度，這裡直接截斷，但會丟棄多餘的物品。
+        # 更好的做法是將多餘的物品放入臨時背包。
+        services_logger.warning(f"玩家 {player_id} 的 DNA 庫存超過最大限制 ({max_inventory_slots})，多餘的 DNA 已被截斷。")
+        current_owned_dna = current_owned_dna[:max_inventory_slots]
+    
     player_data["playerOwnedDNA"] = current_owned_dna
 
     if winning_monster:
@@ -769,6 +822,36 @@ def disassemble_monster_service(
             returned_dna_templates.append(random.choice(eligible_templates))
 
     player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果沒有空位，或空位超過了最大限制，則暫時添加到末尾
+            # 路由層會將其截斷，或前端處理庫存滿的提示
+            current_owned_dna.append(owned_dna_item)
+
+    # 確保 final current_owned_dna 不會超過 max_inventory_slots，且保留 None
+    if len(current_owned_dna) > max_inventory_slots:
+        services_logger.warning(f"玩家 {player_id} 的 DNA 庫存因分解超過最大限制 ({max_inventory_slots})，多餘的 DNA 已被截斷。")
+        current_owned_dna = current_owned_dna[:max_inventory_slots] # 截斷多餘的，以保持固定長度
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+
     services_logger.info(f"怪獸 {monster_to_disassemble.get('nickname')} 已在服務層標記分解，返回 {len(returned_dna_templates)} 個DNA模板。等待路由層處理。")
     return {
         "success": True,
@@ -810,7 +893,7 @@ def recharge_monster_with_dna_service(
     dna_to_consume: Optional[PlayerOwnedDNA] = None
     dna_index = -1
     for idx, dna in enumerate(player_data["playerOwnedDNA"]):
-        if dna.get("id") == dna_instance_id_to_consume:
+        if dna and dna.get("id") == dna_instance_id_to_consume: # 檢查 dna 是否為 None
             dna_to_consume = dna
             dna_index = idx
             break
@@ -824,7 +907,7 @@ def recharge_monster_with_dna_service(
 
     if dna_element not in monster_elements:
         services_logger.warning(f"充能失敗：DNA屬性 ({dna_element}) 與怪獸屬性 ({monster_elements}) 不符。")
-        return player_data
+        return player_data # 返回原始數據，不進行充能
 
     dna_value = calculate_dna_value(dna_to_consume, game_configs)
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS["value_settings"]) # type: ignore
@@ -848,9 +931,10 @@ def recharge_monster_with_dna_service(
         services_logger.info(f"怪獸 {monster_id} 的 {recharge_target} 已恢復至 {new_val}。")
     else:
         services_logger.info(f"怪獸 {monster_id} 的 {recharge_target} 已滿或無變化。")
-        return player_data
+        return player_data # 返回原始數據，不進行充能
 
-    player_data["playerOwnedDNA"].pop(dna_index) # type: ignore
+    # 修改點：將被消耗的 DNA 槽位設置為 None
+    player_data["playerOwnedDNA"][dna_index] = None
     player_data["farmedMonsters"][monster_index] = monster_to_recharge # type: ignore
 
     services_logger.info(f"怪獸 {monster_id} 已使用DNA {dna_to_consume.get('name')} 充能 {recharge_target}（等待路由層儲存）。")
@@ -919,8 +1003,7 @@ def complete_cultivation_service(
               skill.get("current_exp", 0) >= skill.get("exp_to_next_level", _calculate_exp_to_next_level(skill.get("level",1), exp_multiplier)): # type: ignore
 
             current_level = skill.get("level", 1) # type: ignore
-            exp_needed = skill.get("exp_to_next_level", _calculate_exp_to_next_level(current_level, exp_multiplier)) # type: ignore
-
+            exp_needed = skill.get("exp_to_next_level",9999) # type: ignore
             skill["current_exp"] = skill.get("current_exp", 0) - exp_needed # type: ignore
             skill["level"] = current_level + 1 # type: ignore
             skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill["level"], exp_multiplier) # type: ignore
