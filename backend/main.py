@@ -1,7 +1,7 @@
 # MD/backend/main.py
 # Flask 應用程式主啟動點
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request # 導入 request
 from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -28,7 +28,7 @@ app = Flask(__name__)
 
 # --- CORS 配置 ---
 # 暫時改為允許所有來源，僅用於調試
-allowed_origins = ["*"] 
+allowed_origins = ["*"]
 CORS(app,
      resources={r"/api/*": {"origins": allowed_origins}},
      supports_credentials=True,
@@ -36,6 +36,34 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
 app_logger.info(f"CORS configured for origins: {allowed_origins}")
+
+# ====== 新增這個 after_request 處理函數 ======
+@app.after_request
+def add_cors_headers(response):
+    """
+    確保所有響應都包含 CORS 必要的頭部，強制允許所有來源。
+    這是一個強硬的解決方案，僅用於調試。
+    """
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true' # 確保憑證被允許
+    return response
+
+@app.before_request
+def handle_options_requests():
+    """
+    處理 OPTIONS 預檢請求，直接返回 200 OK。
+    """
+    if request.method == 'OPTIONS':
+        response = app.make_response('')
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
+
+# ===============================================
 
 # 註冊藍圖
 app.register_blueprint(md_bp)
