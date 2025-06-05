@@ -481,8 +481,16 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 /* Specific style for DNA draw button to make it 1:1 aspect ratio */
 #dna-draw-button {
     /* 移除 aspect-ratio: 1 / 1; */
-    width: 105px; /* 調整為新的寬度 (35px * 3) */
-    min-width: 105px; /* 調整 min-width 以配合新的寬度 */
+    width: auto; /* 讓它可以在小螢幕上自動伸展 */
+    min-width: unset; /* 取消最小寬度限制 */
+}
+
+/* 在較大螢幕上重新設定抽取DNA按鈕的寬度 */
+@media (min-width: 481px) {
+    #dna-draw-button {
+        width: 105px; /* 調整為新的寬度 (35px * 3) */
+        min-width: 105px; /* 調整 min-width 以配合新的寬度 */
+    }
 }
 
 .farm-monster-item button.farm-battle-btn {
