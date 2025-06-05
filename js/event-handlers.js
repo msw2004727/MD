@@ -119,58 +119,82 @@ async function handleDrop(event) {
             showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
         });
     }
-    // --- B. 處理拖曳到組合槽 ---
+    // --- B. 處理拖曳到組合槽 (從此處開始重構) ---
     else if (dropTargetElement.classList.contains('dna-slot')) {
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
         if (isNaN(targetSlotIndex)) { console.warn("Drop on DNA slot: Invalid targetSlotIndex."); handleDragEnd(event); return; }
 
-        const itemCurrentlyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex];
+        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex]; // 目標槽位原有的物品
 
-        // 處理來源：從原始來源移除 DNA
+        // 1. 處理來源槽位 (清空或交換的起點)
         if (draggedSourceType === 'inventory') {
-            // 在前端狀態中將原位置設為 null，以視覺上清空該槽位
-            // 但此時不將此變更保存到數據庫，數據庫中的 DNA 仍將保留，直到合成成功
+            // 從庫存拖曳到組合槽：庫存源槽位在前端視覺上清空
+            // 數據庫中仍存在，等待合成時由後端消耗
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
         } else if (draggedSourceType === 'temporaryBackpack') {
+            // 從臨時背包拖曳到組合槽：臨時背包源槽位清空
             gameState.temporaryBackpack.splice(draggedSourceIndex, 1);
+        } else if (draggedSourceType === 'combination') {
+            // 從組合槽拖曳到組合槽：
+            // 如果是拖曳到同一槽位，則不執行任何操作
+            if (draggedSourceIndex === targetSlotIndex) {
+                // 如果是拖曳到自身，則不進行任何狀態改變，因為沒有真正的移動發生
+                renderDNACombinationSlots(); // 重新渲染確保 UI 與當前狀態一致
+                return; // 直接返回，結束拖曳操作
+            }
+            // 如果是拖曳到不同槽位，則源槽位先暫時清空 (如果沒有物品與之交換，後面會明確設置為null)
+            // 這裡不立即設為 null，因為後面可能會被 itemOriginallyInTargetSlot 填充
         }
-        // 如果來源是組合槽，則在 moveDnaToCombinationSlot 內部處理交換
 
-        // 將被拖曳的 DNA 放到目標組合槽
+        // 2. 將被拖曳的 DNA 放入目標組合槽
         gameState.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
 
-        // 如果目標組合槽原本有物品，則將其退回庫存或臨時背包
-        if (itemCurrentlyInTargetSlot && itemCurrentlyInTargetSlot.id) {
-            // 判斷是否是內部拖曳，如果是，則被替換的物品會回到原拖曳物品的位置
+        // 3. 處理目標槽位原有的物品 (如果存在)，並將其放回原拖曳來源或找新位置
+        if (itemOriginallyInTargetSlot && itemOriginallyInTargetSlot.id) {
             if (draggedSourceType === 'combination') {
-                gameState.dnaCombinationSlots[draggedSourceIndex] = itemCurrentlyInTargetSlot; // 執行交換
+                // 這是組合槽內部的交換：將目標槽位原有的物品放回拖曳起始的組合槽位
+                gameState.dnaCombinationSlots[draggedSourceIndex] = itemOriginallyInTargetSlot;
             } else {
-                // 從庫存或臨時背包來的物品替換了組合槽中的物品，將被替換的物品退回庫存
-                let targetInventoryIndex = gameState.playerData.playerOwnedDNA.indexOf(null);
-                const MAX_INV_SLOTS = gameState.MAX_INVENTORY_SLOTS; // 使用常量
-
-                if (targetInventoryIndex === -1) {
-                    // 沒有空位，嘗試放入臨時背包
+                // 從庫存或臨時背包拖曳，替換了組合槽中的物品。
+                // 被替換的物品現在需要回到庫存的空位，或臨時背包。
+                let freeSlotFound = false;
+                for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
+                    if (gameState.playerData.playerOwnedDNA[i] === null) {
+                        gameState.playerData.playerOwnedDNA[i] = itemCurrentlyInTargetSlot;
+                        freeSlotFound = true;
+                        break;
+                    }
+                }
+                if (!freeSlotFound) {
+                    // 如果庫存滿了，嘗試放回臨時背包
                     const maxTempSlots = gameState.gameConfigs?.value_settings?.max_temp_backpack_slots || 9;
-                    if (gameState.temporaryBackpack.length < maxTempSlots) {
-                        gameState.temporaryBackpack.push({ type: 'dna', data: itemCurrentlyInTargetSlot, instanceId: itemCurrentlyInTargetSlot.id });
-                        console.log("Returned item to temporary backpack due to full inventory.");
-                    } else {
+                    let tempSlotFound = false;
+                    for (let i = 0; i < maxTempSlots; i++) {
+                        if (gameState.temporaryBackpack[i] === null || gameState.temporaryBackpack[i] === undefined) {
+                            gameState.temporaryBackpack[i] = { type: 'dna', data: itemCurrentlyInTargetSlot, instanceId: itemCurrentlyInTargetSlot.id };
+                            tempSlotFound = true;
+                            console.log("Returned item to temporary backpack due to full inventory.");
+                            break;
+                        }
+                    }
+                    if (!tempSlotFound) {
                         console.warn("Inventory and temporary backpack full when returning item from combination slot. Item may be lost.");
                     }
-                } else {
-                    // 找到空位，放置回去
-                    gameState.playerData.playerOwnedDNA[targetInventoryIndex] = itemCurrentlyInTargetSlot;
                 }
+            }
+        } else {
+            // 目標組合槽位原本是空的
+            // 如果是從組合槽拖曳到空的組合槽 (非自身)
+            if (draggedSourceType === 'combination' && draggedSourceIndex !== targetSlotIndex) {
+                gameState.dnaCombinationSlots[draggedSourceIndex] = null; // 明確清空原來的組合槽位
             }
         }
         
-        // 重新渲染 UI 後，不在此處立即保存。保存由後端處理。
+        // 重新渲染 UI，不在此處立即保存到數據庫
         renderDNACombinationSlots();
-        renderPlayerDNAInventory(); // 因為庫存可能被清空或增加了物品
-        renderTemporaryBackpack(); // 因為臨時背包可能被清空
+        renderPlayerDNAInventory(); 
+        renderTemporaryBackpack(); 
         updateMonsterSnapshot(getSelectedMonster() || null);
-        // await savePlayerData(gameState.playerId, gameState.playerData); // <--- 移除此行
 
     }
     // --- C. 處理拖曳到庫存區 (固定槽位) ---
@@ -687,7 +711,7 @@ function handleLeaderboardSorting() {
             }
         }
     });
-} // 這是 handleLeaderboardSorting 函數的結束括號，沒有多餘的括號了
+} // 這是 handleLeaderboardSorting 函數的結束括號
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
