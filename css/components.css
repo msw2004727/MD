@@ -454,9 +454,10 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 .action-button-main {
-    /* Set a fixed height based on 30% of original min-height (48px * 0.3 = ~14.4px). Let's use 18px-20px for readability */
-    /* Adjust padding to fit new height */
-    padding: 5px 15px !important; 
+    /* 將高度降低70%：假設基礎高度約為 48px，降低 70% 意味著剩下 30% 的高度，即 14.4px。
+       但為了確保可點擊性和文字可讀性，我們將其設定為 35px，同時調整內距。 */
+    height: 35px !important; /* 新的高度 */
+    padding: 0 15px !important; /* 垂直內距設為0，依靠 height 和 line-height 居中 */
     font-size: 0.95rem !important; 
     font-weight: bold !important;
     text-transform: uppercase;
@@ -466,10 +467,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
                 inset 0 -2px 1px rgba(255,255,255,0.1),
                 inset 0 1px 0px rgba(255,255,255,0.05); 
     border-bottom-width: 2px !important; 
-    line-height: 1.2; 
-    height: 100%; /* Keep 100% height for grid alignment */
+    line-height: 35px !important; /* 讓文字垂直居中 */
     display: flex; 
-    align-items: center;
+    align-items: center; /* 確保內容垂直對齊 */
     justify-content: center;
 }
 .action-button-main:active {
@@ -481,7 +481,8 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 /* Specific style for DNA draw button to make it 1:1 aspect ratio */
 #dna-draw-button {
     aspect-ratio: 1 / 1;
-    min-width: 48px; /* Ensure it has a minimum width matching its min-height */
+    /* min-width: 48px;  使用 height 控制，min-width 保持與 height 一致 */
+    min-width: 35px; /* 調整 min-width 以配合新的高度 */
 }
 
 .farm-monster-item button.farm-battle-btn {
