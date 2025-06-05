@@ -52,6 +52,89 @@ function moveDnaToCombinationSlot(draggedDnaObject, sourceSlotIndexIfFromCombina
 
 
 /**
+ * 將 DNA 從各種來源移動到主庫存的特定位置，並處理潛在的物品交換。
+ * @param {object} dnaToMove - 要移動的 DNA 物件（可以是模板或實例數據）。
+ * @param {{type: string, id: string | number | null, originalInventoryIndex?: number | null}} sourceInfo - 來源資訊（類型和原始ID/索引）。
+ * @param {number} targetInventoryIndex - 目標庫存槽的索引（視覺位置）。
+ * @param {object | null} itemAtTargetInventorySlot - 目標庫存槽中原本的物品（如果有的話）。
+ */
+function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex, itemAtTargetInventorySlot) {
+    if (!dnaToMove) {
+        console.error("handleDnaMoveIntoInventory: dnaToMove 不可為空。");
+        return;
+    }
+    const MAX_INVENTORY_SLOTS = 11; // Consistent with ui.js
+    if (targetInventoryIndex < 0 || targetInventoryIndex >= MAX_INVENTORY_SLOTS) {
+        console.warn(`handleDnaMoveIntoInventory: 無效的目標庫存索引 ${targetInventoryIndex}。`);
+        return;
+    }
+
+    // 複製一份當前的 playerOwnedDNA，以便操作。這將作為我們最終設置到 gameState 的版本。
+    let currentOwnedDna = [...gameState.playerData.playerOwnedDNA];
+
+    // 1. 從原始來源移除被拖曳的 DNA
+    if (sourceInfo.type === 'inventory') {
+        const originalIndexInOwned = currentOwnedDna.findIndex(d => d.id === sourceInfo.id);
+        if (originalIndexInOwned !== -1) {
+            currentOwnedDna.splice(originalIndexInOwned, 1);
+        }
+    } else if (sourceInfo.type === 'combination') {
+        gameState.dnaCombinationSlots[sourceInfo.id] = null; // 清空組合槽
+    } else if (sourceInfo.type === 'temporaryBackpack') {
+        gameState.temporaryBackpack.splice(sourceInfo.id, 1); // 從臨時背包移除
+        // 如果是從臨時背包來的，需要為其生成新的實例ID以便加入主庫存
+        const baseIdForNewInstance = dnaToMove.baseId || dnaToMove.id || `temp_template_${Date.now()}`;
+        dnaToMove = { 
+            ...dnaToMove, 
+            id: `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+            baseId: baseIdForNewInstance
+        };
+    }
+
+    // 2. 處理目標槽位原本的物品
+    if (itemAtTargetInventorySlot && itemAtTargetInventorySlot.id) { // 如果目標槽位有物品
+        // 檢查目標槽位物品是否已經在 currentOwnedDna 中（可能因為splice操作尚未反應）
+        const existingTargetItemIndex = currentOwnedDna.findIndex(d => d.id === itemAtTargetInventorySlot.id);
+        if (existingTargetItemIndex !== -1) {
+            currentOwnedDna.splice(existingTargetItemIndex, 1); // 先移除這個項目，等下再放回
+        }
+        
+        // 將目標槽位原本的物品放回
+        // 這裡我們採用將被替換的物品添加到庫存末尾的方式。
+        // 如果是庫存內部的重新排序，則將目標物品放回原拖曳物品的原始位置。
+        if (sourceInfo.type === 'inventory' && sourceInfo.originalInventoryIndex !== null) {
+            // 在原始位置插入被替換的物品
+            currentOwnedDna.splice(sourceInfo.originalInventoryIndex, 0, itemAtTargetInventorySlot);
+        } else {
+            // 從組合槽或臨時背包來的物品，被替換的物品直接加到庫存末尾
+            currentOwnedDna.push(itemAtTargetInventorySlot);
+        }
+    }
+
+    // 3. 將被拖曳的 DNA 插入到目標位置
+    // 防止插入超過最大槽位限制。
+    // 如果目標索引大於當前實際物品數量，則簡單追加。
+    if (targetInventoryIndex > currentOwnedDna.length) {
+        currentOwnedDna.push(dnaToMove);
+    } else {
+        currentOwnedDna.splice(targetInventoryIndex, 0, dnaToMove);
+    }
+
+    // 清理：確保 playerOwnedDNA 仍是正確的。
+    // 過濾掉可能由於中間操作引入的 null 或 undefined。
+    gameState.playerData.playerOwnedDNA = currentOwnedDna.filter(item => item !== null && item !== undefined);
+    
+    // 重新渲染所有受影響的 UI 組件
+    renderPlayerDNAInventory();
+    renderDNACombinationSlots(); // 可能因為組合槽有物品被移出
+    renderTemporaryBackpack();   // 可能因為臨時背包有物品被移出
+    updateMonsterSnapshot(getSelectedMonster() || null);
+    
+    console.log(`DNA 已成功移動到庫存槽位 ${targetInventoryIndex}。`);
+}
+
+
+/**
  * 從玩家庫存中永久刪除指定的 DNA。
  * @param {string} dnaInstanceId 要刪除的 DNA 實例 ID。
  */
@@ -60,15 +143,17 @@ function deleteDNAFromInventory(dnaInstanceId) {
         console.warn("deleteDNAFromInventory: dnaInstanceId 不可為空。");
         return;
     }
-    // 在固定大小的 playerOwnedDNA 陣列中找到並設置為 null
-    const dnaIndex = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === dnaInstanceId);
-    if (dnaIndex !== -1) {
-        gameState.playerData.playerOwnedDNA[dnaIndex] = null;
-        console.log(`DNA 實例 ${dnaInstanceId} 已從 gameState.playerData.playerOwnedDNA 中移除 (設為 null)。`);
+    if (gameState.playerData && gameState.playerData.playerOwnedDNA) {
+        const initialLength = gameState.playerData.playerOwnedDNA.length;
+        gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.filter(dna => dna.id !== dnaInstanceId);
+        if (gameState.playerData.playerOwnedDNA.length < initialLength) {
+            console.log(`DNA 實例 ${dnaInstanceId} 已從 gameState.playerData.playerOwnedDNA 中移除。`);
+        } else {
+            console.warn(`嘗試刪除 DNA 實例 ${dnaInstanceId}，但在 gameState.playerData.playerOwnedDNA 中未找到。`);
+        }
     } else {
-        console.warn(`嘗試刪除 DNA 實例 ${dnaInstanceId}，但在 gameState.playerData.playerOwnedDNA 中未找到。`);
+        console.warn("deleteDNAFromInventory: playerData 或 playerOwnedDNA 未定義。");
     }
-    renderPlayerDNAInventory(); // 重新渲染庫存
     // 注意：這裡只處理前端狀態。實際應用中，還需要呼叫後端 API 持久化刪除。
 }
 
@@ -276,8 +361,7 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
             'success', // confirmButtonClass
             '學習'     // confirmButtonText
         );
-    }
-     else {
+    } else {
         message += `但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
 
         let skillOptionsHtml = '<div class="my-2 space-y-1">'; // 使用 space-y-1 增加按鈕間距
@@ -307,7 +391,7 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
                     const slotToReplace = parseInt(button.dataset.skillSlot, 10);
                     hideModal('feedback-modal'); // 先關閉選擇彈窗
                     try {
-                        showFeedbackModal('替換技能中...', `正在為 ${monster.nickname} 替換技能...`, true);
+                        showFeedbackModal('替換技能中...', `正在為 ${monster.nickname} 替換技能中...`, true);
                         const result = await replaceMonsterSkill(monsterId, slotToReplace, newSkillTemplate);
                         if (result && result.success) {
                             await refreshPlayerData();
@@ -355,8 +439,6 @@ function addDnaToTemporaryBackpack(dnaTemplate) {
     gameState.temporaryBackpack.push({
         type: 'dna', // 標記物品類型
         data: { ...dnaTemplate }, // 儲存 DNA 模板的完整數據
-        // 為臨時背包的 DNA 實例生成一個唯一ID，用於區分。這個 ID 僅限前端臨時使用。
-        instanceId: `temp_dna_${Date.now()}_${Math.floor(Math.random() * 100000)}` 
     });
     renderTemporaryBackpack(); // 更新臨時背包的 UI
     console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包。`);
@@ -373,60 +455,28 @@ function clearTemporaryBackpack() {
 
 /**
  * 處理從臨時背包移動物品到主 DNA 庫存。
+ * (此函數目前由 renderTemporaryBackpack 中的 onClick 調用，用於快速移動到末尾)
  * @param {number} tempBackpackIndex 物品在臨時背包中的索引。
- * @param {number | null} targetInventoryIndex 可選，如果拖曳到特定空位，則為該空位的索引
  */
-async function handleMoveFromTempBackpackToInventory(tempBackpackIndex, targetInventoryIndex = null) {
+async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
     if (tempBackpackIndex < 0 || tempBackpackIndex >= gameState.temporaryBackpack.length) {
         console.warn("handleMoveFromTempBackpackToInventory: 索引越界。");
         return;
     }
 
     const itemToMove = gameState.temporaryBackpack[tempBackpackIndex];
-
     if (itemToMove.type === 'dna' && itemToMove.data) {
-        // 為 DNA 實例創建一個新的唯一 ID
-        const newInstanceId = `dna_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-        // 創建一個新的 DNA 實例對象，包含模板數據和新的實例 ID
-        const newOwnedDna = {
-            ...itemToMove.data, // 複製模板數據
-            id: newInstanceId,   // 設置新的實例 ID
-            baseId: itemToMove.data.id // 保留原始模板 ID 作為 baseId
-        };
-
-        let placed = false;
-        if (targetInventoryIndex !== null && gameState.playerData.playerOwnedDNA[targetInventoryIndex] === null) {
-            // 如果指定了目標空位且該位置確實是空的
-            gameState.playerData.playerOwnedDNA[targetInventoryIndex] = newOwnedDna;
-            placed = true;
-        } else {
-            // 尋找第一個空位
-            const firstEmptySlotIndex = gameState.playerData.playerOwnedDNA.findIndex(slot => slot === null);
-            if (firstEmptySlotIndex !== -1) {
-                gameState.playerData.playerOwnedDNA[firstEmptySlotIndex] = newOwnedDna;
-                placed = true;
-            } else {
-                // 如果庫存已滿，彈出提示
-                showFeedbackModal('庫存已滿', '您的 DNA 庫存已滿，無法將物品從臨時背包移入。請整理您的庫存。');
-                return;
-            }
-        }
-
-        if (placed) {
-            // 從臨時背包中移除該物品
-            gameState.temporaryBackpack.splice(tempBackpackIndex, 1);
-
-            // 更新 UI
-            renderPlayerDNAInventory();
-            renderTemporaryBackpack();
-
-            showFeedbackModal(
-                '物品已移動',
-                `${itemToMove.data.name} 已成功移至您的 DNA 庫存。建議盡快保存遊戲進度以確保資料同步。`,
-                false, null,
-                [{ text: '好的', class: 'primary' }]
-            );
-        }
+        // Find the first visually empty slot, or append to the end.
+        // For current dense array, it's always appended to the end.
+        // We pass null for `itemAtTargetInventorySlot` as we're appending.
+        handleDnaMoveIntoInventory(itemToMove.data, {type: 'temporaryBackpack', id: tempBackpackIndex}, gameState.playerData.playerOwnedDNA.length, null);
+        
+        showFeedbackModal(
+            '物品已移動',
+            `${itemToMove.data.name} 已成功移至您的 DNA 庫存。建議盡快保存遊戲進度以確保資料同步。`,
+            false, null,
+            [{ text: '好的', class: 'primary' }]
+        );
     } else {
         showFeedbackModal('錯誤', '無法移動未知類型或資料不完整的物品。');
         console.error("handleMoveFromTempBackpackToInventory: 物品類型不是 'dna' 或缺少 data 屬性。", itemToMove);
@@ -605,8 +655,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                             }
                              // 更新玩家的DNA庫存 (如果吸收時有返回新DNA)
                             if (battleResult.absorption_details.updated_player_owned_dna) {
-                                // 注意：這裡如果 playerOwnedDNA 已轉為固定大小陣列，需要確保合併邏輯正確
-                                // 服務端應該返回固定大小的 playerOwnedDNA
                                 gameState.playerData.playerOwnedDNA = battleResult.absorption_details.updated_player_owned_dna;
                                 renderPlayerDNAInventory();
                             }
