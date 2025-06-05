@@ -107,18 +107,23 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
         "Content-Type": "application/json"
     }
 
-    ai_logger.debug(f"向 DeepSeek API 發送請求: URL='{DEEPSEEK_API_URL}', Model='{DEEPSEEK_MODEL}'")
+    ai_logger.debug(f"DEBUG AI: 請求 DeepSeek URL: {DEEPSEEK_API_URL}, 模型: {DEEPSEEK_MODEL}")
+    ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}") # 打印完整的請求體
 
     max_retries = 3
     retry_delay = 5 # 秒
 
     for attempt in range(max_retries):
         try:
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 發送請求...")
             response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=90)
-            response.raise_for_status() # 如果 HTTP 狀態碼是 4xx 或 5xx，則拋出異常
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 收到響應，狀態碼: {response.status_code}")
+            
+            # 如果 HTTP 狀態碼是 4xx 或 5xx，則拋出異常
+            response.raise_for_status() 
 
             response_json = response.json()
-            ai_logger.debug(f"DeepSeek API 原始回應 (嘗試 {attempt+1}): {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 收到原始 JSON 響應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
 
             if (response_json.get("choices") and
                 len(response_json["choices"]) > 0 and
@@ -126,6 +131,7 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                 response_json["choices"][0]["message"].get("content")):
 
                 generated_text_json_str = response_json["choices"][0]["message"]["content"]
+                ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - AI 生成的內容字串 (前200字): {generated_text_json_str[:200]}...") # 打印部分內容
 
                 # 清理 AI 可能添加的 markdown 標記
                 cleaned_json_str = generated_text_json_str.strip()
@@ -134,9 +140,12 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                 if cleaned_json_str.endswith("```"):
                     cleaned_json_str = cleaned_json_str[:-3]
                 cleaned_json_str = cleaned_json_str.strip()
+                ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 清理後的 JSON 字串 (前200字): {cleaned_json_str[:200]}...")
+
 
                 try:
                     generated_content = json.loads(cleaned_json_str)
+                    ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 成功解析 AI JSON 內容。")
                     ai_details = {
                         "aiPersonality": generated_content.get("personality_text", DEFAULT_AI_RESPONSES["aiPersonality"]),
                         "aiIntroduction": generated_content.get("introduction_text", DEFAULT_AI_RESPONSES["aiIntroduction"]),
@@ -153,63 +162,57 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                     ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
                     return ai_details
                 except json.JSONDecodeError as json_err:
-                    ai_logger.error(f"解析 DeepSeek API 回應中的 JSON 字串失敗: {json_err}。清理後的字串: '{cleaned_json_str}'。原始字串: '{generated_text_json_str}'")
-                    # 如果解析失敗，也嘗試記錄一下原始回應的 Choices 部分，以防 content 不是預期的字串
+                    ai_logger.error(f"ERROR AI: 解析 DeepSeek API 回應中的 JSON 字串失敗: {json_err}。清理後的字串: '{cleaned_json_str}'。原始字串: '{generated_text_json_str}'")
                     if isinstance(generated_text_json_str, dict): # 有時 AI 可能直接返回了物件而非字串
-                         ai_logger.error(f"DeepSeek content 似乎已經是物件: {generated_text_json_str}")
-                    # 在這裡添加回退，直接返回預設回應
-                    return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+                         ai_logger.error(f"ERROR AI: DeepSeek content 似乎已經是物件: {generated_text_json_str}")
+                    return DEFAULT_AI_RESPONSES.copy()
             else:
                 error_detail = response_json.get("error", {})
                 error_message = error_detail.get("message", "DeepSeek API 回應格式不符合預期或包含錯誤。")
                 error_code = error_detail.get("code")
-                ai_logger.error(f"{error_message} (Code: {error_code}) 完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+                ai_logger.error(f"ERROR AI: DeepSeek API 回應無效 (Code: {error_code})。完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
                 if attempt < max_retries - 1:
-                    ai_logger.info(f"將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
+                    ai_logger.info(f"INFO AI: 將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
                     time.sleep(retry_delay)
                     retry_delay *= 2
                     continue
-                # 在這裡添加回退，直接返回預設回應
-                return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+                return DEFAULT_AI_RESPONSES.copy()
 
         except requests.exceptions.HTTPError as http_err:
             error_body = http_err.response.text if http_err.response else "N/A"
             status_code = http_err.response.status_code if http_err.response else 'N/A'
-            ai_logger.error(f"DeepSeek API HTTP 錯誤 (嘗試 {attempt+1}): {http_err}. 狀態碼: {status_code}. 回應內容: {error_body}")
+            ai_logger.error(f"ERROR AI: DeepSeek API HTTP 錯誤 (嘗試 {attempt+1}): {http_err}. 狀態碼: {status_code}. 回應內容: {error_body}")
             if status_code == 401: # Unauthorized
-                ai_logger.error("DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
-                return DEFAULT_AI_RESPONSES.copy() # 金鑰錯誤，無需重試 [cite: 5]
+                ai_logger.error("ERROR AI: DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
+                return DEFAULT_AI_RESPONSES.copy() # 金鑰錯誤，無需重試
             if status_code == 429: # Too Many Requests
-                 ai_logger.warning("DeepSeek API 請求過於頻繁 (429)。增加重試延遲。")
+                 ai_logger.warning("WARNING AI: DeepSeek API 請求過於頻繁 (429)。增加重試延遲。")
                  retry_delay *= 2
             if attempt < max_retries - 1:
-                ai_logger.info(f"將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
+                ai_logger.info(f"INFO AI: 將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
                 time.sleep(retry_delay)
                 retry_delay *= 1.5
                 continue
-            # 在這裡添加回退，直接返回預設回應
-            return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+            return DEFAULT_AI_RESPONSES.copy()
         except requests.exceptions.RequestException as req_err:
-            ai_logger.error(f"DeepSeek API 請求錯誤 (嘗試 {attempt+1}): {req_err}")
+            ai_logger.error(f"ERROR AI: DeepSeek API 請求錯誤 (嘗試 {attempt+1}): {req_err}")
             if attempt < max_retries - 1:
-                ai_logger.info(f"將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
+                ai_logger.info(f"INFO AI: 將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
                 time.sleep(retry_delay)
                 retry_delay *= 1.5
                 continue
-            # 在這裡添加回退，直接返回預設回應
-            return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+            return DEFAULT_AI_RESPONSES.copy()
         except Exception as e:
-            ai_logger.error(f"生成 AI 怪獸詳細資訊時發生未知錯誤 (嘗試 {attempt+1}): {e}", exc_info=True)
+            ai_logger.error(f"ERROR AI: 生成 AI 怪獸詳細資訊時發生未知錯誤 (嘗試 {attempt+1}): {e}", exc_info=True)
             if attempt < max_retries - 1:
-                ai_logger.info(f"將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
+                ai_logger.info(f"INFO AI: 將在 {retry_delay} 秒後重試 (第 {attempt + 2}/{max_retries} 次嘗試)...")
                 time.sleep(retry_delay)
                 retry_delay *= 1.5
                 continue
-            # 在這裡添加回退，直接返回預設回應
-            return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+            return DEFAULT_AI_RESPONSES.copy()
 
-    ai_logger.error(f"所有重試均失敗，無法為 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
-    return DEFAULT_AI_RESPONSES.copy() # [cite: 5]
+    ai_logger.error(f"ERROR AI: 所有重試均失敗，無法為 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
+    return DEFAULT_AI_RESPONSES.copy()
 
 if __name__ == '__main__':
     # 簡單測試
