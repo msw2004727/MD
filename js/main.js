@@ -1,17 +1,3 @@
-好的，我來幫您修復 main.js 文件，使其能夠正確地作為 ES6 模塊運行，並解決您截圖中顯示的 Unexpected token 'export' 和 initializeDOMElements function is not defined 的問題。
-
-主要的修改思路：
-
-添加 import 語句： 在 main.js 的頂部，我們需要明確地 import 所有它依賴的其他 JavaScript 文件（模塊）。例如，ui.js（包含 initializeDOMElements 和其他 UI 函數）、auth.js、api-client.js、game-state.js、game-logic.js、event-handlers.js 和 config.js 等。
-確保函數調用正確： 導入模塊後，調用這些模塊中導出的函數時，需要使用正確的命名空間（例如，如果從 ui.js 導入為 ui，則調用 ui.initializeDOMElements()）。
-全局變量和狀態管理： 雖然您提到了全局變量 gameState 和 DOMElements，在模塊化的結構中，更推薦的方式是將這些狀態或元素集合封裝在它們各自的模塊中，並通過導出的函數來訪問或修改它們，或者將其實例傳遞給需要的模塊。不過，為了盡可能少地改動您現有的邏輯，我會假設這些全局變量仍然存在，但會確保它們在被使用前已經被正確初始化。
-Firebase 初始化： Firebase SDK 本身現在也推薦使用模塊化的方式導入。您的 initializeFirebaseApp 函數看起來是使用舊的全局 firebase 對象。我會將其更新為使用 ES6 模塊導入 Firebase。
-以下是修改後的 main.js 完整內容：
-
-我會盡量保持您原有的函數結構，主要添加 import 語句和調整函數調用。
-
-JavaScript
-
 // js/main.js
 
 // --- ES6 Module Imports ---
