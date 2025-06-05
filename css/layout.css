@@ -18,13 +18,13 @@
 }
 
 /* Responsive adjustments for main-container */
-@media (min-width: 640px) { /* sm breakpoint */
+@media (min-width: 640px) { 
     .main-container {
         padding: 15px;
         gap: 15px;
     }
 }
-@media (min-width: 768px) { /* md breakpoint */
+@media (min-width: 768px) { 
     .main-container {
         padding: 20px;
         gap: 20px;
@@ -108,7 +108,7 @@
 /* DNA碎片欄位 (Inventory Grid) */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Mobile: 3 columns */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 8px;
     align-items: stretch;
 }
@@ -127,37 +127,39 @@
 /* 臨時背包 (Temporary Backpack Grid) */
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Mobile: 3 columns */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 8px;
+    /* Item 3: Slot size consistency handled by adding .dna-item class in JS 
+       and relying on .dna-item styles in components.css */
 }
 @media (min-width: 480px) { 
     .temp-backpack-grid {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-@media (min-width: 600px) { /* Medium small screens */
+@media (min-width: 600px) { 
     .temp-backpack-grid {
         grid-template-columns: repeat(6, 1fr);
     }
 }
-@media (min-width: 768px) { /* Desktop: 8 columns for 24 slots in 3 rows */
+@media (min-width: 768px) { 
     .temp-backpack-grid {
         grid-template-columns: repeat(8, 1fr);
     }
 }
 
 
-/* Item 2: "怪物合成"按鈕與"抽取DNA"按鈕並排且尺寸都要相同左右對稱 */
+/* Action buttons grid (for Combine and Draw DNA buttons) */
 .action-buttons-grid.dual-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr; 
-    gap: 12px; /* Increased gap for better separation */
+    gap: 12px; 
     align-items: stretch; 
 }
-.action-buttons-grid.dual-buttons > button { /* Target buttons directly for sizing */
-    width: 100%; /* Ensure buttons take full width of their grid cell */
-    height: 100%; /* Make buttons fill the height, good for text centering */
-    min-height: 48px; /* Minimum height for the buttons */
+.action-buttons-grid.dual-buttons > button { 
+    width: 100%; 
+    height: 100%; 
+    min-height: 48px; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,7 +168,7 @@
 @media (max-width: 480px) { 
     .action-buttons-grid.dual-buttons {
         grid-template-columns: 1fr; 
-        gap: 8px; /* Reduce gap when stacked */
+        gap: 8px; 
     }
 }
 
@@ -245,6 +247,11 @@
 }
 
 
+/* Monster Snapshot Area Layout - Ensure it accommodates the new parts container */
+#monster-snapshot-area {
+    /* display: flex; align-items: center; justify-content: center; */ /* This is now in components.css */
+}
+
 /* Grid for medals */
 .medals-grid {
     display: flex;
@@ -252,7 +259,6 @@
     gap: 6px;
     margin-top: 10px;
 }
-
 /* Grid for DNA draw results */
 #dna-draw-results-grid {
     display: grid;
@@ -262,7 +268,6 @@
     max-height: 300px; 
     overflow-y: auto; 
 }
-
 /* Auth screen layout */
 #auth-screen {
     display: flex; 
@@ -275,7 +280,6 @@
     padding: 20px; 
     box-sizing: border-box;
 }
-
 .auth-container {
     background-color: var(--bg-panel);
     padding: 25px 30px; 
@@ -286,8 +290,6 @@
     max-width: 380px; 
     border: 1px solid var(--border-color);
 }
-
-
 /* Details grid for monster info, player info etc. */
 .details-grid {
     display: grid;
@@ -299,3 +301,4 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
+
