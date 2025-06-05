@@ -85,7 +85,7 @@ function handleDragLeave(event) {
 
 async function handleDrop(event) {
     event.preventDefault();
-    const dropTargetElement = event.target.closest('.dna-slot, .dna-item, #inventory-delete-slot, .temp-backpack-slot'); 
+    const dropTargetElement = event.target.closest('.dna-slot, .dna-item, #inventory-delete-slot, .temp-backpack-slot');
 
     if (!draggedDnaObject || !dropTargetElement) {
         console.warn("Drop: No dragged DNA object or invalid drop target.", { draggedDnaObject, dropTargetElement });
@@ -112,7 +112,7 @@ async function handleDrop(event) {
             } else if (draggedSourceType === 'temporaryBackpack') {
                 gameState.temporaryBackpack.splice(draggedSourceIndex, 1);
             }
-            
+
             // 重新渲染相關 UI
             renderPlayerDNAInventory();
             renderDNACombinationSlots();
@@ -157,7 +157,7 @@ async function handleDrop(event) {
                 gameState.playerData.playerOwnedDNA[targetInventoryIndex] = itemCurrentlyInTargetSlot;
             }
         }
-        
+
         // 重新渲染相關 UI
         renderDNACombinationSlots();
         renderPlayerDNAInventory(); // 因為庫存可能被清空或增加了物品
@@ -204,7 +204,7 @@ async function handleDrop(event) {
 
         // 3. 將被拖曳的 DNA 放入目標槽位
         currentOwnedDna[targetInventoryIndex] = dnaDataToMove;
-        
+
         // 更新 gameState
         gameState.playerData.playerOwnedDNA = currentOwnedDna;
 
@@ -253,7 +253,7 @@ async function handleDrop(event) {
             if (freeSlotIndex === -1) {
                 freeSlotIndex = gameState.playerData.playerOwnedDNA.length;
             }
-            gameState.playerData.playerOwnedDNA[freeSlotIndex] = itemCurrentlyInTargetTempSlot.data; // 退回的是原始 DNA 數據 
+            gameState.playerData.playerOwnedDNA[freeSlotIndex] = itemCurrentlyInTargetTempSlot.data; // 退回的是原始 DNA 數據
         }
 
         // 3. 將被拖曳的 DNA 放入目標槽位
@@ -274,7 +274,7 @@ async function handleDrop(event) {
 }
 
 
-// --- Modal Close Button Handler --- (保持不變)
+// --- Modal Close Button Handler ---
 function handleModalCloseButtons() {
     document.querySelectorAll('.modal-close').forEach(button => {
         button.addEventListener('click', () => {
@@ -290,7 +290,7 @@ function handleModalCloseButtons() {
     });
 }
 
-// --- 其他事件處理函數 (保持不變) ---
+// --- 其他事件處理函數 ---
 function handleThemeSwitch() {
     if (DOMElements.themeSwitcherBtn) {
         DOMElements.themeSwitcherBtn.addEventListener('click', () => {
@@ -467,6 +467,8 @@ async function handleCombineDna() {
     const dnaInstanceIdsForCombination = gameState.dnaCombinationSlots
         .filter(slot => slot && slot.id) // 確保有 id (實例 ID)
         .map(slot => slot.id);
+
+    // console.log("嘗試合成的 DNA 實例 ID 列表:", dnaInstanceIdsForCombination); // 移除這行
 
     if (dnaInstanceIdsForCombination.length < 2) {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
