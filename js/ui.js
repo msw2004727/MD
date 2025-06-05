@@ -4,6 +4,39 @@
 
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
 
+// ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
+function switchTabContent(targetTabId, clickedButton, modalId = null) {
+    let tabButtonsContainer, tabContentsContainer;
+
+    if (modalId) {
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) return;
+        tabButtonsContainer = modalElement.querySelector('.tab-buttons');
+        tabContentsContainer = modalElement;
+    } else {
+        tabButtonsContainer = DOMElements.dnaFarmTabs;
+        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
+    }
+
+    if (!tabButtonsContainer || !tabContentsContainer) return;
+
+    tabButtonsContainer.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    clickedButton.classList.add('active');
+
+    tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        content.style.display = 'none';
+    });
+    const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
+    if (targetContent) {
+        targetContent.classList.add('active');
+        targetContent.style.display = 'block';
+    }
+}
+// =============================================================
+
 // 這個函數需要在 main.js 的 DOMContentLoaded 中被優先調用
 function initializeDOMElements() {
     DOMElements = {
