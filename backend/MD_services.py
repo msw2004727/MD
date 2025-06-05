@@ -18,7 +18,7 @@ from .MD_models import (
     Monster, Skill, DNAFragment, RarityDetail, Personality,
     GameConfigs, ElementTypes, MonsterFarmStatus, MonsterAIDetails, MonsterResume,
     HealthCondition, AbsorptionConfig, CultivationConfig, SkillCategory, NamingConstraints,
-    ValueSettings, RarityNames # 確保 RarityNames 也被引入
+    ValueSettings, RarityNames, MonsterRecipe # 確保 MonsterRecipe 也被引入
 )
 from .MD_ai_services import generate_monster_ai_details
 
@@ -306,10 +306,10 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
 
 
 # --- DNA 組合與怪獸生成服務 ---
-def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfigs, player_data: PlayerGameData) -> Optional[Monster]:
+def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfigs, player_data: PlayerGameData, player_id: str) -> Optional[Monster]:
     """
     根據提供的 DNA ID 列表、遊戲設定和玩家資料來組合生成新的怪獸。
-    此函式不再負責儲存玩家資料。
+    此函式將先查詢 MonsterRecipes 集合，若配方存在則直接使用，否則生成新怪獸並記錄。
     """
     # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
     from .MD_firebase_config import db as firestore_db_instance
@@ -323,181 +323,262 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         services_logger.warning("DNA 組合請求中的 DNA ID 列表為空。")
         return None
 
-    all_dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", []) # type: ignore
-    all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {}) # type: ignore
-    all_personalities_db: List[Personality] = game_configs.get("personalities", []) # type: ignore
-    all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", {}) # type: ignore
-    naming_constraints: NamingConstraints = game_configs.get("naming_constraints", DEFAULT_GAME_CONFIGS_FOR_UTILS["naming_constraints"]) # type: ignore
-    element_nicknames_map: Dict[ElementTypes, str] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_UTILS["element_nicknames"]) # type: ignore
-    monster_achievements_list: List[str] = game_configs.get("monster_achievements_list", DEFAULT_GAME_CONFIGS_FOR_UTILS["monster_achievements_list"]) # type: ignore
-
+    # 從玩家的 playerOwnedDNA 中找到對應的 DNA 實例，並獲取它們的 baseId
+    # 同時記錄要消耗的實例 ID，並將這些 DNA 標記為 None (在 player_data 中)
     combined_dnas_data: List[DNAFragment] = []
     constituent_dna_template_ids: List[str] = []
-    consumed_dna_instance_ids: List[str] = [] # 新增：記錄被消耗的 DNA 實例 ID
+    consumed_dna_instance_indices: List[int] = [] # 記錄被消耗的 DNA 在玩家庫存中的索引
 
-    for req_dna_id in dna_ids_from_request:
-        # 從 player_data.playerOwnedDNA 中找到對應的 DNA 實例
-        found_dna_instance_index = -1
-        # 修改點：遍歷時檢查 dna_item 是否為 None
+    for req_dna_instance_id in dna_ids_from_request:
+        found_dna_instance = None
+        found_dna_index = -1
         for idx, dna_item in enumerate(player_data.get("playerOwnedDNA", [])):
-            if dna_item and dna_item.get("id") == req_dna_id:
-                found_dna_instance_index = idx
+            if dna_item and dna_item.get("id") == req_dna_instance_id:
+                found_dna_instance = dna_item
+                found_dna_index = idx
                 break
-
-        if found_dna_instance_index != -1:
-            dna_instance = player_data["playerOwnedDNA"][found_dna_instance_index] # type: ignore
-            combined_dnas_data.append(dna_instance) # type: ignore
-            constituent_dna_template_ids.append(dna_instance["baseId"]) # type: ignore
-            consumed_dna_instance_ids.append(dna_instance["id"]) # 記錄被消耗的實例 ID
-            # 修改點：將被消耗的 DNA 槽位設置為 None
-            player_data["playerOwnedDNA"][found_dna_instance_index] = None
+        
+        if found_dna_instance and found_dna_instance.get("baseId"):
+            combined_dnas_data.append(found_dna_instance)
+            constituent_dna_template_ids.append(found_dna_instance["baseId"]) # 確保是 template ID
+            consumed_dna_instance_indices.append(found_dna_index) # 記錄索引
         else:
-            services_logger.warning(f"在玩家庫存中找不到 ID 為 {req_dna_id} 的 DNA 實例，無法用於組合。")
+            services_logger.warning(f"在玩家庫存中找不到 ID 為 {req_dna_instance_id} 的 DNA 實例，或缺少 baseId。無法用於組合。")
+            return None # 缺少必要的 DNA，直接返回錯誤
 
-
-    if not combined_dnas_data:
-        services_logger.error("提供的 DNA IDs 無效或在設定中均未找到。")
+    if len(combined_dnas_data) < 2:
+        services_logger.error("組合 DNA 數量不足 (至少需要 2 個)。")
         return None
+    
+    # 執行消耗 DNA 的操作
+    for idx_to_consume in consumed_dna_instance_indices:
+        player_data["playerOwnedDNA"][idx_to_consume] = None
 
-    base_stats: Dict[str, int] = {"attack": 0, "defense": 0, "speed": 0, "hp": 0, "mp": 0, "crit": 0}
-    for dna_frag in combined_dnas_data:
+    # 1. 生成 Combination Key
+    combination_key = _generate_combination_key(constituent_dna_template_ids)
+    services_logger.info(f"生成的組合鍵: {combination_key}")
+
+    # 2. 查詢 MonsterRecipes 集合
+    monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
+    recipe_doc = monster_recipes_ref.get()
+
+    new_monster_instance: Optional[Monster] = None
+
+    if recipe_doc.exists:
+        # 3. 如果文檔存在（配方已記錄）
+        services_logger.info(f"配方 '{combination_key}' 已存在於組合庫中，直接讀取。")
+        recipe_data: MonsterRecipe = recipe_doc.to_dict() # type: ignore
+        fixed_monster_data: Monster = recipe_data.get("resultingMonsterData") # type: ignore
+
+        if fixed_monster_data:
+            # 從固定數據創建一個新的怪獸實例，賦予新的 instance ID
+            new_monster_instance = copy.deepcopy(fixed_monster_data)
+            new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+            new_monster_instance["creationTime"] = int(time.time()) # 實際創建時間
+            new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
+            new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "從既有配方召喚。"}],
+            # 確保所有技能的 current_exp 和 exp_to_next_level 歸零或重設為初始值
+            for skill in new_monster_instance.get("skills", []):
+                skill["current_exp"] = 0
+                skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100)) # type: ignore
+            new_monster_instance["hp"] = new_monster_instance["initial_max_hp"] # 確保是滿血
+            new_monster_instance["mp"] = new_monster_instance["initial_max_mp"] # 確保是滿藍
+            new_monster_instance["resume"] = {"wins": 0, "losses": 0} # 新怪獸戰績歸零
+            services_logger.info(f"已從組合庫生成怪獸 '{new_monster_instance['nickname']}' (ID: {new_monster_instance['id']})。")
+            return new_monster_instance
+        else:
+            services_logger.error(f"組合庫中的配方 '{combination_key}' 缺少 'resultingMonsterData'。")
+            return None # 數據不完整
+
+    else:
+        # 3. 如果文檔不存在（全新配方）
+        services_logger.info(f"配方 '{combination_key}' 為全新發現，開始生成新怪獸。")
+
+        all_dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", []) # type: ignore
+        all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {}) # type: ignore
+        all_personalities_db: List[Personality] = game_configs.get("personalities", []) # type: ignore
+        all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", {}) # type: ignore
+        naming_constraints: NamingConstraints = game_configs.get("naming_constraints", DEFAULT_GAME_CONFIGS_FOR_UTILS["naming_constraints"]) # type: ignore
+        element_nicknames_map: Dict[ElementTypes, str] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_UTILS["element_nicknames"]) # type: ignore
+        monster_achievements_list: List[str] = game_configs.get("monster_achievements_list", DEFAULT_GAME_CONFIGS_FOR_UTILS["monster_achievements_list"]) # type: ignore
+
+        # 執行現有怪獸生成邏輯
+        base_stats: Dict[str, int] = {"attack": 0, "defense": 0, "speed": 0, "hp": 0, "mp": 0, "crit": 0}
+        for dna_frag in combined_dnas_data: # 使用從玩家庫存中匹配到的 DNA 數據
+            for stat_name_key in base_stats.keys():
+                stat_name = stat_name_key # type: ignore
+                base_stats[stat_name] += dna_frag.get(stat_name, 0) # type: ignore
+
         for stat_name_key in base_stats.keys():
             stat_name = stat_name_key # type: ignore
-            base_stats[stat_name] += dna_frag.get(stat_name, 0) # type: ignore
+            if base_stats[stat_name] <= 0: # type: ignore
+                base_stats[stat_name] = random.randint(1, 5) # type: ignore
 
-    for stat_name_key in base_stats.keys():
-        stat_name = stat_name_key # type: ignore
-        if base_stats[stat_name] <= 0: # type: ignore
-            base_stats[stat_name] = random.randint(1, 5) # type: ignore
+        element_counts = Counter(dna.get("type", "無") for dna in combined_dnas_data) # type: ignore
+        total_dna_pieces = len(combined_dnas_data)
+        element_composition: Dict[ElementTypes, float] = {el: round((cnt / total_dna_pieces) * 100, 1) for el, cnt in element_counts.items()} if total_dna_pieces > 0 else {"無": 100.0} # type: ignore
+        sorted_elements_by_comp = sorted(element_composition.items(), key=lambda item: item[1], reverse=True)
+        elements_present: List[ElementTypes] = [el_comp[0] for el_comp in sorted_elements_by_comp] if sorted_elements_by_comp else ["無"] # type: ignore
+        primary_element: ElementTypes = elements_present[0]
 
-    element_counts = Counter(dna.get("type", "無") for dna in combined_dnas_data) # type: ignore
-    total_dna_pieces = len(combined_dnas_data)
-    element_composition: Dict[ElementTypes, float] = {el: round((cnt / total_dna_pieces) * 100, 1) for el, cnt in element_counts.items()} if total_dna_pieces > 0 else {"無": 100.0} # type: ignore
-    sorted_elements_by_comp = sorted(element_composition.items(), key=lambda item: item[1], reverse=True)
-    elements_present: List[ElementTypes] = [el_comp[0] for el_comp in sorted_elements_by_comp] if sorted_elements_by_comp else ["無"] # type: ignore
-    primary_element: ElementTypes = elements_present[0]
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        highest_rarity_index = 0
+        for dna_frag in combined_dnas_data:
+            try:
+                current_rarity_index = rarity_order.index(dna_frag.get("rarity", "普通")) # type: ignore
+                highest_rarity_index = max(highest_rarity_index, current_rarity_index)
+            except ValueError:
+                services_logger.warning(f"未知的稀有度名稱 '{dna_frag.get('rarity')}' 在 DNA 片段 {dna_frag.get('id')} 中。")
+        monster_rarity_name: RarityNames = rarity_order[highest_rarity_index]
 
-    rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
-    highest_rarity_index = 0
-    for dna_frag in combined_dnas_data:
+        rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()} # type: ignore
+        monster_rarity_key = rarity_key_lookup.get(monster_rarity_name, "COMMON")
+        monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_UTILS["rarities"]["COMMON"]) # type: ignore
+
+        generated_skills: List[Skill] = []
+        potential_skills_for_elements: List[Skill] = [] # type: ignore
+        for el_str_skill in elements_present:
+            el_skill: ElementTypes = el_str_skill # type: ignore
+            if el_skill in all_skills_db and isinstance(all_skills_db.get(el_skill), list):
+                potential_skills_for_elements.extend(all_skills_db[el_skill]) # type: ignore
+        if "無" in all_skills_db and isinstance(all_skills_db.get("無"), list) and "無" not in elements_present:
+            potential_skills_for_elements.extend(all_skills_db["無"]) # type: ignore
+
+        if potential_skills_for_elements:
+            num_skills_to_select = random.randint(1, min(game_configs.get("value_settings", {}).get("max_monster_skills", 3), len(potential_skills_for_elements)))
+            selected_skill_names_set = set()
+            random.shuffle(potential_skills_for_elements)
+
+            for skill_template in potential_skills_for_elements:
+                if len(generated_skills) >= num_skills_to_select: break
+                if skill_template and skill_template.get("name") not in selected_skill_names_set:
+                    new_skill_instance = _get_skill_from_template(skill_template, game_configs, monster_rarity_data)
+                    generated_skills.append(new_skill_instance)
+                    selected_skill_names_set.add(new_skill_instance["name"])
+
+        if not generated_skills:
+            default_skill_template = all_skills_db.get("無", [{}])[0] if all_skills_db.get("無") else {} # type: ignore
+            generated_skills.append(_get_skill_from_template(default_skill_template, game_configs, monster_rarity_data))
+
+        selected_personality_template: Personality = random.choice(all_personalities_db) if all_personalities_db else DEFAULT_GAME_CONFIGS_FOR_UTILS["personalities"][0] # type: ignore
+
+        player_current_title = player_data.get("playerStats", {}).get("titles", ["新手"])[0] # type: ignore
+        monster_initial_achievement = random.choice(monster_achievements_list) if monster_achievements_list else "新秀" # type: ignore
+        default_element_nickname = element_nicknames_map.get(primary_element, primary_element) # type: ignore
+        monster_full_nickname = _generate_monster_full_nickname(
+            player_current_title, monster_initial_achievement, default_element_nickname, naming_constraints # type: ignore
+        )
+
+        # 這裡的 monster_id 將是這個「標準版」怪獸的模板 ID
+        standard_monster_template_id = f"template_{combination_key}"
+        stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
+        initial_max_hp = int(base_stats["hp"] * stat_multiplier)
+        initial_max_mp = int(base_stats["mp"] * stat_multiplier)
+
+        # 組裝「標準版」怪獸數據
+        standard_monster_data: Monster = {
+            "id": standard_monster_template_id, # 注意：這裡使用 template ID
+            "nickname": monster_full_nickname,
+            "elements": elements_present,
+            "elementComposition": element_composition,
+            "hp": initial_max_hp, "mp": initial_max_mp,
+            "initial_max_hp": initial_max_hp, "initial_max_mp": initial_max_mp,
+            "attack": int(base_stats["attack"] * stat_multiplier),
+            "defense": int(base_stats["defense"] * stat_multiplier),
+            "speed": int(base_stats["speed"] * stat_multiplier),
+            "crit": int(base_stats["crit"] * stat_multiplier),
+            "skills": generated_skills,
+            "rarity": monster_rarity_name,
+            "title": monster_initial_achievement,
+            "custom_element_nickname": None,
+            "description": f"由 {', '.join(dna.get('name', '未知DNA') for dna in combined_dnas_data)} 的力量組合而成。",
+            "personality": selected_personality_template,
+            "creationTime": int(time.time()), # 配方創建時間
+            "monsterTitles": [monster_initial_achievement],
+            "monsterMedals": 0,
+            "farmStatus": {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}, # 初始狀態
+            "activityLog": [], # 標準版怪獸的日誌應為空
+            "healthConditions": [],
+            "resistances": {},
+            "resume": {"wins": 0, "losses": 0},
+            "constituent_dna_ids": constituent_dna_template_ids # 記錄組成該標準怪獸的 DNA 模板 ID
+        }
+
+        base_resistances: Dict[ElementTypes, int] = {} # type: ignore
+        for dna_frag in combined_dnas_data:
+            frag_res = dna_frag.get("resistances")
+            if frag_res and isinstance(frag_res, dict):
+                for el_str_res, val_res in frag_res.items():
+                    el_key_res: ElementTypes = el_str_res # type: ignore
+                    base_resistances[el_key_res] = base_resistances.get(el_key_res, 0) + val_res
+
+        resistance_bonus_from_rarity = monster_rarity_data.get("resistanceBonus", 0)
+        for el_str_present in elements_present:
+            el_key_present: ElementTypes = el_str_present # type: ignore
+            base_resistances[el_key_present] = base_resistances.get(el_key_present, 0) + resistance_bonus_from_rarity
+        standard_monster_data["resistances"] = base_resistances
+        
+        # 調用 AI 服務生成描述
+        services_logger.info(f"為新怪獸 '{standard_monster_data['nickname']}' 調用 AI 生成詳細描述。")
+        ai_input_data_for_generation = {
+            "nickname": standard_monster_data["nickname"],
+            "elements": standard_monster_data["elements"],
+            "rarity": standard_monster_data["rarity"],
+            "hp": standard_monster_data["hp"], "mp": standard_monster_data["mp"],
+            "attack": standard_monster_data["attack"], "defense": standard_monster_data["defense"],
+            "speed": standard_monster_data["speed"], "crit": standard_monster_data["crit"],
+            "personality_name": standard_monster_data["personality"]["name"], # type: ignore
+            "personality_description": standard_monster_data["personality"]["description"] # type: ignore
+        }
+        
+        ai_details: MonsterAIDetails = generate_monster_ai_details(ai_input_data_for_generation) # type: ignore
+        
+        # 填充 AI 生成的內容
+        standard_monster_data["aiPersonality"] = ai_details.get("aiPersonality")
+        standard_monster_data["aiIntroduction"] = ai_details.get("aiIntroduction")
+        standard_monster_data["aiEvaluation"] = ai_details.get("aiEvaluation")
+
+        # 計算評分
+        score = (standard_monster_data["initial_max_hp"] // 10) + \
+                standard_monster_data["attack"] + standard_monster_data["defense"] + \
+                (standard_monster_data["speed"] // 2) + (standard_monster_data["crit"] * 2) + \
+                (len(standard_monster_data["skills"]) * 15) + \
+                (rarity_order.index(standard_monster_data["rarity"]) * 30)
+        standard_monster_data["score"] = score
+
+        services_logger.info(f"服務層：新配方怪獸 '{standard_monster_data['nickname']}' 生成完成。評分: {score}")
+
+        # 記錄到 MonsterRecipes 集合
+        new_recipe_entry: MonsterRecipe = {
+            "combinationKey": combination_key,
+            "resultingMonsterData": standard_monster_data, # 存儲完整且固定的標準版怪獸數據
+            "creationTimestamp": int(time.time()),
+            "discoveredByPlayerId": player_id # 記錄首次發現的玩家 ID
+        }
         try:
-            current_rarity_index = rarity_order.index(dna_frag.get("rarity", "普通")) # type: ignore
-            highest_rarity_index = max(highest_rarity_index, current_rarity_index)
-        except ValueError:
-            services_logger.warning(f"未知的稀有度名稱 '{dna_frag.get('rarity')}' 在 DNA 片段 {dna_frag.get('id')} 中。")
-    monster_rarity_name: RarityNames = rarity_order[highest_rarity_index]
+            monster_recipes_ref.set(new_recipe_entry)
+            services_logger.info(f"新配方 '{combination_key}' 及其怪獸數據已成功記錄到 MonsterRecipes。")
+        except Exception as e:
+            services_logger.error(f"寫入新配方 '{combination_key}' 到 MonsterRecipes 失敗: {e}", exc_info=True)
+            # 如果寫入失敗，但怪獸已經生成，可以選擇返回怪獸但帶有警告，或者直接返回 None
+            return None # 這裡選擇返回 None，確保數據一致性
 
-    rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()} # type: ignore
-    monster_rarity_key = rarity_key_lookup.get(monster_rarity_name, "COMMON")
-    monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_UTILS["rarities"]["COMMON"]) # type: ignore
-
-    generated_skills: List[Skill] = []
-    potential_skills_for_elements: List[Skill] = [] # type: ignore
-    for el_str_skill in elements_present:
-        el_skill: ElementTypes = el_str_skill # type: ignore
-        if el_skill in all_skills_db and isinstance(all_skills_db.get(el_skill), list):
-            potential_skills_for_elements.extend(all_skills_db[el_skill]) # type: ignore
-    if "無" in all_skills_db and isinstance(all_skills_db.get("無"), list) and "無" not in elements_present:
-        potential_skills_for_elements.extend(all_skills_db["無"]) # type: ignore
-
-    if potential_skills_for_elements:
-        num_skills_to_select = random.randint(1, min(game_configs.get("value_settings", {}).get("max_monster_skills", 3), len(potential_skills_for_elements)))
-        selected_skill_names_set = set()
-        random.shuffle(potential_skills_for_elements)
-
-        for skill_template in potential_skills_for_elements:
-            if len(generated_skills) >= num_skills_to_select: break
-            if skill_template and skill_template.get("name") not in selected_skill_names_set:
-                new_skill_instance = _get_skill_from_template(skill_template, game_configs, monster_rarity_data)
-                generated_skills.append(new_skill_instance)
-                selected_skill_names_set.add(new_skill_instance["name"])
-
-    if not generated_skills:
-        default_skill_template = all_skills_db.get("無", [{}])[0] if all_skills_db.get("無") else {} # type: ignore
-        generated_skills.append(_get_skill_from_template(default_skill_template, game_configs, monster_rarity_data))
-
-    selected_personality_template: Personality = random.choice(all_personalities_db) if all_personalities_db else DEFAULT_GAME_CONFIGS_FOR_UTILS["personalities"][0] # type: ignore
-
-    player_current_title = player_data.get("playerStats", {}).get("titles", ["新手"])[0] # type: ignore
-    monster_initial_achievement = random.choice(monster_achievements_list) if monster_achievements_list else "新秀" # type: ignore
-    default_element_nickname = element_nicknames_map.get(primary_element, primary_element) # type: ignore
-    monster_full_nickname = _generate_monster_full_nickname(
-        player_current_title, monster_initial_achievement, default_element_nickname, naming_constraints # type: ignore
-    )
-
-    monster_id = f"m_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
-    stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
-    initial_max_hp = int(base_stats["hp"] * stat_multiplier)
-    initial_max_mp = int(base_stats["mp"] * stat_multiplier)
-
-    new_monster_base: Monster = {
-        "id": monster_id,
-        "nickname": monster_full_nickname,
-        "elements": elements_present,
-        "elementComposition": element_composition,
-        "hp": initial_max_hp, "mp": initial_max_mp,
-        "initial_max_hp": initial_max_hp, "initial_max_mp": initial_max_mp,
-        "attack": int(base_stats["attack"] * stat_multiplier),
-        "defense": int(base_stats["defense"] * stat_multiplier),
-        "speed": int(base_stats["speed"] * stat_multiplier),
-        "crit": int(base_stats["crit"] * stat_multiplier),
-        "skills": generated_skills,
-        "rarity": monster_rarity_name,
-        "title": monster_initial_achievement,
-        "custom_element_nickname": None,
-        "description": f"由 {', '.join(dna.get('name', '未知DNA') for dna in combined_dnas_data)} 的力量組合而成。",
-        "personality": selected_personality_template,
-        "creationTime": int(time.time()),
-        "monsterTitles": [monster_initial_achievement],
-        "monsterMedals": 0,
-        "farmStatus": {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}},
-        "activityLog": [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合。"}],
-        "healthConditions": [],
-        "resistances": {},
-        "resume": {"wins": 0, "losses": 0},
-        "constituent_dna_ids": constituent_dna_template_ids
-    }
-
-    base_resistances: Dict[ElementTypes, int] = {} # type: ignore
-    for dna_frag in combined_dnas_data:
-        frag_res = dna_frag.get("resistances")
-        if frag_res and isinstance(frag_res, dict):
-            for el_str_res, val_res in frag_res.items():
-                el_key_res: ElementTypes = el_str_res # type: ignore
-                base_resistances[el_key_res] = base_resistances.get(el_key_res, 0) + val_res
-
-    resistance_bonus_from_rarity = monster_rarity_data.get("resistanceBonus", 0)
-    for el_str_present in elements_present:
-        el_key_present: ElementTypes = el_str_present # type: ignore
-        base_resistances[el_key_present] = base_resistances.get(el_key_present, 0) + resistance_bonus_from_rarity
-    new_monster_base["resistances"] = base_resistances
-
-    # AI 描述生成部分 (保持不變)
-    services_logger.info(f"為新怪獸 '{new_monster_base['nickname']}' 調用 AI 生成詳細描述。")
-    ai_input_data_for_generation = {
-        "nickname": new_monster_base["nickname"],
-        "elements": new_monster_base["elements"],
-        "rarity": new_monster_base["rarity"],
-        "hp": new_monster_base["hp"], "mp": new_monster_base["mp"],
-        "attack": new_monster_base["attack"], "defense": new_monster_base["defense"],
-        "speed": new_monster_base["speed"], "crit": new_monster_base["crit"],
-        "personality_name": new_monster_base["personality"]["name"], # type: ignore
-        "personality_description": new_monster_base["personality"]["description"] # type: ignore
-    }
-    ai_details: MonsterAIDetails = generate_monster_ai_details(ai_input_data_for_generation) # type: ignore
-    new_monster_base["aiPersonality"] = ai_details.get("aiPersonality")
-    new_monster_base["aiIntroduction"] = ai_details.get("aiIntroduction")
-    new_monster_base["aiEvaluation"] = ai_details.get("aiEvaluation")
-
-    score = (new_monster_base["initial_max_hp"] // 10) + \
-            new_monster_base["attack"] + new_monster_base["defense"] + \
-            (new_monster_base["speed"] // 2) + (new_monster_base["crit"] * 2) + \
-            (len(new_monster_base["skills"]) * 15) + \
-            (rarity_order.index(new_monster_base["rarity"]) * 30)
-    new_monster_base["score"] = score
-
-    services_logger.info(f"服務層：怪獸 '{new_monster_base['nickname']}' 組合完成。評分: {score}")
-    return new_monster_base
+        # 創建怪獸實例並返回
+        new_monster_instance = copy.deepcopy(standard_monster_data)
+        new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}" # 賦予新的實例 ID
+        new_monster_instance["creationTime"] = int(time.time()) # 實際創建時間
+        new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
+        new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}],
+        # 確保所有技能的 current_exp 和 exp_to_next_level 歸零或重設為初始值
+        for skill in new_monster_instance.get("skills", []):
+            skill["current_exp"] = 0
+            skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100)) # type: ignore
+        new_monster_instance["hp"] = new_monster_instance["initial_max_hp"] # 確保是滿血
+        new_monster_instance["mp"] = new_monster_instance["initial_max_mp"] # 確保是滿藍
+        new_monster_instance["resume"] = {"wins": 0, "losses": 0} # 新怪獸戰績歸零
+        
+        services_logger.info(f"已生成並記錄全新怪獸 '{new_monster_instance['nickname']}' (ID: {new_monster_instance['id']})。")
+        return new_monster_instance
 
 
 # --- 更新怪獸自定義屬性名服務 ---
@@ -1082,7 +1163,7 @@ def complete_cultivation_service(
             # 根據稀有度偏好選擇新技能 (如果 new_skill_rarity_bias 存在)
             # 這裡簡化為隨機選擇，但可以根據 new_skill_rarity_bias 實現加權隨機
             new_skill_rarity_bias = cultivation_cfg.get("new_skill_rarity_bias") # type: ignore
-
+            
             # 創建一個加權列表
             weighted_learnable_skills = []
             for skill_template in learnable_skills:
@@ -1266,7 +1347,7 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
         if current_attacker_state["current_hp"] <= 0:
             log.append(f"倒下了！ {attacker_nickname} 被狀態擊倒！")
             break
-
+        
         # Check if the attacker is stunned/confused BEFORE choosing skill
         can_act = True
         for status in current_attacker_state.get("battle_statuses", []):
