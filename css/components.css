@@ -240,10 +240,16 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 #monster-parts-container {
-    width: 180px; 
-    height: 200px; /* Adjusted to better fit typical monster proportions on the base */
+    /* Adjusted based on user's image. These are relative to the silhouette's position/size, not the container itself */
+    position: absolute; /* Already defined, but keeping for clarity */
+    top: 50%; /* Already defined, but keeping for clarity */
+    left: 50%; /* Already defined, but keeping for clarity */
+    transform: translate(-50%, -50%); /* Already defined, but keeping for clarity */
     z-index: 30; /* Above silhouette */
-    /* background-color: rgba(0, 0, 255, 0.1); */ /* Optional: for debugging layout */
+    width: 200px; /* Relative to original image size, adjust as needed */
+    height: 200px; /* Relative to original image size, adjust as needed */
+    /* Remove grid properties from here, individual parts will be absolutely positioned */
+    display: block; /* Ensure it's a block container for absolute children */
 }
 #monster-parts-container.empty-snapshot .monster-part {
     border-color: var(--border-color); 
@@ -251,7 +257,7 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 .monster-part {
-    position: absolute;
+    position: absolute; /* Crucial for precise positioning */
     background-color: transparent; 
     border: 1px solid transparent; /* Make border transparent initially unless it's a placeholder */
     background-size: contain; 
@@ -263,46 +269,43 @@ body.light-theme .inventory-delete-slot.drag-over {
     image-rendering: pixelated; 
 }
 
-/* Precise positioning for monster parts based on image_19df08.png */
-/* Container dimensions for reference: width: 180px, height: 200px */
+/* Precise positioning for monster parts based on user's image (red boxes) */
+/* These values are percentages relative to #monster-parts-container (200x200px approx). */
+/* Values are approximate and may need fine-tuning in preview */
 #monster-part-head {
-    width: 35%;  /* Approx 63px on 180px width */
-    height: 30%; /* Approx 60px on 200px height */
-    top: 0%;    
+    width: 27%;   /* Red box width approx 54px / 200px */
+    height: 26%;  /* Red box height approx 52px / 200px */
+    top: 0%;      /* Top of head box is near top of silhouette */
     left: 50%;
     transform: translateX(-50%);
-    z-index: 35; /* Head is usually on top of other parts */
+    z-index: 35;
 }
 #monster-part-left-arm {
-    width: 30%;  /* Approx 54px */
-    height: 45%; /* Approx 90px */
-    top: 22%;   
-    left: 0%;   
-    transform-origin: top right; 
-    /* transform: rotate(-10deg); */ 
+    width: 25%;   /* Red box width approx 50px / 200px */
+    height: 48%;  /* Red box height approx 96px / 200px */
+    top: 25%;    /* Top of left arm box approx 50px / 200px */
+    left: 10%;   /* Left edge of left arm box approx 20px / 200px */
     z-index: 34;
 }
 #monster-part-right-arm {
-    width: 30%;
-    height: 45%;
-    top: 22%;
-    right: 0%;  
-    transform-origin: top left; 
-    /* transform: rotate(10deg); */
+    width: 25%;
+    height: 48%;
+    top: 25%;
+    right: 10%;
     z-index: 34;
 }
 #monster-part-left-leg {
-    width: 30%;  /* Approx 54px */
-    height: 40%; /* Approx 80px */
-    bottom: 0%; 
-    left: 12%;  
+    width: 25%;
+    height: 48%;
+    top: 52%;    /* Top of left leg box approx 104px / 200px */
+    left: 10%;
     z-index: 33;
 }
 #monster-part-right-leg {
-    width: 30%;
-    height: 40%;
-    bottom: 0%;
-    right: 12%; 
+    width: 25%;
+    height: 48%;
+    top: 52%;
+    right: 10%;
     z-index: 33;
 }
 
@@ -451,7 +454,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 .action-button-main {
-    padding: 12px 15px !important; 
+    /* Set a fixed height based on 30% of original min-height (48px * 0.3 = ~14.4px). Let's use 18px-20px for readability */
+    /* Adjust padding to fit new height */
+    padding: 5px 15px !important; 
     font-size: 0.95rem !important; 
     font-weight: bold !important;
     text-transform: uppercase;
@@ -462,7 +467,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
                 inset 0 1px 0px rgba(255,255,255,0.05); 
     border-bottom-width: 2px !important; 
     line-height: 1.2; 
-    height: 100%; 
+    height: 100%; /* Keep 100% height for grid alignment */
     display: flex; 
     align-items: center;
     justify-content: center;
