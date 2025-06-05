@@ -16,7 +16,7 @@
     padding: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.25); 
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-    z-index: 1050; /* Ensure corner buttons are above modals if any overlap, and above snapshot text */
+    z-index: 990; /* 從 1050 調整為 990，使其位於模態視窗 (z-index: 1000) 之下 */
 }
 .corner-button:hover {
     transform: translateY(-1px); 
@@ -486,7 +486,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 
 /* 在較大螢幕上重新設定抽取DNA按鈕的寬度 */
-@media (min-width: 481px) {
+@media (min-width: 768px) {
     #dna-draw-button {
         width: 105px; /* 調整為新的寬度 (35px * 3) */
         min-width: 105px; /* 調整 min-width 以配合新的寬度 */
@@ -576,6 +576,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* 小陰影 */
     border: 1px solid var(--danger-hover-dark); /* 邊框 */
+    z-index: 1050; /* 確保它在最頂層 */
 }
 #feedback-modal-close-x:hover {
     background-color: var(--danger-hover-dark); /* 懸停時顏色變深 */
@@ -598,6 +599,7 @@ body.light-theme #feedback-modal-close-x:hover {
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     border: 1px solid var(--danger-hover-dark); 
+    z-index: 1050; /* 確保在最頂層 */
 }
 #confirmation-modal-close-x.modal-close:hover {
     background-color: var(--danger-hover-dark);
@@ -617,6 +619,7 @@ body.light-theme #confirmation-modal-close-x.modal-close:hover {
     border-radius: 50%;
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    z-index: 1050; /* 確保在最頂層 */
 }
 #official-announcement-close-x:hover {
     background-color: var(--danger-hover-dark);
@@ -1152,121 +1155,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.8rem;
 }
 
-/* New styles for large feedback modal content */
-.modal-content.large-feedback-modal {
-    max-width: 750px; /* 給予更大的寬度 */
-    padding: 20px 25px; /* 增加內邊距 */
-}
-@media (max-width: 768px) { /* 響應式調整 */
-    .modal-content.large-feedback-modal {
-        max-width: 95%; /* 小螢幕上保持比例 */
-    }
-}
-
-#monster-banner-container {
-    width: 100%;
-    height: 150px; /* 固定高度 */
-    overflow: hidden; /* 確保圖片不溢出 */
-    border-radius: 8px;
-    margin-bottom: 15px; /* 與下方內容的間距 */
-    background-color: var(--bg-primary); /* 預設背景，以防圖片未載入 */
-    display: flex; /* 居中圖片 */
-    align-items: center;
-    justify-content: center;
-}
-#monster-banner-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 裁剪圖片以填充容器 */
-    border-radius: 8px;
-}
-
-.feedback-monster-basic-stats {
-    background-color: var(--bg-primary);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 15px;
-}
-
-.feedback-monster-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 兩列 */
-    gap: 8px 15px; /* 行和列之間的間距 */
-    text-align: left; /* 數值內容左對齊 */
-}
-@media (min-width: 480px) { /* 較大螢幕上可設為三列 */
-    .feedback-monster-stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.feedback-monster-stats-grid div {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-}
-.feedback-monster-stats-grid strong {
-    color: var(--text-secondary);
-    margin-right: 8px;
-}
-.feedback-monster-stats-grid span {
-    color: var(--text-primary);
-    font-weight: bold;
-}
-
-.feedback-monster-info-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* 默認單列 */
-    gap: 15px;
-    margin-top: 15px;
-}
-@media (min-width: 600px) { /* 較大螢幕上分為兩列 */
-    .feedback-monster-info-grid {
-        grid-template-columns: 1fr 1fr; /* 兩列均分 */
-    }
-}
-@media (min-width: 700px) { /* 再大一點的螢幕，AI評價佔滿一行 */
-    .feedback-monster-ai-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-    .feedback-monster-ai-grid .col-span-full { /* 讓 AI評價 佔滿兩列 */
-        grid-column: span 2;
-    }
-}
-
-
-.feedback-monster-info-section {
-    background-color: var(--bg-primary);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    max-height: 250px; /* 限制高度，內部可滾動 */
-    overflow-y: auto;
-}
-.feedback-monster-info-section:last-child { /* AI 綜合評價部分可以更高 */
-    max-height: 350px; 
-}
-
-.feedback-monster-info-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--accent-color);
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px dashed var(--border-color);
-}
-.feedback-monster-info-section p {
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-.feedback-monster-info-section strong {
-    color: var(--text-secondary);
-    margin-right: 5px;
-}
 /* Styles for DNA text within items/slots to ensure visibility */
 .dna-name-text {
     display: block; /* Ensure it takes up space */
@@ -1276,4 +1164,6 @@ body.light-theme .leaderboard-table tr:hover td {
 /* Ensure rarity badge in DNA items has high enough z-index if overlapping */
 .dna-item .dna-rarity-badge {
     z-index: 1;
+}
+
 }
