@@ -485,45 +485,48 @@ function renderPlayerDNAInventory() {
     const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS; // 從 gameState 中獲取最大槽位數
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
 
-    // 遍歷所有固定槽位，無論是否被佔用
+    // 修改點：調整 DNA 庫存的渲染邏輯，第9個位置固定為刪除區
     for (let index = 0; index < MAX_INVENTORY_SLOTS; index++) {
-        const dna = ownedDna[index]; // 獲取該索引位置的 DNA (可能是 DNA 對象或 null)
         const item = document.createElement('div');
-        item.classList.add('dna-item'); // 基礎樣式
+        item.classList.add('dna-item');
         
-        item.dataset.inventoryIndex = index; // 設置槽位索引，用於拖曳放置
+        if (index === 8) { // 第9個位置 (索引為8) 為刪除區
+            item.id = 'inventory-delete-slot';
+            item.classList.add('inventory-delete-slot');
+            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
+            // 刪除區不可拖曳，只可接受放置
+            item.draggable = false; 
+            item.dataset.inventoryIndex = index; // 保持索引一致
+        } else {
+            const dna = ownedDna[index];
+            item.dataset.inventoryIndex = index;
 
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        item.appendChild(nameSpan); // 先添加 span，讓 applyDnaItemStyle 可以找到它
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('dna-name-text');
+            item.appendChild(nameSpan);
 
-        if (dna) { // 如果該槽位有 DNA 物品
-            item.draggable = true;
-            item.dataset.dnaId = dna.id; // 設置 DNA 實例 ID
-            item.dataset.dnaBaseId = dna.baseId; // 設置 DNA 模板 ID
-            item.dataset.dnaSource = 'inventory'; // 標記來源為庫存
-            applyDnaItemStyle(item, dna); // 應用 DNA 物品的樣式和文本
-        } else { // 如果該槽位為空 (null)
-            item.draggable = true; // 空槽位也需要可拖曳，以便接收物品 (但拖曳本身不會拖曳空槽位)
-            item.dataset.dnaSource = 'inventory'; // 標記來源為庫存
-            applyDnaItemStyle(item, null); // 應用空槽位的樣式和文本
-            // 注意：空槽位不設定 data-dnaId 或 data-dnaBaseId
+            if (dna) {
+                item.draggable = true;
+                item.dataset.dnaId = dna.id;
+                item.dataset.dnaBaseId = dna.baseId;
+                item.dataset.dnaSource = 'inventory';
+                applyDnaItemStyle(item, dna);
+            } else {
+                item.draggable = true; // 空槽位也應可拖曳，以便接收物品 (但拖曳本身不會拖曳空槽位)
+                item.dataset.dnaSource = 'inventory';
+                applyDnaItemStyle(item, null);
+            }
         }
         container.appendChild(item);
     }
-
-    const deleteSlot = document.createElement('div');
-    deleteSlot.id = 'inventory-delete-slot';
-    deleteSlot.classList.add('inventory-delete-slot', 'dna-item');
-    deleteSlot.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
-    container.appendChild(deleteSlot);
 }
 
 function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = 24; // You can make this configurable in gameState.gameConfigs
+    // 修改點: 臨時背包的顯示格數從 24 改為 9
+    const MAX_TEMP_SLOTS = 9; 
     const currentTempItems = gameState.temporaryBackpack || [];
 
     // Create a temporary array that represents all slots, including nulls for empty ones
