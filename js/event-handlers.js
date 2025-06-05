@@ -13,47 +13,73 @@ let draggedSourceIdentifier = null; // DNA instance ID or slot index or temp ite
 function handleDragStart(event) {
     const target = event.target.closest('.dna-item, .dna-slot.occupied, .temp-backpack-slot.occupied');
     if (!target) {
+        console.log("Drag Start: Invalid target", target);
         event.preventDefault();
         return;
     }
 
     draggedElement = target;
-    draggedSourceType = target.dataset.dnaSource;
+    draggedSourceType = target.dataset.dnaSource; // 'inventory', 'combination', 'temporaryBackpack'
 
-    console.log("Drag Start - Element:", target, "Source Type:", draggedSourceType);
+    console.log("Drag Start - Element:", target, "Source Type:", draggedSourceType, "Element Dataset:", JSON.parse(JSON.stringify(target.dataset)));
 
     if (draggedSourceType === 'inventory') {
         draggedSourceIdentifier = target.dataset.dnaId;
+        if (!draggedSourceIdentifier) {
+            console.warn("Drag Start from Inventory: Missing data-dna-id on element:", target);
+            event.preventDefault(); return;
+        }
         draggedDnaObject = gameState.playerData.playerOwnedDNA.find(d => d.id === draggedSourceIdentifier);
         if (draggedDnaObject) {
             event.dataTransfer.setData('text/plain', draggedSourceIdentifier);
             console.log("Dragging from Inventory - DNA ID:", draggedSourceIdentifier, "Object:", JSON.parse(JSON.stringify(draggedDnaObject)));
+        } else {
+             console.warn("Drag Start from Inventory: Could not find DNA object in gameState for ID:", draggedSourceIdentifier);
+             event.preventDefault(); return;
         }
     } else if (draggedSourceType === 'combination') {
         draggedSourceIdentifier = parseInt(target.dataset.slotIndex, 10);
+         if (isNaN(draggedSourceIdentifier)) {
+            console.warn("Drag Start from Combination: Invalid or missing data-slot-index on element:", target);
+            event.preventDefault(); return;
+        }
         draggedDnaObject = gameState.dnaCombinationSlots[draggedSourceIdentifier];
         if (draggedDnaObject) {
             event.dataTransfer.setData('text/plain', `combo:${draggedSourceIdentifier}`);
             console.log("Dragging from Combination Slot - Index:", draggedSourceIdentifier, "Object:", JSON.parse(JSON.stringify(draggedDnaObject)));
+        } else {
+            console.warn("Drag Start from Combination: Could not find DNA object in gameState for slot index:", draggedSourceIdentifier);
+            event.preventDefault(); return;
         }
     } else if (draggedSourceType === 'temporaryBackpack') {
         draggedSourceIdentifier = parseInt(target.dataset.tempItemIndex, 10);
+        if (isNaN(draggedSourceIdentifier)) {
+            console.warn("Drag Start from Temporary Backpack: Invalid or missing data-temp-item-index on element:", target);
+            event.preventDefault(); return;
+        }
         const tempItem = gameState.temporaryBackpack[draggedSourceIdentifier];
-        draggedDnaObject = tempItem ? tempItem.data : null; // 假設臨時背包存儲 {type: 'dna', data: {...}}
+        draggedDnaObject = tempItem ? tempItem.data : null;
+
         if (draggedDnaObject) {
             event.dataTransfer.setData('text/plain', `temp:${draggedSourceIdentifier}`);
-            // 如果臨時背包中的物品有唯一的 instanceId (例如從主庫存移過來時保留的)
+            // 將 tempItem 的 instanceId (如果存在) 暫時附加到 draggedDnaObject，以便在 drop 時識別
             if (tempItem && tempItem.instanceId) {
-                 draggedDnaObject.id = tempItem.instanceId; // 確保拖曳對象帶有正確的實例ID
-            } else if (!draggedDnaObject.id) { // 如果拖曳的是模板，確保它有模板ID
-                 draggedDnaObject.id = draggedDnaObject.baseId || `template_${Date.now()}`; // 臨時標識
+                 draggedDnaObject.originalInstanceIdIfFromInventory = tempItem.instanceId;
+                 console.log("Drag Start from Temp: originalInstanceIdIfFromInventory set to", tempItem.instanceId);
+            }
+            // 確保拖曳的對象有一個 id (可以是模板ID或臨時ID)
+            if (!draggedDnaObject.id) {
+                draggedDnaObject.id = draggedDnaObject.baseId || `temp_template_${Date.now()}`;
             }
             console.log("Dragging from Temporary Backpack - Index:", draggedSourceIdentifier, "Object:", JSON.parse(JSON.stringify(draggedDnaObject)));
+        } else {
+            console.warn("Drag Start from Temporary Backpack: Could not find DNA object in gameState for temp index:", draggedSourceIdentifier);
+            event.preventDefault(); return;
         }
     }
 
     if (!draggedDnaObject) {
-        console.warn("Drag Start: Could not identify draggedDnaObject.");
+        console.warn("Drag Start: Could not identify draggedDnaObject at the end of handler.");
         event.preventDefault();
         return;
     }
@@ -73,7 +99,7 @@ function handleDragEnd(event) {
     draggedSourceType = null;
     draggedSourceIdentifier = null;
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    console.log("Drag End");
+    // console.log("Drag End");
 }
 
 function handleDragOver(event) {
@@ -81,21 +107,20 @@ function handleDragOver(event) {
     event.dataTransfer.dropEffect = 'move';
     const target = event.target.closest('.dna-slot, .inventory-slot-empty, .temp-backpack-slot, #inventory-delete-slot, #inventory-items, #temporary-backpack-items');
     if (target) {
-        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over')); // 清除舊的
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         target.classList.add('drag-over');
     }
 }
 
 function handleDragLeave(event) {
     const target = event.target.closest('.dna-slot, .inventory-slot-empty, .temp-backpack-slot, #inventory-delete-slot, #inventory-items, #temporary-backpack-items');
-    if (target && !target.contains(event.relatedTarget)) { // 檢查 relatedTarget 避免子元素觸發 leave
+    if (target && !target.contains(event.relatedTarget)) {
         target.classList.remove('drag-over');
     }
 }
 
 async function handleDrop(event) {
     event.preventDefault();
-    console.log("Drop event triggered");
     const dropTargetElement = event.target.closest('.dna-slot, #inventory-items, #inventory-delete-slot, .inventory-slot-empty, #temporary-backpack-items, .temp-backpack-slot, .temp-backpack-slot.empty');
 
     if (!draggedDnaObject || !dropTargetElement) {
@@ -104,32 +129,42 @@ async function handleDrop(event) {
         return;
     }
     dropTargetElement.classList.remove('drag-over');
-    console.log("Drop Target Element:", dropTargetElement.id || dropTargetElement.className);
-    console.log("Dragged DNA Object:", JSON.parse(JSON.stringify(draggedDnaObject)));
-    console.log("Source Type:", draggedSourceType, "Source ID/Index:", draggedSourceIdentifier);
+    console.log("Drop Event - Target Element:", dropTargetElement.id || dropTargetElement.className);
+    console.log("Drop Event - Dragged DNA Data (before processing):", JSON.parse(JSON.stringify(draggedDnaObject)));
+    console.log("Drop Event - Source Type:", draggedSourceType, "Source ID/Index:", draggedSourceIdentifier);
 
-    // 暫存被拖曳的DNA數據副本，以防在從源頭移除後丟失引用
-    const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
-    const originalSourceType = draggedSourceType;
-    const originalSourceIdentifier = draggedSourceIdentifier;
+    const dnaDataToProcess = JSON.parse(JSON.stringify(draggedDnaObject)); // Critical: Use a deep copy for processing
+    const originalSourceType = draggedSourceType; // Preserve original source type
+    const originalSourceIdentifier = draggedSourceIdentifier; // Preserve original source identifier
 
     // --- 處理刪除 ---
     if (dropTargetElement.id === 'inventory-delete-slot') {
-        let itemNameToDelete = dnaDataToMove.name || "該DNA";
+        let itemNameToDelete = dnaDataToProcess.name || "該DNA";
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${itemNameToDelete}" 嗎？此操作無法復原。`, () => {
             if (originalSourceType === 'inventory' && typeof originalSourceIdentifier === 'string') {
-                deleteDNAFromInventory(originalSourceIdentifier); // game-logic.js
+                console.log(`Deleting from inventory: ID ${originalSourceIdentifier}`);
+                deleteDNAFromInventory(originalSourceIdentifier);
                 renderPlayerDNAInventory();
             } else if (originalSourceType === 'combination' && typeof originalSourceIdentifier === 'number') {
-                const dnaFromSlot = gameState.dnaCombinationSlots[originalSourceIdentifier]; // 再次確認，因為dnaDataToMove是副本
-                if (dnaFromSlot && dnaFromSlot.id && gameState.playerData.playerOwnedDNA.some(d => d.id === dnaFromSlot.id)) { // 檢查是否是來自庫存的實例
-                    deleteDNAFromInventory(dnaFromSlot.id); // 從主庫存刪除
+                const dnaFromSlot = gameState.dnaCombinationSlots[originalSourceIdentifier];
+                if (dnaFromSlot && dnaFromSlot.id && gameState.playerData.playerOwnedDNA.some(d => d.id === dnaFromSlot.id)) {
+                    console.log(`Deleting from inventory (originated from combo slot): ID ${dnaFromSlot.id}`);
+                    deleteDNAFromInventory(dnaFromSlot.id);
                     renderPlayerDNAInventory();
                 }
                 gameState.dnaCombinationSlots[originalSourceIdentifier] = null;
+                console.log(`Cleared combination slot: Index ${originalSourceIdentifier}`);
                 renderDNACombinationSlots();
             } else if (originalSourceType === 'temporaryBackpack' && typeof originalSourceIdentifier === 'number') {
+                const tempItem = gameState.temporaryBackpack[originalSourceIdentifier]; // Get the item before splice
+                if (tempItem && tempItem.instanceId && gameState.playerData.playerOwnedDNA.some(d => d.id === tempItem.instanceId)) {
+                    // If the item in temp an original instanceId from inventory, delete that instance from inventory too.
+                    console.log(`Deleting from inventory (originated from temp backpack): ID ${tempItem.instanceId}`);
+                    deleteDNAFromInventory(tempItem.instanceId);
+                    renderPlayerDNAInventory();
+                }
                 gameState.temporaryBackpack.splice(originalSourceIdentifier, 1);
+                console.log(`Removed from temporary backpack: Index ${originalSourceIdentifier}`);
                 renderTemporaryBackpack();
             }
             updateMonsterSnapshot(getSelectedMonster() || null);
@@ -139,86 +174,99 @@ async function handleDrop(event) {
     // --- 處理拖曳到組合槽 ---
     else if (dropTargetElement.classList.contains('dna-slot')) {
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
+        console.log(`Drop Target: Combination Slot, Index ${targetSlotIndex}`);
         const itemCurrentlyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex] ? JSON.parse(JSON.stringify(gameState.dnaCombinationSlots[targetSlotIndex])) : null;
 
-        // 1. 從源頭移除 (如果是真實移動)
+        // 1. 從源頭移除
         if (originalSourceType === 'inventory' && typeof originalSourceIdentifier === 'string') {
-            deleteDNAFromInventory(originalSourceIdentifier); // 從主庫存移除
+            deleteDNAFromInventory(originalSourceIdentifier);
             renderPlayerDNAInventory();
-        } else if (originalSourceType === 'combination' && typeof originalSourceIdentifier === 'number') {
-            // 如果是組合槽之間的移動，源槽的物品會在 moveDnaToCombinationSlot 中被 itemCurrentlyInTargetSlot (或null) 替換
-            // 所以這裡不需要 gameState.dnaCombinationSlots[originalSourceIdentifier] = null; 除非 target 和 source 是同一個（已在 moveDnaToCombinationSlot 處理）
         } else if (originalSourceType === 'temporaryBackpack' && typeof originalSourceIdentifier === 'number') {
             gameState.temporaryBackpack.splice(originalSourceIdentifier, 1);
             renderTemporaryBackpack();
         }
+        // (如果從組合槽來，moveDnaToCombinationSlot 會處理源槽的清空/交換)
 
         // 2. 放置/交換到目標組合槽
-        moveDnaToCombinationSlot(dnaDataToMove, (originalSourceType === 'combination' ? originalSourceIdentifier : null), targetSlotIndex);
+        moveDnaToCombinationSlot(dnaDataToProcess, (originalSourceType === 'combination' ? originalSourceIdentifier : null), targetSlotIndex);
 
-        // 3. 如果目標槽原本有物品，且來源不是組合槽 (即來源是庫存或臨時背包)，則將目標槽原物品移回來源類型的容器
+        // 3. 如果目標槽原本有物品，且來源不是組合槽 (即來源是庫存或臨時背包)，則將目標槽原物品“退回”
         if (itemCurrentlyInTargetSlot && originalSourceType !== 'combination') {
-            if (originalSourceType === 'inventory') { // 原本是從庫存拖來，被擠出的物品也回庫存
-                if (!gameState.playerData.playerOwnedDNA.find(d => d.id === itemCurrentlyInTargetSlot.id)) { // 確保不重複添加
+            console.log(`Item ${itemCurrentlyInTargetSlot.name} was in target slot ${targetSlotIndex}, returning it.`);
+            if (originalSourceType === 'inventory') { // 來源是庫存，被擠出的物品也回庫存
+                if (!gameState.playerData.playerOwnedDNA.find(d => d.id === itemCurrentlyInTargetSlot.id)) {
                      gameState.playerData.playerOwnedDNA.push(itemCurrentlyInTargetSlot);
                 }
                 renderPlayerDNAInventory();
-                console.log(`Item ${itemCurrentlyInTargetSlot.name} bumped from combo slot ${targetSlotIndex} back to inventory.`);
-            } else if (originalSourceType === 'temporaryBackpack') { // 原本是從臨時背包拖來，被擠出的物品回臨時背包
-                gameState.temporaryBackpack.push({ type: 'dna', data: itemCurrentlyInTargetSlot });
+            } else if (originalSourceType === 'temporaryBackpack') { // 來源是臨時背包，被擠出的物品回臨時背包
+                // 確保退回時保持其 originalInstanceIdIfFromInventory (如果有的話)
+                const instanceIdToPreserve = itemCurrentlyInTargetSlot.originalInstanceIdIfFromInventory || itemCurrentlyInTargetSlot.id;
+                gameState.temporaryBackpack.push({ type: 'dna', data: itemCurrentlyInTargetSlot, instanceId: instanceIdToPreserve });
                 renderTemporaryBackpack();
-                console.log(`Item ${itemCurrentlyInTargetSlot.name} bumped from combo slot ${targetSlotIndex} back to temporary backpack.`);
             }
         }
     }
-    // --- 處理拖曳到庫存區 ---
+    // --- 處理拖曳到庫存區 (主 DNA 碎片區) ---
     else if (dropTargetElement.id === 'inventory-items' || dropTargetElement.classList.contains('inventory-slot-empty')) {
+        console.log("Drop Target: Inventory Area");
         if (originalSourceType === 'combination' && typeof originalSourceIdentifier === 'number') {
-            // 確保 dnaDataToMove 有有效的實例 ID
-            if (dnaDataToMove.id && !gameState.playerData.playerOwnedDNA.find(d => d.id === dnaDataToMove.id)) {
-                 gameState.playerData.playerOwnedDNA.push(dnaDataToMove);
-            } else if (!dnaDataToMove.id) { // 如果是沒有實例ID的模板數據（理論上不應發生從組合槽來的情況）
-                dnaDataToMove.id = `dna_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-                dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id; // 確保有 baseId
-                gameState.playerData.playerOwnedDNA.push(dnaDataToMove);
+            // 從組合槽移回庫存
+            if (dnaDataToProcess.id && !gameState.playerData.playerOwnedDNA.find(d => d.id === dnaDataToProcess.id)) {
+                gameState.playerData.playerOwnedDNA.push(dnaDataToProcess);
+                 console.log(`Added ${dnaDataToProcess.name} (ID: ${dnaDataToProcess.id}) back to inventory from combo slot.`);
+            } else if (!dnaDataToProcess.id) { // 不應發生，組合槽內應有實例ID
+                console.warn("DNA from combo slot missing instance ID, cannot reliably add to inventory.");
+            } else {
+                console.log(`DNA ${dnaDataToProcess.name} (ID: ${dnaDataToProcess.id}) already in inventory or ID conflict.`);
             }
             gameState.dnaCombinationSlots[originalSourceIdentifier] = null;
             renderDNACombinationSlots();
             renderPlayerDNAInventory();
             updateMonsterSnapshot(getSelectedMonster() || null);
-            console.log(`DNA ${dnaDataToMove.name} moved from combination slot ${originalSourceIdentifier} to inventory.`);
         } else if (originalSourceType === 'temporaryBackpack' && typeof originalSourceIdentifier === 'number') {
-            // 從臨時背包到庫存，需要創建/確認實例ID
-            if (!dnaDataToMove.id || gameState.playerData.playerOwnedDNA.find(d => d.id === dnaDataToMove.id)) { // 如果沒有唯一ID或ID已存在，則創建新的
-                dnaDataToMove.id = `dna_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-            }
-            dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id; // 確保有 baseId
-            gameState.playerData.playerOwnedDNA.push(dnaDataToMove);
+            // 從臨時背包移到庫存
+            const templateData = dnaDataToProcess; // dnaDataToProcess is tempItem.data
+            const baseIdForNewInstance = templateData.baseId || templateData.id; // templateData.id is the template's original ID
+            const newInstanceId = `dna_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+            const dnaToAdd = {
+                ...templateData,
+                id: newInstanceId,
+                baseId: baseIdForNewInstance
+            };
+            delete dnaToAdd.originalInstanceIdIfFromInventory; // 清理臨時屬性
+
+            if (!gameState.playerData.playerOwnedDNA) gameState.playerData.playerOwnedDNA = [];
+            gameState.playerData.playerOwnedDNA.push(dnaToAdd);
+            console.log(`Added ${dnaToAdd.name} (New ID: ${dnaToAdd.id}, BaseID: ${dnaToAdd.baseId}) to inventory from temp backpack.`);
+
             gameState.temporaryBackpack.splice(originalSourceIdentifier, 1);
             renderTemporaryBackpack();
             renderPlayerDNAInventory();
-            console.log(`DNA ${dnaDataToMove.name} moved from temporary backpack to inventory.`);
         }
     }
     // --- 處理拖曳到臨時背包區 ---
     else if (dropTargetElement.id === 'temporary-backpack-items' || dropTargetElement.classList.contains('temp-backpack-slot')) {
-        // (不包括從臨時背包拖到臨時背包的內部排序，那需要更複雜的 insert/splice)
+        console.log("Drop Target: Temporary Backpack Area");
+        // (不包括從臨時背包拖到臨時背包的內部排序)
         if (originalSourceType === 'inventory' && typeof originalSourceIdentifier === 'string') {
-            // 這裡的 dnaDataToMove 是從 playerOwnedDNA 來的帶有 instanceId 的對象
-            gameState.temporaryBackpack.push({ type: 'dna', data: dnaDataToMove, instanceId: dnaDataToMove.id }); // 保留 instanceId
+            const instanceIdFromInventory = dnaDataToProcess.id; // 這是從庫存拖曳的物品的唯一實例ID
+            gameState.temporaryBackpack.push({ type: 'dna', data: dnaDataToProcess, instanceId: instanceIdFromInventory });
             deleteDNAFromInventory(originalSourceIdentifier); // 從主庫存移除
             renderPlayerDNAInventory();
             renderTemporaryBackpack();
-            console.log(`DNA ${dnaDataToMove.name} moved from inventory to temporary backpack.`);
+            console.log(`DNA ${dnaDataToProcess.name} (Instance ID: ${instanceIdFromInventory}) moved from inventory to temporary backpack.`);
         } else if (originalSourceType === 'combination' && typeof originalSourceIdentifier === 'number') {
-            // dnaDataToMove 是從組合槽來的對象
-            gameState.temporaryBackpack.push({ type: 'dna', data: dnaDataToMove, instanceId: dnaDataToMove.id }); // 保留 instanceId (如果存在)
+            const instanceIdFromCombo = dnaDataToProcess.id; // 組合槽中的物品應有實例ID
+            gameState.temporaryBackpack.push({ type: 'dna', data: dnaDataToProcess, instanceId: instanceIdFromCombo });
             gameState.dnaCombinationSlots[originalSourceIdentifier] = null;
             renderDNACombinationSlots();
             renderTemporaryBackpack();
             updateMonsterSnapshot(getSelectedMonster() || null);
-            console.log(`DNA ${dnaDataToMove.name} moved from combination slot ${originalSourceIdentifier} to temporary backpack.`);
+            console.log(`DNA ${dnaDataToProcess.name} (Instance ID: ${instanceIdFromCombo}) moved from combination slot ${originalSourceIdentifier} to temporary backpack.`);
         }
+    } else {
+        console.log("Drop: Unhandled drop target or scenario.", dropTargetElement);
     }
 
     handleDragEnd(event);
@@ -678,18 +726,16 @@ function initializeEventListeners() {
 
     if (DOMElements.combineButton) DOMElements.combineButton.addEventListener('click', handleCombineDna);
 
-    const dragDropContext = DOMElements.gameContainer || document.body; // 主要的拖放上下文
+    const dragDropContext = DOMElements.gameContainer || document.body;
 
-    // 統一在 dragDropContext 上監聽 dragstart 和 dragend
     dragDropContext.addEventListener('dragstart', handleDragStart);
     dragDropContext.addEventListener('dragend', handleDragEnd);
 
-    // 為所有潛在的放置目標區域分別綁定 dragover, dragleave, drop
     const dropZones = [
         DOMElements.dnaCombinationSlotsContainer,
-        DOMElements.inventoryItemsContainer, // 整個庫存區作為放置目標
+        DOMElements.inventoryItemsContainer,
         document.getElementById('inventory-delete-slot'),
-        DOMElements.temporaryBackpackContainer // 整個臨時背包區作為放置目標
+        DOMElements.temporaryBackpackContainer
     ];
 
     dropZones.forEach(zone => {
@@ -709,5 +755,5 @@ function initializeEventListeners() {
     handleDnaDrawModal();
     handleAnnouncementModalClose();
 
-    console.log("All event listeners initialized with v2 drag-drop logic.");
+    console.log("All event listeners initialized with v3 drag-drop logic (includes temp backpack fixes).");
 }
