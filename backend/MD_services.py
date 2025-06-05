@@ -391,7 +391,8 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
             new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
             new_monster_instance["creationTime"] = int(time.time()) # 實際創建時間
             new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
-            new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "從既有配方召喚。"}],
+            # 修正 activityLog 的語法，確保它是列表而不是 tuple
+            new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "從既有配方召喚。"}] 
             # 確保所有技能的 current_exp 和 exp_to_next_level 歸零或重設為初始值
             for skill in new_monster_instance.get("skills", []):
                 skill["current_exp"] = 0
@@ -512,7 +513,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
             "monsterTitles": [monster_initial_achievement],
             "monsterMedals": 0,
             "farmStatus": {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}, # 初始狀態
-            "activityLog": [], # 標準版怪獸的日誌應為空
+            "activityLog": [], # 標準版怪獸的日誌應為空 (修正了逗號)
             "healthConditions": [],
             "resistances": {},
             "resume": {"wins": 0, "losses": 0},
@@ -583,7 +584,8 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}" # 賦予新的實例 ID
         new_monster_instance["creationTime"] = int(time.time()) # 實際創建時間
         new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
-        new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}],
+        # 修正 activityLog 的語法，確保它是列表而不是 tuple
+        new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}] 
         # 確保所有技能的 current_exp 和 exp_to_next_level 歸零或重設為初始值
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
