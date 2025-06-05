@@ -3,28 +3,28 @@
 /* Main container for the game interface */
 .main-container {
     width: 100%;
-    max-width: 768px; 
+    max-width: 768px;
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    padding: 10px; 
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 12px; 
+    gap: 12px;
     border: 1px solid var(--border-color);
-    position: relative; 
+    position: relative;
     transition: background-color 0.3s, border-color 0.3s;
-    margin: 10px auto; 
+    margin: 10px auto;
 }
 
 /* Responsive adjustments for main-container */
-@media (min-width: 640px) { 
+@media (min-width: 640px) {
     .main-container {
         padding: 15px;
         gap: 15px;
     }
 }
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
     .main-container {
         padding: 20px;
         gap: 20px;
@@ -36,7 +36,7 @@
 .panel {
     background-color: var(--bg-slot);
     border-radius: 8px;
-    padding: 12px; 
+    padding: 12px;
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
@@ -50,7 +50,7 @@
 
 /* Modal base styles */
 .modal {
-    display: none; 
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
@@ -58,20 +58,20 @@
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.75); 
+    background-color: rgba(0,0,0,0.75);
     align-items: center;
     justify-content: center;
-    padding: 10px; 
+    padding: 10px;
 }
 
 .modal-content {
     background-color: var(--bg-panel);
     color: var(--text-primary);
-    margin: auto; 
-    padding: 15px; 
+    margin: auto;
+    padding: 15px;
     border-radius: 8px;
-    width: 95%; 
-    max-width: 500px; 
+    width: 95%;
+    max-width: 500px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.5);
     position: relative;
     border: 1px solid var(--border-color);
@@ -80,19 +80,19 @@
 @media (min-width: 640px) {
     .modal-content {
         padding: 20px;
-        width: 100%; 
+        width: 100%;
     }
 }
 
 
 /* Modal size variants */
-.modal-content.large { max-width: 700px; } 
+.modal-content.large { max-width: 700px; }
 .modal-content.xlarge { max-width: 850px; }
 .modal-content.feedback-wide { max-width: 600px; }
 
 @media (max-width: 640px) {
     .modal-content.large, .modal-content.xlarge, .modal-content.feedback-wide {
-        max-width: 95%; 
+        max-width: 95%;
     }
 }
 
@@ -100,26 +100,26 @@
 /* Grid for DNA combination slots (5 slots) */
 .dna-combination-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); 
-    gap: 6px; 
-    margin-bottom: 10px; 
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
 }
 
 /* DNA碎片欄位 (Inventory Grid) */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     align-items: stretch;
 }
-@media (min-width: 480px) { 
+@media (min-width: 480px) {
     .inventory-grid {
-        grid-template-columns: repeat(4, 1fr); 
+        grid-template-columns: repeat(4, 1fr);
     }
 }
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
     .inventory-grid {
-        grid-template-columns: repeat(6, 1fr); 
+        grid-template-columns: repeat(6, 1fr);
     }
 }
 
@@ -127,20 +127,20 @@
 /* 臨時背包 (Temporary Backpack Grid) */
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
 }
-@media (min-width: 480px) { 
+@media (min-width: 480px) {
     .temp-backpack-grid {
         grid-template-columns: repeat(4, 1fr);
     }
 }
-@media (min-width: 600px) { 
+@media (min-width: 600px) {
     .temp-backpack-grid {
         grid-template-columns: repeat(6, 1fr);
     }
 }
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
     .temp-backpack-grid {
         grid-template-columns: repeat(8, 1fr);
     }
@@ -150,23 +150,24 @@
 /* Action buttons grid (for Combine and Draw DNA buttons) */
 .action-buttons-grid.dual-buttons {
     display: grid;
-    grid-template-columns: 1fr 1fr; 
-    gap: 12px; 
-    align-items: stretch; 
+    /* OLD: grid-template-columns: 1fr 1fr; */
+    grid-template-columns: 3fr 1fr; /* NEW: Combine button (left) takes 3 parts, Draw DNA (right) takes 1 part */
+    gap: 12px;
+    align-items: stretch;
 }
-.action-buttons-grid.dual-buttons > button { 
-    width: 100%; 
-    height: 100%; 
-    min-height: 48px; 
+.action-buttons-grid.dual-buttons > button {
+    width: 100%;
+    height: 100%;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-@media (max-width: 480px) { 
+@media (max-width: 480px) {
     .action-buttons-grid.dual-buttons {
-        grid-template-columns: 1fr; 
-        gap: 8px; 
+        grid-template-columns: 1fr; /* Stack on small screens */
+        gap: 8px;
     }
 }
 
@@ -175,15 +176,15 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     gap: 0.5rem;
-    padding: 0.5rem 0.25rem; 
-    font-size: 0.75rem; 
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
 }
 .farm-header-grid {
     font-weight: 600;
     color: var(--text-secondary);
-    background-color: var(--bg-primary); 
+    background-color: var(--bg-primary);
     border-bottom-width: 2px;
     border-bottom-color: var(--accent-color);
 }
@@ -193,13 +194,13 @@
 .farm-header-grid, .farm-monster-item {
     grid-template-columns: minmax(36px, auto) 1fr minmax(60px, auto) minmax(60px, auto);
 }
-.farm-monster-item .farm-monster-score { 
-    display: block; 
-    grid-column: 2 / 3; 
+.farm-monster-item .farm-monster-score {
+    display: block;
+    grid-column: 2 / 3;
     font-size: 0.7rem;
     color: var(--success-color);
     padding-left: 2px;
-    margin-top: -4px; 
+    margin-top: -4px;
 }
 .farm-monster-actions-group {
     display: flex;
@@ -214,7 +215,7 @@
     min-width: auto;
     width: 100%;
 }
-.farm-header-grid .hidden-on-mobile { display: none; } 
+.farm-header-grid .hidden-on-mobile { display: none; }
 
 
 /* Farm Grid Columns - Small screens and up (e.g., sm: in Tailwind) */
@@ -224,21 +225,21 @@
         padding: 0.6rem 0.5rem;
         font-size: 0.85rem;
     }
-    .farm-header-grid .hidden-on-mobile { display: block; } 
+    .farm-header-grid .hidden-on-mobile { display: block; }
     .farm-monster-item .farm-monster-score {
-        display: block; 
-        grid-column: auto; 
+        display: block;
+        grid-column: auto;
         font-size: 0.85rem;
         margin-top: 0;
         text-align: center;
     }
     .farm-monster-actions-group {
-        flex-direction: row; 
+        flex-direction: row;
         justify-content: space-around;
     }
     .farm-monster-item button.farm-monster-cultivate-btn,
     .farm-monster-item button.farm-monster-release-btn {
-        width: auto; 
+        width: auto;
         padding: 5px 8px;
         font-size: 0.75rem;
     }
@@ -266,38 +267,38 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
     margin-bottom: 15px;
-    max-height: 300px; 
-    overflow-y: auto; 
+    max-height: 300px;
+    overflow-y: auto;
 }
 /* Auth screen layout */
 #auth-screen {
-    display: flex; 
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 100vh; 
+    min-height: 100vh;
     background-color: var(--bg-primary);
-    padding: 20px; 
+    padding: 20px;
     box-sizing: border-box;
 }
 .auth-container {
     background-color: var(--bg-panel);
-    padding: 25px 30px; 
+    padding: 25px 30px;
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     text-align: center;
     width: 100%;
-    max-width: 380px; 
+    max-width: 380px;
     border: 1px solid var(--border-color);
 }
 /* Details grid for monster info, player info etc. */
 .details-grid {
     display: grid;
-    grid-template-columns: 1fr; 
-    gap: 10px 16px; 
+    grid-template-columns: 1fr;
+    gap: 10px 16px;
 }
-@media (min-width: 540px) { 
+@media (min-width: 540px) {
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
