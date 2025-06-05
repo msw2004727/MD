@@ -16,62 +16,77 @@ const gameState = {
             titles: ["新手"],
             achievements: [],
             medals: 0,
-            nickname: "玩家"
+            nickname: "玩家" // 確保 playerStats 內部也有 nickname
         },
-        nickname: "玩家",
+        nickname: "玩家", // 頂層玩家暱稱
         lastSave: null
     },
     gameConfigs: null, // 從後端獲取的遊戲核心設定
-    isLoading: false,
-    currentTheme: 'dark',
-    selectedMonsterId: null,
-    dnaCombinationSlots: [null, null, null, null, null],
+    
+    // UI 相關狀態
+    isLoading: false, // 是否正在載入數據
+    currentTheme: 'dark', // 當前主題 ('light' 或 'dark')
+    selectedMonsterId: null, // 當前在快照中顯示或操作的怪獸 ID
+    
+    // DNA 組合相關狀態
+    dnaCombinationSlots: [null, null, null, null, null], // DNA 組合槽中的 DNA (可以是 DNAFragment 對象或其 ID)
+    
+    // 新增：DNA組合槽與身體部位的映射關係 (請根據您的設計調整槽位對應)
     dnaSlotToBodyPartMapping: {
-        0: 'head',
-        1: 'leftArm',
-        2: 'rightArm',
-        3: 'leftLeg',
-        4: 'rightLeg'
+        0: 'head',    // 槽位0 (通常是最上面/中間的) 對應 頭部
+        1: 'leftArm', // 槽位1 (左邊的) 對應 左手/左翼/左肢
+        2: 'rightArm',// 槽位2 (右邊的) 對應 右手/右翼/右肢
+        3: 'leftLeg', // 槽位3 (左下方的) 對應 左腳/左下肢
+        4: 'rightLeg' // 槽位4 (右下方的) 對應 右腳/右下肢
     },
-    temporaryBackpack: [],
-    currentError: null,
-    currentInfoMessage: null,
-    activeModalId: null,
+
+    // 臨時背包 (用於存放修煉拾取物等)
+    temporaryBackpack: [], // 存放臨時物品，例如 { type: 'dna', data: {...dnaFragment}, quantity: 1 }
+
+    // 其他可能需要的狀態
+    currentError: null, // 當前錯誤訊息
+    currentInfoMessage: null, // 當前提示訊息
+    activeModalId: null, // 目前活動的彈窗 ID
+    
+    // 排行榜數據
     monsterLeaderboard: [],
     playerLeaderboard: [],
-    currentMonsterLeaderboardElementFilter: 'all',
+    currentMonsterLeaderboardElementFilter: 'all', // 當前怪獸排行榜的元素篩選
+
+    // 排行榜排序設定 (項目10 新增)
     leaderboardSortConfig: {
-        monster: { key: 'score', order: 'desc' },
-        player: { key: 'score', order: 'desc' }
+        monster: { key: 'score', order: 'desc' }, // 預設怪獸排行榜按評價降序
+        player: { key: 'score', order: 'desc' }   // 預設玩家排行榜按積分降序
     },
-    searchedPlayers: [],
-    cultivationMonsterId: null,
-    cultivationStartTime: null,
-    cultivationDurationSet: 0,
-    lastCultivationResult: null,
-    battleTargetMonster: null,
-    lastDnaDrawResult: null,
+
+    // 好友/搜尋相關
+    searchedPlayers: [], // 搜尋到的玩家列表
+
+    // 修煉相關
+    cultivationMonsterId: null, // 正在進行修煉設定的怪獸ID
+    cultivationStartTime: null, // 修煉開始時間戳
+    cultivationDurationSet: 0, // 設定的修煉時長 (秒)
+    lastCultivationResult: null, // 保存上次修煉結果以便加入背包
+    
+    // 戰鬥相關
+    battleTargetMonster: null, // 玩家選擇挑戰的對手怪獸資料
+
+    // DNA 抽卡相關
+    lastDnaDrawResult: null, // 保存上次抽卡結果，以便加入背包
 };
 
-// 函數：更新遊戲狀態
-export function updateGameState(newState) {
+// 函數：更新遊戲狀態並觸發 UI 更新 (如果需要)
+function updateGameState(newState) {
+    // 簡單合併，更複雜的應用可能需要深度合併或使用狀態管理庫
     Object.assign(gameState, newState);
-    // console.log("Game state updated:", JSON.parse(JSON.stringify(gameState))); // 深拷貝打印以避免循環引用問題
+    
+    // 可以在這裡觸發一個自定義事件，讓 UI 模塊監聽並更新
+    // 例如：document.dispatchEvent(new CustomEvent('gameStateChanged', { detail: gameState }));
+    // console.log("Game state updated:", gameState);
 }
-
-// 函數：獲取當前遊戲狀態 (修復點)
-export function getGameState() {
-    return gameState;
-}
-
-// 函數：獲取當前 Firebase 用戶 (修復點)
-export function getCurrentUser() {
-    return gameState.currentUser;
-}
-
 
 // 函數：獲取當前選中的怪獸對象
-export function getSelectedMonster() {
+function getSelectedMonster() {
     if (!gameState.selectedMonsterId || !gameState.playerData || !gameState.playerData.farmedMonsters) {
         return null;
     }
@@ -79,39 +94,42 @@ export function getSelectedMonster() {
 }
 
 // 函數：獲取玩家農場中的第一隻怪獸作為預設選中
-export function getDefaultSelectedMonster() {
+function getDefaultSelectedMonster() {
     if (gameState.playerData && gameState.playerData.farmedMonsters && gameState.playerData.farmedMonsters.length > 0) {
+        // 可以根據某種排序邏輯選擇，例如按評價高低或創建時間
+        // 暫時還是返回第一隻
         return gameState.playerData.farmedMonsters[0];
     }
     return null;
 }
 
 // 函數：重設 DNA 組合槽
-export function resetDNACombinationSlots() {
+function resetDNACombinationSlots() {
     gameState.dnaCombinationSlots = [null, null, null, null, null];
-    if (typeof window.ui !== 'undefined' && typeof window.ui.renderDNACombinationSlots === 'function') {
-        window.ui.renderDNACombinationSlots(gameState.dnaCombinationSlots);
+    if (typeof renderDNACombinationSlots === 'function') { 
+        renderDNACombinationSlots();
     }
      // 當組合槽重設時，也嘗試更新快照中的身體部位
-    if (typeof window.ui !== 'undefined' && typeof window.ui.updateMonsterSnapshot === 'function') {
-        window.ui.updateMonsterSnapshot(getSelectedMonster() || getDefaultSelectedMonster());
+    if (typeof updateMonsterSnapshot === 'function') {
+        // 傳遞 null 或當前選中的怪獸，以觸發快照（包括部位）的更新
+        updateMonsterSnapshot(getSelectedMonster()); 
     }
 }
 
 // 函數：檢查 DNA 組合槽是否已滿
-export function areCombinationSlotsFull() {
+function areCombinationSlotsFull() {
     return gameState.dnaCombinationSlots.every(slot => slot !== null);
 }
 
 // 函數：檢查 DNA 組合槽是否為空
-export function areCombinationSlotsEmpty() {
+function areCombinationSlotsEmpty() {
     return gameState.dnaCombinationSlots.every(slot => slot === null);
 }
 
-// 函數：獲取組合槽中有效的 DNA IDs (應該是 baseId)
-export function getValidDNABaseIdsFromCombinationSlots() {
-    return gameState.dnaCombinationSlots.filter(slot => slot && slot.baseId).map(slot => slot.baseId);
+// 函數：獲取組合槽中有效的 DNA IDs
+function getValidDNAIdsFromCombinationSlots() {
+    return gameState.dnaCombinationSlots.filter(slot => slot && slot.id).map(slot => slot.id);
 }
 
 
-console.log("Game state module loaded with getGameState and other exports.");
+console.log("Game state module loaded with body part mapping and sort config.");
