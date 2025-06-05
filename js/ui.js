@@ -468,31 +468,32 @@ function renderPlayerDNAInventory() {
     const container = DOMElements.inventoryItemsContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_INVENTORY_SLOTS = 11;
-    const ownedDna = gameState.playerData?.playerOwnedDNA || [];
-
-    ownedDna.slice(0, MAX_INVENTORY_SLOTS).forEach(dna => {
+    
+    // 遍歷固定大小的 playerOwnedDNA 陣列
+    for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
+        const dna = gameState.playerData.playerOwnedDNA[i];
         const item = document.createElement('div');
         item.classList.add('dna-item');
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        nameSpan.textContent = dna.name || '未知DNA';
-        item.appendChild(nameSpan);
-        applyDnaItemStyle(item, dna);
-        item.draggable = true;
-        item.dataset.dnaId = dna.id;
-        item.dataset.dnaBaseId = dna.baseId;
-        item.dataset.dnaSource = 'inventory';
-        container.appendChild(item);
-    });
+        item.dataset.inventoryIndex = i; // 為每個槽位設置索引
 
-    const emptySlotsToRender = MAX_INVENTORY_SLOTS - ownedDna.length;
-    for (let i = 0; i < emptySlotsToRender; i++) {
-        const emptySlot = document.createElement('div');
-        emptySlot.classList.add('inventory-slot-empty', 'dna-item');
-        emptySlot.textContent = "空位";
-        applyDnaItemStyle(emptySlot, null);
-        container.appendChild(emptySlot);
+        if (dna && dna.id) {
+            item.classList.add('occupied');
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('dna-name-text');
+            nameSpan.textContent = dna.name || '未知DNA';
+            item.appendChild(nameSpan);
+            applyDnaItemStyle(item, dna);
+            item.draggable = true;
+            item.dataset.dnaId = dna.id;
+            item.dataset.dnaBaseId = dna.baseId;
+            item.dataset.dnaSource = 'inventory';
+        } else {
+            // 空槽位
+            item.classList.add('inventory-slot-empty');
+            item.textContent = "空位";
+            applyDnaItemStyle(item, null);
+        }
+        container.appendChild(item);
     }
 
     const deleteSlot = document.createElement('div');
@@ -512,12 +513,14 @@ function renderTemporaryBackpack() {
     currentTempItems.slice(0, MAX_TEMP_SLOTS).forEach((item, index) => {
         const slot = document.createElement('div');
         slot.classList.add('temp-backpack-slot', 'occupied', 'dna-item');
+        slot.dataset.tempItemIndex = index; // 添加索引
         const nameSpan = document.createElement('span');
         nameSpan.classList.add('dna-name-text');
         nameSpan.textContent = item.data.name || '未知物品';
         slot.appendChild(nameSpan);
         applyDnaItemStyle(slot, item.data);
-        slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
+        // 不再是直接點擊移動，而是由拖曳事件處理
+        // slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
         container.appendChild(slot);
     });
 
@@ -525,6 +528,7 @@ function renderTemporaryBackpack() {
     for (let i = 0; i < emptyTempSlotsToRender; i++) {
         const emptySlot = document.createElement('div');
         emptySlot.classList.add('temp-backpack-slot', 'empty', 'dna-item');
+        emptySlot.dataset.tempItemIndex = currentTempItems.length + i; // 為空槽位也提供索引
         emptySlot.textContent = `空位`;
         applyDnaItemStyle(emptySlot, null);
         container.appendChild(emptySlot);
