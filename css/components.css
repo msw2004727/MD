@@ -3,81 +3,75 @@
 /* Corner buttons (Theme switcher and New Logout button) */
 .corner-button {
     position: absolute;
-    background: none;
+    background: var(--bg-slot); /* Default background for the circle */
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     border-radius: 50%;
-    width: 32px; /* Slightly larger */
-    height: 32px; /* Slightly larger */
-    font-size: 1.1rem; /* Adjusted icon size */
+    width: 36px; /* Increased size for better touch target and emoji visibility */
+    height: 36px; /* Increased size */
+    font-size: 1.2rem; /* Adjusted icon/emoji size */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
-    z-index: 10; /* Ensure they are above other content */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25); /* Slightly stronger shadow */
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    z-index: 10; 
 }
 .corner-button:hover {
-    color: var(--accent-color);
-    border-color: var(--accent-color);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    transform: translateY(-1px); /* Slight lift on hover */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
+.corner-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
 
 /* Specific positioning for corner buttons */
 .top-left-button {
-    top: 12px;
-    left: 12px;
+    top: 10px; /* Adjusted for consistency */
+    left: 10px;
 }
 .top-right-button {
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
 }
 
 
-/* Theme switcher button background (Item 13) */
+/* Theme switcher button background (Item 13 from previous list - ensuring consistency) */
 #theme-switcher {
-    /* Dark theme (default) - Moon icon, light background */
-    background-color: var(--bg-panel-light); /* Use light panel color for contrast */
+    /* Dark theme (default) - Moon icon, uses default .corner-button background or specific if needed */
+    /* background-color: var(--bg-panel-light); */ /* Already handled by .corner-button or can be specific */
     color: var(--text-primary-dark);
-    border-color: var(--border-color-light);
 }
 body.light-theme #theme-switcher {
-    /* Light theme - Sun icon, dark background */
-    background-color: var(--bg-panel-dark); /* Use dark panel color for contrast */
+    /* Light theme - Sun icon, uses default .corner-button background or specific if needed */
+    /* background-color: var(--bg-panel-dark); */
     color: var(--text-primary-light);
-    border-color: var(--border-color-dark);
 }
-#theme-switcher:hover {
-    background-color: var(--accent-hover);
-    color: var(--button-primary-text);
+#theme-switcher:hover { /* General hover for corner buttons is fine, or specialize */
+    color: var(--accent-color);
     border-color: var(--accent-color);
 }
 
 
-/* Logout button style (Item 14, matches theme switcher) */
+/* Logout button style (Item 3: Emoji in a circle) */
 #main-logout-btn {
-    /* Dark theme (default) - Light background for button */
-    background-color: var(--bg-panel-light);
-    color: var(--text-primary-dark);
-    border-color: var(--border-color-light);
-}
-body.light-theme #main-logout-btn {
-    /* Light theme - Dark background for button */
-    background-color: var(--bg-panel-dark);
-    color: var(--text-primary-light);
-    border-color: var(--border-color-dark);
+    font-size: 1.4rem; /* Adjust emoji size if needed */
+    line-height: 1; /* Helps center emoji vertically */
+    padding-bottom: 2px; /* Fine-tune emoji vertical alignment if needed */
 }
 #main-logout-btn:hover {
-    background-color: var(--danger-hover-dark); /* Use danger color for logout hover */
-    color: var(--button-danger-text-dark);
-    border-color: var(--danger-color-dark);
+    background-color: var(--danger-color); 
+    color: var(--button-danger-text-dark); /* White text on danger background */
+    border-color: var(--danger-hover-dark);
 }
 body.light-theme #main-logout-btn:hover {
-    background-color: var(--danger-hover-light);
+    background-color: var(--danger-color);
     color: var(--button-danger-text-light);
-    border-color: var(--danger-color-light);
+    border-color: var(--danger-hover-light);
 }
 
 
@@ -109,30 +103,27 @@ body.light-theme #main-logout-btn:hover {
 /* DNA items, slots, and related elements */
 .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
     border: 1px solid var(--border-color);
-    border-radius: 8px; /* Slightly more rounded */
-    padding: 8px; /* Increased padding */
+    border-radius: 8px; 
+    padding: 8px; 
     text-align: center;
-    font-size: 0.8rem; /* Slightly smaller base font for content */
+    font-size: 0.8rem; 
     transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
     position: relative;
-    min-height: 60px; /* Increased min-height */
+    min-height: 60px; 
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     box-sizing: border-box;
-    word-break: break-all; /* Allow long DNA names to break */
+    word-break: break-all; 
 }
 
-/* Item 6: DNA item styling - Rarity based background with opacity, element based text color */
 .dna-item {
     cursor: grab;
-    /* Background color will be set by JS based on rarity, e.g., background-color: rgba(var(--rarity-rare-rgb), 0.7); */
-    /* Text color will be set by JS based on element, e.g., color: var(--element-fire-text); */
     box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.05);
     font-weight: 500;
 }
-.dna-item .dna-rarity-badge { /* For potential rarity badge, if added by JS */
+.dna-item .dna-rarity-badge { 
     position: absolute;
     top: 3px;
     right: 3px;
@@ -142,17 +133,16 @@ body.light-theme #main-logout-btn:hover {
     line-height: 1;
     text-transform: uppercase;
     font-weight: bold;
-    /* Badge color and background would also be rarity-dependent */
 }
 
 
-.dna-slot, .temp-backpack-slot { cursor: pointer; } /* Clickable slots */
+.dna-slot, .temp-backpack-slot { cursor: pointer; } 
 .inventory-slot-empty, .temp-backpack-slot.empty {
     color: var(--text-secondary);
     border-style: dashed;
-    border-width: 2px; /* Thicker dashed border */
+    border-width: 2px; 
     cursor: default;
-    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent); /* More subtle empty slot */
+    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent); 
 }
 
 .inventory-delete-slot {
@@ -175,7 +165,7 @@ body.light-theme #main-logout-btn:hover {
 
 .inventory-delete-slot.drag-over {
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
-    border-color: var(--danger-hover-dark) !important; /* Use a darker danger color for hover */
+    border-color: var(--danger-hover-dark) !important; 
     color: var(--button-danger-text-dark) !important;
 }
 body.light-theme .inventory-delete-slot.drag-over {
@@ -183,8 +173,6 @@ body.light-theme .inventory-delete-slot.drag-over {
     color: var(--button-danger-text-light) !important;
 }
 
-
-/* Removed .dna-draw-button from here, it's now an .action-button-main */
 
 @media (min-width: 768px) {
     .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
@@ -342,7 +330,7 @@ body.light-theme .monster-snapshot-img-bg img {
 }
 
 /* General Button Styling */
-button, .button { /* Added .button for semantic consistency if needed */
+button, .button {
     padding: 10px 14px;
     border: none;
     border-radius: 6px;
@@ -350,9 +338,9 @@ button, .button { /* Added .button for semantic consistency if needed */
     font-size: 0.9rem;
     font-weight: 500;
     transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1); /* Base shadow for depth */
-    border-bottom: 2px solid rgba(0,0,0,0.2); /* Darker bottom border for 3D effect */
-    position: relative; /* For pseudo-elements if needed */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1); 
+    border-bottom: 2px solid rgba(0,0,0,0.2); 
+    position: relative; 
 }
 @media (min-width: 768px) {
     button, .button {
@@ -362,7 +350,7 @@ button, .button { /* Added .button for semantic consistency if needed */
 }
 button:active, .button:active { 
     transform: translateY(1px); 
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Reduced shadow on press */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
     border-bottom-width: 1px;
 }
 button:disabled, .button:disabled {
@@ -392,8 +380,8 @@ button.primary:hover, .button.primary:hover {
 button.secondary, .button.secondary, .top-nav-button, .farm-time-btn {
     background-color: var(--button-secondary-bg);
     color: var(--button-secondary-text);
-    border: 1px solid var(--border-color); /* Keep thin border for secondary */
-    border-bottom: 2px solid var(--border-color); /* Slightly darker bottom for depth */
+    border: 1px solid var(--border-color); 
+    border-bottom: 2px solid var(--border-color); 
 }
 button.secondary:hover, .button.secondary:hover, .top-nav-button:hover, .farm-time-btn:hover {
     background-color: var(--button-secondary-hover-bg);
@@ -429,27 +417,29 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 
-/* Item 1: 立體感 for "怪物合成" and "抽取DNA" (which are now .action-button-main) */
+/* Item 2: 立體感 for "怪物合成" and "抽取DNA" (which are now .action-button-main) */
+/* Ensure these buttons have the same height and vertical alignment */
 .action-button-main {
-    padding: 12px 20px !important; /* Make them a bit larger */
-    font-size: 1rem !important;
+    padding: 12px 15px !important; /* Adjusted padding for better balance */
+    font-size: 0.95rem !important; /* Standardized font size */
     font-weight: bold !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2), /* Stronger base shadow */
-                0 2px 3px rgba(0,0,0,0.15), /* Softer inner shadow */
-                inset 0 -2px 1px rgba(255,255,255,0.1); /* Subtle highlight from bottom */
-    border-bottom-width: 3px !important; /* Thicker bottom border */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2), 
+                0 1px 2px rgba(0,0,0,0.15),
+                inset 0 -2px 1px rgba(255,255,255,0.1),
+                inset 0 1px 0px rgba(255,255,255,0.05); /* Added subtle top inset highlight */
+    border-bottom-width: 2px !important; /* Standardized bottom border */
+    line-height: 1.2; /* Ensure text is centered well */
+    height: 100%; /* Make buttons fill the height of the grid cell if in a grid */
+    display: flex; /* For centering text if needed */
+    align-items: center;
+    justify-content: center;
 }
 .action-button-main:active {
-    transform: translateY(2px) !important; /* More pronounced press effect */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
+    transform: translateY(1px) !important; /* Reduced press effect for consistency */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
     border-bottom-width: 1px !important;
-}
-/* Apply to specific buttons */
-#combine-button.action-button-main,
-#dna-draw-button.action-button-main {
-    /* Inherits .action-button-main styles */
 }
 
 
@@ -465,9 +455,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     min-width: 32px;
     font-size: 1.2rem;
     line-height: 1;
-    border: none; /* Overrides general button border for this specific case */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Maintain a light shadow */
-    border-bottom: 1px solid rgba(0,0,0,0.1); /* Subtle bottom border */
+    border: none; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+    border-bottom: 1px solid rgba(0,0,0,0.1); 
 }
 .farm-monster-item button.farm-battle-btn:active {
     border-bottom-width: 0;
@@ -497,7 +487,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--accent-color); 
     color: var(--button-primary-text); 
     border: 1px solid var(--accent-hover-dark);
-    border-bottom-width: 2px; /* Consistent with other buttons */
+    border-bottom-width: 2px; 
 }
 .top-nav-button:hover {
     background-color: var(--accent-hover-dark);
@@ -507,19 +497,50 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 
 /* Modal specific components */
-.modal-close {
+.modal-close { /* General modal close button */
     color: var(--text-secondary);
     position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
+    top: 8px; /* Adjusted for better spacing */
+    right: 10px; /* Adjusted for better spacing */
+    font-size: 26px; /* Slightly smaller */
     font-weight: bold;
     cursor: pointer;
+    width: 30px; /* Give it a hit area */
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Make it circular for hover effect */
+    transition: background-color 0.2s, color 0.2s;
 }
 .modal-close:hover, .modal-close:focus {
     color: var(--text-primary);
+    background-color: var(--border-color); /* Subtle hover background */
     text-decoration: none;
 }
+
+/* Item 4: Official Announcement Modal Close Button (X) */
+#official-announcement-close-x {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text); /* White X */
+    width: 28px; /* Specific size */
+    height: 28px;
+    font-size: 20px; /* Size of X character */
+    line-height: 28px; /* Center X vertically */
+    text-align: center;
+    border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+#official-announcement-close-x:hover {
+    background-color: var(--danger-hover-dark);
+    color: var(--button-danger-text);
+}
+body.light-theme #official-announcement-close-x:hover {
+    background-color: var(--danger-hover-light);
+}
+
+
 .modal-header {
     font-size: 1.3rem;
     font-weight: 600;
@@ -704,35 +725,52 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-buttons {
     display: flex;
     flex-wrap: wrap; 
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10px; /* Reduced margin */
+    border-bottom: none; /* Remove bottom border from container, individual tabs will have it */
+    background-color: var(--bg-primary); /* Item 1: Add background color */
+    border-radius: 6px; /* Rounded corners for the tab bar */
+    padding: 4px; /* Padding around the tabs */
+    justify-content: center; /* Item 1: Center tabs */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 .tab-button {
-    padding: 10px 12px; /* Slightly reduced padding for more tabs */
+    padding: 8px 10px; /* Adjusted padding */
     cursor: pointer;
     background-color: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 0.85rem; /* Slightly smaller for more tabs */
+    font-size: 0.8rem; 
     border-bottom: 3px solid transparent; 
-    margin-bottom: -1px; 
-    transition: color 0.2s, border-bottom-color 0.2s;
+    margin: 2px; /* Small margin between tabs */
+    transition: color 0.2s, border-bottom-color 0.2s, background-color 0.2s;
     white-space: nowrap; 
-    flex-grow: 1; /* Allow tabs to grow to fill space if few */
-    text-align: center; /* Center text in tab */
+    flex-grow: 1; 
+    text-align: center; 
+    border-radius: 4px; /* Rounded corners for individual tabs */
 }
-@media (min-width: 768px) { /* On larger screens, tabs don't need to grow as much */
+@media (min-width: 768px) { 
+    .tab-buttons {
+        margin-bottom: 15px; /* Restore margin for larger screens */
+        justify-content: flex-start; /* Align tabs to start on larger screens */
+    }
     .tab-button {
-        flex-grow: 0;
+        flex-grow: 0; /* Tabs don't need to grow as much */
         padding: 10px 15px;
         font-size: 0.9rem;
     }
 }
 .tab-button.active {
     color: var(--accent-color);
-    border-bottom-color: var(--accent-color);
-    font-weight: 500;
+    /* border-bottom-color: var(--accent-color); */ /* Using background for active instead */
+    background-color: var(--bg-panel); /* Active tab background */
+    font-weight: 600; /* Bolder active tab */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
+.tab-button:not(.active):hover {
+    background-color: var(--border-color); /* Hover for non-active tabs */
+    color: var(--text-primary);
+}
+
 .tab-content { display: none; } 
 .tab-content.active { display: block; } 
 
@@ -766,7 +804,7 @@ body.light-theme .leaderboard-table tr:hover td {
     width: 80px; 
     text-align: center;
 }
-.leaderboard-table th .sort-arrow { /* For sort arrows */
+.leaderboard-table th .sort-arrow { 
     margin-left: 5px;
     opacity: 0.5;
 }
@@ -1069,8 +1107,7 @@ body.light-theme .leaderboard-table tr:hover td {
     flex-direction: column;
     align-items: center;
     justify-content: space-between; 
-    min-height: 80px; /* Increased min-height for button */
-    /* Background and text color will be set by JS based on rarity and element */
+    min-height: 80px; 
 }
 .dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
 .dna-draw-result-item .dna-type { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;}
