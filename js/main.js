@@ -7,6 +7,31 @@
 // 為了簡化，這裡假設它們已在全局作用域。
 
 /**
+ * 清除遊戲緩存 (sessionStorage 和特定的 localStorage 項目)。
+ * 會在頁面刷新或關閉視窗前調用。
+ */
+function clearGameCacheOnExitOrRefresh() {
+    console.log("Clearing game cache (sessionStorage and specific localStorage items)...");
+
+    // 清除 sessionStorage 中的所有內容
+    // sessionStorage 中的資料在瀏覽器分頁關閉時會自動清除，
+    // 但在頁面刷新時會保留，所以我們在這裡也清除它以確保刷新時是乾淨的狀態。
+    sessionStorage.clear();
+    console.log("SessionStorage cleared.");
+
+    // 清除 localStorage 中的特定項目
+    // 根據需求，我們清除公告顯示狀態，但保留主題偏好設定。
+    localStorage.removeItem('announcementShown_v1');
+    console.log("localStorage item 'announcementShown_v1' removed.");
+
+    // 注意：gameState 物件本身是 JavaScript 記憶體中的狀態，
+    // 頁面刷新或關閉時它自然會消失，無需在此處手動重置其內部屬性，
+    // 除非這些屬性被持久化到了 localStorage 且需要在 gameState 初始化前被清除。
+    // 目前的設計中，dnaCombinationSlots 和 temporaryBackpack 是 gameState 的一部分，
+    // 它們會隨頁面環境的銷毀而重置。
+}
+
+/**
  * 初始化 Firebase 應用。
  */
 function initializeFirebaseApp() {
@@ -207,6 +232,9 @@ async function loadPlayerDataAndInitializeUI(user) {
 
 // --- Application Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
+    // **新增**: 在 DOM 載入完成後，立即執行一次緩存清除，以處理「刷新瀏覽器」的情況。
+    clearGameCacheOnExitOrRefresh();
+
     console.log("DOM fully loaded and parsed.");
 
     // 1. 初始化 Firebase App
@@ -239,5 +267,17 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch.");
     }
 });
+
+// **新增**: 添加 beforeunload 事件監聽器，處理「關閉視窗」的情況。
+window.addEventListener('beforeunload', function (e) {
+    // 調用我們定義的緩存清除函式
+    clearGameCacheOnExitOrRefresh();
+
+    // 如果需要在用戶關閉前顯示提示，可以取消註解以下兩行。
+    // 但請注意，現代瀏覽器對此行為有所限制，且無法自訂提示文字。
+    // e.preventDefault(); // For some browsers to show the confirmation dialog
+    // e.returnValue = ''; // For some browsers to show the confirmation dialog
+});
+
 
 console.log("Main.js script loaded.");
