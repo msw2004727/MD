@@ -9,7 +9,7 @@ from collections import Counter
 import copy # 用於深拷貝戰鬥狀態
 
 # 這裡不再直接從 .MD_firebase_config 導入 db，而是在函數內部動態獲取
-# from .MD_firebase_config import db 
+# from .MD_firebase_config import db
 import firebase_admin # 僅用於類型提示或檢查 firebase_admin._apps
 from firebase_admin import firestore # 僅用於類型提示或 FieldFilter 等
 
@@ -114,6 +114,21 @@ def _generate_monster_full_nickname(player_title: str, monster_achievement: str,
     full_name = f"{pt}{ma}{en}"
     return full_name[:naming_constraints.get("max_monster_full_nickname_len", 15)]
 
+def _generate_combination_key(dna_template_ids: List[str]) -> str:
+    """
+    根據 DNA 模板 ID 列表生成唯一的組合鍵。
+    - 對輸入的 DNA 模板 ID 列表進行字母排序。
+    - 將排序後的 ID 用底線 `_` 連接成一個單一字串。
+    """
+    if not dna_template_ids:
+        return "empty_combination" # 處理空列表的情況
+
+    # 1. 排序：確保順序不影響結果
+    sorted_ids = sorted(dna_template_ids)
+
+    # 2. 連接：將排序後的 ID 用固定分隔符連接
+    return "_".join(sorted_ids)
+
 # --- 玩家相關服務 ---
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
     """為新玩家初始化遊戲資料。"""
@@ -167,7 +182,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     try:
@@ -217,11 +232,11 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             player_game_data_dict = game_data_doc.to_dict()
             if player_game_data_dict:
                 services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
-                
+
                 # 修改點：確保從 Firestore 載入的 playerOwnedDNA 補齊到最大槽位數
                 loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
                 max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 使用新的預設值
-                
+
                 # 如果載入的 DNA 陣列長度不足，用 None 填充
                 if len(loaded_dna) < max_inventory_slots:
                     loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
@@ -262,7 +277,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     try:
@@ -289,6 +304,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True) # 確保這裡有 exc_info=True
         return False
 
+
 # --- DNA 組合與怪獸生成服務 ---
 def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfigs, player_data: PlayerGameData) -> Optional[Monster]:
     """
@@ -300,7 +316,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (combine_dna_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not dna_ids_from_request:
@@ -327,7 +343,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
             if dna_item and dna_item.get("id") == req_dna_id:
                 found_dna_instance_index = idx
                 break
-        
+
         if found_dna_instance_index != -1:
             dna_instance = player_data["playerOwnedDNA"][found_dna_instance_index] # type: ignore
             combined_dnas_data.append(dna_instance) # type: ignore
@@ -455,7 +471,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         el_key_present: ElementTypes = el_str_present # type: ignore
         base_resistances[el_key_present] = base_resistances.get(el_key_present, 0) + resistance_bonus_from_rarity
     new_monster_base["resistances"] = base_resistances
-    
+
     # AI 描述生成部分 (保持不變)
     services_logger.info(f"為新怪獸 '{new_monster_base['nickname']}' 調用 AI 生成詳細描述。")
     ai_input_data_for_generation = {
@@ -498,7 +514,7 @@ def update_monster_custom_element_nickname_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (update_monster_custom_element_nickname_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters"):
@@ -557,7 +573,7 @@ def absorb_defeated_monster_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。"}
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters"):
@@ -635,27 +651,27 @@ def absorb_defeated_monster_service(
     for dna_template in extracted_dna_templates:
         instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
         owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
-        
+
         # 修改點：找到第一個空位來放置新的 DNA
         free_slot_index = -1
         for i, dna_item in enumerate(current_owned_dna):
             if dna_item is None:
                 free_slot_index = i
                 break
-        
+
         if free_slot_index != -1 and free_slot_index < max_inventory_slots:
             current_owned_dna[free_slot_index] = owned_dna_item
         else:
             # 如果主庫存已滿，嘗試放入臨時背包
             max_temp_backpack_slots = game_configs.get("value_settings", {}).get("max_temp_backpack_slots", 9) # 新增：從 configs 獲取臨時背包槽位數
             temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
-            
+
             free_temp_slot_index = -1
             for i in range(max_temp_backpack_slots):
                 if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
                     free_temp_slot_index = i
                     break
-            
+
             if free_temp_slot_index != -1:
                 # Extend temporary backpack if needed
                 while len(temp_backpack) <= free_temp_slot_index:
@@ -702,7 +718,7 @@ def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs)
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
         return 0
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not dna_instance: return 0
@@ -741,7 +757,7 @@ def heal_monster_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters"):
@@ -794,7 +810,7 @@ def disassemble_monster_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。"}
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters"):
@@ -841,7 +857,7 @@ def disassemble_monster_service(
             returned_dna_templates.append(random.choice(eligible_templates))
 
     player_data["farmedMonsters"].pop(monster_index) # type: ignore
-    
+
     # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
     current_owned_dna = player_data.get("playerOwnedDNA", [])
     max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 修改點：使用新的預設值
@@ -849,26 +865,26 @@ def disassemble_monster_service(
     for dna_template in returned_dna_templates:
         instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
         owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
-        
+
         free_slot_index = -1
         for i, dna_item in enumerate(current_owned_dna):
             if dna_item is None: # 找到第一個 None 槽位
                 free_slot_index = i
                 break
-        
+
         if free_slot_index != -1 and free_slot_index < max_inventory_slots:
             current_owned_dna[free_slot_index] = owned_dna_item
         else:
             # 如果主庫存已滿，嘗試放入臨時背包
             max_temp_backpack_slots = game_configs.get("value_settings", {}).get("max_temp_backpack_slots", 9) # 新增：從 configs 獲取臨時背包槽位數
             temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
-            
+
             free_temp_slot_index = -1
             for i in range(max_temp_backpack_slots):
                 if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
                     free_temp_slot_index = i
                     break
-            
+
             if free_temp_slot_index != -1:
                 # Extend temporary backpack if needed
                 while len(temp_backpack) <= free_temp_slot_index:
@@ -907,7 +923,7 @@ def recharge_monster_with_dna_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (recharge_monster_with_dna_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters") or not player_data.get("playerOwnedDNA"):
@@ -986,7 +1002,7 @@ def complete_cultivation_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (complete_cultivation_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。", "status_code": 500}
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     player_data = get_player_data_service(player_id, None, game_configs)
@@ -1066,7 +1082,7 @@ def complete_cultivation_service(
             # 根據稀有度偏好選擇新技能 (如果 new_skill_rarity_bias 存在)
             # 這裡簡化為隨機選擇，但可以根據 new_skill_rarity_bias 實現加權隨機
             new_skill_rarity_bias = cultivation_cfg.get("new_skill_rarity_bias") # type: ignore
-            
+
             # 創建一個加權列表
             weighted_learnable_skills = []
             for skill_template in learnable_skills:
@@ -1118,7 +1134,7 @@ def replace_monster_skill_service(
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (replace_monster_skill_service 內部)。")
         return None
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not player_data or not player_data.get("farmedMonsters"):
@@ -1173,7 +1189,7 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (simulate_battle_service 內部)。")
         # 這裡不返回 None，因為戰鬥模擬本身不依賴 Firestore，但日誌會記錄問題
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     log: List[str] = []
@@ -1250,7 +1266,7 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
         if current_attacker_state["current_hp"] <= 0:
             log.append(f"倒下了！ {attacker_nickname} 被狀態擊倒！")
             break
-        
+
         # Check if the attacker is stunned/confused BEFORE choosing skill
         can_act = True
         for status in current_attacker_state.get("battle_statuses", []):
@@ -1541,7 +1557,7 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) 
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (get_monster_leaderboard_service 內部)。")
         return []
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     all_monsters: List[Monster] = []
@@ -1575,7 +1591,7 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (get_player_leaderboard_service 內部)。")
         return []
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     all_player_stats: List[PlayerStats] = []
@@ -1605,7 +1621,7 @@ def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[st
     if not firestore_db_instance:
         services_logger.error("Firestore 資料庫未初始化 (search_players_service 內部)。")
         return []
-    
+
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
     if not nickname_query:
@@ -1641,6 +1657,59 @@ def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[st
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     services_logger.info("正在測試 MD_services.py 中的函式...")
+
+    # 模擬 Firebase 初始化 (僅用於本地測試此文件)
+    try:
+        import firebase_admin
+        from firebase_admin import credentials
+        import os, json
+        # 嘗試從環境變數獲取服務帳戶金鑰
+        test_firebase_credentials_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+        if test_firebase_credentials_json:
+            cred = credentials.Certificate(json.loads(test_firebase_credentials_json))
+        else:
+            # 如果環境變數沒有，嘗試從本地檔案讀取 (假設您已下載)
+            if os.path.exists('serviceAccountKey.json'):
+                cred = credentials.Certificate('serviceAccountKey.json')
+            else:
+                cred = None # 無法初始化 Firebase
+
+        if cred and not firebase_admin._apps: # 避免重複初始化
+            firebase_admin.initialize_app(cred)
+            services_logger.info("Firebase Admin SDK 已在測試模式下初始化。")
+            from MD_firebase_config import set_firestore_client
+            set_firestore_client(firestore.client())
+        elif firebase_admin._apps:
+             services_logger.info("Firebase Admin SDK 已經初始化。")
+        else:
+             services_logger.warning("Firebase Admin SDK 未能初始化，部分測試將跳過。")
+
+    except Exception as e:
+        services_logger.error(f"測試模式下 Firebase 初始化失敗: {e}", exc_info=True)
+
+    # 測試 _generate_combination_key
+    print("\n--- 測試 _generate_combination_key ---")
+    test_ids1 = ["dna_fire_c01", "dna_water_r01"]
+    key1 = _generate_combination_key(test_ids1)
+    print(f"輸入: {test_ids1}, 輸出: {key1}") # 預期: dna_fire_c01_dna_water_r01
+
+    test_ids2 = ["dna_water_r01", "dna_fire_c01"]
+    key2 = _generate_combination_key(test_ids2)
+    print(f"輸入: {test_ids2}, 輸出: {key2}") # 預期: dna_fire_c01_dna_water_r01
+
+    assert key1 == key2
+    print("測試通過: 順序不影響組合鍵。")
+
+    test_ids3 = ["dna_wood_c01", "dna_gold_c01", "dna_earth_r01"]
+    key3 = _generate_combination_key(test_ids3)
+    print(f"輸入: {test_ids3}, 輸出: {key3}")
+    # 預期: dna_earth_r01_dna_gold_c01_dna_wood_c01 (因為按字母排序)
+
+    test_ids4 = []
+    key4 = _generate_combination_key(test_ids4)
+    print(f"輸入: {test_ids4}, 輸出: {key4}") # 預期: empty_combination
+    print("測試通過: 空列表的處理。")
+
 
     mock_game_configs_for_battle: GameConfigs = {
         "dna_fragments": [],
