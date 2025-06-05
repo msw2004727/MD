@@ -8,16 +8,18 @@
 let draggedDnaElement = null; // 用於存儲被拖動的 DNA 元素
 
 function handleDragStart(event) {
-    if (event.target.classList.contains('dna-item') || (event.target.classList.contains('dna-slot') && event.target.classList.contains('occupied'))) {
-        draggedDnaElement = event.target;
-        // 傳輸 DNA 實例 ID (如果存在)，否則傳輸文字內容作為備用
-        event.dataTransfer.setData('text/plain', event.target.dataset.dnaId || event.target.dataset.dnaBaseId || event.target.textContent);
+    const target = event.target;
+    if (target.classList.contains('dna-item') || (target.classList.contains('dna-slot') && target.classList.contains('occupied'))) {
+        draggedDnaElement = target;
+        // 同時傳輸實例ID (dnaId) 和基礎ID (dnaBaseId)，以便後續使用
+        event.dataTransfer.setData('text/plain', target.dataset.dnaId || target.dataset.dnaBaseId || target.textContent);
         event.dataTransfer.effectAllowed = 'move';
+        // 為了防止拖曳時元素消失（某些瀏覽器行為），可以延遲添加 dragging class
         setTimeout(() => {
-            if (draggedDnaElement) draggedDnaElement.classList.add('dragging'); // 檢查 draggedDnaElement 是否仍然有效
+            if (draggedDnaElement) draggedDnaElement.classList.add('dragging');
         }, 0);
     } else {
-        event.preventDefault(); // 如果不是可拖動的元素，則阻止拖動
+        event.preventDefault(); // 不是可拖曳元素
     }
 }
 
@@ -26,22 +28,19 @@ function handleDragEnd(event) {
         draggedDnaElement.classList.remove('dragging');
         draggedDnaElement = null;
     }
-    // 清除所有元素的拖曳懸停樣式
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
 }
 
 function handleDragOver(event) {
-    event.preventDefault(); // 必須阻止默認行為才能觸發 drop 事件
-    event.dataTransfer.dropEffect = 'move'; // 視覺提示
-    // 檢查目標是否是有效的放置區域
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
     const target = event.target.closest('.dna-slot, .inventory-slot-empty, .temp-backpack-slot, #inventory-delete-slot, #inventory-items');
     if (target) {
-        target.classList.add('drag-over'); // 為有效的放置目標添加懸停樣式
+        target.classList.add('drag-over');
     }
 }
 
 function handleDragLeave(event) {
-    // 當拖曳離開時，移除懸停樣式
     const target = event.target.closest('.dna-slot, .inventory-slot-empty, .temp-backpack-slot, #inventory-delete-slot, #inventory-items');
     if (target) {
         target.classList.remove('drag-over');
@@ -51,26 +50,32 @@ function handleDragLeave(event) {
 async function handleDrop(event) {
     event.preventDefault();
     if (!draggedDnaElement) {
-        handleDragEnd(event); // 清理拖曳狀態
+        handleDragEnd(event);
         return;
     }
 
-    // 確定放置目標
     const targetElement = event.target.closest('.dna-slot, #inventory-items, #inventory-delete-slot, .temp-backpack-slot, .inventory-slot-empty');
     if (!targetElement) {
-        handleDragEnd(event); // 如果不是有效的放置目標，清理並返回
+        handleDragEnd(event);
         return;
     }
 
-    targetElement.classList.remove('drag-over'); // 移除懸停樣式
+    targetElement.classList.remove('drag-over');
 
-    const dnaInstanceId = draggedDnaElement.dataset.dnaId; // 被拖曳的 DNA 實例 ID
-    const source = draggedDnaElement.dataset.dnaSource; // 來源 ('inventory' 或 'combination')
+    const dnaInstanceId = draggedDnaElement.dataset.dnaId; // 實例ID，主要用於從庫存拖曳
+    const draggedDnaBaseId = draggedDnaElement.dataset.dnaBaseId; // 模板ID，主要用於合成
+    const source = draggedDnaElement.dataset.dnaSource;
     const sourceSlotIndexAttr = draggedDnaElement.dataset.slotIndex;
     const sourceSlotIndex = sourceSlotIndexAttr !== undefined ? parseInt(sourceSlotIndexAttr, 10) : null;
 
+    // 如果是從組合槽拖曳，我們需要傳遞被拖曳的 DNA 物件本身
+    let draggedDnaObject = null;
+    if (source === 'combination' && sourceSlotIndex !== null && gameState.dnaCombinationSlots[sourceSlotIndex]) {
+        draggedDnaObject = gameState.dnaCombinationSlots[sourceSlotIndex];
+    }
+
+
     if (targetElement.id === 'inventory-delete-slot') {
-        // 處理拖曳到刪除區
         if (source === 'inventory' && dnaInstanceId) {
             showConfirmationModal('確認刪除', `您確定要永久刪除 DNA 碎片 "${draggedDnaElement.textContent.trim()}" 嗎？此操作無法復原。`, () => {
                 deleteDNAFromInventory(dnaInstanceId);
@@ -78,29 +83,27 @@ async function handleDrop(event) {
                 showFeedbackModal('操作成功', `DNA 碎片 "${draggedDnaElement.textContent.trim()}" 已被刪除。`);
             });
         } else if (source === 'combination' && sourceSlotIndex !== null) {
-            gameState.dnaCombinationSlots[sourceSlotIndex] = null;
+            gameState.dnaCombinationSlots[sourceSlotIndex] = null; // 清空來源槽
             renderDNACombinationSlots();
             showFeedbackModal('操作成功', `已從組合槽移除 DNA。`);
         }
     } else if (targetElement.classList.contains('dna-slot')) {
-        // 處理拖曳到 DNA 組合槽
         const targetSlotIndex = parseInt(targetElement.dataset.slotIndex, 10);
-        moveDnaToCombinationSlot(dnaInstanceId, source, sourceSlotIndex, targetSlotIndex);
+        // 調用 moveDnaToCombinationSlot，傳遞實例ID (如果從庫存) 或拖曳的物件 (如果從組合槽)
+        moveDnaToCombinationSlot(dnaInstanceId, draggedDnaObject, source, sourceSlotIndex, targetSlotIndex);
     } else if ((targetElement.id === 'inventory-items' || targetElement.classList.contains('inventory-slot-empty')) && source === 'combination' && sourceSlotIndex !== null) {
-        // 處理從組合槽拖曳回 DNA 庫存 (概念上是清空該組合槽)
-        const dnaInSourceSlot = gameState.dnaCombinationSlots[sourceSlotIndex];
-        if (dnaInSourceSlot) {
-            // 如果需要將物品真的移回庫存，這裡需要添加邏輯將 dnaInSourceSlot 添加回 gameState.playerData.playerOwnedDNA
-            // 目前的設計是組合槽中的DNA實例在合成前不直接影響庫存數量，所以僅清空組合槽
+        // 從組合槽拖曳回 DNA 庫存 (概念上是清空該組合槽)
+        // 注意：如果需要將DNA實例“歸還”到庫存，這裡需要更複雜的邏輯
+        // 目前只清空組合槽，不增加庫存（因為庫存DNA有唯一實例ID）
+        if (gameState.dnaCombinationSlots[sourceSlotIndex]) {
             gameState.dnaCombinationSlots[sourceSlotIndex] = null;
             renderDNACombinationSlots();
-            // 如果真的移回庫存，則需要調用 renderPlayerDNAInventory();
-            showFeedbackModal('提示', '已從組合槽移除 DNA。');
+            // renderPlayerDNAInventory(); // 如果需要更新庫存（例如DNA被“歸還”）
+            showFeedbackModal('提示', '已從組合槽移除 DNA。物品未返回庫存。');
         }
     }
-    // 其他放置目標（如臨時背包）的邏輯可以根據需要添加
 
-    handleDragEnd(event); // 完成放置後清理拖曳狀態
+    handleDragEnd(event);
 }
 
 
@@ -284,7 +287,7 @@ function handleTopNavButtons() {
         DOMElements.newbieGuideBtn.addEventListener('click', () => {
             if (gameState.gameConfigs && gameState.gameConfigs.newbie_guide) {
                 updateNewbieGuideModal(gameState.gameConfigs.newbie_guide);
-                DOMElements.newbieGuideSearchInput.value = '';
+                if(DOMElements.newbieGuideSearchInput) DOMElements.newbieGuideSearchInput.value = '';
                 showModal('newbie-guide-modal');
             } else {
                 showFeedbackModal('錯誤', '新手指南尚未載入。');
@@ -295,7 +298,7 @@ function handleTopNavButtons() {
     if (DOMElements.friendsListBtn) {
         DOMElements.friendsListBtn.addEventListener('click', () => {
             updateFriendsListModal([]);
-            DOMElements.friendsListSearchInput.value = '';
+            if(DOMElements.friendsListSearchInput) DOMElements.friendsListSearchInput.value = '';
             showModal('friends-list-modal');
         });
     }
@@ -324,10 +327,10 @@ function handleTabSwitching() {
 
 // --- DNA Combination Handler ---
 async function handleCombineDna() {
-    // *** 修正：獲取 DNA 模板的 baseId 而不是實例的 id ***
+    // *** 修正：確保獲取的是 DNA 模板的 baseId ***
     const dnaBaseIdsForCombination = gameState.dnaCombinationSlots
-        .filter(slot => slot && slot.baseId) // 確保 slot 不為空且有 baseId
-        .map(slot => slot.baseId); // 獲取 baseId
+        .filter(slot => slot && slot.baseId) // 確保 slot 不為空且有 baseId (模板ID)
+        .map(slot => slot.baseId);
 
     if (dnaBaseIdsForCombination.length < 2) {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
@@ -336,8 +339,7 @@ async function handleCombineDna() {
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        // *** 修正：將 dnaBaseIdsForCombination 傳遞給後端 ***
-        const result = await combineDNA(dnaBaseIdsForCombination);
+        const result = await combineDNA(dnaBaseIdsForCombination); // 將 baseIds 傳遞給後端
 
         if (result && result.id) {
             const newMonster = result;
@@ -369,14 +371,18 @@ async function handleCombineDna() {
             showFeedbackModal('合成失敗', '發生未知錯誤，未能生成怪獸。');
         }
     } catch (error) {
-        showFeedbackModal('合成失敗', `請求錯誤: ${error.message}`);
+        // 顯示更詳細的錯誤訊息給用戶，如果 error.message 包含 "未能生成怪獸"
+        let errorMessage = `請求錯誤: ${error.message}`;
+        if (error.message && error.message.includes("未能生成怪獸")) {
+            errorMessage = `合成失敗: DNA 組合未能生成怪獸。請檢查您的 DNA 組合或稍後再試。`;
+        }
+        showFeedbackModal('合成失敗', errorMessage);
     }
 }
 
 // --- Confirmation Modal Action Handler ---
 function handleConfirmationActions() {
-    // 確認 DOMElements.cancelActionBtn 是否存在，如果您的 HTML 中沒有這個按鈕，則這段可以移除或註解
-    if (DOMElements.cancelActionBtn) {
+    if (DOMElements.cancelActionBtn) { // 確保您的HTML中有這個按鈕，如果沒有，則此段不需要
         DOMElements.cancelActionBtn.addEventListener('click', () => {
             hideModal('confirmation-modal');
         });
@@ -391,7 +397,7 @@ function handleCultivationModals() {
                 showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
                 return;
             }
-            const MOCK_CULTIVATION_DURATION_SECONDS = 10; // 之後可以從輸入框獲取或設定
+            const MOCK_CULTIVATION_DURATION_SECONDS = 10;
 
             gameState.cultivationStartTime = Date.now();
             gameState.cultivationDurationSet = MOCK_CULTIVATION_DURATION_SECONDS;
@@ -417,7 +423,7 @@ function handleCultivationModals() {
     }
 
     if (DOMElements.closeTrainingResultsBtn) DOMElements.closeTrainingResultsBtn.addEventListener('click', () => {
-        if (gameState.temporaryBackpack.length > 0) { // 檢查臨時背包是否有物品
+        if (gameState.temporaryBackpack.length > 0) {
             showModal('reminder-modal');
         } else {
             hideModal('training-results-modal');
@@ -442,10 +448,10 @@ function handleCultivationModals() {
     if (DOMElements.reminderConfirmCloseBtn) DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
         hideModal('reminder-modal');
         hideModal('training-results-modal');
-        clearTemporaryBackpack(); // 確認關閉時清空臨時背包
+        clearTemporaryBackpack();
     });
     if (DOMElements.reminderCancelBtn) DOMElements.reminderCancelBtn.addEventListener('click', () => {
-        hideModal('reminder-modal'); // 只是關閉提醒，返回修煉成果
+        hideModal('reminder-modal');
     });
 }
 
@@ -466,17 +472,17 @@ function handleFriendsListSearch() {
    if (DOMElements.friendsListSearchInput) {
         DOMElements.friendsListSearchInput.addEventListener('input', async (event) => {
             const query = event.target.value.trim();
-            if (query.length > 1) { // 至少輸入2個字才開始搜尋
+            if (query.length > 1) {
                 try {
-                    const result = await searchPlayers(query); // api-client.js
+                    const result = await searchPlayers(query);
                     gameState.searchedPlayers = result.players || [];
                     updateFriendsListModal(gameState.searchedPlayers);
                 } catch (error) {
                     console.error("搜尋玩家失敗:", error);
-                    updateFriendsListModal([]); // 出錯時清空列表
+                    updateFriendsListModal([]);
                 }
             } else if (query.length === 0) {
-                updateFriendsListModal([]); // 清空輸入時也清空列表
+                updateFriendsListModal([]);
             }
         });
    }
@@ -582,8 +588,6 @@ function initializeEventListeners() {
 
     if (DOMElements.combineButton) DOMElements.combineButton.addEventListener('click', handleCombineDna);
 
-    // 將拖放事件監聽器綁定到一個更廣泛的父容器，以確保在動態添加/刪除元素時仍然有效
-    // 選擇一個始終存在且包含所有可拖放區域的容器，例如 gameContainer 或 body
     const dragDropContainer = DOMElements.gameContainer || document.body;
 
     dragDropContainer.addEventListener('dragstart', handleDragStart);
@@ -592,13 +596,10 @@ function initializeEventListeners() {
     dragDropContainer.addEventListener('dragleave', handleDragLeave);
     dragDropContainer.addEventListener('drop', handleDrop);
 
-    // 如果 dnaCombinationSlotsContainer 是獨立於 dnaInventoryPanel 的，也需要為它單獨添加監聽器（如果它不是 dragDropContainer 的子元素）
-    // 但如果它是 dragDropContainer 的子元素，則上面的事件委託已經覆蓋。
-    // 為了保險，如果它是一個明確的放置目標且可能獨立於其他拖曳源，可以單獨綁定 drop 和 dragover/dragleave
     if (DOMElements.dnaCombinationSlotsContainer) {
-        DOMElements.dnaCombinationSlotsContainer.addEventListener('dragover', handleDragOver); // 允許放置
-        DOMElements.dnaCombinationSlotsContainer.addEventListener('dragleave', handleDragLeave); // 清除懸停
-        DOMElements.dnaCombinationSlotsContainer.addEventListener('drop', handleDrop); // 處理放置
+        DOMElements.dnaCombinationSlotsContainer.addEventListener('dragover', handleDragOver);
+        DOMElements.dnaCombinationSlotsContainer.addEventListener('dragleave', handleDragLeave);
+        DOMElements.dnaCombinationSlotsContainer.addEventListener('drop', handleDrop);
     }
 
 
@@ -611,5 +612,5 @@ function initializeEventListeners() {
     handleDnaDrawModal();
     handleAnnouncementModalClose();
 
-    console.log("All event listeners initialized with drag-drop and DNA combination fixes.");
+    console.log("All event listeners initialized with drag-drop and DNA combination fixes (v2).");
 }
