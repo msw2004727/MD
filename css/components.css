@@ -5,7 +5,6 @@
     position: absolute;
     background: var(--bg-slot); 
     border: 1px solid var(--border-color);
-    color: var(--text-secondary);
     border-radius: 50%;
     width: 36px; 
     height: 36px; 
@@ -473,6 +472,13 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
     border-bottom-width: 1px !important;
 }
+
+/* Specific style for DNA draw button to make it 1:1 aspect ratio */
+#dna-draw-button {
+    aspect-ratio: 1 / 1;
+    min-width: 48px; /* Ensure it has a minimum width matching its min-height */
+}
+
 .farm-monster-item button.farm-battle-btn {
     width: 32px;
     height: 32px;
