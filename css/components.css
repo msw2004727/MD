@@ -240,26 +240,27 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 #monster-parts-container {
-    /* NEW: Adjust size to better fit the visual area around the monster silhouette */
-    width: 150px; /* Adjusted from 200px to bring parts closer */
-    height: 180px; /* Adjusted from 200px */
+    /* Adjusted based on user's image. */
+    /* Make it a grid to place the 5 parts */
+    width: 180px; /* Adjusted to be slightly larger for better spacing, still within 190px silhouette */
+    height: 180px; /* Make it more square */
     z-index: 30;
-    /* Grid layout for positioning the 5 parts */
     display: grid;
-    /* Redefine grid areas for more precise control based on your red box image */
-    grid-template-columns: 1fr 1fr 1fr; /* Example: 3 columns */
-    grid-template-rows: 1fr 1fr 1fr;    /* Example: 3 rows */
+    /* Define grid areas for each part based on your red box diagram */
+    grid-template-columns: 1fr 1fr 1fr; /* 3 columns */
+    grid-template-rows: 1fr 1fr 1fr;    /* 3 rows */
     grid-template-areas:
         ". head ."
-        "leftArm . rightArm"
-        "leftLeg . rightLeg"; /* This is an example, adjust as needed for precise placement */
-    gap: 0px; /* Adjust gap to control spacing between parts */
+        "leftArm center rightArm"
+        "leftLeg center rightLeg"; /* 'center' can be empty or used for body visuals */
+    /* Adjust gap to bring parts closer to the center */
+    gap: 0px; /* Start with no gap, fine-tune with part sizes and margins */
 }
 
 /* Precise positioning for monster parts based on your red box image */
 .monster-part {
     background-color: transparent; 
-    border: 1px solid var(--accent-color); /* Make border visible for debugging positioning */
+    /* border: 1px solid var(--accent-color); /* Keep this border for debugging positioning, then remove */
     background-size: contain; 
     background-repeat: no-repeat;
     background-position: center center;
@@ -271,12 +272,51 @@ body.light-theme .inventory-delete-slot.drag-over {
     align-items: center;
     justify-content: center;
 }
-
-#monster-part-head { grid-area: head; /* Adjust size relative to container */ width: 60px; height: 60px; justify-self: center; align-self: center; } /* Example size */
-#monster-part-left-arm { grid-area: leftArm; width: 50px; height: 80px; justify-self: end; align-self: center; } /* Example size */
-#monster-part-right-arm { grid-area: rightArm; width: 50px; height: 80px; justify-self: start; align-self: center; } /* Example size */
-#monster-part-left-leg { grid-area: leftLeg; width: 50px; height: 80px; justify-self: end; align-self: center; } /* Example size */
-#monster-part-right-leg { grid-area: rightLeg; width: 50px; height: 80px; justify-self: start; align-self: center; } /* Example size */
+/* Specific grid areas for each part */
+#monster-part-head {
+    grid-area: head;
+    width: 55px; /* approx 30% of 180px container */
+    height: 45px; /* Make it slightly horizontal */
+    justify-self: center; /* Center horizontally within grid area */
+    align-self: center; /* Center vertically within grid area */
+    margin-top: 15px; /* Push slightly down from the very top of the grid area */
+}
+#monster-part-left-arm {
+    grid-area: leftArm;
+    width: 55px;
+    height: 45px;
+    justify-self: end; /* Align to the right edge of its grid cell */
+    align-self: center;
+    margin-right: -10px; /* Pull it slightly left to overlap center */
+    margin-top: -5px; /* Pull slightly up */
+}
+#monster-part-right-arm {
+    grid-area: rightArm;
+    width: 55px;
+    height: 45px;
+    justify-self: start; /* Align to the left edge of its grid cell */
+    align-self: center;
+    margin-left: -10px; /* Pull it slightly right to overlap center */
+    margin-top: -5px; /* Pull slightly up */
+}
+#monster-part-left-leg {
+    grid-area: leftLeg;
+    width: 55px;
+    height: 45px;
+    justify-self: end;
+    align-self: start; /* Align to the top of its grid cell */
+    margin-right: -10px;
+    margin-bottom: 20px; /* Push slightly up from the very bottom of the grid area */
+}
+#monster-part-right-leg {
+    grid-area: rightLeg;
+    width: 55px;
+    height: 45px;
+    justify-self: start;
+    align-self: start;
+    margin-left: -10px;
+    margin-bottom: 20px; /* Push slightly up from the very bottom of the grid area */
+}
 
 
 /* Snapshot text info - ensure they are above all image layers */
@@ -332,7 +372,7 @@ body.light-theme .inventory-delete-slot.drag-over {
     text-align: right;
     padding: 3px 6px; /* Adjusted */
     background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-    border-radius: 4px;
+    border-radius: 44px;
 }
 .snapshot-win-loss span { display: block; } 
 
@@ -526,14 +566,12 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     justify-content: center;
     border-radius: 50%; 
     transition: background-color 0.2s, color 0.2s;
-    z-index: 1; /* 確保在其他內容之上 */
 }
 .modal-close:hover, .modal-close:focus { 
     color: var(--text-primary);
     background-color: var(--border-color); 
     text-decoration: none;
 }
-/* 新增：右上角關閉按鈕樣式 */
 #feedback-modal-close-x {
     background-color: var(--danger-color); /* 紅色背景 */
     color: var(--button-danger-text); /* 白色 X */
@@ -1249,5 +1287,4 @@ body.light-theme .leaderboard-table tr:hover td {
 /* Ensure rarity badge in DNA items has high enough z-index if overlapping */
 .dna-item .dna-rarity-badge {
     z-index: 1;
-}
 }
