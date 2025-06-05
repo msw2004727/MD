@@ -3,159 +3,160 @@
 // 注意：此檔案會依賴 gameState (來自 js/game-state.js) 和其他輔助函數
 
 // --- DOM Element Selectors (集中管理，方便維護) ---
-const DOMElements = {
-    // Auth Screen
-    authScreen: document.getElementById('auth-screen'),
-    gameContainer: document.getElementById('game-container'),
-    showLoginFormBtn: document.getElementById('show-login-form-btn'),
-    showRegisterFormBtn: document.getElementById('show-register-form-btn'),
-    mainLogoutBtn: document.getElementById('main-logout-btn'), 
+// 確保在 DOMContentLoaded 之後執行或透過 main.js 的延遲初始化來保證元素存在
+let DOMElements = {};
 
-    // Register Modal
-    registerModal: document.getElementById('register-modal'),
-    registerNicknameInput: document.getElementById('register-nickname'),
-    registerPasswordInput: document.getElementById('register-password'),
-    registerErrorMsg: document.getElementById('register-error'),
-    registerSubmitBtn: document.getElementById('register-submit-btn'),
-    
-    // Login Modal
-    loginModal: document.getElementById('login-modal'),
-    loginNicknameInput: document.getElementById('login-nickname'),
-    loginPasswordInput: document.getElementById('login-password'),
-    loginErrorMsg: document.getElementById('login-error'),
-    loginSubmitBtn: document.getElementById('login-submit-btn'),
+function initializeDOMElements() {
+    DOMElements = {
+        // Auth Screen
+        authScreen: document.getElementById('auth-screen'),
+        gameContainer: document.getElementById('game-container'),
+        showLoginFormBtn: document.getElementById('show-login-form-btn'),
+        showRegisterFormBtn: document.getElementById('show-register-form-btn'),
+        mainLogoutBtn: document.getElementById('main-logout-btn'),
 
-    // Theme Switcher
-    themeSwitcherBtn: document.getElementById('theme-switcher'),
-    themeIcon: document.getElementById('theme-icon'),
+        // Register Modal
+        registerModal: document.getElementById('register-modal'),
+        registerNicknameInput: document.getElementById('register-nickname'),
+        registerPasswordInput: document.getElementById('register-password'),
+        registerErrorMsg: document.getElementById('register-error'),
+        registerSubmitBtn: document.getElementById('register-submit-btn'),
 
-    // Monster Snapshot Panel
-    monsterSnapshotArea: document.getElementById('monster-snapshot-area'),
-    snapshotAchievementTitle: document.getElementById('snapshot-achievement-title'),
-    snapshotNickname: document.getElementById('snapshot-nickname'), 
-    snapshotWinLoss: document.getElementById('snapshot-win-loss'),
-    snapshotEvaluation: document.getElementById('snapshot-evaluation'), 
-    snapshotMainContent: document.getElementById('snapshot-main-content'), // 主要用於顯示屬性等
-    monsterSnapshotBaseBg: document.getElementById('monster-snapshot-base-bg'), // 新增快照背景圖元素
-    monsterSnapshotBodySilhouette: document.getElementById('monster-snapshot-body-silhouette'), // 新增怪獸全身圖元素
-    
-    // 怪獸部位元素
-    monsterPartsContainer: document.getElementById('monster-parts-container'), 
-    monsterPartHead: document.getElementById('monster-part-head'),
-    monsterPartLeftArm: document.getElementById('monster-part-left-arm'),
-    monsterPartRightArm: document.getElementById('monster-part-right-arm'),
-    monsterPartLeftLeg: document.getElementById('monster-part-left-leg'),
-    monsterPartRightLeg: document.getElementById('monster-part-right-leg'),
+        // Login Modal
+        loginModal: document.getElementById('login-modal'),
+        loginNicknameInput: document.getElementById('login-nickname'),
+        loginPasswordInput: document.getElementById('login-password'),
+        loginErrorMsg: document.getElementById('login-error'),
+        loginSubmitBtn: document.getElementById('login-submit-btn'),
 
-    // Top Navigation Buttons
-    monsterInfoButton: document.getElementById('monster-info-button'),
-    playerInfoButton: document.getElementById('player-info-button'),
-    showMonsterLeaderboardBtn: document.getElementById('show-monster-leaderboard-btn'),
-    showPlayerLeaderboardBtn: document.getElementById('show-player-leaderboard-btn'),
-    friendsListBtn: document.getElementById('friends-list-btn'),
-    newbieGuideBtn: document.getElementById('newbie-guide-btn'),
+        // Theme Switcher
+        themeSwitcherBtn: document.getElementById('theme-switcher'),
+        themeIcon: document.getElementById('theme-icon'),
 
-    // DNA Combination Panel
-    dnaCombinationSlotsContainer: document.getElementById('dna-combination-slots'),
-    combineButton: document.getElementById('combine-button'),
-    dnaDrawButton: document.getElementById('dna-draw-button'), 
+        // Monster Snapshot Panel
+        monsterSnapshotArea: document.getElementById('monster-snapshot-area'),
+        snapshotAchievementTitle: document.getElementById('snapshot-achievement-title'),
+        snapshotNickname: document.getElementById('snapshot-nickname'),
+        snapshotWinLoss: document.getElementById('snapshot-win-loss'),
+        snapshotEvaluation: document.getElementById('snapshot-evaluation'),
+        snapshotMainContent: document.getElementById('snapshot-main-content'),
+        monsterSnapshotBaseBg: document.getElementById('monster-snapshot-base-bg'),
+        monsterSnapshotBodySilhouette: document.getElementById('monster-snapshot-body-silhouette'),
+        
+        monsterPartsContainer: document.getElementById('monster-parts-container'),
+        monsterPartHead: document.getElementById('monster-part-head'),
+        monsterPartLeftArm: document.getElementById('monster-part-left-arm'),
+        monsterPartRightArm: document.getElementById('monster-part-right-arm'),
+        monsterPartLeftLeg: document.getElementById('monster-part-left-leg'),
+        monsterPartRightLeg: document.getElementById('monster-part-right-leg'),
 
-    // DNA Inventory Panel
-    inventoryItemsContainer: document.getElementById('inventory-items'),
-    
-    // Temporary Backpack
-    temporaryBackpackContainer: document.getElementById('temporary-backpack-items'),
+        // Top Navigation Buttons
+        monsterInfoButton: document.getElementById('monster-info-button'),
+        playerInfoButton: document.getElementById('player-info-button'),
+        showMonsterLeaderboardBtn: document.getElementById('show-monster-leaderboard-btn'),
+        showPlayerLeaderboardBtn: document.getElementById('show-player-leaderboard-btn'),
+        friendsListBtn: document.getElementById('friends-list-btn'),
+        newbieGuideBtn: document.getElementById('newbie-guide-btn'),
 
-    // Monster Farm Panel
-    farmedMonstersListContainer: document.getElementById('farmed-monsters-list'),
-    farmHeaders: document.getElementById('farm-headers'), 
+        // DNA Combination Panel
+        dnaCombinationSlotsContainer: document.getElementById('dna-combination-slots'),
+        combineButton: document.getElementById('combine-button'),
+        dnaDrawButton: document.getElementById('dna-draw-button'),
 
-    // Tabs
-    dnaFarmTabs: document.getElementById('dna-farm-tabs'),
-    dnaInventoryContent: document.getElementById('dna-inventory-content'),
-    monsterFarmContent: document.getElementById('monster-farm-content'),
-    trainingGroundContent: document.getElementById('training-ground-content'), 
-    exchangeContent: document.getElementById('exchange-content'),
-    homesteadContent: document.getElementById('homestead-content'),
-    guildContent: document.getElementById('guild-content'),
+        // DNA Inventory Panel
+        inventoryItemsContainer: document.getElementById('inventory-items'),
+        
+        temporaryBackpackContainer: document.getElementById('temporary-backpack-items'),
 
-    // Modals
-    monsterInfoModal: document.getElementById('monster-info-modal'),
-    monsterInfoModalHeader: document.getElementById('monster-info-modal-header-content'),
-    monsterInfoTabs: document.getElementById('monster-info-tabs'),
-    monsterDetailsTabContent: document.getElementById('monster-details-tab'),
-    monsterLogsTabContent: document.getElementById('monster-logs-tab'),
-    monsterActivityLogsContainer: document.getElementById('monster-activity-logs'),
+        farmedMonstersListContainer: document.getElementById('farmed-monsters-list'),
+        farmHeaders: document.getElementById('farm-headers'),
 
-    playerInfoModal: document.getElementById('player-info-modal'),
-    playerInfoModalBody: document.getElementById('player-info-modal-body'),
+        dnaFarmTabs: document.getElementById('dna-farm-tabs'),
+        dnaInventoryContent: document.getElementById('dna-inventory-content'),
+        monsterFarmContent: document.getElementById('monster-farm-content'),
+        trainingGroundContent: document.getElementById('training-ground-content'),
+        exchangeContent: document.getElementById('exchange-content'),
+        homesteadContent: document.getElementById('homestead-content'),
+        guildContent: document.getElementById('guild-content'),
 
-    feedbackModal: document.getElementById('feedback-modal'),
-    feedbackModalCloseX: document.getElementById('feedback-modal-close-x'),
-    feedbackModalTitle: document.getElementById('feedback-modal-title'),
-    feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
-    feedbackModalMessage: document.getElementById('feedback-modal-message'),
-    feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
+        monsterInfoModal: document.getElementById('monster-info-modal'),
+        monsterInfoModalHeader: document.getElementById('monster-info-modal-header-content'),
+        monsterInfoTabs: document.getElementById('monster-info-tabs'),
+        monsterDetailsTabContent: document.getElementById('monster-details-tab'),
+        monsterLogsTabContent: document.getElementById('monster-logs-tab'),
+        monsterActivityLogsContainer: document.getElementById('monster-activity-logs'),
 
-    confirmationModal: document.getElementById('confirmation-modal'),
-    confirmationModalTitle: document.getElementById('confirmation-modal-title'),
-    confirmationModalBody: document.getElementById('confirmation-modal-body'),
-    confirmationModalCloseX: document.getElementById('confirmation-modal-close-x'), 
-    releaseMonsterImagePlaceholder: document.getElementById('release-monster-image-placeholder'),
-    releaseMonsterImgPreview: document.getElementById('release-monster-img-preview'),
-    confirmActionBtn: document.getElementById('confirm-action-btn'),
+        playerInfoModal: document.getElementById('player-info-modal'),
+        playerInfoModalBody: document.getElementById('player-info-modal-body'),
 
-    cultivationSetupModal: document.getElementById('cultivation-setup-modal'),
-    cultivationSetupModalTitle: document.getElementById('cultivation-setup-modal-title'),
-    cultivationMonsterNameText: document.getElementById('cultivation-monster-name'),
-    startCultivationBtn: document.getElementById('start-cultivation-btn'),
-    maxCultivationTimeText: document.getElementById('max-cultivation-time'),
+        feedbackModal: document.getElementById('feedback-modal'),
+        feedbackModalCloseX: document.getElementById('feedback-modal-close-x'),
+        feedbackModalTitle: document.getElementById('feedback-modal-title'),
+        feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
+        feedbackModalMessage: document.getElementById('feedback-modal-message'),
+        feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
 
-    trainingResultsModal: document.getElementById('training-results-modal'),
-    trainingResultsModalTitle: document.getElementById('training-results-modal-title'),
-    trainingStoryResult: document.getElementById('training-story-result'),
-    trainingGrowthResult: document.getElementById('training-growth-result'),
-    trainingItemsResult: document.getElementById('training-items-result'),
-    addAllToTempBackpackBtn: document.getElementById('add-all-to-temp-backpack-btn'),
-    closeTrainingResultsBtn: document.getElementById('close-training-results-btn'), 
-    finalCloseTrainingResultsBtn: document.getElementById('final-close-training-results-btn'), 
+        confirmationModal: document.getElementById('confirmation-modal'),
+        confirmationModalTitle: document.getElementById('confirmation-modal-title'),
+        confirmationModalBody: document.getElementById('confirmation-modal-body'),
+        confirmationModalCloseX: document.getElementById('confirmation-modal-close-x'),
+        releaseMonsterImagePlaceholder: document.getElementById('release-monster-image-placeholder'),
+        releaseMonsterImgPreview: document.getElementById('release-monster-img-preview'),
+        confirmActionBtn: document.getElementById('confirm-action-btn'),
 
-    newbieGuideModal: document.getElementById('newbie-guide-modal'),
-    newbieGuideSearchInput: document.getElementById('newbie-guide-search-input'),
-    newbieGuideContentArea: document.getElementById('newbie-guide-content-area'),
+        cultivationSetupModal: document.getElementById('cultivation-setup-modal'),
+        cultivationSetupModalTitle: document.getElementById('cultivation-setup-modal-title'),
+        cultivationMonsterNameText: document.getElementById('cultivation-monster-name'),
+        startCultivationBtn: document.getElementById('start-cultivation-btn'),
+        maxCultivationTimeText: document.getElementById('max-cultivation-time'),
 
-    reminderModal: document.getElementById('reminder-modal'),
-    reminderConfirmCloseBtn: document.getElementById('reminder-confirm-close-btn'),
-    reminderCancelBtn: document.getElementById('reminder-cancel-btn'),
-    
-    friendsListModal: document.getElementById('friends-list-modal'),
-    friendsListSearchInput: document.getElementById('friends-list-search-input'),
-    friendsListContainer: document.getElementById('friends-list-container'),
+        trainingResultsModal: document.getElementById('training-results-modal'),
+        trainingResultsModalTitle: document.getElementById('training-results-modal-title'),
+        trainingStoryResult: document.getElementById('training-story-result'),
+        trainingGrowthResult: document.getElementById('training-growth-result'),
+        trainingItemsResult: document.getElementById('training-items-result'),
+        addAllToTempBackpackBtn: document.getElementById('add-all-to-temp-backpack-btn'),
+        closeTrainingResultsBtn: document.getElementById('close-training-results-btn'),
+        finalCloseTrainingResultsBtn: document.getElementById('final-close-training-results-btn'),
 
-    monsterLeaderboardModal: document.getElementById('monster-leaderboard-modal'),
-    monsterLeaderboardTabsContainer: document.getElementById('monster-leaderboard-tabs-container'),
-    monsterLeaderboardElementTabs: document.getElementById('monster-leaderboard-element-tabs'),
-    monsterLeaderboardTableContainer: document.getElementById('monster-leaderboard-table-container'),
-    monsterLeaderboardTable: document.getElementById('monster-leaderboard-table'),
+        newbieGuideModal: document.getElementById('newbie-guide-modal'),
+        newbieGuideSearchInput: document.getElementById('newbie-guide-search-input'),
+        newbieGuideContentArea: document.getElementById('newbie-guide-content-area'),
 
-    playerLeaderboardModal: document.getElementById('player-leaderboard-modal'),
-    playerLeaderboardTableContainer: document.getElementById('player-leaderboard-table-container'),
-    playerLeaderboardTable: document.getElementById('player-leaderboard-table'),
+        reminderModal: document.getElementById('reminder-modal'),
+        reminderConfirmCloseBtn: document.getElementById('reminder-confirm-close-btn'),
+        reminderCancelBtn: document.getElementById('reminder-cancel-btn'),
+        
+        friendsListModal: document.getElementById('friends-list-modal'),
+        friendsListSearchInput: document.getElementById('friends-list-search-input'),
+        friendsListContainer: document.getElementById('friends-list-container'),
 
-    battleLogModal: document.getElementById('battle-log-modal'),
-    battleLogArea: document.getElementById('battle-log-area'),
-    closeBattleLogBtn: document.getElementById('close-battle-log-btn'),
+        monsterLeaderboardModal: document.getElementById('monster-leaderboard-modal'),
+        monsterLeaderboardTabsContainer: document.getElementById('monster-leaderboard-tabs-container'),
+        monsterLeaderboardElementTabs: document.getElementById('monster-leaderboard-element-tabs'),
+        monsterLeaderboardTableContainer: document.getElementById('monster-leaderboard-table-container'),
+        monsterLeaderboardTable: document.getElementById('monster-leaderboard-table'),
 
-    dnaDrawModal: document.getElementById('dna-draw-modal'),
-    dnaDrawResultsGrid: document.getElementById('dna-draw-results-grid'),
-    closeDnaDrawBtn: document.getElementById('close-dna-draw-btn'),
+        playerLeaderboardModal: document.getElementById('player-leaderboard-modal'),
+        playerLeaderboardTableContainer: document.getElementById('player-leaderboard-table-container'),
+        playerLeaderboardTable: document.getElementById('player-leaderboard-table'),
 
-    officialAnnouncementModal: document.getElementById('official-announcement-modal'),
-    officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'), 
-    announcementPlayerName: document.getElementById('announcement-player-name'),
+        battleLogModal: document.getElementById('battle-log-modal'),
+        battleLogArea: document.getElementById('battle-log-area'),
+        closeBattleLogBtn: document.getElementById('close-battle-log-btn'),
 
-    scrollingHintsContainer: document.querySelector('.scrolling-hints-container'),
-};
+        dnaDrawModal: document.getElementById('dna-draw-modal'),
+        dnaDrawResultsGrid: document.getElementById('dna-draw-results-grid'),
+        closeDnaDrawBtn: document.getElementById('close-dna-draw-btn'),
+
+        officialAnnouncementModal: document.getElementById('official-announcement-modal'),
+        officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
+        announcementPlayerName: document.getElementById('announcement-player-name'),
+
+        scrollingHintsContainer: document.querySelector('.scrolling-hints-container'),
+    };
+}
+// 在 main.js 的 DOMContentLoaded 中調用 initializeDOMElements()
 
 // --- Helper Functions ---
 
@@ -190,7 +191,6 @@ function hideAllModals() {
 }
 
 function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null) {
-    // 防禦性程式設計：確保核心 feedback modal 元素存在
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
         return;
@@ -201,8 +201,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
     if (monsterDetails) {
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true);
-        // 可以在此處填充 feedbackMonsterDetails 的內容
-        // 例如 DOMElements.feedbackMonsterDetails.innerHTML = `...`;
     } else {
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
@@ -216,7 +214,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         actionButtons.forEach(btnConfig => {
             const button = document.createElement('button');
             button.textContent = btnConfig.text;
-            button.className = `button ${btnConfig.class || 'secondary'}`; // Ensure 'button' class for consistent styling
+            button.className = `button ${btnConfig.class || 'secondary'}`;
             button.onclick = () => {
                 if (btnConfig.onClick) btnConfig.onClick();
                 hideModal('feedback-modal'); 
@@ -244,9 +242,9 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     if (monsterToRelease && monsterToRelease.id) { 
         const imgPlaceholder = DOMElements.releaseMonsterImagePlaceholder;
         const imgPreview = DOMElements.releaseMonsterImgPreview;
-        if (imgPlaceholder && imgPreview) { 
+        if (imgPlaceholder && imgPreview) {
             const monsterPrimaryElement = monsterToRelease.elements && monsterToRelease.elements.length > 0 ? monsterToRelease.elements[0] : '無';
-            imgPreview.src = getMonsterImagePathForSnapshot(monsterPrimaryElement, monsterToRelease.rarity); // 使用快照圖片函數
+            imgPreview.src = getMonsterImagePathForSnapshot(monsterPrimaryElement, monsterToRelease.rarity); 
             imgPreview.alt = monsterToRelease.nickname || '怪獸圖片';
             toggleElementDisplay(imgPlaceholder, true, 'flex');
         }
@@ -277,7 +275,6 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     showModal('confirmation-modal');
 }
 
-
 // --- UI Update Functions ---
 
 function updateTheme(themeName) {
@@ -294,7 +291,6 @@ function initializeTheme() {
     updateTheme(savedTheme);
 }
 
-// 快照圖片的占位符 (用於放生預覽等)
 function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     const colors = {
         '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
@@ -306,21 +302,18 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
-// 部位圖片的占位符
 function getMonsterPartImagePath(dnaFragment, bodyPartName) {
-    const placeholderBase = 'https://placehold.co/80x80/00000000/cccccc?font=inter&text='; // 透明背景
+    const placeholderBase = 'https://placehold.co/80x80/00000000/cccccc?font=inter&text=';
     if (!dnaFragment || !dnaFragment.type || !dnaFragment.rarity) {
         return `${placeholderBase}${bodyPartName[0].toUpperCase()}%3F`; 
     }
     const dnaTypeInitial = dnaFragment.type ? dnaFragment.type[0] : 'X';
     const partInitial = bodyPartName[0].toUpperCase();
-    // 範例：您可以根據您的圖片命名規則修改，例如：
-    // return `images/parts/${dnaFragment.type.toLowerCase()}/${bodyPartName.toLowerCase()}_${dnaFragment.rarity.toLowerCase()}.png`;
-    return `https://placehold.co/80x80/2d3748/e2e8f0?text=${dnaTypeInitial}${partInitial}&font=inter`; // 暫用占位符
+    return `https://placehold.co/80x80/2d3748/e2e8f0?text=${dnaTypeInitial}${partInitial}&font=inter`;
 }
 
 function clearMonsterBodyPartsDisplay() {
-    const defaultPartPlaceholder = `https://placehold.co/80x80/00000000/4A5568?text=?&font=inter`; // 透明背景的問號
+    const defaultPartPlaceholder = `https://placehold.co/80x80/00000000/4A5568?text=?&font=inter`; 
     const partsMap = {
         Head: DOMElements.monsterPartHead,
         LeftArm: DOMElements.monsterPartLeftArm,
@@ -332,7 +325,6 @@ function clearMonsterBodyPartsDisplay() {
         const partElement = partsMap[partName];
         if (partElement) {
             partElement.style.backgroundImage = `url('${defaultPartPlaceholder}')`;
-            partElement.innerHTML = ''; 
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -348,27 +340,18 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 設定底層背景圖 (可以保持不變或根據怪獸改變)
-    // DOMElements.monsterSnapshotBaseBg.src = monster ? getMonsterSpecificBackground(monster) : 'default_snapshot_bg.png';
-
-    // 設定全身圖 (如果沒有選中怪獸，則使用預設占位符)
-    if (monster && monster.id) {
-        // DOMElements.monsterSnapshotBodySilhouette.src = getFullBodyImagePath(monster); // 您需要實作此函數
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 或 'none' 如果只想顯示部位
-    } else {
-        // DOMElements.monsterSnapshotBodySilhouette.src = 'path/to/default_silhouette_or_placeholder.png';
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 或者在沒有怪獸時隱藏
-    }
-
+    // 更新背景圖和全身圖 (如果需要根據怪獸變化)
+    // DOMElements.monsterSnapshotBaseBg.src = monster ? getMonsterSpecificBackground(monster) : 'default_bg_url';
+    // DOMElements.monsterSnapshotBodySilhouette.src = monster ? getFullBodyImagePath(monster) : 'default_body_url';
 
     if (monster && monster.id && gameState.playerData) { 
-        DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
-        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸'; 
+        DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀'); // 稱號在前
+        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸'; // 名字在後
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`; 
         
-        let elementsHtml = '<div class="flex justify-center items-center space-x-1">'; // 移除 mt-1
+        let elementsHtml = '<div class="flex justify-center items-center space-x-1">';
         if (monster.elements && monster.elements.length > 0) {
             monster.elements.forEach(element => {
                 elementsHtml += `<span class="text-xs px-1.5 py-0.5 rounded-full text-element-${element.toLowerCase()} bg-element-${element.toLowerCase()}-bg">${element}</span>`;
@@ -379,14 +362,14 @@ function updateMonsterSnapshot(monster) {
         elementsHtml += '</div>';
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = elementsHtml;
 
-        const rarityColorVar = `var(--rarity-${monster.rarity.toLowerCase()}-text)`; // 用於邊框
+        const rarityColorVar = `var(--rarity-${monster.rarity.toLowerCase()}-text)`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
     } else { 
-        DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
-        DOMElements.snapshotNickname.textContent = '尚無怪獸';
+        DOMElements.snapshotAchievementTitle.textContent = '初出茅廬'; // 預設稱號
+        DOMElements.snapshotNickname.textContent = '尚無怪獸';     // 預設名字
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
@@ -422,54 +405,48 @@ function updateMonsterSnapshot(monster) {
     }
 }
 
+
 function applyDnaItemStyle(element, dnaData) {
     if (!dnaData || !element) return;
 
     const type = dnaData.type ? dnaData.type.toLowerCase() : '無';
     const rarity = dnaData.rarity ? dnaData.rarity.toLowerCase() : 'common';
 
-    // 設定背景顏色 (基於屬性)
-    const elementBgVarName = `--element-${type}-bg`; // 使用者要求屬性是底色
-    element.style.backgroundColor = `var(${elementBgVarName}, var(--bg-slot))`; // 提供一個預設背景色
+    // 1. 設定背景顏色 (基於屬性)
+    const elementBgVarName = `--element-${type}-bg`;
+    element.style.backgroundColor = `var(${elementBgVarName}, var(--bg-slot))`; // 預設為槽位背景色
 
-    // 設定文字顏色 (基於稀有度)
-    let rarityTextColorVarName = `var(--text-primary)`; // 預設為白色/淺色 (普通)
+    // 2. 設定文字顏色 (基於稀有度)
+    let rarityTextColorVar = 'var(--text-primary)'; // Default for Common (White-ish)
     switch (rarity) {
-        case 'rare': // 稀有 - 綠色
-            rarityTextColorVarName = `var(--success-color)`;
+        case 'rare': // 綠色
+            rarityTextColorVar = 'var(--success-color)';
             break;
-        case 'elite': // 菁英 - 紅色
-            rarityTextColorVarName = `var(--danger-color)`;
+        case 'elite': // 紅色
+            rarityTextColorVar = 'var(--danger-color)';
             break;
-        case 'legendary': // 傳奇 - 紫色
-            rarityTextColorVarName = `var(--rarity-mythical-text)`; // theme.css 中 mythical 是紫色
+        case 'legendary': // 紫色 (您 theme.css 中 mythical-text 是紫色系)
+            rarityTextColorVar = 'var(--rarity-mythical-text)';
             break;
-        case 'mythical': // 神話 - 金色
-            rarityTextColorVarName = `var(--rarity-legendary-text)`; // theme.css 中 legendary 是金色
-            break;
-        case 'common': // 普通 - 白色 (保持預設)
-        default:
-            rarityTextColorVarName = `var(--text-primary)`;
+        case 'mythical': // 金色 (您 theme.css 中 legendary-text 是金色系)
+            rarityTextColorVar = 'var(--rarity-legendary-text)';
             break;
     }
     // 應用到 DNA 名稱文字
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
-        nameSpan.style.color = rarityTextColorVarName;
-    } else { // 如果沒有 nameSpan，直接應用到 element (備用方案)
-        element.style.color = rarityTextColorVarName;
+        nameSpan.style.color = rarityTextColorVar;
+    } else {
+        element.style.color = rarityTextColorVar; // Fallback if no nameSpan
     }
     
-    // 設定邊框顏色 (可以基於稀有度或一個中性色)
-    element.style.borderColor = rarityTextColorVarName; // 邊框也用稀有度顏色
+    // 3. 設定邊框顏色 (也可以基於稀有度，或一個較為中性的顏色)
+    element.style.borderColor = rarityTextColorVar; // 邊框也用稀有度顏色，使其更突出
 
-    // 更新稀有度徽章樣式
+    // 4. 移除右上角的稀有度文字徽章的顯示 (但保留DOM結構以便未來可能恢復)
     const rarityBadge = element.querySelector('.dna-rarity-badge');
     if (rarityBadge) {
-        rarityBadge.textContent = dnaData.rarity ? dnaData.rarity[0] : '普';
-        rarityBadge.style.backgroundColor = `var(--bg-slot)`; // 中性背景
-        rarityBadge.style.color = rarityTextColorVarName; // 文字顏色同稀有度
-        rarityBadge.style.border = `1px solid ${rarityTextColorVarName}`; // 邊框同稀有度
+        rarityBadge.style.display = 'none'; // 直接隱藏徽章
     }
 }
 
@@ -484,11 +461,14 @@ function renderDNACombinationSlots() {
         slot.dataset.slotIndex = index;
         const nameSpan = document.createElement('span'); 
         nameSpan.classList.add('dna-name-text');
+        // const rarityBadge = document.createElement('span'); // 移除徽章創建
+        // rarityBadge.classList.add('dna-rarity-badge');    // 移除徽章創建
         
         if (dna && dna.id) { 
             slot.classList.add('occupied');
             nameSpan.textContent = dna.name || '未知DNA';
             slot.appendChild(nameSpan);
+            // slot.appendChild(rarityBadge); // 移除徽章添加
             applyDnaItemStyle(slot, dna); 
             slot.draggable = true; 
             slot.dataset.dnaId = dna.id; 
@@ -496,8 +476,8 @@ function renderDNACombinationSlots() {
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`; 
             slot.appendChild(nameSpan);
+            // slot.appendChild(rarityBadge); // 移除徽章添加 (空槽位也不需要)
             slot.classList.add('empty');
-             // 為空槽位也應用一個基礎樣式，使其顏色與其他空槽一致
             slot.style.backgroundColor = 'var(--bg-slot)';
             slot.style.color = 'var(--text-secondary)';
             slot.style.borderColor = 'var(--border-color)';
@@ -525,12 +505,11 @@ function renderPlayerDNAInventory() {
         nameSpan.textContent = dna.name || '未知DNA';
         item.appendChild(nameSpan);
 
-        // 確保稀有度徽章存在並應用樣式
-        const rarityBadge = document.createElement('span');
-        rarityBadge.classList.add('dna-rarity-badge');
-        item.appendChild(rarityBadge); // 先添加徽章，再應用整體樣式
+        // const rarityBadge = document.createElement('span'); // 移除徽章創建
+        // rarityBadge.classList.add('dna-rarity-badge');    // 移除徽章創建
+        // item.appendChild(rarityBadge); // 移除徽章添加
 
-        applyDnaItemStyle(item, dna); // 應用新的顏色邏輯
+        applyDnaItemStyle(item, dna); 
 
         item.draggable = true;
         item.dataset.dnaId = dna.id; 
@@ -566,9 +545,9 @@ function renderTemporaryBackpack() {
         nameSpan.textContent = item.data.name || '未知物品';
         slot.appendChild(nameSpan);
         
-        const rarityBadge = document.createElement('span'); // 為臨時背包物品也加上徽章結構
-        rarityBadge.classList.add('dna-rarity-badge');
-        slot.appendChild(rarityBadge);
+        // const rarityBadge = document.createElement('span'); // 移除徽章創建
+        // rarityBadge.classList.add('dna-rarity-badge');    // 移除徽章創建
+        // slot.appendChild(rarityBadge); // 移除徽章添加
 
         applyDnaItemStyle(slot, item.data); 
         slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
@@ -583,8 +562,6 @@ function renderTemporaryBackpack() {
     }
 }
 
-// ... (其餘 renderMonsterFarm, updatePlayerInfoModal 等函數保持之前的版本，或按需調整)
-// 確保 renderMonsterFarm 中的按鈕類名包含 'button'
 function renderMonsterFarm() {
     const container = DOMElements.farmedMonstersListContainer;
     if (!container) return;
@@ -600,7 +577,7 @@ function renderMonsterFarm() {
         itemDiv.classList.add('farm-monster-item');
         itemDiv.dataset.monsterId = monster.id;
 
-        const rarityColorVar = `var(--rarity-${monster.rarity.toLowerCase()}-text)`; // 這裡的顏色是文字顏色
+        const rarityColorVar = `var(--rarity-${monster.rarity.toLowerCase()}-text)`;
         itemDiv.style.borderLeft = `4px solid ${rarityColorVar}`; 
 
         let statusText = '待命中';
@@ -623,7 +600,6 @@ function renderMonsterFarm() {
         battleBtn.title = "挑戰其他怪獸";
         battleBtn.className = 'farm-battle-btn primary button'; 
         battleBtn.dataset.monsterId = monster.id;
-        // onclick 在 event-handlers.js 中處理
 
         const cultivateBtn = document.createElement('button');
         cultivateBtn.textContent = '修煉';
@@ -652,7 +628,6 @@ function renderMonsterFarm() {
         const actionsPlaceholder = itemDiv.querySelector('.farm-monster-actions-placeholder');
         if (actionsPlaceholder) actionsPlaceholder.appendChild(actionsGroup);
 
-
         const nameArea = itemDiv.querySelector('.farm-monster-name');
         if (nameArea) {
             nameArea.style.cursor = 'pointer';
@@ -670,7 +645,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         if(body) body.innerHTML = '<p>無法載入玩家資訊。</p>';
         return;
     }
-    // ... (此函數其餘部分與前一版本相同，保持不變)
     const stats = playerData.playerStats;
     const nickname = playerData.nickname || stats.nickname || "未知玩家";
 
@@ -741,7 +715,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         console.error("Monster info modal elements not found in DOMElements.");
         return;
     }
-    // ... (此函數其餘部分與前一版本相同，保持不變)
     if (!monster || !monster.id) {
         DOMElements.monsterInfoModalHeader.innerHTML = '<h4 class="monster-info-name-styled">無法載入怪獸資訊</h4>';
         DOMElements.monsterDetailsTabContent.innerHTML = '<p>錯誤：找不到怪獸資料。</p>';
@@ -848,7 +821,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 }
 
-
 function switchTabContent(targetTabId, clickedTabButton, parentModalId = null) {
     let tabButtonContainer, tabContentContainer;
 
@@ -924,7 +896,7 @@ function updateFriendsListModal(players) {
             <span class="friend-name">${player.nickname}</span>
             <div class="flex items-center space-x-2">
                 <span class="friend-status ${statusClass}">${status === 'online' ? '線上' : '離線'}</span>
-                <button class="text-xs secondary p-1 challenge-friend-btn button" data-player-id="${player.uid}" data-player-nickname="${player.nickname}">挑戰</button>
+                <button class="text-xs secondary p-1 view-player-btn button" data-player-id="${player.uid}" data-player-nickname="${player.nickname}">查看</button>
             </div>
         `;
         container.appendChild(itemDiv);
@@ -1101,26 +1073,22 @@ function showDnaDrawModal(drawnDnaTemplates) {
             const itemDiv = document.createElement('div');
             itemDiv.classList.add('dna-draw-result-item', 'dna-item'); 
             
-            const nameSpan = document.createElement('span'); // DNA 名稱
+            const nameSpan = document.createElement('span');
             nameSpan.classList.add('dna-name-text');
             nameSpan.textContent = dna.name || '未知DNA';
             itemDiv.appendChild(nameSpan);
 
-            const typeSpan = document.createElement('div'); // 類型 (非主要顯示，可能小字)
+            const typeSpan = document.createElement('div');
             typeSpan.classList.add('dna-type');
-            typeSpan.textContent = `屬性: ${dna.type}`;
+            typeSpan.textContent = `屬性: ${dna.type}`; // 顯示屬性
             itemDiv.appendChild(typeSpan);
             
-            const raritySpan = document.createElement('div'); // 稀有度 (非主要顯示，可能小字)
-            raritySpan.classList.add('dna-rarity'); // text-rarity-... 會由 applyDnaItemStyle 處理文字顏色
-            raritySpan.textContent = `稀有度: ${dna.rarity}`;
-            itemDiv.appendChild(raritySpan);
-
-            const rarityBadge = document.createElement('span'); // 稀有度徽章 (右上角)
-            rarityBadge.classList.add('dna-rarity-badge');
-            itemDiv.appendChild(rarityBadge);
+            const rarityInfoSpan = document.createElement('div'); // 用於顯示稀有度文字
+            rarityInfoSpan.classList.add('dna-rarity-info'); // 可以添加樣式
+            rarityInfoSpan.textContent = `稀有度: ${dna.rarity}`;
+            itemDiv.appendChild(rarityInfoSpan);
             
-            applyDnaItemStyle(itemDiv, dna); // 應用整體樣式，包括基於稀有度的主要文字顏色
+            applyDnaItemStyle(itemDiv, dna); // 應用顏色
 
             const addButton = document.createElement('button');
             addButton.className = 'add-drawn-dna-to-backpack-btn button secondary text-xs mt-1'; 
@@ -1157,4 +1125,4 @@ function updateScrollingHints(hints) {
     });
 }
 
-console.log("UI module loaded - v2 with snapshot layout and DNA color fixes.");
+console.log("UI module loaded - v3 with snapshot layout fixes and DNA color adjustments.");
