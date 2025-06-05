@@ -3,24 +3,24 @@
 /* Corner buttons (Theme switcher and New Logout button) */
 .corner-button {
     position: absolute;
-    background: var(--bg-slot); /* Default background for the circle */
+    background: var(--bg-slot); 
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     border-radius: 50%;
-    width: 36px; /* Increased size for better touch target and emoji visibility */
-    height: 36px; /* Increased size */
-    font-size: 1.2rem; /* Adjusted icon/emoji size */
+    width: 36px; 
+    height: 36px; 
+    font-size: 1.2rem; 
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.25); /* Slightly stronger shadow */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25); 
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s;
     z-index: 10; 
 }
 .corner-button:hover {
-    transform: translateY(-1px); /* Slight lift on hover */
+    transform: translateY(-1px); 
     box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
 .corner-button:active {
@@ -28,10 +28,9 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-
 /* Specific positioning for corner buttons */
 .top-left-button {
-    top: 10px; /* Adjusted for consistency */
+    top: 10px; 
     left: 10px;
 }
 .top-right-button {
@@ -40,32 +39,28 @@
 }
 
 
-/* Theme switcher button background (Item 13 from previous list - ensuring consistency) */
+/* Theme switcher button background */
 #theme-switcher {
-    /* Dark theme (default) - Moon icon, uses default .corner-button background or specific if needed */
-    /* background-color: var(--bg-panel-light); */ /* Already handled by .corner-button or can be specific */
-    color: var(--text-primary-dark);
+    color: var(--text-primary-dark); 
 }
 body.light-theme #theme-switcher {
-    /* Light theme - Sun icon, uses default .corner-button background or specific if needed */
-    /* background-color: var(--bg-panel-dark); */
-    color: var(--text-primary-light);
+    color: var(--text-primary-light); 
 }
-#theme-switcher:hover { /* General hover for corner buttons is fine, or specialize */
+#theme-switcher:hover { 
     color: var(--accent-color);
     border-color: var(--accent-color);
 }
 
 
-/* Logout button style (Item 3: Emoji in a circle) */
+/* Logout button style */
 #main-logout-btn {
-    font-size: 1.4rem; /* Adjust emoji size if needed */
-    line-height: 1; /* Helps center emoji vertically */
-    padding-bottom: 2px; /* Fine-tune emoji vertical alignment if needed */
+    font-size: 1.4rem; 
+    line-height: 1; 
+    padding-bottom: 2px; 
 }
 #main-logout-btn:hover {
     background-color: var(--danger-color); 
-    color: var(--button-danger-text-dark); /* White text on danger background */
+    color: var(--button-danger-text-dark); 
     border-color: var(--danger-hover-dark);
 }
 body.light-theme #main-logout-btn:hover {
@@ -117,9 +112,8 @@ body.light-theme #main-logout-btn:hover {
     box-sizing: border-box;
     word-break: break-all; 
 }
-
-.dna-item {
-    cursor: grab;
+.dna-item { 
+    cursor: grab; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.05);
     font-weight: 500;
 }
@@ -163,7 +157,7 @@ body.light-theme #main-logout-btn:hover {
     margin-top: 2px;
 }
 
-.inventory-delete-slot.drag-over {
+.inventory-delete-slot.drag-over { 
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
     border-color: var(--danger-hover-dark) !important; 
     color: var(--button-danger-text-dark) !important;
@@ -183,17 +177,17 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 .dna-item:hover,
-.dna-slot:hover:not(.occupied),
-.temp-backpack-slot:hover:not(.occupied):not(.empty) {
+.dna-slot:hover:not(.occupied), 
+.temp-backpack-slot:hover:not(.occupied):not(.empty) { 
     border-color: var(--accent-color);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
-.temp-backpack-slot.empty:hover {
+.temp-backpack-slot.empty:hover { 
      background-color: var(--accent-hover);
      border-color: var(--accent-color);
 }
 .dna-slot.occupied, .temp-backpack-slot.occupied {
-    border-style: solid;
+    border-style: solid; 
 }
 .inventory-slot-empty.drag-over, .temp-backpack-slot.empty.drag-over {
     border-color: var(--accent-color);
@@ -213,15 +207,15 @@ body.light-theme .inventory-delete-slot.drag-over {
     height: 220px; 
     background-color: var(--bg-primary);
     border-radius: 8px;
-    display: grid;
-    grid-template-columns: 1fr auto; 
-    grid-template-rows: auto auto 1fr auto; 
-    position: relative;
+    position: relative; 
     overflow: hidden;
     border: 1px solid var(--border-color);
     padding: 8px;
     box-sizing: border-box;
     transition: background-color 0.3s, border-color 0.3s;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
 }
 @media (min-width: 768px) {
     .monster-snapshot-area {
@@ -230,104 +224,133 @@ body.light-theme .inventory-delete-slot.drag-over {
     }
 }
 
-.monster-snapshot-img-bg { 
+/* Container for Monster Parts */
+#monster-parts-container {
+    position: relative;
+    width: 180px; 
+    height: 180px; 
+    /* background-color: rgba(255, 0, 0, 0.1); */ /* Optional: for debugging layout */
+}
+#monster-parts-container.empty-snapshot .monster-part {
+    border-color: var(--border-color-dark); 
+}
+
+.monster-part {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 0; 
+    background-color: rgba(0,0,0,0.05); 
+    border: 1px dashed var(--text-secondary); 
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: background-image 0.3s ease-in-out, border-color 0.3s;
+    border-radius: 4px; 
+    overflow: hidden; 
 }
-.monster-snapshot-img-bg img {
-    max-width: 75%;
-    max-height: 75%;
-    object-fit: contain;
-    opacity: 0.7; 
+
+/* Approximate positions and sizes for monster parts (adjust these based on your design) */
+#monster-part-head {
+    width: 60px; height: 60px;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
 }
-body.light-theme .monster-snapshot-img-bg img {
-    opacity: 0.9; 
+#monster-part-left-arm {
+    width: 50px; height: 70px;
+    top: 55px; left: 15px; 
+    transform: rotate(-15deg);
+    z-index: 2;
 }
+#monster-part-right-arm {
+    width: 50px; height: 70px;
+    top: 55px; right: 15px; 
+    transform: rotate(15deg);
+    z-index: 2;
+}
+#monster-part-left-leg {
+    width: 50px; height: 60px;
+    bottom: 10px; left: 35px; 
+    z-index: 1;
+}
+#monster-part-right-leg {
+    width: 50px; height: 60px;
+    bottom: 10px; right: 35px; 
+    z-index: 1;
+}
+
 
 .snapshot-achievement-title {
-    grid-column: 1 / -1; 
-    grid-row: 1 / 2;
-    text-align: center;
-    font-size: 0.875rem;
+    position: absolute; 
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem; 
     font-weight: 500;
     color: var(--text-secondary);
-    z-index: 1;
-    margin-bottom: 2px;
-    text-shadow: 1px 1px 1px color-mix(in srgb, var(--bg-primary) 50%, transparent);
-    background-color: color-mix(in srgb, var(--bg-panel) 50%, transparent); 
-    padding: 2px 6px;
+    z-index: 5; 
+    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent); 
+    padding: 2px 8px; 
     border-radius: 4px;
-    display: inline-block; 
-    margin: 0 auto;
 }
+
 .snapshot-nickname {
-    grid-column: 1 / -1;
-    grid-row: 2 / 3;
-    text-align: center;
-    font-size: 1.3rem;
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 1.1rem; 
     font-weight: bold;
     color: var(--accent-color);
-    z-index: 1;
-    margin-bottom: 5px;
+    z-index: 5;
     text-shadow: 1px 1px 2px color-mix(in srgb, var(--bg-primary) 70%, transparent);
     padding: 3px 8px;
-    background-color: color-mix(in srgb, var(--bg-slot) 60%, transparent);
+    background-color: color-mix(in srgb, var(--bg-slot) 70%, transparent);
     border-radius: 5px;
     border: 1px solid var(--border-color);
-    display: inline-block;
-    margin: 0 auto;
-}
-.snapshot-win-loss {
-    position: absolute; 
-    top: 8px;
-    right: 8px;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    z-index: 2; 
-    text-align: right;
-    padding: 3px 5px;
-    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-    border-radius: 4px;
-}
- .snapshot-win-loss span { display: block; } 
-
-.snapshot-main-content { 
-    grid-column: 1 / -1;
-    grid-row: 3 / 4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 1;
 }
 .snapshot-evaluation {
     position: absolute; 
     bottom: 8px;
     right: 8px;
-    font-size: 1.1rem;
+    font-size: 1.1rem; 
     font-weight: bold;
     color: var(--success-color);
-    z-index: 1;
+    z-index: 5;
     text-shadow: 1px 1px 2px color-mix(in srgb, var(--bg-primary) 70%, transparent);
-    padding: 4px 10px;
+    padding: 3px 8px; 
     background-color: color-mix(in srgb, var(--bg-slot) 70%, transparent);
     border-radius: 5px;
     border: 1px solid var(--border-color);
 }
-@media (min-width: 768px) {
-    .snapshot-evaluation {
-        font-size: 1.2rem;
-        bottom: 12px;
-        right: 12px;
-    }
+.monster-snapshot-area > #snapshot-nickname,
+.monster-snapshot-area > #snapshot-evaluation {
+    grid-column: auto; 
+    grid-row: auto;
+    text-align: left; 
+    margin: 0; 
 }
+
+
+.snapshot-win-loss { 
+    position: absolute; 
+    top: 8px;
+    right: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    z-index: 5; 
+    text-align: right;
+    padding: 3px 5px;
+    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
+    border-radius: 4px;
+}
+.snapshot-win-loss span { display: block; } 
+
+.snapshot-main-content { 
+    position: absolute;
+    bottom: 35px; 
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+}
+
 
 /* General Button Styling */
 button, .button {
@@ -417,33 +440,30 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 
-/* Item 2: 立體感 for "怪物合成" and "抽取DNA" (which are now .action-button-main) */
-/* Ensure these buttons have the same height and vertical alignment */
 .action-button-main {
-    padding: 12px 15px !important; /* Adjusted padding for better balance */
-    font-size: 0.95rem !important; /* Standardized font size */
+    padding: 12px 15px !important; 
+    font-size: 0.95rem !important; 
     font-weight: bold !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 3px 6px rgba(0,0,0,0.2), 
                 0 1px 2px rgba(0,0,0,0.15),
                 inset 0 -2px 1px rgba(255,255,255,0.1),
-                inset 0 1px 0px rgba(255,255,255,0.05); /* Added subtle top inset highlight */
-    border-bottom-width: 2px !important; /* Standardized bottom border */
-    line-height: 1.2; /* Ensure text is centered well */
-    height: 100%; /* Make buttons fill the height of the grid cell if in a grid */
-    display: flex; /* For centering text if needed */
+                inset 0 1px 0px rgba(255,255,255,0.05); 
+    border-bottom-width: 2px !important; 
+    line-height: 1.2; 
+    height: 100%; 
+    display: flex; 
     align-items: center;
     justify-content: center;
 }
 .action-button-main:active {
-    transform: translateY(1px) !important; /* Reduced press effect for consistency */
+    transform: translateY(1px) !important; 
     box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 -1px 0px rgba(255,255,255,0.1) !important;
     border-bottom-width: 1px !important;
 }
 
 
-/* Farm Battle Button Specific */
 .farm-monster-item button.farm-battle-btn {
     width: 32px;
     height: 32px;
@@ -464,7 +484,6 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 
 
-/* Top navigation buttons (under snapshot) */
 .top-buttons-container {
     display: flex;
     justify-content: center;
@@ -497,36 +516,56 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 
 /* Modal specific components */
-.modal-close { /* General modal close button */
+.modal-close { 
     color: var(--text-secondary);
     position: absolute;
-    top: 8px; /* Adjusted for better spacing */
-    right: 10px; /* Adjusted for better spacing */
-    font-size: 26px; /* Slightly smaller */
+    top: 8px; 
+    right: 10px; 
+    font-size: 26px; 
     font-weight: bold;
     cursor: pointer;
-    width: 30px; /* Give it a hit area */
+    width: 30px; 
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%; /* Make it circular for hover effect */
+    border-radius: 50%; 
     transition: background-color 0.2s, color 0.2s;
 }
-.modal-close:hover, .modal-close:focus {
+.modal-close:hover, .modal-close:focus { 
     color: var(--text-primary);
-    background-color: var(--border-color); /* Subtle hover background */
+    background-color: var(--border-color); 
     text-decoration: none;
 }
 
-/* Item 4: Official Announcement Modal Close Button (X) */
-#official-announcement-close-x {
+#confirmation-modal-close-x.modal-close { 
     background-color: var(--danger-color);
-    color: var(--button-danger-text); /* White X */
-    width: 28px; /* Specific size */
+    color: var(--button-danger-text); 
+    width: 28px; 
     height: 28px;
-    font-size: 20px; /* Size of X character */
-    line-height: 28px; /* Center X vertically */
+    font-size: 20px; 
+    line-height: 26px; 
+    text-align: center;
+    border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 1px solid var(--danger-hover-dark); 
+}
+#confirmation-modal-close-x.modal-close:hover {
+    background-color: var(--danger-hover-dark);
+    color: var(--button-danger-text);
+}
+body.light-theme #confirmation-modal-close-x.modal-close:hover {
+    background-color: var(--danger-hover-light);
+}
+
+#official-announcement-close-x { 
+    background-color: var(--danger-color);
+    color: var(--button-danger-text); 
+    width: 28px; 
+    height: 28px;
+    font-size: 20px; 
+    line-height: 28px; 
     text-align: center;
     border-radius: 50%;
     padding: 0;
@@ -566,8 +605,6 @@ body.light-theme #official-announcement-close-x:hover {
     padding: 12px 25px; 
     font-size: 1rem;
 }
-
-/* Loading spinner */
 .loading-spinner {
     border:4px solid var(--border-color);
     border-top:4px solid var(--accent-color); 
@@ -577,8 +614,6 @@ body.light-theme #official-announcement-close-x:hover {
     animation:spin 1s linear infinite;
     margin:20px auto; 
 }
-
-/* DNA Panel specific title styles (if different from general panel-title) */
 .dna-panel-title {
     font-size: 1.2rem;
     font-weight: 600;
@@ -588,14 +623,11 @@ body.light-theme #official-announcement-close-x:hover {
     padding-bottom: 0;
 }
 body.light-theme .dna-panel-title { color: #0550ae; } 
-
 .dna-panel-hint {
     font-size: 0.875rem;
     color: var(--text-secondary);
 }
 body.light-theme .dna-panel-hint { color: #424a53; }
-
-/* Monster/Player Info Modal Details Section */
 .details-section {
     background-color: var(--bg-primary); 
     padding: 12px;
@@ -633,7 +665,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .details-value.boosted { color: var(--success-color); font-weight: bold; }
 .details-value.debuffed { color: var(--danger-color); }
-
 .creation-time-centered {
     text-align: center;
     font-size: 0.875rem;
@@ -641,7 +672,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     margin-top: 10px;
 }
 .element-composition-item { font-size: 0.875rem; }
-
 .skill-entry {
     margin-bottom: 10px;
     padding-bottom: 10px;
@@ -658,7 +688,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-secondary);
     margin-left: 10px; 
 }
-
 .monster-info-header { 
     text-align: center;
     margin-bottom: 15px;
@@ -692,8 +721,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-size: 0.9rem;
     line-height: 1.5;
 }
-
-/* Scrolling Hints Container */
 .scrolling-hints-container {
     height: 22px; 
     overflow: hidden;
@@ -715,66 +742,60 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     animation: scrollHint 15s linear infinite;
     opacity: 0; 
 }
-
 .scrolling-hint-text:nth-child(1) { animation-delay: 0s; }
 .scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
 .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
 
-
-/* Tab Button Styling */
 .tab-buttons {
     display: flex;
     flex-wrap: wrap; 
-    margin-bottom: 10px; /* Reduced margin */
-    border-bottom: none; /* Remove bottom border from container, individual tabs will have it */
-    background-color: var(--bg-primary); /* Item 1: Add background color */
-    border-radius: 6px; /* Rounded corners for the tab bar */
-    padding: 4px; /* Padding around the tabs */
-    justify-content: center; /* Item 1: Center tabs */
+    margin-bottom: 10px; 
+    border-bottom: none; 
+    background-color: var(--bg-primary); 
+    border-radius: 6px; 
+    padding: 4px; 
+    justify-content: center; 
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 .tab-button {
-    padding: 8px 10px; /* Adjusted padding */
+    padding: 8px 10px; 
     cursor: pointer;
     background-color: transparent;
     border: none;
     color: var(--text-secondary);
     font-size: 0.8rem; 
     border-bottom: 3px solid transparent; 
-    margin: 2px; /* Small margin between tabs */
+    margin: 2px; 
     transition: color 0.2s, border-bottom-color 0.2s, background-color 0.2s;
     white-space: nowrap; 
     flex-grow: 1; 
     text-align: center; 
-    border-radius: 4px; /* Rounded corners for individual tabs */
+    border-radius: 4px; 
 }
 @media (min-width: 768px) { 
     .tab-buttons {
-        margin-bottom: 15px; /* Restore margin for larger screens */
-        justify-content: flex-start; /* Align tabs to start on larger screens */
+        margin-bottom: 15px; 
+        justify-content: flex-start; 
     }
     .tab-button {
-        flex-grow: 0; /* Tabs don't need to grow as much */
+        flex-grow: 0; 
         padding: 10px 15px;
         font-size: 0.9rem;
     }
 }
 .tab-button.active {
     color: var(--accent-color);
-    /* border-bottom-color: var(--accent-color); */ /* Using background for active instead */
-    background-color: var(--bg-panel); /* Active tab background */
-    font-weight: 600; /* Bolder active tab */
+    background-color: var(--bg-panel); 
+    font-weight: 600; 
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .tab-button:not(.active):hover {
-    background-color: var(--border-color); /* Hover for non-active tabs */
+    background-color: var(--border-color); 
     color: var(--text-primary);
 }
-
 .tab-content { display: none; } 
 .tab-content.active { display: block; } 
 
-/* Leaderboard Table Styling */
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
@@ -812,9 +833,6 @@ body.light-theme .leaderboard-table tr:hover td {
     opacity: 1;
     color: var(--accent-hover);
 }
-
-
-/* Titles, Medals, Achievements Lists */
 .titles-medals-section { margin-top: 15px; }
 .titles-list, .achievements-list, .owned-monsters-list {
     list-style: none;
@@ -837,9 +855,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .owned-monsters-list .monster-name { font-weight: bold; }
 .owned-monsters-list .monster-score { color: var(--success-color); }
 .medal-emoji { font-size: 1.3rem; }
-
-
-/* Farm Monster Item Specifics (Status, Buttons) */
 .farm-monster-item .farm-monster-status.active {
     color: var(--warning-color); 
     font-weight: bold;
@@ -855,8 +870,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .farm-monster-item .farm-monster-cultivate-btn:hover {
     background-color: var(--button-warning-hover-bg);
 }
-
-/* Image placeholder for release confirmation */
 #release-monster-image-placeholder {
     width: 100px;
     height: 75px;
@@ -875,8 +888,6 @@ body.light-theme .leaderboard-table tr:hover td {
     max-height: 100%;
     object-fit: contain;
 }
-
-/* Log Entry Styling (e.g., monster activity log) */
 .log-entry {
     padding: 7px;
     border-bottom: 1px solid var(--border-color);
@@ -890,8 +901,6 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-right: 8px;
 }
 .log-entry .log-message {} 
-
-/* Feedback Modal Skill Entry (if showing monster details in feedback) */
 .feedback-skill-entry { margin-bottom: 6px; }
 .feedback-skill-name {
     font-weight: bold;
@@ -903,16 +912,10 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
     margin-left: 10px;
 }
-
-/* Cultivation Modal Styles */
 #cultivation-setup-modal .modal-body,
-#training-results-modal .modal-body {
-    text-align: left; 
-}
+#training-results-modal .modal-body { text-align: left; }
 #cultivation-setup-modal button,
-#training-results-modal button {
-    margin-top: 10px; 
-}
+#training-results-modal button { margin-top: 10px; }
 #start-cultivation-btn { 
     padding-top: 1rem;
     padding-bottom: 1rem; 
@@ -922,8 +925,6 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
     margin-top: 5px;
 }
-
-/* Training Results Modal Sections */
 .training-result-section {
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -954,8 +955,6 @@ body.light-theme .leaderboard-table tr:hover td {
     height: auto; 
     font-size: 0.9rem;
 }
-
-/* Newbie Guide Search Input & Results */
 #newbie-guide-search-input {
     width: 100%;
     padding: 8px;
@@ -972,8 +971,6 @@ body.light-theme .leaderboard-table tr:hover td {
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
 }
-
-/* Friends List Modal Components */
 #friends-list-search-input {
     width: 100%;
     padding: 8px 12px;
@@ -1009,8 +1006,6 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 .friend-item .friend-status.online { color: var(--success-color); }
 .friend-item .friend-status.offline { color: var(--text-secondary); }
-
-/* Auth Screen Components */
 .auth-title {
     font-size: 1.8rem;
     font-weight: 700;
@@ -1033,7 +1028,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 1rem;
     margin-bottom: 10px;
 }
-
 #show-register-form-btn.highlighted-register {
     background-color: var(--button-success-bg) !important;
     color: var(--button-success-text) !important;
@@ -1052,8 +1046,6 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-bottom: 15px;
     min-height: 1.2em; 
 }
-
-/* Battle Log Modal Specific Styles */
 #battle-log-modal .modal-content { max-width: 700px; } 
 #battle-log-area {
     background-color: var(--bg-primary);
@@ -1090,12 +1082,9 @@ body.light-theme .leaderboard-table tr:hover td {
  #battle-log-area .battle-end.winner { color: var(--success-color); }
  #battle-log-area .battle-end.loser { color: var(--danger-color); border-color: var(--danger-color); }
  #battle-log-area .battle-end.draw { color: var(--warning-color); border-color: var(--warning-color); }
-
 #battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
 #battle-log-area .heal-action { color: var(--success-color); }
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
-
-/* DNA Draw Modal Styles */
 #dna-draw-modal .modal-content { max-width: 600px; } 
 .dna-draw-result-item {
     border: 1px solid var(--border-color);
