@@ -14,9 +14,48 @@
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
+    <style>
+        /* 確保快照區域的文字資訊在圖片之上 */
+        .monster-snapshot-area {
+            position: relative; /* 作為子元素定位的基準 */
+        }
+        #monster-snapshot-base-bg,
+        #monster-snapshot-body-silhouette,
+        #monster-parts-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #monster-snapshot-base-bg {
+            z-index: 1; /* 底層背景 */
+            object-fit: cover; /* 或 contain, 根據需求調整 */
+        }
+        #monster-snapshot-body-silhouette {
+            z-index: 2; /* 中間層輪廓 (如果使用) */
+            object-fit: contain;
+        }
+        #monster-parts-container {
+            z-index: 3; /* 部位圖層 */
+            /* monster-parts-container 內部 div 的樣式已在 ui.js 和 components.css/layout.css 中處理 */
+        }
+
+        /* 文字資訊應在圖片圖層之上 */
+        #snapshot-achievement-title,
+        #snapshot-nickname,
+        #snapshot-win-loss,
+        #snapshot-main-content,
+        #snapshot-evaluation {
+            position: relative; /* 確保在正常文檔流中，但 z-index 高於絕對定位的圖片 */
+            z-index: 4;
+        }
+    </style>
 </head>
 <body>
-    <!-- 身份驗證畫面 -->
     <div id="auth-screen">
         <div class="auth-container">
             <h1 class="auth-title">怪獸異世界</h1>
@@ -25,7 +64,6 @@
         </div>
     </div>
 
-    <!-- 註冊彈窗 -->
     <div id="register-modal" class="modal">
         <div class="modal-content" style="max-width: 420px;">
             <span class="modal-close" data-modal-id="register-modal">&times;</span> 
@@ -39,7 +77,6 @@
         </div>
     </div>
 
-    <!-- 登入彈窗 -->
     <div id="login-modal" class="modal">
         <div class="modal-content" style="max-width: 420px;">
             <span class="modal-close" data-modal-id="login-modal">&times;</span> 
@@ -53,7 +90,6 @@
         </div>
     </div>
 
-    <!-- 遊戲官方公告彈窗 -->
     <div id="official-announcement-modal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <span class="modal-close" data-modal-id="official-announcement-modal" id="official-announcement-close-x">&times;</span>
@@ -72,7 +108,6 @@
         </div>
     </div>
 
-    <!-- 遊戲主容器 -->
     <div id="game-container" style="display: none; width:100%; display:flex; flex-direction:column; align-items:center;">
         <div class="main-container">
             <button id="main-logout-btn" class="corner-button top-left-button" title="登出">🚪</button>
@@ -80,16 +115,12 @@
                 <span id="theme-icon">🌙</span>
             </button>
 
-            <!-- 怪獸快照面板 -->
             <div class="monster-snapshot-panel panel">
                 <div id="monster-snapshot-area" class="monster-snapshot-area">
-                    <!-- 圖層1: 最底層的背景圖 (您提供的 GitHub 圖片) -->
                     <img id="monster-snapshot-base-bg" src="https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true" alt="怪獸底圖">
                     
-                    <!-- 圖層2: 中間的怪獸全身圖 (如果需要，例如一個通用的身體輪廓) -->
-                    <img id="monster-snapshot-body-silhouette" src="" alt="怪獸全身輪廓" style="display: none;"> <!-- 預設隱藏，由JS控制 -->
+                    <img id="monster-snapshot-body-silhouette" src="" alt="怪獸全身輪廓" style="display: none;">
 
-                    <!-- 圖層3: 可動態變化的五個部位 -->
                     <div id="monster-parts-container">
                         <div id="monster-part-head" class="monster-part"></div>
                         <div id="monster-part-left-arm" class="monster-part"></div>
@@ -98,7 +129,6 @@
                         <div id="monster-part-right-leg" class="monster-part"></div>
                     </div>
 
-                    <!-- 其他快照資訊，需要確保它們在最頂層 (CSS z-index 控制) -->
                     <div id="snapshot-achievement-title" class="snapshot-achievement-title">初出茅廬</div>
                     <div id="snapshot-nickname" class="snapshot-nickname">-</div>
                     <div id="snapshot-win-loss" class="snapshot-win-loss">
@@ -106,21 +136,19 @@
                         <span>敗: 0</span>
                     </div>
                     <div id="snapshot-main-content" class="snapshot-main-content">
-                        <!-- 用於顯示屬性等 -->
-                    </div>
+                        </div>
                     <div id="snapshot-evaluation" class="snapshot-evaluation">總評價: 0</div>
                 </div>
                 <div class="top-buttons-container">
-                    <button id="monster-info-button" class="top-nav-button" disabled>當前怪獸</button> 
-                    <button id="player-info-button" class="top-nav-button">玩家資訊</button>
-                    <button id="show-monster-leaderboard-btn" class="top-nav-button">怪獸排行</button>
-                    <button id="show-player-leaderboard-btn" class="top-nav-button">玩家排行</button>
-                    <button id="friends-list-btn" class="top-nav-button">好友名單</button>
-                    <button id="newbie-guide-btn" class="top-nav-button">新手上路</button>
+                    <button id="monster-info-button" class="top-nav-button button" disabled>當前怪獸</button> 
+                    <button id="player-info-button" class="top-nav-button button">玩家資訊</button>
+                    <button id="show-monster-leaderboard-btn" class="top-nav-button button">怪獸排行</button>
+                    <button id="show-player-leaderboard-btn" class="top-nav-button button">玩家排行</button>
+                    <button id="friends-list-btn" class="top-nav-button button">好友名單</button>
+                    <button id="newbie-guide-btn" class="top-nav-button button">新手上路</button>
                 </div>
             </div>
 
-            <!-- 主要功能面板 -->
             <div class="panel">
                 <div class="tab-buttons" id="dna-farm-tabs">
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
@@ -136,8 +164,8 @@
                         <h2 class="panel-title dna-panel-title">🧬 DNA組合</h2>
                         <div id="dna-combination-slots" class="dna-combination-grid mt-2"></div>
                         <div class="action-buttons-grid dual-buttons mt-3">
-                            <button id="combine-button" class="success action-button-main" disabled>怪物合成</button>
-                            <button id="dna-draw-button" class="primary action-button-main">抽取DNA (1次)</button>
+                            <button id="combine-button" class="success action-button-main button" disabled>怪物合成</button>
+                            <button id="dna-draw-button" class="primary action-button-main button">抽取DNA (1次)</button>
                         </div>
                     </div>
                     <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
@@ -164,7 +192,7 @@
                         <div>養成</div>
                     </div>
                     <div id="farmed-monsters-list">
-                        <p class="text-center text-sm text-[var(--text-secondary)] py-4">農場空空如也，快去組合怪獸吧！</p>
+                        <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>
                     </div>
                 </div>
                 
@@ -191,7 +219,6 @@
         </div>
     </div>
 
-    <!-- 確認動作彈窗 -->
     <div id="confirmation-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" id="confirmation-modal-close-x" data-modal-id="confirmation-modal">&times;</span>
@@ -202,18 +229,79 @@
                 </div>
             </div>
             <div class="modal-footer" style="justify-content: center;"> 
-                <button id="confirm-action-btn" class="danger">✔️ 確定</button>
+                <button id="confirm-action-btn" class="button danger">✔️ 確定</button>
             </div>
         </div>
     </div>
 
-    <!-- ... 其他 Modal 保持不變 (確保所有button都有 'button' class 以應用統一樣式) ... -->
-    <div id="monster-leaderboard-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="player-leaderboard-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="monster-info-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="player-info-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="feedback-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="cultivation-setup-modal" class="modal"> <!-- ... (按鈕添加 button class) ... -->
+    <div id="monster-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="monster-leaderboard-modal">&times;</span>
+            <h3 class="modal-header">怪獸排行榜</h3>
+            <div id="monster-leaderboard-tabs-container"> 
+                <div id="monster-leaderboard-element-tabs" class="tab-buttons">
+                    </div>
+            </div>
+            <div id="monster-leaderboard-table-container" class="modal-body">
+                <table id="monster-leaderboard-table" class="leaderboard-table">
+                    </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="player-leaderboard-modal">&times;</span>
+            <h3 class="modal-header">玩家英雄榜</h3>
+            <div id="player-leaderboard-table-container" class="modal-body">
+                <table id="player-leaderboard-table" class="leaderboard-table">
+                    </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="monster-info-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="monster-info-modal">&times;</span>
+            <div id="monster-info-modal-header-content" class="monster-info-header">
+                </div>
+            <div class="tab-buttons" id="monster-info-tabs">
+                <button class="tab-button active" data-tab-target="monster-details-tab" data-parent-modal="monster-info-modal">📜 詳細資訊</button>
+                <button class="tab-button" data-tab-target="monster-logs-tab" data-parent-modal="monster-info-modal">🐾 活動紀錄</button>
+            </div>
+            <div id="monster-details-tab" class="tab-content active modal-body">
+                </div>
+            <div id="monster-logs-tab" class="tab-content modal-body">
+                <div id="monster-activity-logs" class="max-h-[300px] overflow-y-auto">
+                    <p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-info-modal" class="modal">
+        <div class="modal-content large"> 
+            <span class="modal-close" data-modal-id="player-info-modal">&times;</span>
+            <h3 class="modal-header">👤 玩家資訊</h3>
+            <div id="player-info-modal-body" class="modal-body">
+                </div>
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content feedback-wide"> 
+            <span id="feedback-modal-close-x" class="modal-close" data-modal-id="feedback-modal">&times;</span>
+            <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
+            <div id="feedback-modal-body-content" class="modal-body text-left">
+                 <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
+                 <div id="feedback-modal-message"></div>
+                 <div id="feedback-monster-details" style="display:none;" class="mt-3">
+                    </div>
+            </div>
+            </div>
+    </div>
+
+    <div id="cultivation-setup-modal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
             <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成</h3>
@@ -225,7 +313,8 @@
             </div>
         </div>
     </div>
-    <div id="training-results-modal" class="modal"> <!-- ... (按鈕添加 button class) ... -->
+
+    <div id="training-results-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" id="close-training-results-btn" data-modal-id="training-results-modal">&times;</span>
             <h3 id="training-results-modal-title" class="modal-header">🎉 修煉成果 🎉</h3>
@@ -249,8 +338,20 @@
             </div>
         </div>
     </div>
-    <div id="newbie-guide-modal" class="modal"> <!-- ... (內容不變) ... --> </div>
-    <div id="reminder-modal" class="modal"> <!-- ... (按鈕添加 button class) ... -->
+
+    <div id="newbie-guide-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="newbie-guide-modal">&times;</span>
+            <h3 class="modal-header">📖 新手上路指南</h3>
+            <div class="modal-body">
+                <input type="text" id="newbie-guide-search-input" placeholder="搜尋指南內容..." class="mb-4">
+                <div id="newbie-guide-content-area" class="max-h-[50vh] overflow-y-auto">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reminder-modal" class="modal">
         <div class="modal-content" style="max-width: 380px;">
             <h3 id="reminder-modal-title" class="modal-header text-center">溫馨提醒</h3>
             <div id="reminder-modal-body" class="modal-body text-center">
@@ -262,8 +363,21 @@
             </div>
         </div>
     </div>
-    <div id="friends-list-modal" class="modal"> <!-- ... (內容不變, button class已在之前版本添加) ... --> </div>
-    <div id="battle-log-modal" class="modal"> <!-- ... (按鈕添加 button class) ... -->
+
+    <div id="friends-list-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="friends-list-modal">&times;</span>
+            <h3 class="modal-header">🧑‍🤝‍🧑 好友名單</h3>
+            <div class="modal-body">
+                <input type="text" id="friends-list-search-input" placeholder="搜尋玩家暱稱..." class="mb-3">
+                <div id="friends-list-container">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">輸入暱稱搜尋其他玩家。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="battle-log-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" data-modal-id="battle-log-modal">&times;</span>
             <h3 class="modal-header">⚔️ 戰鬥記錄 ⚔️</h3>
@@ -273,12 +387,14 @@
             </div>
         </div>
     </div>
-    <div id="dna-draw-modal" class="modal"> <!-- ... (按鈕添加 button class) ... -->
+
+    <div id="dna-draw-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" data-modal-id="dna-draw-modal">&times;</span>
             <h3 class="modal-header">🧬 DNA 抽取結果</h3>
             <div class="modal-body">
-                <div id="dna-draw-results-grid"></div>
+                <div id="dna-draw-results-grid">
+                    </div>
                 <p class="text-sm text-[var(--text-secondary)] mt-3 text-center">點擊物品可將其加入臨時背包。</p>
             </div>
             <div class="modal-footer">
@@ -287,7 +403,6 @@
         </div>
     </div>
 
-    <!-- JavaScript 檔案 -->
     <script src="js/firebase-config.js" defer></script>
     <script src="js/config.js" defer></script> 
     <script src="js/game-state.js" defer></script>
