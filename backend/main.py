@@ -27,13 +27,8 @@ app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # --- CORS 配置 ---
-allowed_origins = [
-    "https://msw2004727.github.io",  # 您的 GitHub Pages
-    "http://127.0.0.1:5500",         # 本地 Live Server
-    "http://localhost:5500",
-    "http://127.0.0.1:8080",         # 其他本地開發端口
-    "http://localhost:8080",
-]
+# 暫時改為允許所有來源，僅用於調試
+allowed_origins = ["*"] 
 CORS(app,
      resources={r"/api/*": {"origins": allowed_origins}},
      supports_credentials=True,
