@@ -129,8 +129,6 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr); 
     gap: 8px;
-    /* Item 3: Slot size consistency handled by adding .dna-item class in JS 
-       and relying on .dna-item styles in components.css */
 }
 @media (min-width: 480px) { 
     .temp-backpack-grid {
@@ -247,9 +245,12 @@
 }
 
 
-/* Monster Snapshot Area Layout - Ensure it accommodates the new parts container */
+/* Monster Snapshot Area Layout - display:flex is in components.css */
 #monster-snapshot-area {
-    /* display: flex; align-items: center; justify-content: center; */ /* This is now in components.css */
+    /* Ensure it can contain absolutely positioned children */
+    /* display: flex; already handled */
+    /* align-items: center; already handled */
+    /* justify-content: center; already handled */
 }
 
 /* Grid for medals */
@@ -301,4 +302,3 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
-
