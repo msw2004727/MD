@@ -389,15 +389,25 @@ function applyDnaItemStyle(element, dnaData) {
     if (!element) return;
 
     if (!dnaData) {
+        // 這是空槽位的樣式
         element.style.backgroundColor = 'var(--bg-slot)';
         const nameSpan = element.querySelector('.dna-name-text');
-        if (nameSpan) nameSpan.style.color = 'var(--text-secondary)';
+        if (nameSpan) {
+            nameSpan.style.color = 'var(--text-secondary)';
+            nameSpan.textContent = "空位"; // 設置空位文本
+        }
         else element.style.color = 'var(--text-secondary)';
         element.style.borderColor = 'var(--border-color)';
+        element.classList.add('empty'); // 確保有 empty class
+        element.classList.remove('occupied'); // 移除 occupied class
         const rarityBadge = element.querySelector('.dna-rarity-badge');
         if (rarityBadge) rarityBadge.style.display = 'none';
         return;
     }
+
+    // 已佔用槽位的樣式
+    element.classList.remove('empty'); // 移除 empty class
+    element.classList.add('occupied'); // 確保有 occupied class
 
     const elementTypeMap = {
         '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
@@ -417,6 +427,7 @@ function applyDnaItemStyle(element, dnaData) {
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
         nameSpan.style.color = rarityTextColorVar;
+        nameSpan.textContent = dnaData.name || '未知DNA'; // 設置 DNA 名字
     } else {
         element.style.color = rarityTextColorVar;
     }
@@ -424,7 +435,7 @@ function applyDnaItemStyle(element, dnaData) {
 
     const rarityBadge = element.querySelector('.dna-rarity-badge');
     if (rarityBadge) {
-        rarityBadge.style.display = 'none';
+        rarityBadge.style.display = 'none'; // 通常在 DNA 項目中不顯示這個徽章，或根據設計調整
     }
 }
 
@@ -451,10 +462,11 @@ function renderDNACombinationSlots() {
             slot.dataset.dnaSource = 'combination';
             slot.dataset.slotIndex = index; // Ensure this is also on occupied slots
         } else {
-            nameSpan.textContent = `組合槽 ${index + 1}`;
+            // 這個分支現在會調用 applyDnaItemStyle(slot, null) 來設置空位樣式
+            nameSpan.textContent = `組合槽 ${index + 1}`; // 仍然顯示組合槽號碼
             slot.appendChild(nameSpan);
             slot.classList.add('empty');
-            applyDnaItemStyle(slot, null);
+            applyDnaItemStyle(slot, null); // 傳入 null 以應用空槽樣式
             slot.dataset.slotIndex = index; // Ensure this is also on empty slots
         }
         container.appendChild(slot);
@@ -470,43 +482,35 @@ function renderPlayerDNAInventory() {
     const container = DOMElements.inventoryItemsContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_INVENTORY_SLOTS = 11; // You can make this configurable in gameState.gameConfigs
+    const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS; // 從 gameState 中獲取最大槽位數
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
 
-    // Create a temporary array that represents all slots, including nulls for empty ones
-    // This allows us to render a fixed grid size regardless of how many items are actually owned
-    let tempInventoryArray = new Array(MAX_INVENTORY_SLOTS).fill(null);
-    ownedDna.forEach((dna, index) => {
-        if (index < MAX_INVENTORY_SLOTS) {
-            tempInventoryArray[index] = dna;
-        }
-    });
-
-    tempInventoryArray.forEach((dna, index) => {
+    // 遍歷所有固定槽位，無論是否被佔用
+    for (let index = 0; index < MAX_INVENTORY_SLOTS; index++) {
+        const dna = ownedDna[index]; // 獲取該索引位置的 DNA (可能是 DNA 對象或 null)
         const item = document.createElement('div');
-        item.classList.add('dna-item');
+        item.classList.add('dna-item'); // 基礎樣式
         
-        item.dataset.inventoryIndex = index; // Crucial: Add index to both occupied and empty slots
+        item.dataset.inventoryIndex = index; // 設置槽位索引，用於拖曳放置
 
-        if (dna) { // If slot is occupied
-            item.classList.add('occupied');
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('dna-name-text');
-            nameSpan.textContent = dna.name || '未知DNA';
-            item.appendChild(nameSpan);
-            applyDnaItemStyle(item, dna);
+        const nameSpan = document.createElement('span');
+        nameSpan.classList.add('dna-name-text');
+        item.appendChild(nameSpan); // 先添加 span，讓 applyDnaItemStyle 可以找到它
+
+        if (dna) { // 如果該槽位有 DNA 物品
             item.draggable = true;
-            item.dataset.dnaId = dna.id;
-            item.dataset.dnaBaseId = dna.baseId;
-            item.dataset.dnaSource = 'inventory';
-        } else { // If slot is empty
-            item.classList.add('empty'); // Use 'empty' class for visual styling
-            item.textContent = "空位";
-            applyDnaItemStyle(item, null);
-            item.draggable = false; // Empty slots are not draggable
+            item.dataset.dnaId = dna.id; // 設置 DNA 實例 ID
+            item.dataset.dnaBaseId = dna.baseId; // 設置 DNA 模板 ID
+            item.dataset.dnaSource = 'inventory'; // 標記來源為庫存
+            applyDnaItemStyle(item, dna); // 應用 DNA 物品的樣式和文本
+        } else { // 如果該槽位為空 (null)
+            item.draggable = true; // 空槽位也需要可拖曳，以便接收物品 (但拖曳本身不會拖曳空槽位)
+            item.dataset.dnaSource = 'inventory'; // 標記來源為庫存
+            applyDnaItemStyle(item, null); // 應用空槽位的樣式和文本
+            // 注意：空槽位不設定 data-dnaId 或 data-dnaBaseId
         }
         container.appendChild(item);
-    });
+    }
 
     const deleteSlot = document.createElement('div');
     deleteSlot.id = 'inventory-delete-slot';
@@ -549,9 +553,9 @@ function renderTemporaryBackpack() {
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index); // Still allow click for quick move
         } else { // If slot is empty
             slot.classList.add('empty');
-            slot.textContent = `空位`;
+            slot.textContent = `空位`; // Change to use textContent directly for empty slots
             applyDnaItemStyle(slot, null);
-            slot.draggable = false; // Empty slots are not draggable
+            slot.draggable = false; // Empty slots are not draggable, as they don't contain an item to drag
         }
         container.appendChild(slot);
     });
@@ -1177,7 +1181,6 @@ function updateScrollingHints(hintsArray) {
     const totalDuration = hintsArray.length * 5;
     // The animation is set on the child elements, not the container itself for infinite scrolling effect
     // container.style.animationDuration = `${totalDuration}s`; // This line might not be necessary depending on CSS setup
-
     hintsArray.forEach((hint, index) => {
         const p = document.createElement('p');
         p.classList.add('scrolling-hint-text');
