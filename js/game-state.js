@@ -5,8 +5,13 @@ const gameState = {
     currentUser: null, // Firebase Auth User object
     playerId: null, // 當前玩家的 ID (通常是 UID)
     playerNickname: "玩家", // 玩家暱稱
+    
+    // 定義最大庫存槽位數，與 UI/數據庫保持一致
+    MAX_INVENTORY_SLOTS: 11, // 新增：玩家DNA庫存的最大槽位數
+
     playerData: { // 玩家的遊戲進度資料
-        playerOwnedDNA: [], // 玩家擁有的 DNA 碎片
+        // playerOwnedDNA 現在是一個固定大小的陣列，空槽位為 null
+        playerOwnedDNA: Array(11).fill(null), // 玩家擁有的 DNA 碎片 (固定 11 格)
         farmedMonsters: [], // 玩家農場中的怪獸
         playerStats: { // 玩家統計數據
             rank: "N/A",
