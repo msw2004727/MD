@@ -801,7 +801,7 @@ function handleMonsterLeaderboardFilter() {
                 gameState.currentMonsterLeaderboardElementFilter = filter;
                 DOMElements.monsterLeaderboardElementTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
-                filterAndRenderLeaderboard();
+                filterAndRenderMonsterLeaderboard();
             }
         });
     }
