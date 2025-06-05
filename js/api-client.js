@@ -78,6 +78,24 @@ async function getPlayerData(playerId) {
     return fetchAPI(`/player/${playerId}`);
 }
 
+/**
+ * 將玩家的遊戲資料保存到後端。
+ * 這是一個新函數，用於在前端玩家數據發生變更後將其持久化到資料庫。
+ * 請注意，後端 (MD_routes.py) 也需要新增對應的 '/player/<playerId>/save' 路由來處理此請求。
+ * @param {string} playerId 玩家 ID
+ * @param {object} playerData 玩家的完整遊戲資料物件 (通常是 gameState.playerData)
+ * @returns {Promise<object>} 保存結果（例如：{"success": true, "message": "保存成功"}）
+ */
+async function savePlayerData(playerId, playerData) {
+    if (!playerId || !playerData) {
+        throw new Error("保存玩家資料需要 playerId 和 playerData。");
+    }
+    return fetchAPI(`/player/${playerId}/save`, {
+        method: 'POST',
+        body: JSON.stringify(playerData),
+    });
+}
+
 
 /**
  * 組合 DNA 生成新怪獸
@@ -241,4 +259,4 @@ async function searchPlayers(nicknameQuery, limit = 10) {
 console.log("API client module loaded.");
 
 // 導出 (如果使用 ES6 模塊)
-// export { getGameConfigs, getPlayerData, combineDNA, simulateBattle, generateAIDescriptions, updateMonsterCustomNickname, healMonster, disassembleMonster, rechargeMonsterWithDNA, completeCultivation, replaceMonsterSkill, getMonsterLeaderboard, getPlayerLeaderboard, searchPlayers };
+// export { getGameConfigs, getPlayerData, combineDNA, simulateBattle, generateAIDescriptions, updateMonsterCustomNickname, healMonster, disassembleMonster, rechargeMonsterWithDNA, completeCultivation, replaceMonsterSkill, getMonsterLeaderboard, getPlayerLeaderboard, searchPlayers, savePlayerData };
