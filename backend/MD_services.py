@@ -319,6 +319,10 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
 
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
 
+    # ====== 新增這行來打印完整的 playerOwnedDNA ======
+    services_logger.debug(f"DEBUG combine_dna_service: 玩家 {player_id} 的完整 playerOwnedDNA: {player_data.get('playerOwnedDNA', 'N/A')}")
+    # =================================================
+
     if not dna_ids_from_request:
         services_logger.warning("DNA 組合請求中的 DNA ID 列表為空。")
         return None
@@ -329,22 +333,32 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
     constituent_dna_template_ids: List[str] = []
     consumed_dna_instance_indices: List[int] = [] # 記錄被消耗的 DNA 在玩家庫存中的索引
 
+    services_logger.debug(f"DEBUG combine_dna_service: 收到請求的 DNA ID 列表: {dna_ids_from_request}")
+
     for req_dna_instance_id in dna_ids_from_request:
         found_dna_instance = None
         found_dna_index = -1
         for idx, dna_item in enumerate(player_data.get("playerOwnedDNA", [])):
+            # ====== 新增調試日誌 ======
+            services_logger.debug(f"DEBUG combine_dna_service: 檢查庫存槽位 {idx} - DNA: {dna_item.get('id') if dna_item else 'None'}, 匹配目標: {req_dna_instance_id}")
+            # ==========================
             if dna_item and dna_item.get("id") == req_dna_instance_id:
                 found_dna_instance = dna_item
                 found_dna_index = idx
                 break
         
         if found_dna_instance and found_dna_instance.get("baseId"):
+            services_logger.debug(f"DEBUG combine_dna_service: 成功找到匹配的 DNA: {found_dna_instance.get('id')}, baseId: {found_dna_instance.get('baseId')}")
             combined_dnas_data.append(found_dna_instance)
             constituent_dna_template_ids.append(found_dna_instance["baseId"]) # 確保是 template ID
             consumed_dna_instance_indices.append(found_dna_index) # 記錄索引
         else:
             services_logger.warning(f"在玩家庫存中找不到 ID 為 {req_dna_instance_id} 的 DNA 實例，或缺少 baseId。無法用於組合。")
-            return None # 缺少必要的 DNA，直接返回錯誤
+            # 如果是因為找不到 DNA 實例導致的失敗，我們需要更明確地返回錯誤
+            return None # 這裡讓函數直接返回 None，以觸發路由層的 400 錯誤
+
+    services_logger.debug(f"DEBUG combine_dna_service: 成功匹配 {len(combined_dnas_data)} 個 DNA 實例。")
+    services_logger.debug(f"DEBUG combine_dna_service: 待消耗的 DNA 索引: {consumed_dna_instance_indices}")
 
     if len(combined_dnas_data) < 2:
         services_logger.error("組合 DNA 數量不足 (至少需要 2 個)。")
@@ -836,7 +850,7 @@ def heal_monster_service(
     # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
-        services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        services_logger.error("Firestore 資料庫未初始化 (heal_monster_service內部)。")
         return None
 
     db = firestore_db_instance # 將局部變數 db 指向已初始化的實例
