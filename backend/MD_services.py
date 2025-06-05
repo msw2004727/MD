@@ -44,10 +44,11 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS: GameConfigs = {
     "value_settings": {
         "element_value_factors": {"火": 1.2, "水": 1.1, "無": 0.7, "混": 0.6},
         "dna_recharge_conversion_factor": 0.15,
-        "max_farm_slots": 10, # 新增農場上限的預設值
-        "max_monster_skills": 3, # 新增怪獸最大技能數的預設值
-        "max_battle_turns": 30, # 新增戰鬥最大回合數
-        "max_inventory_slots": 24 # 新增：預設庫存槽位數
+        "max_farm_slots": 10, # 農場上限的預設值
+        "max_monster_skills": 3, # 怪獸最大技能數的預設值
+        "max_battle_turns": 30, # 戰鬥最大回合數
+        "max_inventory_slots": 12, # 修改點：預設庫存槽位數為 12
+        "max_temp_backpack_slots": 9 # 新增：預設臨時背包槽位數為 9
     },
     "absorption_config": {
         "base_stat_gain_factor": 0.03, "score_diff_exponent": 0.3,
@@ -126,8 +127,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname
     }
 
-    # 修改點：初始化 playerOwnedDNA 為固定大小的 None 陣列
-    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+    # 修改點：初始化 playerOwnedDNA 為固定大小的 None 陣列，從 game_configs 獲取最大槽位數
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 使用新的預設值
     initial_dna_owned: List[Optional[PlayerOwnedDNA]] = [None] * max_inventory_slots # 初始化為指定數量的 None
 
     dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", []) # type: ignore
@@ -153,7 +154,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "playerOwnedDNA": initial_dna_owned, # 使用固定大小的陣列
         "farmedMonsters": [],
         "playerStats": player_stats,
-        "nickname": nickname, # 頂層 nickname
+        "nickname": nickname, # 頂層玩家暱稱
         "lastSave": int(time.time())
     }
     services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
@@ -219,7 +220,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 
                 # 修改點：確保從 Firestore 載入的 playerOwnedDNA 補齊到最大槽位數
                 loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
-                max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+                max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 使用新的預設值
                 
                 # 如果載入的 DNA 陣列長度不足，用 None 填充
                 if len(loaded_dna) < max_inventory_slots:
@@ -272,6 +273,10 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "nickname": game_data.get("nickname", "未知玩家"),
             "lastSave": int(time.time())
         }
+        # 過濾掉 playerOwnedDNA 中的 None 值，Firestore 會將其視為 null
+        # 但在 TypedDict 中 List[Optional[PlayerOwnedDNA]] 允許 None
+        # data_to_save["playerOwnedDNA"] = [item for item in data_to_save["playerOwnedDNA"] if item is not None]
+
         if isinstance(data_to_save["playerStats"], dict) and \
            data_to_save["playerStats"].get("nickname") != data_to_save["nickname"]:
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
@@ -317,6 +322,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
     for req_dna_id in dna_ids_from_request:
         # 從 player_data.playerOwnedDNA 中找到對應的 DNA 實例
         found_dna_instance_index = -1
+        # 修改點：遍歷時檢查 dna_item 是否為 None
         for idx, dna_item in enumerate(player_data.get("playerOwnedDNA", [])):
             if dna_item and dna_item.get("id") == req_dna_id:
                 found_dna_instance_index = idx
@@ -624,12 +630,13 @@ def absorb_defeated_monster_service(
     player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
 
     current_owned_dna = player_data.get("playerOwnedDNA", [])
-    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 修改點：使用新的預設值
+
     for dna_template in extracted_dna_templates:
         instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
         owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
         
-        # 修改點：找到第一個空位來放置新的 DNA，如果沒有空位則添加到末尾
+        # 修改點：找到第一個空位來放置新的 DNA
         free_slot_index = -1
         for i, dna_item in enumerate(current_owned_dna):
             if dna_item is None:
@@ -639,18 +646,30 @@ def absorb_defeated_monster_service(
         if free_slot_index != -1 and free_slot_index < max_inventory_slots:
             current_owned_dna[free_slot_index] = owned_dna_item
         else:
-            # 如果沒有空位，或空位超過了最大限制，則添加到末尾 (會導致陣列長度增加)
-            # 實際應用中，如果固定槽位模式，這裡需要處理滿倉邏輯，例如掉落
-            current_owned_dna.append(owned_dna_item) 
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", {}).get("max_temp_backpack_slots", 9) # 新增：從 configs 獲取臨時背包槽位數
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                # 這部分邏輯只在後端運行，前端會再次刷新數據，所以可能不會直接看到此警告
+                # 但理論上前端應該處理庫存滿的提示
+                pass # DNA 被丟棄
 
-    # 確保 final current_owned_dna 不會超過 max_inventory_slots，且保留 None
-    if len(current_owned_dna) > max_inventory_slots:
-        # 這裡需要決定是截斷，還是提示玩家庫存滿。
-        # 為了保持固定長度，這裡直接截斷，但會丟棄多餘的物品。
-        # 更好的做法是將多餘的物品放入臨時背包。
-        services_logger.warning(f"玩家 {player_id} 的 DNA 庫存超過最大限制 ({max_inventory_slots})，多餘的 DNA 已被截斷。")
-        current_owned_dna = current_owned_dna[:max_inventory_slots]
-    
+
     player_data["playerOwnedDNA"] = current_owned_dna
 
     if winning_monster:
@@ -825,7 +844,7 @@ def disassemble_monster_service(
     
     # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
     current_owned_dna = player_data.get("playerOwnedDNA", [])
-    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 24)
+    max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12) # 修改點：使用新的預設值
 
     for dna_template in returned_dna_templates:
         instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
@@ -833,21 +852,34 @@ def disassemble_monster_service(
         
         free_slot_index = -1
         for i, dna_item in enumerate(current_owned_dna):
-            if dna_item is None:
+            if dna_item is None: # 找到第一個 None 槽位
                 free_slot_index = i
                 break
         
         if free_slot_index != -1 and free_slot_index < max_inventory_slots:
             current_owned_dna[free_slot_index] = owned_dna_item
         else:
-            # 如果沒有空位，或空位超過了最大限制，則暫時添加到末尾
-            # 路由層會將其截斷，或前端處理庫存滿的提示
-            current_owned_dna.append(owned_dna_item)
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", {}).get("max_temp_backpack_slots", 9) # 新增：從 configs 獲取臨時背包槽位數
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
 
-    # 確保 final current_owned_dna 不會超過 max_inventory_slots，且保留 None
-    if len(current_owned_dna) > max_inventory_slots:
-        services_logger.warning(f"玩家 {player_id} 的 DNA 庫存因分解超過最大限制 ({max_inventory_slots})，多餘的 DNA 已被截斷。")
-        current_owned_dna = current_owned_dna[:max_inventory_slots] # 截斷多餘的，以保持固定長度
 
     player_data["playerOwnedDNA"] = current_owned_dna
 
@@ -1218,7 +1250,8 @@ def simulate_battle_service(monster1_data: Monster, monster2_data: Monster, game
         if current_attacker_state["current_hp"] <= 0:
             log.append(f"倒下了！ {attacker_nickname} 被狀態擊倒！")
             break
-
+        
+        # Check if the attacker is stunned/confused BEFORE choosing skill
         can_act = True
         for status in current_attacker_state.get("battle_statuses", []):
             if status.get("type") == "stun":
