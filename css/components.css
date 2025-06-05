@@ -455,8 +455,8 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 }
 .action-button-main {
     /* 將高度降低70%：假設基礎高度約為 48px，降低 70% 意味著剩下 30% 的高度，即 14.4px。
-       但為了確保可點擊性和文字可讀性，我們將其設定為 30px，同時調整內距。 */
-    height: 30px !important; /* 新的高度 */
+       但為了確保可點擊性和文字可讀性，我們將其設定為 35px，同時調整內距。 */
+    height: 35px !important; /* 新的高度 */
     padding: 0 15px !important; /* 垂直內距設為0，依靠 height 和 line-height 居中 */
     font-size: 0.95rem !important; 
     font-weight: bold !important;
@@ -480,9 +480,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 
 /* Specific style for DNA draw button to make it 1:1 aspect ratio */
 #dna-draw-button {
-    aspect-ratio: 1 / 1;
-    /* min-width: 48px;  使用 height 控制，min-width 保持與 height 一致 */
-    min-width: 35px; /* 調整 min-width 以配合新的高度 */
+    /* 移除 aspect-ratio: 1 / 1; */
+    width: 105px; /* 調整為新的寬度 (35px * 3) */
+    min-width: 105px; /* 調整 min-width 以配合新的寬度 */
 }
 
 .farm-monster-item button.farm-battle-btn {
@@ -923,7 +923,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .feedback-skill-description {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-left: 10px;
+    margin-left: 10px; 
 }
 #cultivation-setup-modal .modal-body,
 #training-results-modal .modal-body { text-align: left; }
