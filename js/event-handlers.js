@@ -253,7 +253,7 @@ async function handleDrop(event) {
             if (freeSlotIndex === -1) {
                 freeSlotIndex = gameState.playerData.playerOwnedDNA.length;
             }
-            gameState.playerData.playerOwnedDNA[freeSlotIndex] = itemCurrentlyInTargetTempSlot.data; // 退回的是原始 DNA 數據
+            gameState.playerData.playerOwnedDNA[freeSlotIndex] = itemCurrentlyInTargetTempSlot.data; // 退回的是原始 DNA 數據 
         }
 
         // 3. 將被拖曳的 DNA 放入目標槽位
@@ -463,41 +463,37 @@ function handleTabSwitching() {
 }
 
 async function handleCombineDna() {
-    const dnaBaseIdsForCombination = gameState.dnaCombinationSlots
-        .filter(slot => slot && slot.baseId)
-        .map(slot => slot.baseId);
+    // 修正: 收集 DNA 的實例 ID (slot.id)，而不是 baseId
+    const dnaInstanceIdsForCombination = gameState.dnaCombinationSlots
+        .filter(slot => slot && slot.id) // 確保有 id (實例 ID)
+        .map(slot => slot.id);
 
-    if (dnaBaseIdsForCombination.length < 2) {
+    if (dnaInstanceIdsForCombination.length < 2) {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
         return;
     }
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        const result = await combineDNA(dnaBaseIdsForCombination);
+        const result = await combineDNA(dnaInstanceIdsForCombination);
 
         if (result && result.id) {
             const newMonster = result;
             // 清空所有組合槽位
             gameState.dnaCombinationSlots = [null, null, null, null, null];
-            // 更新 playerOwnedDNA，將被消耗的 DNA 替換為 null
-            const consumedDnaIds = dnaBaseIdsForCombination; // 這裡應該是實例ID，不是 baseId
-            const currentOwnedDna = [...gameState.playerData.playerOwnedDNA];
-            currentOwnedDna.forEach((dna, index) => {
-                if (dna && consumedDnaIds.includes(dna.baseId)) { // 用 baseId 檢查，確保是原始拖曳的 DNA
-                    currentOwnedDna[index] = null; // 將被消耗的 DNA 槽位設置為 null
-                }
-            });
-            gameState.playerData.playerOwnedDNA = currentOwnedDna;
+            // 更新 playerOwnedDNA，將被消耗的 DNA 替換為 null (此邏輯已在後端處理，前端只需刷新)
+            // 這裡不再手動將 playerOwnedDNA 中的 DNA 設為 null，因為後端會負責。
+            // 我們只需確保刷新玩家數據。
 
             await refreshPlayerData(); // 刷新玩家數據，確保 UI 同步並儲存新怪獸
+
             resetDNACombinationSlots(); // 重新渲染組合槽
 
             let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
             feedbackMessage += `屬性: ${newMonster.elements.join(', ')}, 稀有度: ${newMonster.rarity}<br>`;
             feedbackMessage += `HP: ${newMonster.hp}, 攻擊: ${newMonster.attack}, 防禦: ${newMonster.defense}, 速度: ${newMonster.speed}, 爆擊: ${newMonster.crit}%`;
             if (result.farm_full_warning) {
-                feedbackMessage += `<br><strong class="text-[var(--warning-color)]">${result.farm_full_warning}</strong> 請至農場管理。`;
+                feedbackMessage += `<br><strong class="text-[var(--warning-color)]">${result.farm_full_warning}</strong>`;
             }
 
             showFeedbackModal(
