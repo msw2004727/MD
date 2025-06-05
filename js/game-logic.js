@@ -190,6 +190,43 @@ function handleCultivateMonsterClick(event, monsterId) {
 }
 
 /**
+ * 處理修煉結束邏輯。
+ * @param {Event} event 事件對象。
+ * @param {string} monsterId 怪獸 ID。
+ * @param {number} trainingStartTime 修煉開始時間戳。
+ * @param {number} trainingDuration 修煉總時長 (毫秒)。
+ */
+async function handleEndCultivationClick(event, monsterId, trainingStartTime, trainingDuration) {
+    event.stopPropagation();
+    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+    if (!monster) {
+        showFeedbackModal('錯誤', '找不到指定的怪獸。');
+        return;
+    }
+
+    const now = Date.now();
+    const elapsedTimeSeconds = Math.floor((now - trainingStartTime) / 1000); // 實際修煉秒數
+    const totalDurationSeconds = trainingDuration / 1000;
+
+    // 如果時間未到，可以選擇提示用戶是否強制結束
+    if (elapsedTimeSeconds < totalDurationSeconds) {
+        showConfirmationModal(
+            '提前結束修煉',
+            `怪獸 ${monster.nickname} 的修煉時間尚未結束 (${totalDurationSeconds - elapsedTimeSeconds}秒剩餘)。提前結束將無法獲得完整獎勵。確定要結束嗎？`,
+            async () => {
+                await handleCompleteCultivation(monsterId, elapsedTimeSeconds); // 傳入實際修煉秒數
+            },
+            'danger', // confirmButtonClass
+            '強制結束'     // confirmButtonText
+        );
+    } else {
+        // 時間已到，直接結算
+        await handleCompleteCultivation(monsterId, totalDurationSeconds); // 傳入完整時長
+    }
+}
+
+
+/**
  * 處理玩家點擊農場中怪獸的“放生”按鈕。
  * @param {Event} event 事件對象。
  * @param {string} monsterId 怪獸 ID。
@@ -404,7 +441,7 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
                             await refreshPlayerData();
                             showFeedbackModal('替換成功！', `${monster.nickname} 成功學習了 ${newSkillTemplate.name}，替換了原技能！`);
                         } else {
-                            showFeedbackModal('替換失敗', result.error || '替換技能時發生錯誤。');
+                            showFeedbackModal('替換失敗', result.error || '學習新技能時發生錯誤。');
                         }
                     } catch (error) {
                         showFeedbackModal('替換失敗', `請求錯誤: ${error.message}`);
@@ -652,12 +689,19 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
     try {
         showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
+        // 設定玩家怪獸為「戰鬥中」狀態
+        playerMonster.farmStatus = playerMonster.farmStatus || {};
+        playerMonster.farmStatus.isBattling = true;
+        renderMonsterFarm(); // 更新農場UI，顯示出戰狀態
+        updateMonsterSnapshot(playerMonster); // 將出戰怪獸顯示在快照區
+
         if (npcId) { // 挑戰 NPC (假設 NPC 資料在 gameConfigs 中)
             const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
             opponentMonster = npcTemplates.find(npc => npc.id === npcId);
             if (!opponentMonster) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
             // NPC怪獸可能需要深拷貝或特殊處理以避免修改原始設定
             opponentMonster = JSON.parse(JSON.stringify(opponentMonster));
+            opponentMonster.isNPC = true; // 確保標記為NPC
         } else if (monsterIdToChallenge && ownerId && ownerId !== gameState.playerId) { // 挑戰其他玩家的怪獸
             const opponentPlayerData = await getPlayerData(ownerId);
             if (!opponentPlayerData || !opponentPlayerData.farmedMonsters) throw new Error('無法獲取對手玩家資料。');
@@ -670,6 +714,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
                 if (npcTemplates.length > 0) {
                     opponentMonster = JSON.parse(JSON.stringify(npcTemplates[Math.floor(Math.random() * npcTemplates.length)]));
+                    opponentMonster.isNPC = true; // 確保標記為NPC
                     console.log(`為玩家怪獸 ${playerMonster.nickname} 匹配到NPC對手: ${opponentMonster.nickname}`);
                 } else {
                     throw new Error('沒有可用的NPC對手進行挑戰。');
@@ -682,6 +727,10 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
         if (!opponentMonster) {
             showFeedbackModal('錯誤', '未能找到合適的挑戰對手。');
+            // 如果未能找到對手，需要重置玩家怪獸的戰鬥狀態
+            playerMonster.farmStatus.isBattling = false;
+            renderMonsterFarm();
+            updateMonsterSnapshot(playerMonster);
             return;
         }
 
@@ -694,6 +743,10 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
                     const battleResult = await simulateBattle(playerMonster, opponentMonster);
+
+                    // 戰鬥結束，重置玩家怪獸的戰鬥狀態
+                    playerMonster.farmStatus.isBattling = false; 
+                    renderMonsterFarm(); // 再次更新農場UI，清除戰鬥狀態
 
                     showBattleLogModal(battleResult.log,
                         battleResult.winner_id === playerMonster.id ? playerMonster.nickname : (battleResult.winner_id === opponentMonster.id ? opponentMonster.nickname : null),
@@ -725,7 +778,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     }
                     // 統一刷新玩家數據，因為戰績等總會變動
                     await refreshPlayerData();
-                    renderMonsterFarm(); // 確保農場列表（包括技能經驗）更新
+                    // renderMonsterFarm(); // 確保農場列表（包括技能經驗）更新 (已在上面調用)
                     updateMonsterSnapshot(getSelectedMonster());
 
 
@@ -734,6 +787,10 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
                     console.error("模擬戰鬥錯誤:", battleError);
+                    // 如果戰鬥失敗，也需要重置玩家怪獸的戰鬥狀態
+                    playerMonster.farmStatus.isBattling = false; 
+                    renderMonsterFarm();
+                    updateMonsterSnapshot(playerMonster);
                 }
             },
             'primary', // confirmButtonClass
@@ -743,6 +800,12 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
     } catch (error) {
         showFeedbackModal('錯誤', `準備戰鬥失敗: ${error.message}`);
         console.error("準備戰鬥錯誤:", error);
+        // 如果準備戰鬥失敗，也需要重置玩家怪獸的戰鬥狀態
+        if (playerMonster) {
+            playerMonster.farmStatus.isBattling = false;
+            renderMonsterFarm();
+            updateMonsterSnapshot(playerMonster);
+        }
     }
 }
 
