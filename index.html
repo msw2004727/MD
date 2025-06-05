@@ -23,11 +23,11 @@
             justify-content: center;
             overflow: hidden;
             padding: 8px; 
-            min-height: 230px; /* 稍微增加最小高度以容納內容 */
+            min-height: 230px; 
         }
          @media (min-width: 768px) {
             .monster-snapshot-area {
-                min-height: 270px; /* 桌面版也增加 */
+                min-height: 270px; 
             }
         }
 
@@ -42,48 +42,46 @@
             object-fit: contain; 
         }
 
-        #monster-snapshot-base-bg { /* 圖層1: 背景圖 */
+        #monster-snapshot-base-bg { 
             z-index: 1; 
-            width: 100%; /* 背景圖通常填滿 */
+            width: 100%; 
             height: 100%;
-            object-fit: cover; /* 背景圖使用 cover 可能更好看 */
+            object-fit: cover; 
         }
 
-        #monster-snapshot-body-silhouette { /* 圖層2: 怪獸全身圖 */
+        #monster-snapshot-body-silhouette { 
             z-index: 2; 
-            max-width: 75%; /* 調整怪獸主體大小，使其不要過大 */
+            max-width: 75%; 
             max-height: 75%;
         }
 
-        #monster-parts-container { /* 圖層3: 部位圖 */
+        #monster-parts-container { 
             z-index: 3; 
-            width: 70%; /* 部位容器相對於快照區域的大小，可以微調 */
-            height: 85%; /* 部位容器相對於快照區域的高度，可以微調 */
+            width: 70%; 
+            height: 85%; 
             display: grid; 
-            /* 根據您提供的圖片 "unnamed.png" 調整 grid 佈局 */
-            /* 假設怪獸主體在中間，頭部在其上方，四肢在其周圍 */
-            grid-template-columns: 25% 50% 25%; /* 左肢、身體(頭部在此上方)、右肢 */
-            grid-template-rows: 30% 40% 30%;    /* 頭部區域、手臂區域、腿部區域 */
+            grid-template-columns: 28% 44% 28%; /* 左(28%) 中(44%) 右(28%) */
+            grid-template-rows: 30% 35% 35%;    /* 頭(30%) 手(35%) 腳(35%) */
             grid-template-areas:
                 ".    head   ."
-                "lArm body rArm" /* body 區域可以留空，讓全身圖顯示 */
-                "lLeg .    rLeg";
-            gap: 2%; /* 部位間的微小間隙 */
+                "lArm body rArm"
+                "lLeg body rLeg"; /* 讓 body 區域也延伸到腿部，以更好地覆蓋全身圖 */
+            gap: 1%; 
         }
         
         .monster-part {
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            width: 100%; /* 填滿 grid cell */
-            height: 100%; /* 填滿 grid cell */
-            /* border: 1px dashed rgba(255,0,0,0.3); */ /* 測試用邊框 */
+            width: 100%; 
+            height: 100%; 
+            border: 1px dashed var(--accent-color-dark); /* 預設虛線框，顏色可調 */
+            box-sizing: border-box; /* 確保邊框不會使元素變大 */
         }
 
-        /* 如果部位沒有圖片，背景設為透明 */
-        .monster-part.empty-part {
-            background-image: none !important; /* 移除背景圖 */
-            background-color: transparent !important; /* 確保背景透明 */
+        .monster-part.empty-part { /* 當沒有圖片時，背景透明，但保留虛線框 */
+            background-image: none !important;
+            background-color: transparent !important;
         }
 
         #monster-part-head { grid-area: head; }
@@ -91,7 +89,6 @@
         #monster-part-right-arm { grid-area: rArm; }
         #monster-part-left-leg { grid-area: lLeg; }
         #monster-part-right-leg { grid-area: rLeg; }
-
 
         /* 文字資訊疊加層 */
         .snapshot-info-overlay {
@@ -113,13 +110,13 @@
             text-align: right;
         }
         
-        #snapshot-achievement-title { /* 稱號 */
+        #snapshot-achievement-title { 
             font-size: 1.1rem; 
             font-weight: bold;
             color: var(--accent-color); 
             display: block; 
         }
-        #snapshot-nickname { /* 名字 */
+        #snapshot-nickname { 
             font-size: 0.8rem; 
             color: var(--text-secondary); 
             display: block; 
@@ -144,7 +141,7 @@
         }
          #snapshot-win-loss span { display: block; }
 
-        #snapshot-main-content { /* 屬性顯示區 */
+        #snapshot-main-content { 
             position: absolute;
             top: 8px; 
             left: 50%;
@@ -224,7 +221,7 @@
                     <!-- 圖層1: 背景圖 -->
                     <img id="monster-snapshot-base-bg" src="https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true" alt="怪獸快照背景">
                     
-                    <!-- 圖層2: 怪獸全身圖 (預留) -->
+                    <!-- 圖層2: 怪獸全身圖 -->
                     <img id="monster-snapshot-body-silhouette" src="https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true" alt="怪獸全身輪廓">
 
                     <!-- 圖層3: 部位圖 -->
