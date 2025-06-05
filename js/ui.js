@@ -222,11 +222,12 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     DOMElements.confirmActionBtn.textContent = confirmButtonText;
     DOMElements.confirmActionBtn.className = `button ${confirmButtonClass}`;
 
+    // 克隆並替換按鈕以移除舊的事件監聽器
     const newConfirmBtn = DOMElements.confirmActionBtn.cloneNode(true);
     if (DOMElements.confirmActionBtn.parentNode) {
       DOMElements.confirmActionBtn.parentNode.replaceChild(newConfirmBtn, DOMElements.confirmActionBtn);
     }
-    DOMElements.confirmActionBtn = newConfirmBtn;
+    DOMElements.confirmActionBtn = newConfirmBtn; // 更新 DOMElement 引用
 
     DOMElements.confirmActionBtn.onclick = () => {
         onConfirm();
@@ -270,12 +271,11 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 
 function getMonsterPartImagePath(dnaFragment, bodyPartName) {
     if (!dnaFragment || !dnaFragment.type || !dnaFragment.rarity) {
-        return 'transparent'; // 返回 'transparent' 表示空部位，CSS中 .empty-part 會處理
+        return 'transparent';
     }
     const dnaTypeInitial = dnaFragment.type[0];
     const partInitial = bodyPartName[0].toUpperCase();
-    // 實際使用時，這裡應該返回真實的圖片路徑
-    return `https://placehold.co/80x80/718096/E2E8F0?text=${dnaTypeInitial}${partInitial}&font=inter`; // 更改占位符顏色使其更明顯
+    return `https://placehold.co/80x80/718096/E2E8F0?text=${dnaTypeInitial}${partInitial}&font=inter`;
 }
 
 
@@ -291,7 +291,7 @@ function clearMonsterBodyPartsDisplay() {
         const partElement = partsMap[partName];
         if (partElement) {
             partElement.style.backgroundImage = 'none';
-            partElement.classList.add('empty-part'); // 確保空部位有虛線框
+            partElement.classList.add('empty-part');
         }
     }
     if (DOMElements.monsterPartsContainer) {
@@ -309,16 +309,13 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 確保背景圖總是可見
-    DOMElements.monsterSnapshotBaseBg.style.display = 'block'; // 已有 !important
-    // JS 設定的 src 會覆蓋 HTML 中的 src
+    DOMElements.monsterSnapshotBaseBg.style.display = 'block';
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a9f25d4e-9381-4dea-aa33-603afb3d6261.png?raw=true";
 
     if (monster && monster.id) {
-        // 有怪獸數據
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/monster_body_transparent.png?raw=true";
-        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '1'; // 顯示怪獸輪廓
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保顯示
+        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '1';
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
@@ -348,11 +345,10 @@ function updateMonsterSnapshot(monster) {
             DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
         }
 
-    } else { // 沒有選擇怪獸
-        // 修改：顯示預設的灰色輪廓圖
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"; // 預設輪廓圖
-        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '0.3'; // 半透明，使其看起來像占位符
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保顯示
+    } else {
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
+        DOMElements.monsterSnapshotBodySilhouette.style.opacity = '0.3';
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
@@ -452,6 +448,7 @@ function renderDNACombinationSlots() {
         const slot = document.createElement('div');
         slot.classList.add('dna-slot');
         slot.dataset.slotIndex = index;
+        slot.dataset.sourceType = 'combination'; // 用於拖曳識別
         const nameSpan = document.createElement('span');
         nameSpan.classList.add('dna-name-text');
 
@@ -463,7 +460,6 @@ function renderDNACombinationSlots() {
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
             slot.dataset.dnaBaseId = dna.baseId;
-            slot.dataset.dnaSource = 'combination';
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.appendChild(nameSpan);
@@ -483,37 +479,38 @@ function renderPlayerDNAInventory() {
     const container = DOMElements.inventoryItemsContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_INVENTORY_SLOTS = 11;
+    const MAX_INVENTORY_SLOTS = 11; // 包含一個刪除槽位
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
 
-    ownedDna.slice(0, MAX_INVENTORY_SLOTS).forEach(dna => {
+    for (let i = 0; i < MAX_INVENTORY_SLOTS -1; i++) { // -1 for delete slot
+        const dna = ownedDna[i]; // Directly use index for slot mapping
         const item = document.createElement('div');
-        item.classList.add('dna-item');
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        nameSpan.textContent = dna.name || '未知DNA';
-        item.appendChild(nameSpan);
-        applyDnaItemStyle(item, dna);
-        item.draggable = true;
-        item.dataset.dnaId = dna.id;
-        item.dataset.dnaBaseId = dna.baseId;
-        item.dataset.dnaSource = 'inventory';
-        container.appendChild(item);
-    });
+        item.classList.add('dna-item'); // All are 'dna-item' now
+        item.dataset.inventorySlotIndex = i; // Store slot index
+        item.dataset.sourceType = 'inventory'; // 用於拖曳識別
 
-    const emptySlotsToRender = MAX_INVENTORY_SLOTS - ownedDna.length;
-    for (let i = 0; i < emptySlotsToRender; i++) {
-        const emptySlot = document.createElement('div');
-        emptySlot.classList.add('inventory-slot-empty', 'dna-item');
-        emptySlot.textContent = "空位";
-        applyDnaItemStyle(emptySlot, null);
-        container.appendChild(emptySlot);
+        if (dna) {
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('dna-name-text');
+            nameSpan.textContent = dna.name || '未知DNA';
+            item.appendChild(nameSpan);
+            applyDnaItemStyle(item, dna);
+            item.draggable = true;
+            item.dataset.dnaId = dna.id;
+            item.dataset.dnaBaseId = dna.baseId;
+        } else {
+            item.classList.add('inventory-slot-empty');
+            item.textContent = "空位";
+            applyDnaItemStyle(item, null);
+        }
+        container.appendChild(item);
     }
 
     const deleteSlot = document.createElement('div');
     deleteSlot.id = 'inventory-delete-slot';
-    deleteSlot.classList.add('inventory-delete-slot', 'dna-item');
+    deleteSlot.classList.add('inventory-delete-slot', 'dna-item'); // Also a dna-item for consistent styling
     deleteSlot.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
+    deleteSlot.dataset.sourceType = 'delete'; // Special type for delete
     container.appendChild(deleteSlot);
 }
 
@@ -524,25 +521,31 @@ function renderTemporaryBackpack() {
     const MAX_TEMP_SLOTS = 24;
     const currentTempItems = gameState.temporaryBackpack || [];
 
-    currentTempItems.slice(0, MAX_TEMP_SLOTS).forEach((item, index) => {
+    for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
+        const itemData = currentTempItems[i]; // Directly use index for slot mapping
         const slot = document.createElement('div');
-        slot.classList.add('temp-backpack-slot', 'occupied', 'dna-item');
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        nameSpan.textContent = item.data.name || '未知物品';
-        slot.appendChild(nameSpan);
-        applyDnaItemStyle(slot, item.data);
-        slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
-        container.appendChild(slot);
-    });
+        slot.classList.add('temp-backpack-slot', 'dna-item'); // All are 'dna-item'
+        slot.dataset.tempSlotIndex = i; // Store slot index
+        slot.dataset.sourceType = 'temporary'; // 用於拖曳識別
 
-    const emptyTempSlotsToRender = MAX_TEMP_SLOTS - currentTempItems.length;
-    for (let i = 0; i < emptyTempSlotsToRender; i++) {
-        const emptySlot = document.createElement('div');
-        emptySlot.classList.add('temp-backpack-slot', 'empty', 'dna-item');
-        emptySlot.textContent = `空位`;
-        applyDnaItemStyle(emptySlot, null);
-        container.appendChild(emptySlot);
+        if (itemData && itemData.data) { // Expecting item = { type: 'dna', data: {...} }
+            slot.classList.add('occupied');
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('dna-name-text');
+            nameSpan.textContent = itemData.data.name || '未知物品';
+            slot.appendChild(nameSpan);
+            applyDnaItemStyle(slot, itemData.data);
+            slot.onclick = () => handleMoveFromTempBackpackToInventory(i); // Pass index
+            // Draggable if needed
+            slot.draggable = true;
+            slot.dataset.dnaId = itemData.data.id; // Assuming 'id' in itemData.data is the unique instance ID for temp items if applicable
+            slot.dataset.dnaBaseId = itemData.data.baseId || itemData.data.id; // Or template ID
+        } else {
+            slot.classList.add('empty');
+            slot.textContent = `空位`;
+            applyDnaItemStyle(slot, null);
+        }
+        container.appendChild(slot);
     }
 }
 
@@ -838,7 +841,7 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
         tabContentsContainer = modalElement;
     } else {
         tabButtonsContainer = DOMElements.dnaFarmTabs;
-        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
+        tabContentsContainer = DOMElements.dnaFarmTabs.parentNode; // 假設 .tab-content 與 .tab-buttons 是兄弟節點的父節點的子節點
     }
 
     if (!tabButtonsContainer || !tabContentsContainer) return;
@@ -893,13 +896,16 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
         thead = document.createElement('thead');
         table.appendChild(thead);
     }
-    thead.innerHTML = '';
+    thead.innerHTML = ''; // 清空現有表頭
     const headerRow = document.createElement('tr');
     headersConfig.forEach(header => {
         const th = document.createElement('th');
         th.textContent = header.text;
-        th.dataset.sortKey = header.key;
-        th.innerHTML += ' <span class="sort-arrow"></span>';
+        if (header.key) { // 只有可排序的欄位才有 data-sort-key
+            th.dataset.sortKey = header.key;
+            th.innerHTML += ' <span class="sort-arrow"></span>'; // 用於顯示排序箭頭
+            th.style.cursor = 'pointer'; // 提示可點擊
+        }
         if(header.align) th.style.textAlign = header.align;
         headerRow.appendChild(th);
     });
@@ -910,7 +916,7 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
         tbody = document.createElement('tbody');
         table.appendChild(tbody);
     }
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; // 清空現有內容
 }
 
 function updateLeaderboardTable(tableType, data) {
@@ -920,30 +926,30 @@ function updateLeaderboardTable(tableType, data) {
 
     let headersConfig;
     if (tableType === 'monster') {
-        headersConfig = [
+        headersConfig = [ // 添加 data-sort-key
             { text: '排名', key: 'rank', align: 'center' },
             { text: '怪獸暱稱', key: 'nickname' },
-            { text: '元素', key: 'elements', align: 'center' },
+            { text: '元素', key: 'elements', align: 'center' }, // 元素通常篩選，排序意義不大，但可按主元素排
             { text: '稀有度', key: 'rarity', align: 'center' },
             { text: '總評價', key: 'score', align: 'center' },
             { text: '勝/敗', key: 'resume', align: 'center' },
             { text: '擁有者', key: 'owner_nickname' },
-            { text: '操作', key: 'actions', align: 'center' }
+            { text: '操作', align: 'center' } // 操作列不可排序
         ];
-    } else {
+    } else { // player leaderboard
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
             { text: '玩家暱稱', key: 'nickname' },
             { text: '總積分', key: 'score', align: 'center' },
             { text: '勝場', key: 'wins', align: 'center' },
             { text: '敗場', key: 'losses', align: 'center' },
-            { text: '稱號', key: 'titles' }
+            { text: '稱號', key: 'titles' } // 稱號可按主稱號排序
         ];
     }
-    setupLeaderboardTableHeaders(tableId, headersConfig);
+    setupLeaderboardTableHeaders(tableId, headersConfig); // 重建表頭以包含排序標記
 
     const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = ''; // 清空現有表格內容
 
     if (!data || data.length === 0) {
         const colSpan = headersConfig.length;
@@ -953,13 +959,15 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
-        row.insertCell().textContent = index + 1;
+        // 排名使用 item.rank (如果後端提供) 或 index + 1
+        row.insertCell().textContent = item.rank !== undefined ? item.rank : index + 1;
+
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
-            item.elements.forEach(el => {
+            (item.elements || ['無']).forEach(el => {
                  const elSpan = document.createElement('span');
                  elSpan.textContent = el;
                  elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
@@ -982,14 +990,15 @@ function updateLeaderboardTable(tableType, data) {
             row.insertCell().textContent = item.owner_nickname || 'N/A';
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.owner_id !== gameState.playerId && !item.isNPC) {
+            // 確保 gameState.playerId 存在且不為 null/undefined
+            if (gameState.playerId && item.owner_id !== gameState.playerId && !item.isNPC) {
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
                 challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id);
                 actionsCell.appendChild(challengeBtn);
             }
-        } else {
+        } else { // player leaderboard
             row.insertCell().textContent = item.nickname;
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
@@ -1005,12 +1014,13 @@ function updateLeaderboardTable(tableType, data) {
             titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
         }
     });
+    // 更新排序圖標
     updateLeaderboardSortIcons(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
 function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
     if (!tableElement) return;
-    const headers = tableElement.querySelectorAll('thead th');
+    const headers = tableElement.querySelectorAll('thead th[data-sort-key]'); // 只選擇可排序的表頭
     headers.forEach(th => {
         const arrowSpan = th.querySelector('.sort-arrow');
         if (arrowSpan) {
@@ -1018,28 +1028,46 @@ function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
                 arrowSpan.textContent = activeOrder === 'asc' ? '▲' : '▼';
                 arrowSpan.classList.add('active');
             } else {
-                arrowSpan.textContent = '';
+                arrowSpan.textContent = ''; // 清空非活動列的箭頭
                 arrowSpan.classList.remove('active');
             }
         }
     });
 }
 
-function updateMonsterLeaderboardElementTabs(elements) {
+function updateMonsterLeaderboardElementTabs(elementsWithNPC = []) { // 修改參數名以反映包含NPC
     const tabsContainer = DOMElements.monsterLeaderboardElementTabs;
     if (!tabsContainer) return;
     tabsContainer.innerHTML = '';
 
-    const elementTypeMap = {
-        'fire':'火','water':'水','wood':'木','gold':'金','earth':'土',
-        'light':'光','dark':'暗','poison':'毒','wind':'風','mix':'混','無':'無'
+    const elementTypeMap = { // 確保包含所有遊戲中使用的元素鍵
+        'fire':'火', 'water':'水', 'wood':'木', 'gold':'金', 'earth':'土',
+        'light':'光', 'dark':'暗', 'poison':'毒', 'wind':'風', 'mix':'混', '無':'無'
+        // 'all' 和 'NPC' 是特殊鍵，不需要在映射中
     };
 
-    elements.forEach(elementKey => {
+    // 確保 '所有' 和 'NPC' 在最前面 (如果 elementsWithNPC 包含它們)
+    const sortedElements = ['所有', 'NPC', ...Object.keys(elementTypeMap)].filter((elKey, index, self) =>
+        elementsWithNPC.includes(elKey) && self.indexOf(elKey) === index // 從 elementsWithNPC 取，並去重
+    );
+
+
+    elementsWithNPC.forEach(elementKey => { // 使用傳入的 elementsWithNPC
         const button = document.createElement('button');
         button.classList.add('tab-button');
-        button.textContent = elementKey === 'all' ? '全部' : (elementTypeMap[elementKey.toLowerCase()] || elementKey);
-        button.dataset.elementFilter = elementKey;
+        let buttonText = elementKey;
+        if (elementKey.toLowerCase() === 'all') {
+            buttonText = '全部';
+        } else if (elementKey.toUpperCase() === 'NPC') {
+            buttonText = 'NPC';
+        } else if (elementTypeMap[elementKey.toLowerCase()]) {
+            buttonText = elementTypeMap[elementKey.toLowerCase()];
+        }
+        // 如果 elementKey 不是 'all' 或 'NPC'，且不在 elementTypeMap 中，則直接使用 elementKey (例如 "混")
+        // 這裡假設 gameState.currentMonsterLeaderboardElementFilter 儲存的是 'all', 'NPC', 或元素的小寫鍵名
+
+        button.textContent = buttonText;
+        button.dataset.elementFilter = elementKey; // 儲存原始鍵名，用於過濾
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
             button.classList.add('active');
         }
@@ -1077,7 +1105,7 @@ function updateFriendsListModal(players) {
             const playerNickname = e.target.dataset.playerNickname;
             showFeedbackModal('載入中...', `正在獲取玩家 ${playerNickname} 的資訊...`, true);
             try {
-                const playerData = await getPlayerData(playerId);
+                const playerData = await getPlayerData(playerId); // Assuming getPlayerData is globally available
                 hideModal('feedback-modal');
                 if (playerData) {
                     updatePlayerInfoModal(playerData, gameState.gameConfigs);
@@ -1116,9 +1144,9 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (winnerName) {
         const winnerP = document.createElement('p');
         winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
+        winnerP.textContent = `🏆 ${winnerName} 獲勝！�`;
         DOMElements.battleLogArea.appendChild(winnerP);
-    } else if (loserName && logEntries.some(l => l.includes("平手"))) {
+    } else if (loserName && logEntries.some(l => l.includes("平手"))) { // 確保是平手情況
          const drawP = document.createElement('p');
         drawP.className = 'battle-end draw mt-3';
         drawP.textContent = `🤝 平手！🤝`;
@@ -1167,9 +1195,8 @@ function updateScrollingHints(hintsArray) {
         const p = document.createElement('p');
         p.classList.add('scrolling-hint-text');
         p.textContent = hint;
-        // CSS animation handles delays based on nth-child
         container.appendChild(p);
     });
 }
 
-console.log("UI module loaded - v8 with layering and placeholder fixes.");
+console.log("UI module loaded (v19 - with drag-drop & leaderboard enhancements).");
