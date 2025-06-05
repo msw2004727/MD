@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request, current_app
 import firebase_admin
 from firebase_admin import auth
 import logging
+import datetime # 導入 datetime 模組，用於生成更可靠的時間戳ID
 
 # 從服務和設定模組引入函式 (使用相對導入，正確)
 from .MD_services import (
@@ -188,19 +189,20 @@ def combine_dna_api_route():
     if not data or 'dna_ids' not in data or not isinstance(data['dna_ids'], list):
         return jsonify({"error": "請求格式錯誤，需要包含 'dna_ids' 列表"}), 400
 
-    dna_ids_from_request = data['dna_ids']
+    dna_ids_from_request = data['dna_ids'] # 這是 DNA 實例的 ID 列表
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法組合DNA。"}), 500
 
     # 從 get_player_data_service 獲取 player_data
+    # 這裡的 player_data 會是服務層可能修改後的版本 (因為 DNA 會被消耗掉)
     player_data = get_player_data_service(user_id, decoded_token_info.get('name'), game_configs)
     if not player_data:
-        # 即使 get_player_data_service 會嘗試初始化，這裡也再次檢查以防萬一
         routes_logger.error(f"組合DNA前無法獲取玩家 {user_id} 的資料。")
         return jsonify({"error": "無法獲取玩家資料以進行DNA組合。"}), 500
 
-    new_monster_object: Optional[Monster] = combine_dna_service(dna_ids_from_request, game_configs, player_data)
+    # 調用更新後的 combine_dna_service，它會處理消耗 DNA 並返回新怪獸
+    new_monster_object: Optional[Monster] = combine_dna_service(dna_ids_from_request, game_configs, player_data, user_id)
 
     if new_monster_object:
         current_farmed_monsters = player_data.get("farmedMonsters", [])
@@ -223,12 +225,12 @@ def combine_dna_api_route():
                 routes_logger.warning(f"警告：新怪獸已生成，但儲存玩家 {user_id} 資料失敗。")
             return jsonify(new_monster_object), 201
         else:
-            routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
+            routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未自動加入農場。")
             # 即使農場已滿，也返回怪獸資料，讓前端決定如何處理 (例如提示玩家或放入臨時背包)
-            return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200 # 200 OK 但帶有警告
+            return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場，請在農場管理區處理。如果您放生舊怪獸，新怪獸將自動入庫。"}), 200 # 200 OK 但帶有警告
     else:
-        # combine_dna_service 返回 None 表示組合失敗
-        return jsonify({"error": "DNA 組合失敗，未能生成怪獸。"}), 400
+        # combine_dna_service 返回 None 表示組合失敗（可能是 DNA 無效，或 AI/寫入配方失敗）
+        return jsonify({"error": "DNA 組合失敗，未能生成怪獸。請檢查您的DNA碎片或稍後再試。"}), 400
 
 
 @md_bp.route('/players/search', methods=['GET'])
@@ -478,7 +480,7 @@ def disassemble_monster_route(monster_id: str):
         returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
         current_owned_dna = player_data.get("playerOwnedDNA", [])
         for dna_template in returned_dna_templates:
-            instance_id = f"dna_{user_id}_{int(auth.datetime.datetime.now().timestamp() * 1000)}_{len(current_owned_dna)}" # 使用更可靠的時間戳
+            instance_id = f"dna_{user_id}_{int(datetime.datetime.now().timestamp() * 1000)}_{random.randint(0, 9999)}" # 使用更可靠的時間戳和隨機數
             owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
             
             # 找到第一個空位來放置新的 DNA，如果沒有空位則添加到末尾
@@ -491,7 +493,14 @@ def disassemble_monster_route(monster_id: str):
             if free_slot_index != -1:
                 current_owned_dna[free_slot_index] = owned_dna_item
             else:
-                current_owned_dna.append(owned_dna_item) # 如果沒有空位，則添加到末尾 (會導致陣列長度增加)
+                # 如果沒有空位，則添加到末尾 (會導致陣列長度增加)
+                # 這裡需要注意，如果超出最大庫存槽位，則會被丟棄
+                max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12)
+                if len(current_owned_dna) < max_inventory_slots:
+                    current_owned_dna.append(owned_dna_item)
+                else:
+                    routes_logger.warning(f"玩家 {user_id} 庫存已滿，分解出的 DNA ({dna_template.get('name')}) 已被丟棄。")
+
 
         player_data["playerOwnedDNA"] = current_owned_dna
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
@@ -502,7 +511,7 @@ def disassemble_monster_route(monster_id: str):
                 "success": True,
                 "message": disassembly_result.get("message"),
                 "returned_dna_templates_info": [{"name": dna.get("name"), "rarity": dna.get("rarity")} for dna in returned_dna_templates],
-                "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
+                "updated_player_owned_dna_count": len([dna for dna in player_data.get("playerOwnedDNA",[]) if dna is not None]), # 計算非空DNA數量
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
         else:
