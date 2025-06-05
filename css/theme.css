@@ -49,12 +49,20 @@
     --element-無-text-dark: var(--text-secondary-dark); --element-無-bg-dark: rgba(139, 148, 158, 0.1);
 
 
-    /* Rarity Colors (Text & Background) Dark Theme */
-    --rarity-common-text-dark: var(--text-primary-dark);
-    --rarity-rare-text-dark: var(--accent-color-dark);
-    --rarity-elite-text-dark: #ff704d;
-    --rarity-legendary-text-dark: var(--element-gold-text-dark);
-    --rarity-mythical-text-dark: var(--element-poison-text-dark);
+    /* Rarity Colors (Text) Dark Theme */
+    --rarity-common-text-dark: var(--text-primary-dark);     /* #c9d1d9 */
+    --rarity-rare-text-dark: var(--accent-color-dark);       /* #58a6ff */
+    --rarity-elite-text-dark: #ff704d;                       /* orangey-red */
+    --rarity-legendary-text-dark: var(--element-gold-text-dark); /* #e3b341 */
+    --rarity-mythical-text-dark: var(--element-poison-text-dark);/* #d87ff8 */
+
+    /* NEW: Rarity RGB values for background opacity (Dark Theme) */
+    --rarity-common-rgb-dark: 201, 209, 217; /* from --text-primary-dark */
+    --rarity-rare-rgb-dark: 88, 166, 255;    /* from --accent-color-dark */
+    --rarity-elite-rgb-dark: 255, 112, 77;   /* from --rarity-elite-text-dark */
+    --rarity-legendary-rgb-dark: 227, 179, 65;/* from --element-gold-text-dark */
+    --rarity-mythical-rgb-dark: 216, 127, 248;/* from --element-poison-text-dark */
+    --default-rgb-dark: 139, 148, 158;      /* from --text-secondary-dark for a neutral default */
 
 
     /* Light Theme */
@@ -106,15 +114,23 @@
     --element-無-text-light: var(--text-secondary-light); --element-無-bg-light: rgba(200, 200, 200, 0.1);
 
 
-    /* Rarity Colors (Text & Background) Light Theme */
-    --rarity-common-text-light: var(--text-primary-light);
-    --rarity-rare-text-light: var(--accent-color-light);
-    --rarity-elite-text-light: #d32f2f;
-    --rarity-legendary-text-light: var(--element-gold-text-light);
-    --rarity-mythical-text-light: var(--element-poison-text-light);
+    /* Rarity Colors (Text) Light Theme */
+    --rarity-common-text-light: var(--text-primary-light);    /* #1f2328 */
+    --rarity-rare-text-light: var(--accent-color-light);      /* #0969da */
+    --rarity-elite-text-light: #d32f2f;                       /* red */
+    --rarity-legendary-text-light: var(--element-gold-text-light); /* #b08800 */
+    --rarity-mythical-text-light: var(--element-poison-text-light);/* #732d91 */
+
+    /* NEW: Rarity RGB values for background opacity (Light Theme) */
+    --rarity-common-rgb-light: 108, 117, 125; /* A mid-gray, as text is dark */
+    --rarity-rare-rgb-light: 9, 105, 218;     /* from --accent-color-light */
+    --rarity-elite-rgb-light: 211, 47, 47;    /* from --rarity-elite-text-light */
+    --rarity-legendary-rgb-light: 176, 136, 0;/* from --element-gold-text-light */
+    --rarity-mythical-rgb-light: 115, 45, 145;/* from --element-poison-text-light */
+    --default-rgb-light: 173, 181, 189;     /* A lighter gray for default background on light theme */
 
 
-    /* Applied Theme Variables */
+    /* Applied Theme Variables (Defaults to Dark Theme) */
     --bg-primary: var(--bg-primary-dark);
     --bg-panel: var(--bg-panel-dark);
     --bg-slot: var(--bg-slot-dark);
@@ -163,12 +179,19 @@
     --element-無-text: var(--element-無-text-dark); --element-無-bg: var(--element-無-bg-dark);
 
 
-    /* Applied Rarity Colors */
+    /* Applied Rarity Colors (Text & RGB for background) */
     --rarity-common-text: var(--rarity-common-text-dark);
     --rarity-rare-text: var(--rarity-rare-text-dark);
     --rarity-elite-text: var(--rarity-elite-text-dark);
     --rarity-legendary-text: var(--rarity-legendary-text-dark);
     --rarity-mythical-text: var(--rarity-mythical-text-dark);
+
+    --rarity-common-rgb: var(--rarity-common-rgb-dark);
+    --rarity-rare-rgb: var(--rarity-rare-rgb-dark);
+    --rarity-elite-rgb: var(--rarity-elite-rgb-dark);
+    --rarity-legendary-rgb: var(--rarity-legendary-rgb-dark);
+    --rarity-mythical-rgb: var(--rarity-mythical-rgb-dark);
+    --default-rgb: var(--default-rgb-dark); /* Applied default RGB */
 }
 
 body.light-theme {
@@ -220,12 +243,19 @@ body.light-theme {
     --element-無-text: var(--element-無-text-light); --element-無-bg: var(--element-無-bg-light);
 
 
-    /* Applied Rarity Colors - Light Theme */
+    /* Applied Rarity Colors - Light Theme (Text & RGB for background) */
     --rarity-common-text: var(--rarity-common-text-light);
     --rarity-rare-text: var(--rarity-rare-text-light);
     --rarity-elite-text: var(--rarity-elite-text-light);
     --rarity-legendary-text: var(--rarity-legendary-text-light);
     --rarity-mythical-text: var(--rarity-mythical-text-light);
+
+    --rarity-common-rgb: var(--rarity-common-rgb-light);
+    --rarity-rare-rgb: var(--rarity-rare-rgb-light);
+    --rarity-elite-rgb: var(--rarity-elite-rgb-light);
+    --rarity-legendary-rgb: var(--rarity-legendary-rgb-light);
+    --rarity-mythical-rgb: var(--rarity-mythical-rgb-light);
+    --default-rgb: var(--default-rgb-light); /* Applied default RGB for light theme */
 }
 
 /* Helper classes for element text colors */
@@ -258,10 +288,10 @@ body {
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
-    padding: 10px; /* Reduced padding for small screens */
+    padding: 10px; 
     box-sizing: border-box;
     transition: background-color 0.3s, color 0.3s;
-    font-size: 1rem; /* Default base font size */
+    font-size: 1rem; 
 }
 
 /* Loading Spinner Animation */
@@ -277,3 +307,4 @@ body {
     33% { opacity: 0; transform: translateY(-100%); }
     100% { opacity: 0; transform: translateY(-100%); }
 }
+
