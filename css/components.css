@@ -32,12 +32,10 @@
 .top-right-button { top: 10px; right: 10px; }
 
 #theme-switcher {
-    /* Dark theme (default) - Moon icon, uses default .corner-button background */
-    color: var(--text-primary-dark); /* Ensuring icon color matches theme text */
+    color: var(--text-primary-dark);
 }
 body.light-theme #theme-switcher {
-    /* Light theme - Sun icon, uses default .corner-button background */
-    color: var(--text-primary-light); /* Ensuring icon color matches theme text */
+    color: var(--text-primary-light);
 }
 #theme-switcher:hover { 
     color: var(--accent-color);
@@ -195,7 +193,7 @@ body.light-theme .inventory-delete-slot.drag-over {
 .monster-snapshot-area {
     width: 100%;
     height: 220px; 
-    background-color: var(--bg-primary);
+    background-color: var(--bg-primary); /* Can be a subtle texture or dark color */
     border-radius: 8px;
     position: relative; 
     overflow: hidden; 
@@ -217,68 +215,67 @@ body.light-theme .inventory-delete-slot.drag-over {
 /* Container for Monster Parts */
 #monster-parts-container {
     position: relative;
-    width: 180px; 
-    height: 210px; 
-    /* background-color: rgba(0, 255, 0, 0.1); */ /* Optional: for debugging layout */
+    width: 160px; /* Adjusted based on visual estimation from new image */
+    height: 200px; /* Adjusted based on visual estimation from new image */
+    /* background-color: rgba(0, 255, 0, 0.05); */ /* Optional: for debugging layout */
 }
 #monster-parts-container.empty-snapshot .monster-part {
-    border-color: var(--border-color-dark); 
+    border-color: var(--border-color); 
+    background-color: rgba(0,0,0,0.1);
 }
 
 .monster-part {
     position: absolute;
-    background-color: rgba(0,0,0,0.05); 
-    border: 1px dashed var(--text-secondary); 
+    background-color: transparent; /* Default to transparent, image will fill */
+    border: 1px solid transparent; /* Initially transparent border */
     background-size: contain; 
     background-repeat: no-repeat;
     background-position: center center;
-    transition: background-image 0.3s ease-in-out, border-color 0.3s;
+    transition: background-image 0.2s ease-in-out, border-color 0.2s;
     border-radius: 4px; 
     overflow: hidden; 
     image-rendering: pixelated; 
 }
 
-/* NEW: 精確定位怪獸部位 based on the new image_19df08.png */
+/* NEW: More precise positioning for monster parts based on image_19df08.png */
+/* Base container dimensions assumed: width: 160px, height: 200px */
 #monster-part-head {
-    width: 30%;  
-    height: 25%; 
-    top: 2%; 
+    width: 35%;  /* Approx 56px */
+    height: 30%; /* Approx 60px */
+    top: 0%;    /* Align to the top of the container */
     left: 50%;
     transform: translateX(-50%);
     z-index: 5; 
 }
 #monster-part-left-arm {
-    width: 28%;  
-    height: 45%; 
-    top: 20%; 
-    left: 5%;   
-    transform-origin: top right; 
-    /* transform: rotate(-10deg); */ 
+    width: 30%;  /* Approx 48px */
+    height: 40%; /* Approx 80px */
+    top: 25%;   /* Start below the head */
+    left: 0%;   /* Align to the left edge */
     z-index: 4;
 }
 #monster-part-right-arm {
-    width: 28%;
-    height: 45%;
-    top: 20%;
-    right: 5%; 
-    transform-origin: top left; 
-    /* transform: rotate(10deg); */
+    width: 30%;
+    height: 40%;
+    top: 25%;
+    right: 0%;  /* Align to the right edge */
     z-index: 4;
 }
 #monster-part-left-leg {
-    width: 30%;  
-    height: 40%; 
-    bottom: 0%; 
-    left: 15%;  
+    width: 30%;  /* Approx 48px */
+    height: 40%; /* Approx 80px */
+    bottom: 0%; /* Align to the bottom */
+    left: 10%;  /* Slightly offset from the edge */
     z-index: 3;
 }
 #monster-part-right-leg {
     width: 30%;
     height: 40%;
     bottom: 0%;
-    right: 15%; 
+    right: 10%; /* Slightly offset from the edge */
     z-index: 3;
 }
+
 
 .snapshot-achievement-title { 
     position: absolute; 
@@ -345,10 +342,13 @@ body.light-theme .inventory-delete-slot.drag-over {
 
 .snapshot-main-content { 
     position: absolute;
-    bottom: 35px; 
+    bottom: 30px; /* Adjusted to not overlap with nickname/evaluation if they are larger */
     left: 50%;
     transform: translateX(-50%);
     z-index: 6; 
+    display: flex; /* ensure content inside is centered if it's a container */
+    justify-content: center;
+    align-items: center;
 }
 
 
@@ -1101,4 +1101,15 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-top: 8px;
     padding: 5px 8px;
     font-size: 0.8rem;
+}
+
+/* Styles for DNA text within items/slots to ensure visibility */
+.dna-name-text {
+    display: block; /* Ensure it takes up space */
+    /* color is set by applyDnaItemStyle via parent */
+}
+
+/* Ensure rarity badge in DNA items has high enough z-index if overlapping */
+.dna-item .dna-rarity-badge {
+    z-index: 1;
 }
