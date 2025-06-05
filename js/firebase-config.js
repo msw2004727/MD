@@ -5,7 +5,7 @@
 // However, since firebase is globally available after SDK load, direct usage is also common.
 
 // Your web app's Firebase configuration (來自 index.html)
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyCACjjC1S-9gj6hKCyfAedzH9kTf_JZwDE", // 請確認這是您正確的 API 金鑰
   authDomain: "aigame-fb578.firebaseapp.com",
   projectId: "aigame-fb578",
