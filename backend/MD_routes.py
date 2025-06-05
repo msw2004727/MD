@@ -119,6 +119,45 @@ def get_player_info_route(requested_player_id: str):
         return jsonify({"error": f"找不到玩家 {target_player_id_to_fetch} 或無法初始化資料。"}), 404
 
 
+@md_bp.route('/player/<player_id>/save', methods=['POST'])
+def save_player_data_route(player_id: str):
+    """
+    保存玩家的遊戲資料。
+    需要有效的 Authorization Token 且 Token 中的 UID 必須與 player_id 匹配。
+    """
+    user_id = None
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({"error": "未授權：缺少 Token"}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+    try:
+        if firebase_admin._apps:
+            decoded_token = auth.verify_id_token(id_token)
+            user_id = decoded_token['uid']
+        else:
+            routes_logger.error("Firebase Admin SDK 未初始化，無法驗證 save player data API 的 Token。")
+            return jsonify({"error": "伺服器設定錯誤，Token 驗證失敗。"}), 500
+    except auth.FirebaseAuthError as e:
+        routes_logger.error(f"Save Player Data API Token 驗證 FirebaseAuthError: {e}")
+        return jsonify({"error": "Token 無效或已過期。"}), 401
+    except Exception as e:
+        routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
+        return jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403
+
+    if not user_id or user_id != player_id:
+        return jsonify({"error": "未授權：您無權保存此玩家的資料。"}), 403
+
+    game_data = request.json
+    if not game_data:
+        return jsonify({"error": "請求中缺少遊戲資料。"}), 400
+
+    if save_player_data_service(player_id, game_data):
+        return jsonify({"success": True, "message": "玩家資料保存成功。"}), 200
+    else:
+        return jsonify({"success": False, "error": "玩家資料保存失敗。"}), 500
+
+
 @md_bp.route('/combine', methods=['POST'])
 def combine_dna_api_route():
     user_id = None
@@ -176,6 +215,8 @@ def combine_dna_api_route():
                     player_stats_achievements.append("首次組合怪獸")
                 player_data["playerStats"]["achievements"] = player_stats_achievements
 
+            # combine_dna_service 已經處理了從 playerOwnedDNA 中移除 DNA 的邏輯
+            # 所以這裡只需要保存 player_data
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
             else:
@@ -439,7 +480,19 @@ def disassemble_monster_route(monster_id: str):
         for dna_template in returned_dna_templates:
             instance_id = f"dna_{user_id}_{int(auth.datetime.datetime.now().timestamp() * 1000)}_{len(current_owned_dna)}" # 使用更可靠的時間戳
             owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
-            current_owned_dna.append(owned_dna_item)
+            
+            # 找到第一個空位來放置新的 DNA，如果沒有空位則添加到末尾
+            free_slot_index = -1
+            for i, dna_item in enumerate(current_owned_dna):
+                if dna_item is None:
+                    free_slot_index = i
+                    break
+            
+            if free_slot_index != -1:
+                current_owned_dna[free_slot_index] = owned_dna_item
+            else:
+                current_owned_dna.append(owned_dna_item) # 如果沒有空位，則添加到末尾 (會導致陣列長度增加)
+
         player_data["playerOwnedDNA"] = current_owned_dna
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
 
