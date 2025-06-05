@@ -101,7 +101,7 @@ async function handleDrop(event) {
     // 複製一份被拖曳的 DNA 數據，確保操作的是副本
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
-    // 修改點: 將刪除區的索引更新為 11 (第12格)
+    // 將刪除區的索引更新為 11 (第12格)
     const DELETE_SLOT_INDEX = 11;
 
     // --- A. 處理拖曳到刪除區 ---
@@ -113,7 +113,7 @@ async function handleDrop(event) {
             } else if (draggedSourceType === 'combination') {
                 gameState.dnaCombinationSlots[draggedSourceIndex] = null;
             } else if (draggedSourceType === 'temporaryBackpack') {
-                // 修改點: 臨時背包的刪除是將槽位設置為 null，而不是 splice
+                // 臨時背包的刪除是將槽位設置為 null
                 gameState.temporaryBackpack[draggedSourceIndex] = null;
             }
             
@@ -139,7 +139,7 @@ async function handleDrop(event) {
         if (draggedSourceType === 'inventory') {
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null; // 庫存中設為 null
         } else if (draggedSourceType === 'temporaryBackpack') {
-            // 修改點: 臨時背包的移除是將槽位設置為 null，而不是 splice
+            // 臨時背包的移除是將槽位設置為 null
             gameState.temporaryBackpack[draggedSourceIndex] = null;
         }
         // 如果來源是組合槽，則在 moveDnaToCombinationSlot 內部處理交換
@@ -214,7 +214,7 @@ async function handleDrop(event) {
         } else if (draggedSourceType === 'combination') {
             gameState.dnaCombinationSlots[draggedSourceIndex] = null;
         } else if (draggedSourceType === 'temporaryBackpack') {
-            // 修改點: 臨時背包的移除是將槽位設置為 null
+            // 臨時背包的移除是將槽位設置為 null
             gameState.temporaryBackpack[draggedSourceIndex] = null;
         }
 
@@ -331,7 +331,7 @@ async function handleDrop(event) {
                 // Item from inventory or combination slot displaced an item in temp backpack.
                 // Displaced item from temp backpack goes to main inventory.
                 const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
-                // 修改點: 刪除區的索引
+                // 刪除區的索引
                 const DELETE_SLOT_INDEX = 11;
                 let freeInventorySlot = -1;
                 for (let i = 0; i < MAX_INVENTORY_SLOTS; i++) {
@@ -345,7 +345,7 @@ async function handleDrop(event) {
                     gameState.playerData.playerOwnedDNA[freeInventorySlot] = itemCurrentlyInTargetTempSlot.data;
                     showFeedbackModal('提示', `DNA "${itemCurrentlyInTargetTempSlot.data.name}" 已放入您的主庫存，因為臨時背包該位置已被替換。`);
                 } else {
-                    console.warn("Inventory full, displaced temporary backpack item might be lost.");
+                    console.warn("Inventory and temporary backpack full, displaced item might be lost.");
                     showFeedbackModal('警告', `DNA "${itemCurrentlyInTargetTempSlot.data.name}" 無法放入主庫存，已被丟棄。`);
                 }
             }
@@ -438,12 +438,13 @@ async function handleDrop(event) {
 }
 
 
-// --- Modal Close Button Handler --- (保持不變)
+// --- Modal Close Button Handler ---
 function handleModalCloseButtons() {
     document.querySelectorAll('.modal-close').forEach(button => {
         button.addEventListener('click', () => {
             const modalId = button.dataset.modalId || button.closest('.modal')?.id;
             if (modalId) {
+                // 修正: 檢查是否存在於 gameState.activeModalId，並在 hideModal 中處理
                 if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
                     showModal('reminder-modal');
                 } else {
@@ -454,7 +455,7 @@ function handleModalCloseButtons() {
     });
 }
 
-// --- 其他事件處理函數 (保持不變) ---
+// --- 其他事件處理函數 ---
 function handleThemeSwitch() {
     if (DOMElements.themeSwitcherBtn) {
         DOMElements.themeSwitcherBtn.addEventListener('click', () => {
@@ -800,7 +801,7 @@ function handleMonsterLeaderboardFilter() {
                 gameState.currentMonsterLeaderboardElementFilter = filter;
                 DOMElements.monsterLeaderboardElementTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
-                filterAndRenderMonsterLeaderboard();
+                filterAndRenderLeaderboard();
             }
         });
     }
@@ -891,7 +892,6 @@ function initializeEventListeners() {
     dragDropContext.addEventListener('dragend', handleDragEnd);
 
     // 拖曳目標區：組合槽容器、庫存項目容器、臨時背包容器
-    // 修改點: #inventory-delete-slot 現在作為 .dna-item 的一部分，並由 inventoryItemsContainer 處理
     const dropZones = [
         DOMElements.dnaCombinationSlotsContainer,
         DOMElements.inventoryItemsContainer,
