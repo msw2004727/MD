@@ -261,7 +261,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     const colors = {
         '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
         '金': 'FFD700/000000', '土': 'D2B48C/000000', '光': 'F8F8FF/000000',
-        '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
+        '暗': 'A9A99/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
         '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
     const colorPair = colors[primaryElement] || colors['無'];
@@ -338,7 +338,7 @@ function updateMonsterSnapshot(monster) {
         gameState.selectedMonsterId = monster.id;
     } else {
         // *** 修改點：使用透明背景的佔位圖 ***
-        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb001.png?raw=true";
+        DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
@@ -449,11 +449,13 @@ function renderDNACombinationSlots() {
             slot.dataset.dnaId = dna.id; // 實例 ID
             slot.dataset.dnaBaseId = dna.baseId; // 模板 ID，用於合成
             slot.dataset.dnaSource = 'combination';
+            slot.dataset.slotIndex = index; // Ensure this is also on occupied slots
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.appendChild(nameSpan);
             slot.classList.add('empty');
             applyDnaItemStyle(slot, null);
+            slot.dataset.slotIndex = index; // Ensure this is also on empty slots
         }
         container.appendChild(slot);
     });
@@ -468,15 +470,25 @@ function renderPlayerDNAInventory() {
     const container = DOMElements.inventoryItemsContainer;
     if (!container) return;
     container.innerHTML = '';
-    
-    // 遍歷固定大小的 playerOwnedDNA 陣列
-    for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
-        const dna = gameState.playerData.playerOwnedDNA[i];
+    const MAX_INVENTORY_SLOTS = 11; // You can make this configurable in gameState.gameConfigs
+    const ownedDna = gameState.playerData?.playerOwnedDNA || [];
+
+    // Create a temporary array that represents all slots, including nulls for empty ones
+    // This allows us to render a fixed grid size regardless of how many items are actually owned
+    let tempInventoryArray = new Array(MAX_INVENTORY_SLOTS).fill(null);
+    ownedDna.forEach((dna, index) => {
+        if (index < MAX_INVENTORY_SLOTS) {
+            tempInventoryArray[index] = dna;
+        }
+    });
+
+    tempInventoryArray.forEach((dna, index) => {
         const item = document.createElement('div');
         item.classList.add('dna-item');
-        item.dataset.inventoryIndex = i; // 為每個槽位設置索引
+        
+        item.dataset.inventoryIndex = index; // Crucial: Add index to both occupied and empty slots
 
-        if (dna && dna.id) {
+        if (dna) { // If slot is occupied
             item.classList.add('occupied');
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('dna-name-text');
@@ -487,14 +499,14 @@ function renderPlayerDNAInventory() {
             item.dataset.dnaId = dna.id;
             item.dataset.dnaBaseId = dna.baseId;
             item.dataset.dnaSource = 'inventory';
-        } else {
-            // 空槽位
-            item.classList.add('inventory-slot-empty');
+        } else { // If slot is empty
+            item.classList.add('empty'); // Use 'empty' class for visual styling
             item.textContent = "空位";
             applyDnaItemStyle(item, null);
+            item.draggable = false; // Empty slots are not draggable
         }
         container.appendChild(item);
-    }
+    });
 
     const deleteSlot = document.createElement('div');
     deleteSlot.id = 'inventory-delete-slot';
@@ -507,32 +519,42 @@ function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = 24;
+    const MAX_TEMP_SLOTS = 24; // You can make this configurable in gameState.gameConfigs
     const currentTempItems = gameState.temporaryBackpack || [];
 
-    currentTempItems.slice(0, MAX_TEMP_SLOTS).forEach((item, index) => {
-        const slot = document.createElement('div');
-        slot.classList.add('temp-backpack-slot', 'occupied', 'dna-item');
-        slot.dataset.tempItemIndex = index; // 添加索引
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        nameSpan.textContent = item.data.name || '未知物品';
-        slot.appendChild(nameSpan);
-        applyDnaItemStyle(slot, item.data);
-        // 不再是直接點擊移動，而是由拖曳事件處理
-        // slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
-        container.appendChild(slot);
+    // Create a temporary array that represents all slots, including nulls for empty ones
+    let tempBackpackArray = new Array(MAX_TEMP_SLOTS).fill(null);
+    currentTempItems.forEach((item, index) => {
+        if (index < MAX_TEMP_SLOTS) {
+            tempBackpackArray[index] = item;
+        }
     });
 
-    const emptyTempSlotsToRender = MAX_TEMP_SLOTS - currentTempItems.length;
-    for (let i = 0; i < emptyTempSlotsToRender; i++) {
-        const emptySlot = document.createElement('div');
-        emptySlot.classList.add('temp-backpack-slot', 'empty', 'dna-item');
-        emptySlot.dataset.tempItemIndex = currentTempItems.length + i; // 為空槽位也提供索引
-        emptySlot.textContent = `空位`;
-        applyDnaItemStyle(emptySlot, null);
-        container.appendChild(emptySlot);
-    }
+    tempBackpackArray.forEach((item, index) => {
+        const slot = document.createElement('div');
+        slot.classList.add('temp-backpack-slot', 'dna-item'); // Consistent styling with dna-item
+        slot.dataset.tempItemIndex = index; // Crucial: Add index to both occupied and empty slots
+
+        if (item) { // If slot is occupied
+            slot.classList.add('occupied');
+            const nameSpan = document.createElement('span');
+            nameSpan.classList.add('dna-name-text');
+            nameSpan.textContent = item.data.name || '未知物品';
+            slot.appendChild(nameSpan);
+            applyDnaItemStyle(slot, item.data);
+            slot.draggable = true; // Temporary backpack items are draggable
+            slot.dataset.dnaId = item.data.id; // Or a unique temp ID if it's not a real DNA instance yet
+            slot.dataset.dnaBaseId = item.data.baseId;
+            slot.dataset.dnaSource = 'temporaryBackpack';
+            slot.onclick = () => handleMoveFromTempBackpackToInventory(index); // Still allow click for quick move
+        } else { // If slot is empty
+            slot.classList.add('empty');
+            slot.textContent = `空位`;
+            applyDnaItemStyle(slot, null);
+            slot.draggable = false; // Empty slots are not draggable
+        }
+        container.appendChild(slot);
+    });
 }
 
 function renderMonsterFarm() {
