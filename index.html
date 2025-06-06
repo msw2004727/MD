@@ -151,9 +151,8 @@
                          <h2 class="panel-title dna-panel-title">🏡 怪物農場</h2>
                          <span class="panel-title-hint dna-panel-hint">※最多收納10隻怪獸</span>
                     </div>
-                    <!-- ▼▼▼ 修改開始 ▼▼▼ -->
-                    <!-- 新增一個包裹層，讓表頭和列表可以一起捲動 -->
-                    <div class="farm-scroll-wrapper">
+                    <!-- ▼▼▼ HTML 結構修正 ▼▼▼ -->
+                    <div class="farm-table-wrapper">
                         <div id="farm-headers" class="farm-header-grid mt-2">
                             <div>出戰</div>
                             <div>怪物</div>
@@ -163,10 +162,10 @@
                             <div>養成</div>
                         </div>
                         <div id="farmed-monsters-list">
-                            <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>
+                            <!-- JS 會將怪獸項目插入此處 -->
                         </div>
                     </div>
-                    <!-- ▲▲▲ 修改結束 ▲▲▲ -->
+                    <!-- ▲▲▲ HTML 結構修正 ▲▲▲ -->
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
