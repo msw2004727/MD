@@ -542,12 +542,9 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .monster-info-name-styled { 
     font-size: 1.6rem;
     font-weight: bold;
-    color: var(--accent-color);
-    padding: 6px 18px;
-    background-color: var(--bg-slot);
-    border-radius: 8px;
+    /* Color is set dynamically by JS based on rarity */
+    /* Removed background, border, padding to make it frameless */
     display: inline-block;
-    border: 1px solid var(--border-color);
 }
 .monster-description-area { 
     font-size: 0.9rem;
@@ -1089,7 +1086,7 @@ body.light-theme .leaderboard-table tr:hover td {
     z-index: 1;
 }
 
-/* Styles moved from index.html */
+/* ===== Styles moved from index.html ===== */
 .monster-snapshot-area {
     position: relative; 
     display: flex;
