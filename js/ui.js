@@ -438,7 +438,7 @@ function updateMonsterSnapshot(monster) {
     }
 
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
-    clearMonsterBodyPartsDisplay();
+    clearMonsterBodyPartsDisplay(); // Always clear parts first
 
     if (monster && monster.id) {
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
@@ -451,11 +451,10 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
-        // ====== MODIFICATION: Remove attribute text from snapshot ======
+        // MODIFICATION: Removed attribute text from snapshot
         if (DOMElements.snapshotMainContent) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
-        // ====== END MODIFICATION ======
 
         const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -466,46 +465,30 @@ function updateMonsterSnapshot(monster) {
 
         if (monster.constituent_dna_ids && monster.constituent_dna_ids.length > 0 && gameState.gameConfigs?.dna_fragments) {
             const partsMap = {
-                0: DOMElements.monsterPartHead,
-                1: DOMElements.monsterPartLeftArm,
-                2: DOMElements.monsterPartRightArm,
-                3: DOMElements.monsterPartLeftLeg,
+                0: DOMElements.monsterPartHead, 1: DOMElements.monsterPartLeftArm,
+                2: DOMElements.monsterPartRightArm, 3: DOMElements.monsterPartLeftLeg,
                 4: DOMElements.monsterPartRightLeg
             };
-
-            clearMonsterBodyPartsDisplay(); 
             
             monster.constituent_dna_ids.forEach((dnaBaseId, index) => {
                 const partElement = partsMap[index];
                 if (partElement) {
                     const dnaInfo = getMonsterPartImagePath(dnaBaseId);
-
                     if (!dnaInfo.isPlaceholder) {
-                        const elementTypeMap = {
-                            '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
-                            '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
-                        };
-                        const typeClass = elementTypeMap[dnaInfo.elementType] || dnaInfo.elementType.toLowerCase();
-                        const rarityClass = dnaInfo.rarity.toLowerCase();
-
+                        const { typeClass, rarityClass, nameAbbr } = dnaInfo;
                         partElement.style.backgroundColor = `var(--element-${typeClass}-bg)`;
                         partElement.style.color = `var(--rarity-${rarityClass}-text)`;
                         partElement.style.borderColor = `var(--rarity-${rarityClass}-text)`;
                         partElement.style.backgroundImage = 'none';
                         partElement.classList.remove('empty-part');
-                        partElement.textContent = dnaInfo.nameAbbr;
+                        partElement.textContent = nameAbbr;
                         partElement.style.fontWeight = 'bold';
                         partElement.style.fontSize = '0.75rem';
                         partElement.style.display = 'flex';
                         partElement.style.alignItems = 'center';
                         partElement.style.justifyContent = 'center';
                     } else {
-                        partElement.style.backgroundImage = 'none';
-                        partElement.classList.add('empty-part');
                         partElement.textContent = '??';
-                        partElement.style.backgroundColor = 'transparent';
-                        partElement.style.color = 'var(--text-secondary)';
-                        partElement.style.borderColor = 'var(--border-color)';
                     }
                 }
             });
@@ -739,7 +722,7 @@ function renderMonsterFarm() {
                 statusClass = remainingTime > 0 ? "status-training" : "status-idle";
             }
         }
-
+        
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
