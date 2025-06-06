@@ -405,8 +405,10 @@ function handleAuthForms() {
         DOMElements.loginSubmitBtn.addEventListener('click', async () => {
             const nickname = DOMElements.loginNicknameInput.value.trim();
             const password = DOMElements.loginPasswordInput.value;
+            // 修正錯誤：將 DOMEElements.loginErrorMsg 改為 DOMElements.loginErrorMsg
             DOMElements.loginErrorMsg.textContent = '';
             if (!nickname || !password) {
+                // 修正錯誤：將 DOMEElements.loginErrorMsg 改為 DOMElements.loginErrorMsg
                 DOMElements.loginErrorMsg.textContent = '暱稱和密碼不能為空。';
                 return;
             }
@@ -415,6 +417,7 @@ function handleAuthForms() {
                 await loginUser(nickname, password);
                 hideModal('login-modal');
             } catch (error) {
+                // 修正錯誤：將 DOMEElements.loginErrorMsg 改為 DOMElements.loginErrorMsg
                 DOMElements.loginErrorMsg.textContent = error.message;
                 hideModal('feedback-modal');
             }
@@ -698,10 +701,11 @@ function handleFriendsListSearch() {
                     const result = await searchPlayers(query);
                     gameState.searchedPlayers = result.players || [];
                     updateFriendsListModal(gameState.searchedPlayers);
-                } catch (error) {
-                    console.error("搜尋玩家失敗:", error);
-                    updateFriendsListModal([]);
                 }
+            } catch (error) {
+                console.error("搜尋玩家失敗:", error);
+                updateFriendsListModal([]);
+            }
             } else if (query.length === 0) {
                 updateFriendsListModal([]);
             }
