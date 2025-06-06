@@ -205,7 +205,7 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     """
     執行免費的 DNA 抽取。
     規則：
-    1. 隨機抽取 3 到 5 個 DNA。
+    1. 隨機抽取 3 個 DNA。
     2. 卡池中只包含“普通”和“稀有”等級的 DNA。
     """
     player_services_logger.info("正在執行免費 DNA 抽取...")
@@ -231,8 +231,8 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
             player_services_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
             return []
             
-        # 2. 決定本次抽取的數量 (3 到 5 個)
-        num_to_draw = random.randint(3, 5)
+        # 2. 決定本次抽取的數量 (固定為 3)
+        num_to_draw = 3
         
         # 3. 從篩選後的卡池中隨機抽取 DNA
         # random.choices 允許重複選取，適合模擬抽卡
