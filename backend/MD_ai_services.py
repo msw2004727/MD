@@ -18,14 +18,13 @@ DEEPSEEK_MODEL = "deepseek-chat" # 常用的 DeepSeek 模型，如有需要請�
 
 # 預設的 AI 生成內容，以防 API 呼叫失敗
 DEFAULT_AI_RESPONSES = {
-    "aiPersonality": "AI 個性描述生成失敗，這隻怪獸的性格如同一個未解之謎，等待著有緣人去探索。它可能時而溫順，時而狂野，需要訓練師細心的觀察與引導。",
-    "aiIntroduction": "AI 介紹生成失敗。這隻神秘的怪獸，其基礎數值（HP、MP、攻擊、防禦、速度、爆擊率）和元素屬性都隱藏在迷霧之中，只有真正的強者才能揭開它的全部潛力。",
-    "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸的個性與數值，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
+    "personalityName": "神秘",
+    "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     """
-    使用 DeepSeek API 為指定的怪獸數據生成 AI 描述、個性和評價。
+    使用 DeepSeek API 為指定的怪獸數據生成獨特的個性名稱和專屬的綜合評價。
     """
     monster_nickname = monster_data.get('nickname', '一隻神秘怪獸')
     ai_logger.info(f"開始為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
@@ -34,44 +33,49 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
         ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 服務。請檢查程式碼中的 DEEPSEEK_API_KEY 或相關環境變數。")
         return DEFAULT_AI_RESPONSES.copy()
 
+    # 準備給 AI 的資料
     elements_str = "、".join(monster_data.get('elements', ['無']))
     rarity = monster_data.get('rarity', '普通')
-    personality_name = monster_data.get('personality_name', '未知')
+    stats_str = f"HP: {monster_data.get('hp', 0)}, 攻擊: {monster_data.get('attack', 0)}, 防禦: {monster_data.get('defense', 0)}, 速度: {monster_data.get('speed', 0)}, 爆擊: {monster_data.get('crit', 0)}%"
+    skills_list = monster_data.get('skills', [])
+    skills_str = "、".join([f"{s.get('name', '未知技能')} (威力:{s.get('power', 0)})" for s in skills_list]) if skills_list else "無"
+    
+    # 參考的個性列表
+    personality_examples = "勇敢的、膽小的、貪吃的、懶散的、好奇的、溫馴的、暴躁的、愛炫耀的"
 
-    # ====== MODIFICATION START: New witty and concise prompt ======
     prompt = f"""
-請你扮演一位風趣又毒舌的怪獸專家，為一隻名為「{monster_nickname}」的怪獸，生成極度精簡且一針見血的中文描述。
+請你扮演一位頂級的怪獸命名師與戰術分析家。你的任務是為一隻新誕生的怪獸賦予靈魂。
 
 怪獸資料：
+- 稱號：{monster_nickname}
 - 屬性：{elements_str}
 - 稀有度：{rarity}
-- 個性：{personality_name}
+- 數值：{stats_str}
+- 技能：{skills_str}
 
-請嚴格按照以下JSON格式提供回應，不要有任何額外的解釋或開頭文字。內容必須風趣、簡短、講重點：
+請根據以上所有資訊，嚴格按照以下JSON格式提供回應，不要有任何額外的解釋或開頭文字：
 
 {{
-  "aiPersonality": "（針對「{personality_name}」個性，寫一句話的風趣吐槽或點評，約15-20字）",
-  "aiIntroduction": "（寫一句話的簡短介紹，點出它的屬性和稀有度，可以帶點玩笑或比喻，約20-25字）",
-  "aiEvaluation": "（用一句話總結它的優缺點，並給出一句簡短的培養建議或戰術定位，約20-25字）"
+  "personalityName": "（參考範例「{personality_examples}」，為這隻怪獸創造一個獨特的、2到4個字的中文個性名稱，例如：傲嬌、吃貨、戰狂、天然呆...）",
+  "aiEvaluation": "（綜合怪獸的屬性、數值、技能和剛才你為牠創造的個性，撰寫一段約100字左右的「綜合評價」。內容需包含對牠的戰術定位分析、優點、潛在缺點，以及一句畫龍點睛的培養建議。）"
 }}
 """
-    # ====== MODIFICATION END ======
 
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位風趣、毒舌的怪獸專家，你的評論總是非常精簡且一針見血。你將嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記。"},
+            {"role": "system", "content": "你是一位頂級的怪獸命名師與戰術分析家，精通中文，並且會嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記。"},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.8, # 稍微提高溫度以增加創意
-        "max_tokens": 300, # 限制最大 token 數量
+        "temperature": 0.9, # 提高溫度以增加創意
+        "max_tokens": 500, # 增加 token 數量以容納更長的評價
     }
 
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
     }
-
+    
     ai_logger.debug(f"DEBUG AI: 請求 DeepSeek URL: {DEEPSEEK_API_URL}, 模型: {DEEPSEEK_MODEL}")
     ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
 
@@ -105,8 +109,7 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                     generated_content = json.loads(cleaned_json_str)
                     ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 成功解析 AI JSON 內容。")
                     ai_details = {
-                        "aiPersonality": generated_content.get("aiPersonality", DEFAULT_AI_RESPONSES["aiPersonality"]),
-                        "aiIntroduction": generated_content.get("aiIntroduction", DEFAULT_AI_RESPONSES["aiIntroduction"]),
+                        "personalityName": generated_content.get("personalityName", DEFAULT_AI_RESPONSES["personalityName"]),
                         "aiEvaluation": generated_content.get("aiEvaluation", DEFAULT_AI_RESPONSES["aiEvaluation"])
                     }
                     ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
@@ -156,11 +159,12 @@ if __name__ == '__main__':
         'elements': ['火', '龍'],
         'rarity': '稀有',
         'hp': 120, 'mp': 60, 'attack': 25, 'defense': 18, 'speed': 22, 'crit': 8,
-        'personality_name': '勇敢的',
-        'personality_description': '天生的冒險家，無所畏懼。'
+        'skills': [
+            {"name": "火焰爪", "power": 30},
+            {"name": "小火球", "power": 35}
+        ]
     }
     ai_descriptions = generate_monster_ai_details(test_monster)
     print("\n--- AI 生成的怪獸詳細資訊 (DeepSeek) ---")
-    print(f"個性描述: {ai_descriptions['aiPersonality']}")
-    print(f"背景介紹: {ai_descriptions['aiIntroduction']}")
+    print(f"個性名稱: {ai_descriptions['personalityName']}")
     print(f"綜合評價: {ai_descriptions['aiEvaluation']}")
