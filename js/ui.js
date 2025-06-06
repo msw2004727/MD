@@ -208,6 +208,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     const existingBasicStats = feedbackModalBody.querySelector('.feedback-monster-basic-stats');
     if (existingBasicStats) existingBasicStats.remove();
 
+    // 移除: 舊的 actionButtons 邏輯中，設置了 '關閉' 按鈕
+    // 新增: 在 monsterDetails 存在時，加入圖片預覽和「即時統計」資訊
 
     if (monsterDetails) {
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
@@ -249,6 +251,29 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
             ${message}
         `;
+
+        // 新增: 圖片預覽和即時統計
+        const imageAndStatsContainer = document.createElement('div');
+        imageAndStatsContainer.className = 'flex flex-col items-center justify-center p-3 mb-3 bg-[var(--bg-primary)] rounded-md border border-[var(--border-color)]';
+        
+        const monsterImage = document.createElement('img');
+        monsterImage.src = getMonsterImagePathForSnapshot(primaryElement, monsterDetails.rarity); // 使用現有的圖片生成函數
+        monsterImage.alt = monsterDetails.nickname || '新怪獸';
+        monsterImage.className = 'w-32 h-24 object-contain mb-2 rounded-sm'; // 調整大小和樣式
+        imageAndStatsContainer.appendChild(monsterImage);
+
+        const totalMonsterCount = gameState.monsterLeaderboard.filter(m => m.baseId === monsterDetails.baseId).length;
+        let countMessage = `這隻怪獸在遊戲中已有 <span class="font-bold text-[var(--accent-color)]">${totalMonsterCount}</span> 隻。`;
+        if (totalMonsterCount === 1) {
+            countMessage = `恭喜！這是全球<span class="font-bold text-[var(--danger-color)]">首隻！</span>`;
+        }
+        const countParagraph = document.createElement('p');
+        countParagraph.className = 'text-sm text-[var(--text-secondary)] text-center';
+        countParagraph.innerHTML = countMessage;
+        imageAndStatsContainer.appendChild(countParagraph);
+
+        // 將新的圖片和統計信息容器插入到 feedbackModalMessage 的後面
+        DOMElements.feedbackModalMessage.after(imageAndStatsContainer);
 
 
         DOMElements.feedbackMonsterDetails.innerHTML = `
