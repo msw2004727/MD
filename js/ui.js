@@ -353,7 +353,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
 function updateTheme(themeName) {
     document.body.className = themeName === 'light' ? 'light-theme' : '';
     if (DOMElements.themeIcon) {
-        DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '🌙';
+        DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '�';
     }
     gameState.currentTheme = themeName;
     localStorage.setItem('theme', themeName);
@@ -438,7 +438,7 @@ function updateMonsterSnapshot(monster) {
     }
 
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
-    clearMonsterBodyPartsDisplay(); // Always clear parts first
+    clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
@@ -451,7 +451,6 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
-        // MODIFICATION: Removed attribute text from snapshot
         if (DOMElements.snapshotMainContent) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
@@ -1082,12 +1081,11 @@ function updateLeaderboardTable(tableType, data) {
     }
 
     data.forEach((item, index) => {
-        // ====== MODIFICATION START: Leaderboard bug fix ======
-        const row = tbody.insertRow(); // Use insertRow() to create a <tr> element
+        const row = tbody.insertRow();
         
-        const rankCell = row.insertCell(); // Add cells to the new row
+        const rankCell = row.insertCell();
         rankCell.textContent = index + 1;
-        // ====== END MODIFICATION ======
+        rankCell.style.textAlign = 'center';
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
@@ -1096,12 +1094,12 @@ function updateLeaderboardTable(tableType, data) {
             item.elements.forEach(el => {
                  const elSpan = document.createElement('span');
                  elSpan.textContent = el;
-                 elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
+                 elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${String(el).toLowerCase()} bg-element-${String(el).toLowerCase()}-bg mr-1`;
                  elementsCell.appendChild(elSpan);
             });
             const rarityCell = row.insertCell();
             rarityCell.textContent = item.rarity;
-            rarityCell.className = `text-rarity-${item.rarity.toLowerCase()}`;
+            rarityCell.className = `text-rarity-${String(item.rarity).toLowerCase()}`;
             rarityCell.style.textAlign = 'center';
 
             const scoreCell = row.insertCell();
