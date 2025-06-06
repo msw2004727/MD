@@ -193,65 +193,65 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
+    // 設置標題和通用消息
     DOMElements.feedbackModalTitle.textContent = title;
     DOMElements.feedbackModalMessage.innerHTML = message;
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
 
     // 清除舊的monsterDetails和相關元素
     const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    const existingBanner = feedbackModalBody.querySelector('#monster-banner-container');
-    if (existingBanner) existingBanner.remove();
-    const existingBasicStats = feedbackModalBody.querySelector('.feedback-monster-basic-stats');
-    if (existingBasicStats) existingBasicStats.remove();
-    // 確保 feedbackMonsterDetails 始終被清除和隱藏，除非 monsterDetails 存在
-    if (DOMElements.feedbackMonsterDetails) {
-        DOMElements.feedbackMonsterDetails.innerHTML = '';
-        toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
+    // 清空 body 內容，以便重新構建
+    if (feedbackModalBody) {
+        feedbackModalBody.innerHTML = '';
+        // 重新添加 spinner 和 message 的預留位置
+        const spinnerDiv = document.createElement('div');
+        spinnerDiv.id = 'feedback-modal-spinner';
+        spinnerDiv.className = 'loading-spinner';
+        spinnerDiv.style.display = 'none';
+        feedbackModalBody.appendChild(spinnerDiv);
+
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'feedback-modal-message-actual';
+        feedbackModalBody.appendChild(messageDiv);
+
+        // 重新獲取引用
+        DOMElements.feedbackModalSpinner = spinnerDiv;
+        DOMElements.feedbackModalMessage = messageDiv;
     }
 
+
+    // 根據 monsterDetails 存在與否決定顯示內容
     if (monsterDetails) {
-        // 因為新的HTML結構已經在 index.html 預留了位置，這裡不需要再創建很多 div
-        // 我們直接設定 feedbackModalBody 的內容，並將圖片和統計動態插入到預留的ID中
         const primaryElement = monsterDetails.elements && monsterDetails.elements.length > 0 ? monsterDetails.elements[0] : '無';
         const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
         
-        // 圖片預覽部分
         const monsterImageSrc = getMonsterImagePathForSnapshot(primaryElement, monsterDetails.rarity);
         const monsterImageAlt = monsterDetails.nickname || '新怪獸';
 
-        // 即時統計部分
         let totalMonsterCount = 0;
-        // 我們需要確保 gameState.monsterLeaderboard 已經被載入
-        // 這通常在玩家登入時，或者點擊排行榜按鈕時載入
-        // 如果此時它為空，可以考慮在此處觸發一次排行榜載入，或者顯示一個「載入中/N/A」的狀態
         if (gameState.monsterLeaderboard && monsterDetails.baseId) {
              totalMonsterCount = gameState.monsterLeaderboard.filter(m => m.baseId === monsterDetails.baseId).length;
         }
         
-        let elementsDisplay = monsterDetails.elements.map(el => {
-            const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
-            return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
-        }).join('');
-
-        let countMessageText = `這隻怪獸在遊戲中已有 <span class="font-bold text-[var(--accent-color)]">${totalMonsterCount}</span> 隻。`;
+        let countMessageText = `這是世界第 <span class="font-bold text-[var(--accent-color)]">${totalMonsterCount}</span> 隻。`;
         let countMessageClass = 'text-sm text-[var(--text-secondary)] text-center';
         if (totalMonsterCount === 1) {
             countMessageText = `恭喜！這是全球<span class="font-bold text-[var(--danger-color)]">首隻！</span>`;
             countMessageClass += ' text-lg'; // Make "首隻" text larger
         }
 
-        // 使用 feedbackModalBody.innerHTML 直接設定大部分內容，然後再插入動態元素
-        // 這樣可以確保結構是我們想要的，並且方便在 JS 中定位和填充
+        // 重新構建 body 內容以匹配示意圖
         feedbackModalBody.innerHTML = `
             <div class="flex flex-col items-center justify-center py-2 relative">
-                <div class="absolute top-0 w-full border-b-2 border-red-500"></div> <h4 id="feedback-monster-nickname" class="text-lg font-semibold text-center text-[var(--text-primary)] mt-4 mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
-                
-                <div id="feedback-monster-combined-stats-image" class="w-full flex flex-col items-center p-3 mb-3 bg-[var(--bg-panel)] rounded-md border border-[var(--border-color)]">
-                    <img src="${monsterImageSrc}" alt="${monsterImageAlt}" class="w-32 h-24 object-contain mb-2 rounded-sm">
-                    <p class="${countMessageClass}">${countMessageText}</p>
+                <h4 id="feedback-monster-nickname" class="text-lg font-semibold text-center text-[var(--text-primary)] mt-4 mb-2" style="color: var(--success-color);">合成成功！</h4>
+                <div class="w-full h-[150px] bg-[var(--bg-panel)] rounded-md border border-[var(--border-color)] flex items-center justify-center overflow-hidden mb-3">
+                    <img src="${monsterImageSrc}" alt="${monsterImageAlt}" class="max-w-[120px] max-h-[90px] object-contain rounded-sm">
                 </div>
-
-                <div class="feedback-monster-basic-stats text-center py-3 w-full">
+                <p class="text-center text-lg font-bold text-[var(--danger-color)] mb-1">DNA合成出新怪獸</p>
+                <p class="${countMessageClass}">${countMessageText}</p>
+                
+                <div class="feedback-monster-basic-stats text-center py-3 w-full mt-3">
+                    <h5 class="details-section-title">基本數值</h5>
                     <div class="feedback-monster-stats-grid">
                         <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
                         <div><strong>MP:</strong> ${monsterDetails.mp || 0}</div>
@@ -260,48 +260,22 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
                         <div><strong>速度:</strong> ${monsterDetails.speed || 0}</div>
                         <div><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</div>
                     </div>
-                    <p class="text-sm mt-2"><strong>元素:</strong> ${elementsDisplay || '無'}</p>
-                    <p class="text-sm"><strong>稀有度:</strong> <span class="text-rarity-${rarityKey}">${monsterDetails.rarity || '普通'}</span></p>
-                    <p class="text-base mt-2"><strong>總評價:</strong> <span class="text-[var(--success-color)] text-lg font-bold">${monsterDetails.score || 0}</span></p>
                 </div>
-                <div id="feedback-modal-message-actual" class="text-center w-full mt-2">${message}</div>
+                <div id="feedback-modal-message-actual" class="text-center w-full mt-2" style="display:none;"></div>
             </div>
         `;
-        // 重新設定 DOMElements.feedbackModalMessage，因為它在上面的 innerHTML 中被覆蓋了
+        // 更新對應的 DOMElements 引用
         DOMElements.feedbackModalMessage = feedbackModalBody.querySelector('#feedback-modal-message-actual');
-
-
-        DOMElements.feedbackMonsterDetails.innerHTML = `
-            <div class="feedback-monster-ai-grid mt-4">
-                <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">AI 個性分析</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
-                </div>
-                <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">AI 背景介紹</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
-                </div>
-                <div class="feedback-monster-info-section col-span-full">
-                    <h5 class="feedback-monster-info-title">AI 綜合評價與培養建議</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
-                </div>
-            </div>
-            <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
-        `;
-        // 確保 feedbackMonsterDetails 在 monsterDetails 存在時是可見的
-        toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
+        // 確保 AI 詳情區域也被清除或隱藏，因為示意圖中沒有這部分
+        if (DOMElements.feedbackMonsterDetails) {
+            DOMElements.feedbackMonsterDetails.innerHTML = '';
+            toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
+        }
 
     } else {
-        // 如果沒有 monsterDetails，就回歸到只顯示 message 的傳統模式
-        feedbackModalBody.innerHTML = `
-            <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
-            <div id="feedback-modal-message-actual">${message}</div>
-            <div id="feedback-monster-details" style="display:none;" class="mt-3"></div>
-        `;
-        DOMElements.feedbackModalMessage = feedbackModalBody.querySelector('#feedback-modal-message-actual');
-        DOMElements.feedbackModalSpinner = feedbackModalBody.querySelector('#feedback-modal-spinner'); // 重新獲取引用
-        DOMElements.feedbackMonsterDetails = feedbackModalBody.querySelector('#feedback-monster-details'); // 重新獲取引用
-        toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading); // 再次設定 spinner 顯示狀態
+        // 如果沒有 monsterDetails，則只顯示 loading spinner 和 feedback message
+        toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
+        DOMElements.feedbackModalMessage.innerHTML = message;
     }
 
     // 處理 footer 按鈕
@@ -486,7 +460,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
-        DOMEElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
+        DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
         // ====== MODIFICATION: Remove attribute text from snapshot ======
         if (DOMElements.snapshotMainContent) {
