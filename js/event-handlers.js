@@ -1,7 +1,7 @@
 // js/event-handlers.js
 
 // 移除: 舊的 handleDrop 函數中，處理從臨時背包拖曳到其他位置時，清除 temporaryBackpack 源槽位的邏輯。
-// 新增: handleDrop 函數中，對於從 temporaryBackpack 拖曳出的物品，統一使用 splice(draggedSourceIndex, 1) 來移除。
+// 新增: handleDrop 函數中，對於從 temporary背包 拖曳出的物品，統一使用 splice(draggedSourceIndex, 1) 來移除。
 
 let draggedElement = null;
 let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
@@ -556,11 +556,24 @@ async function handleCombineDna() {
 
         if (result && result.id) {
             const newMonster = result;
+            // 清空組合槽中的 DNA
             gameState.dnaCombinationSlots = [null, null, null, null, null];
-            
-            await refreshPlayerData(); 
 
-            resetDNACombinationSlots(); 
+            // 從玩家庫存中移除已被消耗的 DNA
+            if (result.consumed_dna_indices && result.consumed_dna_indices.length > 0) {
+                // 為了避免因 pop 或 splice 導致索引錯亂，從後往前移除
+                result.consumed_dna_indices.sort((a, b) => b - a).forEach(index => {
+                    if (gameState.playerData.playerOwnedDNA[index]) {
+                        gameState.playerData.playerOwnedDNA[index] = null;
+                        console.log(`已從庫存移除 DNA 索引: ${index}`);
+                    }
+                });
+            }
+            
+            await refreshPlayerData(); // 刷新玩家數據，包括新的怪獸和更新的 DNA 庫存
+
+            renderDNACombinationSlots(); // 更新組合槽UI
+            renderPlayerDNAInventory();   // 更新玩家DNA庫存UI
 
             let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
             feedbackMessage += `屬性: ${newMonster.elements.join(', ')}, 稀有度: ${newMonster.rarity}<br>`;
@@ -573,7 +586,7 @@ async function handleCombineDna() {
                 '合成成功！',
                 feedbackMessage,
                 false,
-                null,
+                newMonster, // 將新怪獸數據傳遞給 showFeedbackModal
                 [{ text: '查看新怪獸', class: 'primary', onClick: () => {
                     handleDeployMonsterClick(newMonster.id); // 使用新的出戰功能
                     if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
