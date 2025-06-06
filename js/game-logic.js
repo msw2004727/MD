@@ -208,23 +208,15 @@ async function handleReleaseMonsterClick(event, monsterId) {
 
     showConfirmationModal(
         '確認放生',
-        `您確定要放生怪獸 "${monster.nickname}" 嗎？放生後，您將根據其構成DNA獲得一些DNA碎片。此操作無法復原。`,
+        `您確定要放生怪獸 "${monster.nickname}" 嗎？此為單向操作，一旦放生，牠將永遠離開，無法復原。`,
         async () => {
             try {
                 showFeedbackModal('處理中...', `正在放生 ${monster.nickname}...`, true);
                 const result = await disassembleMonster(monsterId);
                 if (result && result.success) {
-                    if (result.returned_dna_templates_info && result.returned_dna_templates_info.length > 0) {
-                        result.returned_dna_templates_info.forEach(dnaTemplateInfo => {
-                            const fullTemplate = gameState.gameConfigs.dna_fragments.find(df => df.name === dnaTemplateInfo.name && df.rarity === dnaTemplateInfo.rarity);
-                            if (fullTemplate) {
-                                addDnaToTemporaryBackpack(fullTemplate);
-                            }
-                        });
-                         renderTemporaryBackpack();
-                    }
                     await refreshPlayerData();
-                    showFeedbackModal('放生成功', `${result.message || monster.nickname + " 已成功放生。"} ${result.returned_dna_templates_info && result.returned_dna_templates_info.length > 0 ? '獲得了新的DNA碎片！請查看臨時背包。' : ''}`);
+                    const successMessage = `「${monster.nickname}」已回歸塵土。隨著一陣微光閃爍，牠的生命能量與構成的DNA碎片已消散在風中，僅留下一段無聲的回憶。`;
+                    showFeedbackModal('放生成功', successMessage);
                 } else {
                     showFeedbackModal('放生失敗', result.error || '放生怪獸時發生錯誤。');
                 }
