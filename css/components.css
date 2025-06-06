@@ -581,13 +581,12 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     user-select: none;
 }
 
-/* MODIFICATION START: Adjusted keyframes for smooth transition and added transform in initial state */
+/* MODIFICATION START: Adjusted keyframes for smoother transition and better timing */
 @keyframes scrollHint {
-    0% { opacity: 0; transform: translateY(100%); }
-    5% { opacity: 1; transform: translateY(0%); } /* Make sure it's fully visible quickly */
-    18% { opacity: 1; transform: translateY(0%); } /* Hold visible longer */
-    23% { opacity: 0; transform: translateY(-100%); } /* Start fading out and moving up */
-    100% { opacity: 0; transform: translateY(-100%); } /* Ensure it finishes off screen */
+    0% { opacity: 0; transform: translateY(100%); } /* Start completely transparent and below */
+    5% { opacity: 1; transform: translateY(0%); } /* Rapidly become visible and move into position */
+    95% { opacity: 1; transform: translateY(0%); } /* Hold visible for the majority of the animation, until just before it ends */
+    100% { opacity: 0; transform: translateY(-100%); } /* Quickly fade out and move off-screen upwards */
 }
 /* MODIFICATION END */
 
@@ -600,7 +599,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-secondary);
     animation-name: scrollHint;
     animation-duration: var(--total-animation-duration, 15s);
-    animation-timing-function: linear; /* Changed from cubic-bezier for smoother, even scroll */
+    animation-timing-function: linear;
     animation-iteration-count: infinite;
     opacity: 0;
     /* ADDED: Ensure initial state is off-screen below */
