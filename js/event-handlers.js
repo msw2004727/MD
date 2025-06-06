@@ -529,9 +529,9 @@ function handleTabSwitching() {
 }
 
 async function handleCombineDna() {
-    // 修正: 收集 DNA 的實例 ID (slot.id)，而不是 baseId
+    // 收集 DNA 的實例 ID (slot.id)
     const dnaInstanceIdsForCombination = gameState.dnaCombinationSlots
-        .filter(slot => slot && slot.id) // 確保有 id (實例 ID)
+        .filter(slot => slot && slot.id)
         .map(slot => slot.id);
 
     if (dnaInstanceIdsForCombination.length < 2) {
@@ -541,21 +541,45 @@ async function handleCombineDna() {
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        const result = await combineDNA(dnaInstanceIdsForCombination);
+        // 後端只返回新怪獸，不修改玩家資料
+        const newMonster = await combineDNA(dnaInstanceIdsForCombination);
 
-        if (result && result.id) {
-            const newMonster = result;
-            gameState.dnaCombinationSlots = [null, null, null, null, null];
+        if (newMonster && newMonster.id) {
             
-            await refreshPlayerData(); 
+            // 1. 從 gameState.playerData.playerOwnedDNA 中移除已消耗的 DNA
+            dnaInstanceIdsForCombination.forEach(consumedId => {
+                const indexToRemove = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === consumedId);
+                if (indexToRemove !== -1) {
+                    gameState.playerData.playerOwnedDNA[indexToRemove] = null;
+                }
+            });
 
-            resetDNACombinationSlots(); 
+            // 2. 將新怪獸加入 farmedMonsters
+            const MAX_FARM_SLOTS = gameState.gameConfigs?.value_settings?.max_farm_slots || 10;
+            if (gameState.playerData.farmedMonsters.length < MAX_FARM_SLOTS) {
+                gameState.playerData.farmedMonsters.push(newMonster);
+            }
 
+            // 3. 更新玩家成就
+            if (gameState.playerData.playerStats && !gameState.playerData.playerStats.achievements.includes("首次組合怪獸")) {
+                gameState.playerData.playerStats.achievements.push("首次組合怪獸");
+            }
+            
+            // 4. 清空組合槽狀態
+            resetDNACombinationSlots(); // 這個函數內部會調用 renderDNACombinationSlots
+
+            // 5. 重新渲染庫存和農場
+            renderPlayerDNAInventory();
+            renderMonsterFarm();
+
+            // 6. 將更新後的玩家資料保存回後端
+            await savePlayerData(gameState.playerId, gameState.playerData);
+
+            // 7. 顯示成功回饋
             let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
             feedbackMessage += `屬性: ${newMonster.elements.join(', ')}, 稀有度: ${newMonster.rarity}<br>`;
-            feedbackMessage += `HP: ${newMonster.hp}, 攻擊: ${newMonster.attack}, 防禦: ${newMonster.defense}, 速度: ${newMonster.speed}, 爆擊: ${newMonster.crit}%`;
-            if (result.farm_full_warning) {
-                feedbackMessage += `<br><strong class="text-[var(--warning-color)]">${result.farm_full_warning}</strong>`;
+            if (gameState.playerData.farmedMonsters.length >= MAX_FARM_SLOTS) {
+                feedbackMessage += `<br><strong class="text-[var(--warning-color)]">農場已滿，新怪獸可能未自動加入農場。請檢查農場狀態。</strong>`;
             }
 
             showFeedbackModal(
@@ -564,7 +588,7 @@ async function handleCombineDna() {
                 false,
                 null,
                 [{ text: '查看新怪獸', class: 'primary', onClick: () => {
-                    handleDeployMonsterClick(newMonster.id); // 使用新的出戰功能
+                    handleDeployMonsterClick(newMonster.id);
                     if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
                         const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
                         if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
@@ -572,8 +596,8 @@ async function handleCombineDna() {
                 }}, { text: '關閉', class: 'secondary'}]
             );
 
-        } else if (result && result.error) {
-            showFeedbackModal('合成失敗', result.error);
+        } else if (newMonster && newMonster.error) {
+            showFeedbackModal('合成失敗', newMonster.error);
         } else {
             showFeedbackModal('合成失敗', '發生未知錯誤，未能生成怪獸。請檢查DNA組合或稍後再試。');
         }
@@ -586,6 +610,7 @@ async function handleCombineDna() {
         console.error("合成DNA錯誤:", error);
     }
 }
+
 
 function handleConfirmationActions() {
     // confirmActionBtn is dynamically bound in showConfirmationModal
