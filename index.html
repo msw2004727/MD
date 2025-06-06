@@ -14,141 +14,7 @@
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
-    <style>
-        /* 怪獸快照區域特定樣式 */
-        .monster-snapshot-area {
-            position: relative; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 8px; 
-            min-height: 230px; 
-        }
-         @media (min-width: 768px) {
-            .monster-snapshot-area {
-                min-height: 270px; 
-            }
-        }
-
-        /* 圖層樣式 */
-        #monster-snapshot-base-bg,
-        #monster-snapshot-body-silhouette,
-        #monster-parts-container {
-            position: absolute;
-            top: 50%; 
-            left: 50%;
-            transform: translate(-50%, -50%);
-            object-fit: contain; 
-        }
-
-        #monster-snapshot-base-bg { 
-            z-index: 1; 
-            width: 100%; 
-            height: 100%;
-            object-fit: cover; 
-        }
-
-        #monster-snapshot-body-silhouette { 
-            z-index: 2; 
-            max-width: 75%; 
-            max-height: 75%;
-        }
-
-        #monster-parts-container { 
-            z-index: 3; 
-            width: 70%; 
-            height: 85%; 
-            display: grid; 
-            grid-template-columns: 28% 44% 28%; /* 左(28%) 中(44%) 右(28%) */
-            grid-template-rows: 30% 35% 35%;    /* 頭(30%) 手(35%) 腳(35%) */
-            grid-template-areas:
-                ".    head   ."
-                "lArm body rArm"
-                "lLeg body rLeg"; /* 讓 body 區域也延伸到腿部，以更好地覆蓋全身圖 */
-            gap: 1%; 
-        }
-        
-        .monster-part {
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            width: 100%; 
-            height: 100%; 
-            border: 1px dashed var(--accent-color-dark); /* 預設虛線框，顏色可調 */
-            box-sizing: border-box; /* 確保邊框不會使元素變大 */
-        }
-
-        .monster-part.empty-part { /* 當沒有圖片時，背景透明，但保留虛線框 */
-            background-image: none !important;
-            background-color: transparent !important;
-        }
-
-        #monster-part-head { grid-area: head; }
-        #monster-part-left-arm { grid-area: lArm; }
-        #monster-part-right-arm { grid-area: rArm; }
-        #monster-part-left-leg { grid-area: lLeg; }
-        #monster-part-right-leg { grid-area: rLeg; }
-
-        /* 文字資訊疊加層 */
-        .snapshot-info-overlay {
-            position: absolute;
-            bottom: 8px; 
-            left: 10px;
-            right: 10px;
-            z-index: 4;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end; 
-            pointer-events: none; 
-        }
-
-        .snapshot-info-left {
-            text-align: left;
-        }
-        .snapshot-info-right {
-            text-align: right;
-        }
-        
-        #snapshot-achievement-title { 
-            font-size: 1.1rem; 
-            font-weight: bold;
-            color: var(--accent-color); 
-            display: block; 
-        }
-        #snapshot-nickname { 
-            font-size: 0.8rem; 
-            color: var(--text-secondary); 
-            display: block; 
-            margin-top: 1px; 
-        }
-        #snapshot-evaluation {
-            font-size: 1.1rem; 
-            font-weight: bold;
-            color: var(--success-color);
-        }
-
-        #snapshot-win-loss {
-            position: absolute;
-            top: 8px;
-            right: 10px;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            z-index: 4;
-            background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-            padding: 3px 6px;
-            border-radius: 4px;
-        }
-         #snapshot-win-loss span { display: block; }
-
-        #snapshot-main-content { 
-            position: absolute;
-            top: 8px; 
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 4;
-        }
-    </style>
+    
 </head>
 <body>
     <!-- 身份驗證畫面 -->
@@ -417,7 +283,7 @@
     <div id="cultivation-setup-modal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
-            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成</h3>
+            <h3 id="cultivation-setup-modal-title" class="modal-header">� 怪獸養成</h3>
             <div class="modal-body">
                 <p class="mb-2">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
                 <button id="start-cultivation-btn" class="w-full primary button">💪 開始修煉</button>
