@@ -6,12 +6,15 @@ MD/
 │   ├── MD_models.py
 │   ├── MD_populate_gamedata.py
 │   ├── MD_routes.py
-│   ├── __pycache__/
 │   ├── api_key.txt
 │   ├── leaderboard_search_services.py
 │   ├── main.py
 │   ├── monster_absorption_services.py
 │   ├── monster_combination_services.py
+│   ├── monster_cultivation_services.py
+│   ├── monster_disassembly_services.py
+│   ├── monster_healing_services.py
+│   ├── monster_nickname_services.py
 │   ├── player_services.py
 │   ├── requirements.txt
 │   ├── serviceAccountKey.json
