@@ -115,16 +115,21 @@
     }
 }
 
-
-/* Layout for monster farm headers and items */
+/* ======================================= */
+/* ====== Monster Farm Layout Grid ======= */
+/* ======================================= */
 .farm-header-grid, .farm-monster-item {
     display: grid;
+    /* 定義網格欄位：出戰(auto) | 資訊(1fr) | 狀態(90px) | 評價(70px) | 養成(auto) */
+    grid-template-columns: auto 1fr 90px 70px auto;
     gap: 0.5rem;
     padding: 0.75rem 0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     align-items: center;
+    text-align: center;
     border-bottom: 1px solid var(--border-color);
 }
+
 .farm-header-grid {
     font-weight: 600;
     color: var(--text-secondary);
@@ -132,95 +137,46 @@
     border-bottom-width: 2px;
     border-bottom-color: var(--accent-color);
 }
-.farm-monster-item:last-child { border-bottom: none; }
 
-/* ======================================= */
-/* ====== Mobile Farm Layout Tweak ======= */
-/* ======================================= */
-
-/* For smaller screens, use a 2-column layout to stack info vertically */
-@media (max-width: 640px) {
-    .farm-header-grid {
-        /* Hide the header on mobile to save space and avoid layout confusion */
-        display: none;
-    }
-    .farm-monster-item {
-        grid-template-columns: auto 1fr; /* Left column for button, right column for everything else */
-        grid-template-areas: 
-            "battle main"
-            "actions actions"; /* Actions can span both columns if needed */
-        align-items: start; /* Align items to the top */
-        padding: 0.75rem;
-        gap: 0 0.75rem; /* No row gap, only column gap */
-    }
-
-    /* Place battle button in its area */
-    .farm-monster-item .farm-col:first-child {
-        grid-area: battle;
-        align-self: center; /* Center the button vertically */
-    }
-
-    /* Group all other info into a new container for stacking */
-    .farm-monster-item > div:not(:first-child) {
-        grid-column: 2 / 3; /* All other divs go into the second column */
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start; /* Align text to the left */
-        gap: 0.25rem; /* Space between stacked items */
-        text-align: left;
-    }
-
-    /* Specifically style the monster name/score/status group */
-    .farm-monster-item .farm-col.text-center {
-        align-items: flex-start;
-    }
-    
-    .farm-monster-score.sm\:hidden {
-         display: block !important; /* Make sure mobile score is visible */
-         text-align: left;
-    }
-    
-    .farm-monster-actions-group {
-        width: 100%;
-        grid-column: 1 / 3; /* Actions span the full width */
-        flex-direction: row; /* Keep buttons horizontal */
-        justify-content: space-around; /* Distribute them evenly */
-        margin-top: 0.5rem;
-        padding-top: 0.5rem;
-        border-top: 1px dashed var(--border-color);
-    }
+.farm-monster-item:last-child { 
+    border-bottom: none; 
 }
 
+/* 讓資訊欄位靠左對齊 */
+.farm-header-grid > div:nth-child(2),
+.farm-col-info {
+    text-align: left;
+    padding-left: 0.5rem;
+}
 
-/* Farm Grid Columns - Larger screens (641px and up) */
-@media (min-width: 641px) {
+/* 養成按鈕組 */
+.farm-col-actions {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+/* 手機版響應式調整 */
+@media (max-width: 640px) {
     .farm-header-grid, .farm-monster-item {
-        grid-template-columns: minmax(40px, auto) 2fr 1.2fr 1fr 1.5fr;
-        padding: 0.75rem;
-        font-size: 0.9rem;
+        /* 在小螢幕上，隱藏評價欄位，並將養成按鈕垂直排列 */
+        grid-template-columns: auto 1fr 80px; /* 出戰 | 資訊+狀態 | 養成 */
+        grid-template-areas: 
+            "battle info actions"
+            "battle status actions";
+        padding: 0.75rem 0.25rem;
+        row-gap: 0.1rem;
     }
+
     .farm-header-grid {
-        display: grid; /* Make sure header is visible on larger screens */
-    }
-    .farm-header-grid .hidden-on-mobile { display: block; }
-    
-    .farm-monster-item .farm-monster-score.hidden.sm\:block {
-        display: block !important;
-        text-align: center;
-    }
-    .farm-monster-item .farm-monster-score.sm\:hidden {
-        display: none !important;
+        display: none; /* 手機上直接隱藏標題列，節省空間 */
     }
     
-    .farm-monster-actions-group {
-        flex-direction: row;
-        justify-content: center; /* Center buttons within their group */
-        gap: 0.5rem;
-        width: auto;
-        margin-top: 0;
-        padding-top: 0;
-        border-top: none;
-    }
+    .farm-col-battle { grid-area: battle; align-self: center; }
+    .farm-col-info { grid-area: info; align-self: end; padding-left: 0.25rem; }
+    .farm-col-status { grid-area: status; align-self: start; }
+    .farm-col-actions { grid-area: actions; flex-direction: column; justify-content: center; }
+    .farm-col-score { display: none; } /* 手機上隱藏評價 */
 }
 
 
