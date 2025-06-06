@@ -4,22 +4,24 @@
 # 導入必要的模組
 import time
 import random
-import os # 導入 os 模組用於檢查文件路徑和讀取環境變數
-import json # 導入 json 模組用於解析 JSON
-import logging # 導入 logging 模組
+import os 
+import json
+import logging
+import sys
 
 # 導入 Firebase Admin SDK
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# 從 MD_firebase_config 導入 set_firestore_client，以便在初始化後設置 db
-# 這裡不再導入 db as current_db_instance，因為我們會在函數內部動態獲取
-from .MD_firebase_config import set_firestore_client
+# --- 關鍵修正：將相對導入改為絕對導入 ---
+# 這樣此腳本就可以被獨立執行
+from MD_firebase_config import set_firestore_client
+# --- 修正結束 ---
+
 
 # 設定日誌記錄器
 script_logger = logging.getLogger(__name__)
-script_logger.setLevel(logging.INFO) # 預設日誌級別為 INFO，可以根據需要調整
-# 如果沒有處理器，添加一個 StreamHandler 以便在控制台輸出
+script_logger.setLevel(logging.INFO) 
 if not script_logger.handlers:
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -41,7 +43,7 @@ def initialize_firebase_for_script():
     優先從環境變數 'FIREBASE_SERVICE_ACCOUNT_KEY' 載入憑證。
     如果環境變數不存在，則嘗試從本地檔案 'serviceAccountKey.json' 載入。
     """
-    if not firebase_admin._apps: # 僅在尚未初始化時執行
+    if not firebase_admin._apps: 
         cred = None
         firebase_credentials_json_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
         script_logger.info(f"環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: {'已設定' if firebase_credentials_json_env else '未設定'}")
@@ -56,7 +58,6 @@ def initialize_firebase_for_script():
                 script_logger.error(f"從環境變數解析 Firebase 憑證失敗: {e}", exc_info=True)
                 cred = None
         else:
-            # Fallback to local file for local development if env var is not set
             script_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
             if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
                 try:
@@ -73,46 +74,39 @@ def initialize_firebase_for_script():
             try:
                 firebase_admin.initialize_app(cred)
                 script_logger.info("Firebase Admin SDK 已使用提供的憑證成功初始化。")
-                # 在這裡確保 MD_firebase_config.db 被設置
                 set_firestore_client(firestore.client())
-                return True # 初始化成功
+                return True 
             except Exception as e:
                 script_logger.error(f"使用提供的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
-                return False # 初始化失敗
+                return False
         else:
             script_logger.critical("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
-            return False # 初始化失敗
+            return False
     else:
-        # 如果已經初始化，確保 db client 已經設置
-        # 這裡需要從 MD_firebase_config 再次導入 db 變數來檢查其狀態
-        from .MD_firebase_config import db as current_db_check
-        if current_db_check is None: # 如果 db 還沒被設置過
+        from MD_firebase_config import db as current_db_check
+        if current_db_check is None:
              set_firestore_client(firestore.client())
         script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
-    return True # 初始化成功
+    return True
 
 
 def populate_game_configs():
     """
     將遊戲設定資料寫入 Firestore 的 MD_GameConfigs 集合。
     """
-    # 在執行資料填充前，先確保 Firebase 已初始化
     if not initialize_firebase_for_script():
         script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
         return
 
-    # 確保 db 實例已經被設置
-    # 從 MD_firebase_config 模組中直接獲取 db 的最新值
-    from .MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
-
+    from MD_firebase_config import db as firestore_db_instance
     if firestore_db_instance is None:
         script_logger.error("錯誤：Firestore 資料庫未初始化 (在 populate_game_configs 內部)。無法執行資料填充。")
         return
 
-    db_client = firestore_db_instance # 使用已設置的 db 實例
+    db_client = firestore_db_instance
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
 
-    # 1. DNA 碎片資料 (DNAFragments) - 沿用 v5 的擴充範例
+    # 1. DNA 碎片資料 (DNAFragments)
     dna_fragments_data = [
         { "id": "dna_fire_c01", "name": "初階火種", "type": "火", "attack": 18, "defense": 6, "speed": 9, "hp": 45, "mp": 22, "crit": 4, "description": "微弱燃燒的火種。", "rarity": "普通", "resistances": {'火': 2} },
         { "id": "dna_water_c01", "name": "純淨水滴", "type": "水", "attack": 12, "defense": 12, "speed": 12, "hp": 55, "mp": 28, "crit": 3, "description": "純淨但普通的水滴。", "rarity": "普通", "resistances": {'水': 2} },
@@ -160,7 +154,7 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"寫入 Rarities 資料失敗: {e}")
 
-    # 3. 招式資料 (Skills) - 大幅擴充
+    # 3. 招式資料 (Skills)
     skill_database_data = {
         '火': [
             { "name": "火花", "description": "噴出一團小火花攻擊對手。", "story": "{attacker_name}從口中噴出一團小小的火花，試探性地燒灼{target_name}。", "power": 25, "crit": 5, "probability": 80, "type": "火", "baseLevel": 1, "mp_cost": 5, "skill_category": "魔法" },
@@ -466,13 +460,7 @@ def populate_game_configs():
     script_logger.info("遊戲設定資料填充/更新完畢。")
 
 if __name__ == '__main__':
-    # 配置日誌，以便在本地直接運行時也能看到輸出
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     script_logger.info("正在直接執行 MD_populate_gamedata.py 腳本...")
 
-    # 在自動化環境中，直接執行資料填充，不再需要用戶確認
-    # confirmation = input("您確定要執行此腳本並將遊戲設定資料填充/更新到 Firestore 嗎？此操作可能會覆蓋現有設定。(yes/no): ")
-    # if confirmation.lower() == 'yes':
     populate_game_configs()
-    # else:
-    #     script_logger.info("操作已取消。")
