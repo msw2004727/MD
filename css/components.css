@@ -814,43 +814,48 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
 .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
 
+/* --- 頁籤按鈕修正 --- */
 .tab-buttons {
-    display: flex;
-    flex-wrap: wrap; 
-    margin-bottom: 10px; 
-    border-bottom: none; 
-    background-color: var(--bg-primary); 
-    border-radius: 6px; 
-    padding: 4px; 
-    justify-content: center; 
+    display: grid; /* 在手機上預設使用 Grid 佈局 */
+    grid-template-columns: repeat(3, 1fr); /* 固定三欄 */
+    gap: 4px; /* 按鈕間的間距 */
+    margin-bottom: 15px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
+
 .tab-button {
-    padding: 8px 10px; 
+    padding: 8px 10px;
     cursor: pointer;
     background-color: transparent;
     border: none;
     color: var(--text-secondary);
-    font-size: 0.8rem; 
-    border-bottom: 3px solid transparent; 
-    margin: 2px; 
-    transition: color 0.2s, border-bottom-color 0.2s, background-color 0.2s;
-    white-space: nowrap; 
-    flex-grow: 1; 
-    text-align: center; 
-    border-radius: 4px; 
+    font-size: 0.8rem;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, background-color 0.2s;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 4px;
+    /* 移除 flex-grow: 1; */
 }
-@media (min-width: 768px) { 
+
+@media (min-width: 768px) {
+    /* 在大螢幕上恢復為 Flex 佈局 */
     .tab-buttons {
-        margin-bottom: 15px; 
-        justify-content: flex-start; 
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        grid-template-columns: none; /* 取消 grid 設定 */
     }
     .tab-button {
-        flex-grow: 0; 
+        flex-grow: 0; /* 恢復為不伸展 */
         padding: 10px 15px;
         font-size: 0.9rem;
     }
 }
+
 .tab-button.active {
     color: var(--accent-color);
     background-color: var(--bg-panel); 
@@ -861,6 +866,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color); 
     color: var(--text-primary);
 }
+/* --- 頁籤內容 --- */
 .tab-content { display: none; } 
 .tab-content.active { display: block; } 
 
