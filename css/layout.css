@@ -120,8 +120,8 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     gap: 0.5rem;
-    padding: 0.5rem;
-    font-size: 0.8rem; /* 微調字體大小 */
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
 }
@@ -134,48 +134,92 @@
 }
 .farm-monster-item:last-child { border-bottom: none; }
 
-/* Farm Grid Columns - Mobile First (Default) */
-.farm-header-grid, .farm-monster-item {
-    /* 調整欄位比例，給怪物名稱多點空間 */
-    grid-template-columns: 40px 1.5fr 1fr 1fr;
+/* ======================================= */
+/* ====== Mobile Farm Layout Tweak ======= */
+/* ======================================= */
+
+/* For smaller screens, use a 2-column layout to stack info vertically */
+@media (max-width: 640px) {
+    .farm-header-grid {
+        /* Hide the header on mobile to save space and avoid layout confusion */
+        display: none;
+    }
+    .farm-monster-item {
+        grid-template-columns: auto 1fr; /* Left column for button, right column for everything else */
+        grid-template-areas: 
+            "battle main"
+            "actions actions"; /* Actions can span both columns if needed */
+        align-items: start; /* Align items to the top */
+        padding: 0.75rem;
+        gap: 0 0.75rem; /* No row gap, only column gap */
+    }
+
+    /* Place battle button in its area */
+    .farm-monster-item .farm-col:first-child {
+        grid-area: battle;
+        align-self: center; /* Center the button vertically */
+    }
+
+    /* Group all other info into a new container for stacking */
+    .farm-monster-item > div:not(:first-child) {
+        grid-column: 2 / 3; /* All other divs go into the second column */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start; /* Align text to the left */
+        gap: 0.25rem; /* Space between stacked items */
+        text-align: left;
+    }
+
+    /* Specifically style the monster name/score/status group */
+    .farm-monster-item .farm-col.text-center {
+        align-items: flex-start;
+    }
+    
+    .farm-monster-score.sm\:hidden {
+         display: block !important; /* Make sure mobile score is visible */
+         text-align: left;
+    }
+    
+    .farm-monster-actions-group {
+        width: 100%;
+        grid-column: 1 / 3; /* Actions span the full width */
+        flex-direction: row; /* Keep buttons horizontal */
+        justify-content: space-around; /* Distribute them evenly */
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed var(--border-color);
+    }
 }
-.farm-monster-item .farm-monster-score {
-    display: block;
-    grid-column: 2 / 3; /* 顯示在怪物名稱下方 */
-    font-size: 0.75rem;
-    color: var(--success-color);
-    padding-left: 2px;
-    margin-top: -4px;
-}
-.farm-monster-actions-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    align-items: stretch; /* 讓按鈕等寬 */
-}
-.farm-header-grid .hidden-on-mobile { display: none; }
 
 
-/* Farm Grid Columns - Small screens and up (e.g., sm: in Tailwind) */
-@media (min-width: 640px) {
+/* Farm Grid Columns - Larger screens (641px and up) */
+@media (min-width: 641px) {
     .farm-header-grid, .farm-monster-item {
-        /* 在大螢幕上重新分配欄位 */
-        grid-template-columns: 50px 2fr 1fr 1fr 1.5fr;
+        grid-template-columns: minmax(40px, auto) 2fr 1.2fr 1fr 1.5fr;
         padding: 0.75rem;
         font-size: 0.9rem;
     }
+    .farm-header-grid {
+        display: grid; /* Make sure header is visible on larger screens */
+    }
     .farm-header-grid .hidden-on-mobile { display: block; }
-    .farm-monster-item .farm-monster-score {
-        display: block;
-        grid-column: 4 / 5; /* 總評價回到自己的欄位 */
-        font-size: 0.9rem;
-        margin-top: 0;
+    
+    .farm-monster-item .farm-monster-score.hidden.sm\:block {
+        display: block !important;
         text-align: center;
     }
+    .farm-monster-item .farm-monster-score.sm\:hidden {
+        display: none !important;
+    }
+    
     .farm-monster-actions-group {
         flex-direction: row;
-        justify-content: center; /* 讓按鈕組置中 */
+        justify-content: center; /* Center buttons within their group */
         gap: 0.5rem;
+        width: auto;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
     }
 }
 
