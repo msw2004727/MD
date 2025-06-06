@@ -944,7 +944,6 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
 #battle-log-area .heal-action { color: var(--success-color); }
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
-
 #dna-draw-modal .modal-content { max-width: 600px; }
 #dna-draw-results-grid {
     display: grid;
@@ -1136,16 +1135,16 @@ body.light-theme .leaderboard-table tr:hover td {
 
 #monster-parts-container {
     z-index: 3;
-    width: 70%;
-    height: 85%;
+    width: 60%; 
+    height: 75%;
     display: grid;
-    grid-template-columns: 28% 44% 28%;
-    grid-template-rows: 30% 35% 35%;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
     grid-template-areas:
-        ".    head   ."
-        "lArm body rArm"
-        "lLeg body rLeg";
-    gap: 1%;
+        "head head"
+        "lArm rArm"
+        "lLeg rLeg";
+    gap: 5px;
 }
 
 .monster-part {
@@ -1154,13 +1153,16 @@ body.light-theme .leaderboard-table tr:hover td {
     background-position: center;
     width: 100%;
     height: 100%;
-    border: 1px dashed var(--accent-color-dark);
+    border: 1px solid var(--border-color); /* Keep the border solid */
+    border-radius: 6px; /* Add rounded corners */
     box-sizing: border-box;
 }
 
+
 .monster-part.empty-part {
     background-image: none !important;
-    background-color: transparent !important;
+    background-color: rgba(0,0,0,0.2) !important;
+    border-style: dashed; /* Only show dashed border for empty parts */
 }
 
 #monster-part-head { grid-area: head; }
@@ -1244,5 +1246,4 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 .farm-col-score .score-value {
     font-weight: bold;
-    color: var(--success-color);
-}
+    color: var(--success-color)
