@@ -320,7 +320,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
 
     if (DOMElements.feedbackModalCloseX) {
-        DOMEElements.feedbackModalCloseX.setAttribute('data-modal-id', 'feedback-modal');
+        DOMElements.feedbackModalCloseX.setAttribute('data-modal-id', 'feedback-modal');
         DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
     }
     
@@ -495,7 +495,7 @@ function updateMonsterSnapshot(monster) {
         if (monster.constituent_dna_ids && monster.constituent_dna_ids.length > 0 && gameState.gameConfigs?.dna_fragments) {
             const partsMap = {
                 0: DOMElements.monsterPartHead,
-                1: DOMEElements.monsterPartLeftArm,
+                1: DOMElements.monsterPartLeftArm,
                 2: DOMElements.monsterPartRightArm,
                 3: DOMElements.monsterPartLeftLeg,
                 4: DOMElements.monsterPartRightLeg
