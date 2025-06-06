@@ -257,7 +257,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
         DOMElements.feedbackModalMessage.innerHTML = `
             <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
-            ${message} `;
+            ${message} <!-- 保留原始消息，如果存在 -->
+        `;
 
 
         // 重新組織 AI 描述和其他詳細資訊到 feedbackMonsterDetails 容器
@@ -411,13 +412,18 @@ function getMonsterPartImagePath(dnaTemplateId) {
         '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
     };
     const typeKey = dnaTemplate.type ? (elementTypeMap[dnaTemplate.type] || dnaTemplate.type.toLowerCase()) : '無';
-    const rarityKey = dnaTemplate.rarity ? dnaTemplate.rarity.toLowerCase() : 'common';
+    const rarityMap = {
+        '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical'
+    };
+    const rarityKey = dnaTemplate.rarity ? (rarityMap[dnaTemplate.rarity] || dnaTemplate.rarity.toLowerCase()) : 'common';
 
     // 返回一個包含 DNA 樣式所需資訊的對象，而不是圖片路徑
     return {
         isPlaceholder: false,
         elementType: dnaTemplate.type,
+        typeClass: typeKey, // 添加 typeClass 便於 CSS 選擇
         rarity: dnaTemplate.rarity,
+        rarityClass: rarityKey, // 添加 rarityClass 便於 CSS 選擇
         nameAbbr: dnaTemplate.name.substring(0,2) // 名稱縮寫
     };
 }
@@ -439,7 +445,7 @@ function clearMonsterBodyPartsDisplay() {
             partElement.textContent = ''; // 清除任何文本
             partElement.style.backgroundColor = ''; // 清除背景色
             partElement.style.color = ''; // 清除文字顏色
-            partElement.style.borderColor = 'var(--border-color)'; // 恢復默認邊框
+            partElement.style.borderColor = ''; // 清除邊框，讓 CSS 默認邊框生效
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -455,26 +461,32 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // 處理全身照的透明化
-    DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
-    // 如果怪獸沒有全身圖的URL或者是一個NPC且沒有專門的全身圖，則將輪廓圖透明化
-    // 這裡假設 monster.fullBodyImageUrl 是一個存在的屬性，或者 NPC 怪獸沒有這個屬性
+    // 將背景圖層移到最底層
+    DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true"; // 背景圖保持不變
+
+    // ====== 怪獸全身照邏輯 ======
+    const defaultSilhouette = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"; // 預設的全身輪廓圖
+
     if (monster && monster.fullBodyImageUrl && !monster.isNPC) { 
+        // 如果有特定全身圖且不是NPC (NPC可能沒有自定義圖)
         DOMElements.monsterSnapshotBodySilhouette.src = monster.fullBodyImageUrl;
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 1; // 顯示圖片
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
     } else {
-        // 如果沒有特定全身圖，或者它是NPC，則輪廓圖完全透明，不遮擋
+        // 如果沒有特定全身圖，或者它是NPC，則預設顯示 mb01.png，並將其透明化
+        // 為了讓它完全透明不遮擋，我們將其 src 設為一個最小透明 GIF，並 opacity 設為 0
         DOMElements.monsterSnapshotBodySilhouette.src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="; // 最小的透明 GIF
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 0; // 完全透明
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保元素佔位
     }
+    // =============================
 
     // 清空所有部位圖示
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; // 確保輪廓圖可見（即使透明）
+        // 確保輪廓圖可見（即使透明）
+        DOMElements.monsterSnapshotBodySilhouette.style.display = 'block'; 
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
@@ -501,64 +513,60 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
 
-        // ====== 根據 monster.constituent_dna_ids 顯示 DNA 部位圖案 ======
+        // ====== 根據 monster.constituent_dna_ids 顯示 DNA 部位圖案 (純 CSS 樣式) ======
         if (monster.constituent_dna_ids && monster.constituent_dna_ids.length > 0 && gameState.gameConfigs?.dna_fragments) {
             const partsMap = { // 直接使用 DOM 元素引用
-                0: DOMElements.monsterPartHead,
-                1: DOMElements.monsterPartLeftArm,
-                2: DOMElements.monsterPartRightArm,
-                3: DOMElements.monsterPartLeftLeg,
-                4: DOMElements.monsterPartRightLeg
+                0: DOMElements.monsterPartHead,       // 第一個 DNA
+                1: DOMElements.monsterPartLeftArm,    // 第二個 DNA
+                2: DOMElements.monsterPartRightArm,   // 第三個 DNA
+                3: DOMElements.monsterPartLeftLeg,    // 第四個 DNA
+                4: DOMElements.monsterPartRightLeg    // 第五個 DNA
             };
 
-            // 先清空所有部位的文本，以防從之前狀態殘留
-            for (const key in partsMap) {
-                if (partsMap.hasOwnProperty(key) && partsMap[key]) {
-                    partsMap[key].textContent = '';
-                }
-            }
+            // 先清空所有部位的文本和樣式，以防從之前狀態殘留
+            clearMonsterBodyPartsDisplay(); 
             
             monster.constituent_dna_ids.forEach((dnaBaseId, index) => {
                 const partElement = partsMap[index]; // 獲取對應的部位 DOM 元素
                 if (partElement) {
-                    const dnaInfo = gameState.gameConfigs.dna_fragments.find(d => d.id === dnaBaseId);
+                    const dnaInfo = getMonsterPartImagePath(dnaBaseId); // 現在返回的是 DNA 信息對象
 
-                    if (dnaInfo) {
+                    if (!dnaInfo.isPlaceholder) { // 如果找到了有效的 DNA 模板信息
                         const elementTypeMap = {
                             '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
                             '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
                         };
-                        const typeClass = elementTypeMap[dnaInfo.type] || dnaInfo.type.toLowerCase();
+                        const typeClass = elementTypeMap[dnaInfo.elementType] || dnaInfo.elementType.toLowerCase();
                         const rarityClass = dnaInfo.rarity.toLowerCase();
 
                         // 應用背景色和文字顏色
-                        partElement.style.backgroundColor = `var(--element-${typeClass}-bg)`;
-                        partElement.style.color = `var(--rarity-${rarityClass}-text)`; // 使用稀有度文本顏色
+                        partElement.style.backgroundColor = `var(--element-${typeClass}-bg)`; // 屬性底色
+                        partElement.style.color = `var(--rarity-${rarityClass}-text)`; // 稀有度字體顏色
                         partElement.style.borderColor = `var(--rarity-${rarityClass}-text)`; // 邊框顏色也用稀有度
                         partElement.style.backgroundImage = 'none'; // 確保沒有背景圖片
                         partElement.classList.remove('empty-part'); // 移除空狀態
-                        partElement.textContent = dnaInfo.name.substring(0, 2); // 顯示 DNA 名稱前兩個字
+                        partElement.textContent = dnaInfo.nameAbbr; // 顯示 DNA 名稱前兩個字
                         partElement.style.fontWeight = 'bold';
-                        partElement.style.fontSize = '0.75rem';
+                        partElement.style.fontSize = '0.75rem'; // 適當的字體大小
                         partElement.style.display = 'flex'; // 確保內容居中
                         partElement.style.alignItems = 'center';
                         partElement.style.justifyContent = 'center';
                     } else {
-                        // 如果找不到對應的 DNA 模板，顯示為空位
+                        // 如果沒有對應的 DNA 模板或 placeholder，則顯示為透明問號方塊
                         partElement.style.backgroundImage = 'none';
                         partElement.classList.add('empty-part');
-                        partElement.textContent = ''; // 清除文字
-                        partElement.style.backgroundColor = ''; // 清除背景色
-                        partElement.style.color = ''; // 清除文字顏色
-                        partElement.style.borderColor = 'var(--border-color)'; // 恢復默認邊框
+                        partElement.textContent = '??'; // 顯示問號
+                        partElement.style.backgroundColor = 'transparent'; // 背景透明
+                        partElement.style.color = 'var(--text-secondary)'; // 顏色偏淡
+                        partElement.style.borderColor = 'var(--border-color)'; // 虛線框
                     }
                 }
             });
             DOMElements.monsterPartsContainer.classList.remove('empty-snapshot'); // 有 DNA 則移除空狀態
         } else {
-            // 如果怪獸沒有 constituent_dna_ids，則清空部位顯示
-            clearMonsterBodyPartsDisplay();
-            DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
+            // 如果怪獸沒有 constituent_dna_ids (例如新生成的還沒有或者NPC沒有定義)
+            clearMonsterBodyPartsDisplay(); // 清空所有部位顯示
+            DOMElements.monsterPartsContainer.classList.add('empty-snapshot'); // 添加空狀態類別
         }
         // =============================================================
 
@@ -779,31 +787,36 @@ function renderMonsterFarm() {
 
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
+        // 移除選擇時的底色，只保留 selected class
         item.classList.add('farm-monster-item');
         if (gameState.selectedMonsterId === monster.id) {
             item.classList.add('selected');
-            item.style.backgroundColor = 'var(--accent-hover)';
         }
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
-        let statusClass = "text-[var(--text-secondary)]"; // 預設灰色
+        let statusClass = "status-idle"; // 預設為綠色
         if (monster.farmStatus) {
             if (monster.farmStatus.isBattling) {
-                statusText = "戰鬥中"; statusClass = "farm-monster-status battling"; // 紅色
+                statusText = "戰鬥中"; statusClass = "status-battling"; // 紅色
             } else if (monster.farmStatus.isTraining) {
-                // 如果是修煉中，需要讀秒並顯示
                 const endTime = monster.farmStatus.trainingStartTime + monster.farmStatus.trainingDuration;
-                const now = Date.now();
-                if (now < endTime) {
-                    const remainingTime = Math.max(0, Math.ceil((endTime - now) / 1000));
-                    statusText = `修煉中 (${remainingTime}秒)`; 
-                    statusClass = "farm-monster-status active"; // 黃色
+                let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+                // 限制最高顯示999秒
+                if (remainingTime > 999) {
+                    statusText = `修煉中 (999+秒)`;
+                } else if (remainingTime <= 0) {
+                    statusText = "發呆中"; // 時間到，狀態改為發呆中
+                    statusClass = "status-idle"; // 發呆中也是綠色（或另一種顏色）
                 } else {
-                    statusText = "修煉完成!"; statusClass = "text-[var(--success-color)] font-bold"; // 綠色
+                    statusText = `修煉中 (${remainingTime}秒)`; 
                 }
+                statusClass = "status-training"; // 黃色
+            } else if (monster.farmStatus.type === "idle") { // 新增發呆中判斷
+                statusText = "發呆中"; 
+                statusClass = "status-idle"; // 發呆中為綠色
             } else if (monster.farmStatus.completed) {
-                 statusText = "已完成"; statusClass = "text-[var(--success-color)]"; // 綠色
+                 statusText = "已完成"; statusClass = "status-idle"; // 已完成也算待命中，綠色
             }
         }
 
@@ -812,23 +825,25 @@ function renderMonsterFarm() {
         ).join(' ');
 
         item.innerHTML = `
-            <div class="text-center">
-                <button class="farm-monster-item button farm-battle-btn ${monster.farmStatus?.isBattling ? 'danger' : 'success'}"
+            <div class="farm-col text-center"> <!-- 出戰按鈕獨自一列 -->
+                <button class="farm-battle-btn button ${monster.farmStatus?.isBattling ? 'danger' : 'success'}"
                         data-monster-id="${monster.id}"
                         title="${monster.farmStatus?.isBattling ? '戰鬥中' : '挑戰對手'}"
-                        ${monster.farmStatus?.isBattling ? 'disabled' : ''}>
+                        ${monster.farmStatus?.isBattling || monster.farmStatus?.isTraining ? 'disabled' : ''}>
                     ⚔️
                 </button>
             </div>
-            <div class="text-center"> <strong class="block text-sm text-[var(--text-primary)]">${monster.nickname}</strong>
+            <div class="farm-col text-center"> <!-- 讓怪物暱稱和元素置中 -->
+                <strong class="block text-sm text-[var(--text-primary)]">${monster.nickname}</strong>
                 <div class="text-xs">${elementsDisplay} <span class="text-rarity-${monster.rarity.toLowerCase()}">${monster.rarity}</span></div>
                 <div class="farm-monster-score sm:hidden">評價: ${monster.score || 0}</div>
             </div>
-            <div class="farm-monster-status text-center ${statusClass}">
+            <div class="farm-col text-center ${statusClass}"> <!-- 狀態文字置中 -->
                 ${statusText}
             </div>
-            <div class="farm-monster-score hidden sm:block text-center text-[var(--success-color)]">${monster.score || 0}</div>
-            <div class="farm-monster-actions-group text-center"> <button class="farm-monster-info-btn button secondary text-xs" data-monster-id="${monster.id}">資訊</button>
+            <div class="farm-col farm-monster-score hidden sm:block text-center text-[var(--success-color)]">${monster.score || 0}</div>
+            <div class="farm-col farm-monster-actions-group text-center"> <!-- 養成按鈕組置中 -->
+                <button class="farm-monster-info-btn button secondary text-xs" data-monster-id="${monster.id}">資訊</button>
                 <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
                         data-monster-id="${monster.id}" 
                         title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
@@ -839,42 +854,60 @@ function renderMonsterFarm() {
             </div>
         `;
 
+        // 綁定行點擊事件，用於選擇怪獸並更新快照
         item.addEventListener('click', () => {
-            gameState.selectedMonsterId = monster.id;
-            updateMonsterSnapshot(monster);
+            // 移除其他怪獸的 selected class
             listContainer.querySelectorAll('.farm-monster-item').forEach(el => {
                 el.classList.remove('selected');
-                el.style.backgroundColor = '';
             });
+            // 為當前點擊的怪獸添加 selected class
             item.classList.add('selected');
-            item.style.backgroundColor = 'var(--accent-hover)';
+            
+            gameState.selectedMonsterId = monster.id;
+            updateMonsterSnapshot(monster); // 點擊行時更新快照
+
+            // 切換到怪物農場頁籤（如果不是的話），確保視覺同步
             if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
                 const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
                 if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
             }
         });
 
+        // 綁定獨立的按鈕事件，防止事件冒泡到行點擊事件
+        item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // 阻止冒泡
+            handleChallengeMonsterClick(e, monster.id); // 僅傳遞 monster.id
+        });
+        
         item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
-            e.stopPropagation(); // 防止事件冒泡到父級的 item.addEventListener
+            e.stopPropagation(); // 防止事件冒泡
             updateMonsterInfoModal(monster, gameState.gameConfigs);
             showModal('monster-info-modal');
         });
 
-        item.querySelector('.farm-battle-btn').addEventListener('click', (e) => handleChallengeMonsterClick(e, monster.id));
-        
-        // 修正修煉按鈕邏輯：根據狀態呼叫不同處理函數
         const cultivateButton = item.querySelector('.farm-monster-cultivate-btn');
         if (cultivateButton) {
-            if (monster.farmStatus?.isTraining) {
-                cultivateButton.addEventListener('click', (e) => handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration));
-            } else {
-                cultivateButton.addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
-            }
+            cultivateButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // 防止事件冒泡
+                if (monster.farmStatus?.isTraining) {
+                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+                } else {
+                    handleCultivateMonsterClick(e, monster.id);
+                }
+            });
         }
-        item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => handleReleaseMonsterClick(e, monster.id));
+        item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止事件冒泡
+            handleReleaseMonsterClick(e, monster.id);
+        });
 
         listContainer.appendChild(item);
     });
+    // 監控修煉狀態的計時器，每秒刷新 UI (如果有多隻怪獸同時修煉，需要優化)
+    // 這裡需要一個全局計時器來更新所有修煉中的怪獸的狀態顯示
+    if (!gameState.farmTimerInterval) {
+        gameState.farmTimerInterval = setInterval(renderMonsterFarm, 1000); // 每秒刷新農場列表
+    }
 }
 
 function updatePlayerInfoModal(playerData, gameConfigs) {
@@ -1187,8 +1220,8 @@ function updateLeaderboardTable(tableType, data) {
     }
 
     data.forEach((item, index) => {
-        const row = tbody.insertRow();
-        row.insertCell().textContent = index + 1;
+        const row = tbody.insertCell();
+        row.textContent = index + 1;
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
@@ -1217,11 +1250,17 @@ function updateLeaderboardTable(tableType, data) {
             row.insertCell().textContent = item.owner_nickname || 'N/A';
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.owner_id !== gameState.playerId && !item.isNPC) {
+            if (item.isNPC) { // Only challenge if it's an NPC or another player's monster
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id);
+                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, null, item.id); // For NPC, pass npcId
+                actionsCell.appendChild(challengeBtn);
+            } else if (item.owner_id && item.owner_id !== gameState.playerId) {
+                const challengeBtn = document.createElement('button');
+                challengeBtn.textContent = '挑戰';
+                challengeBtn.className = 'button primary text-xs py-1 px-2';
+                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null); // For player monster
                 actionsCell.appendChild(challengeBtn);
             }
         } else {
@@ -1407,7 +1446,7 @@ function updateScrollingHints(hintsArray) {
         p.textContent = hint;
         // The animation delay and duration for individual hints are typically handled by CSS @keyframes
         // and nth-child selectors if the number of hints is fixed,
-        // or by dynamically setting animation-delay if JS controls the animation animation lifecycle per hint.
+        // or by dynamically setting animation-delay if JS controls the animation lifecycle per hint.
         // The current CSS has animation-delay based on nth-child.
         // If hintsArray can vary in length, a more dynamic CSS or JS animation approach might be needed.
         // For simplicity, assuming CSS handles the cycling.
