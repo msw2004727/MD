@@ -228,6 +228,11 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
              totalMonsterCount = gameState.monsterLeaderboard.filter(m => m.baseId === monsterDetails.baseId).length;
         }
         
+        let elementsDisplay = monsterDetails.elements.map(el => {
+            const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
+            return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
+        }).join('');
+
         let countMessageText = `這隻怪獸在遊戲中已有 <span class="font-bold text-[var(--accent-color)]">${totalMonsterCount}</span> 隻。`;
         let countMessageClass = 'text-sm text-[var(--text-secondary)] text-center';
         if (totalMonsterCount === 1) {
@@ -481,7 +486,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
-        DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
+        DOMEElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
         // ====== MODIFICATION: Remove attribute text from snapshot ======
         if (DOMElements.snapshotMainContent) {
