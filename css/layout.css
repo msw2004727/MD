@@ -7,17 +7,16 @@
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    padding: 1rem; /* 使用 rem 單位，更具彈性 */
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem; /* 使用 rem 單位 */
+    gap: 1rem;
     border: 1px solid var(--border-color);
     position: relative;
     transition: background-color 0.3s, border-color 0.3s;
-    margin: 1rem auto; /* 確保容器本身在頁面中有邊距 */
+    margin: 1rem auto;
 }
 
-/* Responsive adjustments for main-container */
 @media (min-width: 768px) {
     .main-container {
         padding: 1.5rem;
@@ -25,17 +24,15 @@
     }
 }
 
-
 /* Panel base style */
 .panel {
     background-color: var(--bg-slot);
     border-radius: 8px;
-    padding: 1rem; /* 使用 rem 單位 */
+    padding: 1rem;
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
-
 
 /* Modal base styles */
 .modal {
@@ -50,14 +47,14 @@
     background-color: rgba(0,0,0,0.75);
     align-items: center;
     justify-content: center;
-    padding: 1rem; /* 增加邊距，避免內容貼邊 */
+    padding: 1rem;
 }
 
 .modal-content {
     background-color: var(--bg-panel);
     color: var(--text-primary);
     margin: auto;
-    padding: 1.25rem; /* 使用 rem 單位 */
+    padding: 1.25rem;
     border-radius: 8px;
     width: 95%;
     max-width: 500px;
@@ -67,33 +64,28 @@
     transition: background-color 0.3s, border-color 0.3s, color 0.3s;
 }
 
-/* Modal size variants */
-.modal-content.large { max-width: 720px; } /* 統一尺寸 */
+.modal-content.large { max-width: 720px; }
 .modal-content.xlarge { max-width: 850px; }
 .modal-content.feedback-wide { max-width: 600px; }
 
-
-/* Grid for DNA combination slots (5 slots) */
+/* Grid for DNA combination slots */
 .dna-combination-grid {
     display: grid;
-    /* 使用 auto-fit 和 minmax 讓其更具彈性，但因固定5個，直接用fr即可 */
     grid-template-columns: repeat(5, 1fr);
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
-/* DNA碎片欄位 (Inventory Grid) & 臨時背包 (Temporary Backpack Grid) */
+/* Inventory and Backpack Grids */
 .inventory-grid,
 .temp-backpack-grid {
     display: grid;
-    /* 使用 auto-fit 和 minmax 實現更好的響應式效果 */
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 0.5rem;
     align-items: stretch;
 }
 
-
-/* Action buttons grid (for Combine and Draw DNA buttons) */
+/* Action buttons grid */
 .action-buttons-grid.dual-buttons {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -107,7 +99,6 @@
     align-items: center;
     justify-content: center;
 }
-
 @media (max-width: 480px) {
     .action-buttons-grid.dual-buttons {
         grid-template-columns: 1fr;
@@ -120,75 +111,34 @@
 /* ======================================= */
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 定義網格欄位：出戰(auto) | 資訊(1fr) | 狀態(90px) | 評價(70px) | 養成(auto) */
-    grid-template-columns: auto 1fr 90px 70px auto;
-    gap: 0.5rem;
-    padding: 0.75rem 0.5rem;
-    font-size: 0.85rem;
+    /* NEW GRID DEFINITION: Battle(auto) | Info(flexible) | Status(auto) | Actions(auto) */
+    grid-template-columns: auto 1fr auto auto;
+    gap: 0.75rem; /* Increased gap for better spacing */
+    padding: 0.5rem;
     align-items: center;
-    text-align: center;
     border-bottom: 1px solid var(--border-color);
 }
 
 .farm-header-grid {
     font-weight: 600;
     color: var(--text-secondary);
-    background-color: var(--bg-primary);
-    border-bottom-width: 2px;
-    border-bottom-color: var(--accent-color);
+    padding-bottom: 0.5rem;
+}
+
+.farm-header-grid > div, .farm-monster-item > .farm-col {
+    text-align: center; /* Default to center for all columns */
+}
+
+/* Align the monster info column to the left */
+.farm-header-grid > div:nth-child(2),
+.farm-monster-item .farm-col-info {
+    text-align: left;
 }
 
 .farm-monster-item:last-child { 
     border-bottom: none; 
 }
 
-/* 讓資訊欄位靠左對齊 */
-.farm-header-grid > div:nth-child(2),
-.farm-col-info {
-    text-align: left;
-    padding-left: 0.5rem;
-}
-
-/* 養成按鈕組 */
-.farm-col-actions {
-    display: flex;
-    gap: 0.25rem;
-    justify-content: center;
-}
-
-/* 手機版響應式調整 */
-@media (max-width: 640px) {
-    .farm-header-grid, .farm-monster-item {
-        /* 在小螢幕上，隱藏評價欄位，並將養成按鈕垂直排列 */
-        grid-template-columns: auto 1fr 80px; /* 出戰 | 資訊+狀態 | 養成 */
-        grid-template-areas: 
-            "battle info actions"
-            "battle status actions";
-        padding: 0.75rem 0.25rem;
-        row-gap: 0.1rem;
-    }
-
-    .farm-header-grid {
-        display: none; /* 手機上直接隱藏標題列，節省空間 */
-    }
-    
-    .farm-col-battle { grid-area: battle; align-self: center; }
-    .farm-col-info { grid-area: info; align-self: end; padding-left: 0.25rem; }
-    .farm-col-status { grid-area: status; align-self: start; }
-    .farm-col-actions { grid-area: actions; flex-direction: column; justify-content: center; }
-    .farm-col-score { display: none; } /* 手機上隱藏評價 */
-}
-
-
-/* Grid for DNA draw results */
-#dna-draw-results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-    max-height: 300px;
-    overflow-y: auto;
-}
 /* Auth screen layout */
 #auth-screen {
     display: flex;
@@ -203,7 +153,7 @@
 }
 .auth-container {
     background-color: var(--bg-panel);
-    padding: 2rem 1.5rem; /* 增加垂直內距 */
+    padding: 2rem 1.5rem;
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     text-align: center;
@@ -215,10 +165,10 @@
 .details-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.75rem 1rem; /* 調整間距 */
+    gap: 0.75rem 1rem;
 }
 @media (min-width: 540px) {
     .details-grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* 增加最小寬度 */
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 }
