@@ -1,171 +1,202 @@
 # backend/player_services.py
-# 處理與玩家數據相關的核心服務，如讀取、儲存、更新等
+# 處理玩家遊戲資料的初始化、獲取、保存功能
 
-from .MD_firebase_config import db
-from .MD_models import PlayerData
-from .MD_config_services import load_game_configs
+import time
 import logging
-import random # 引入 random 模組
+from typing import List, Dict, Optional, Any
+import firebase_admin
+from firebase_admin import firestore
 
-# 設定日誌記錄器
-player_logger = logging.getLogger(__name__)
+# 從 MD_models 導入相關的 TypedDict 定義 (修正名稱)
+from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
 
-# --- Firestore 資料庫集合參考 ---
-players_collection = db.collection('players')
-users_collection = db.collection('users')
+player_services_logger = logging.getLogger(__name__)
 
-async def get_player_data(player_id: str) -> dict:
-    """
-    從 Firestore 根據 player_id 獲取玩家數據。
-    """
-    player_logger.info(f"正在為 player_id: {player_id} 獲取玩家數據...")
-    try:
-        player_doc_ref = players_collection.document(player_id)
-        player_doc = await player_doc_ref.get()
-        if player_doc.exists:
-            player_logger.info(f"成功為 player_id: {player_id} 獲取到玩家數據。")
-            return player_doc.to_dict()
-        else:
-            player_logger.warning(f"找不到 player_id: {player_id} 的玩家數據。")
-            return None
-    except Exception as e:
-        player_logger.error(f"為 player_id: {player_id} 獲取玩家數據時出錯: {e}", exc_info=True)
+# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
+DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
+    "dna_fragments": [], 
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
+    "skills": {}, 
+    "personalities": [],
+    "titles": ["新手"],
+    "monster_achievements_list": ["新秀"],
+    "element_nicknames": {"火": "炎獸"},
+    "naming_constraints": {
+        "max_player_title_len": 5, "max_monster_achievement_len": 5,
+        "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
+    },
+    "health_conditions": [],
+    "newbie_guide": [],
+    "npc_monsters": [],
+    "value_settings": {
+        "element_value_factors": {},
+        "dna_recharge_conversion_factor": 0.15,
+        "max_farm_slots": 10,
+        "max_monster_skills": 3,
+        "max_battle_turns": 30,
+        "max_inventory_slots": 12,
+        "max_temp_backpack_slots": 9
+    },
+    "absorption_config": {},
+    "cultivation_config": {},
+    "elemental_advantage_chart": {},
+}
+
+
+def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
+    """為新玩家初始化遊戲資料。"""
+    player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
+    player_titles_list = game_configs.get("titles", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["titles"])
+    default_player_title = player_titles_list[0] if player_titles_list else "新手" # type: ignore
+
+    player_stats: PlayerStats = {
+        "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
+        "titles": [default_player_title],
+        "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname
+    }
+
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
+    max_inventory_slots = value_settings.get("max_inventory_slots", 12)
+    initial_dna_owned: List[Optional[PlayerOwnedDNA]] = [None] * max_inventory_slots
+
+    dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["dna_fragments"]) # type: ignore
+    num_initial_dna = 6
+
+    if dna_fragments_templates:
+        eligible_dna_templates = [dna for dna in dna_fragments_templates if dna.get("rarity") in ["普通", "稀有"]]
+        if not eligible_dna_templates:
+            eligible_dna_templates = list(dna_fragments_templates) 
+
+        import random
+        for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)):
+            if not eligible_dna_templates: break
+            template = random.choice(eligible_dna_templates)
+            instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
+            owned_dna_item: PlayerOwnedDNA = {**template, "id": instance_id, "baseId": template["id"]} # type: ignore
+            initial_dna_owned[i] = owned_dna_item
+            pass
+
+    new_player_data: PlayerGameData = {
+        "playerOwnedDNA": initial_dna_owned,
+        "farmedMonsters": [],
+        "playerStats": player_stats,
+        "nickname": nickname,
+        "lastSave": int(time.time())
+    }
+    player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
+    return new_player_data
+
+def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
+    """獲取玩家遊戲資料，如果不存在則初始化。"""
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        player_services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
         return None
 
-async def save_player_data(player_id: str, player_data: dict) -> bool:
-    """
-    將玩家數據儲存到 Firestore。
-    """
-    player_logger.info(f"正在儲存 player_id: {player_id} 的玩家數據...")
+    db = firestore_db_instance
+
     try:
-        player_doc_ref = players_collection.document(player_id)
-        # 在儲存前更新 lastSave 時間戳
-        import time
-        player_data['lastSave'] = int(time.time())
-        await player_doc_ref.set(player_data)
-        player_logger.info(f"成功儲存 player_id: {player_id} 的玩家數據。")
+        user_profile_ref = db.collection('users').document(player_id)
+        user_profile_doc = user_profile_ref.get()
+
+        authoritative_nickname = nickname_from_auth
+        if not authoritative_nickname:
+            if user_profile_doc.exists:
+                profile_data = user_profile_doc.to_dict()
+                if profile_data and profile_data.get("nickname"):
+                    authoritative_nickname = profile_data["nickname"]
+            if not authoritative_nickname:
+                authoritative_nickname = "未知玩家"
+
+        if user_profile_doc.exists:
+            profile_data = user_profile_doc.to_dict()
+            if profile_data and profile_data.get("nickname") != authoritative_nickname:
+                try:
+                    user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                    player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
+                except Exception as e:
+                    player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
+            else:
+                try:
+                    user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                    player_services_logger.info(f"已更新玩家 {player_id} 的最後登入時間。")
+                except Exception as e:
+                    player_services_logger.error(f"更新玩家 {player_id} 的最後登入時間失敗: {e}", exc_info=True)
+        else:
+            player_services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
+            try:
+                user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
+            except Exception as e:
+                player_services_logger.error(f"建立玩家 {player_id} 的 Firestore users 集合 profile 失敗: {e}", exc_info=True)
+                return None
+
+        game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
+        game_data_doc = game_data_ref.get()
+
+        if game_data_doc.exists:
+            player_game_data_dict = game_data_doc.to_dict()
+            if player_game_data_dict:
+                player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
+                
+                loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
+                max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
+                
+                if len(loaded_dna) < max_inventory_slots:
+                    loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
+                elif len(loaded_dna) > max_inventory_slots:
+                    loaded_dna = loaded_dna[:max_inventory_slots]
+
+                player_game_data: PlayerGameData = {
+                    "playerOwnedDNA": loaded_dna,
+                    "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
+                    "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
+                    "nickname": authoritative_nickname,
+                    "lastSave": int(time.time())
+                }
+                if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
+                    player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
+                return player_game_data
+
+        player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，使用暱稱: {authoritative_nickname}。")
+        new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
+        
+        return new_player_data
+
+    except Exception as e:
+        player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
+        return None
+
+def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
+    """儲存玩家遊戲資料到 Firestore。"""
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
+        return False
+    
+    db = firestore_db_instance
+
+    try:
+        data_to_save: Dict[str, Any] = {
+            "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
+            "farmedMonsters": game_data.get("farmedMonsters", []),
+            "playerStats": game_data.get("playerStats", {}),
+            "nickname": game_data.get("nickname", "未知玩家"),
+            "lastSave": int(time.time())
+        }
+
+        player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
+        player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 playerOwnedDNA: {data_to_save['playerOwnedDNA']}")
+
+
+        if isinstance(data_to_save["playerStats"], dict) and \
+           data_to_save["playerStats"].get("nickname") != data_to_save["nickname"]:
+            data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
+
+        game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
+        game_data_ref.set(data_to_save, merge=True)
+        player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
-        player_logger.error(f"為 player_id: {player_id} 儲存玩家數據時出錯: {e}", exc_info=True)
+        player_services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
         return False
-
-async def create_new_player(player_id: str, nickname: str) -> dict:
-    """
-    為新玩家創建一個初始的玩家數據結構。
-    """
-    player_logger.info(f"正在為 player_id: {player_id} (暱稱: {nickname}) 創建新玩家數據...")
-    try:
-        # 載入遊戲基本設定
-        game_configs = await load_game_configs()
-        if not game_configs:
-            raise Exception("無法載入遊戲基本設定，無法創建新玩家。")
-
-        initial_inventory_size = game_configs.get('value_settings', {}).get('initial_inventory_size', 12)
-
-        # 創建一個 PlayerData 實例以利用 Pydantic 的預設值和結構
-        new_player = PlayerData(
-            id=player_id,
-            nickname=nickname,
-            playerOwnedDNA=[None] * initial_inventory_size,
-            farmedMonsters=[],
-            playerStats={
-                "nickname": nickname,
-                "rank": "新手訓練師",
-                "score": 0,
-                "wins": 0,
-                "losses": 0,
-                "medals": 0,
-                "titles": ["初出茅廬"],
-                "achievements": []
-            }
-        )
-        
-        # 將 Pydantic 模型轉換為字典以便存儲
-        player_data_dict = new_player.dict()
-        
-        # 儲存到 Firestore
-        await save_player_data(player_id, player_data_dict)
-        
-        player_logger.info(f"成功為 player_id: {player_id} 創建並儲存新玩家數據。")
-        return player_data_dict
-    except Exception as e:
-        player_logger.error(f"為 player_id: {player_id} 創建新玩家時出錯: {e}", exc_info=True)
-        return None
-
-def find_player_by_nickname(nickname: str):
-    """
-    通過暱稱查找玩家的 UID (同步版本)。
-    注意：在異步環境中，應使用異步版本。
-    """
-    player_logger.info(f"正在通過暱稱 '{nickname}' 同步查找玩家...")
-    try:
-        # Firestore 的 `where` 方法需要一個流式查詢
-        users_stream = users_collection.where('nickname', '==', nickname).limit(1).stream()
-        for user in users_stream:
-            player_logger.info(f"成功找到暱稱為 '{nickname}' 的玩家，UID: {user.id}")
-            return user.id
-        player_logger.warning(f"找不到暱稱為 '{nickname}' 的玩家。")
-        return None
-    except Exception as e:
-        player_logger.error(f"通過暱稱 '{nickname}' 查找玩家時出錯: {e}", exc_info=True)
-        return None
-
-async def find_player_by_nickname_async(nickname: str) -> str:
-    """
-    通過暱稱查找玩家的 UID (異步版本)。
-    """
-    player_logger.info(f"正在通過暱稱 '{nickname}' 異步查找玩家...")
-    try:
-        users_stream = users_collection.where('nickname', '==', nickname).limit(1).stream()
-        async for user in users_stream:
-            player_logger.info(f"成功找到暱稱為 '{nickname}' 的玩家，UID: {user.id}")
-            return user.id
-        player_logger.warning(f"找不到暱稱為 '{nickname}' 的玩家。")
-        return None
-    except Exception as e:
-        player_logger.error(f"通過暱稱 '{nickname}' 查找玩家時出錯: {e}", exc_info=True)
-        return None
-
-async def draw_free_dna() -> list:
-    """
-    執行免費的 DNA 抽取。
-    規則：
-    1. 隨機抽取 3 到 5 個 DNA。
-    2. 卡池中只包含“普通”和“稀有”等級的 DNA。
-    """
-    player_logger.info("正在執行免費 DNA 抽取...")
-    try:
-        game_configs = await load_game_configs()
-        if not game_configs or 'dna_fragments' not in game_configs:
-            player_logger.error("無法載入 DNA 碎片設定，抽取失敗。")
-            return []
-
-        all_dna_fragments = game_configs['dna_fragments']
-        
-        # 1. 篩選卡池，只保留 '普通' 和 '稀有'
-        allowed_rarities = {"普通", "稀有"}
-        filtered_pool = [
-            dna for dna in all_dna_fragments 
-            if dna.get('rarity') in allowed_rarities
-        ]
-
-        if not filtered_pool:
-            player_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
-            return []
-            
-        # 2. 決定本次抽取的數量 (3 到 5 個)
-        num_to_draw = random.randint(3, 5)
-        
-        # 3. 從篩選後的卡池中隨機抽取 DNA
-        # random.choices 允許重複選取，適合模擬抽卡
-        drawn_dna_templates = random.choices(filtered_pool, k=num_to_draw)
-        
-        player_logger.info(f"成功抽取了 {num_to_draw} 個 DNA。")
-        
-        # 返回的是 DNA 的模板，前端可以用來顯示，後續再生成實例
-        return drawn_dna_templates
-
-    except Exception as e:
-        player_logger.error(f"執行免費 DNA 抽取時發生錯誤: {e}", exc_info=True)
-        return []
-
