@@ -73,18 +73,14 @@ async function getPlayerData(playerId) {
     if (!playerId) {
         throw new Error("獲取玩家資料需要 playerId。");
     }
-    // 後端 /player/<path:requested_player_id> 路由會處理 Token 驗證
-    // 如果是請求自己的資料，Token 會被用來識別；如果是查詢他人，則為公開查詢
     return fetchAPI(`/player/${playerId}`);
 }
 
 /**
  * 將玩家的遊戲資料保存到後端。
- * 這是一個新函數，用於在前端玩家數據發生變更後將其持久化到資料庫。
- * 請注意，後端 (MD_routes.py) 也需要新增對應的 '/player/<playerId>/save' 路由來處理此請求。
  * @param {string} playerId 玩家 ID
- * @param {object} playerData 玩家的完整遊戲資料物件 (通常是 gameState.playerData)
- * @returns {Promise<object>} 保存結果（例如：{"success": true, "message": "保存成功"}）
+ * @param {object} playerData 玩家的完整遊戲資料物件
+ * @returns {Promise<object>} 保存結果
  */
 async function savePlayerData(playerId, playerData) {
     if (!playerId || !playerData) {
@@ -99,7 +95,7 @@ async function savePlayerData(playerId, playerData) {
 
 /**
  * 組合 DNA 生成新怪獸
- * @param {string[]} dnaInstanceIds 要組合的 DNA 實例 ID 列表 (注意：這裡現在傳遞的是實例 ID)
+ * @param {string[]} dnaInstanceIds 要組合的 DNA 實例 ID 列表
  * @returns {Promise<object>} 新生成的怪獸對象或錯誤訊息
  */
 async function combineDNA(dnaInstanceIds) {
@@ -108,9 +104,20 @@ async function combineDNA(dnaInstanceIds) {
     }
     return fetchAPI('/combine', {
         method: 'POST',
-        body: JSON.stringify({ dna_ids: dnaInstanceIds }), // 傳遞的是 DNA 實例 ID
+        body: JSON.stringify({ dna_ids: dnaInstanceIds }),
     });
 }
+
+/**
+ * 執行一次免費的 DNA 抽取
+ * @returns {Promise<object>} 包含抽取結果的對象
+ */
+async function drawFreeDNA() {
+    return fetchAPI('/dna/draw-free', {
+        method: 'POST', // 使用 POST 請求，即使沒有 body，通常抽獎等改變資源狀態的操作會用 POST
+    });
+}
+
 
 /**
  * 模擬戰鬥
@@ -143,8 +150,8 @@ async function generateAIDescriptions(monsterData) {
 /**
  * 更新怪獸的自定義屬性名
  * @param {string} monsterId 怪獸 ID
- * @param {string} customElementNickname 新的自定義屬性名 (空字串表示清除)
- * @returns {Promise<object>} 更新結果，包含更新後的怪獸資料
+ * @param {string} customElementNickname 新的自定義屬性名
+ * @returns {Promise<object>} 更新結果
  */
 async function updateMonsterCustomNickname(monsterId, customElementNickname) {
     return fetchAPI(`/monster/${monsterId}/update-nickname`, {
@@ -157,7 +164,7 @@ async function updateMonsterCustomNickname(monsterId, customElementNickname) {
  * 治療怪獸
  * @param {string} monsterId 怪獸 ID
  * @param {'full_hp' | 'full_mp' | 'cure_conditions' | 'full_restore'} healType 治療類型
- * @returns {Promise<object>} 治療結果，包含更新後的怪獸資料
+ * @returns {Promise<object>} 治療結果
  */
 async function healMonster(monsterId, healType) {
     return fetchAPI(`/monster/${monsterId}/heal`, {
@@ -169,7 +176,7 @@ async function healMonster(monsterId, healType) {
 /**
  * 分解怪獸
  * @param {string} monsterId 怪獸 ID
- * @returns {Promise<object>} 分解結果，包含返回的 DNA 模板和更新後的農場怪獸列表
+ * @returns {Promise<object>} 分解結果
  */
 async function disassembleMonster(monsterId) {
     return fetchAPI(`/monster/${monsterId}/disassemble`, {
@@ -181,8 +188,8 @@ async function disassembleMonster(monsterId) {
  * 使用 DNA 為怪獸充能
  * @param {string} monsterId 怪獸 ID
  * @param {string} dnaInstanceId 要消耗的 DNA 實例 ID
- * @param {'hp' | 'mp'} rechargeTarget 充能目標 (HP 或 MP)
- * @returns {Promise<object>} 充能結果，包含更新後的怪獸和玩家 DNA 列表
+ * @param {'hp' | 'mp'} rechargeTarget 充能目標
+ * @returns {Promise<object>} 充能結果
  */
 async function rechargeMonsterWithDNA(monsterId, dnaInstanceId, rechargeTarget) {
     return fetchAPI(`/monster/${monsterId}/recharge`, {
@@ -198,7 +205,7 @@ async function rechargeMonsterWithDNA(monsterId, dnaInstanceId, rechargeTarget) 
  * 完成怪獸修煉
  * @param {string} monsterId 怪獸 ID
  * @param {number} durationSeconds 修煉時長 (秒)
- * @returns {Promise<object>} 修煉結果，包含技能更新、潛在新技能等
+ * @returns {Promise<object>} 修煉結果
  */
 async function completeCultivation(monsterId, durationSeconds) {
     return fetchAPI(`/monster/${monsterId}/cultivation/complete`, {
@@ -210,9 +217,9 @@ async function completeCultivation(monsterId, durationSeconds) {
 /**
  * 替換或學習怪獸技能
  * @param {string} monsterId 怪獸 ID
- * @param {number | null} slotIndex 要替換的技能槽索引 (null 表示學習到新槽位)
+ * @param {number | null} slotIndex 要替換的技能槽索引
  * @param {object} newSkillTemplate 新技能的模板數據
- * @returns {Promise<object>} 更新結果，包含更新後的怪獸資料
+ * @returns {Promise<object>} 更新結果
  */
 async function replaceMonsterSkill(monsterId, slotIndex, newSkillTemplate) {
     return fetchAPI(`/monster/${monsterId}/skill/replace`, {
@@ -250,13 +257,10 @@ async function getPlayerLeaderboard(topN = 10) {
  */
 async function searchPlayers(nicknameQuery, limit = 10) {
     if (!nicknameQuery.trim()) {
-        return Promise.resolve({ players: [] }); // 如果查詢為空，直接返回空結果
+        return Promise.resolve({ players: [] });
     }
     return fetchAPI(`/players/search?nickname=${encodeURIComponent(nicknameQuery)}&limit=${limit}`);
 }
 
 
 console.log("API client module loaded.");
-
-// 導出 (如果使用 ES6 模塊)
-// export { getGameConfigs, getPlayerData, combineDNA, simulateBattle, generateAIDescriptions, updateMonsterCustomNickname, healMonster, disassembleMonster, rechargeMonsterWithDNA, completeCultivation, replaceMonsterSkill, getMonsterLeaderboard, getPlayerLeaderboard, searchPlayers, savePlayerData };
