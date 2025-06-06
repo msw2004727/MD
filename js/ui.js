@@ -1212,7 +1212,7 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (winnerName) {
         const winnerP = document.createElement('p');
         winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
+        winnerP.textContent = `🏆 ${winnerName} 獲勝！�`;
         DOMElements.battleLogArea.appendChild(winnerP);
     } else if (loserName && logEntries.some(l => l.includes("平手"))) {
          const drawP = document.createElement('p');
