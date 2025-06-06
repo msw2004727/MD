@@ -504,7 +504,6 @@ async function handleCombineDna() {
             const newMonster = result;
             
             // MODIFICATION START: Manually clear used DNA from frontend state
-            // This prevents items from reappearing while waiting for backend sync.
             const usedIds = new Set(dnaInstanceIdsForCombination);
             gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map(dna => {
                 return (dna && usedIds.has(dna.id)) ? null : dna;
@@ -512,7 +511,7 @@ async function handleCombineDna() {
             gameState.dnaCombinationSlots = [null, null, null, null, null];
             // END MODIFICATION
             
-            await refreshPlayerData();
+            await refreshPlayerData(); 
             resetDNACombinationSlots(); 
 
             let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
@@ -529,6 +528,7 @@ async function handleCombineDna() {
                 null,
                 [{ text: '查看新怪獸', class: 'primary', onClick: () => {
                     // MODIFICATION START: Link to monster info modal
+                    handleDeployMonsterClick(newMonster.id); // Set as deployed to show in snapshot
                     updateMonsterInfoModal(newMonster, gameState.gameConfigs);
                     showModal('monster-info-modal');
                     // END MODIFICATION
