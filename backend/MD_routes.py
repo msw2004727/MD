@@ -574,17 +574,13 @@ def replace_monster_skill_route(monster_id: str):
 @md_bp.route('/leaderboard/monsters', methods=['GET'])
 def get_monster_leaderboard_route():
     top_n_str = request.args.get('top_n', '10')
-    include_base_id_str = request.args.get('include_base_id', 'false').lower() # 新增: 獲取 include_base_id 參數
-    include_base_id = include_base_id_str == 'true' # 將字串轉換為布林值
-
     try:
         top_n = int(top_n_str)
         if top_n <=0 or top_n > 50: top_n = 10
     except ValueError:
         top_n = 10
     game_configs = _get_game_configs_data_from_app_context()
-    # 傳遞 include_base_id 參數給服務層
-    leaderboard = get_monster_leaderboard_service(game_configs, top_n, include_base_id=include_base_id)
+    leaderboard = get_monster_leaderboard_service(game_configs, top_n)
     return jsonify(leaderboard), 200
 
 @md_bp.route('/leaderboard/players', methods=['GET'])

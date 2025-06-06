@@ -37,7 +37,7 @@ DEFAULT_GAME_CONFIGS_FOR_LEADERBOARD: GameConfigs = {
 
 
 # --- 排行榜與玩家搜尋服務 ---
-def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10, include_base_id: bool = False) -> List[Monster]:
+def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[Monster]:
     """獲取怪獸排行榜。"""
     if not MD_firebase_config.db:
         leaderboard_search_services_logger.error("Firestore 資料庫未初始化 (get_monster_leaderboard_service 內部)。")
@@ -60,13 +60,6 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10, 
                     for monster_dict in player_game_data["farmedMonsters"]:
                         monster_dict["owner_nickname"] = player_game_data.get("nickname", user_doc.id) # type: ignore
                         monster_dict["owner_id"] = user_doc.id # type: ignore
-                        
-                        # 新增: 如果需要，包含 baseId
-                        if include_base_id:
-                            # 對於玩家組合的怪獸，baseId 可以是構成 DNA 的第一個 ID
-                            # 如果沒有構成 DNA，則使用自己的 ID 作為 baseId (例如初始怪獸)
-                            monster_dict["baseId"] = monster_dict.get("constituent_dna_ids", [monster_dict["id"]])[0] # type: ignore
-
                         all_monsters.append(monster_dict) # type: ignore
 
         npc_monsters_templates: List[Monster] = game_configs.get("npc_monsters", DEFAULT_GAME_CONFIGS_FOR_LEADERBOARD["npc_monsters"]) # type: ignore
@@ -79,12 +72,6 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10, 
                     npc["owner_id"] = "NPC"
                 if "owner_nickname" not in npc:
                     npc["owner_nickname"] = "遊戲系統"
-                
-                # 新增: 如果需要，包含 baseId
-                if include_base_id:
-                    # 對於 NPC，baseId 就是其自身的 ID
-                    npc["baseId"] = npc["id"] # type: ignore
-                
             all_monsters.extend(copied_npcs)
 
         all_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)

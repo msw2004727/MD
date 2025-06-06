@@ -1,9 +1,6 @@
 // js/api-client.js
 
-// 注意：此檔案依賴於 js/config.js 中的 API_BASE_URL 和 js/auth.js 中的 getCurrentUserToken
-
-const MAX_RETRIES = 3; // 最大重試次數
-const RETRY_DELAY_MS = 1000; // 重試之間的延遲時間 (毫秒)
+// 注意：這個檔案依賴於 js/config.js 中的 API_BASE_URL 和 js/auth.js 中的 getCurrentUserToken
 
 /**
  * 輔助函數，用於發送 fetch 請求並處理常見的錯誤。
@@ -27,50 +24,34 @@ async function fetchAPI(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     // console.log(`Fetching: ${options.method || 'GET'} ${url}`, options.body ? `with body: ${options.body}` : '');
 
-    for (let i = 0; i < MAX_RETRIES; i++) {
-        try {
-            const response = await fetch(url, { ...options, headers });
+    try {
+        const response = await fetch(url, { ...options, headers });
 
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    // 如果回應不是 JSON，或者解析失敗
-                    errorData = { message: response.statusText, status: response.status };
-                }
-                const error = new Error(errorData.error || errorData.message || `HTTP error ${response.status}`);
-                error.status = response.status;
-                error.data = errorData;
-                console.error(`API Error (${url}): ${error.status} - ${error.message}`, errorData);
-
-                // 對於 5xx 錯誤 (伺服器錯誤) 或網路錯誤，嘗試重試
-                if ((response.status >= 500 || response.status === 0) && i < MAX_RETRIES - 1) {
-                    console.warn(`Retrying API call to ${url} (attempt ${i + 1}/${MAX_RETRIES})...`);
-                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (i + 1))); // 增加延遲時間
-                    continue; // 繼續下一次重試
-                }
-                throw error; // 非重試錯誤或已達最大重試次數，拋出錯誤
+        if (!response.ok) {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                // 如果回應不是 JSON，或者解析失敗
+                errorData = { message: response.statusText, status: response.status };
             }
-
-            // 如果回應狀態碼是 204 (No Content)，則不嘗試解析 JSON
-            if (response.status === 204) {
-                return null;
-            }
-            return await response.json();
-        } catch (error) {
-            console.error(`Fetch API Error for ${url}:`, error);
-            // 對於網路錯誤 (例如 CORS 錯誤、連線中斷等)，也嘗試重試
-            if (i < MAX_RETRIES - 1 && (error instanceof TypeError || error.message.includes("Failed to fetch"))) {
-                console.warn(`Retrying API call to ${url} due to network error (attempt ${i + 1}/${MAX_RETRIES})...`);
-                await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (i + 1))); // 增加延遲時間
-                continue;
-            }
-            // 向上拋出錯誤，讓調用者處理
+            const error = new Error(errorData.error || errorData.message || `HTTP error ${response.status}`);
+            error.status = response.status;
+            error.data = errorData;
+            console.error(`API Error (${url}): ${error.status} - ${error.message}`, errorData);
             throw error;
         }
+
+        // 如果回應狀態碼是 204 (No Content)，則不嘗試解析 JSON
+        if (response.status === 204) {
+            return null; 
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Fetch API Error for ${url}:`, error);
+        // 向上拋出錯誤，讓調用者處理
+        throw error;
     }
-    // 如果所有重試都失敗，這裡會隱含地拋出最後一個錯誤
 }
 
 // --- API 函數 ---
@@ -256,9 +237,7 @@ async function replaceMonsterSkill(monsterId, slotIndex, newSkillTemplate) {
  * @returns {Promise<Array<object>>} 怪獸排行榜列表
  */
 async function getMonsterLeaderboard(topN = 10) {
-    // 移除: return fetchAPI(`/leaderboard/monsters?top_n=${topN}`);
-    // 新增: 加入 include_base_id=true 參數
-    return fetchAPI(`/leaderboard/monsters?top_n=${topN}&include_base_id=true`);
+    return fetchAPI(`/leaderboard/monsters?top_n=${topN}`);
 }
 
 /**
