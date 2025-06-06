@@ -647,127 +647,126 @@ function renderTemporaryBackpack() {
     });
 }
 
+// ▼▼▼ JS 邏輯修正 ▼▼▼
 function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersListContainer;
-    const farmHeaders = DOMElements.farmHeaders;
-    if (!listContainer || !farmHeaders) return;
+    const farmTableWrapper = listContainer ? listContainer.parentElement : null;
+
+    if (!listContainer || !farmTableWrapper) {
+        console.error("怪物農場的容器元素未找到。");
+        return;
+    }
 
     listContainer.innerHTML = '';
 
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
-        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
-        if(farmHeaders) { // Check if farmHeaders exists
-            const wrapper = farmHeaders.closest('.farm-scroll-wrapper');
-            if (wrapper) {
-                // Hide the entire scrollable wrapper if there are no monsters
-                wrapper.style.display = 'none';
-            }
-        }
-        return;
-    }
-    const wrapper = farmHeaders.closest('.farm-scroll-wrapper');
-    if (wrapper) {
-        wrapper.style.display = 'block';
-    }
-
-
-    gameState.playerData.farmedMonsters.forEach(monster => {
-        const item = document.createElement('div');
-        item.classList.add('farm-monster-item');
-        
-        const isDeployed = gameState.selectedMonsterId === monster.id;
-        if (isDeployed) {
-            item.classList.add('selected');
-        }
-
-        item.dataset.monsterId = monster.id;
-
-        let statusText = "待命中";
-        let statusClass = "status-idle";
-        if (monster.farmStatus) {
-            if (isDeployed) {
-                statusText = "出戰中"; 
-                statusClass = "status-battling";
-            } else if (monster.farmStatus.isTraining) {
-                const endTime = (monster.farmStatus.trainingStartTime || 0) + (monster.farmStatus.trainingDuration || 0);
-                let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-                statusText = remainingTime > 0 ? `修煉中 (${remainingTime}s)` : "發呆中";
-                statusClass = remainingTime > 0 ? "status-training" : "status-idle";
-            }
-        }
-
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
-        const displayName = monster.custom_element_nickname || defaultElementName;
-        
-        const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
-        const battleButtonClass = isDeployed ? 'danger' : 'success';
-        const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-
-        item.innerHTML = `
-            <div class="farm-col farm-col-battle">
-                <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
-                    ${battleButtonIcon}
-                </button>
-            </div>
-            <div class="farm-col farm-col-info">
-                <strong class="monster-name-display">${displayName}</strong>
-                <div class="monster-details-display">
-                    ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
+        // 當沒有怪獸時，顯示提示訊息，但保持表頭可見，這樣整體結構不會崩潰
+        listContainer.innerHTML = `
+            <div class="farm-monster-item" style="grid-template-columns: 1fr;">
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-secondary); padding: 1rem 0;">
+                    農場空空如也，快去組合怪獸吧！
                 </div>
-            </div>
-            <div class="farm-col farm-col-rarity">
-                <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
-            </div>
-             <div class="farm-col farm-col-score">
-                <span class="score-value">${monster.score || 0}</span>
-            </div>
-            <div class="farm-col farm-col-status">
-                <span class="status-text ${statusClass}">${statusText}</span>
-            </div>
-            <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
-                <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
-                        title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
-                        ${isDeployed ? 'disabled' : ''}>
-                    ${monster.farmStatus?.isTraining ? '結束' : '修煉'}
-                </button>
-                <button class="farm-monster-release-btn button danger text-xs" ${monster.farmStatus?.isTraining || isDeployed ? 'disabled' : ''}>放生</button>
-            </div>
-        `;
-
-        item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleDeployMonsterClick(monster.id);
-        });
-        
-        item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            updateMonsterInfoModal(monster, gameState.gameConfigs);
-            showModal('monster-info-modal');
-        });
-
-        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (monster.farmStatus?.isTraining) {
-                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-            } else {
-                handleCultivateMonsterClick(e, monster.id);
+            </div>`;
+    } else {
+        gameState.playerData.farmedMonsters.forEach(monster => {
+            const item = document.createElement('div');
+            item.classList.add('farm-monster-item');
+            
+            const isDeployed = gameState.selectedMonsterId === monster.id;
+            if (isDeployed) {
+                item.classList.add('selected');
             }
-        });
 
-        item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleReleaseMonsterClick(e, monster.id);
-        });
+            item.dataset.monsterId = monster.id;
 
-        listContainer.appendChild(item);
-    });
+            let statusText = "待命中";
+            let statusClass = "status-idle";
+            if (monster.farmStatus) {
+                if (isDeployed) {
+                    statusText = "出戰中"; 
+                    statusClass = "status-battling";
+                } else if (monster.farmStatus.isTraining) {
+                    const endTime = (monster.farmStatus.trainingStartTime || 0) + (monster.farmStatus.trainingDuration || 0);
+                    let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+                    statusText = remainingTime > 0 ? `修煉中 (${remainingTime}s)` : "發呆中";
+                    statusClass = remainingTime > 0 ? "status-training" : "status-idle";
+                }
+            }
+
+            const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+            const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
+            const displayName = monster.custom_element_nickname || defaultElementName;
+            
+            const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
+            const battleButtonClass = isDeployed ? 'danger' : 'success';
+            const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
+
+            item.innerHTML = `
+                <div class="farm-col farm-col-battle">
+                    <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
+                        ${battleButtonIcon}
+                    </button>
+                </div>
+                <div class="farm-col farm-col-info">
+                    <strong class="monster-name-display">${displayName}</strong>
+                    <div class="monster-details-display">
+                        ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
+                    </div>
+                </div>
+                <div class="farm-col farm-col-rarity">
+                    <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
+                </div>
+                 <div class="farm-col farm-col-score">
+                    <span class="score-value">${monster.score || 0}</span>
+                </div>
+                <div class="farm-col farm-col-status">
+                    <span class="status-text ${statusClass}">${statusText}</span>
+                </div>
+                <div class="farm-col farm-col-actions">
+                    <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
+                    <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
+                            title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
+                            ${isDeployed ? 'disabled' : ''}>
+                        ${monster.farmStatus?.isTraining ? '結束' : '修煉'}
+                    </button>
+                    <button class="farm-monster-release-btn button danger text-xs" ${monster.farmStatus?.isTraining || isDeployed ? 'disabled' : ''}>放生</button>
+                </div>
+            `;
+
+            item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleDeployMonsterClick(monster.id);
+            });
+            
+            item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                updateMonsterInfoModal(monster, gameState.gameConfigs);
+                showModal('monster-info-modal');
+            });
+
+            item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (monster.farmStatus?.isTraining) {
+                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+                } else {
+                    handleCultivateMonsterClick(e, monster.id);
+                }
+            });
+
+            item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleReleaseMonsterClick(e, monster.id);
+            });
+
+            listContainer.appendChild(item);
+        });
+    }
 
     if (!gameState.farmTimerInterval) {
         gameState.farmTimerInterval = setInterval(renderMonsterFarm, 1000);
     }
 }
+// ▲▲▲ JS 邏輯修正 ▲▲▲
 
 function updatePlayerInfoModal(playerData, gameConfigs) {
     const body = DOMElements.playerInfoModalBody;
@@ -839,6 +838,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     `;
 }
 
+// ▼▼▼ JS 內容修正 ▼▼▼
 function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
         console.error("Monster info modal elements not found in DOMElements.");
@@ -854,7 +854,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    // 2. 怪獸名稱依稀有度上色
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
             ${monster.nickname}
@@ -862,10 +861,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
-    // 4 & 5. 元素標籤加大字體並上色
     let elementsDisplay = (monster.elements || []).map(el => {
         const elClass = typeof el === 'string' ? `text-element-${el.toLowerCase()}` : '';
-        // 使用 text-sm 加大字體, 增加 padding, 應用顏色
         return `<span class="text-sm px-3 py-1 rounded-full ${elClass} bg-element-${el.toLowerCase()}-bg mr-1">${el}</span>`;
     }).join('');
 
@@ -887,7 +884,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
             const skillTypeClass = typeof skill.type === 'string' ? `text-element-${skill.type.toLowerCase()}` : '';
-            // 3. 使用 description 欄位取代 story
             const description = skill.description || '暫無描述';
             return `
             <div class="skill-entry">
@@ -899,12 +895,10 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         `}).join('');
     }
 
-    // ▼▼▼ 修改開始 ▼▼▼
     const personality = monster.personality || { name: '未知' };
     const aiPersonality = monster.aiPersonality || 'AI 個性分析生成中或失敗...';
     const aiIntroduction = monster.aiIntroduction || 'AI 背景介紹生成中或失敗...';
 
-    // 1. 重新設計排版，將技能列表放到右側，並確保左右兩欄等高
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
             <!-- Left Column: Basic Stats -->
@@ -937,20 +931,20 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
 
-        <!-- NEW: Full-Width AI Personality Section -->
+        <!-- AI Personality Section -->
         <div class="details-section mt-3">
             <h5 class="details-section-title">AI 個性分析</h5>
             <p class="ai-generated-text text-sm">${aiPersonality}</p>
         </div>
 
-        <!-- UPDATED: Full-Width AI Introduction Section -->
+        <!-- Comprehensive Evaluation (using aiIntroduction) -->
         <div class="details-section mt-3">
-            <h5 class="details-section-title">背景介紹</h5>
+            <h5 class="details-section-title">綜合評價</h5>
             <p class="ai-generated-text text-sm">${aiIntroduction}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
-    // ▲▲▲ 修改結束 ▲▲▲
+    // ▲▲▲ JS 內容修正 ▲▲▲
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
