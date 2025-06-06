@@ -770,7 +770,7 @@ function renderMonsterFarm() {
                 <span class="status-text ${statusClass}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
+                <button class="farm-monster-info-btn button success text-xs">資訊</button>
                 <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
                         title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
@@ -1004,7 +1004,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
     if (!container) return;
-    container.innerHTML = '';
+    
+    // MODIFICATION: Add check for empty or invalid guideEntries
+    if (!guideEntries || guideEntries.length === 0) {
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">新手指南內容正在準備中...</p>`;
+        return;
+    }
 
     const filteredEntries = guideEntries.filter(entry =>
         entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1094,8 +1099,12 @@ function updateLeaderboardTable(tableType, data) {
     }
 
     data.forEach((item, index) => {
-        const row = tbody.insertCell();
-        row.textContent = index + 1;
+        // ====== MODIFICATION START: Leaderboard bug fix ======
+        const row = tbody.insertRow(); // Use insertRow() to create a <tr> element
+        
+        const rankCell = row.insertCell(); // Add cells to the new row
+        rankCell.textContent = index + 1;
+        // ====== END MODIFICATION ======
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
@@ -1324,4 +1333,4 @@ function updateScrollingHints(hintsArray) {
     });
 }
 
-console.log("UI module loaded - v8 with farm layout fixes.");
+console.log("UI module loaded - v9 with bug fixes and enhancements.");
