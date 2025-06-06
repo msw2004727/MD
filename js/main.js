@@ -60,17 +60,19 @@ async function initializeGame() {
             if (DOMElements.maxCultivationTimeText && configs.value_settings) {
                 DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
             }
-            const gameHints = [
-                `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
-                "💡 稀有度越高的DNA，基礎能力越強！",
-                "💡 嘗試不同的DNA組合，發掘隱藏的強力怪獸！",
-                "💡 完成修煉有機會領悟新技能！",
-                "💡 記得查看新手指南，了解更多遊戲訣竅！"
-            ];
-            if (configs.newbie_guide && configs.newbie_guide.length > 0) {
-                gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0,20)}...`);
-            }
-            if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
+            // MODIFICATION START: Removed scrolling hints related code
+            // const gameHints = [
+            //     `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
+            //     "💡 稀有度越高的DNA，基礎能力越強！",
+            //     "💡 嘗試不同的DNA組合，發掘隱藏的強力怪獸！",
+            //     "💡 完成修煉有機會領悟新技能！",
+            //     "💡 記得查看新手指南，了解更多遊戲訣竅！"
+            // ];
+            // if (configs.newbie_guide && configs.newbie_guide.length > 0) {
+            //     gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0,20)}...`);
+            // }
+            // if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
+            // MODIFICATION END
         } else {
             throw new Error("無法獲取遊戲核心設定。");
         }
