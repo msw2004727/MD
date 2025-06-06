@@ -375,31 +375,10 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 
 function getMonsterPartImagePath(dnaTemplateId) {
     if (!dnaTemplateId || !gameState.gameConfigs || !gameState.gameConfigs.dna_fragments) {
-        return { isPlaceholder: true }; 
+        return null; 
     }
     const dnaTemplate = gameState.gameConfigs.dna_fragments.find(d => d.id === dnaTemplateId);
-    if (!dnaTemplate) {
-        return { isPlaceholder: true }; 
-    }
-
-    const elementTypeMap = {
-        '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
-        '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
-    };
-    const typeKey = dnaTemplate.type ? (elementTypeMap[dnaTemplate.type] || dnaTemplate.type.toLowerCase()) : '無';
-    const rarityMap = {
-        '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical'
-    };
-    const rarityKey = dnaTemplate.rarity ? (rarityMap[dnaTemplate.rarity] || dnaTemplate.rarity.toLowerCase()) : 'common';
-
-    return {
-        isPlaceholder: false,
-        elementType: dnaTemplate.type,
-        typeClass: typeKey,
-        rarity: dnaTemplate.rarity,
-        rarityClass: rarityKey,
-        nameAbbr: dnaTemplate.name.substring(0,2)
-    };
+    return dnaTemplate || null;
 }
 
 
@@ -414,12 +393,9 @@ function clearMonsterBodyPartsDisplay() {
     for (const partName in partsMap) {
         const partElement = partsMap[partName];
         if (partElement) {
-            partElement.style.backgroundImage = 'none';
+            applyDnaItemStyle(partElement, null); // Use the main styling function to clear
+            partElement.innerHTML = ''; // Ensure no leftover text
             partElement.classList.add('empty-part');
-            partElement.textContent = '';
-            partElement.style.backgroundColor = '';
-            partElement.style.color = '';
-            partElement.style.borderColor = '';
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -474,34 +450,14 @@ function updateMonsterSnapshot(monster) {
             monster.constituent_dna_ids.forEach((dnaBaseId, index) => {
                 const partElement = partsMap[index];
                 if (partElement) {
-                    const dnaInfo = getMonsterPartImagePath(dnaBaseId);
-
-                    if (!dnaInfo.isPlaceholder) {
-                        const elementTypeMap = {
-                            '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
-                            '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
-                        };
-                        const typeClass = elementTypeMap[dnaInfo.elementType] || dnaInfo.elementType.toLowerCase();
-                        const rarityClass = dnaInfo.rarity.toLowerCase();
-
-                        partElement.style.backgroundColor = `var(--element-${typeClass}-bg)`;
-                        partElement.style.color = `var(--rarity-${rarityClass}-text)`;
-                        partElement.style.borderColor = `var(--rarity-${rarityClass}-text)`;
-                        partElement.style.backgroundImage = 'none';
+                    const dnaTemplate = getMonsterPartImagePath(dnaBaseId);
+                    applyDnaItemStyle(partElement, dnaTemplate); // Use the styling function
+                    if (dnaTemplate) {
+                        partElement.innerHTML = `<span class="dna-name-text">${dnaTemplate.name}</span>`;
                         partElement.classList.remove('empty-part');
-                        partElement.textContent = dnaInfo.nameAbbr;
-                        partElement.style.fontWeight = 'bold';
-                        partElement.style.fontSize = '0.75rem';
-                        partElement.style.display = 'flex';
-                        partElement.style.alignItems = 'center';
-                        partElement.style.justifyContent = 'center';
                     } else {
-                        partElement.style.backgroundImage = 'none';
+                        partElement.innerHTML = '';
                         partElement.classList.add('empty-part');
-                        partElement.textContent = '??';
-                        partElement.style.backgroundColor = 'transparent';
-                        partElement.style.color = 'var(--text-secondary)';
-                        partElement.style.borderColor = 'var(--border-color)';
                     }
                 }
             });
@@ -533,18 +489,15 @@ function applyDnaItemStyle(element, dnaData) {
     if (!element) return;
 
     if (!dnaData) {
-        element.style.backgroundColor = 'var(--bg-slot)';
+        element.style.backgroundColor = '';
+        element.style.color = '';
+        element.style.borderColor = '';
         const nameSpan = element.querySelector('.dna-name-text');
         if (nameSpan) {
-            nameSpan.style.color = 'var(--text-secondary)';
             nameSpan.textContent = "空位";
         }
-        else element.style.color = 'var(--text-secondary)';
-        element.style.borderColor = 'var(--border-color)';
         element.classList.add('empty');
         element.classList.remove('occupied');
-        const rarityBadge = element.querySelector('.dna-rarity-badge');
-        if (rarityBadge) rarityBadge.style.display = 'none';
         return;
     }
 
@@ -566,18 +519,15 @@ function applyDnaItemStyle(element, dnaData) {
 
     let rarityTextColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
 
+    element.style.color = rarityTextColorVar;
+    element.style.borderColor = rarityTextColorVar;
+    
+    // Ensure the name is displayed
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
-        nameSpan.style.color = rarityTextColorVar;
         nameSpan.textContent = dnaData.name || '未知DNA';
     } else {
-        element.style.color = rarityTextColorVar;
-    }
-    element.style.borderColor = rarityTextColorVar;
-
-    const rarityBadge = element.querySelector('.dna-rarity-badge');
-    if (rarityBadge) {
-        rarityBadge.style.display = 'none';
+        element.innerHTML = `<span class="dna-name-text">${dnaData.name || '未知DNA'}</span>`;
     }
 }
 
@@ -592,11 +542,11 @@ function renderDNACombinationSlots() {
         slot.dataset.slotIndex = index;
         const nameSpan = document.createElement('span');
         nameSpan.classList.add('dna-name-text');
+        slot.appendChild(nameSpan);
 
         if (dna && dna.id) {
             slot.classList.add('occupied');
             nameSpan.textContent = dna.name || '未知DNA';
-            slot.appendChild(nameSpan);
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
@@ -605,7 +555,6 @@ function renderDNACombinationSlots() {
             slot.dataset.slotIndex = index;
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
-            slot.appendChild(nameSpan);
             slot.classList.add('empty');
             applyDnaItemStyle(slot, null);
             slot.dataset.slotIndex = index;
@@ -650,6 +599,7 @@ function renderPlayerDNAInventory() {
                 item.draggable = true;
                 item.dataset.dnaSource = 'inventory';
                 applyDnaItemStyle(item, null);
+                nameSpan.textContent = '空位';
             }
         }
         container.appendChild(item);
@@ -689,7 +639,7 @@ function renderTemporaryBackpack() {
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
         } else {
             slot.classList.add('empty');
-            slot.textContent = `空位`;
+            slot.innerHTML = `<span class="dna-name-text">空位</span>`;
             applyDnaItemStyle(slot, null);
             slot.draggable = false;
         }
