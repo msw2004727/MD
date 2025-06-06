@@ -739,10 +739,6 @@ function renderMonsterFarm() {
                 statusClass = remainingTime > 0 ? "status-training" : "status-idle";
             }
         }
-
-        const elementsDisplay = (monster.elements || []).map(el =>
-            `<span class="text-xs px-1 py-0.5 rounded-full text-element-${String(el).toLowerCase()} bg-element-${String(el).toLowerCase()}-bg">${el}</span>`
-        ).join(' ');
         
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
@@ -759,10 +755,16 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <strong class="monster-name-display">${displayName} (評價: ${monster.score || 0})</strong>
+                <strong class="monster-name-display">${displayName}</strong>
                 <div class="monster-details-display">
-                    ${elementsDisplay} <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
+                    ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
                 </div>
+            </div>
+            <div class="farm-col farm-col-rarity">
+                <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
+            </div>
+             <div class="farm-col farm-col-score">
+                <span class="score-value">${monster.score || 0}</span>
             </div>
             <div class="farm-col farm-col-status">
                 <span class="status-text ${statusClass}">${statusText}</span>
@@ -778,7 +780,6 @@ function renderMonsterFarm() {
             </div>
         `;
 
-        // MODIFICATION: Removed row click listener, added specific button listeners
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
@@ -1263,7 +1264,7 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (winnerName) {
         const winnerP = document.createElement('p');
         winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！�`;
+        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
         DOMElements.battleLogArea.appendChild(winnerP);
     } else if (loserName && logEntries.some(l => l.includes("平手"))) {
          const drawP = document.createElement('p');
