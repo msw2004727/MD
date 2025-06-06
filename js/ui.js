@@ -151,7 +151,6 @@ function initializeDOMElements() {
         officialAnnouncementModal: document.getElementById('official-announcement-modal'),
         officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
         announcementPlayerName: document.getElementById('announcement-player-name'),
-        // REMOVED: scrollingHintsContainer: document.querySelector('.scrolling-hints-container'),
     };
     console.log("DOMElements initialized in ui.js");
 }
@@ -194,41 +193,41 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         return;
     }
     DOMElements.feedbackModalTitle.textContent = title;
-    DOMElements.feedbackModalMessage.innerHTML = message;
+    
+    // 清理之前的內容
+    DOMElements.feedbackModalMessage.innerHTML = ''; // 清空主訊息區域
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
-
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
-    
     const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    const existingBanner = feedbackModalBody.querySelector('#monster-banner-container');
+    const existingBanner = feedbackModalBody ? feedbackModalBody.querySelector('#monster-banner-container') : null;
     if (existingBanner) existingBanner.remove();
-    const existingBasicStats = feedbackModalBody.querySelector('.feedback-monster-basic-stats');
+    const existingBasicStats = feedbackModalBody ? feedbackModalBody.querySelector('.feedback-monster-basic-stats') : null;
     if (existingBasicStats) existingBasicStats.remove();
 
 
     if (monsterDetails) {
+        // 如果傳入怪獸物件，則渲染新的卡片式彈窗
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
 
-        const primaryElement = monsterDetails.elements && monsterDetails.elements.length > 0 ? monsterDetails.elements[0] : '無';
-        const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
+        // 圖片預留位 (橫幅)
         const monsterBannerPath = `https://placehold.co/700x150/4a5568/a0aec0?text=${encodeURIComponent(monsterDetails.nickname || '新怪獸')}+Banner&font=noto-sans-tc`;
-
         const bannerContainer = document.createElement('div');
         bannerContainer.id = 'monster-banner-container';
         bannerContainer.innerHTML = `<img src="${monsterBannerPath}" alt="${monsterDetails.nickname || '新怪獸'} Banner" class="w-full h-auto rounded-md object-cover">`;
         DOMElements.feedbackModalTitle.after(bannerContainer);
 
-
+        // 基本數值欄
         const basicStatsContainer = document.createElement('div');
         basicStatsContainer.className = 'feedback-monster-basic-stats text-center py-3';
-        let elementsDisplay = monsterDetails.elements.map(el => {
+        let elementsDisplay = (monsterDetails.elements || []).map(el => {
             const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
             return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
         }).join('');
-
+        const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
+        
         basicStatsContainer.innerHTML = `
             <div class="feedback-monster-stats-grid">
                 <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
@@ -244,39 +243,40 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         `;
         bannerContainer.after(basicStatsContainer);
 
-
+        // 中間的文字訊息
+        let discoveryMessage = "是這個世界誕生的第 N 隻"; // Placeholder, N 可以在後端生成
+        if (monsterDetails.activityLog && monsterDetails.activityLog.some(log => log.message.includes("首次發現新配方"))) {
+            discoveryMessage = "<span class='text-[var(--rarity-legendary-text)]'>是這個世界首次發現的稀有品種！</span>";
+        }
+        
         DOMElements.feedbackModalMessage.innerHTML = `
             <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
-            ${message}
+            <p class="text-center text-sm text-[var(--text-secondary)]">${message}</p>
+            <p class="text-center text-sm text-[var(--text-secondary)] mt-1">${discoveryMessage}</p>
         `;
 
-
+        // 底部的 AI 生成內容 (只留綜合評價)
         DOMElements.feedbackMonsterDetails.innerHTML = `
-            <div class="feedback-monster-ai-grid mt-4">
-                <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">AI 個性分析</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
-                </div>
-                <div class="feedback-monster-info-section">
-                    <h5 class="feedback-monster-info-title">AI 背景介紹</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
-                </div>
-                <div class="feedback-monster-info-section col-span-full">
-                    <h5 class="feedback-monster-info-title">AI 綜合評價與培養建議</h5>
-                    <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
-                </div>
+            <div class="details-section mt-3">
+                 <h5 class="details-section-title">綜合評價</h5>
+                 <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價生成中或失敗...'}</p>
             </div>
             <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
         `;
+        DOMElements.feedbackModal.querySelector('.modal-content').classList.add('large-feedback-modal');
+    } else {
+        // 如果沒有傳入怪獸物件，則使用舊的簡單訊息顯示方式
+        DOMElements.feedbackModalMessage.innerHTML = message;
+        DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
     }
 
+    // 處理按鈕
     let footer = DOMElements.feedbackModal.querySelector('.modal-footer');
     if (footer) footer.remove();
 
-    const newFooter = document.createElement('div');
-    newFooter.className = 'modal-footer';
-
     if (actionButtons && actionButtons.length > 0) {
+        const newFooter = document.createElement('div');
+        newFooter.className = 'modal-footer';
         actionButtons.forEach(btnConfig => {
             const button = document.createElement('button');
             button.textContent = btnConfig.text;
@@ -287,9 +287,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             };
             newFooter.appendChild(button);
         });
+        const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
+        if (modalContent) modalContent.appendChild(newFooter);
     }
-    const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
-    if (modalContent) modalContent.appendChild(newFooter);
 
 
     if (DOMElements.feedbackModalCloseX) {
@@ -297,8 +297,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
     }
     
-    DOMElements.feedbackModal.querySelector('.modal-content').classList.add('large-feedback-modal');
-
     showModal('feedback-modal');
 }
 
@@ -451,11 +449,9 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
-        // ====== MODIFICATION: Remove attribute text from snapshot ======
         if (DOMElements.snapshotMainContent) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
-        // ====== END MODIFICATION ======
 
         const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -898,13 +894,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--accent-color))`;
     
-    // ====== MODIFICATION: Hide ID, apply rarity color to name ======
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
             ${monster.nickname}
         </h4>
     `;
-    // ====== END MODIFICATION ======
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
     let elementsDisplay = monster.elements.map(el => {
@@ -939,17 +933,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         `}).join('');
     }
 
-    const personality = monster.personality || { name: '未知', description: '個性不明' };
-    const aiPersonality = monster.aiPersonality || 'AI 個性描述生成中或失敗...';
-    const aiIntroduction = monster.aiIntroduction || 'AI 介紹生成中或失敗...';
-    const aiEvaluation = monster.aiEvaluation || 'AI 綜合評價與培養建議...';
+    const personality = monster.personality || { name: '未知' };
+    const aiEvaluation = monster.aiEvaluation || 'AI 綜合評價生成中或失敗...';
 
     detailsBody.innerHTML = `
-        <div class="details-grid">
+        <div class="details-grid compact">
             <div class="details-section">
                 <h5 class="details-section-title">基礎屬性</h5>
                 <div class="details-item"><span class="details-label">元素:</span> <span class="details-value">${elementsDisplay}</span></div>
                 <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
+                <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold text-[var(--accent-color)]">${personality.name}</span></div>
                 <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
                 <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
                 <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
@@ -964,21 +957,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
         <div class="details-section mt-3">
-            <h5 class="details-section-title">個性</h5>
-            <p class="font-semibold text-[var(--accent-color)]">${personality.name}</p>
-            <p class="personality-text text-sm">${personality.description}</p>
-        </div>
-        <div class="details-section mt-3">
             <h5 class="details-section-title">技能列表 (最多 ${maxSkills} 個)</h5>
             ${skillsHtml}
         </div>
         <div class="details-section mt-3">
-            <h5 class="details-section-title">AI 深度解析</h5>
-            <p class="font-semibold">AI 個性分析:</p>
-            <p class="ai-generated-text text-sm">${aiPersonality}</p>
-            <p class="font-semibold mt-2">AI 背景介紹:</p>
-            <p class="ai-generated-text text-sm">${aiIntroduction}</p>
-            <p class="font-semibold mt-2">AI 綜合評價與培養建議:</p>
+            <h5 class="details-section-title">綜合評價</h5>
             <p class="ai-generated-text text-sm">${aiEvaluation}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
@@ -1000,6 +983,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         }
     }
 }
+
 
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
@@ -1305,7 +1289,5 @@ function updateAnnouncementPlayerName(playerName) {
         DOMElements.announcementPlayerName.textContent = playerName || "玩家";
     }
 }
-
-// REMOVED: function updateScrollingHints(hintsArray) { ... }
 
 console.log("UI module loaded - v8 with farm layout fixes.");
