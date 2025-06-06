@@ -3851,4 +3851,4 @@ def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs)
 def heal_monster_service(
     player_id: str,
     monster_id: str,
-    heal_type: Literal["full_hp", "full_mp", "
+    heal_type: Literal["full_hp", "full_mp"]
