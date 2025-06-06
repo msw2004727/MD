@@ -9,7 +9,7 @@ import logging
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service
 from .monster_combination_services import combine_dna_service
-from .monster_management_services import (
+from .monster_management_services import ( # 這裡包含了所有怪獸管理相關服務，現在它們都來自這個模組
     update_monster_custom_element_nickname_service,
     absorb_defeated_monster_service,
     heal_monster_service,
@@ -231,7 +231,7 @@ def combine_dna_api_route():
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
-        consumed_dna_indices = combine_result["consumed_dna_indices"] # 獲取被消耗的 DNA 索引
+        # consumed_dna_indices = combine_result["consumed_dna_indices"] # 從服務返回的結果中獲取
 
         current_farmed_monsters = player_data.get("farmedMonsters", [])
         MAX_FARM_SLOTS = game_configs.get("value_settings", {}).get("max_farm_slots", 10)
@@ -245,14 +245,8 @@ def combine_dna_api_route():
                     player_stats_achievements.append("首次組合怪獸")
                 player_data["playerStats"]["achievements"] = player_stats_achievements
 
-            # 在這裡，根據 combine_result 中返回的 consumed_dna_indices 來將 playerOwnedDNA 中的對應位置設為 None
-            for idx_to_consume in consumed_dna_indices:
-                if 0 <= idx_to_consume < len(player_data["playerOwnedDNA"]):
-                    player_data["playerOwnedDNA"][idx_to_consume] = None
-                else:
-                    routes_logger.warning(f"警告：嘗試消耗無效的 DNA 索引 {idx_to_consume}。")
-
-
+            # 在這裡，combine_dna_service 已經在它內部修改了 player_data["playerOwnedDNA"]
+            # 所以這裡只需要保存 player_data
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
             else:
@@ -404,6 +398,25 @@ def simulate_battle_api_route():
                  routes_logger.info(f"提示 (simulate_battle_api_route)：怪獸 {monster1_data_req.get('nickname')} 是 NPC，戰績不記錄到玩家。")
 
     return jsonify(battle_result), 200
+
+
+@md_bp.route('/generate-ai-descriptions', methods=['POST'])
+def generate_ai_descriptions_route():
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response: return error_response
+
+    data = request.json
+    monster_data = data.get('monster_data')
+    if not monster_data:
+        return jsonify({"error": "請求中缺少怪獸資料。"}), 400
+
+    try:
+        from .MD_ai_services import generate_monster_ai_details as generate_ai_details_inner # 避免循環導入
+        ai_details = generate_ai_details_inner(monster_data)
+        return jsonify(ai_details), 200
+    except Exception as e:
+        routes_logger.error(f"生成AI描述時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "生成AI描述失敗。", "details": str(e)}), 500
 
 
 @md_bp.route('/monster/<monster_id>/update-nickname', methods=['POST'])
