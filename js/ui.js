@@ -842,8 +842,9 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 
     const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
-    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--accent-color))`;
+    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
+    // 2. 怪獸名稱依稀有度上色
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
             ${monster.nickname}
@@ -851,9 +852,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
-    let elementsDisplay = monster.elements.map(el => {
+    // 4 & 5. 元素標籤加大字體並上色
+    let elementsDisplay = (monster.elements || []).map(el => {
         const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
-        return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
+        // 使用 text-sm 加大字體, 增加 padding
+        return `<span class="text-sm px-3 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
     }).join('');
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
@@ -863,7 +866,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             if (value === 0) continue;
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
-            resistancesHtml += `<li>${element}: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
+            const elClass = typeof element === 'string' ? `text-element-${element.toLowerCase()}` : '';
+            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -872,12 +876,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            const skillTypeClass = typeof skill.type === 'string' ? skill.type.toLowerCase() : '無';
+            const skillTypeClass = typeof skill.type === 'string' ? `text-element-${skill.type.toLowerCase()}` : '';
+            // 3. 使用 description 欄位取代 story
+            const description = skill.description || '暫無描述';
             return `
             <div class="skill-entry">
-                <span class="skill-name text-element-${skillTypeClass}">${skill.name} (Lv.${skill.level || 1})</span>
+                <span class="skill-name ${skillTypeClass}">${skill.name} (Lv.${skill.level || 1})</span>
                 <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
-                <p class="skill-details text-xs">${skill.story || skill.description || '暫無描述'}</p>
+                <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? `<p class="text-xs text-[var(--text-secondary)]">經驗: ${skill.current_exp}/${skill.exp_to_next_level || '-'}</p>` : ''}
             </div>
         `}).join('');
@@ -886,13 +892,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const personality = monster.personality || { name: '未知' };
     const aiEvaluation = monster.aiEvaluation || 'AI 綜合評價生成中或失敗...';
 
+    // 1. 重新設計排版，將技能列表放到右側
     detailsBody.innerHTML = `
-        <div class="details-grid compact">
+        <div class="details-grid-rearranged">
+            <!-- Left Column: Basic Stats -->
             <div class="details-section">
                 <h5 class="details-section-title">基礎屬性</h5>
                 <div class="details-item"><span class="details-label">元素:</span> <span class="details-value">${elementsDisplay}</span></div>
                 <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold text-[var(--accent-color)]">${personality.name}</span></div>
+                <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold" style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name}</span></div>
                 <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
                 <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
                 <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
@@ -901,15 +909,21 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%</span></div>
                 <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
             </div>
-            <div class="details-section">
-                <h5 class="details-section-title">元素抗性</h5>
-                ${resistancesHtml}
+
+            <!-- Right Column: Resistances and Skills -->
+            <div class="details-column-right">
+                <div class="details-section">
+                    <h5 class="details-section-title">元素抗性</h5>
+                    ${resistancesHtml}
+                </div>
+                <div class="details-section">
+                    <h5 class="details-section-title">技能列表 (最多 ${maxSkills} 個)</h5>
+                    ${skillsHtml}
+                </div>
             </div>
         </div>
-        <div class="details-section mt-3">
-            <h5 class="details-section-title">技能列表 (最多 ${maxSkills} 個)</h5>
-            ${skillsHtml}
-        </div>
+
+        <!-- Full-Width Bottom Section: AI Evaluation -->
         <div class="details-section mt-3">
             <h5 class="details-section-title">綜合評價</h5>
             <p class="ai-generated-text text-sm">${aiEvaluation}</p>
