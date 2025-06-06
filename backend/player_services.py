@@ -6,8 +6,9 @@ import logging
 from typing import List, Dict, Optional, Any
 import firebase_admin
 from firebase_admin import firestore
+import random # 引入 random 模組
 
-# 從 MD_models 導入相關的 TypedDict 定義 (修正名稱)
+# 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
 
 player_services_logger = logging.getLogger(__name__)
@@ -67,7 +68,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         if not eligible_dna_templates:
             eligible_dna_templates = list(dna_fragments_templates) 
 
-        import random
         for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)):
             if not eligible_dna_templates: break
             template = random.choice(eligible_dna_templates)
@@ -200,3 +200,49 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     except Exception as e:
         player_services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
         return False
+        
+def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
+    """
+    執行免費的 DNA 抽取。
+    規則：
+    1. 隨機抽取 3 到 5 個 DNA。
+    2. 卡池中只包含“普通”和“稀有”等級的 DNA。
+    """
+    player_services_logger.info("正在執行免費 DNA 抽取...")
+    try:
+        # 從 MD_config_services 導入函式，以避免循環導入
+        from .MD_config_services import load_all_game_configs_from_firestore
+        game_configs = load_all_game_configs_from_firestore()
+
+        if not game_configs or 'dna_fragments' not in game_configs:
+            player_services_logger.error("無法載入 DNA 碎片設定，抽取失敗。")
+            return None
+
+        all_dna_fragments = game_configs['dna_fragments']
+        
+        # 1. 篩選卡池，只保留 '普通' 和 '稀有'
+        allowed_rarities = {"普通", "稀有"}
+        filtered_pool = [
+            dna for dna in all_dna_fragments 
+            if dna.get('rarity') in allowed_rarities
+        ]
+
+        if not filtered_pool:
+            player_services_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
+            return []
+            
+        # 2. 決定本次抽取的數量 (3 到 5 個)
+        num_to_draw = random.randint(3, 5)
+        
+        # 3. 從篩選後的卡池中隨機抽取 DNA
+        # random.choices 允許重複選取，適合模擬抽卡
+        drawn_dna_templates = random.choices(filtered_pool, k=num_to_draw)
+        
+        player_services_logger.info(f"成功抽取了 {num_to_draw} 個 DNA。")
+        
+        # 返回的是 DNA 的模板
+        return drawn_dna_templates
+
+    except Exception as e:
+        player_services_logger.error(f"執行免費 DNA 抽取時發生錯誤: {e}", exc_info=True)
+        return None
