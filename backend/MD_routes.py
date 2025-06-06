@@ -26,7 +26,7 @@ from .leaderboard_search_services import (
 
 # 從設定和 AI 服務模組引入函式
 from .MD_config_services import load_all_game_configs_from_firestore
-from .MD_models import PlayerGameData, Monster
+from .MD_models import PlayerGameData, Monster # 從 MD_models 導入 Monster
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__) # 為路由設定日誌
@@ -231,7 +231,7 @@ def combine_dna_api_route():
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
-        # consumed_dna_indices = combine_result["consumed_dna_indices"] # 暫時不用，因為 combine_dna_service 已經從 player_data 裡消耗了
+        consumed_dna_indices = combine_result["consumed_dna_indices"] # 獲取被消耗的 DNA 索引
 
         current_farmed_monsters = player_data.get("farmedMonsters", [])
         MAX_FARM_SLOTS = game_configs.get("value_settings", {}).get("max_farm_slots", 10)
@@ -245,8 +245,14 @@ def combine_dna_api_route():
                     player_stats_achievements.append("首次組合怪獸")
                 player_data["playerStats"]["achievements"] = player_stats_achievements
 
-            # combine_dna_service 已經處理了從 playerOwnedDNA 中移除 DNA 的邏輯
-            # 所以這裡只需要保存 player_data
+            # 在這裡，根據 combine_result 中返回的 consumed_dna_indices 來將 playerOwnedDNA 中的對應位置設為 None
+            for idx_to_consume in consumed_dna_indices:
+                if 0 <= idx_to_consume < len(player_data["playerOwnedDNA"]):
+                    player_data["playerOwnedDNA"][idx_to_consume] = None
+                else:
+                    routes_logger.warning(f"警告：嘗試消耗無效的 DNA 索引 {idx_to_consume}。")
+
+
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
             else:
@@ -254,10 +260,8 @@ def combine_dna_api_route():
             return jsonify(new_monster_object), 201
         else:
             routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
-            # 即使農場已滿，也返回怪獸資料，讓前端決定如何處理 (例如提示玩家或放入臨時背包)
             return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200 # 200 OK 但帶有警告
     else:
-        # combine_result 返回 None 表示組合失敗
         error_message = "DNA 組合失敗，未能生成怪獸。"
         if combine_result and combine_result.get("error"):
             error_message = combine_result["error"]
@@ -280,7 +284,6 @@ def search_players_api_route():
     if not nickname_query:
         return jsonify({"error": "請提供搜尋的暱稱關鍵字。"}), 400
 
-    # 呼叫 service 層的搜尋函式
     results = search_players_service(nickname_query, limit)
     return jsonify({"players": results}), 200
 
@@ -402,28 +405,6 @@ def simulate_battle_api_route():
 
     return jsonify(battle_result), 200
 
-# --- 新增的路由 ---
-
-# 新增 AI 描述生成路由
-@md_bp.route('/generate-ai-descriptions', methods=['POST'])
-def generate_ai_descriptions_route():
-    user_id, _, error_response = _get_authenticated_user_id()
-    if error_response: return error_response
-
-    data = request.json
-    monster_data = data.get('monster_data')
-    if not monster_data:
-        return jsonify({"error": "請求中缺少怪獸資料。"}), 400
-
-    try:
-        # 調用 AI 服務模組中的函式
-        from .MD_ai_services import generate_monster_ai_details as generate_ai_details_inner # 避免循環導入
-        ai_details = generate_ai_details_inner(monster_data)
-        return jsonify(ai_details), 200
-    except Exception as e:
-        routes_logger.error(f"生成AI描述時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "生成AI描述失敗。", "details": str(e)}), 500
-
 
 @md_bp.route('/monster/<monster_id>/update-nickname', methods=['POST'])
 def update_monster_nickname_route(monster_id: str):
@@ -443,7 +424,7 @@ def update_monster_nickname_route(monster_id: str):
         return jsonify({"error": "找不到玩家資料"}), 404
 
     updated_player_data = update_monster_custom_element_nickname_service(
-        user_id, monster_id, new_custom_element_nickname, game_configs, player_data
+        user_id, monster_id, new_custom_element_nickname, game_configs, player_data # type: ignore
     )
 
     if updated_player_data:
@@ -657,5 +638,3 @@ def get_player_leaderboard_route():
     game_configs = _get_game_configs_data_from_app_context() # game_configs 可能用於NPC資料等
     leaderboard = get_player_leaderboard_service(game_configs, top_n)
     return jsonify(leaderboard), 200
-
-}
