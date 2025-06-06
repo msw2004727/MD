@@ -16,7 +16,7 @@
     padding: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.25); 
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s;
-    z-index: 990; /* 從 1050 調整為 990，使其位於模態視窗 (z-index: 1000) 之下 */
+    z-index: 990;
 }
 .corner-button:hover {
     transform: translateY(-1px); 
@@ -114,7 +114,7 @@ body.light-theme #main-logout-btn:hover {
     line-height: 1;
     text-transform: uppercase;
     font-weight: bold;
-    z-index: 1; /* Ensure badge is above DNA item background */
+    z-index: 1;
 }
 
 
@@ -568,6 +568,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-size: 0.9rem;
     line-height: 1.5;
 }
+
 .scrolling-hints-container {
     height: 22px; 
     overflow: hidden;
@@ -578,7 +579,17 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     margin-top: 10px;
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
+
+@keyframes scrollHint {
+    0% { opacity: 0; transform: translateY(100%); }
+    20%, 80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-100%); }
+}
+
 .scrolling-hint-text {
     position: absolute;
     width: 100%;
@@ -586,12 +597,12 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     line-height: 22px;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    animation: scrollHint 15s linear infinite;
+    animation-name: scrollHint;
+    animation-duration: var(--total-animation-duration, 15s);
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
     opacity: 0; 
 }
-.scrolling-hint-text:nth-child(1) { animation-delay: 0s; }
-.scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
-.scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
 
 .tab-buttons {
     display: grid; 
@@ -1078,8 +1089,7 @@ body.light-theme .leaderboard-table tr:hover td {
     z-index: 1;
 }
 
-/* ===== Styles moved from index.html ===== */
-/* 怪獸快照區域特定樣式 */
+/* Styles moved from index.html */
 .monster-snapshot-area {
     position: relative; 
     display: flex;
@@ -1095,7 +1105,6 @@ body.light-theme .leaderboard-table tr:hover td {
     }
 }
 
-/* 圖層樣式 */
 #monster-snapshot-base-bg,
 #monster-snapshot-body-silhouette,
 #monster-parts-container {
@@ -1124,12 +1133,12 @@ body.light-theme .leaderboard-table tr:hover td {
     width: 70%; 
     height: 85%; 
     display: grid; 
-    grid-template-columns: 28% 44% 28%; /* 左(28%) 中(44%) 右(28%) */
-    grid-template-rows: 30% 35% 35%;    /* 頭(30%) 手(35%) 腳(35%) */
+    grid-template-columns: 28% 44% 28%;
+    grid-template-rows: 30% 35% 35%;
     grid-template-areas:
         ".    head   ."
         "lArm body rArm"
-        "lLeg body rLeg"; /* 讓 body 區域也延伸到腿部，以更好地覆蓋全身圖 */
+        "lLeg body rLeg";
     gap: 1%; 
 }
 
@@ -1139,11 +1148,11 @@ body.light-theme .leaderboard-table tr:hover td {
     background-position: center;
     width: 100%; 
     height: 100%; 
-    border: 1px dashed var(--accent-color-dark); /* 預設虛線框，顏色可調 */
-    box-sizing: border-box; /* 確保邊框不會使元素變大 */
+    border: 1px dashed var(--accent-color-dark);
+    box-sizing: border-box;
 }
 
-.monster-part.empty-part { /* 當沒有圖片時，背景透明，但保留虛線框 */
+.monster-part.empty-part {
     background-image: none !important;
     background-color: transparent !important;
 }
@@ -1154,7 +1163,6 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
 
-/* 文字資訊疊加層 */
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px; 
@@ -1211,4 +1219,24 @@ body.light-theme .leaderboard-table tr:hover td {
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
+}
+
+.farm-col-info .monster-name-display {
+    font-weight: bold;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+.farm-col-info .monster-details-display {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.farm-col-score .score-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+.farm-col-score .score-value {
+    font-weight: bold;
+    color: var(--success-color);
 }
