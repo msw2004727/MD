@@ -316,15 +316,14 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     display: flex;
     justify-content: center;
     align-items: stretch; 
-    gap: 0.5rem; /* Reduced gap between buttons */
+    gap: 0.2rem; 
     margin-top: 0.5rem;
-    flex-wrap: wrap; /* Allow buttons to wrap on small screens */
 }
 .top-nav-button {
     width: auto;
-    padding: 0.4rem 0.6rem; /* Adjusted padding */
+    padding: 0.5rem 0.5rem;
     min-width: 0;
-    font-size: 0.8rem; /* Slightly smaller font */
+    font-size: 0.75rem;
     height: 38px;
     display: flex;
     align-items: center;
@@ -335,8 +334,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--accent-color); 
     color: var(--button-primary-text); 
     border: 1px solid var(--accent-hover-dark);
-    border-bottom-width: 2px;
-    white-space: nowrap; /* Prevent text wrapping */
+    border-bottom-width: 2px; 
 }
 .top-nav-button:hover {
     background-color: var(--accent-hover-dark);
@@ -344,21 +342,6 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 .top-nav-button:disabled {
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
 }
-
-/* Modal styles - adjust for mobile */
-@media (max-width: 640px) {
-    .modal-content, .modal-content.large, .modal-content.xlarge, .modal-content.feedback-wide {
-        width: 95vw; /* Use viewport width */
-        max-width: 95vw;
-        padding: 1rem;
-        flex-direction: column; /* Ensure vertical layout */
-    }
-    .modal-body {
-        max-height: 65vh; /* Adjust max height for mobile */
-    }
-}
-
-
 .modal-close { 
     color: var(--text-secondary);
     position: absolute;
@@ -559,6 +542,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .monster-info-name-styled { 
     font-size: 1.6rem;
     font-weight: bold;
+    /* Color is set dynamically by JS based on rarity */
     /* Removed background, border, padding to make it frameless */
     display: inline-block;
 }
@@ -619,7 +603,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 .tab-buttons {
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(3, 1fr); 
     gap: 4px; 
     margin-bottom: 15px;
     background-color: var(--bg-primary);
@@ -735,13 +719,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .farm-monster-item .farm-monster-status.battling {
     color: var(--danger-color); 
     font-weight: bold;
-}
-.farm-monster-item .farm-monster-info-btn {
-    background-color: var(--button-success-bg);
-    color: var(--button-success-text);
-}
-.farm-monster-item .farm-monster-info-btn:hover {
-    background-color: var(--button-success-hover-bg);
 }
 .farm-monster-item .farm-monster-cultivate-btn {
     background-color: var(--button-warning-bg);
@@ -966,14 +943,6 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .heal-action { color: var(--success-color); }
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
 #dna-draw-modal .modal-content { max-width: 600px; } 
-#dna-draw-results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-    max-height: 300px;
-    overflow-y: auto;
-}
 .dna-draw-result-item {
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -1259,6 +1228,11 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
 }
 
+.farm-col-score .score-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
 .farm-col-score .score-value {
     font-weight: bold;
     color: var(--success-color);

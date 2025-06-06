@@ -353,7 +353,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
 function updateTheme(themeName) {
     document.body.className = themeName === 'light' ? 'light-theme' : '';
     if (DOMElements.themeIcon) {
-        DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '�';
+        DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '🌙';
     }
     gameState.currentTheme = themeName;
     localStorage.setItem('theme', themeName);
@@ -451,9 +451,11 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
+        // ====== MODIFICATION: Remove attribute text from snapshot ======
         if (DOMElements.snapshotMainContent) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
+        // ====== END MODIFICATION ======
 
         const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -464,30 +466,46 @@ function updateMonsterSnapshot(monster) {
 
         if (monster.constituent_dna_ids && monster.constituent_dna_ids.length > 0 && gameState.gameConfigs?.dna_fragments) {
             const partsMap = {
-                0: DOMElements.monsterPartHead, 1: DOMElements.monsterPartLeftArm,
-                2: DOMElements.monsterPartRightArm, 3: DOMElements.monsterPartLeftLeg,
+                0: DOMElements.monsterPartHead,
+                1: DOMElements.monsterPartLeftArm,
+                2: DOMElements.monsterPartRightArm,
+                3: DOMElements.monsterPartLeftLeg,
                 4: DOMElements.monsterPartRightLeg
             };
+
+            clearMonsterBodyPartsDisplay(); 
             
             monster.constituent_dna_ids.forEach((dnaBaseId, index) => {
                 const partElement = partsMap[index];
                 if (partElement) {
                     const dnaInfo = getMonsterPartImagePath(dnaBaseId);
+
                     if (!dnaInfo.isPlaceholder) {
-                        const { typeClass, rarityClass, nameAbbr } = dnaInfo;
+                        const elementTypeMap = {
+                            '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
+                            '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
+                        };
+                        const typeClass = elementTypeMap[dnaInfo.elementType] || dnaInfo.elementType.toLowerCase();
+                        const rarityClass = dnaInfo.rarity.toLowerCase();
+
                         partElement.style.backgroundColor = `var(--element-${typeClass}-bg)`;
                         partElement.style.color = `var(--rarity-${rarityClass}-text)`;
                         partElement.style.borderColor = `var(--rarity-${rarityClass}-text)`;
                         partElement.style.backgroundImage = 'none';
                         partElement.classList.remove('empty-part');
-                        partElement.textContent = nameAbbr;
+                        partElement.textContent = dnaInfo.nameAbbr;
                         partElement.style.fontWeight = 'bold';
                         partElement.style.fontSize = '0.75rem';
                         partElement.style.display = 'flex';
                         partElement.style.alignItems = 'center';
                         partElement.style.justifyContent = 'center';
                     } else {
+                        partElement.style.backgroundImage = 'none';
+                        partElement.classList.add('empty-part');
                         partElement.textContent = '??';
+                        partElement.style.backgroundColor = 'transparent';
+                        partElement.style.color = 'var(--text-secondary)';
+                        partElement.style.borderColor = 'var(--border-color)';
                     }
                 }
             });
@@ -721,7 +739,7 @@ function renderMonsterFarm() {
                 statusClass = remainingTime > 0 ? "status-training" : "status-idle";
             }
         }
-        
+
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
@@ -752,7 +770,7 @@ function renderMonsterFarm() {
                 <span class="status-text ${statusClass}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button success text-xs">資訊</button>
+                <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
                 <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
                         title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
@@ -986,12 +1004,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
     if (!container) return;
-    
-    // MODIFICATION: Add check for empty or invalid guideEntries
-    if (!guideEntries || guideEntries.length === 0) {
-        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">新手指南內容正在準備中...</p>`;
-        return;
-    }
+    container.innerHTML = '';
 
     const filteredEntries = guideEntries.filter(entry =>
         entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1081,11 +1094,8 @@ function updateLeaderboardTable(tableType, data) {
     }
 
     data.forEach((item, index) => {
-        const row = tbody.insertRow();
-        
-        const rankCell = row.insertCell();
-        rankCell.textContent = index + 1;
-        rankCell.style.textAlign = 'center';
+        const row = tbody.insertCell();
+        row.textContent = index + 1;
 
         if (tableType === 'monster') {
             row.insertCell().textContent = item.nickname;
@@ -1094,12 +1104,12 @@ function updateLeaderboardTable(tableType, data) {
             item.elements.forEach(el => {
                  const elSpan = document.createElement('span');
                  elSpan.textContent = el;
-                 elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${String(el).toLowerCase()} bg-element-${String(el).toLowerCase()}-bg mr-1`;
+                 elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
                  elementsCell.appendChild(elSpan);
             });
             const rarityCell = row.insertCell();
             rarityCell.textContent = item.rarity;
-            rarityCell.className = `text-rarity-${String(item.rarity).toLowerCase()}`;
+            rarityCell.className = `text-rarity-${item.rarity.toLowerCase()}`;
             rarityCell.style.textAlign = 'center';
 
             const scoreCell = row.insertCell();
@@ -1314,4 +1324,4 @@ function updateScrollingHints(hintsArray) {
     });
 }
 
-console.log("UI module loaded - v9 with bug fixes and enhancements.");
+console.log("UI module loaded - v8 with farm layout fixes.");
