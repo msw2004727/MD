@@ -9,6 +9,33 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
+/**
+ * 新增：處理點擊“出戰”按鈕的邏輯
+ * @param {string} monsterId - 被點擊的出戰按鈕對應的怪獸ID
+ */
+function handleDeployMonsterClick(monsterId) {
+    if (!monsterId) return;
+
+    // 將點擊的怪獸設定為當前選中的怪獸
+    gameState.selectedMonsterId = monsterId;
+
+    // 從玩家數據中找到完整的怪獸物件
+    const selectedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+
+    // 更新頂部的怪獸快照
+    if (typeof updateMonsterSnapshot === 'function' && selectedMonster) {
+        updateMonsterSnapshot(selectedMonster);
+    }
+
+    // 重新渲染農場列表，這會更新所有按鈕的“出戰中/備戰”狀態和樣式
+    if (typeof renderMonsterFarm === 'function') {
+        renderMonsterFarm();
+    }
+    
+    console.log(`怪獸 ${monsterId} 已設定為出戰狀態。`);
+}
+
+
 function handleDragStart(event) {
     // 尋找最近的拖曳元素，可以是 DNA 庫存物品、組合槽中已佔用的 DNA，或臨時背包中已佔用的物品
     const target = event.target.closest('.dna-item.occupied, .dna-slot.occupied, .temp-backpack-slot.occupied');
@@ -507,8 +534,6 @@ async function handleCombineDna() {
         .filter(slot => slot && slot.id) // 確保有 id (實例 ID)
         .map(slot => slot.id);
 
-    // console.log("嘗試合成的 DNA 實例 ID 列表:", dnaInstanceIdsForCombination); // 移除這行
-
     if (dnaInstanceIdsForCombination.length < 2) {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
         return;
@@ -520,15 +545,11 @@ async function handleCombineDna() {
 
         if (result && result.id) {
             const newMonster = result;
-            // 清空所有組合槽位
             gameState.dnaCombinationSlots = [null, null, null, null, null];
-            // 更新 playerOwnedDNA，將被消耗的 DNA 替換為 null (此邏輯已在後端處理，前端只需刷新)
-            // 這裡不再手動將 playerOwnedDNA 中的 DNA 設為 null，因為後端會負責。
-            // 我們只需確保刷新玩家數據。
+            
+            await refreshPlayerData(); 
 
-            await refreshPlayerData(); // 刷新玩家數據，確保 UI 同步並儲存新怪獸
-
-            resetDNACombinationSlots(); // 重新渲染組合槽
+            resetDNACombinationSlots(); 
 
             let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
             feedbackMessage += `屬性: ${newMonster.elements.join(', ')}, 稀有度: ${newMonster.rarity}<br>`;
@@ -543,8 +564,7 @@ async function handleCombineDna() {
                 false,
                 null,
                 [{ text: '查看新怪獸', class: 'primary', onClick: () => {
-                    gameState.selectedMonsterId = newMonster.id;
-                    updateMonsterSnapshot(newMonster);
+                    handleDeployMonsterClick(newMonster.id); // 使用新的出戰功能
                     if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
                         const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
                         if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
@@ -673,7 +693,7 @@ function handleMonsterLeaderboardFilter() {
                 gameState.currentMonsterLeaderboardElementFilter = filter;
                 DOMElements.monsterLeaderboardElementTabs.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
-                filterAndRenderLeaderboard();
+                filterAndRenderMonsterLeaderboard();
             }
         });
     }
@@ -711,7 +731,7 @@ function handleLeaderboardSorting() {
             }
         }
     });
-} // 這是 handleLeaderboardSorting 函數的結束括號
+} 
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
@@ -763,7 +783,6 @@ function initializeEventListeners() {
     dragDropContext.addEventListener('dragstart', handleDragStart);
     dragDropContext.addEventListener('dragend', handleDragEnd);
 
-    // 拖曳目標區：組合槽容器、庫存項目容器、刪除區、臨時背包容器
     const dropZones = [
         DOMElements.dnaCombinationSlotsContainer,
         DOMElements.inventoryItemsContainer,
