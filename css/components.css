@@ -581,12 +581,13 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     user-select: none;
 }
 
-/* MODIFICATION START: Adjusted keyframes for smoother transition and better timing */
+/* MODIFICATION START: Adjusted keyframes for 1s display and 1s interval */
 @keyframes scrollHint {
-    0% { opacity: 0; transform: translateY(100%); } /* Start completely transparent and below */
-    5% { opacity: 1; transform: translateY(0%); } /* Rapidly become visible and move into position */
-    95% { opacity: 1; transform: translateY(0%); } /* Hold visible for the majority of the animation, until just before it ends */
-    100% { opacity: 0; transform: translateY(-100%); } /* Quickly fade out and move off-screen upwards */
+    0% { opacity: 0; transform: translateY(100%); } /* Start transparent and below */
+    12.5% { opacity: 1; transform: translateY(0%); } /* Fade in and move to center (1/8 of total duration) */
+    37.5% { opacity: 1; transform: translateY(0%); } /* Stay visible for 1 second (1/4 of total duration) */
+    50% { opacity: 0; transform: translateY(-100%); } /* Fade out and move up (1/8 of total duration) */
+    100% { opacity: 0; transform: translateY(-100%); } /* Remain transparent and above, ready to loop */
 }
 /* MODIFICATION END */
 
@@ -598,12 +599,13 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-size: 0.875rem;
     color: var(--text-secondary);
     animation-name: scrollHint;
-    animation-duration: var(--total-animation-duration, 15s);
+    /* MODIFICATION START: Removed var(--total-animation-duration) and set animationDuration from JS */
+    /* animation-duration will be set by JS dynamically for each hint based on total hints count */
+    /* MODIFICATION END */
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     opacity: 0;
-    /* ADDED: Ensure initial state is off-screen below */
-    transform: translateY(100%);
+    transform: translateY(100%); /* Initial state */
 }
 
 .tab-buttons {
