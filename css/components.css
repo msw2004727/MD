@@ -1099,7 +1099,45 @@ body.light-theme .leaderboard-table tr:hover td {
     overflow: hidden;
     padding: 8px; 
     min-height: 230px; 
+    /* 新增：稀有度邊框和內陰影 */
+    border: 2px solid var(--border-color); /* 默認邊框 */
+    box-shadow: 0 0 5px rgba(0,0,0,0.2), inset 0 0 10px rgba(0,0,0,0.1); /* 默認陰影 */
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
+/* 稀有度對應的陰影效果 - Dark Theme */
+.monster-snapshot-area[style*="--rarity-common-text-dark"] {
+    box-shadow: 0 0 10px -2px var(--rarity-common-text-dark), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-common-text-dark) 30%, transparent);
+}
+.monster-snapshot-area[style*="--rarity-rare-text-dark"] {
+    box-shadow: 0 0 10px -2px var(--rarity-rare-text-dark), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-rare-text-dark) 30%, transparent);
+}
+.monster-snapshot-area[style*="--rarity-elite-text-dark"] {
+    box-shadow: 0 0 10px -2px var(--rarity-elite-text-dark), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-elite-text-dark) 30%, transparent);
+}
+.monster-snapshot-area[style*="--rarity-legendary-text-dark"] {
+    box-shadow: 0 0 10px -2px var(--rarity-legendary-text-dark), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-legendary-text-dark) 30%, transparent);
+}
+.monster-snapshot-area[style*="--rarity-mythical-text-dark"] {
+    box-shadow: 0 0 10px -2px var(--rarity-mythical-text-dark), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-mythical-text-dark) 30%, transparent);
+}
+
+/* 稀有度對應的陰影效果 - Light Theme */
+body.light-theme .monster-snapshot-area[style*="--rarity-common-text-light"] {
+    box-shadow: 0 0 10px -2px var(--rarity-common-text-light), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-common-text-light) 30%, transparent);
+}
+body.light-theme .monster-snapshot-area[style*="--rarity-rare-text-light"] {
+    box-shadow: 0 0 10px -2px var(--rarity-rare-text-light), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-rare-text-light) 30%, transparent);
+}
+body.light-theme .monster-snapshot-area[style*="--rarity-elite-text-light"] {
+    box-shadow: 0 0 10px -2px var(--rarity-elite-text-light), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-elite-text-light) 30%, transparent);
+}
+body.light-theme .monster-snapshot-area[style*="--rarity-legendary-text-light"] {
+    box-shadow: 0 0 10px -2px var(--rarity-legendary-text-light), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-legendary-text-light) 30%, transparent);
+}
+body.light-theme .monster-snapshot-area[style*="--rarity-mythical-text-light"] {
+    box-shadow: 0 0 10px -2px var(--rarity-mythical-text-light), inset 0 0 15px -5px color-mix(in srgb, var(--rarity-mythical-text-light) 30%, transparent);
+}
+
  @media (min-width: 768px) {
     .monster-snapshot-area {
         min-height: 270px; 
@@ -1156,6 +1194,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .monster-part.empty-part {
     background-image: none !important;
     background-color: transparent !important;
+    border-color: var(--border-color) !important; /* 為空部位添加邊框 */
 }
 
 #monster-part-head { grid-area: head; }
