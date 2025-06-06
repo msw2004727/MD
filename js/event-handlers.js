@@ -586,14 +586,8 @@ async function handleCombineDna() {
                 '合成成功！',
                 feedbackMessage,
                 false,
-                null,
-                [{ text: '查看新怪獸', class: 'primary', onClick: () => {
-                    handleDeployMonsterClick(newMonster.id);
-                    if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
-                        const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
-                        if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
-                    }
-                }}, { text: '關閉', class: 'secondary'}]
+                newMonster,
+                null // 傳入 null 來移除所有按鈕
             );
 
         } else if (newMonster && newMonster.error) {
