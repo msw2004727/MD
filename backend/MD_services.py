@@ -3853,3 +3853,4 @@ def heal_monster_service(
     monster_id: str,
     heal_type: Literal["full_hp", "full_mp"]
 ):
+    pass
