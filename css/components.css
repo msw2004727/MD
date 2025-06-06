@@ -144,7 +144,6 @@ body.light-theme #main-logout-btn:hover {
     display: block;
     margin-top: 2px;
 }
-
 .inventory-delete-slot.drag-over { 
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
     border-color: var(--danger-hover-dark) !important; 
@@ -357,6 +356,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     justify-content: center;
     border-radius: 50%; 
     transition: background-color 0.2s, color 0.2s;
+    z-index: 990; /* Adjusted z-index for modals */
 }
 .modal-close:hover, .modal-close:focus { 
     color: var(--text-primary);
@@ -569,7 +569,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .scrolling-hints-container {
     height: 22px; 
     overflow: hidden;
-    position: relative;
+    position: relative; /* 新增: 確保內部絕對定位的元素相對於此容器 */
     background-color: var(--bg-primary);
     border-radius: 4px;
     padding: 0 10px;
@@ -579,24 +579,28 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    line-height: 22px; /* 確保單行高度 */
 }
 
+/* 調整後的動畫 */
 @keyframes scrollHint {
-    0% { opacity: 0; transform: translateY(100%); }
-    20%, 80% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-100%); }
+    0% { opacity: 0; transform: translateY(100%); } /* 訊息從下方進入，隱藏 */
+    5% { opacity: 1; transform: translateY(0%); }    /* 訊息完全顯示 */
+    95% { opacity: 1; transform: translateY(0%); }   /* 訊息保持顯示 */
+    100% { opacity: 0; transform: translateY(-100%); } /* 訊息向上移出，隱藏 */
 }
 
 .scrolling-hint-text {
-    position: absolute;
-    width: 100%;
+    position: absolute; /* 維持絕對定位 */
+    width: calc(100% - 20px); /* 考慮 padding */
+    left: 10px; /* 考慮 padding */
     text-align: center;
-    line-height: 22px;
+    line-height: 22px; /* 與容器高度一致 */
     font-size: 0.875rem;
     color: var(--text-secondary);
     animation-name: scrollHint;
     animation-duration: var(--total-animation-duration, 15s);
-    animation-timing-function: linear;
+    animation-timing-function: ease-in-out; /* 調整為更流暢的過渡 */
     animation-iteration-count: infinite;
     opacity: 0; 
 }
