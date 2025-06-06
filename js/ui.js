@@ -854,9 +854,9 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const detailsBody = DOMElements.monsterDetailsTabContent;
     // 4 & 5. 元素標籤加大字體並上色
     let elementsDisplay = (monster.elements || []).map(el => {
-        const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
-        // 使用 text-sm 加大字體, 增加 padding
-        return `<span class="text-sm px-3 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
+        const elClass = typeof el === 'string' ? `text-element-${el.toLowerCase()}` : '';
+        // 使用 text-sm 加大字體, 增加 padding, 應用顏色
+        return `<span class="text-sm px-3 py-1 rounded-full ${elClass} bg-element-${el.toLowerCase()}-bg mr-1">${el}</span>`;
     }).join('');
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
