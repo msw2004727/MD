@@ -214,40 +214,60 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
         const primaryElement = monsterDetails.elements && monsterDetails.elements.length > 0 ? monsterDetails.elements[0] : '無';
         const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
-        
-        // MODIFICATION START: Custom layout for "合成成功" modal
-        DOMElements.feedbackModalTitle.textContent = "合成成功"; // Override title to "合成成功"
-        DOMElements.feedbackModalTitle.style.color = 'red'; // Make title red, as per design
+        const monsterBannerPath = `https://placehold.co/700x150/4a5568/a0aec0?text=${encodeURIComponent(monsterDetails.nickname || '新怪獸')}+Banner&font=noto-sans-tc`;
+
+        const bannerContainer = document.createElement('div');
+        bannerContainer.id = 'monster-banner-container';
+        bannerContainer.innerHTML = `<img src="${monsterBannerPath}" alt="${monsterDetails.nickname || '新怪獸'} Banner" class="w-full h-auto rounded-md object-cover">`;
+        DOMElements.feedbackModalTitle.after(bannerContainer);
+
+
+        const basicStatsContainer = document.createElement('div');
+        basicStatsContainer.className = 'feedback-monster-basic-stats text-center py-3';
+        let elementsDisplay = monsterDetails.elements.map(el => {
+            const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
+            return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
+        }).join('');
+
+        basicStatsContainer.innerHTML = `
+            <div class="feedback-monster-stats-grid">
+                <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
+                <div><strong>MP:</strong> ${monsterDetails.mp || 0}</div>
+                <div><strong>攻擊:</strong> ${monsterDetails.attack || 0}</div>
+                <div><strong>防禦:</strong> ${monsterDetails.defense || 0}</div>
+                <div><strong>速度:</strong> ${monsterDetails.speed || 0}</div>
+                <div><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</div>
+            </div>
+            <p class="text-sm mt-2"><strong>元素:</strong> ${elementsDisplay || '無'}</p>
+            <p class="text-sm"><strong>稀有度:</strong> <span class="text-rarity-${rarityKey}">${monsterDetails.rarity || '普通'}</span></p>
+            <p class="text-base mt-2"><strong>總評價:</strong> <span class="text-[var(--success-color)] text-lg font-bold">${monsterDetails.score || 0}</span></p>
+        `;
+        bannerContainer.after(basicStatsContainer);
+
 
         DOMElements.feedbackModalMessage.innerHTML = `
-            <div style="text-align: center; margin-bottom: 15px; border-bottom: 1px solid red; padding-bottom: 10px;">
-                <div style="border: 2px solid black; width: 150px; height: 100px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: var(--bg-slot);">
-                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true" alt="圖片預留位" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <p style="color: red; margin-top: 10px; font-weight: bold;">DNA合成出新怪獸</p>
-                <p style="color: red; font-size: 1.2em; font-weight: bold;">${monsterDetails.nickname || '未知怪獸'}</p>
-                <p style="color: red; font-weight: bold;">是這世界第一__隻</p>
-            </div>
+            <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
+            ${message}
         `;
-        // Removed original basic stats container and its insertion point (handled by the new details section)
+
 
         DOMElements.feedbackMonsterDetails.innerHTML = `
-            <div style="border: 2px solid black; padding: 15px; margin-top: 20px;">
-                <h5 style="text-align: center; font-weight: bold; font-size: 1.1em; color: var(--text-primary);">基本數值欄</h5>
-                <div class="feedback-monster-stats-grid">
-                    <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
-                    <div><strong>MP:</strong> ${monsterDetails.mp || 0}</div>
-                    <div><strong>攻擊:</strong> ${monsterDetails.attack || 0}</div>
-                    <div><strong>防禦:</strong> ${monsterDetails.defense || 0}</div>
-                    <div><strong>速度:</strong> ${monsterDetails.speed || 0}</div>
-                    <div><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</div>
+            <div class="feedback-monster-ai-grid mt-4">
+                <div class="feedback-monster-info-section">
+                    <h5 class="feedback-monster-info-title">AI 個性分析</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiPersonality || 'AI 個性描述生成中或失敗...'}</p>
                 </div>
-                <p class="text-sm mt-2" style="text-align: center;"><strong>元素:</strong> ${monsterDetails.elements.map(el => `<span class="text-xs px-2 py-1 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1">${el}</span>`).join('') || '無'}</p>
-                <p class="text-sm" style="text-align: center;"><strong>稀有度:</strong> <span class="text-rarity-${rarityKey}">${monsterDetails.rarity || '普通'}</span></p>
-                <p class="text-base mt-2" style="text-align: center;"><strong>總評價:</strong> <span class="text-[var(--success-color)] text-lg font-bold">${monsterDetails.score || 0}</span></p>
+                <div class="feedback-monster-info-section">
+                    <h5 class="feedback-monster-info-title">AI 背景介紹</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiIntroduction || 'AI 介紹生成中或失敗...'}</p>
+                </div>
+                <div class="feedback-monster-info-section col-span-full">
+                    <h5 class="feedback-monster-info-title">AI 綜合評價與培養建議</h5>
+                    <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價與培養建議...'}</p>
+                </div>
             </div>
-            `;
-        // MODIFICATION END
+            <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
+        `;
     }
 
     let footer = DOMElements.feedbackModal.querySelector('.modal-footer');
@@ -267,21 +287,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             };
             newFooter.appendChild(button);
         });
-    } else { // MODIFICATION: Add "查看" button if no actionButtons are provided, as per design
-        const viewButton = document.createElement('button');
-        viewButton.textContent = '查看';
-        viewButton.className = 'button primary';
-        viewButton.onclick = () => {
-            if (monsterDetails && typeof handleDeployMonsterClick === 'function') {
-                handleDeployMonsterClick(monsterDetails.id);
-                if (DOMElements.dnaFarmTabs && typeof switchTabContent === 'function') {
-                    const monsterFarmTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="monster-farm-content"]');
-                    if(monsterFarmTabButton) switchTabContent('monster-farm-content', monsterFarmTabButton);
-                }
-            }
-            hideModal('feedback-modal');
-        };
-        newFooter.appendChild(viewButton);
     }
     const modalContent = DOMElements.feedbackModal.querySelector('.modal-content');
     if (modalContent) modalContent.appendChild(newFooter);
@@ -348,7 +353,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
 function updateTheme(themeName) {
     document.body.className = themeName === 'light' ? 'light-theme' : '';
     if (DOMElements.themeIcon) {
-        DOMEElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '🌙';
+        DOMElements.themeIcon.textContent = themeName === 'light' ? '☀️' : '🌙';
     }
     gameState.currentTheme = themeName;
     localStorage.setItem('theme', themeName);

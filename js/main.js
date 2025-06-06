@@ -21,7 +21,7 @@ function clearGameCacheOnExitOrRefresh() {
 function initializeFirebaseApp() {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
         try {
-            if (!firebase.apps.length) {
+            if (!firebase.apps.length) { 
                 firebase.initializeApp(firebaseConfig);
                 console.log("Firebase App initialized successfully.");
             } else {
@@ -46,35 +46,31 @@ function initializeFirebaseApp() {
  */
 async function initializeGame() {
     console.log("Initializing game...");
-    // MODIFICATION START: Add a check for DOMElements before proceeding
-    if (Object.keys(DOMElements).length === 0 || !DOMElements.themeIcon) {
-        console.warn("initializeGame: DOMElements not fully initialized yet. Retrying initialization.");
-        // This scenario should be rare with the DOMContentLoaded change, but as a fallback.
-        if (typeof initializeDOMElements === 'function') {
-            initializeDOMElements();
-        }
-        if (Object.keys(DOMElements).length === 0 || !DOMElements.themeIcon) {
-            // If still not initialized, show a critical error.
-            showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
-            return;
-        }
-    }
-    // MODIFICATION END
-
     if (typeof showFeedbackModal === 'function') {
         showFeedbackModal('遊戲載入中...', '正在準備您的怪獸異世界...', true);
     }
 
     try {
-        if (typeof initializeTheme === 'function') initializeTheme();
+        if (typeof initializeTheme === 'function') initializeTheme(); 
 
-        const configs = await getGameConfigs();
+        const configs = await getGameConfigs(); 
         if (configs && Object.keys(configs).length > 0) {
-            updateGameState({ gameConfigs: configs });
+            updateGameState({ gameConfigs: configs }); 
             console.log("Game configs loaded and saved to gameState.");
             if (DOMElements.maxCultivationTimeText && configs.value_settings) {
                 DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
             }
+            const gameHints = [
+                `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
+                "💡 稀有度越高的DNA，基礎能力越強！",
+                "💡 嘗試不同的DNA組合，發掘隱藏的強力怪獸！",
+                "💡 完成修煉有機會領悟新技能！",
+                "💡 記得查看新手指南，了解更多遊戲訣竅！"
+            ];
+            if (configs.newbie_guide && configs.newbie_guide.length > 0) {
+                gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0,20)}...`);
+            }
+            if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
         } else {
             throw new Error("無法獲取遊戲核心設定。");
         }
@@ -84,7 +80,7 @@ async function initializeGame() {
             if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
             if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
             if (typeof hideModal === 'function') hideModal('feedback-modal');
-            return;
+            return; 
         }
 
         await loadPlayerDataAndInitializeUI(gameState.currentUser);
@@ -104,50 +100,38 @@ async function initializeGame() {
  * 當 Firebase Auth 狀態改變時的回調函數
  */
 async function onAuthStateChangedHandler(user) {
-    // MODIFICATION START: Removed setTimeout retry logic.
-    // The DOMElements initialization is now primarily guaranteed by DOMContentLoaded.
-    // If there's still a race condition, the checks within initializeGame/loadPlayerDataAndInitializeUI will handle.
-    // MODIFICATION END
+    // 確保 DOMElements 已初始化
+    if (Object.keys(DOMElements).length === 0) {
+        console.warn("onAuthStateChangedHandler called before DOMElements initialized. Retrying in 100ms.");
+        setTimeout(() => onAuthStateChangedHandler(user), 100); // 稍微延遲後重試
+        return;
+    }
 
     if (user) {
         console.log("User is signed in:", user.uid);
         updateGameState({ currentUser: user, playerId: user.uid, playerNickname: user.displayName || (user.email ? user.email.split('@')[0] : "玩家") });
 
-        // MODIFICATION START: Re-evaluate calling initializeGame or loadPlayerDataAndInitializeUI
-        // Ensure DOMElements are available before proceeding with UI-heavy operations
-        if (Object.keys(DOMElements).length === 0 || !DOMElements.gameContainer) {
-            console.warn("onAuthStateChangedHandler: DOMElements not available, attempting re-initialization.");
-            if (typeof initializeDOMElements === 'function') initializeDOMElements(); // Re-call to ensure DOMElements are set
-            if (Object.keys(DOMElements).length === 0 || !DOMElements.gameContainer) {
-                console.error("onAuthStateChangedHandler: Critical error, DOMElements could not be initialized.");
-                if (typeof showFeedbackModal === 'function') showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
-                return; // Stop execution if DOMElements are still not ready
-            }
-        }
-        // Proceed with game initialization now that DOMElements are expected to be ready
-        if (DOMElements.gameContainer.style.display === 'none' || DOMElements.gameContainer.style.display === '') {
-            await initializeGame();
+        if (DOMElements.gameContainer && (DOMElements.gameContainer.style.display === 'none' || DOMElements.gameContainer.style.display === '')) {
+            await initializeGame(); 
         } else {
-            await loadPlayerDataAndInitializeUI(user);
+            await loadPlayerDataAndInitializeUI(user); 
         }
-        // MODIFICATION END
-
-        if (localStorage.getItem('announcementShown_v1') !== 'true' && gameState.currentUser) {
+        if (localStorage.getItem('announcementShown_v1') !== 'true' && gameState.currentUser) { 
             if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
             if (typeof showModal === 'function') showModal('official-announcement-modal');
         }
 
     } else {
         console.log("User is signed out or not yet signed in.");
-        updateGameState({ currentUser: null, playerId: null, playerNickname: "玩家" });
+        updateGameState({ currentUser: null, playerId: null, playerNickname: "玩家" }); 
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
-
-        if (typeof updateMonsterSnapshot === 'function') updateMonsterSnapshot(null);
+        
+        if (typeof updateMonsterSnapshot === 'function') updateMonsterSnapshot(null); 
         if (typeof resetDNACombinationSlots === 'function') resetDNACombinationSlots();
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
-        if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
+        if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack(); 
         if (typeof hideAllModals === 'function') hideAllModals();
     }
 }
@@ -158,25 +142,11 @@ async function onAuthStateChangedHandler(user) {
 async function loadPlayerDataAndInitializeUI(user) {
     if (!user) return;
 
-    // MODIFICATION START: Add a check for DOMElements before proceeding
-    if (Object.keys(DOMElements).length === 0 || !DOMElements.feedbackModal) {
-        console.warn("loadPlayerDataAndInitializeUI: DOMElements not fully initialized yet. Attempting re-initialization.");
-        if (typeof initializeDOMElements === 'function') {
-            initializeDOMElements();
-        }
-        if (Object.keys(DOMElements).length === 0 || !DOMElements.feedbackModal) {
-            // If still not initialized, show a critical error.
-            showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
-            return;
-        }
-    }
-    // MODIFICATION END
-
     if (typeof showFeedbackModal === 'function') {
         showFeedbackModal('載入中...', '正在獲取您的玩家資料...', true);
     }
     try {
-        const playerData = await getPlayerData(user.uid);
+        const playerData = await getPlayerData(user.uid); 
         if (playerData) {
             updateGameState({
                 playerData: playerData,
@@ -187,15 +157,15 @@ async function loadPlayerDataAndInitializeUI(user) {
             if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
             if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
             if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
-            if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
+            if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack(); 
 
-            const defaultMonster = getDefaultSelectedMonster();
+            const defaultMonster = getDefaultSelectedMonster(); 
             if (typeof updateMonsterSnapshot === 'function') {
                 updateMonsterSnapshot(defaultMonster || null);
             }
 
             if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
-            if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
+            if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex'); 
 
             if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
             if (typeof hideModal === 'function') hideModal('feedback-modal');
@@ -218,26 +188,23 @@ async function loadPlayerDataAndInitializeUI(user) {
 
 // --- Application Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
-    // MODIFICATION START: Ensure DOMElements is initialized AT THE VERY BEGINNING of DOMContentLoaded
+    // 1. 優先初始化 DOM 元素引用
     if (typeof initializeDOMElements === 'function') {
-        initializeDOMElements();
-        console.log("DOMElements initialized in DOMContentLoaded.");
+        initializeDOMElements(); 
     } else {
         console.error("CRITICAL: initializeDOMElements function is not defined! UI will not work.");
         document.body.innerHTML = "遊戲介面關鍵組件初始化失敗，請刷新或聯繫管理員。";
-        return;
+        return; 
     }
-    // MODIFICATION END
-
+    
     // 2. 清理緩存
     clearGameCacheOnExitOrRefresh();
-    console.log("DOM fully loaded and parsed. DOMElements should be initialized.");
+    console.log("DOM fully loaded and parsed. DOMElements initialized.");
 
     // 3. 初始化 Firebase App
     initializeFirebaseApp();
 
     // 4. 設置 Firebase Auth 狀態監聽器
-    // onAuthStateChangedHandler 現在期望 DOMElements 已經被 initializeDOMElements() 填充了
     if (typeof RosterAuthListener === 'function') {
         RosterAuthListener(onAuthStateChangedHandler);
     } else {
@@ -249,10 +216,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 5. 初始化事件監聽器
+    // 檢查 initializeEventListeners 是否是 function，如果不是，則可能文件載入順序有問題
     if (typeof initializeEventListeners === 'function') {
         initializeEventListeners();
     } else {
+        // 如果 initializeEventListeners 未定義，這可能是因為 event-handlers.js 未能正確載入或執行。
+        // 這會導致按鈕點擊等所有事件無法被處理。
         console.error("CRITICAL: initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
+        // 可以選擇在這裡顯示一個更嚴重的錯誤訊息給用戶
         if (typeof showFeedbackModal === 'function') {
             showFeedbackModal('初始化錯誤', '核心遊戲功能未載入，請刷新頁面或檢查控制台錯誤。');
         }
