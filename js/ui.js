@@ -829,7 +829,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
     let achievementsHtml = '<p>尚無成就</p>';
     if (stats.achievements && stats.achievements.length > 0) {
-        achievementsHtml = `<ul class="list-disc list-inside ml-1 text-sm">${stats.achievements.map(ach => `<li>${ach}</li>`).join('')}</ul>`;
+        achievementsHtml = `<ul class="list-disc list-inside ml-1 text-sm">${stats.achievements.map(ach => `<li>${ach}</li>`).join('襪')}</ul>`;
     }
 
     let ownedMonstersHtml = '<p>尚無怪獸</p>';
@@ -1311,15 +1311,20 @@ function updateScrollingHints(hintsArray) {
     if (!container || !hintsArray || hintsArray.length === 0) return;
     container.innerHTML = '';
 
-    const singleHintDuration = 5; // seconds
-    const totalDuration = hintsArray.length * singleHintDuration;
-    container.style.setProperty('--total-animation-duration', `${totalDuration}s`);
+    // MODIFICATION START: Adjusted singleHintDuration and removed totalDuration
+    const singleHintDuration = 2; // Each hint's animation cycle (display + interval)
+    // Removed: const totalDuration = hintsArray.length * singleHintDuration;
+    // Removed: container.style.setProperty('--total-animation-duration', `${totalDuration}s`);
+    // MODIFICATION END
 
     hintsArray.forEach((hint, index) => {
         const p = document.createElement('p');
         p.classList.add('scrolling-hint-text');
         p.textContent = hint;
         p.style.animationDelay = `${index * singleHintDuration}s`;
+        // MODIFICATION START: Apply animationDuration to each hint element
+        p.style.animationDuration = `${singleHintDuration * hintsArray.length}s`; // Total duration for all hints to loop once
+        // MODIFICATION END
         container.appendChild(p);
     });
 }
