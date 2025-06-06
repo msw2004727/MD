@@ -1,8 +1,6 @@
 // js/api-client.js
-// 移除: 無
-// 新增: MAX_RETRIES, RETRY_DELAY_MS 常量，以及 fetchAPI 中的重試邏輯
 
-// 注意：這個檔案依賴於 js/config.js 中的 API_BASE_URL 和 js/auth.js 中的 getCurrentUserToken
+// 注意：此檔案依賴於 js/config.js 中的 API_BASE_URL 和 js/auth.js 中的 getCurrentUserToken
 
 const MAX_RETRIES = 3; // 最大重試次數
 const RETRY_DELAY_MS = 1000; // 重試之間的延遲時間 (毫秒)
@@ -258,7 +256,9 @@ async function replaceMonsterSkill(monsterId, slotIndex, newSkillTemplate) {
  * @returns {Promise<Array<object>>} 怪獸排行榜列表
  */
 async function getMonsterLeaderboard(topN = 10) {
-    return fetchAPI(`/leaderboard/monsters?top_n=${topN}`);
+    // 移除: return fetchAPI(`/leaderboard/monsters?top_n=${topN}`);
+    // 新增: 加入 include_base_id=true 參數
+    return fetchAPI(`/leaderboard/monsters?top_n=${topN}&include_base_id=true`);
 }
 
 /**
