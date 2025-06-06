@@ -1,0 +1,4262 @@
+# backend/monster_management_services.py
+# 處理怪獸的農場管理、治療、分解、充能、修煉、技能替換
+
+import random
+import time
+import logging
+from typing import List, Dict, Optional, Union, Tuple, Literal, Any
+import copy # 用於深拷貝怪獸數據
+
+# 從 MD_models 導入相關的 TypedDict 定義
+from .MD_models import (
+    PlayerGameData, PlayerStats, PlayerOwnedDNA,
+    Monster, Skill, DNAFragment, RarityDetail, Personality,
+    GameConfigs, ElementTypes, MonsterFarmStatus, MonsterAIDetails, MonsterResume,
+    HealthCondition, AbsorptionConfig, CultivationConfig, SkillCategory, NamingConstraints,
+    ValueSettings, RarityNames
+)
+
+# 從 MD_firebase_config 導入 db 實例，因為這裡的服務需要與 Firestore 互動
+# 這裡使用絕對導入確保在任何調用情境下都能找到
+from . import MD_firebase_config
+# 這裡需要導入 player_services 才能調用 get_player_data_service
+from .player_services import get_player_data_service # 這是新的導入
+
+monster_management_services_logger = logging.getLogger(__name__)
+
+# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
+# 這裡只包含這個模組需要的預設值，避免重複和潛在的循環導入
+DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT: GameConfigs = {
+    "dna_fragments": [], # 實際會從 game_configs 載入
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
+    "skills": {"無": [{"name":"撞擊", "power":10, "crit":5, "probability":100, "type":"無", "baseLevel":1, "mp_cost":0, "skill_category":"物理"}]}, # type: ignore
+    "personalities": [], # 實際會從 game_configs 載入
+    "titles": ["新手"],
+    "monster_achievements_list": ["新秀"],
+    "element_nicknames": {"火": "炎獸"},
+    "naming_constraints": {
+        "max_player_title_len": 5, "max_monster_achievement_len": 5,
+        "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
+    },
+    "health_conditions": [],
+    "newbie_guide": [],
+    "npc_monsters": [],
+    "value_settings": {
+        "element_value_factors": {"火": 1.2, "水": 1.1, "無": 0.7, "混": 0.6},
+        "dna_recharge_conversion_factor": 0.15,
+        "max_farm_slots": 10,
+        "max_monster_skills": 3,
+        "max_battle_turns": 30,
+        "max_inventory_slots": 12,
+        "max_temp_backpack_slots": 9
+    },
+    "absorption_config": {
+        "base_stat_gain_factor": 0.03, "score_diff_exponent": 0.3,
+        "max_stat_gain_percentage": 0.015, "min_stat_gain": 1,
+        "dna_extraction_chance_base": 0.75,
+        "dna_extraction_rarity_modifier": {"普通": 1.0, "稀有": 0.9} # type: ignore
+    },
+    "cultivation_config": {
+        "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
+        "skill_exp_gain_range": (10,30), "max_skill_level": 5,
+        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1} # type: ignore
+    },
+    "elemental_advantage_chart": {},
+}
+
+
+# --- 輔助函式 (僅用於此模組，或可進一步拆分到 utils_services.py) ---
+def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
+    """計算升到下一級所需的經驗值。"""
+    if level <= 0: level = 1
+    return level * base_multiplier
+
+def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
+    """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。"""
+    cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["cultivation_config"])
+
+    if target_level is not None:
+        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 7)))
+    else:
+        skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
+        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 7))) # type: ignore
+
+    new_skill_instance: Skill = {
+        "name": skill_template.get("name", "未知技能"),
+        "power": skill_template.get("power", 10),
+        "crit": skill_template.get("crit", 5),
+        "probability": skill_template.get("probability", 50),
+        "story": skill_template.get("story", skill_template.get("description", "一個神秘的招式")),
+        "type": skill_template.get("type", "無"), # type: ignore
+        "baseLevel": skill_template.get("baseLevel", 1),
+        "level": skill_level,
+        "mp_cost": skill_template.get("mp_cost", 0),
+        "skill_category": skill_template.get("skill_category", "其他"), # type: ignore
+        "current_exp": 0,
+        "exp_to_next_level": _calculate_exp_to_next_level(skill_level, cultivation_cfg.get("skill_exp_base_multiplier", 100)), # type: ignore
+        "effect": skill_template.get("effect"), # 簡要效果標識
+        "stat": skill_template.get("stat"),     # 影響的數值
+        "amount": skill_template.get("amount"),   # 影響的量
+        "duration": skill_template.get("duration"), # 持續回合
+        "damage": skill_template.get("damage"),   # 額外傷害或治療量
+        "recoilDamage": skill_template.get("recoilDamage") # 反傷比例
+    }
+    return new_skill_instance
+
+def _generate_monster_full_nickname(player_title: str, monster_achievement: str, element_nickname_part: str, naming_constraints: NamingConstraints) -> str:
+    """根據玩家稱號、怪獸成就和元素暱稱部分生成怪獸的完整暱稱。"""
+    pt = player_title[:naming_constraints.get("max_player_title_len", 5)]
+    ma = monster_achievement[:naming_constraints.get("max_monster_achievement_len", 5)]
+    en = element_nickname_part[:naming_constraints.get("max_element_nickname_len", 5)]
+    full_name = f"{pt}{ma}{en}"
+    return full_name[:naming_constraints.get("max_monster_full_nickname_len", 15)]
+
+
+# --- 怪獸管理服務 ---
+def update_monster_custom_element_nickname_service(
+    player_id: str,
+    monster_id: str,
+    new_custom_element_nickname: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """更新怪獸的自定義屬性名，並重新計算完整暱稱。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (update_monster_custom_element_nickname_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"更新屬性名失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_update: Optional[Monster] = None
+    monster_idx = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_update = m
+            monster_idx = idx
+            break
+
+    if not monster_to_update or monster_idx == -1:
+        monster_management_services_logger.error(f"更新屬性名失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    naming_constraints: NamingConstraints = game_configs.get("naming_constraints", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["naming_constraints"]) # type: ignore
+    max_len = naming_constraints.get("max_element_nickname_len", 5)
+
+    element_nicknames_map: Dict[ElementTypes, str] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["element_nicknames"]) # type: ignore
+    primary_element: ElementTypes = monster_to_update.get("elements", ["無"])[0] # type: ignore
+
+    if not new_custom_element_nickname:
+        monster_to_update["custom_element_nickname"] = None
+        element_nickname_part_for_full_name = element_nicknames_map.get(primary_element, primary_element) # type: ignore
+    else:
+        processed_nickname = new_custom_element_nickname.strip()[:max_len]
+        monster_to_update["custom_element_nickname"] = processed_nickname
+        element_nickname_part_for_full_name = processed_nickname
+
+    player_current_title = player_data.get("playerStats", {}).get("titles", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["titles"])[0] # type: ignore
+    monster_achievement = monster_to_update.get("title", "新秀") # type: ignore
+
+    monster_to_update["nickname"] = _generate_monster_full_nickname(
+        player_current_title, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
+    )
+
+    player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
+    monster_management_services_logger.info(f"怪獸 {monster_id} 的自定義屬性名已在服務層更新為 '{monster_to_update['custom_element_nickname']}'，完整暱稱更新為 '{monster_to_update['nickname']}'。等待路由層儲存。")
+    return player_data
+
+
+def absorb_defeated_monster_service(
+    player_id: str,
+    winning_monster_id: str,
+    defeated_monster_snapshot: Monster,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, Any]]:
+    """處理勝利怪獸吸收被擊敗怪獸的邏輯。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    winning_monster: Optional[Monster] = None
+    winning_monster_idx = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == winning_monster_id:
+            winning_monster = m
+            winning_monster_idx = idx
+            break
+
+    if not winning_monster or winning_monster_idx == -1:
+        return {"success": False, "error": f"找不到ID為 {winning_monster_id} 的勝利怪獸。"}
+
+    monster_management_services_logger.info(f"玩家 {player_id} 的怪獸 {winning_monster.get('nickname')} 開始吸收 {defeated_monster_snapshot.get('nickname')}。")
+
+    absorption_cfg: AbsorptionConfig = game_configs.get("absorption_config", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["absorption_config"]) # type: ignore
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+    extracted_dna_templates: List[DNAFragment] = []
+
+    defeated_constituent_ids = defeated_monster_snapshot.get("constituent_dna_ids", [])
+    if defeated_constituent_ids:
+        for dna_template_id in defeated_constituent_ids:
+            dna_template = next((t for t in all_dna_templates if t.get("id") == dna_template_id), None)
+            if dna_template:
+                extraction_chance = absorption_cfg.get("dna_extraction_chance_base", 0.75)
+                rarity_modifier = absorption_cfg.get("dna_extraction_rarity_modifier", {}).get(dna_template.get("rarity", "普通"), 1.0) # type: ignore
+                if random.random() < (extraction_chance * rarity_modifier): # type: ignore
+                    extracted_dna_templates.append(dna_template)
+                    monster_management_services_logger.info(f"成功提取DNA模板: {dna_template.get('name')}") # type: ignore
+
+    stat_gains: Dict[str, int] = {}
+    defeated_score = defeated_monster_snapshot.get("score", 100)
+    winning_score = winning_monster.get("score", 100)
+    if winning_score <= 0: winning_score = 100
+
+    base_gain_factor = absorption_cfg.get("base_stat_gain_factor", 0.03)
+    score_diff_exp = absorption_cfg.get("score_diff_exponent", 0.3)
+    score_ratio_effect = min(2.0, max(0.5, (defeated_score / winning_score) ** score_diff_exp))
+
+    stats_to_grow = ["hp", "mp", "attack", "defense", "speed", "crit"]
+    for stat_key in stats_to_grow:
+        defeated_stat_value = defeated_monster_snapshot.get(stat_key, 10 if stat_key not in ["hp", "mp"] else 50) # type: ignore
+        gain = int(defeated_stat_value * base_gain_factor * score_ratio_effect * random.uniform(0.8, 1.2)) # type: ignore
+        gain = max(absorption_cfg.get("min_stat_gain", 1) if gain > 0 else 0, gain) # type: ignore
+
+        max_gain_for_stat = 0
+        if stat_key in ["hp", "mp"]:
+            max_gain_for_stat = int(winning_monster.get(f"initial_max_{stat_key}", 1000) * absorption_cfg.get("max_stat_gain_percentage", 0.015)) # type: ignore
+        else:
+            max_gain_for_stat = int(winning_monster.get(stat_key, 100) * absorption_cfg.get("max_stat_gain_percentage", 0.015) * 2) # type: ignore
+
+        gain = min(gain, max(absorption_cfg.get("min_stat_gain", 1), max_gain_for_stat)) # type: ignore
+
+        if gain > 0:
+            current_stat_val = winning_monster.get(stat_key, 0) # type: ignore
+            target_max_stat_val_key = f"initial_max_{stat_key}" if stat_key in ["hp", "mp"] else None
+
+            if target_max_stat_val_key:
+                max_val = winning_monster.get(target_max_stat_val_key, current_stat_val + gain) # type: ignore
+                winning_monster[stat_key] = min(max_val, current_stat_val + gain) # type: ignore
+                winning_monster[target_max_stat_val_key] = min(int(max_val * 1.05), max_val + int(gain * 0.5)) # type: ignore
+            else:
+                winning_monster[stat_key] = current_stat_val + gain # type: ignore
+            stat_gains[stat_key] = gain
+            monster_management_services_logger.info(f"怪獸 {winning_monster_id} 的 {stat_key} 成長了 {gain}點。")
+
+    player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in extracted_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None: # 找到第一個 None 槽位
+                free_slot_index = i
+                break
+
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None: # 找到第一個 None 槽位
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None: # 找到第一個 None 槽位
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None: # 找到第一個 None 槽位
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_management_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_heal: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_heal = m
+            monster_index = idx
+            break
+
+    if not monster_to_heal or monster_index == -1:
+        monster_management_services_logger.error(f"治療失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    monster_management_services_logger.info(f"開始治療玩家 {player_id} 的怪獸 {monster_to_heal.get('nickname')} (ID: {monster_id})，治療類型: {heal_type}")
+    healed = False
+    if heal_type == "full_hp" or heal_type == "full_restore":
+        monster_to_heal["hp"] = monster_to_heal.get("initial_max_hp", 100)
+        healed = True
+    if heal_type == "full_mp" or heal_type == "full_restore":
+        monster_to_heal["mp"] = monster_to_heal.get("initial_max_mp", 50)
+        healed = True
+    if heal_type == "cure_conditions" or heal_type == "full_restore":
+        if monster_to_heal.get("healthConditions"):
+            monster_to_heal["healthConditions"] = []
+            healed = True
+            monster_management_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
+
+    if healed:
+        player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
+        monster_management_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_management_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        return player_data
+
+def disassemble_monster_service(
+    player_id: str,
+    monster_id: str,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[Dict[str, any]]:
+    """分解怪獸，返回分解出的 DNA 模板列表。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (disassemble_monster_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。"}
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not player_data or not player_data.get("farmedMonsters"):
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。"}
+
+    monster_to_disassemble: Optional[Monster] = None
+    monster_index = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_disassemble = m
+            monster_index = idx
+            break
+
+    if not monster_to_disassemble or monster_index == -1:
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。"}
+
+    monster_management_services_logger.info(f"開始分解玩家 {player_id} 的怪獸 {monster_to_disassemble.get('nickname')} (ID: {monster_id})")
+
+    returned_dna_templates: List[DNAFragment] = []
+    constituent_ids = monster_to_disassemble.get("constituent_dna_ids", [])
+    all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["dna_fragments"]) # type: ignore
+
+    if constituent_ids:
+        for template_id in constituent_ids:
+            found_template = next((t for t in all_dna_templates if t.get("id") == template_id), None)
+            if found_template:
+                returned_dna_templates.append(found_template)
+    else:
+        num_to_return = random.randint(1, 3)
+        monster_rarity = monster_to_disassemble.get("rarity", "普通")
+        monster_elements: List[ElementTypes] = monster_to_disassemble.get("elements", ["無"]) # type: ignore
+
+        eligible_templates = [
+            t for t in all_dna_templates
+            if t.get("rarity") == monster_rarity and any(el == t.get("type") for el in monster_elements) # type: ignore
+        ]
+        if not eligible_templates:
+            eligible_templates = [t for t in all_dna_templates if t.get("rarity") == monster_rarity]
+        if not eligible_templates:
+            eligible_templates = all_dna_templates
+
+        for _ in range(min(num_to_return, len(eligible_templates))):
+            if not eligible_templates: break
+            returned_dna_templates.append(random.choice(eligible_templates))
+
+    player_data["farmedMonsters"].pop(monster_index) # type: ignore
+    
+    # 修改點：在 service 層處理將分解出的 DNA 加入玩家庫存的 None 槽位，並保持陣列長度
+    current_owned_dna = player_data.get("playerOwnedDNA", [])
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+
+    for dna_template in returned_dna_templates:
+        instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
+        owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
+        
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None:
+                free_slot_index = i
+                break
+        
+        if free_slot_index != -1 and free_slot_index < max_inventory_slots:
+            current_owned_dna[free_slot_index] = owned_dna_item
+        else:
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+            
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None:
+                    free_temp_slot_index = i
+                    break
+            
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_management_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_management_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
+
+    player_data["playerOwnedDNA"] = current_owned_dna
+
+    if winning_monster:
+        rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"] # type: ignore
+        winning_monster["score"] = (winning_monster.get("initial_max_hp",0) // 10) + \
+                                   winning_monster.get("attack",0) + winning_monster.get("defense",0) + \
+                                   (winning_monster.get("speed",0) // 2) + (winning_monster.get("crit",0) * 2) + \
+                                   (len(winning_monster.get("skills",[])) * 15) + \
+                                   (rarity_order.index(winning_monster.get("rarity","普通")) * 30) # type: ignore
+        player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
+
+
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
+    return {
+        "success": True,
+        "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
+        "extracted_dna_templates": extracted_dna_templates,
+        "stat_gains": stat_gains,
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
+    }
+
+
+# --- 醫療站相關服務 ---
+def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs) -> int:
+    """計算 DNA 碎片的價值，用於充能等。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
+        return 0
+    
+    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+
+    if not dna_instance: return 0
+    base_rarity_value = 0
+    rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["rarities"]) # type: ignore
+    dna_rarity_name = dna_instance.get("rarity", "普通")
+
+    rarity_key_found = next((r_key for r_key, r_detail in rarities_config.items() if r_detail.get("name") == dna_rarity_name), None)
+    if rarity_key_found:
+        base_rarity_value = rarities_config[rarity_key_found].get("value_factor", 10) # type: ignore
+    else:
+        base_rarity_value = rarities_config.get("COMMON", {}).get("value_factor", 10) # type: ignore
+
+    element_factor = 1.0
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_MANAGEMENT["value_settings"]) # type: ignore
+    element_value_factors: Dict[ElementTypes, float] = value_settings.get("element_value_factors", {}) # type: ignore
+    dna_element: ElementTypes = dna_instance.get("type", "無") # type: ignore
+
+    if dna_element in element_value_factors:
+        element_factor = element_value_factors[dna_element] # type: ignore
+
+    calculated_value = int(base_rarity_value * element_factor)
+    monster_management_services_logger.debug(f"計算DNA '{dna_instance.get('name')}' 價值: {calculated_value}")
+    return max(1, calculated_value)
+
+def heal_monster_service(
+    player_id: str,
+    monster_id: str,
+    heal_type: Literal["full_hp", "full_mp", "cure_conditions", "full_restore"],
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    """治療怪獸。"""
+    if not MD_firebase_config.db:
+        monster_management_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
+        return None
+    
+    db = MD_firebase
