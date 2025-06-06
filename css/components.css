@@ -3,23 +3,23 @@
 /* Corner buttons (Theme switcher and New Logout button) */
 .corner-button {
     position: absolute;
-    background: var(--bg-slot);
+    background: var(--bg-slot); 
     border: 1px solid var(--border-color);
     border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    font-size: 1.2rem;
+    width: 36px; 
+    height: 36px; 
+    font-size: 1.2rem; 
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.25); 
     transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, transform 0.2s;
     z-index: 990;
 }
 .corner-button:hover {
-    transform: translateY(-1px);
+    transform: translateY(-1px); 
     box-shadow: 0 3px 6px rgba(0,0,0,0.3);
 }
 .corner-button:active {
@@ -36,19 +36,19 @@
 body.light-theme #theme-switcher {
     color: var(--text-primary-light);
 }
-#theme-switcher:hover {
+#theme-switcher:hover { 
     color: var(--accent-color);
     border-color: var(--accent-color);
 }
 
 #main-logout-btn {
-    font-size: 1.4rem;
-    line-height: 1;
-    padding-bottom: 2px;
+    font-size: 1.4rem; 
+    line-height: 1; 
+    padding-bottom: 2px; 
 }
 #main-logout-btn:hover {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text-dark);
+    background-color: var(--danger-color); 
+    color: var(--button-danger-text-dark); 
     border-color: var(--danger-hover-dark);
 }
 body.light-theme #main-logout-btn:hover {
@@ -70,8 +70,8 @@ body.light-theme #main-logout-btn:hover {
     font-size: 1.2rem;
     font-weight: 600;
     color: var(--accent-color);
-    margin-bottom: 0;
-    border-bottom: none;
+    margin-bottom: 0; 
+    border-bottom: none; 
     padding-bottom: 0;
 }
 .panel-title-hint {
@@ -85,26 +85,26 @@ body.light-theme #main-logout-btn:hover {
 /* DNA items, slots, and related elements */
 .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 8px;
+    border-radius: 8px; 
+    padding: 8px; 
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.8rem; 
     transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
     position: relative;
-    min-height: 60px;
+    min-height: 60px; 
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     box-sizing: border-box;
-    word-break: break-all;
+    word-break: break-all; 
 }
-.dna-item {
-    cursor: grab;
+.dna-item { 
+    cursor: grab; 
     box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.05);
     font-weight: 500;
 }
-.dna-item .dna-rarity-badge {
+.dna-item .dna-rarity-badge { 
     position: absolute;
     top: 3px;
     right: 3px;
@@ -118,13 +118,13 @@ body.light-theme #main-logout-btn:hover {
 }
 
 
-.dna-slot, .temp-backpack-slot { cursor: pointer; }
+.dna-slot, .temp-backpack-slot { cursor: pointer; } 
 .inventory-slot-empty, .temp-backpack-slot.empty {
     color: var(--text-secondary);
     border-style: dashed;
-    border-width: 2px;
+    border-width: 2px; 
     cursor: default;
-    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent); 
 }
 
 .inventory-delete-slot {
@@ -145,9 +145,9 @@ body.light-theme #main-logout-btn:hover {
     margin-top: 2px;
 }
 
-.inventory-delete-slot.drag-over {
+.inventory-delete-slot.drag-over { 
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
-    border-color: var(--danger-hover-dark) !important;
+    border-color: var(--danger-hover-dark) !important; 
     color: var(--button-danger-text-dark) !important;
 }
 body.light-theme .inventory-delete-slot.drag-over {
@@ -165,17 +165,17 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 .dna-item:hover,
-.dna-slot:hover:not(.occupied),
-.temp-backpack-slot:hover:not(.occupied):not(.empty) {
+.dna-slot:hover:not(.occupied), 
+.temp-backpack-slot:hover:not(.occupied):not(.empty) { 
     border-color: var(--accent-color);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
-.temp-backpack-slot.empty:hover {
+.temp-backpack-slot.empty:hover { 
      background-color: var(--accent-hover);
      border-color: var(--accent-color);
 }
 .dna-slot.occupied, .temp-backpack-slot.occupied {
-    border-style: solid;
+    border-style: solid; 
 }
 .inventory-slot-empty.drag-over, .temp-backpack-slot.empty.drag-over {
     border-color: var(--accent-color);
@@ -192,9 +192,9 @@ button, .button {
     font-size: 0.9rem;
     font-weight: 500;
     transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s, border-color 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1);
-    border-bottom: 2px solid rgba(0,0,0,0.2);
-    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1); 
+    border-bottom: 2px solid rgba(0,0,0,0.2); 
+    position: relative; 
 }
 @media (min-width: 768px) {
     button, .button {
@@ -202,9 +202,9 @@ button, .button {
         font-size: 0.95rem;
     }
 }
-button:active, .button:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+button:active, .button:active { 
+    transform: translateY(1px); 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
     border-bottom-width: 1px;
 }
 button:disabled, .button:disabled {
@@ -216,7 +216,7 @@ button:disabled, .button:disabled {
     border-bottom: 1px solid color-mix(in srgb, var(--border-color, #555555) 50%, var(--bg-primary, #111111)) !important;
 }
 button:disabled:hover, .button:disabled:hover {
-    background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important;
+    background-color: color-mix(in srgb, var(--button-secondary-bg, #888888) 50%, var(--bg-primary, #111111)) !important; 
 }
 button.primary, .button.primary {
     background-color: var(--button-primary-bg);
@@ -229,8 +229,8 @@ button.primary:hover, .button.primary:hover {
 button.secondary, .button.secondary, .top-nav-button, .farm-time-btn {
     background-color: var(--button-secondary-bg);
     color: var(--button-secondary-text);
-    border: 1px solid var(--border-color);
-    border-bottom: 2px solid var(--border-color);
+    border: 1px solid var(--border-color); 
+    border-bottom: 2px solid var(--border-color); 
 }
 button.secondary:hover, .button.secondary:hover, .top-nav-button:hover, .farm-time-btn:hover {
     background-color: var(--button-secondary-hover-bg);
@@ -260,25 +260,25 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 .action-button-main {
-    height: 35px !important;
-    padding: 0 15px !important;
-    font-size: 0.95rem !important;
+    height: 35px !important; 
+    padding: 0 15px !important; 
+    font-size: 0.95rem !important; 
     font-weight: bold !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.2),
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2), 
                 0 1px 2px rgba(0,0,0,0.15),
                 inset 0 -2px 1px rgba(255,255,255,0.1),
-                inset 0 1px 0px rgba(255,255,255,0.05);
-    border-bottom-width: 2px !important;
-    line-height: 35px !important;
-    display: flex;
-    align-items: center;
+                inset 0 1px 0px rgba(255,255,255,0.05); 
+    border-bottom-width: 2px !important; 
+    line-height: 35px !important; 
+    display: flex; 
+    align-items: center; 
     justify-content: center;
 }
 .action-button-main:active {
-    transform: translateY(1px) !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    transform: translateY(1px) !important; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
     border-bottom-width: 1px !important;
 }
 
@@ -297,7 +297,7 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 .farm-monster-item button.farm-battle-btn {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    border-radius: 50%; 
     padding: 0;
     display: flex;
     align-items: center;
@@ -305,9 +305,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     min-width: 32px;
     font-size: 1.2rem;
     line-height: 1;
-    border: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    border-bottom: 1px solid rgba(0,0,0,0.1);
+    border: none; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); 
+    border-bottom: 1px solid rgba(0,0,0,0.1); 
 }
 .farm-monster-item button.farm-battle-btn:active {
     border-bottom-width: 0;
@@ -315,8 +315,8 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 .top-buttons-container {
     display: flex;
     justify-content: center;
-    align-items: stretch;
-    gap: 0.2rem;
+    align-items: stretch; 
+    gap: 0.2rem; 
     margin-top: 0.5rem;
 }
 .top-nav-button {
@@ -328,13 +328,13 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-grow: 1;
+    flex-grow: 1; 
     text-align: center;
     line-height: 1.2;
-    background-color: var(--accent-color);
-    color: var(--button-primary-text);
+    background-color: var(--accent-color); 
+    color: var(--button-primary-text); 
     border: 1px solid var(--accent-hover-dark);
-    border-bottom-width: 2px;
+    border-bottom-width: 2px; 
 }
 .top-nav-button:hover {
     background-color: var(--accent-hover-dark);
@@ -342,25 +342,25 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
 .top-nav-button:disabled {
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
 }
-.modal-close {
+.modal-close { 
     color: var(--text-secondary);
     position: absolute;
-    top: 8px;
-    right: 10px;
-    font-size: 26px;
+    top: 8px; 
+    right: 10px; 
+    font-size: 26px; 
     font-weight: bold;
     cursor: pointer;
-    width: 30px;
+    width: 30px; 
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 50%; 
     transition: background-color 0.2s, color 0.2s;
 }
-.modal-close:hover, .modal-close:focus {
+.modal-close:hover, .modal-close:focus { 
     color: var(--text-primary);
-    background-color: var(--border-color);
+    background-color: var(--border-color); 
     text-decoration: none;
 }
 #feedback-modal-close-x {
@@ -386,18 +386,18 @@ body.light-theme #feedback-modal-close-x:hover {
 }
 
 
-#confirmation-modal-close-x.modal-close {
+#confirmation-modal-close-x.modal-close { 
     background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
+    color: var(--button-danger-text); 
+    width: 28px; 
     height: 28px;
-    font-size: 20px;
-    line-height: 26px;
+    font-size: 20px; 
+    line-height: 26px; 
     text-align: center;
     border-radius: 50%;
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    border: 1px solid var(--danger-hover-dark);
+    border: 1px solid var(--danger-hover-dark); 
     z-index: 1050;
 }
 #confirmation-modal-close-x.modal-close:hover {
@@ -407,13 +407,13 @@ body.light-theme #feedback-modal-close-x:hover {
 body.light-theme #confirmation-modal-close-x.modal-close:hover {
     background-color: var(--danger-hover-light);
 }
-#official-announcement-close-x {
+#official-announcement-close-x { 
     background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
+    color: var(--button-danger-text); 
+    width: 28px; 
     height: 28px;
-    font-size: 20px;
-    line-height: 28px;
+    font-size: 20px; 
+    line-height: 28px; 
     text-align: center;
     border-radius: 50%;
     padding: 0;
@@ -439,27 +439,27 @@ body.light-theme #official-announcement-close-x:hover {
 .modal-body {
     font-size: 0.95rem;
     line-height: 1.6;
-    max-height: 70vh;
-    overflow-y: auto;
+    max-height: 70vh; 
+    overflow-y: auto; 
 }
 .modal-footer {
     margin-top: 20px;
     display:flex;
-    justify-content: center;
+    justify-content: center; 
     gap: 15px;
 }
 .modal-footer button {
-    padding: 12px 25px;
+    padding: 12px 25px; 
     font-size: 1rem;
 }
 .loading-spinner {
     border:4px solid var(--border-color);
-    border-top:4px solid var(--accent-color);
+    border-top:4px solid var(--accent-color); 
     border-radius:50%;
     width:30px;
     height:30px;
     animation:spin 1s linear infinite;
-    margin:20px auto;
+    margin:20px auto; 
 }
 .dna-panel-title {
     font-size: 1.2rem;
@@ -469,14 +469,14 @@ body.light-theme #official-announcement-close-x:hover {
     border-bottom: none;
     padding-bottom: 0;
 }
-body.light-theme .dna-panel-title { color: #0550ae; }
+body.light-theme .dna-panel-title { color: #0550ae; } 
 .dna-panel-hint {
     font-size: 0.875rem;
     color: var(--text-secondary);
 }
 body.light-theme .dna-panel-hint { color: #424a53; }
 .details-section {
-    background-color: var(--bg-primary);
+    background-color: var(--bg-primary); 
     padding: 12px;
     border-radius: 6px;
     margin-bottom: 15px;
@@ -502,7 +502,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     font-weight: 500;
     color: var(--text-secondary);
     margin-right: 10px;
-    white-space: nowrap;
+    white-space: nowrap; 
 }
 .details-value {
     color: var(--text-primary);
@@ -527,26 +527,26 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
 .skill-name {
     font-weight: bold;
-    color: var(--accent-hover);
+    color: var(--accent-hover); 
     font-size: 0.95rem;
 }
 .skill-details {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-left: 10px;
+    margin-left: 10px; 
 }
-.monster-info-header {
+.monster-info-header { 
     text-align: center;
     margin-bottom: 15px;
 }
-.monster-info-name-styled {
+.monster-info-name-styled { 
     font-size: 1.6rem;
     font-weight: bold;
     /* Color is set dynamically by JS based on rarity */
     /* Removed background, border, padding to make it frameless */
     display: inline-block;
 }
-.monster-description-area {
+.monster-description-area { 
     font-size: 0.9rem;
     margin-top: 10px;
     padding: 10px;
@@ -560,7 +560,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     line-height: 1.6;
     font-size: 0.9rem;
 }
-.ai-generated-text {
+.ai-generated-text { 
     margin-top: 5px;
     font-size: 0.9rem;
     line-height: 1.5;
@@ -598,7 +598,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     line-height: 22px;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    animation-name: scrollHint;
     /* MODIFICATION START: Removed var(--total-animation-duration) and set animationDuration from JS */
     /* animation-duration will be set by JS dynamically for each hint based on total hints count */
     /* MODIFICATION END */
@@ -609,9 +608,9 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 
 .tab-buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 4px; 
     margin-bottom: 15px;
     background-color: var(--bg-primary);
     border-radius: 6px;
@@ -649,16 +648,16 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 .tab-button.active {
     color: var(--accent-color);
-    background-color: var(--bg-panel);
-    font-weight: 600;
+    background-color: var(--bg-panel); 
+    font-weight: 600; 
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 .tab-button:not(.active):hover {
-    background-color: var(--border-color);
+    background-color: var(--border-color); 
     color: var(--text-primary);
 }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.tab-content { display: none; } 
+.tab-content.active { display: block; } 
 
 .leaderboard-table {
     width: 100%;
@@ -673,23 +672,23 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .leaderboard-table th {
     color: var(--accent-color);
     font-weight: 500;
-    cursor: pointer;
+    cursor: pointer; 
 }
 .leaderboard-table th:hover { color: var(--accent-hover); }
 .leaderboard-table td { color: var(--text-primary); }
-.leaderboard-table .leaderboard-element-cell span { font-weight: bold; }
-.leaderboard-table tr:last-child td { border-bottom: none; }
+.leaderboard-table .leaderboard-element-cell span { font-weight: bold; } 
+.leaderboard-table tr:last-child td { border-bottom: none; } 
 .leaderboard-table tr:hover td {
     background-color: var(--bg-slot);
 }
 body.light-theme .leaderboard-table tr:hover td {
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; 
 }
 .leaderboard-table .challenge-btn-cell {
-    width: 80px;
+    width: 80px; 
     text-align: center;
 }
-.leaderboard-table th .sort-arrow {
+.leaderboard-table th .sort-arrow { 
     margin-left: 5px;
     opacity: 0.5;
 }
@@ -711,7 +710,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
 }
-.owned-monsters-list li {
+.owned-monsters-list li { 
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -720,11 +719,11 @@ body.light-theme .leaderboard-table tr:hover td {
 .owned-monsters-list .monster-score { color: var(--success-color); }
 .medal-emoji { font-size: 1.3rem; }
 .farm-monster-item .farm-monster-status.active {
-    color: var(--warning-color);
+    color: var(--warning-color); 
     font-weight: bold;
 }
 .farm-monster-item .farm-monster-status.battling {
-    color: var(--danger-color);
+    color: var(--danger-color); 
     font-weight: bold;
 }
 .farm-monster-item .farm-monster-cultivate-btn {
@@ -745,7 +744,7 @@ body.light-theme .leaderboard-table tr:hover td {
     justify-content: center;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin: 10px auto;
+    margin: 10px auto; 
 }
 #release-monster-image-placeholder img {
     max-width: 100%;
@@ -764,7 +763,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
     margin-right: 8px;
 }
-.log-entry .log-message {}
+.log-entry .log-message {} 
 .feedback-skill-entry { margin-bottom: 6px; }
 .feedback-skill-name {
     font-weight: bold;
@@ -774,15 +773,15 @@ body.light-theme .leaderboard-table tr:hover td {
 .feedback-skill-description {
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-left: 10px;
+    margin-left: 10px; 
 }
 #cultivation-setup-modal .modal-body,
 #training-results-modal .modal-body { text-align: left; }
 #cultivation-setup-modal button,
 #training-results-modal button { margin-top: 10px; }
-#start-cultivation-btn {
+#start-cultivation-btn { 
     padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 1rem; 
 }
 .cultivation-hint {
     font-size: 0.875rem;
@@ -798,7 +797,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-bottom: none;
     margin-bottom: 0;
 }
-.training-result-section h5 {
+.training-result-section h5 { 
     font-size: 1rem;
     font-weight: 600;
     color: var(--accent-color);
@@ -808,15 +807,15 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.9rem;
     margin-bottom: 4px;
 }
-.temp-backpack-item-container {
+.temp-backpack-item-container { 
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
 }
-#add-all-to-temp-backpack-btn {
+#add-all-to-temp-backpack-btn { 
     padding: 8px 10px;
-    height: auto;
+    height: auto; 
     font-size: 0.9rem;
 }
 #newbie-guide-search-input {
@@ -828,9 +827,9 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
     color: var(--text-primary);
 }
-#newbie-guide-search-results p {
+#newbie-guide-search-results p { 
     padding: 5px;
-    border-bottom: 1px solid var(--border-color-dark);
+    border-bottom: 1px solid var(--border-color-dark); 
 }
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
@@ -845,7 +844,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
 }
 #friends-list-container {
-    max-height: 250px;
+    max-height: 250px; 
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -886,7 +885,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-primary);
     font-size: 0.95rem;
 }
-.auth-button {
+.auth-button { 
     width: 100%;
     padding: 12px;
     font-size: 1rem;
@@ -906,25 +905,25 @@ body.light-theme .leaderboard-table tr:hover td {
 .auth-error-message {
     color: var(--danger-color);
     font-size: 0.875rem;
-    margin-top: -10px;
+    margin-top: -10px; 
     margin-bottom: 15px;
-    min-height: 1.2em;
+    min-height: 1.2em; 
 }
-#battle-log-modal .modal-content { max-width: 700px; }
+#battle-log-modal .modal-content { max-width: 700px; } 
 #battle-log-area {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 15px;
-    height: 400px;
-    overflow-y: auto;
-    font-family: 'Courier New', Courier, monospace;
+    height: 400px; 
+    overflow-y: auto; 
+    font-family: 'Courier New', Courier, monospace; 
     font-size: 0.9rem;
     line-height: 1.5;
-    white-space: pre-wrap;
+    white-space: pre-wrap; 
     color: var(--text-primary);
 }
-#battle-log-area p { margin-bottom: 5px; }
+#battle-log-area p { margin-bottom: 5px; } 
 #battle-log-area .turn-divider {
     border-top: 1px dashed var(--accent-color);
     margin-top: 10px;
@@ -936,7 +935,7 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .battle-start,
 #battle-log-area .battle-end {
     font-weight: bold;
-    color: var(--success-color);
+    color: var(--success-color); 
     text-align: center;
     padding: 5px 0;
     border-top: 1px solid var(--success-color);
@@ -949,7 +948,7 @@ body.light-theme .leaderboard-table tr:hover td {
 #battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
 #battle-log-area .heal-action { color: var(--success-color); }
 #battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
-#dna-draw-modal .modal-content { max-width: 600px; }
+#dna-draw-modal .modal-content { max-width: 600px; } 
 .dna-draw-result-item {
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -959,13 +958,13 @@ body.light-theme .leaderboard-table tr:hover td {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    min-height: 80px;
+    justify-content: space-between; 
+    min-height: 80px; 
 }
 .dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
 .dna-draw-result-item .dna-type { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;}
 .dna-draw-result-item .dna-rarity { font-size: 0.8rem; }
-.dna-draw-result-item button {
+.dna-draw-result-item button { 
     margin-top: 8px;
     padding: 5px 8px;
     font-size: 0.8rem;
@@ -1065,7 +1064,7 @@ body.light-theme .leaderboard-table tr:hover td {
     overflow-y: auto;
 }
 .feedback-monster-info-section:last-child {
-    max-height: 350px;
+    max-height: 350px; 
 }
 
 .feedback-monster-info-title {
@@ -1095,17 +1094,17 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* ===== Styles moved from index.html ===== */
 .monster-snapshot-area {
-    position: relative;
+    position: relative; 
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 8px;
-    min-height: 230px;
+    padding: 8px; 
+    min-height: 230px; 
 }
  @media (min-width: 768px) {
     .monster-snapshot-area {
-        min-height: 270px;
+        min-height: 270px; 
     }
 }
 
@@ -1113,45 +1112,45 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-snapshot-body-silhouette,
 #monster-parts-container {
     position: absolute;
-    top: 50%;
+    top: 50%; 
     left: 50%;
     transform: translate(-50%, -50%);
-    object-fit: contain;
+    object-fit: contain; 
 }
 
-#monster-snapshot-base-bg {
-    z-index: 1;
-    width: 100%;
+#monster-snapshot-base-bg { 
+    z-index: 1; 
+    width: 100%; 
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; 
 }
 
-#monster-snapshot-body-silhouette {
-    z-index: 2;
-    max-width: 75%;
+#monster-snapshot-body-silhouette { 
+    z-index: 2; 
+    max-width: 75%; 
     max-height: 75%;
 }
 
-#monster-parts-container {
-    z-index: 3;
-    width: 70%;
-    height: 85%;
-    display: grid;
+#monster-parts-container { 
+    z-index: 3; 
+    width: 70%; 
+    height: 85%; 
+    display: grid; 
     grid-template-columns: 28% 44% 28%;
     grid-template-rows: 30% 35% 35%;
     grid-template-areas:
         ".    head   ."
         "lArm body rArm"
         "lLeg body rLeg";
-    gap: 1%;
+    gap: 1%; 
 }
 
 .monster-part {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-    width: 100%;
-    height: 100%;
+    width: 100%; 
+    height: 100%; 
     border: 1px dashed var(--accent-color-dark);
     box-sizing: border-box;
 }
@@ -1169,14 +1168,14 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .snapshot-info-overlay {
     position: absolute;
-    bottom: 8px;
+    bottom: 8px; 
     left: 10px;
     right: 10px;
     z-index: 4;
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    pointer-events: none;
+    align-items: flex-end; 
+    pointer-events: none; 
 }
 
 .snapshot-info-left {
@@ -1186,20 +1185,20 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: right;
 }
 
-#snapshot-achievement-title {
-    font-size: 1.1rem;
+#snapshot-achievement-title { 
+    font-size: 1.1rem; 
     font-weight: bold;
-    color: var(--accent-color);
-    display: block;
+    color: var(--accent-color); 
+    display: block; 
 }
-#snapshot-nickname {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-top: 1px;
+#snapshot-nickname { 
+    font-size: 0.8rem; 
+    color: var(--text-secondary); 
+    display: block; 
+    margin-top: 1px; 
 }
 #snapshot-evaluation {
-    font-size: 1.1rem;
+    font-size: 1.1rem; 
     font-weight: bold;
     color: var(--success-color);
 }
@@ -1217,9 +1216,9 @@ body.light-theme .leaderboard-table tr:hover td {
 }
  #snapshot-win-loss span { display: block; }
 
-#snapshot-main-content {
+#snapshot-main-content { 
     position: absolute;
-    top: 8px;
+    top: 8px; 
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
@@ -1244,3 +1243,10 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     color: var(--success-color);
 }
+
+/* MODIFICATION START: Specific style for feedback-modal content */
+#feedback-modal .modal-content {
+    background-color: #ff00ff; /* 示例: 洋紅色背景，請替換為您想要的顏色 */
+    border: 2px solid #a000a0; /* 示例: 搭配的邊框顏色 */
+}
+/* MODIFICATION END */
