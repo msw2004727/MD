@@ -718,15 +718,21 @@ function renderMonsterFarm() {
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
-        if (gameState.selectedMonsterId === monster.id) {
+        
+        const isDeployed = gameState.selectedMonsterId === monster.id;
+        if (isDeployed) {
             item.classList.add('selected');
         }
+
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
         let statusClass = "status-idle";
         if (monster.farmStatus) {
-            if (monster.farmStatus.isTraining) {
+            if (isDeployed) {
+                statusText = "出戰中"; 
+                statusClass = "status-battling";
+            } else if (monster.farmStatus.isTraining) {
                 const endTime = (monster.farmStatus.trainingStartTime || 0) + (monster.farmStatus.trainingDuration || 0);
                 let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
                 statusText = remainingTime > 0 ? `修煉中 (${remainingTime}s)` : "發呆中";
@@ -741,20 +747,19 @@ function renderMonsterFarm() {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
-
-        const isDeployed = gameState.selectedMonsterId === monster.id;
+        
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
-                <button class="farm-battle-btn button ${battleButtonClass}" data-monster-id="${monster.id}" title="${battleButtonTitle}">
+                <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
                     ${battleButtonIcon}
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <strong class="monster-name-display">${displayName}</strong>
+                <strong class="monster-name-display">${displayName} (評價: ${monster.score || 0})</strong>
                 <div class="monster-details-display">
                     ${elementsDisplay} <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
                 </div>
@@ -763,22 +768,20 @@ function renderMonsterFarm() {
                 <span class="status-text ${statusClass}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button secondary text-xs" data-monster-id="${monster.id}">資訊</button>
+                <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
                 <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
-                        data-monster-id="${monster.id}" 
                         title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${monster.farmStatus?.isTraining ? '結束' : '修煉'}
                 </button>
-                <button class="farm-monster-release-btn button danger text-xs" data-monster-id="${monster.id}" ${monster.farmStatus?.isTraining || isDeployed ? 'disabled' : ''}>放生</button>
+                <button class="farm-monster-release-btn button danger text-xs" ${monster.farmStatus?.isTraining || isDeployed ? 'disabled' : ''}>放生</button>
             </div>
         `;
 
-        // MODIFICATION: Removed row click event listener
-        
+        // MODIFICATION: Removed row click listener, added specific button listeners
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            handleDeployMonsterClick(monster.id); // Replaced with new function
+            handleDeployMonsterClick(monster.id);
         });
         
         item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
@@ -893,12 +896,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--accent-color))`;
+    
+    // ====== MODIFICATION: Hide ID, apply rarity color to name ======
     DOMElements.monsterInfoModalHeader.innerHTML = `
-        <h4 class="monster-info-name-styled" style="color: ${rarityColorVar}; border-color: ${rarityColorVar};">
+        <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
             ${monster.nickname}
         </h4>
-        <p class="text-xs text-[var(--text-secondary)] mt-1">ID: ${monster.id}</p>
     `;
+    // ====== END MODIFICATION ======
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
     let elementsDisplay = monster.elements.map(el => {
@@ -1258,7 +1263,7 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (winnerName) {
         const winnerP = document.createElement('p');
         winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
+        winnerP.textContent = `🏆 ${winnerName} 獲勝！�`;
         DOMElements.battleLogArea.appendChild(winnerP);
     } else if (loserName && logEntries.some(l => l.includes("平手"))) {
          const drawP = document.createElement('p');
