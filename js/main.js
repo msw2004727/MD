@@ -46,6 +46,21 @@ function initializeFirebaseApp() {
  */
 async function initializeGame() {
     console.log("Initializing game...");
+    // MODIFICATION START: Add a check for DOMElements before proceeding
+    if (Object.keys(DOMElements).length === 0 || !DOMElements.themeIcon) {
+        console.warn("initializeGame: DOMElements not fully initialized yet. Retrying initialization.");
+        // This scenario should be rare with the DOMContentLoaded change, but as a fallback.
+        if (typeof initializeDOMElements === 'function') {
+            initializeDOMElements();
+        }
+        if (Object.keys(DOMElements).length === 0 || !DOMElements.themeIcon) {
+            // If still not initialized, show a critical error.
+            showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
+            return;
+        }
+    }
+    // MODIFICATION END
+
     if (typeof showFeedbackModal === 'function') {
         showFeedbackModal('遊戲載入中...', '正在準備您的怪獸異世界...', true);
     }
@@ -89,25 +104,34 @@ async function initializeGame() {
  * 當 Firebase Auth 狀態改變時的回調函數
  */
 async function onAuthStateChangedHandler(user) {
-    // MODIFICATION START: Removed setTimeout retry logic as initializeDOMElements is now guaranteed to run first
-    // if (Object.keys(DOMElements).length === 0) {
-    //     console.warn("onAuthStateChangedHandler called before DOMElements initialized. Retrying in 100ms.");
-    //     setTimeout(() => onAuthStateChangedHandler(user), 100); // 稍微延遲後重試
-    //     return;
-    // }
+    // MODIFICATION START: Removed setTimeout retry logic.
+    // The DOMElements initialization is now primarily guaranteed by DOMContentLoaded.
+    // If there's still a race condition, the checks within initializeGame/loadPlayerDataAndInitializeUI will handle.
     // MODIFICATION END
 
     if (user) {
         console.log("User is signed in:", user.uid);
         updateGameState({ currentUser: user, playerId: user.uid, playerNickname: user.displayName || (user.email ? user.email.split('@')[0] : "玩家") });
 
-        // Ensure initializeGame is called after DOMElements is guaranteed to be initialized
-        // This is now implicitly guaranteed by the DOMContentLoaded block
-        if (DOMElements.gameContainer && (DOMElements.gameContainer.style.display === 'none' || DOMElements.gameContainer.style.display === '')) {
+        // MODIFICATION START: Re-evaluate calling initializeGame or loadPlayerDataAndInitializeUI
+        // Ensure DOMElements are available before proceeding with UI-heavy operations
+        if (Object.keys(DOMElements).length === 0 || !DOMElements.gameContainer) {
+            console.warn("onAuthStateChangedHandler: DOMElements not available, attempting re-initialization.");
+            if (typeof initializeDOMElements === 'function') initializeDOMElements(); // Re-call to ensure DOMElements are set
+            if (Object.keys(DOMElements).length === 0 || !DOMElements.gameContainer) {
+                console.error("onAuthStateChangedHandler: Critical error, DOMElements could not be initialized.");
+                if (typeof showFeedbackModal === 'function') showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
+                return; // Stop execution if DOMElements are still not ready
+            }
+        }
+        // Proceed with game initialization now that DOMElements are expected to be ready
+        if (DOMElements.gameContainer.style.display === 'none' || DOMElements.gameContainer.style.display === '') {
             await initializeGame();
         } else {
             await loadPlayerDataAndInitializeUI(user);
         }
+        // MODIFICATION END
+
         if (localStorage.getItem('announcementShown_v1') !== 'true' && gameState.currentUser) {
             if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
             if (typeof showModal === 'function') showModal('official-announcement-modal');
@@ -133,6 +157,20 @@ async function onAuthStateChangedHandler(user) {
  */
 async function loadPlayerDataAndInitializeUI(user) {
     if (!user) return;
+
+    // MODIFICATION START: Add a check for DOMElements before proceeding
+    if (Object.keys(DOMElements).length === 0 || !DOMElements.feedbackModal) {
+        console.warn("loadPlayerDataAndInitializeUI: DOMElements not fully initialized yet. Attempting re-initialization.");
+        if (typeof initializeDOMElements === 'function') {
+            initializeDOMElements();
+        }
+        if (Object.keys(DOMElements).length === 0 || !DOMElements.feedbackModal) {
+            // If still not initialized, show a critical error.
+            showFeedbackModal('嚴重錯誤', '遊戲介面組件初始化失敗，請刷新頁面或聯繫管理員。');
+            return;
+        }
+    }
+    // MODIFICATION END
 
     if (typeof showFeedbackModal === 'function') {
         showFeedbackModal('載入中...', '正在獲取您的玩家資料...', true);
@@ -180,8 +218,7 @@ async function loadPlayerDataAndInitializeUI(user) {
 
 // --- Application Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
-    // MODIFICATION START: Call initializeDOMElements unconditionally at the very beginning of DOMContentLoaded
-    // This guarantees DOMElements are defined before any other script could potentially try to access them.
+    // MODIFICATION START: Ensure DOMElements is initialized AT THE VERY BEGINNING of DOMContentLoaded
     if (typeof initializeDOMElements === 'function') {
         initializeDOMElements();
         console.log("DOMElements initialized in DOMContentLoaded.");
@@ -194,12 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 2. 清理緩存
     clearGameCacheOnExitOrRefresh();
-    console.log("DOM fully loaded and parsed. DOMElements should be initialized."); // Updated log message
+    console.log("DOM fully loaded and parsed. DOMElements should be initialized.");
 
     // 3. 初始化 Firebase App
     initializeFirebaseApp();
 
     // 4. 設置 Firebase Auth 狀態監聽器
+    // onAuthStateChangedHandler 現在期望 DOMElements 已經被 initializeDOMElements() 填充了
     if (typeof RosterAuthListener === 'function') {
         RosterAuthListener(onAuthStateChangedHandler);
     } else {
