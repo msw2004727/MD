@@ -25,32 +25,16 @@ app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # --- CORS 配置 ---
-allowed_origins = ["*"]
-CORS(app,
-     resources={r"/api/*": {"origins": allowed_origins}},
-     supports_credentials=True,
+# 簡化並強化 CORS 設定，讓 Flask-CORS 處理所有路由
+# 允許所有來源(*)，支援憑證，並明確指定允許的方法和標頭
+CORS(app, 
+     origins="*", 
+     supports_credentials=True, 
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
-app_logger.info(f"CORS configured for origins: {allowed_origins}")
+app_logger.info("CORS configured to allow all origins ('*').")
 
-@app.after_request
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
-
-@app.before_request
-def handle_options_requests():
-    if request.method == 'OPTIONS':
-        response = app.make_response('')
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        return response
 
 # 註冊藍圖
 app.register_blueprint(md_bp)
