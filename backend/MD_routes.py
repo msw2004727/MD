@@ -9,15 +9,14 @@ import logging
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service
 from .monster_combination_services import combine_dna_service
-from .monster_management_services import ( # 這裡包含了所有怪獸管理相關服務，現在它們都來自這個模組
-    update_monster_custom_element_nickname_service,
-    absorb_defeated_monster_service,
-    heal_monster_service,
-    disassemble_monster_service,
-    recharge_monster_with_dna_service,
-    complete_cultivation_service,
-    replace_monster_skill_service
-)
+
+# 直接從更細分的怪物管理服務模組中導入
+from .monster_nickname_services import update_monster_custom_element_nickname_service
+from .monster_healing_services import heal_monster_service, recharge_monster_with_dna_service
+from .monster_disassembly_services import disassemble_monster_service
+from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
+from .monster_absorption_services import absorb_defeated_monster_service # 新增導入吸收服務
+
 from .leaderboard_search_services import (
     get_monster_leaderboard_service,
     get_player_leaderboard_service,
