@@ -14,6 +14,8 @@ from .MD_models import (
 )
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
+# 從 utils_services 導入 calculate_dna_value (如果它被定義為通用輔助函數的話)
+# 或者如果 calculate_dna_value 僅在 healing/recharge 中使用，那麼就不要在這裡導入
 
 monster_absorption_services_logger = logging.getLogger(__name__)
 
