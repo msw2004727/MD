@@ -183,223 +183,7 @@ body.light-theme .inventory-delete-slot.drag-over {
 }
 
 
-/* Monster Snapshot Area */
-.monster-snapshot-panel {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-.monster-snapshot-area {
-    width: 100%;
-    height: 220px; 
-    background-color: var(--bg-primary); 
-    border-radius: 8px;
-    position: relative; 
-    overflow: hidden; 
-    border: 1px solid var(--border-color);
-    padding: 0; /* Remove padding if images are to fill edge to edge */
-    box-sizing: border-box;
-    transition: background-color 0.3s, border-color 0.3s;
-    display: flex; 
-    align-items: center;
-    justify-content: center;
-}
-@media (min-width: 768px) {
-    .monster-snapshot-area {
-        height: 260px; 
-    }
-}
-
-/* Layered Snapshot Images */
-#monster-snapshot-base-bg,
-#monster-snapshot-body-silhouette,
-#monster-parts-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    object-fit: contain; /* For <img> tags */
-    background-size: contain; /* For div backgrounds */
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-#monster-snapshot-base-bg {
-    width: 200px; /* As per your image dimension */
-    height: 200px;
-    z-index: 10; /* Lowest image layer */
-    opacity: 0.8; /* Optional: slight transparency for base */
-}
-
-#monster-snapshot-body-silhouette {
-    width: 190px; /* Slightly smaller or same as base */
-    height: 190px;
-    z-index: 20; /* Above base, below parts */
-    /* Default src can be a transparent png or set by JS */
-}
-
-#monster-parts-container {
-    /* NEW: Adjusted based on user's red box image. */
-    width: 150px; /* 調整為更緊湊的區域 */
-    height: 150px; /* 調整為更緊湊的區域 */
-    z-index: 30;
-    display: grid;
-    /* 根據您的紅框圖 重新定義 grid areas */
-    grid-template-columns: 1fr 1fr 1fr; /* 三列 */
-    grid-template-rows: 1fr 1fr 1fr;    /* 三行 */
-    grid-template-areas:
-        ".     head    ."
-        "leftArm body  rightArm"
-        "leftLeg body  rightLeg"; /* 讓 'body' 區域可以佔據中心，保持部位靠近 */
-    gap: 0px; /* 移除間隙，通過 margin 調整具體位置 */
-}
-
-/* Precise positioning for monster parts based on your red box image */
-.monster-part {
-    background-color: transparent; 
-    /* border: 1px solid var(--accent-color); /* 移除調試邊框或在完成後註釋掉 */
-    background-image: none; /* 確保不使用背景圖片，將由 JS 直接設置背景色和文字 */
-    background-size: contain; 
-    background-repeat: no-repeat;
-    background-position: center center;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s; /* 過渡顏色變化 */
-    border-radius: 4px; 
-    overflow: hidden; 
-    image-rendering: pixelated; 
-    display: flex; /* 確保內容（文字）居中 */
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75rem; /* 確保文字可見 */
-    font-weight: bold;
-    color: var(--text-primary); /* 預設文字顏色，會被 JS 覆蓋 */
-    border: 1px solid var(--border-color); /* 預設邊框 */
-}
-/* Specific grid areas for each part */
-#monster-part-head {
-    grid-area: head;
-    width: 50px; /* 約 33% 容器寬度 */
-    height: 40px; /* 偏橫向 */
-    justify-self: center;
-    align-self: center;
-    margin-top: -5px; /* 微調靠近中心 */
-}
-#monster-part-left-arm {
-    grid-area: leftArm;
-    width: 50px;
-    height: 40px;
-    justify-self: end; /* 靠近中間 */
-    align-self: center;
-    margin-right: -10px; /* 靠近中間 */
-    margin-top: 5px; /* 微調靠近中心 */
-}
-#monster-part-right-arm {
-    grid-area: rightArm;
-    width: 50px;
-    height: 40px;
-    justify-self: start; /* 靠近中間 */
-    align-self: center;
-    margin-left: -10px; /* 靠近中間 */
-    margin-top: 5px; /* 微調靠近中心 */
-}
-#monster-part-left-leg {
-    grid-area: leftLeg;
-    width: 50px;
-    height: 40px;
-    justify-self: end;
-    align-self: start; /* 靠近中間 */
-    margin-right: -10px;
-    margin-bottom: 5px; /* 微調靠近中心 */
-}
-#monster-part-right-leg {
-    grid-area: rightLeg;
-    width: 50px;
-    height: 40px;
-    justify-self: start;
-    align-self: start;
-    margin-left: -10px;
-    margin-bottom: 5px; /* 微調靠近中心 */
-}
-
-.monster-part.empty-part { /* 當沒有 DNA 圖案時，顯示為透明虛線框，文字為 ??. */
-    background-image: none !important;
-    background-color: transparent !important;
-    border: 1px dashed var(--border-color) !important;
-    color: var(--text-secondary); /* 顏色偏淡 */
-    font-size: 1.5rem; /* 大問號 */
-    font-weight: bold;
-}
-
-
-/* Snapshot text info - ensure they are above all image layers */
-.snapshot-achievement-title { 
-    position: absolute; 
-    top: 10px; /* Adjusted from 5px */
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.8rem; 
-    font-weight: 500;
-    color: var(--text-secondary);
-    z-index: 40; 
-    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent); 
-    padding: 3px 10px; /* Adjusted padding */
-    border-radius: 12px; /* More rounded */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-.snapshot-nickname { 
-    position: absolute;
-    bottom: 10px; /* Adjusted */
-    left: 10px;
-    font-size: 1.05rem; /* Slightly reduced */
-    font-weight: bold;
-    color: var(--accent-color);
-    z-index: 40;
-    text-shadow: 1px 1px 2px color-mix(in srgb, var(--bg-primary) 70%, transparent);
-    padding: 4px 10px; /* Adjusted */
-    background-color: color-mix(in srgb, var(--bg-slot) 80%, transparent);
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-}
-.snapshot-evaluation { 
-    position: absolute; 
-    bottom: 10px; /* Adjusted */
-    right: 10px;
-    font-size: 1.05rem; 
-    font-weight: bold;
-    color: var(--success-color);
-    z-index: 40;
-    text-shadow: 1px 1px 2px color-mix(in srgb, var(--bg-primary) 70%, transparent);
-    padding: 4px 10px; 
-    background-color: color-mix(in srgb, var(--bg-slot) 80%, transparent);
-    border-radius: 5px;
-    border: 1px solid var(--border-color);
-}
-.snapshot-win-loss { 
-    position: absolute; 
-    top: 10px; /* Adjusted */
-    right: 10px;
-    font-size: 0.8rem; /* Slightly smaller */
-    color: var(--text-secondary);
-    z-index: 40; 
-    text-align: right;
-    padding: 3px 6px; /* Adjusted */
-    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
-    border-radius: 4px;
-}
-.snapshot-win-loss span { display: block; } 
-
-.snapshot-main-content { /* For elemental icons, etc. */
-    position: absolute;
-    bottom: 38px; /* Position above nickname/evaluation */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40; 
-    display: flex; 
-    justify-content: center;
-    align-items: center;
-}
-
-/* General Button Styling ... (Rest of the file is the same as the previous complete version) */
+/* General Button Styling */
 button, .button {
     padding: 10px 14px;
     border: none;
@@ -476,10 +260,8 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     background-color: var(--button-warning-hover-bg);
 }
 .action-button-main {
-    /* 將高度降低70%：假設基礎高度約為 48px，降低 70% 意味著剩下 30% 的高度，即 14.4px。
-       但為了確保可點擊性和文字可讀性，我們將其設定為 35px，同時調整內距。 */
-    height: 35px !important; /* 新的高度 */
-    padding: 0 15px !important; /* 垂直內距設為0，依靠 height 和 line-height 居中 */
+    height: 35px !important; 
+    padding: 0 15px !important; 
     font-size: 0.95rem !important; 
     font-weight: bold !important;
     text-transform: uppercase;
@@ -489,9 +271,9 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
                 inset 0 -2px 1px rgba(255,255,255,0.1),
                 inset 0 1px 0px rgba(255,255,255,0.05); 
     border-bottom-width: 2px !important; 
-    line-height: 35px !important; /* 讓文字垂直居中 */
+    line-height: 35px !important; 
     display: flex; 
-    align-items: center; /* 確保內容垂直對齊 */
+    align-items: center; 
     justify-content: center;
 }
 .action-button-main:active {
@@ -500,18 +282,15 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     border-bottom-width: 1px !important;
 }
 
-/* Specific style for DNA draw button to make it 1:1 aspect ratio */
 #dna-draw-button {
-    /* 移除 aspect-ratio: 1 / 1; */
-    width: auto; /* 讓它可以在小螢幕上自動伸展 */
-    min-width: unset; /* 取消最小寬度限制 */
+    width: auto;
+    min-width: unset;
 }
 
-/* 在較大螢幕上重新設定抽取DNA按鈕的寬度 */
 @media (min-width: 481px) {
     #dna-draw-button {
-        width: 105px; /* 調整為新的寬度 (35px * 3) */
-        min-width: 105px; /* 調整 min-width 以配合新的寬度 */
+        width: 105px;
+        min-width: 105px;
     }
 }
 
@@ -585,21 +364,21 @@ button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-mons
     text-decoration: none;
 }
 #feedback-modal-close-x {
-    background-color: var(--danger-color); /* 紅色背景 */
-    color: var(--button-danger-text); /* 白色 X */
-    width: 28px; /* 調整大小 */
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+    width: 28px;
     height: 28px;
-    font-size: 20px; /* X 的大小 */
-    line-height: 28px; /* 垂直居中 X */
+    font-size: 20px;
+    line-height: 28px;
     text-align: center;
-    border-radius: 50%; /* 圓形 */
+    border-radius: 50%;
     padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* 小陰影 */
-    border: 1px solid var(--danger-hover-dark); /* 邊框 */
-    z-index: 1050; /* 確保它在最頂層 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 1px solid var(--danger-hover-dark);
+    z-index: 1050;
 }
 #feedback-modal-close-x:hover {
-    background-color: var(--danger-hover-dark); /* 懸停時顏色變深 */
+    background-color: var(--danger-hover-dark);
     color: var(--button-danger-text);
 }
 body.light-theme #feedback-modal-close-x:hover {
@@ -619,7 +398,7 @@ body.light-theme #feedback-modal-close-x:hover {
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     border: 1px solid var(--danger-hover-dark); 
-    z-index: 1050; /* 確保在最頂層 */
+    z-index: 1050;
 }
 #confirmation-modal-close-x.modal-close:hover {
     background-color: var(--danger-hover-dark);
@@ -639,7 +418,7 @@ body.light-theme #confirmation-modal-close-x.modal-close:hover {
     border-radius: 50%;
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    z-index: 1050; /* 確保在最頂層 */
+    z-index: 1050;
 }
 #official-announcement-close-x:hover {
     background-color: var(--danger-hover-dark);
@@ -814,11 +593,10 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .scrolling-hint-text:nth-child(2) { animation-delay: 5s; }
 .scrolling-hint-text:nth-child(3) { animation-delay: 10s; }
 
-/* --- 頁籤按鈕修正 --- */
 .tab-buttons {
-    display: grid; /* 在手機上預設使用 Grid 佈局 */
-    grid-template-columns: repeat(3, 1fr); /* 固定三欄 */
-    gap: 4px; /* 按鈕間的間距 */
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 4px; 
     margin-bottom: 15px;
     background-color: var(--bg-primary);
     border-radius: 6px;
@@ -838,19 +616,17 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     white-space: nowrap;
     text-align: center;
     border-radius: 4px;
-    /* 移除 flex-grow: 1; */
 }
 
 @media (min-width: 768px) {
-    /* 在大螢幕上恢復為 Flex 佈局 */
     .tab-buttons {
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-start;
-        grid-template-columns: none; /* 取消 grid 設定 */
+        grid-template-columns: none;
     }
     .tab-button {
-        flex-grow: 0; /* 恢復為不伸展 */
+        flex-grow: 0;
         padding: 10px 15px;
         font-size: 0.9rem;
     }
@@ -866,7 +642,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color); 
     color: var(--text-primary);
 }
-/* --- 頁籤內容 --- */
 .tab-content { display: none; } 
 .tab-content.active { display: block; } 
 
@@ -1181,32 +956,31 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.8rem;
 }
 
-/* New styles for large feedback modal content */
 .modal-content.large-feedback-modal {
-    max-width: 750px; /* 給予更大的寬度 */
-    padding: 20px 25px; /* 增加內邊距 */
+    max-width: 750px;
+    padding: 20px 25px;
 }
-@media (max-width: 768px) { /* 響應式調整 */
+@media (max-width: 768px) {
     .modal-content.large-feedback-modal {
-        max-width: 95%; /* 小螢幕上保持比例 */
+        max-width: 95%;
     }
 }
 
 #monster-banner-container {
     width: 100%;
-    height: 150px; /* 固定高度 */
-    overflow: hidden; /* 確保圖片不溢出 */
+    height: 150px;
+    overflow: hidden;
     border-radius: 8px;
-    margin-bottom: 15px; /* 與下方內容的間距 */
-    background-color: var(--bg-primary); /* 預設背景，以防圖片未載入 */
-    display: flex; /* 居中圖片 */
+    margin-bottom: 15px;
+    background-color: var(--bg-primary);
+    display: flex;
     align-items: center;
     justify-content: center;
 }
 #monster-banner-container img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 裁剪圖片以填充容器 */
+    object-fit: cover;
     border-radius: 8px;
 }
 
@@ -1220,11 +994,11 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .feedback-monster-stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 兩列 */
-    gap: 8px 15px; /* 行和列之間的間距 */
-    text-align: left; /* 數值內容左對齊 */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 15px;
+    text-align: left;
 }
-@media (min-width: 480px) { /* 較大螢幕上可設為三列 */
+@media (min-width: 480px) {
     .feedback-monster-stats-grid {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -1247,21 +1021,21 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .feedback-monster-info-grid {
     display: grid;
-    grid-template-columns: 1fr; /* 默認單列 */
+    grid-template-columns: 1fr;
     gap: 15px;
     margin-top: 15px;
 }
-@media (min-width: 600px) { /* 較大螢幕上分為兩列 */
+@media (min-width: 600px) {
     .feedback-monster-info-grid {
-        grid-template-columns: 1fr 1fr; /* 兩列均分 */
+        grid-template-columns: 1fr 1fr;
     }
 }
-@media (min-width: 700px) { /* 再大一點的螢幕，AI評價佔滿一行 */
+@media (min-width: 700px) {
     .feedback-monster-ai-grid {
         grid-template-columns: 1fr 1fr;
         gap: 15px;
     }
-    .feedback-monster-ai-grid .col-span-full { /* 讓 AI評價 佔滿兩列 */
+    .feedback-monster-ai-grid .col-span-full {
         grid-column: span 2;
     }
 }
@@ -1272,10 +1046,10 @@ body.light-theme .leaderboard-table tr:hover td {
     padding: 15px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    max-height: 250px; /* 限制高度，內部可滾動 */
+    max-height: 250px;
     overflow-y: auto;
 }
-.feedback-monster-info-section:last-child { /* AI 綜合評價部分可以更高 */
+.feedback-monster-info-section:last-child {
     max-height: 350px; 
 }
 
@@ -1296,13 +1070,145 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
     margin-right: 5px;
 }
-/* Styles for DNA text within items/slots to ensure visibility */
 .dna-name-text {
-    display: block; /* Ensure it takes up space */
-    /* color is set by applyDnaItemStyle via parent */
+    display: block;
 }
 
-/* Ensure rarity badge in DNA items has high enough z-index if overlapping */
 .dna-item .dna-rarity-badge {
     z-index: 1;
+}
+
+/* ===== Styles moved from index.html ===== */
+/* 怪獸快照區域特定樣式 */
+.monster-snapshot-area {
+    position: relative; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 8px; 
+    min-height: 230px; 
+}
+ @media (min-width: 768px) {
+    .monster-snapshot-area {
+        min-height: 270px; 
+    }
+}
+
+/* 圖層樣式 */
+#monster-snapshot-base-bg,
+#monster-snapshot-body-silhouette,
+#monster-parts-container {
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: contain; 
+}
+
+#monster-snapshot-base-bg { 
+    z-index: 1; 
+    width: 100%; 
+    height: 100%;
+    object-fit: cover; 
+}
+
+#monster-snapshot-body-silhouette { 
+    z-index: 2; 
+    max-width: 75%; 
+    max-height: 75%;
+}
+
+#monster-parts-container { 
+    z-index: 3; 
+    width: 70%; 
+    height: 85%; 
+    display: grid; 
+    grid-template-columns: 28% 44% 28%; /* 左(28%) 中(44%) 右(28%) */
+    grid-template-rows: 30% 35% 35%;    /* 頭(30%) 手(35%) 腳(35%) */
+    grid-template-areas:
+        ".    head   ."
+        "lArm body rArm"
+        "lLeg body rLeg"; /* 讓 body 區域也延伸到腿部，以更好地覆蓋全身圖 */
+    gap: 1%; 
+}
+
+.monster-part {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 100%; 
+    height: 100%; 
+    border: 1px dashed var(--accent-color-dark); /* 預設虛線框，顏色可調 */
+    box-sizing: border-box; /* 確保邊框不會使元素變大 */
+}
+
+.monster-part.empty-part { /* 當沒有圖片時，背景透明，但保留虛線框 */
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
+#monster-part-head { grid-area: head; }
+#monster-part-left-arm { grid-area: lArm; }
+#monster-part-right-arm { grid-area: rArm; }
+#monster-part-left-leg { grid-area: lLeg; }
+#monster-part-right-leg { grid-area: rLeg; }
+
+/* 文字資訊疊加層 */
+.snapshot-info-overlay {
+    position: absolute;
+    bottom: 8px; 
+    left: 10px;
+    right: 10px;
+    z-index: 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; 
+    pointer-events: none; 
+}
+
+.snapshot-info-left {
+    text-align: left;
+}
+.snapshot-info-right {
+    text-align: right;
+}
+
+#snapshot-achievement-title { 
+    font-size: 1.1rem; 
+    font-weight: bold;
+    color: var(--accent-color); 
+    display: block; 
+}
+#snapshot-nickname { 
+    font-size: 0.8rem; 
+    color: var(--text-secondary); 
+    display: block; 
+    margin-top: 1px; 
+}
+#snapshot-evaluation {
+    font-size: 1.1rem; 
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+#snapshot-win-loss {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    z-index: 4;
+    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+ #snapshot-win-loss span { display: block; }
+
+#snapshot-main-content { 
+    position: absolute;
+    top: 8px; 
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
 }
