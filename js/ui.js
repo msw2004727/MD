@@ -739,7 +739,7 @@ function renderMonsterFarm() {
                 statusClass = remainingTime > 0 ? "status-training" : "status-idle";
             }
         }
-        
+
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
