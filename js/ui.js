@@ -656,10 +656,20 @@ function renderMonsterFarm() {
 
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
-        farmHeaders.style.display = 'none';
+        if(farmHeaders) { // Check if farmHeaders exists
+            const wrapper = farmHeaders.closest('.farm-scroll-wrapper');
+            if (wrapper) {
+                // Hide the entire scrollable wrapper if there are no monsters
+                wrapper.style.display = 'none';
+            }
+        }
         return;
     }
-    farmHeaders.style.display = 'grid';
+    const wrapper = farmHeaders.closest('.farm-scroll-wrapper');
+    if (wrapper) {
+        wrapper.style.display = 'block';
+    }
+
 
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
@@ -762,7 +772,7 @@ function renderMonsterFarm() {
 function updatePlayerInfoModal(playerData, gameConfigs) {
     const body = DOMElements.playerInfoModalBody;
     if (!body || !playerData || !playerData.playerStats) {
-        if (body) body.innerHTML = '<p>無法載入玩家資訊。</p>';
+        if(body) body.innerHTML = '<p>無法載入玩家資訊。</p>';
         return;
     }
     const stats = playerData.playerStats;
@@ -780,27 +790,14 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
     let ownedMonstersHtml = '<p>尚無怪獸</p>';
     if (playerData.farmedMonsters && playerData.farmedMonsters.length > 0) {
-        const monsters = playerData.farmedMonsters;
-        const previewLimit = 5;
-        
-        let previewHtml = monsters.slice(0, previewLimit).map(m => 
-            `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
-        ).join('');
-
-        let moreMonstersHtml = '';
-        if (monsters.length > previewLimit) {
-            moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
-                monsters.slice(previewLimit).map(m => 
-                    `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
-                ).join('')
-            }</div>`;
+        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">`;
+        playerData.farmedMonsters.slice(0, 5).forEach(m => {
+            ownedMonstersHtml += `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
+        });
+        if (playerData.farmedMonsters.length > 5) {
+            ownedMonstersHtml += `<li>...等共 ${playerData.farmedMonsters.length} 隻</li>`;
         }
-        
-        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
-
-        if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
-        }
+        ownedMonstersHtml += `</ul>`;
     }
 
     const medalsHtml = stats.medals > 0 ? `${'🥇'.repeat(Math.min(stats.medals, 5))} (${stats.medals})` : '無';
@@ -834,22 +831,12 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 </div>
             </div>
         </div>
-        <div id="player-monsters-section" class="details-section mt-3">
-            <h5 class="details-section-title">持有怪獸 (共 ${playerData.farmedMonsters.length || 0} 隻)</h5>
+        <div class="details-section mt-3">
+            <h5 class="details-section-title">持有怪獸 (部分預覽)</h5>
             ${ownedMonstersHtml}
         </div>
         <p class="creation-time-centered mt-3">上次存檔時間: ${new Date(playerData.lastSave * 1000).toLocaleString()}</p>
     `;
-
-    const toggleBtn = body.querySelector('#toggle-monster-list-btn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            const moreList = body.querySelector('#more-monsters-list');
-            const isHidden = moreList.style.display === 'none';
-            moreList.style.display = isHidden ? 'block' : 'none';
-            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${playerData.farmedMonsters.length - 5}隻)...`;
-        });
-    }
 }
 
 function updateMonsterInfoModal(monster, gameConfigs) {
@@ -875,6 +862,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
+    // 4 & 5. 元素標籤加大字體並上色
+    let elementsDisplay = (monster.elements || []).map(el => {
+        const elClass = typeof el === 'string' ? `text-element-${el.toLowerCase()}` : '';
+        // 使用 text-sm 加大字體, 增加 padding, 應用顏色
+        return `<span class="text-sm px-3 py-1 rounded-full ${elClass} bg-element-${el.toLowerCase()}-bg mr-1">${el}</span>`;
+    }).join('');
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -906,24 +899,29 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         `}).join('');
     }
 
+    // ▼▼▼ 修改開始 ▼▼▼
     const personality = monster.personality || { name: '未知' };
-    const aiEvaluation = monster.aiEvaluation || 'AI 綜合評價生成中或失敗...';
+    const aiPersonality = monster.aiPersonality || 'AI 個性分析生成中或失敗...';
+    const aiIntroduction = monster.aiIntroduction || 'AI 背景介紹生成中或失敗...';
 
-    // 1. 重新設計排版，將技能列表放到右側
+    // 1. 重新設計排版，將技能列表放到右側，並確保左右兩欄等高
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
             <!-- Left Column: Basic Stats -->
-            <div class="details-section">
-                <h5 class="details-section-title">基礎屬性</h5>
-                <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold" style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name}</span></div>
-                <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
-                <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
-                <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
-                <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}</span></div>
-                <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}</span></div>
-                <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%</span></div>
-                <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
+            <div class="details-column-left">
+                <div class="details-section">
+                    <h5 class="details-section-title">基礎屬性</h5>
+                    <div class="details-item"><span class="details-label">元素:</span> <span class="details-value">${elementsDisplay}</span></div>
+                    <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
+                    <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold" style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%</span></div>
+                    <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
+                </div>
             </div>
 
             <!-- Right Column: Resistances and Skills -->
@@ -939,13 +937,20 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
 
-        <!-- Full-Width Bottom Section: AI Evaluation -->
+        <!-- NEW: Full-Width AI Personality Section -->
         <div class="details-section mt-3">
-            <h5 class="details-section-title">綜合評價</h5>
-            <p class="ai-generated-text text-sm">${aiEvaluation}</p>
+            <h5 class="details-section-title">AI 個性分析</h5>
+            <p class="ai-generated-text text-sm">${aiPersonality}</p>
+        </div>
+
+        <!-- UPDATED: Full-Width AI Introduction Section -->
+        <div class="details-section mt-3">
+            <h5 class="details-section-title">背景介紹</h5>
+            <p class="ai-generated-text text-sm">${aiIntroduction}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
+    // ▲▲▲ 修改結束 ▲▲▲
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
@@ -1228,12 +1233,12 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (winnerName) {
         const winnerP = document.createElement('p');
         winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
+        winnerP.textContent = `🏆 ${winnerName} 獲勝！`;
         DOMElements.battleLogArea.appendChild(winnerP);
     } else if (loserName && logEntries.some(l => l.includes("平手"))) {
          const drawP = document.createElement('p');
         drawP.className = 'battle-end draw mt-3';
-        drawP.textContent = `🤝 平手！�`;
+        drawP.textContent = `🤝 平手！🤝`;
         DOMElements.battleLogArea.appendChild(drawP);
     }
     showModal('battle-log-modal');
