@@ -231,7 +231,7 @@ def combine_dna_api_route():
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
-        # consumed_dna_indices = combine_result["consumed_dna_indices"] # 從服務返回的結果中獲取
+        # consumed_dna_indices 在 combine_dna_service 內部已經處理了 player_data 的修改
 
         current_farmed_monsters = player_data.get("farmedMonsters", [])
         MAX_FARM_SLOTS = game_configs.get("value_settings", {}).get("max_farm_slots", 10)
@@ -245,7 +245,7 @@ def combine_dna_api_route():
                     player_stats_achievements.append("首次組合怪獸")
                 player_data["playerStats"]["achievements"] = player_stats_achievements
 
-            # 在這裡，combine_dna_service 已經在它內部修改了 player_data["playerOwnedDNA"]
+            # combine_dna_service 已經處理了從 playerOwnedDNA 中移除 DNA 的邏輯
             # 所以這裡只需要保存 player_data
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
