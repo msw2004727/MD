@@ -14,7 +14,7 @@ from firebase_admin import credentials, firestore
 
 # 從 MD_firebase_config 導入 set_firestore_client，以便在初始化後設置 db
 # 這裡不再導入 db as current_db_instance，因為我們會在函數內部動態獲取
-from MD_firebase_config import set_firestore_client
+from .MD_firebase_config import set_firestore_client
 
 # 設定日誌記錄器
 script_logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def initialize_firebase_for_script():
     else:
         # 如果已經初始化，確保 db client 已經設置
         # 這裡需要從 MD_firebase_config 再次導入 db 變數來檢查其狀態
-        from MD_firebase_config import db as current_db_check
+        from .MD_firebase_config import db as current_db_check
         if current_db_check is None: # 如果 db 還沒被設置過
              set_firestore_client(firestore.client())
         script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
@@ -103,7 +103,7 @@ def populate_game_configs():
 
     # 確保 db 實例已經被設置
     # 從 MD_firebase_config 模組中直接獲取 db 的最新值
-    from MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
+    from .MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
 
     if firestore_db_instance is None:
         script_logger.error("錯誤：Firestore 資料庫未初始化 (在 populate_game_configs 內部)。無法執行資料填充。")
@@ -163,88 +163,80 @@ def populate_game_configs():
     # 3. 招式資料 (Skills) - 大幅擴充
     skill_database_data = {
         '火': [
-            { "name": "火花", "power": 25, "crit": 5, "probability": 80, "story": "{attacker_name}從口中噴出一團小小的火花，試探性地燒灼{target_name}。", "type": "火", "baseLevel": 1, "mp_cost": 5, "skill_category": "魔法" },
-            { "name": "火焰爪", "power": 30, "crit": 10, "probability": 75, "story": "{attacker_name}的爪子燃起熾熱的火焰，兇猛地抓向{target_name}！", "type": "火", "baseLevel": 1, "mp_cost": 6, "skill_category": "近戰" },
-            { "name": "小火球", "power": 35, "crit": 7, "probability": 70, "story": "{attacker_name}凝聚出一顆跳動的小火球，擲向{target_name}。", "type": "火", "baseLevel": 1, "mp_cost": 7, "skill_category": "魔法" },
-            { "name": "火之舞", "power": 0, "crit": 0, "probability": 65, "story": "{attacker_name}跳起神秘的火焰之舞，提升了自身的攻擊力和速度。", "type": "火", "effect": "buff", "stat": ["attack", "speed"], "amount": [10, 8], "duration": 3, "baseLevel": 2, "mp_cost": 9, "skill_category": "輔助", "target":"self"},
-            { "name": "烈焰之鞭", "power": 40, "crit": 8, "probability": 70, "story": "{attacker_name}將火焰凝聚成長鞭，靈活地抽打遠處的{target_name}。", "type": "火", "baseLevel": 2, "mp_cost": 8, "skill_category": "遠程" },
-            { "name": "燃燒之魂", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}激發體內的火焰能量，戰意高昂，攻擊力和爆擊率短時間內大幅提升！", "type": "火", "effect": "buff", "stat": ["attack", "crit"], "amount": [15, 10], "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
-            { "name": "炎爆術", "power": 50, "crit": 10, "probability": 65, "story": "{attacker_name}吟唱咒文，引爆一團壓縮的火焰能量，對{target_name}造成巨大傷害！", "type": "火", "baseLevel": 3, "mp_cost": 12, "skill_category": "魔法" },
-            { "name": "鬼火縈繞", "power": 15, "crit": 0, "probability": 70, "story": "{attacker_name}召喚數團幽藍的鬼火，它們纏上了{target_name}，使其陷入燒傷狀態，持續受到折磨。", "type": "火", "effect": "dot", "damage_per_turn": 8, "duration": 3, "chance": 85, "baseLevel": 2, "mp_cost": 7, "skill_category": "特殊" },
-            { "name": "火焰噴射", "power": 60, "crit": 8, "probability": 60, "story": "{attacker_name}深吸一口氣，猛地噴射出柱狀的烈焰，席捲{target_name}！", "type": "火", "baseLevel": 3, "mp_cost": 14, "skill_category": "魔法" },
-            { "name": "煉獄火海", "power": 70, "crit": 5, "probability": 50, "story": "{attacker_name}怒吼一聲，釋放毀滅性的火焰席捲整個戰場！", "type": "火", "baseLevel": 4, "mp_cost": 20, "skill_category": "魔法", "target": "enemy_all" },
-            { "name": "陽炎", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}周圍的空氣因高熱而扭曲，降低了{target_name}的攻擊命中率。", "type": "火", "effect": "debuff", "stat": "accuracy", "amount": -15, "duration": 2, "baseLevel": 3, "mp_cost": 9, "skill_category": "變化" },
-            { "name": "灰燼風暴", "power": 45, "crit": 5, "probability": 55, "story": "{attacker_name}掀起夾雜著滾燙灰燼的熱風，對所有敵人造成傷害並可能使其燒傷。", "type": "火", "baseLevel": 3, "mp_cost": 16, "skill_category": "魔法", "target": "enemy_all", "effect": "dot", "damage_per_turn": 4, "duration": 2, "chance": 30},
-            { "name": "浴火重生", "power": 0, "crit": 0, "probability": 25, "story": "在瀕臨倒下之際，{attacker_name}的身體被火焰包裹，奇蹟般地從灰燼中重生，恢復了部分生命！", "type": "火", "effect": "revive_self_heal", "amount": 0.35, "chance": 25, "baseLevel": 5, "mp_cost": 30, "skill_category": "輔助", "target":"self" },
-            { "name": "過熱", "power": 85, "crit": 0, "probability": 40, "story": "{attacker_name}釋放出極度高溫的能量，對{target_name}造成巨大傷害，但自身特攻會大幅下降。", "type": "火", "baseLevel": 5, "mp_cost": 22, "skill_category": "魔法", "effect": "self_debuff", "stat":"attack", "amount": -20, "duration":0}, # duration 0 表示立即生效且不隨回合消失
+            { "name": "火花", "description": "噴出一團小火花攻擊對手。", "story": "{attacker_name}從口中噴出一團小小的火花，試探性地燒灼{target_name}。", "power": 25, "crit": 5, "probability": 80, "type": "火", "baseLevel": 1, "mp_cost": 5, "skill_category": "魔法" },
+            { "name": "火焰爪", "description": "用燃燒的爪子進行攻擊。", "story": "{attacker_name}的爪子燃起熾熱的火焰，兇猛地抓向{target_name}！", "power": 30, "crit": 10, "probability": 75, "type": "火", "baseLevel": 1, "mp_cost": 6, "skill_category": "近戰" },
+            { "name": "小火球", "description": "投擲一顆小火球。", "story": "{attacker_name}凝聚出一顆跳動的小火球，擲向{target_name}。", "power": 35, "crit": 7, "probability": 70, "type": "火", "baseLevel": 1, "mp_cost": 7, "skill_category": "魔法" },
+            { "name": "火之舞", "description": "跳起神秘舞蹈，提升自身攻擊與速度。", "story": "{attacker_name}跳起神秘的火焰之舞，提升了自身的攻擊力和速度。", "power": 0, "crit": 0, "probability": 65, "type": "火", "effect": "buff", "stat": ["attack", "speed"], "amount": [10, 8], "duration": 3, "baseLevel": 2, "mp_cost": 9, "skill_category": "輔助", "target":"self"},
+            { "name": "烈焰之鞭", "description": "用火焰長鞭進行遠程抽打。", "story": "{attacker_name}將火焰凝聚成長鞭，靈活地抽打遠處的{target_name}。", "power": 40, "crit": 8, "probability": 70, "type": "火", "baseLevel": 2, "mp_cost": 8, "skill_category": "遠程" },
+            { "name": "燃燒之魂", "description": "激發內心戰意，提升攻擊與爆擊率。", "story": "{attacker_name}激發體內的火焰能量，戰意高昂，攻擊力和爆擊率短時間內大幅提升！", "power": 0, "crit": 0, "probability": 60, "type": "火", "effect": "buff", "stat": ["attack", "crit"], "amount": [15, 10], "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
+            { "name": "炎爆術", "description": "引爆一團壓縮的火焰能量。", "story": "{attacker_name}吟唱咒文，引爆一團壓縮的火焰能量，對{target_name}造成巨大傷害！", "power": 50, "crit": 10, "probability": 65, "type": "火", "baseLevel": 3, "mp_cost": 12, "skill_category": "魔法" },
+            { "name": "鬼火縈繞", "description": "召喚鬼火，可能使對手陷入燒傷狀態。", "story": "{attacker_name}召喚數團幽藍的鬼火，它們纏上了{target_name}，使其陷入燒傷狀態，持續受到折磨。", "power": 15, "crit": 0, "probability": 70, "type": "火", "effect": "dot", "damage_per_turn": 8, "duration": 3, "chance": 85, "baseLevel": 2, "mp_cost": 7, "skill_category": "特殊" },
+            { "name": "火焰噴射", "description": "噴射出柱狀的烈焰。", "story": "{attacker_name}深吸一口氣，猛地噴射出柱狀的烈焰，席捲{target_name}！", "power": 60, "crit": 8, "probability": 60, "type": "火", "baseLevel": 3, "mp_cost": 14, "skill_category": "魔法" },
+            { "name": "煉獄火海", "description": "釋放毀滅性的火焰席捲全場。", "story": "{attacker_name}怒吼一聲，釋放毀滅性的火焰席捲整個戰場！", "power": 70, "crit": 5, "probability": 50, "type": "火", "baseLevel": 4, "mp_cost": 20, "skill_category": "魔法", "target": "enemy_all" },
+            { "name": "陽炎", "description": "用高溫扭曲空氣，降低對手的命中率。", "story": "{attacker_name}周圍的空氣因高熱而扭曲，降低了{target_name}的攻擊命中率。", "power": 0, "crit": 0, "probability": 60, "type": "火", "effect": "debuff", "stat": "accuracy", "amount": -15, "duration": 2, "baseLevel": 3, "mp_cost": 9, "skill_category": "變化" },
+            { "name": "灰燼風暴", "description": "掀起滾燙的灰燼熱風，攻擊並可能燒傷所有敵人。", "story": "{attacker_name}掀起夾雜著滾燙灰燼的熱風，對所有敵人造成傷害並可能使其燒傷。", "power": 45, "crit": 5, "probability": 55, "type": "火", "baseLevel": 3, "mp_cost": 16, "skill_category": "魔法", "target": "enemy_all", "effect": "dot", "damage_per_turn": 4, "duration": 2, "chance": 30},
+            { "name": "浴火重生", "description": "在瀕死之際，有機會從火焰中重生並恢復部分生命。", "story": "在瀕臨倒下之際，{attacker_name}的身體被火焰包裹，奇蹟般地從灰燼中重生，恢復了部分生命！", "power": 0, "crit": 0, "probability": 25, "type": "火", "effect": "revive_self_heal", "amount": 0.35, "chance": 25, "baseLevel": 5, "mp_cost": 30, "skill_category": "輔助", "target":"self" },
+            { "name": "過熱", "description": "釋放極度高溫，造成巨大傷害但會大幅降低自身特攻。", "story": "{attacker_name}釋放出極度高溫的能量，對{target_name}造成巨大傷害，但自身特攻會大幅下降。", "power": 85, "crit": 0, "probability": 40, "type": "火", "baseLevel": 5, "mp_cost": 22, "skill_category": "魔法", "effect": "self_debuff", "stat":"attack", "amount": -20, "duration":0},
         ],
         '水': [
-            { "name": "水槍", "power": 28, "crit": 5, "probability": 80, "story": "{attacker_name}從口中噴射出強勁的水柱，衝擊{target_name}！", "type": "水", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
-            { "name": "泡沫光線", "power": 32, "crit": 7, "probability": 70, "story": "{attacker_name}發射大量黏稠的泡沫形成光線，{target_name}的行動似乎變得遲緩了。", "type": "水", "baseLevel": 1, "mp_cost": 7, "skill_category": "魔法", "effect": "debuff", "stat": "speed", "amount": -12, "chance": 50, "duration": 2 },
-            { "name": "水流環", "power": 0, "crit": 0, "probability": 65, "story": "{attacker_name}周身環繞著流動的水環，巧妙地提升了閃避能力。", "type": "水", "effect": "buff", "stat": "evasion", "amount": 15, "duration": 3, "baseLevel": 2, "mp_cost": 9, "skill_category": "輔助", "target":"self" },
-            { "name": "治癒漣漪", "power": 0, "crit": 0, "probability": 65, "story": "{attacker_name}散發出溫和的水波，輕柔地治癒了{target_name}的傷口。", "type": "水", "effect": "heal", "amount": 45, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target": "team_single" },
-            { "name": "冰凍之觸", "power": 30, "crit": 5, "probability": 60, "story": "{attacker_name}釋放出刺骨的寒氣觸碰{target_name}，試圖將其冰封！", "type": "水", "effect": "stun", "chance": 30, "duration": 1, "baseLevel": 3, "mp_cost": 12, "skill_category": "特殊" }, # stun 改為 frozen 效果
-            { "name": "潮汐之力", "power": 0, "crit": 0, "probability": 55, "story": "{attacker_name}引動潮汐的力量，短時間內強化了水系技能的威力！", "type": "水", "effect": "buff", "stat": "water_power", "amount": 10, "duration": 3, "baseLevel": 3, "mp_cost": 11, "skill_category": "輔助", "target":"self" },
-            { "name": "濁流", "power": 45, "crit": 0, "probability": 60, "story": "{attacker_name}掀起渾濁的水流攻擊所有敵人，並可能降低他們的命中率。", "type": "水", "baseLevel": 3, "mp_cost": 13, "skill_category": "魔法", "target":"enemy_all", "effect":"debuff", "stat":"accuracy", "amount":-10, "chance":30, "duration":2},
-            { "name": "巨浪滔天", "power": 65, "crit": 5, "probability": 55, "story": "{attacker_name}召喚出滔天巨浪，無情地吞噬了所有敵人！", "type": "水", "baseLevel": 4, "mp_cost": 18, "skill_category": "魔法", "target": "enemy_all" },
-            { "name": "生命甘露", "power": 0, "crit": 0, "probability": 40, "story": "{attacker_name}祈禱降下充滿生命能量的甘露，為我方全體帶來持續的治癒。", "type": "水", "effect": "team_heal_over_time", "amount_per_turn": 20, "duration": 3, "baseLevel": 5, "mp_cost": 25, "skill_category": "輔助" },
-            { "name": "絕對零度", "power": 0, "crit": 0, "probability": 15, "story": "{attacker_name}釋放出極致的寒意，試圖將{target_name}瞬間冰封，造成一擊必殺！但命中率極低。", "type": "水", "effect": "one_hit_ko", "chance": 15, "baseLevel": 5, "mp_cost": 35, "skill_category": "特殊"}
+            { "name": "水槍", "description": "從口中噴射出強勁的水柱。", "story": "{attacker_name}從口中噴射出強勁的水柱，衝擊{target_name}！", "power": 28, "crit": 5, "probability": 80, "type": "水", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
+            { "name": "泡沫光線", "description": "發射大量黏稠泡沫，可能降低對手速度。", "story": "{attacker_name}發射大量黏稠的泡沫形成光線，{target_name}的行動似乎變得遲緩了。", "power": 32, "crit": 7, "probability": 70, "type": "水", "baseLevel": 1, "mp_cost": 7, "skill_category": "魔法", "effect": "debuff", "stat": "speed", "amount": -12, "chance": 50, "duration": 2 },
+            { "name": "水流環", "description": "周身環繞水環，提升閃避能力。", "story": "{attacker_name}周身環繞著流動的水環，巧妙地提升了閃避能力。", "power": 0, "crit": 0, "probability": 65, "type": "水", "effect": "buff", "stat": "evasion", "amount": 15, "duration": 3, "baseLevel": 2, "mp_cost": 9, "skill_category": "輔助", "target":"self" },
+            { "name": "治癒漣漪", "description": "散發溫和的水波，治癒隊友的傷口。", "story": "{attacker_name}散發出溫和的水波，輕柔地治癒了{target_name}的傷口。", "power": 0, "crit": 0, "probability": 65, "type": "水", "effect": "heal", "amount": 45, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target": "team_single" },
+            { "name": "冰凍之觸", "description": "釋放刺骨寒氣，有機會冰封對手。", "story": "{attacker_name}釋放出刺骨的寒氣觸碰{target_name}，試圖將其冰封！", "power": 30, "crit": 5, "probability": 60, "type": "水", "effect": "stun", "chance": 30, "duration": 1, "baseLevel": 3, "mp_cost": 12, "skill_category": "特殊" },
+            { "name": "潮汐之力", "description": "引動潮汐力量，短時間內強化水系技能威力。", "story": "{attacker_name}引動潮汐的力量，短時間內強化了水系技能的威力！", "power": 0, "crit": 0, "probability": 55, "type": "水", "effect": "buff", "stat": "water_power", "amount": 10, "duration": 3, "baseLevel": 3, "mp_cost": 11, "skill_category": "輔助", "target":"self" },
+            { "name": "濁流", "description": "掀起渾濁水流攻擊全體敵人，並可能降低其命中率。", "story": "{attacker_name}掀起渾濁的水流攻擊所有敵人，並可能降低他們的命中率。", "power": 45, "crit": 0, "probability": 60, "type": "水", "baseLevel": 3, "mp_cost": 13, "skill_category": "魔法", "target":"enemy_all", "effect":"debuff", "stat":"accuracy", "amount":-10, "chance":30, "duration":2},
+            { "name": "巨浪滔天", "description": "召喚滔天巨浪，吞噬所有敵人。", "story": "{attacker_name}召喚出滔天巨浪，無情地吞噬了所有敵人！", "power": 65, "crit": 5, "probability": 55, "type": "水", "baseLevel": 4, "mp_cost": 18, "skill_category": "魔法", "target": "enemy_all" },
+            { "name": "生命甘露", "description": "降下生命甘露，為我方全體持續恢復生命。", "story": "{attacker_name}祈禱降下充滿生命能量的甘露，為我方全體帶來持續的治癒。", "power": 0, "crit": 0, "probability": 40, "type": "水", "effect": "team_heal_over_time", "amount_per_turn": 20, "duration": 3, "baseLevel": 5, "mp_cost": 25, "skill_category": "輔助" },
+            { "name": "絕對零度", "description": "釋放極致寒意，有低機率造成一擊必殺。", "story": "{attacker_name}釋放出極致的寒意，試圖將{target_name}瞬間冰封，造成一擊必殺！但命中率極低。", "power": 0, "crit": 0, "probability": 15, "type": "水", "effect": "one_hit_ko", "chance": 15, "baseLevel": 5, "mp_cost": 35, "skill_category": "特殊"}
         ],
-        # ... (為其他元素 木, 金, 土, 光, 暗, 毒, 風, 無, 混 各自擴充大量技能) ...
-        # 以下僅為少量範例，你需要大幅擴充
         '木': [
-            { "name": "飛葉快刀", "power": 25, "crit": 15, "probability": 85, "story": "{attacker_name}雙手一揮，無數鋒利的葉片如飛刀般射向{target_name}！", "type": "木", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
-            { "name": "寄生種子", "power": 15, "crit": 0, "probability": 70, "story": "一顆奇異的種子從{attacker_name}手中飛出，鑽入{target_name}體內，不斷吸取其生命力反哺自身。", "type": "木", "effect": "leech", "damage_per_turn": 10, "heal_per_turn": 7, "duration": 3, "baseLevel": 1, "mp_cost": 8, "skill_category": "特殊" },
-            { "name": "光合作用", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}靜靜地沐浴在能量之中，將自然之力轉化為生命力，緩慢恢復HP。", "type": "木", "effect": "heal_self_over_time", "amount_per_turn": 25, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
-            { "name": "森林的憤怒", "power": 70, "crit": 8, "probability": 50, "story": "{attacker_name}引導大自然的磅礴力量，召喚無數巨大的藤蔓和樹木猛擊所有敵人！", "type": "木", "baseLevel": 4, "mp_cost": 19, "skill_category": "魔法", "target": "enemy_all" },
+            { "name": "飛葉快刀", "description": "射出大量鋒利葉片，爆擊率較高。", "story": "{attacker_name}雙手一揮，無數鋒利的葉片如飛刀般射向{target_name}！", "power": 25, "crit": 15, "probability": 85, "type": "木", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
+            { "name": "寄生種子", "description": "植入種子，持續吸取對手生命力反哺自身。", "story": "一顆奇異的種子從{attacker_name}手中飛出，鑽入{target_name}體內，不斷吸取其生命力反哺自身。", "power": 15, "crit": 0, "probability": 70, "type": "木", "effect": "leech", "damage_per_turn": 10, "heal_per_turn": 7, "duration": 3, "baseLevel": 1, "mp_cost": 8, "skill_category": "特殊" },
+            { "name": "光合作用", "description": "吸收自然能量，持續恢復自身生命。", "story": "{attacker_name}靜靜地沐浴在能量之中，將自然之力轉化為生命力，緩慢恢復HP。", "power": 0, "crit": 0, "probability": 60, "type": "木", "effect": "heal_self_over_time", "amount_per_turn": 25, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
+            { "name": "森林的憤怒", "description": "引導大自然力量，攻擊所有敵人。", "story": "{attacker_name}引導大自然的磅礴力量，召喚無數巨大的藤蔓和樹木猛擊所有敵人！", "power": 70, "crit": 8, "probability": 50, "type": "木", "baseLevel": 4, "mp_cost": 19, "skill_category": "魔法", "target": "enemy_all" },
         ],
-        # **新增：土系技能**
         '土': [
-            { "name": "落石", "power": 30, "crit": 5, "probability": 75, "story": "{attacker_name}召喚數塊巨石從天而降，猛烈砸向{target_name}！", "type": "土", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
-            { "name": "堅壁", "power": 0, "crit": 0, "probability": 80, "story": "{attacker_name}凝聚土元素形成一道堅固的屏障，大幅提升自身防禦力。", "type": "土", "effect": "buff", "stat": "defense", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
-            { "name": "地震", "power": 55, "crit": 0, "probability": 60, "story": "{attacker_name}猛擊地面，引發一場小型地震，震動所有敵人！", "type": "土", "baseLevel": 3, "mp_cost": 15, "skill_category": "物理", "target": "enemy_all" },
+            { "name": "落石", "description": "召喚數塊巨石砸向對手。", "story": "{attacker_name}召喚數塊巨石從天而降，猛烈砸向{target_name}！", "power": 30, "crit": 5, "probability": 75, "type": "土", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
+            { "name": "堅壁", "description": "凝聚土元素形成屏障，大幅提升自身防禦力。", "story": "{attacker_name}凝聚土元素形成一道堅固的屏障，大幅提升自身防禦力。", "power": 0, "crit": 0, "probability": 80, "type": "土", "effect": "buff", "stat": "defense", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助", "target":"self" },
+            { "name": "地震", "description": "引發地震，震動所有地面上的敵人。", "story": "{attacker_name}猛擊地面，引發一場小型地震，震動所有敵人！", "power": 55, "crit": 0, "probability": 60, "type": "土", "baseLevel": 3, "mp_cost": 15, "skill_category": "物理", "target": "enemy_all" },
         ],
-        # **新增：金系技能**
         '金': [
-            { "name": "鋼鐵衝擊", "power": 35, "crit": 10, "probability": 80, "story": "{attacker_name}全身化為鋼鐵，以驚人速度衝撞{target_name}！", "type": "金", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
-            { "name": "金屬風暴", "power": 40, "crit": 5, "probability": 70, "story": "{attacker_name}揮舞利爪，掀起一陣金屬碎片風暴，切割所有敵人。", "type": "金", "baseLevel": 2, "mp_cost": 12, "skill_category": "物理", "target": "enemy_all" },
-            { "name": "反射護盾", "power": 0, "crit": 0, "probability": 50, "story": "{attacker_name}召喚一面光滑的金屬護盾，能反射部分魔法攻擊。", "type": "金", "effect": "reflect_magic", "chance": 30, "duration": 2, "baseLevel": 3, "mp_cost": 15, "skill_category": "輔助", "target":"self" },
+            { "name": "鋼鐵衝擊", "description": "將身體硬化後進行衝撞。", "story": "{attacker_name}全身化為鋼鐵，以驚人速度衝撞{target_name}！", "power": 35, "crit": 10, "probability": 80, "type": "金", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
+            { "name": "金屬風暴", "description": "掀起金屬碎片風暴切割所有敵人。", "story": "{attacker_name}揮舞利爪，掀起一陣金屬碎片風暴，切割所有敵人。", "power": 40, "crit": 5, "probability": 70, "type": "金", "baseLevel": 2, "mp_cost": 12, "skill_category": "物理", "target": "enemy_all" },
+            { "name": "反射護盾", "description": "召喚金屬護盾，有機會反射魔法攻擊。", "story": "{attacker_name}召喚一面光滑的金屬護盾，能反射部分魔法攻擊。", "power": 0, "crit": 0, "probability": 50, "type": "金", "effect": "reflect_magic", "chance": 30, "duration": 2, "baseLevel": 3, "mp_cost": 15, "skill_category": "輔助", "target":"self" },
         ],
-        # **新增：光系技能**
         '光': [
-            { "name": "聖光彈", "power": 30, "crit": 8, "probability": 75, "story": "{attacker_name}凝聚聖潔的光芒，射出一枚光彈攻擊{target_name}。", "type": "光", "baseLevel": 1, "mp_cost": 6, "skill_category": "魔法" },
-            { "name": "淨化之光", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}釋放溫暖的淨化之光，移除我方一個怪獸的不良狀態。", "type": "光", "effect": "cure_debuff", "target": "team_single", "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助" },
-            { "name": "耀眼閃光", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}發出刺眼的光芒，大幅降低敵人的命中率。", "type": "光", "effect": "debuff", "stat": "accuracy", "amount": -20, "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "變化", "target": "enemy_all" },
+            { "name": "聖光彈", "description": "射出一枚聖潔的光彈。", "story": "{attacker_name}凝聚聖潔的光芒，射出一枚光彈攻擊{target_name}。", "power": 30, "crit": 8, "probability": 75, "type": "光", "baseLevel": 1, "mp_cost": 6, "skill_category": "魔法" },
+            { "name": "淨化之光", "description": "釋放淨化之光，移除隊友的不良狀態。", "story": "{attacker_name}釋放溫暖的淨化之光，移除我方一個怪獸的不良狀態。", "power": 0, "crit": 0, "probability": 60, "type": "光", "effect": "cure_debuff", "target": "team_single", "baseLevel": 2, "mp_cost": 10, "skill_category": "輔助" },
+            { "name": "耀眼閃光", "description": "發出刺眼光芒，大幅降低所有敵人的命中率。", "story": "{attacker_name}發出刺眼的光芒，大幅降低敵人的命中率。", "power": 0, "crit": 0, "probability": 70, "type": "光", "effect": "debuff", "stat": "accuracy", "amount": -20, "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "變化", "target": "enemy_all" },
         ],
-        # **新增：暗系技能**
         '暗': [
-            { "name": "暗影爪", "power": 32, "crit": 12, "probability": 70, "story": "{attacker_name}的利爪被暗影籠罩，悄無聲息地襲擊{target_name}！", "type": "暗", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
-            { "name": "虛無之境", "power": 0, "crit": 0, "probability": 55, "story": "{attacker_name}將自身隱沒於虛無，大幅提升閃避能力。", "type": "暗", "effect": "buff", "stat": "evasion", "amount": 25, "duration": 3, "baseLevel": 2, "mp_cost": 11, "skill_category": "輔助", "target":"self" },
-            { "name": "暗影爆破", "power": 60, "crit": 10, "probability": 50, "story": "{attacker_name}引爆一團黑暗能量，對所有敵人造成毀滅性打擊！", "type": "暗", "baseLevel": 4, "mp_cost": 18, "skill_category": "魔法", "target": "enemy_all" },
+            { "name": "暗影爪", "description": "用被暗影籠罩的利爪進行攻擊。", "story": "{attacker_name}的利爪被暗影籠罩，悄無聲息地襲擊{target_name}！", "power": 32, "crit": 12, "probability": 70, "type": "暗", "baseLevel": 1, "mp_cost": 7, "skill_category": "近戰" },
+            { "name": "虛無之境", "description": "將自身隱沒於虛無，大幅提升閃避能力。", "story": "{attacker_name}將自身隱沒於虛無，大幅提升閃避能力。", "power": 0, "crit": 0, "probability": 55, "type": "暗", "effect": "buff", "stat": "evasion", "amount": 25, "duration": 3, "baseLevel": 2, "mp_cost": 11, "skill_category": "輔助", "target":"self" },
+            { "name": "暗影爆破", "description": "引爆黑暗能量，對所有敵人造成傷害。", "story": "{attacker_name}引爆一團黑暗能量，對所有敵人造成毀滅性打擊！", "power": 60, "crit": 10, "probability": 50, "type": "暗", "baseLevel": 4, "mp_cost": 18, "skill_category": "魔法", "target": "enemy_all" },
         ],
-        # **新增：毒系技能**
         '毒': [
-            { "name": "毒液噴射", "power": 28, "crit": 5, "probability": 75, "story": "{attacker_name}向{target_name}噴射出腐蝕性毒液！", "type": "毒", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
-            { "name": "劇毒之霧", "power": 10, "crit": 0, "probability": 65, "story": "{attacker_name}釋放一片劇毒之霧，使敵人中毒並持續掉血。", "type": "毒", "effect": "dot", "damage_per_turn": 10, "duration": 4, "chance": 70, "baseLevel": 2, "mp_cost": 9, "skill_category": "特殊", "target": "enemy_all" },
-            { "name": "腐蝕", "power": 0, "crit": 0, "probability": 50, "story": "{attacker_name}的毒素具有腐蝕性，降低{target_name}的防禦力。", "type": "毒", "effect": "debuff", "stat": "defense", "amount": -15, "duration": 3, "baseLevel": 3, "mp_cost": 10, "skill_category": "變化" },
+            { "name": "毒液噴射", "description": "噴射出腐蝕性的毒液。", "story": "{attacker_name}向{target_name}噴射出腐蝕性毒液！", "power": 28, "crit": 5, "probability": 75, "type": "毒", "baseLevel": 1, "mp_cost": 6, "skill_category": "遠程" },
+            { "name": "劇毒之霧", "description": "釋放劇毒之霧，使所有敵人中毒。", "story": "{attacker_name}釋放一片劇毒之霧，使敵人中毒並持續掉血。", "power": 10, "crit": 0, "probability": 65, "type": "毒", "effect": "dot", "damage_per_turn": 10, "duration": 4, "chance": 70, "baseLevel": 2, "mp_cost": 9, "skill_category": "特殊", "target": "enemy_all" },
+            { "name": "腐蝕", "description": "用毒素腐蝕對手，降低其防禦力。", "story": "{attacker_name}的毒素具有腐蝕性，降低{target_name}的防禦力。", "power": 0, "crit": 0, "probability": 50, "type": "毒", "effect": "debuff", "stat": "defense", "amount": -15, "duration": 3, "baseLevel": 3, "mp_cost": 10, "skill_category": "變化" },
         ],
         '風': [
-            { "name": "風刃", "power": 25, "crit": 15, "probability": 80, "story": "{attacker_name}凝聚風元素形成鋒利刀刃，切割{target_name}！", "type": "風", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
-            { "name": "疾風步", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}身形化為疾風，速度大幅提升！", "type": "風", "effect": "buff", "stat": "speed", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 8, "skill_category": "輔助", "target":"self" },
-            { "name": "龍捲風", "power": 50, "crit": 5, "probability": 55, "story": "{attacker_name}召喚狂暴龍捲風，席捲所有敵人！", "type": "風", "baseLevel": 3, "mp_cost": 14, "skill_category": "魔法", "target": "enemy_all" },
+            { "name": "風刃", "description": "用風凝聚成刀刃進行攻擊，爆擊率較高。", "story": "{attacker_name}凝聚風元素形成鋒利刀刃，切割{target_name}！", "power": 25, "crit": 15, "probability": 80, "type": "風", "baseLevel": 1, "mp_cost": 5, "skill_category": "遠程" },
+            { "name": "疾風步", "description": "身形化為疾風，大幅提升自身速度。", "story": "{attacker_name}身形化為疾風，速度大幅提升！", "power": 0, "crit": 0, "probability": 70, "type": "風", "effect": "buff", "stat": "speed", "amount": 20, "duration": 3, "baseLevel": 2, "mp_cost": 8, "skill_category": "輔助", "target":"self" },
+            { "name": "龍捲風", "description": "召喚狂暴龍捲風，席捲所有敵人。", "story": "{attacker_name}召喚狂暴龍捲風，席捲所有敵人！", "power": 50, "crit": 5, "probability": 55, "type": "風", "baseLevel": 3, "mp_cost": 14, "skill_category": "魔法", "target": "enemy_all" },
         ],
-        # **新增：混系技能**
         '混': [
-            { "name": "元素爆發", "power": 40, "crit": 10, "probability": 70, "story": "{attacker_name}釋放體內混亂的元素能量，對{target_name}造成多重屬性傷害！", "type": "混", "baseLevel": 2, "mp_cost": 10, "skill_category": "魔法" },
-            { "name": "混沌護盾", "power": 0, "crit": 0, "probability": 60, "story": "{attacker_name}周身環繞混沌能量，隨機提升自身數值。", "type": "混", "effect": "random_buff", "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "輔助", "target":"self" },
-            { "name": "萬物歸元", "power": 75, "crit": 5, "probability": 45, "story": "{attacker_name}引導萬物歸元之力，對所有敵人造成無差別打擊！", "type": "混", "baseLevel": 4, "mp_cost": 20, "skill_category": "特殊", "target": "enemy_all" },
+            { "name": "元素爆發", "description": "釋放混亂的元素能量，造成多重屬性傷害。", "story": "{attacker_name}釋放體內混亂的元素能量，對{target_name}造成多重屬性傷害！", "power": 40, "crit": 10, "probability": 70, "type": "混", "baseLevel": 2, "mp_cost": 10, "skill_category": "魔法" },
+            { "name": "混沌護盾", "description": "環繞混沌能量，隨機提升自身數值。", "story": "{attacker_name}周身環繞混沌能量，隨機提升自身數值。", "power": 0, "crit": 0, "probability": 60, "type": "混", "effect": "random_buff", "duration": 2, "baseLevel": 3, "mp_cost": 12, "skill_category": "輔助", "target":"self" },
+            { "name": "萬物歸元", "description": "引導萬物歸元之力，對所有敵人造成無差別打擊。", "story": "{attacker_name}引導萬物歸元之力，對所有敵人造成無差別打擊！", "power": 75, "crit": 5, "probability": 45, "type": "混", "baseLevel": 4, "mp_cost": 20, "skill_category": "特殊", "target": "enemy_all" },
         ],
         '無': [
-            { "name": "猛撞", "power": 35, "crit": 5, "probability": 80, "story": "{attacker_name}集中全身力量，奮力撞向{target_name}。", "type": "無", "baseLevel": 1, "mp_cost": 4, "skill_category": "近戰"},
-            { "name": "嚎叫", "power": 0, "crit": 0, "probability": 70, "story": "{attacker_name}發出威嚇的嚎叫，試圖降低周圍所有敵人的攻擊力。", "type": "無", "effect": "debuff", "stat": "attack", "amount": -10, "duration": 2, "baseLevel": 1, "mp_cost": 6, "skill_category": "變化", "target": "enemy_all"},
-            { "name": "高速星星", "power": 20, "crit": 0, "probability": 75, "story": "{attacker_name}快速射出多枚閃爍的能量星星，它們追蹤著{target_name}，幾乎無法閃避！", "type": "無", "baseLevel": 2, "mp_cost": 8, "skill_category": "特殊", "effect":"always_hit", "hits": random.randint(2,5)}, # 2-5次攻擊
-            { "name": "捨身衝撞", "power": 75, "crit": 10, "probability": 50, "story": "{attacker_name}不顧一切地發起猛烈撞擊，對{target_name}造成巨大傷害，但自身也因巨大的衝擊力受到了不小的反噬！", "type": "無", "baseLevel": 4, "mp_cost": 15, "skill_category": "物理", "recoilDamage": 0.33 },
-            { "name": "最終的咆哮", "power": 0, "crit": 0, "probability": 20, "story": "{attacker_name}發出生命最後的咆哮，釋放出所有能量，試圖與{target_name}同歸於盡！", "type": "無", "baseLevel": 5, "mp_cost": 50, "skill_category": "特殊", "effect": "self_ko_enemy_ko", "chance": 40}
+            { "name": "猛撞", "description": "奮力撞向對手。", "story": "{attacker_name}集中全身力量，奮力撞向{target_name}。", "power": 35, "crit": 5, "probability": 80, "type": "無", "baseLevel": 1, "mp_cost": 4, "skill_category": "近戰"},
+            { "name": "嚎叫", "description": "發出嚎叫，降低所有敵人的攻擊力。", "story": "{attacker_name}發出威嚇的嚎叫，試圖降低周圍所有敵人的攻擊力。", "power": 0, "crit": 0, "probability": 70, "type": "無", "effect": "debuff", "stat": "attack", "amount": -10, "duration": 2, "baseLevel": 1, "mp_cost": 6, "skill_category": "變化", "target": "enemy_all"},
+            { "name": "高速星星", "description": "快速射出多枚能量星星，無法閃避。", "story": "{attacker_name}快速射出多枚閃爍的能量星星，它們追蹤著{target_name}，幾乎無法閃避！", "power": 20, "crit": 0, "probability": 75, "type": "無", "baseLevel": 2, "mp_cost": 8, "skill_category": "特殊", "effect":"always_hit", "hits": random.randint(2,5)},
+            { "name": "捨身衝撞", "description": "不顧一切地猛烈撞擊，自身也會受到反噬傷害。", "story": "{attacker_name}不顧一切地發起猛烈撞擊，對{target_name}造成巨大傷害，但自身也因巨大的衝擊力受到了不小的反噬！", "power": 75, "crit": 10, "probability": 50, "type": "無", "baseLevel": 4, "mp_cost": 15, "skill_category": "物理", "recoilDamage": 0.33 },
+            { "name": "最終的咆哮", "description": "釋放所有能量，有機會與對手同歸於盡。", "story": "{attacker_name}發出生命最後的咆哮，釋放出所有能量，試圖與{target_name}同歸於盡！", "power": 0, "crit": 0, "probability": 20, "type": "無", "baseLevel": 5, "mp_cost": 50, "skill_category": "特殊", "effect": "self_ko_enemy_ko", "chance": 40}
         ]
     }
     try:
@@ -329,7 +321,7 @@ def populate_game_configs():
     newbie_guide_data = [
         {"title": "遊戲目標", "content": "歡迎來到怪獸異世界！您的目標是透過組合不同的DNA碎片，創造出獨一無二的強大怪獸，並透過養成提升它們的能力，最終在排行榜上名列前茅。"},
         {"title": "怪獸命名規則", "content": "怪獸的完整名稱將由「您的當前稱號」+「怪獸獲得的成就」+「怪獸的屬性代表名」自動組成，總長度不超過15個字。您可以在怪獸詳細資料中修改其「屬性代表名」(最多5個字)。"},
-        {"title": "DNA組合與怪獸農場", "content": "在「DNA管理」頁籤的「DNA組合」區塊，您可以將擁有的「DNA碎片」拖曳到上方的組合槽中。合成的怪獸會出現在「怪物農場」。農場是您培育、出戰、放生怪獸的地方。"},
+        {"title": "DNA組合與怪獸農場", "content": "在「DNA管理」頁籤的「DNA組合」区塊，您可以將擁有的「DNA碎片」拖曳到上方的組合槽中。合成的怪獸會出現在「怪物農場」。農場是您培育、出戰、放生怪獸的地方。"},
         {"title": "戰鬥與吸收", "content": "您可以指派怪獸出戰並挑戰其他怪獸。勝利後，您有機會吸收敗方怪獸的精華，這可能會讓您的怪獸獲得數值成長，並獲得敗方怪獸的DNA碎片作為戰利品！"},
         {"title": "醫療站", "content": "「醫療站」是您照護怪獸的地方。您可以為受傷的怪獸恢復HP、MP，或治療不良的健康狀態。此外，您還可以將不需要的怪獸分解成DNA碎片，或使用特定的DNA為同屬性怪獸進行充能恢復HP。"},
         {"title": "修煉與技能成長", "content": "透過「養成」功能，您的怪獸可以進行修煉。修煉不僅能提升基礎數值、獲得物品，還有機會讓怪獸的技能獲得經驗值。技能經驗值滿了就能升級，變得更強！修煉中還有可能領悟全新的技能(等級1)！您將有機會決定是否讓怪獸學習新技能或替換現有技能。"},
