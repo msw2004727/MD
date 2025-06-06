@@ -222,12 +222,13 @@ body.light-theme {
     --button-danger-text: var(--button-danger-text-light);
 
     --button-success-bg: var(--button-success-bg-light);
-    --button-success-hover-bg: var(--button-success-hover-bg-light);
+    --button-success-hover-bg: color-mix(in srgb, var(--success-color-light) 85%, black);
     --button-success-text: var(--button-success-text-light);
 
     --button-warning-bg: var(--button-warning-bg-light);
-    --button-warning-hover-bg: var(--button-warning-hover-bg-light);
+    --button-warning-hover-bg: color-mix(in srgb, var(--warning-color-light) 85%, black);
     --button-warning-text: var(--button-warning-text-light);
+
 
     /* Applied Element Colors - Light Theme */
     --element-fire-text: var(--element-fire-text-light);       --element-fire-bg: var(--element-fire-bg-light);
@@ -307,4 +308,3 @@ body {
     33% { opacity: 0; transform: translateY(-100%); }
     100% { opacity: 0; transform: translateY(-100%); }
 }
-
