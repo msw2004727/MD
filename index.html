@@ -61,7 +61,7 @@
             <h3 class="modal-header">📢 遊戲官方公告</h3>
             <div class="modal-body">
                 <div id="announcement-ad-banner" style="background-color: var(--bg-slot); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
-                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true" alt="廣告橫幅" style="max-width: 100%; max-height: 100%; /* 可根據需要調整高度，例如固定高度 object-fit: cover; height: 120px; */ border-radius: 4px; /* 如果希望圖片本身也有圓角 */">
+                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true" alt="廣告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">
                 </div>
                 <div id="announcement-content">
                     <p>親愛的<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>
@@ -163,11 +163,11 @@
                          <h2 class="panel-title dna-panel-title">🏡 怪物農場</h2>
                          <span class="panel-title-hint dna-panel-hint">※最多收納10隻怪獸</span>
                     </div>
+                    <!-- MODIFICATION: Removed the score column from the header -->
                     <div id="farm-headers" class="farm-header-grid mt-2">
                         <div>出戰</div>
                         <div>怪物</div>
                         <div>狀態</div>
-                        <div class="hidden sm:block hidden-on-mobile">總評價</div> 
                         <div>養成</div>
                     </div>
                     <div id="farmed-monsters-list">
@@ -190,15 +190,13 @@
                 </div>
 
                 <div class="scrolling-hints-container">
-                    <div class="scrolling-hint-text">💡 金木水火土屬性相生相剋！</div>
-                    <div class="scrolling-hint-text">💡 相同DNA組合產生的怪物是相同的！</div>
-                    <div class="scrolling-hint-text">💡 招式是怪物依據特性隨機配置！</div>
+                    <!-- Hint text will be populated by JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 確認動作彈窗 -->
+    <!-- Modals -->
     <div id="confirmation-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" id="confirmation-modal-close-x" data-modal-id="confirmation-modal">&times;</span>
@@ -214,7 +212,6 @@
         </div>
     </div>
 
-    <!-- 怪獸排行榜彈窗 -->
     <div id="monster-leaderboard-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="monster-leaderboard-modal">&times;</span>
@@ -228,7 +225,6 @@
         </div>
     </div>
 
-    <!-- 玩家排行榜彈窗 -->
     <div id="player-leaderboard-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="player-leaderboard-modal">&times;</span>
@@ -239,7 +235,6 @@
         </div>
     </div>
 
-    <!-- 怪獸資訊彈窗 -->
     <div id="monster-info-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="monster-info-modal">&times;</span>
@@ -257,7 +252,6 @@
         </div>
     </div>
 
-    <!-- 玩家資訊彈窗 -->
     <div id="player-info-modal" class="modal">
         <div class="modal-content large"> 
             <span class="modal-close" data-modal-id="player-info-modal">&times;</span>
@@ -266,7 +260,6 @@
         </div>
     </div>
 
-    <!-- 回饋/提示彈窗 -->
     <div id="feedback-modal" class="modal">
         <div class="modal-content feedback-wide"> 
             <span id="feedback-modal-close-x" class="modal-close" data-modal-id="feedback-modal">&times;</span>
@@ -279,11 +272,10 @@
         </div>
     </div>
 
-    <!-- 養成設定彈窗 -->
     <div id="cultivation-setup-modal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
-            <h3 id="cultivation-setup-modal-title" class="modal-header">� 怪獸養成</h3>
+            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成</h3>
             <div class="modal-body">
                 <p class="mb-2">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
                 <button id="start-cultivation-btn" class="w-full primary button">💪 開始修煉</button>
@@ -293,7 +285,6 @@
         </div>
     </div>
 
-    <!-- 修煉成果彈窗 -->
     <div id="training-results-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" id="close-training-results-btn" data-modal-id="training-results-modal">&times;</span>
@@ -308,7 +299,7 @@
                     <div id="training-growth-result"></div>
                 </div>
                 <div class="training-result-section">
-                    <h5>💎 拾獲物品</h5>
+                    <h5>� 拾獲物品</h5>
                     <div id="training-items-result" class="mb-2"></div>
                     <button id="add-all-to-temp-backpack-btn" class="w-full secondary button mt-2">一鍵全數加入背包</button>
                 </div>
@@ -319,7 +310,6 @@
         </div>
     </div>
 
-    <!-- 新手指南彈窗 -->
     <div id="newbie-guide-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="newbie-guide-modal">&times;</span>
@@ -331,7 +321,6 @@
         </div>
     </div>
 
-    <!-- 提醒彈窗 (關閉修煉成果時) -->
     <div id="reminder-modal" class="modal">
         <div class="modal-content" style="max-width: 380px;">
             <h3 id="reminder-modal-title" class="modal-header text-center">溫馨提醒</h3>
@@ -345,7 +334,6 @@
         </div>
     </div>
 
-    <!-- 好友列表/搜尋彈窗 -->
     <div id="friends-list-modal" class="modal">
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="friends-list-modal">&times;</span>
@@ -359,7 +347,6 @@
         </div>
     </div>
 
-    <!-- 戰鬥記錄彈窗 -->
     <div id="battle-log-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" data-modal-id="battle-log-modal">&times;</span>
@@ -371,7 +358,6 @@
         </div>
     </div>
 
-    <!-- DNA 抽取結果彈窗 -->
     <div id="dna-draw-modal" class="modal">
         <div class="modal-content">
             <span class="modal-close" data-modal-id="dna-draw-modal">&times;</span>
