@@ -111,33 +111,37 @@
 /* ======================================= */
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* NEW GRID DEFINITION: Battle(auto) | Info(flexible) | Status(auto) | Actions(auto) */
-    grid-template-columns: auto 1fr auto auto;
-    gap: 0.75rem; /* Increased gap for better spacing */
+    /* NEW 6-COLUMN GRID: Deploy | Monster Info | Rarity | Score | Status | Actions */
+    grid-template-columns: auto 1fr auto auto auto auto;
+    gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    min-width: 600px; /* 設定一個最小寬度，當螢幕太窄時會出現水平捲軸，避免換行 */
+}
+#farmed-monsters-list {
+    overflow-x: auto; /* 允許水平滾動 */
 }
 
 .farm-header-grid {
     font-weight: 600;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     padding-bottom: 0.5rem;
+    text-align: center;
 }
 
-.farm-header-grid > div, .farm-monster-item > .farm-col {
-    text-align: center; /* Default to center for all columns */
-}
-
-/* Align the monster info column to the left */
+/* Align monster info column to the left */
 .farm-header-grid > div:nth-child(2),
 .farm-monster-item .farm-col-info {
     text-align: left;
+    justify-self: start;
 }
 
 .farm-monster-item:last-child { 
     border-bottom: none; 
 }
+
 
 /* Auth screen layout */
 #auth-screen {
