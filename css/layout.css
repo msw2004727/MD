@@ -7,27 +7,21 @@
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    padding: 10px;
+    padding: 1rem; /* 使用 rem 單位，更具彈性 */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 1rem; /* 使用 rem 單位 */
     border: 1px solid var(--border-color);
     position: relative;
     transition: background-color 0.3s, border-color 0.3s;
-    margin: 10px auto;
+    margin: 1rem auto; /* 確保容器本身在頁面中有邊距 */
 }
 
 /* Responsive adjustments for main-container */
-@media (min-width: 640px) {
-    .main-container {
-        padding: 15px;
-        gap: 15px;
-    }
-}
 @media (min-width: 768px) {
     .main-container {
-        padding: 20px;
-        gap: 20px;
+        padding: 1.5rem;
+        gap: 1.5rem;
     }
 }
 
@@ -36,15 +30,10 @@
 .panel {
     background-color: var(--bg-slot);
     border-radius: 8px;
-    padding: 12px;
+    padding: 1rem; /* 使用 rem 單位 */
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
-}
-@media (min-width: 640px) {
-    .panel {
-        padding: 15px;
-    }
 }
 
 
@@ -61,14 +50,14 @@
     background-color: rgba(0,0,0,0.75);
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 1rem; /* 增加邊距，避免內容貼邊 */
 }
 
 .modal-content {
     background-color: var(--bg-panel);
     color: var(--text-primary);
     margin: auto;
-    padding: 15px;
+    padding: 1.25rem; /* 使用 rem 單位 */
     border-radius: 8px;
     width: 95%;
     max-width: 500px;
@@ -77,73 +66,30 @@
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s, color 0.3s;
 }
-@media (min-width: 640px) {
-    .modal-content {
-        padding: 20px;
-        width: 100%;
-    }
-}
-
 
 /* Modal size variants */
-.modal-content.large { max-width: 700px; }
+.modal-content.large { max-width: 720px; } /* 統一尺寸 */
 .modal-content.xlarge { max-width: 850px; }
 .modal-content.feedback-wide { max-width: 600px; }
-
-@media (max-width: 640px) {
-    .modal-content.large, .modal-content.xlarge, .modal-content.feedback-wide {
-        max-width: 95%;
-    }
-}
 
 
 /* Grid for DNA combination slots (5 slots) */
 .dna-combination-grid {
     display: grid;
+    /* 使用 auto-fit 和 minmax 讓其更具彈性，但因固定5個，直接用fr即可 */
     grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-    margin-bottom: 10px;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
-/* DNA碎片欄位 (Inventory Grid) */
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 手機: 3格 */
-    gap: 8px;
-    align-items: stretch;
-}
-@media (min-width: 480px) {
-    .inventory-grid {
-        grid-template-columns: repeat(4, 1fr); /* 中等螢幕: 4格 (可選調整) */
-    }
-}
-@media (min-width: 768px) {
-    .inventory-grid {
-        grid-template-columns: repeat(6, 1fr); /* PC: 6格 */
-    }
-}
-
-
-/* 臨時背包 (Temporary Backpack Grid) */
+/* DNA碎片欄位 (Inventory Grid) & 臨時背包 (Temporary Backpack Grid) */
+.inventory-grid,
 .temp-backpack-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 手機: 3格 */
-    gap: 8px;
-}
-@media (min-width: 480px) {
-    .temp-backpack-grid {
-        grid-template-columns: repeat(4, 1fr); /* 中等螢幕: 4格 (與DNA碎片欄同步) */
-    }
-}
-/* @media (min-width: 600px) {
-    .temp-backpack-grid {
-        grid-template-columns: repeat(6, 1fr); // 如果需要在 600px 時就變6格可以保留
-    }
-} */
-@media (min-width: 768px) {
-    .temp-backpack-grid {
-        grid-template-columns: repeat(6, 1fr); /* PC: 6格 (與DNA碎片欄同步) */
-    }
+    /* 使用 auto-fit 和 minmax 實現更好的響應式效果 */
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 0.5rem;
+    align-items: stretch;
 }
 
 
@@ -151,13 +97,12 @@
 .action-buttons-grid.dual-buttons {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 12px;
+    gap: 0.75rem;
     align-items: stretch;
 }
 .action-buttons-grid.dual-buttons > button {
     width: 100%;
     height: 100%;
-    min-height: 14.4px; /* Adjusting the min-height to 30% of 48px (48 * 0.3 = 14.4) */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -166,7 +111,7 @@
 @media (max-width: 480px) {
     .action-buttons-grid.dual-buttons {
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 0.5rem;
     }
 }
 
@@ -175,8 +120,8 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     gap: 0.5rem;
-    padding: 0.5rem 0.25rem;
-    font-size: 0.75rem;
+    padding: 0.5rem;
+    font-size: 0.8rem; /* 微調字體大小 */
     align-items: center;
     border-bottom: 1px solid var(--border-color);
 }
@@ -191,12 +136,13 @@
 
 /* Farm Grid Columns - Mobile First (Default) */
 .farm-header-grid, .farm-monster-item {
-    grid-template-columns: minmax(36px, auto) 1fr minmax(60px, auto) minmax(60px, auto);
+    /* 調整欄位比例，給怪物名稱多點空間 */
+    grid-template-columns: 40px 1.5fr 1fr 1fr;
 }
 .farm-monster-item .farm-monster-score {
     display: block;
-    grid-column: 2 / 3;
-    font-size: 0.7rem;
+    grid-column: 2 / 3; /* 顯示在怪物名稱下方 */
+    font-size: 0.75rem;
     color: var(--success-color);
     padding-left: 2px;
     margin-top: -4px;
@@ -205,14 +151,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    align-items: stretch;
-}
-.farm-monster-item button.farm-monster-cultivate-btn,
-.farm-monster-item button.farm-monster-release-btn {
-    padding: 4px 6px;
-    font-size: 0.7rem;
-    min-width: auto;
-    width: 100%;
+    align-items: stretch; /* 讓按鈕等寬 */
 }
 .farm-header-grid .hidden-on-mobile { display: none; }
 
@@ -220,43 +159,27 @@
 /* Farm Grid Columns - Small screens and up (e.g., sm: in Tailwind) */
 @media (min-width: 640px) {
     .farm-header-grid, .farm-monster-item {
-        grid-template-columns: minmax(40px, auto) 1.5fr 1fr minmax(50px,0.7fr) minmax(70px, auto);
-        padding: 0.6rem 0.5rem;
-        font-size: 0.85rem;
+        /* 在大螢幕上重新分配欄位 */
+        grid-template-columns: 50px 2fr 1fr 1fr 1.5fr;
+        padding: 0.75rem;
+        font-size: 0.9rem;
     }
     .farm-header-grid .hidden-on-mobile { display: block; }
     .farm-monster-item .farm-monster-score {
         display: block;
-        grid-column: auto;
-        font-size: 0.85rem;
+        grid-column: 4 / 5; /* 總評價回到自己的欄位 */
+        font-size: 0.9rem;
         margin-top: 0;
         text-align: center;
     }
     .farm-monster-actions-group {
         flex-direction: row;
-        justify-content: space-around;
-    }
-    .farm-monster-item button.farm-monster-cultivate-btn,
-    .farm-monster-item button.farm-monster-release-btn {
-        width: auto;
-        padding: 5px 8px;
-        font-size: 0.75rem;
+        justify-content: center; /* 讓按鈕組置中 */
+        gap: 0.5rem;
     }
 }
 
 
-/* Monster Snapshot Area Layout - display:flex is in components.css */
-#monster-snapshot-area {
-    /* Ensure it can contain absolutely positioned children */
-}
-
-/* Grid for medals */
-.medals-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-}
 /* Grid for DNA draw results */
 #dna-draw-results-grid {
     display: grid;
@@ -280,7 +203,7 @@
 }
 .auth-container {
     background-color: var(--bg-panel);
-    padding: 25px 30px;
+    padding: 2rem 1.5rem; /* 增加垂直內距 */
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     text-align: center;
@@ -292,10 +215,10 @@
 .details-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 10px 16px;
+    gap: 0.75rem 1rem; /* 調整間距 */
 }
 @media (min-width: 540px) {
     .details-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* 增加最小寬度 */
     }
 }
