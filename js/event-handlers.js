@@ -13,11 +13,16 @@ let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引
  * 新增：處理點擊“出戰”按鈕的邏輯
  * @param {string} monsterId - 被點擊的出戰按鈕對應的怪獸ID
  */
-function handleDeployMonsterClick(monsterId) {
+async function handleDeployMonsterClick(monsterId) {
     if (!monsterId) return;
 
-    // 將點擊的怪獸設定為當前選中的怪獸
+    // 更新 gameState 中的 selectedMonsterId
     gameState.selectedMonsterId = monsterId;
+
+    // 將 selectedMonsterId 也存入 playerData，以便儲存
+    if (gameState.playerData) {
+        gameState.playerData.selectedMonsterId = monsterId;
+    }
 
     // 從玩家數據中找到完整的怪獸物件
     const selectedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
@@ -32,7 +37,14 @@ function handleDeployMonsterClick(monsterId) {
         renderMonsterFarm();
     }
     
-    console.log(`怪獸 ${monsterId} 已設定為出戰狀態。`);
+    // 儲存玩家資料到後端
+    try {
+        await savePlayerData(gameState.playerId, gameState.playerData);
+        console.log(`怪獸 ${monsterId} 已設定為出戰狀態並成功儲存。`);
+    } catch (error) {
+        console.error("儲存出戰怪獸狀態失敗:", error);
+        showFeedbackModal('錯誤', '無法儲存出戰狀態，請稍後再試。');
+    }
 }
 
 
@@ -541,47 +553,20 @@ async function handleCombineDna() {
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        // 後端只返回新怪獸，不修改玩家資料
+        // 後端現在會處理資料更新與儲存，只返回新怪獸物件
         const newMonster = await combineDNA(dnaInstanceIdsForCombination);
 
         if (newMonster && newMonster.id) {
             
-            // 1. 從 gameState.playerData.playerOwnedDNA 中移除已消耗的 DNA
-            dnaInstanceIdsForCombination.forEach(consumedId => {
-                const indexToRemove = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === consumedId);
-                if (indexToRemove !== -1) {
-                    gameState.playerData.playerOwnedDNA[indexToRemove] = null;
-                }
-            });
+            // 後端已處理資料，前端只需刷新即可
+            // 為了更佳的即時體驗，可以手動更新本地狀態，或直接重新載入玩家資料
+            await refreshPlayerData(); // 重新載入以確保狀態完全同步
 
-            // 2. 將新怪獸加入 farmedMonsters
-            const MAX_FARM_SLOTS = gameState.gameConfigs?.value_settings?.max_farm_slots || 10;
-            if (gameState.playerData.farmedMonsters.length < MAX_FARM_SLOTS) {
-                gameState.playerData.farmedMonsters.push(newMonster);
-            }
+            // 清空組合槽狀態
+            resetDNACombinationSlots();
 
-            // 3. 更新玩家成就
-            if (gameState.playerData.playerStats && !gameState.playerData.playerStats.achievements.includes("首次組合怪獸")) {
-                gameState.playerData.playerStats.achievements.push("首次組合怪獸");
-            }
-            
-            // 4. 清空組合槽狀態
-            resetDNACombinationSlots(); // 這個函數內部會調用 renderDNACombinationSlots
-
-            // 5. 重新渲染庫存和農場
-            renderPlayerDNAInventory();
-            renderMonsterFarm();
-
-            // 6. 將更新後的玩家資料保存回後端
-            await savePlayerData(gameState.playerId, gameState.playerData);
-
-            // 7. 顯示成功回饋
-            let feedbackMessage = `🎉 成功合成了新的怪獸：<strong>${newMonster.nickname}</strong>！<br>`;
-            feedbackMessage += `屬性: ${newMonster.elements.join(', ')}, 稀有度: ${newMonster.rarity}<br>`;
-            if (gameState.playerData.farmedMonsters.length >= MAX_FARM_SLOTS) {
-                feedbackMessage += `<br><strong class="text-[var(--warning-color)]">農場已滿，新怪獸可能未自動加入農場。請檢查農場狀態。</strong>`;
-            }
-
+            // 顯示成功回饋
+            let feedbackMessage = `成功合成了新的怪獸`;
             showFeedbackModal(
                 '合成成功！',
                 feedbackMessage,
