@@ -8,15 +8,16 @@ import random # 引入 random 模組
 
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
-# 移除從 MD_firebase_config 導入 get_firestore_client，將其作為參數傳遞
+# 導入 MD_firebase_config 的 get_firestore_client 函數
+from .MD_firebase_config import get_firestore_client # 新增：導入獲取 db 客戶端的函數
 
 player_services_logger = logging.getLogger(__name__)
 
 # --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
-    "dna_fragments": [], 
+    "dna_fragments": [],
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
-    "skills": {}, 
+    "skills": {},
     "personalities": [],
     "titles": ["新手"],
     "monster_achievements_list": ["新秀"],
@@ -69,7 +70,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     if dna_fragments_templates:
         eligible_dna_templates = [dna for dna in dna_fragments_templates if dna.get("rarity") in ["普通", "稀有"]]
         if not eligible_dna_templates:
-            eligible_dna_templates = list(dna_fragments_templates) 
+            eligible_dna_templates = list(dna_fragments_templates)
 
         for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)):
             if not eligible_dna_templates: break
@@ -112,8 +113,7 @@ def get_player_data_service(db: Any, player_id: str, nickname_from_auth: Optiona
 
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
-            # 確保導入 firestore 以使用 firestore.SERVER_TIMESTAMP
-            import firebase_admin # 為了使用 firestore.SERVER_TIMESTAMP，需要導入 firebase_admin
+            # 在需要時導入 firestore
             from firebase_admin import firestore # 新增：在需要時導入 firestore
             if not profile_data or profile_data.get("nickname") != authoritative_nickname:
                 try:
@@ -129,7 +129,6 @@ def get_player_data_service(db: Any, player_id: str, nickname_from_auth: Optiona
         else:
             player_services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
             try:
-                import firebase_admin # 為了使用 firestore.SERVER_TIMESTAMP，需要導入 firebase_admin
                 from firebase_admin import firestore # 新增：在需要時導入 firestore
                 user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
                 player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
@@ -144,10 +143,10 @@ def get_player_data_service(db: Any, player_id: str, nickname_from_auth: Optiona
             player_game_data_dict = game_data_doc.to_dict()
             if player_game_data_dict:
                 player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
-                
+
                 loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
                 max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
-                
+
                 if len(loaded_dna) < max_inventory_slots:
                     loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
                 elif len(loaded_dna) > max_inventory_slots:
@@ -164,21 +163,21 @@ def get_player_data_service(db: Any, player_id: str, nickname_from_auth: Optiona
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                     "playerStats": player_stats_loaded, # 使用確保有 gold 字段的 stats
                     "nickname": authoritative_nickname,
-                    "lastSave": int(time.time()),
+                    "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                     "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None)
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
                 # 傳遞 db 實例給 save_player_data_service
-                if save_player_data_service(db, player_id, new_player_data):
-                    player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
+                if save_player_data_service(db, player_id, player_game_data): # 使用 player_game_data
+                    player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
                 else:
                     player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
                 return player_game_data # 即使保存失敗，也返回新數據，讓前端至少有數據顯示
 
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，並執行首次儲存。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
-        
+
         # 傳遞 db 實例給 save_player_data_service
         if save_player_data_service(db, player_id, new_player_data):
             player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
@@ -197,7 +196,7 @@ def save_player_data_service(db: Any, player_id: str, game_data: PlayerGameData)
     if not db:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
-    
+
 
     try:
         data_to_save: Dict[str, Any] = {
@@ -223,13 +222,13 @@ def save_player_data_service(db: Any, player_id: str, game_data: PlayerGameData)
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
-        game_data_ref.set(data_to_save) 
+        game_data_ref.set(data_to_save)
         player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
         player_services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
         return False
-        
+
 # 修改函數簽名，接受 db 參數
 def draw_free_dna(db: Any) -> Optional[List[Dict[str, Any]]]:
     """
@@ -241,7 +240,7 @@ def draw_free_dna(db: Any) -> Optional[List[Dict[str, Any]]]:
     player_services_logger.info("正在執行免費 DNA 抽取...")
     try:
         # load_all_game_configs_from_firestore 不直接需要 db 參數，它會自行獲取
-        from .MD_config_services import load_all_game_configs_from_firestore 
+        from .MD_config_services import load_all_game_configs_from_firestore
         game_configs = load_all_game_configs_from_firestore()
 
         if not game_configs or 'dna_fragments' not in game_configs:
@@ -249,23 +248,23 @@ def draw_free_dna(db: Any) -> Optional[List[Dict[str, Any]]]:
             return None
 
         all_dna_fragments = game_configs['dna_fragments']
-        
+
         allowed_rarities = {"普通", "稀有"}
         filtered_pool = [
-            dna for dna in all_dna_fragments 
+            dna for dna in all_dna_fragments
             if dna.get('rarity') in allowed_rarities
         ]
 
         if not filtered_pool:
             player_services_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
             return []
-            
+
         num_to_draw = 3
-        
+
         drawn_dna_templates = random.choices(filtered_pool, k=num_to_draw)
-        
+
         player_services_logger.info(f"成功抽取了 {num_to_draw} 個 DNA。")
-        
+
         return drawn_dna_templates
 
     except Exception as e:
