@@ -212,7 +212,9 @@ def populate_game_configs():
             {"name": "自然恩惠", "rarity": "普通", "description": "根據攜帶的果實，技能屬性與威力會變化。", "power": 0, "crit": 0, "type": "木", "mp_cost": 10, "skill_category": "其他"},
             {"name": "森林詛咒", "rarity": "稀有", "description": "為對手增加「草」屬性。", "power": 0, "crit": 0, "type": "木", "mp_cost": 15, "skill_category": "其他"},
         ],
-        # ... 其他屬性的技能數據將遵循此格式 ...
+        # --- 新增 ---
+        '土': [], '金': [], '光': [], '暗': [], '毒': [], '風': [], '無': [], '混': []
+        # --- 結束 ---
     }
     try:
         db_client.collection('MD_GameConfigs').document('Skills').set({'skill_database': skill_database_data})
