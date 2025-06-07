@@ -914,7 +914,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">個性:</span> <span class="details-value font-semibold" style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name}</span></div>
                     <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
                     <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
                     <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
@@ -939,7 +938,10 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
         <div class="details-section mt-3">
             <h5 class="details-section-title">AI 生成個性</h5>
-            <p class="ai-generated-text text-sm">${aiPersonality}</p>
+            <p class="ai-generated-text text-sm" style="line-height: 1.6;">
+                <strong style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name || '未知'}:</strong><br>
+                ${aiPersonality}
+            </p>
         </div>
         <div class="details-section mt-3">
             <h5 class="details-section-title">AI 介紹</h5>
