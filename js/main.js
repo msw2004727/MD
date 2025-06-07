@@ -85,8 +85,9 @@ async function initializeGame() {
 
         // 步驟 4: 在確認所有狀態都準備好後，才開始渲染整個UI
         // 設定依賴遊戲設定的UI元素
+        // 確保 maxCultivationTimeText 存在且 gameConfigs.value_settings 也存在
         if (DOMElements.maxCultivationTimeText && configs.value_settings) {
-            DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
+            DOMElements.maxCultivationTimeText.textContent = (configs.value_settings.max_cultivation_time_seconds / 60) || 60; // 假設單位是分鐘
         }
         const gameHints = [
             `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
