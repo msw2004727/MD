@@ -250,7 +250,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
         
         DOMElements.feedbackModalMessage.innerHTML = `
-            <h4 class="text-lg font-semibold text-center text-[var(--text-primary)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
+            <h4 class="text-lg font-semibold text-center text-rarity-${rarityKey} mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
             <p class="text-center text-sm text-[var(--text-secondary)]">${message}</p>
             <p class="text-center text-sm text-[var(--text-secondary)] mt-1">${discoveryMessage}</p>
         `;
@@ -307,9 +307,13 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
         return;
     }
     DOMElements.confirmationModalTitle.textContent = title;
-    DOMElements.confirmationModalBody.innerHTML = `<p>${message}</p>`;
+    
+    if (monsterToRelease) {
+        const rarityKey = (monsterToRelease.rarity || 'common').toLowerCase();
+        const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
+        const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
+        DOMElements.confirmationModalBody.innerHTML = `<p>${finalMessage}</p>`;
 
-    if (monsterToRelease && monsterToRelease.id) {
         const imgPlaceholder = DOMElements.releaseMonsterImagePlaceholder;
         const imgPreview = DOMElements.releaseMonsterImgPreview;
         if (imgPlaceholder && imgPreview) {
@@ -319,6 +323,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
             toggleElementDisplay(imgPlaceholder, true, 'flex');
         }
     } else {
+        DOMElements.confirmationModalBody.innerHTML = `<p>${message}</p>`;
         if (DOMElements.releaseMonsterImagePlaceholder) {
             toggleElementDisplay(DOMElements.releaseMonsterImagePlaceholder, false);
         }
@@ -415,12 +420,16 @@ function updateMonsterSnapshot(monster) {
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
+        const rarityKey = (monster.rarity || 'common').toLowerCase();
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 1;
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
+        
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
+        DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
+
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
@@ -429,7 +438,6 @@ function updateMonsterSnapshot(monster) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
 
-        const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
@@ -472,6 +480,7 @@ function updateMonsterSnapshot(monster) {
         
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
+        DOMElements.snapshotNickname.className = ''; // 清除稀有度顏色
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
@@ -689,6 +698,7 @@ function renderMonsterFarm() {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
+        const rarityKey = String(monster.rarity).toLowerCase();
         
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
@@ -701,13 +711,13 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <strong class="monster-name-display">${displayName}</strong>
+                <strong class="monster-name-display text-rarity-${rarityKey}">${displayName}</strong>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
                 </div>
             </div>
             <div class="farm-col farm-col-rarity">
-                <span class="text-rarity-${String(monster.rarity).toLowerCase()}">${monster.rarity}</span>
+                <span class="text-rarity-${rarityKey}">${monster.rarity}</span>
             </div>
              <div class="farm-col farm-col-score">
                 <span class="score-value">${monster.score || 0}</span>
@@ -783,16 +793,18 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         const monsters = playerData.farmedMonsters;
         const previewLimit = 5;
         
-        let previewHtml = monsters.slice(0, previewLimit).map(m => 
-            `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
-        ).join('');
+        let previewHtml = monsters.slice(0, previewLimit).map(m => {
+            const rarityKey = String(m.rarity).toLowerCase();
+            return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+        }).join('');
 
         let moreMonstersHtml = '';
         if (monsters.length > previewLimit) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
-                monsters.slice(previewLimit).map(m => 
-                    `<li><span class="monster-name">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
-                ).join('')
+                monsters.slice(previewLimit).map(m => {
+                    const rarityKey = String(m.rarity).toLowerCase();
+                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+                }).join('')
             }</div>`;
         }
         
@@ -1109,7 +1121,13 @@ function updateLeaderboardTable(tableType, data) {
         row.textContent = index + 1;
 
         if (tableType === 'monster') {
-            row.insertCell().textContent = item.nickname;
+            const nicknameCell = row.insertCell();
+            const nicknameSpan = document.createElement('span');
+            const rarityKey = item.rarity.toLowerCase();
+            nicknameSpan.className = `text-rarity-${rarityKey}`;
+            nicknameSpan.textContent = item.nickname;
+            nicknameCell.appendChild(nicknameSpan);
+            
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             item.elements.forEach(el => {
