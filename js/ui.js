@@ -908,6 +908,39 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const aiPersonality = monster.aiPersonality || 'AI 個性生成中或失敗...';
     const aiIntroduction = monster.aiIntroduction || 'AI 介紹生成中或失敗...';
 
+    // --- 新增：產生怪獸組成DNA的HTML ---
+    let constituentDnaHtml = '';
+    const dnaSlots = new Array(5).fill(null);
+    if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
+        monster.constituent_dna_ids.forEach((id, i) => {
+            if (i < 5) {
+                dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
+            }
+        });
+    }
+
+    const dnaItemsHtml = dnaSlots.map(dna => {
+        if (dna) {
+            // 返回帶有特殊屬性的佔位符，以便稍後用 JS 上色
+            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
+                        <span class="dna-name-text">${dna.name}</span>
+                    </div>`;
+        } else {
+            return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
+        }
+    }).join('');
+    
+    constituentDnaHtml = `
+        <div class="details-section">
+            <h5 class="details-section-title">怪獸DNA組成</h5>
+            <div class="inventory-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+                ${dnaItemsHtml}
+            </div>
+        </div>
+    `;
+    // --- 結束：產生怪獸組成DNA的HTML ---
+
+
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
             <div class="details-column-left" style="display: flex; flex-direction: column; gap: 1rem;">
@@ -922,6 +955,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                     <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
+                ${constituentDnaHtml}
             </div>
 
             <div class="details-column-right">
@@ -949,6 +983,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
+
+    // --- 新增：為組成DNA卡片應用樣式 ---
+    detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
+        const dnaId = el.dataset.dnaRefId;
+        const dnaTemplate = gameState.gameConfigs?.dna_fragments.find(d => d.id === dnaId);
+        if (dnaTemplate) {
+            applyDnaItemStyle(el, dnaTemplate);
+        }
+    });
+    // --- 結束 ---
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
