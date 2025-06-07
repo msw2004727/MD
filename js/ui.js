@@ -681,9 +681,22 @@ function renderMonsterFarm() {
                 statusClass = "status-battling";
             } else if (monster.farmStatus.isTraining) {
                 const endTime = (monster.farmStatus.trainingStartTime || 0) + (monster.farmStatus.trainingDuration || 0);
-                let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-                statusText = remainingTime > 0 ? `修煉中 (${remainingTime}s)` : "發呆中";
-                statusClass = remainingTime > 0 ? "status-training" : "status-idle";
+                const elapsed = Date.now() - (monster.farmStatus.trainingStartTime || 0);
+                const totalDuration = monster.farmStatus.trainingDuration || 0;
+                
+                let remainingTimeSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+                let elapsedSeconds = Math.floor(elapsed / 1000);
+                let totalDurationSeconds = Math.floor(totalDuration / 1000);
+
+                // 修改修煉過程讀秒顯示為 "已修煉時間 / 總修煉時間" 的格式
+                statusText = `修煉中 (${elapsedSeconds}s / ${totalDurationSeconds}s)`; [cite: 1]
+                statusClass = "status-training";
+                
+                if (remainingTimeSeconds <= 0) {
+                    statusText = "修煉完成";
+                    statusClass = "status-idle"; // 修煉完成後回到閒置狀態
+                }
+
             }
         }
 
@@ -766,6 +779,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     }
     const stats = playerData.playerStats;
     const nickname = playerData.nickname || stats.nickname || "未知玩家";
+    const gold = stats.gold !== undefined ? stats.gold : 0; // 新增：獲取金幣數量 
 
     let titlesHtml = '<p>尚無稱號</p>';
     if (stats.titles && stats.titles.length > 0) {
@@ -819,6 +833,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 <div class="details-item"><span class="details-label">總勝場:</span> <span class="details-value text-[var(--success-color)]">${stats.wins || 0}</span></div>
                 <div class="details-item"><span class="details-label">總敗場:</span> <span class="details-value text-[var(--danger-color)]">${stats.losses || 0}</span></div>
                 <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value">${stats.score || 0}</span></div>
+                <div class="details-item"><span class="details-label">金幣:</span> <span class="details-value text-[var(--warning-color)]">${gold}</span></div>
             </div>
             <div class="details-section">
                 <h5 class="details-section-title">榮譽</h5>
@@ -893,16 +908,20 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     let skillsHtml = '<p class="text-sm">尚無技能</p>';
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
+    const maxSkillLevel = gameConfigs?.cultivation_config?.max_skill_level || 10; // 獲取最高技能等級 
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
             const skillTypeClass = typeof skill.type === 'string' ? `text-element-${skill.type.toLowerCase()}` : '';
             const description = skill.description || '暫無描述';
+            const currentLevel = skill.level || 1;
+            const displayLevel = currentLevel >= maxSkillLevel ? 'Max' : `Lv.${currentLevel}`; // 修改顯示為 Max 
+
             return `
             <div class="skill-entry">
-                <span class="skill-name ${skillTypeClass}">${skill.name} (Lv.${skill.level || 1})</span>
+                <span class="skill-name ${skillTypeClass}">${skill.name} (${displayLevel})</span>
                 <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
-                ${skill.current_exp !== undefined ? `<p class="text-xs text-[var(--text-secondary)]">經驗: ${skill.current_exp}/${skill.exp_to_next_level || '-'}</p>` : ''}
+                ${currentLevel < maxSkillLevel ? `<p class="text-xs text-[var(--text-secondary)]">經驗: ${skill.current_exp}/${skill.exp_to_next_level || '-'}</p>` : ''}
             </div>
         `}).join('');
     }
@@ -1175,23 +1194,6 @@ function updateLeaderboardTable(tableType, data) {
         }
     });
     updateLeaderboardSortIcons(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
-}
-
-function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
-    if (!tableElement) return;
-    const headers = tableElement.querySelectorAll('thead th');
-    headers.forEach(th => {
-        const arrowSpan = th.querySelector('.sort-arrow');
-        if (arrowSpan) {
-            if (th.dataset.sortKey === activeKey) {
-                arrowSpan.textContent = activeOrder === 'asc' ? '▲' : '▼';
-                arrowSpan.classList.add('active');
-            } else {
-                arrowSpan.textContent = '';
-                arrowSpan.classList.remove('active');
-            }
-        }
-    });
 }
 
 function updateMonsterLeaderboardElementTabs(elements) {
