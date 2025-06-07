@@ -454,7 +454,7 @@
   },
   {
     "id": "dna_light_c03",
-    "name": "螢火蟲之光",
+    "name": "螢火蟲光",
     "type": "光",
     "rarity": "普通",
     "description": "螢火蟲發出的生物光。",
@@ -721,7 +721,7 @@
   },
   {
     "id": "dna_wind_c04",
-    "name": "蒲公英種子",
+    "name": "蒲公英種",
     "type": "風",
     "rarity": "普通",
     "description": "乘風而行的蒲公英種子。",
@@ -769,7 +769,7 @@
   },
   {
     "id": "dna_none_c01",
-    "name": "中性細胞核",
+    "name": "中性細胞",
     "type": "無",
     "rarity": "普通",
     "description": "基礎的生命核心。",
@@ -936,7 +936,7 @@
   },
   {
     "id": "dna_water_r05",
-    "name": "毒性水母觸手",
+    "name": "水母觸手",
     "type": "水",
     "rarity": "稀有",
     "description": "帶有麻痺毒素的水母觸手。",
@@ -953,7 +953,7 @@
   },
   {
     "id": "dna_wood_r01",
-    "name": "硬化樹皮塊",
+    "name": "硬化樹皮",
     "type": "木",
     "rarity": "稀有",
     "description": "經過硬化的堅韌樹皮。",
@@ -1055,7 +1055,7 @@
   },
   {
     "id": "dna_gold_r02",
-    "name": "鋒利刀刃碎片",
+    "name": "鋒銳刃片",
     "type": "金",
     "rarity": "稀有",
     "description": "從傳說武器上剝落的鋒利碎片。",
@@ -1241,7 +1241,7 @@
   },
   {
     "id": "dna_light_r03",
-    "name": "星塵聚集體",
+    "name": "星塵聚集",
     "type": "光",
     "rarity": "稀有",
     "description": "宇宙星塵的閃耀聚集體。",
@@ -1477,7 +1477,7 @@
   },
   {
     "id": "dna_wind_r02",
-    "name": "風暴之眼碎片",
+    "name": "風暴之眼",
     "type": "風",
     "rarity": "稀有",
     "description": "從風暴中心帶出的穩定能量碎片。",
@@ -1544,7 +1544,7 @@
   },
   {
     "id": "dna_mix_r01",
-    "name": "不穩定化合物",
+    "name": "混沌膠質",
     "type": "混",
     "rarity": "稀有",
     "description": "隨時可能發生異變的化合物。",
@@ -1558,7 +1558,7 @@
   },
   {
     "id": "dna_none_r01",
-    "name": "進化細胞簇",
+    "name": "進化元核",
     "type": "無",
     "rarity": "稀有",
     "description": "具有高度適應性的細胞簇。",
@@ -1589,7 +1589,7 @@
   },
   {
     "id": "dna_fire_e02",
-    "name": "太陽耀斑碎片",
+    "name": "日冕殘焰",
     "type": "火",
     "rarity": "菁英",
     "description": "太陽耀斑爆發時產生的能量碎片。",
@@ -1623,7 +1623,7 @@
   },
   {
     "id": "dna_fire_e04",
-    "name": "地獄火精粹",
+    "name": "獄火精粹",
     "type": "火",
     "rarity": "菁英",
     "description": "來自地獄深淵的純粹火焰能量。",
@@ -1674,7 +1674,7 @@
   },
   {
     "id": "dna_water_e02",
-    "name": "絕對零度冰核",
+    "name": "絕對零度",
     "type": "水",
     "rarity": "菁英",
     "description": "接近絕對零度的極寒冰核。",
@@ -1691,7 +1691,7 @@
   },
   {
     "id": "dna_water_e03",
-    "name": "利維坦鱗片",
+    "name": "海怪鱗片",
     "type": "水",
     "rarity": "菁英",
     "description": "傳說海怪利維坦的堅硬鱗片。",
@@ -1707,7 +1707,7 @@
   },
   {
     "id": "dna_water_e04",
-    "name": "生命之泉源頭",
+    "name": "生命之泉",
     "type": "水",
     "rarity": "菁英",
     "description": "生命之泉的源頭，充滿治癒與活化之力。",
@@ -1724,7 +1724,7 @@
   },
   {
     "id": "dna_water_e05",
-    "name": "克拉肯之墨",
+    "name": "深海妖墨",
     "type": "水",
     "rarity": "菁英",
     "description": "巨大海妖克拉肯噴出的，能迷惑心智的墨汁。",
@@ -1741,7 +1741,7 @@
   },
   {
     "id": "dna_wood_e01",
-    "name": "世界樹嫩芽",
+    "name": "世界樹芽",
     "type": "木",
     "rarity": "菁英",
     "description": "傳說中世界樹長出的新芽。",
@@ -1775,7 +1775,7 @@
   },
   {
     "id": "dna_wood_e03",
-    "name": "德魯伊圖騰",
+    "name": "古森圖騰",
     "type": "木",
     "rarity": "菁英",
     "description": "蘊含著古老德魯伊力量的圖騰。",
@@ -1792,7 +1792,7 @@
   },
   {
     "id": "dna_wood_e04",
-    "name": "光合作用結晶",
+    "name": "光合結晶",
     "type": "木",
     "rarity": "菁英",
     "description": "極致光合作用下產生的能量結晶。",
@@ -1893,7 +1893,7 @@
   },
   {
     "id": "dna_gold_e05",
-    "name": "守護者之盾碎片",
+    "name": "守護者盾",
     "type": "金",
     "rarity": "菁英",
     "description": "上古守護者巨盾的碎片，擁有極高的防禦力。",
@@ -2145,7 +2145,7 @@
   },
   {
     "id": "dna_dark_e05",
-    "name": "噬魂者之牙",
+    "name": "噬魂魔牙",
     "type": "暗",
     "rarity": "菁英",
     "description": "傳說中噬魂者的牙齒，能吸取靈魂能量。",
@@ -2196,7 +2196,7 @@
   },
   {
     "id": "dna_poison_e03",
-    "name": "神經毒素原液",
+    "name": "神經劇毒",
     "type": "毒",
     "rarity": "菁英",
     "description": "能瞬間麻痺神經的強烈毒素原液。",
@@ -2213,7 +2213,7 @@
   },
   {
     "id": "dna_poison_e04",
-    "name": "放射性核心",
+    "name": "輻射核心",
     "type": "毒",
     "rarity": "菁英",
     "description": "不斷釋放出有害射線的能量核心。",
@@ -2264,7 +2264,7 @@
   },
   {
     "id": "dna_wind_e02",
-    "name": "風精靈女王之息",
+    "name": "風后之息",
     "type": "風",
     "rarity": "菁英",
     "description": "風精靈女王呼出的一口氣，蘊含強大魔力。",
@@ -2314,7 +2314,7 @@
   },
   {
     "id": "dna_wind_e05",
-    "name": "真空刃碎片",
+    "name": "真空刃片",
     "type": "風",
     "rarity": "菁英",
     "description": "能切割萬物的真空之刃的碎片。",
@@ -2330,7 +2330,7 @@
   },
   {
     "id": "dna_mix_e01",
-    "name": "煉金術師的賢者之石碎片",
+    "name": "賢者之石",
     "type": "混",
     "rarity": "菁英",
     "description": "傳說中的賢者之石的微小碎片。",
@@ -2344,7 +2344,7 @@
   },
   {
     "id": "dna_none_e01",
-    "name": "完美細胞樣本",
+    "name": "完美細胞",
     "type": "無",
     "rarity": "菁英",
     "description": "具有無限可能性的完美細胞。",
@@ -2376,7 +2376,7 @@
   },
   {
     "id": "dna_fire_l02",
-    "name": "紅蓮地獄火",
+    "name": "紅蓮業火",
     "type": "火",
     "rarity": "傳奇",
     "description": "足以燃盡一切的紅蓮業火。",
@@ -2393,7 +2393,7 @@
   },
   {
     "id": "dna_fire_l03",
-    "name": "伊格尼斯的心跳",
+    "name": "火神心跳",
     "type": "火",
     "rarity": "傳奇",
     "description": "古代火神伊格尼斯心臟的餘響。",
@@ -2410,7 +2410,7 @@
   },
   {
     "id": "dna_fire_l04",
-    "name": "末日火山灰",
+    "name": "末日餘燼",
     "type": "火",
     "rarity": "傳奇",
     "description": "終結一個時代的火山爆發所留下的灰燼。",
@@ -2463,7 +2463,7 @@
   },
   {
     "id": "dna_water_l02",
-    "name": "波賽頓的三叉戟碎片",
+    "name": "海神之戟",
     "type": "水",
     "rarity": "傳奇",
     "description": "傳說海神波賽頓武器的碎片。",
@@ -2498,7 +2498,7 @@
   },
   {
     "id": "dna_water_l04",
-    "name": "亞特蘭提斯之心",
+    "name": "淵海之心",
     "type": "水",
     "rarity": "傳奇",
     "description": "沉沒之城亞特蘭提斯的能量核心。",
@@ -2533,7 +2533,7 @@
   },
   {
     "id": "dna_wood_l01",
-    "name": "伊格德拉修之葉",
+    "name": "世界樹葉",
     "type": "木",
     "rarity": "傳奇",
     "description": "生命之樹伊格德拉修的葉片。",
@@ -2551,7 +2551,7 @@
   },
   {
     "id": "dna_wood_l02",
-    "name": "蓋亞的祝福",
+    "name": "蓋亞祝福",
     "type": "木",
     "rarity": "傳奇",
     "description": "大地母神蓋亞對生命的祝福。",
@@ -2569,7 +2569,7 @@
   },
   {
     "id": "dna_wood_l03",
-    "name": "森林賢者之魂",
+    "name": "賢者之魂",
     "type": "木",
     "rarity": "傳奇",
     "description": "古代森林賢者的靈魂結晶。",
@@ -2586,7 +2586,7 @@
   },
   {
     "id": "dna_wood_l04",
-    "name": "阿瓦隆的聖果",
+    "name": "聖鄉之果",
     "type": "木",
     "rarity": "傳奇",
     "description": "來自理想鄉阿瓦隆，能治癒一切的聖果。",
@@ -2604,7 +2604,7 @@
   },
   {
     "id": "dna_wood_l05",
-    "name": "猛毒世界樹根",
+    "name": "猛毒樹根",
     "type": "木",
     "rarity": "傳奇",
     "description": "世界樹根部被污染後產生的劇毒變異體。",
@@ -2639,7 +2639,7 @@
   },
   {
     "id": "dna_gold_l02",
-    "name": "赫淮斯托斯的鍛錘碎片",
+    "name": "工神鍛錘",
     "type": "金",
     "rarity": "傳奇",
     "description": "工匠之神赫淮斯托斯的神錘碎片。",
@@ -2657,7 +2657,7 @@
   },
   {
     "id": "dna_gold_l03",
-    "name": "朗基努斯之槍尖",
+    "name": "聖槍之尖",
     "type": "金",
     "rarity": "傳奇",
     "description": "傳說中刺穿神祇的聖槍之尖。",
@@ -2675,7 +2675,7 @@
   },
   {
     "id": "dna_gold_l04",
-    "name": "絕對防禦力場核心",
+    "name": "絕對力場",
     "type": "金",
     "rarity": "傳奇",
     "description": "能產生絕對防禦力場的古代核心。",
@@ -2691,7 +2691,7 @@
   },
   {
     "id": "dna_gold_l05",
-    "name": "變形金剛火種源碎片",
+    "name": "賽博火種",
     "type": "金",
     "rarity": "傳奇",
     "description": "賦予機械生命的火種源的微小碎片。",
@@ -2708,7 +2708,7 @@
   },
   {
     "id": "dna_earth_l01",
-    "name": "大地龍脈結晶",
+    "name": "大地龍脈",
     "type": "土",
     "rarity": "傳奇",
     "description": "蘊含大地龍脈力量的稀有結晶。",
@@ -2725,7 +2725,7 @@
   },
   {
     "id": "dna_earth_l02",
-    "name": "盤古的脊柱",
+    "name": "盤古脊柱",
     "type": "土",
     "rarity": "傳奇",
     "description": "開天闢地的巨人盤古的脊柱化石。",
@@ -2743,7 +2743,7 @@
   },
   {
     "id": "dna_earth_l03",
-    "name": "萬有引力之核",
+    "name": "引力之核",
     "type": "土",
     "rarity": "傳奇",
     "description": "控制萬有引力的神秘核心。",
@@ -2761,7 +2761,7 @@
   },
   {
     "id": "dna_earth_l04",
-    "name": "巴別塔基石",
+    "name": "通天之基",
     "type": "土",
     "rarity": "傳奇",
     "description": "通天塔巴別塔的基石，蘊含著古代文明的智慧。",
@@ -2778,7 +2778,7 @@
   },
   {
     "id": "dna_earth_l05",
-    "name": "石中劍劍鞘",
+    "name": "聖劍之鞘",
     "type": "土",
     "rarity": "傳奇",
     "description": "保護石中劍的岩石劍鞘，持有者不會受傷。",
@@ -2814,7 +2814,7 @@
   },
   {
     "id": "dna_light_l02",
-    "name": "天堂之門鑰匙",
+    "name": "天堂之鑰",
     "type": "光",
     "rarity": "傳奇",
     "description": "能開啟天堂之門的神秘鑰匙。",
@@ -2866,7 +2866,7 @@
   },
   {
     "id": "dna_light_l05",
-    "name": "真理之書殘頁",
+    "name": "真理殘頁",
     "type": "光",
     "rarity": "傳奇",
     "description": "記載著世界所有真理的書的殘頁。",
@@ -2883,7 +2883,7 @@
   },
   {
     "id": "dna_dark_l01",
-    "name": "路西法的墮落之羽",
+    "name": "墮天之羽",
     "type": "暗",
     "rarity": "傳奇",
     "description": "墮天使路西法遺落的黑色羽毛。",
@@ -2901,7 +2901,7 @@
   },
   {
     "id": "dna_dark_l02",
-    "name": "潘朵拉之盒的鎖",
+    "name": "災厄之鎖",
     "type": "暗",
     "rarity": "傳奇",
     "description": "封印著世間所有災厄的潘朵拉之盒的鎖。",
@@ -2936,7 +2936,7 @@
   },
   {
     "id": "dna_dark_l04",
-    "name": "克蘇魯的觸鬚",
+    "name": "邪神觸鬚",
     "type": "暗",
     "rarity": "傳奇",
     "description": "舊日支配者克蘇魯的觸鬚，蘊含瘋狂之力。",
@@ -2989,7 +2989,7 @@
   },
   {
     "id": "dna_poison_l02",
-    "name": "許德拉的再生之血",
+    "name": "蛇妖之血",
     "type": "毒",
     "rarity": "傳奇",
     "description": "九頭蛇許德拉的血液，既是劇毒也能再生。",
@@ -3006,7 +3006,7 @@
   },
   {
     "id": "dna_poison_l03",
-    "name": "寂靜之春的農藥",
+    "name": "寂靜死劑",
     "type": "毒",
     "rarity": "傳奇",
     "description": "讓春天沉寂的禁忌農藥。",
@@ -3024,7 +3024,7 @@
   },
   {
     "id": "dna_poison_l04",
-    "name": "芬里爾的唾液",
+    "name": "魔狼之涎",
     "type": "毒",
     "rarity": "傳奇",
     "description": "諸神黃昏中魔狼芬里爾的腐蝕性唾液。",
@@ -3042,7 +3042,7 @@
   },
   {
     "id": "dna_poison_l05",
-    "name": "疫病之王的嘆息",
+    "name": "疫王嘆息",
     "type": "毒",
     "rarity": "傳奇",
     "description": "傳播瘟疫的君王的嘆息，化為實體。",
@@ -3059,7 +3059,7 @@
   },
   {
     "id": "dna_wind_l01",
-    "name": "埃俄羅斯的風袋",
+    "name": "風神之袋",
     "type": "風",
     "rarity": "傳奇",
     "description": "風神埃俄羅斯用來收納全世界的風的袋子。",
@@ -3077,7 +3077,7 @@
   },
   {
     "id": "dna_wind_l02",
-    "name": "天狗的羽扇",
+    "name": "天狗羽扇",
     "type": "風",
     "rarity": "傳奇",
     "description": "日本傳說中天狗的羽扇，能掀起狂風。",
@@ -3094,7 +3094,7 @@
   },
   {
     "id": "dna_wind_l03",
-    "name": "風之迦樓羅的啼鳴",
+    "name": "神鳥啼鳴",
     "type": "風",
     "rarity": "傳奇",
     "description": "神鳥迦樓羅的啼鳴，化為音速的衝擊波。",
@@ -3112,7 +3112,7 @@
   },
   {
     "id": "dna_wind_l04",
-    "name": "蝴蝶效應的風暴",
+    "name": "混沌風暴",
     "type": "風",
     "rarity": "傳奇",
     "description": "由初始的微小扇動最終引發的毀滅性風暴。",
@@ -3130,7 +3130,7 @@
   },
   {
     "id": "dna_wind_l05",
-    "name": "女武神的騎行",
+    "name": "英靈騎行",
     "type": "風",
     "rarity": "傳奇",
     "description": "女武神在天空中騎行時留下的神速軌跡。",
@@ -3147,7 +3147,7 @@
   },
   {
     "id": "dna_mix_l01",
-    "name": "阿卡西記錄的殘片",
+    "name": "阿卡西片",
     "type": "混",
     "rarity": "傳奇",
     "description": "記載著宇宙一切資訊的阿卡西記錄的殘片。",
@@ -3161,7 +3161,7 @@
   },
   {
     "id": "dna_none_l01",
-    "name": "蓋亞的意識",
+    "name": "蓋亞意識",
     "type": "無",
     "rarity": "傳奇",
     "description": "行星地球本身的意識體。",
@@ -3175,7 +3175,7 @@
   },
   {
     "id": "dna_fire_m01",
-    "name": "宇宙大爆炸奇點",
+    "name": "創世奇點",
     "type": "火",
     "rarity": "神話",
     "description": "宇宙誕生之初的那個無限熱的奇點。",
@@ -3194,7 +3194,7 @@
   },
   {
     "id": "dna_water_m01",
-    "name": "萬物初始之海",
+    "name": "初始之海",
     "type": "水",
     "rarity": "神話",
     "description": "生命誕生之前的原始海洋。",
@@ -3213,7 +3213,7 @@
   },
   {
     "id": "dna_wood_m01",
-    "name": "生命螺旋的頂點",
+    "name": "生命螺旋",
     "type": "木",
     "rarity": "神話",
     "description": "所有生命基因演化的終極形態。",
@@ -3232,7 +3232,7 @@
   },
   {
     "id": "dna_gold_m01",
-    "name": "絕對秩序的法則",
+    "name": "秩序法則",
     "type": "金",
     "rarity": "神話",
     "description": "構成世界運轉的絕對物理法則本身。",
@@ -3251,7 +3251,7 @@
   },
   {
     "id": "dna_earth_m01",
-    "name": "承載世界之龜的甲殼",
+    "name": "創世龜甲",
     "type": "土",
     "rarity": "神話",
     "description": "傳說中背負整個世界的巨龜的甲殼。",
@@ -3270,7 +3270,7 @@
   },
   {
     "id": "dna_light_m01",
-    "name": "上帝的第一次呼吸",
+    "name": "神之初息",
     "type": "光",
     "rarity": "神話",
     "description": "「要有光」，於是便有了光。",
@@ -3289,7 +3289,7 @@
   },
   {
     "id": "dna_dark_m01",
-    "name": "拉格納羅克的號角",
+    "name": "末日號角",
     "type": "暗",
     "rarity": "神話",
     "description": "吹響諸神黃昏的末日號角。",
@@ -3308,7 +3308,7 @@
   },
   {
     "id": "dna_poison_m01",
-    "name": "尼德霍格的絕望",
+    "name": "絕望龍息",
     "type": "毒",
     "rarity": "神話",
     "description": "啃食世界樹根的絕望黑龍尼德霍格的吐息。",
@@ -3363,7 +3363,7 @@
   },
   {
     "id": "dna_none_m01",
-    "name": "薛丁格的貓",
+    "name": "薛丁格貓",
     "type": "無",
     "rarity": "神話",
     "description": "在觀測之前，處於所有可能性的疊加態。",
