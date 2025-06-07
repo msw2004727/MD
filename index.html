@@ -251,7 +251,7 @@
         <div class="modal-content feedback-wide"> 
             <span id="feedback-modal-close-x" class="modal-close" data-modal-id="feedback-modal">&times;</span>
             <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
-            <div id="feedback-modal-body-content" class="modal-body text-left">
+            <div id="feedback-modal-body-content" class="modal-body">
                  <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
                  <div id="feedback-modal-message"></div>
                  <div id="feedback-monster-details" style="display:none;" class="mt-3"></div>
@@ -260,14 +260,17 @@
     </div>
 
     <div id="cultivation-setup-modal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content" style="max-width: 420px;">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
             <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成</h3>
-            <div class="modal-body">
-                <p class="mb-2">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true" alt="修煉橫幅" class="w-full h-auto rounded-md object-cover">
+                </div>
+                <p class="mb-3 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
                 <button id="start-cultivation-btn" class="w-full primary button">💪 開始修煉</button>
-                <p class="cultivation-hint text-base mt-2">提示：修煉期間，怪獸將無法放生或出戰。</p>
-                <p class="cultivation-hint text-sm mt-1">修煉時長上限為 <span id="max-cultivation-time">999</span> 秒。</p>
+                <p class="cultivation-hint text-sm mt-3">提示：修煉期間，怪獸將無法放生或出戰。</p>
+                <p class="cultivation-hint text-xs mt-1">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。</p>
             </div>
         </div>
     </div>
