@@ -99,7 +99,8 @@ async function initializeGame() {
         if (configs.newbie_guide && configs.newbie_guide.length > 0) {
             gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0, 20)}...`);
         }
-        if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
+        // updateScrollingHints 應該在 DOMElements 初始化後才被調用
+        // if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
         
         // 渲染遊戲主畫面
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
@@ -140,10 +141,17 @@ async function initializeGame() {
  * 當 Firebase Auth 狀態改變時的回調函數
  */
 async function onAuthStateChangedHandler(user) {
+    // CRITICAL: 優先初始化 DOM 元素引用
+    // 確保只初始化一次，並且在任何需要 DOMElements 的地方之前
     if (Object.keys(DOMElements).length === 0) {
-        console.warn("onAuthStateChangedHandler called before DOMElements initialized. Retrying in 100ms.");
-        setTimeout(() => onAuthStateChangedHandler(user), 100);
-        return;
+        if (typeof initializeDOMElements === 'function') {
+            initializeDOMElements(); 
+            console.log("DOMElements initialized from onAuthStateChangedHandler.");
+        } else {
+            console.error("CRITICAL: initializeDOMElements function is not defined! UI will not work.");
+            document.body.innerHTML = "遊戲介面關鍵組件初始化失敗，請刷新或聯繫管理員。";
+            return; // 無法初始化 DOMElements，阻止後續邏輯
+        }
     }
 
     if (user) {
@@ -177,23 +185,15 @@ async function onAuthStateChangedHandler(user) {
 
 // --- Application Entry Point ---
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 優先初始化 DOM 元素引用
-    if (typeof initializeDOMElements === 'function') {
-        initializeDOMElements(); 
-    } else {
-        console.error("CRITICAL: initializeDOMElements function is not defined! UI will not work.");
-        document.body.innerHTML = "遊戲介面關鍵組件初始化失敗，請刷新或聯繫管理員。";
-        return; 
-    }
-    
-    // 2. 清理緩存
+    // 1. 清理緩存 (此步驟不依賴 DOM 元素)
     clearGameCacheOnExitOrRefresh();
-    console.log("DOM fully loaded and parsed. DOMElements initialized.");
+    console.log("DOM fully loaded and parsed.");
 
-    // 3. 初始化 Firebase App
+    // 2. 初始化 Firebase App (此步驟不依賴 DOM 元素)
     initializeFirebaseApp();
 
-    // 4. 設置 Firebase Auth 狀態監聽器
+    // 3. 設置 Firebase Auth 狀態監聽器
+    // onAuthStateChangedHandler 將會負責 DOMElements 的初始化
     if (typeof RosterAuthListener === 'function') {
         RosterAuthListener(onAuthStateChangedHandler);
     } else {
@@ -204,7 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 5. 初始化事件監聽器
+    // 4. 初始化事件監聽器 (這可能依賴部分 DOMElements，所以需要調整)
+    // 考慮到初始化 DOMElements 的時機變更，這裡的事件監聽器可能需要延遲綁定
+    // 或者只綁定不依賴 DOMElements 存在的事件 (如 modal-close, theme-switcher)
+    // 但為了簡化，目前假設 DOMElements 在 onAuthStateChangedHandler 中初始化後，這些監聽器就能找到元素
     if (typeof initializeEventListeners === 'function') {
         initializeEventListeners();
     } else {
@@ -214,7 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 6. 預設顯示第一個頁籤 (DNA管理)
+    // 5. 預設顯示第一個頁籤 (DNA管理)
+    // 這一步也依賴 DOMElements，所以需要確保 DOMElements 已初始化
+    // 由於 DOMElements 初始化被移到 onAuthStateChangedHandler，
+    // 這裡可能需要調整為在登入後再執行
+    // 為了立即解決問題，我們先保留，但實際顯示會在登入後進行
     if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
         if (typeof switchTabContent === 'function') {
             switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
