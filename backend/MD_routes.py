@@ -160,10 +160,6 @@ def get_player_info_route(requested_player_id: str):
     )
 
     if player_data:
-        if "lastSave" not in player_data and player_data.get("farmedMonsters") is not None:
-            routes_logger.info(f"檢測到新初始化的玩家 {target_player_id_to_fetch} 資料，路由層進行首次保存。")
-            if not save_player_data_service(target_player_id_to_fetch, player_data):
-                routes_logger.error(f"路由層：首次保存新玩家 {target_player_id_to_fetch} 資料失敗。")
         return jsonify(player_data), 200
     else:
         routes_logger.warning(f"在服務層未能獲取或初始化玩家 {target_player_id_to_fetch} 的資料。")
@@ -213,26 +209,39 @@ def combine_dna_api_route():
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
+        consumed_dna_indices = combine_result.get("consumed_dna_indices", [])
+
+        # 後端直接處理資料更新
+        # 1. 將消耗掉的 DNA 設置為 None
+        for index in consumed_dna_indices:
+            if 0 <= index < len(player_data["playerOwnedDNA"]):
+                player_data["playerOwnedDNA"][index] = None
         
+        # 2. 加入新怪獸到農場
         current_farmed_monsters = player_data.get("farmedMonsters", [])
         MAX_FARM_SLOTS = game_configs.get("value_settings", {}).get("max_farm_slots", 10)
 
         if len(current_farmed_monsters) < MAX_FARM_SLOTS:
             current_farmed_monsters.append(new_monster_object)
             player_data["farmedMonsters"] = current_farmed_monsters
+            # 3. 更新玩家成就
             if "playerStats" in player_data and isinstance(player_data["playerStats"], dict):
                 player_stats_achievements = player_data["playerStats"].get("achievements", [])
                 if "首次組合怪獸" not in player_stats_achievements:
                     player_stats_achievements.append("首次組合怪獸")
-                player_data["playerStats"]["achievements"] = player_stats_achievements
-
+                    player_data["playerStats"]["achievements"] = player_stats_achievements
+            
+            # 4. 儲存更新後的完整玩家資料
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
+                return jsonify(new_monster_object), 201
             else:
                 routes_logger.warning(f"警告：新怪獸已生成，但儲存玩家 {user_id} 資料失敗。")
-            return jsonify(new_monster_object), 201
+                # 即使儲存失敗，也返回怪獸物件，讓前端至少可以顯示
+                return jsonify(new_monster_object), 201
         else:
             routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
+            # 注意：這裡我們不儲存，因為怪獸沒有地方放。但前端仍然會收到怪獸物件和警告。
             return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200
     else:
         error_message = "DNA 組合失敗，未能生成怪獸。"
