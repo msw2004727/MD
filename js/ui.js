@@ -943,8 +943,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
-            <div class="details-column-left" style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="details-section">
+            <div class="details-column-left" style="display: flex; flex-direction: column;">
+                <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
                     <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
