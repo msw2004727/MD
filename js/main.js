@@ -21,7 +21,7 @@ function clearGameCacheOnExitOrRefresh() {
 function initializeFirebaseApp() {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
         try {
-            if (!firebase.apps.length) { 
+            if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);
                 console.log("Firebase App initialized successfully.");
             } else {
@@ -55,6 +55,7 @@ async function initializeGame() {
 
         if (!gameState.currentUser) {
             console.log("No user logged in. Aborting game initialization.");
+            // 確保 DOMElements.authScreen 和 DOMElements.gameContainer 存在才操作
             if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
             if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
             if (typeof hideModal === 'function') hideModal('feedback-modal');
@@ -114,6 +115,7 @@ async function initializeGame() {
         }
         
         // 切換主畫面顯示
+        // 確保 DOMElements.authScreen 和 DOMElements.gameContainer 存在才操作
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
 
@@ -140,6 +142,7 @@ async function initializeGame() {
             };
             showFeedbackModal('遊戲載入失敗', `初始化過程中發生錯誤：${error.message}。請嘗試刷新頁面或重新登入。`, false, null, [logoutButton, { text: '關閉', class: 'secondary' }]);
         }
+        // 確保 DOMElements.authScreen 和 DOMElements.gameContainer 存在才操作
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
     }
@@ -180,6 +183,7 @@ async function onAuthStateChangedHandler(user) {
     } else {
         console.log("User is signed out or not yet signed in.");
         updateGameState({ currentUser: null, playerId: null, playerNickname: "玩家", playerData: null, gameConfigs: null });
+        // 確保 DOMElements.authScreen 和 DOMElements.gameContainer 存在才操作
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
         
@@ -213,22 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 4. 預設顯示第一個頁籤 (DNA管理)
-    // 這一步也依賴 DOMElements，所以需要確保 DOMElements 已初始化
-    // 由於 DOMElements 初始化被移到 onAuthStateChangedHandler，
-    // 這裡可能需要調整為在登入後再執行
-    // 為了立即解決問題，我們先保留，但實際顯示會在登入後進行
-    // 注意：這裡的 DOMElements.dnaFarmTabs 在 DOMElements 初始化前是 null
-    // 因此，將其移動到 initializeGame() 內，確保在 DOMElements 準備好後才執行。
-    // 或在 onAuthStateChangedHandler 中，在 DOMElements 初始化後立即執行。
-    // 為了避免再次改動，我們將這部分直接移除，因為 initializeGame() 中會處理UI渲染
-    // if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
-    //     if (typeof switchTabContent === 'function') {
-    //         switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
-    //     }
-    // } else {
-    //     console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch. DOMElements.dnaFarmTabs:", DOMElements.dnaFarmTabs);
-    // }
+    // 移除了 DOMElements.dnaFarmTabs 的判斷，因為它應在 DOMElements 初始化後再執行
+    // 初始頁籤的顯示應在 initializeGame() 內部（在用戶登入並獲取數據後）或在一個安全的時機執行
+
 });
 
 window.addEventListener('beforeunload', function (e) {
