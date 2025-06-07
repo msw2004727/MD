@@ -356,11 +356,11 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
             "hp": standard_monster_data["hp"], "mp": standard_monster_data["mp"],
             "attack": standard_monster_data["attack"], "defense": standard_monster_data["defense"],
             "speed": standard_monster_data["speed"], "crit": standard_monster_data["crit"],
-            "personality_name": standard_monster_data["personality"]["name"], # type: ignore
-            "personality_description": standard_monster_data["personality"]["description"] # type: ignore
+            "skills": standard_monster_data["skills"],
+            "personality": standard_monster_data["personality"]
         }
         
-        ai_details: MonsterAIDetails = generate_monster_ai_details(ai_input_data_for_generation) # type: ignore
+        ai_details = generate_monster_ai_details(ai_input_data_for_generation)
         
         # 填充 AI 生成的內容
         standard_monster_data["aiPersonality"] = ai_details.get("aiPersonality")
