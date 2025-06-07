@@ -1154,13 +1154,12 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 1px solid var(--border-color);
     border-radius: 6px; 
     box-sizing: border-box;
+    visibility: visible;
 }
 
 
 .monster-part.empty-part {
-    background-image: none !important;
-    background-color: rgba(0,0,0,0.2) !important;
-    border-style: dashed;
+    visibility: hidden;
 }
 
 #monster-part-head { grid-area: head; }
@@ -1194,12 +1193,14 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--accent-color);
     display: block;
 }
+
 #snapshot-nickname {
     font-size: 1rem;
-    color: var(--text-secondary);
+    /* color: var(--text-secondary); */ /* 移除此行，讓稀有度顏色生效 */
     display: block;
     margin-top: 1px;
 }
+
 #snapshot-evaluation {
     font-size: 1rem;
     font-weight: bold;
@@ -1229,7 +1230,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .farm-col-info .monster-name-display {
     font-weight: bold;
-    color: var(--text-primary);
+    /* color: var(--text-primary); */ /* 移除此行，讓稀有度顏色生效 */
     font-size: 1rem;
 }
 .farm-col-info .monster-details-display {
@@ -1269,3 +1270,10 @@ body.light-theme .leaderboard-table tr:hover td {
 .details-column-right .details-section {
     margin-bottom: 0; /* Remove bottom margin as gap is handled by grid */
 }
+
+/* 新增：強制覆蓋養成彈窗中怪獸名稱的顏色 */
+#cultivation-monster-name.text-rarity-common { color: var(--rarity-common-text) !important; }
+#cultivation-monster-name.text-rarity-rare { color: var(--rarity-rare-text) !important; }
+#cultivation-monster-name.text-rarity-elite { color: var(--rarity-elite-text) !important; }
+#cultivation-monster-name.text-rarity-legendary { color: var(--rarity-legendary-text) !important; }
+#cultivation-monster-name.text-rarity-mythical { color: var(--rarity-mythical-text) !important; }
