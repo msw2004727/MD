@@ -36,12 +36,12 @@ allowed_origins = [
 
 # 採用更精確的資源路徑設定，這在某些代理環境後可能更穩定
 CORS(app, 
-     resources={r"/api/*": {"origins": allowed_origins}},
+     resources={r"/api/MD/*": {"origins": allowed_origins}},
      supports_credentials=True, 
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
-app_logger.info(f"CORS configured to allow specific origins for /api/* path: {allowed_origins}")
+app_logger.info(f"CORS configured to allow specific origins for /api/MD/* path: {allowed_origins}")
 
 
 # 註冊藍圖
