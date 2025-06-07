@@ -8,7 +8,7 @@ from typing import List, Dict, Optional, Union, Tuple, Any
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
     PlayerGameData, Monster, Skill, RarityDetail, GameConfigs, ElementTypes, RarityNames,
-    CultivationConfig, ValueSettings, Personality, HealthCondition, DNAFragment, PlayerOwnedDNA
+    CultivationConfig, ValueSettings, Personality, HealthCondition
 )
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
@@ -42,23 +42,9 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     },
     "absorption_config": {},
     "cultivation_config": { # 需要所有修煉相關設定
-        "skill_exp_base_multiplier": 100, # 修改為 100
-        "new_skill_chance": 0.1, # 修改為 0.1
-        "skill_exp_gain_range": (15,75),
-        "max_skill_level": 10, # 修改為 10
-        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1}, # type: ignore
-        "stat_growth_chance_interval_seconds": 900, # 新增
-        "stat_growth_weights": { # 新增
-            "hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10
-        },
-        "dna_drop_chance_interval_seconds": 1200, # 新增
-        "dna_drop_rarity_bias": { # 新增
-            "普通": {"普通": 0.90, "稀有": 0.10, "菁英": 0.00, "傳奇": 0.00, "神話": 0.00},
-            "稀有": {"普通": 0.60, "稀有": 0.35, "菁英": 0.05, "傳奇": 0.00, "神話": 0.00},
-            "菁英": {"普通": 0.30, "稀有": 0.50, "菁英": 0.20, "傳奇": 0.00, "神話": 0.00},
-            "傳奇": {"普通": 0.10, "稀有": 0.30, "菁英": 0.40, "傳奇": 0.20, "神話": 0.00},
-            "神話": {"普通": 0.05, "稀有": 0.10, "菁英": 0.35, "傳奇": 0.40, "神話": 0.10}
-        }
+        "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
+        "skill_exp_gain_range": (10,30), "max_skill_level": 5,
+        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1} # type: ignore
     },
     "elemental_advantage_chart": {},
 }
@@ -66,12 +52,9 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
 
 # --- 輔助函式 (僅用於此模組) ---
 def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
-    """計算升到下一級所需的經驗值。
-    修改：從 level * base_multiplier 改為 (level + 1) * base_multiplier
-    """
+    """計算升到下一級所需的經驗值。"""
     if level <= 0: level = 1
-    return (level + 1) * base_multiplier # 修改了公式
-
+    return level * base_multiplier
 
 def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
     """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。
@@ -82,10 +65,10 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
     cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
 
     if target_level is not None:
-        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 10))) # 修改為 10
+        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 7)))
     else:
         skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
-        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 10))) # type: ignore # 修改為 10
+        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 7))) # type: ignore
 
     new_skill_instance: Skill = {
         "name": skill_template.get("name", "未知技能"),
@@ -109,71 +92,6 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
     }
     return new_skill_instance
 
-def _choose_weighted_stat(weights: Dict[str, int]) -> Optional[str]:
-    """根據權重隨機選擇一個數值屬性。"""
-    if not weights:
-        return None
-    
-    stats = list(weights.keys())
-    total_weight = sum(weights.values())
-    
-    if total_weight == 0:
-        return random.choice(stats) # Fallback to uniform if no weights
-    
-    r = random.randint(1, total_weight)
-    for stat, weight in weights.items():
-        r -= weight
-        if r <= 0:
-            return stat
-    return None # Should not happen if total_weight > 0
-
-
-def _get_random_dna_template(elements: List[ElementTypes], monster_rarity: RarityNames, game_configs: GameConfigs) -> Optional[DNAFragment]:
-    """根據怪獸屬性和稀有度，隨機生成一個 DNA 碎片模板。"""
-    all_dna_fragments: List[DNAFragment] = game_configs.get("dna_fragments", []) # type: ignore
-    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"]) # type: ignore
-    dna_drop_rarity_bias: Dict[RarityNames, Dict[RarityNames, float]] = cultivation_cfg.get("dna_drop_rarity_bias", {}) # type: ignore
-
-    if not all_dna_fragments:
-        monster_cultivation_services_logger.warning("沒有可用的 DNA 碎片模板。")
-        return None
-
-    # 根據修煉怪獸的稀有度，決定掉落 DNA 的稀有度偏好
-    rarity_bias_for_monster = dna_drop_rarity_bias.get(monster_rarity)
-    if not rarity_bias_for_monster:
-        monster_cultivation_services_logger.warning(f"找不到怪獸稀有度 '{monster_rarity}' 的 DNA 掉落偏好，將使用平均分布。")
-        possible_drop_rarities = list(set(d.get("rarity") for d in all_dna_fragments if d.get("rarity")))
-        if not possible_drop_rarities:
-            return None
-        chosen_rarity = random.choice(possible_drop_rarities)
-    else:
-        # 進行加權隨機選擇掉落 DNA 的稀有度
-        rarity_weights = list(rarity_bias_for_monster.values())
-        rarity_choices = list(rarity_bias_for_monster.keys())
-        chosen_rarity_name = random.choices(rarity_choices, weights=[w*100 for w in rarity_weights], k=1)[0]
-        chosen_rarity: RarityNames = chosen_rarity_name # type: ignore
-
-    # 從符合屬性和選定稀有度的 DNA 碎片中選擇
-    eligible_dna_for_drop = [
-        dna for dna in all_dna_fragments
-        if dna.get("rarity") == chosen_rarity and any(el == dna.get("type") for el in elements)
-    ]
-    
-    # 如果沒有符合屬性的，放寬條件，只選符合稀有度的
-    if not eligible_dna_for_drop:
-        eligible_dna_for_drop = [
-            dna for dna in all_dna_fragments
-            if dna.get("rarity") == chosen_rarity
-        ]
-
-    if not eligible_dna_for_drop:
-        monster_cultivation_services_logger.warning(f"未能為稀有度 '{chosen_rarity}' 和屬性 '{elements}' 找到 DNA，將隨機選擇。")
-        eligible_dna_for_drop = all_dna_fragments # Fallback to any DNA
-
-    if eligible_dna_for_drop:
-        return random.choice(eligible_dna_for_drop)
-    return None
-
 
 # --- 修煉與技能成長服務 ---
 def complete_cultivation_service(
@@ -182,7 +100,7 @@ def complete_cultivation_service(
     duration_seconds: int,
     game_configs: GameConfigs
 ) -> Optional[Dict[str, Any]]:
-    """完成怪獸修煉，計算經驗、潛在新技能、數值成長、拾獲物品等。""" # 修改了描述
+    """完成怪獸修煉，計算經驗、潛在新技能等。"""
     if not MD_firebase_config.db:
         monster_cultivation_services_logger.error("Firestore 資料庫未初始化 (complete_cultivation_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。", "status_code": 500}
@@ -190,6 +108,9 @@ def complete_cultivation_service(
     db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
 
     # 從 player_services 獲取 player_data
+    # 這裡需要呼叫 get_player_data_service，但其參數需要 nickname_from_auth (這裡沒有)
+    # 為了簡化，暫時將 nickname_from_auth 設為 None，讓 get_player_data_service 自行處理
+    # 但最佳實踐是從路由層傳遞過來
     player_data = get_player_data_service(player_id, None, game_configs) 
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
@@ -221,13 +142,13 @@ def complete_cultivation_service(
     skill_updates_log: List[str] = []
     current_skills: List[Skill] = monster_to_update.get("skills", []) # type: ignore
 
-    exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75)) # type: ignore
-    max_skill_lvl = cultivation_cfg.get("max_skill_level", 10) # type: ignore # 修改為 10
-    exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100) # type: ignore # 修改為 100
+    exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (10,50)) # type: ignore
+    max_skill_lvl = cultivation_cfg.get("max_skill_level", 7) # type: ignore
+    exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100) # type: ignore
 
     for skill in current_skills:
         if skill.get("level", 1) >= max_skill_lvl: # type: ignore
-            skill_updates_log.append(f"技能 '{skill.get('name')}' 已達最高等級 (Max)。") # 修改顯示
+            skill_updates_log.append(f"技能 '{skill.get('name')}' 已達最高等級。")
             continue
 
         exp_gained = random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)
@@ -247,7 +168,7 @@ def complete_cultivation_service(
     monster_to_update["skills"] = current_skills # type: ignore
 
     learned_new_skill_template: Optional[Skill] = None
-    if random.random() < cultivation_cfg.get("new_skill_chance", 0.1): # type: ignore # 修改為 0.1
+    if random.random() < cultivation_cfg.get("new_skill_chance", 0.08): # type: ignore
         monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"]) # type: ignore
         all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["skills"]) # type: ignore
 
@@ -286,54 +207,6 @@ def complete_cultivation_service(
                 monster_cultivation_services_logger.info(f"怪獸 {monster_id} 有機會領悟新技能，但沒有可學習的技能。")
 
 
-    # --- 新增：修煉隨機提升數值 ---
-    stat_growth_log: List[str] = []
-    stat_growth_interval = cultivation_cfg.get("stat_growth_chance_interval_seconds", 900)
-    stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {}) # type: ignore
-    
-    num_growth_opportunities = duration_seconds // stat_growth_interval
-
-    monster_rarity_data: RarityDetail = game_configs.get("rarities", {}).get(monster_to_update.get("rarity", "普通").upper(), {}) # type: ignore
-    rarity_stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
-
-    for _ in range(num_growth_opportunities):
-        chosen_stat = _choose_weighted_stat(stat_growth_weights)
-        if chosen_stat:
-            gain = random.randint(1, 3) # 基礎增長 1-3 點
-            # 稀有度對數值成長的額外加成 (例如，神話級怪獸每次增長量多一些)
-            if chosen_stat in ["hp", "mp"]:
-                gain = int(gain * rarity_stat_multiplier * 0.5) # HP/MP增長可以更多一些
-            else:
-                gain = int(gain * rarity_stat_multiplier)
-
-            gain = max(1, gain) # 確保至少增長 1 點 (如果邏輯允許)
-            
-            # 更新怪獸數值
-            if chosen_stat in monster_to_update: # type: ignore
-                if chosen_stat in ["hp", "mp"]:
-                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain # type: ignore
-                    monster_to_update[f"initial_max_{chosen_stat}"] = monster_to_update.get(f"initial_max_{chosen_stat}", 0) + gain # type: ignore
-                else:
-                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain # type: ignore
-                stat_growth_log.append(f"{chosen_stat.upper()} 成長了 {gain} 點！")
-    # --- 新增結束 ---
-
-    # --- 新增：修煉結束時隨機拾獲 DNA 碎片 ---
-    items_obtained: List[DNAFragment] = []
-    dna_drop_interval = cultivation_cfg.get("dna_drop_chance_interval_seconds", 1200)
-    
-    num_dna_drops = duration_seconds // dna_drop_interval
-
-    monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"]) # type: ignore
-    monster_rarity: RarityNames = monster_to_update.get("rarity", "普通") # type: ignore
-
-    for _ in range(num_dna_drops):
-        dropped_dna_template = _get_random_dna_template(monster_elements, monster_rarity, game_configs)
-        if dropped_dna_template:
-            items_obtained.append(dropped_dna_template)
-            monster_cultivation_services_logger.info(f"拾獲 DNA 碎片: {dropped_dna_template.get('name')}")
-    # --- 新增結束 ---
-
     player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
 
     # 修煉完成後儲存玩家資料
@@ -345,9 +218,8 @@ def complete_cultivation_service(
             "updated_monster_skills": monster_to_update.get("skills"),
             "learned_new_skill_template": learned_new_skill_template,
             "skill_updates_log": skill_updates_log,
-            "stat_growth_log": stat_growth_log, # 新增返回數值成長日誌
-            "items_obtained": items_obtained, # 新增返回拾獲物品
             "message": "修煉完成！查看成果。",
+            "items_obtained": [] # TODO: 添加修煉可能獲得的物品
         }
     else:
         monster_cultivation_services_logger.error(f"完成修煉後儲存玩家 {player_id} 資料失敗。")

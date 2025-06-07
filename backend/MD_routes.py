@@ -1,4 +1,5 @@
 # backend/MD_routes.py
+# 定義怪獸養成遊戲 (MD) 的 API 路由
 
 from flask import Blueprint, jsonify, request, current_app
 import firebase_admin
@@ -8,6 +9,7 @@ import random
 
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna
+from .monster_combination_services import combine_dna_service
 
 # 直接從更細分的怪物管理服務模組中導入
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -331,13 +333,6 @@ def simulate_battle_api_route():
                         player_data=player_data
                     )
                     if absorption_result and absorption_result.get("success"):
-                        # 將吸收結果中的更新應用回 player_data
-                        # 注意：這裡假設 absorption_result 已經更新了 player_data 的引用，
-                        # 如果不是，則需要手動合併 'updated_winning_monster' 和 'updated_player_owned_dna'
-                        # 到 player_data 中
-                        # 為確保一致性，這裡直接從 absorption_result 中取最新的數據
-                        player_data["farmedMonsters"] = absorption_result.get("updated_winning_monster_list", player_data["farmedMonsters"]) # Assuming list is returned
-                        player_data["playerOwnedDNA"] = absorption_result.get("updated_player_owned_dna", player_data["playerOwnedDNA"])
                         battle_result["absorption_details"] = absorption_result
                     elif absorption_result:
                         battle_result["absorption_details"] = {"error": absorption_result.get("error")}
@@ -542,17 +537,7 @@ def complete_cultivation_route(monster_id: str):
     result = complete_cultivation_service(user_id, monster_id, duration_seconds, game_configs)
 
     if result and result.get("success"):
-        # 確保在響應中包含 skill_updates_log, stat_growth_log, items_obtained
-        return jsonify({
-            "success": True,
-            "monster_id": result.get("monster_id"),
-            "updated_monster_skills": result.get("updated_monster_skills"),
-            "learned_new_skill_template": result.get("learned_new_skill_template"),
-            "skill_updates_log": result.get("skill_updates_log", []),
-            "stat_growth_log": result.get("stat_growth_log", []), # 新增：傳遞數值成長日誌
-            "items_obtained": result.get("items_obtained", []), # 新增：傳遞拾獲物品
-            "message": result.get("message")
-        }), 200
+        return jsonify(result), 200
     else:
         status_code = result.get("status_code", 500) if result else 500
         return jsonify({"error": result.get("error", "完成修煉失敗。") if result else "完成修煉失敗。"}), status_code

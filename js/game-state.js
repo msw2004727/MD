@@ -23,8 +23,7 @@ const gameState = {
             titles: ["新手"],
             achievements: [],
             medals: 0,
-            nickname: "玩家", // 確保 playerStats 內部也有 nickname
-            gold: 0 // 新增：玩家金幣數量
+            nickname: "玩家" // 確保 playerStats 內部也有 nickname
         },
         nickname: "玩家", // 頂層玩家暱稱
         lastSave: null,
@@ -77,7 +76,6 @@ const gameState = {
     cultivationStartTime: null, // 修煉開始時間戳
     cultivationDurationSet: 0, // 設定的修煉時長 (秒)
     lastCultivationResult: null, // 保存上次修煉結果以便加入背包
-    selectedTrainingLocation: null, // 新增：儲存玩家選擇的修煉場所ID
     
     // 戰鬥相關
     battleTargetMonster: null, // 玩家選擇挑戰的對手怪獸資料

@@ -4,7 +4,7 @@
 # 導入必要的模組
 import time
 import random
-import os
+import os 
 import json
 import logging
 import sys
@@ -21,7 +21,7 @@ from MD_firebase_config import set_firestore_client
 
 # 設定日誌記錄器
 script_logger = logging.getLogger(__name__)
-script_logger.setLevel(logging.INFO)
+script_logger.setLevel(logging.INFO) 
 if not script_logger.handlers:
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -43,7 +43,7 @@ def initialize_firebase_for_script():
     優先從環境變數 'FIREBASE_SERVICE_ACCOUNT_KEY' 載入憑證。
     如果環境變數不存在，則嘗試從本地檔案 'serviceAccountKey.json' 載入。
     """
-    if not firebase_admin._apps:
+    if not firebase_admin._apps: 
         cred = None
         firebase_credentials_json_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
         script_logger.info(f"環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: {'已設定' if firebase_credentials_json_env else '未設定'}")
@@ -75,7 +75,7 @@ def initialize_firebase_for_script():
                 firebase_admin.initialize_app(cred)
                 script_logger.info("Firebase Admin SDK 已使用提供的憑證成功初始化。")
                 set_firestore_client(firestore.client())
-                return True
+                return True 
             except Exception as e:
                 script_logger.error(f"使用提供的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
                 return False
@@ -105,11 +105,11 @@ def populate_game_configs():
 
     db_client = firestore_db_instance
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
-
+    
     # --- 新增：從外部 JSON 檔案載入資料 ---
     # 建立 data 資料夾的路徑
     data_dir = os.path.join(os.path.dirname(__file__), 'data')
-
+    
     # 確保 data 資料夾存在
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -296,8 +296,7 @@ def populate_game_configs():
         "max_battle_turns": 30, # 戰鬥最大回合數
         # 修改點：增加 DNA 庫存和臨時背包的最大槽位數設定
         "max_inventory_slots": 12, # DNA 庫存格數設定
-        "max_temp_backpack_slots": 9, # 臨時背包格數設定
-        "initial_gold": 100 # 新增：玩家初始金幣數量
+        "max_temp_backpack_slots": 9 # 臨時背包格數設定
     }
     try:
         db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
@@ -324,23 +323,11 @@ def populate_game_configs():
 
     # 13. 修煉系統設定 (CultivationSettings)
     cultivation_settings_data = {
-        "skill_exp_base_multiplier": 100, # 從 120 改為 100 
-        "new_skill_chance": 0.1, # 從 0.08 改為 0.1 
+        "skill_exp_base_multiplier": 120,
+        "new_skill_chance": 0.08,
         "skill_exp_gain_range": (15, 75),
-        "max_skill_level": 10, # 從 7 改為 10 
-        "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 },
-        "stat_growth_chance_interval_seconds": 900, # 每 900 秒 (15 分鐘) 有一次數值成長機會 
-        "stat_growth_weights": { # 數值成長權重 
-            "hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10
-        },
-        "dna_drop_chance_interval_seconds": 1200, # 每 1200 秒 (20 分鐘) 保底 1 個 DNA 碎片 
-        "dna_drop_rarity_bias": { # DNA 掉落稀有度偏好 
-            "普通": {"普通": 0.90, "稀有": 0.10, "菁英": 0.00, "傳奇": 0.00, "神話": 0.00},
-            "稀有": {"普通": 0.60, "稀有": 0.35, "菁英": 0.05, "傳奇": 0.00, "神話": 0.00},
-            "菁英": {"普通": 0.30, "稀有": 0.50, "菁英": 0.20, "傳奇": 0.00, "神話": 0.00},
-            "傳奇": {"普通": 0.10, "稀有": 0.30, "菁英": 0.40, "傳奇": 0.20, "神話": 0.00},
-            "神話": {"普通": 0.05, "稀有": 0.10, "菁英": 0.35, "傳奇": 0.40, "神話": 0.10}
-        }
+        "max_skill_level": 7,
+        "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 }
     }
     try:
         db_client.collection('MD_GameConfigs').document('CultivationSettings').set(cultivation_settings_data)

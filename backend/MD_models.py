@@ -129,10 +129,6 @@ class CultivationConfig(TypedDict):
     skill_exp_gain_range: Tuple[int, int]
     max_skill_level: int
     new_skill_rarity_bias: NotRequired[Dict[RarityNames, float]]
-    stat_growth_chance_interval_seconds: NotRequired[int] # 新增：數值成長機會間隔
-    stat_growth_weights: NotRequired[Dict[str, int]] # 新增：數值成長權重
-    dna_drop_chance_interval_seconds: NotRequired[int] # 新增：DNA掉落機會間隔
-    dna_drop_rarity_bias: NotRequired[Dict[RarityNames, Dict[RarityNames, float]]] # 新增：DNA掉落稀有度偏好
 
 
 class ValueSettings(TypedDict):
@@ -144,7 +140,6 @@ class ValueSettings(TypedDict):
     # 修改點：新增 DNA 庫存和臨時背包的最大槽位數設定
     max_inventory_slots: NotRequired[int]
     max_temp_backpack_slots: NotRequired[int]
-    initial_gold: NotRequired[int] # 新增：玩家初始金幣數量
 
 
 class NamingConstraints(TypedDict): # 新增：命名限制設定
@@ -230,7 +225,6 @@ class PlayerStats(TypedDict):
     achievements: List[str]
     medals: int
     nickname: str
-    gold: NotRequired[int] # 新增：金幣數量
 
 
 class PlayerOwnedDNA(DNAFragment):
@@ -319,13 +313,10 @@ if __name__ == '__main__':
         "element_value_factors": {"火": 1.2, "水": 1.1},
         "dna_recharge_conversion_factor": 0.15,
         "max_inventory_slots": 12,
-        "max_temp_backpack_slots": 9,
-        "initial_gold": 100
+        "max_temp_backpack_slots": 9
     }
     print(f"\nValueSettings 範例: 最大庫存槽位 {test_value_settings['max_inventory_slots']}")
     print(f"ValueSettings 範例: 最大臨時背包槽位 {test_value_settings['max_temp_backpack_slots']}")
-    print(f"ValueSettings 範例: 初始金幣 {test_value_settings['initial_gold']}")
-
 
     # 測試 PlayerGameData
     test_player_owned_dna: List[Optional[PlayerOwnedDNA]] = [
@@ -340,16 +331,13 @@ if __name__ == '__main__':
         "farmedMonsters": [],
         "playerStats": {
             "rank": "B", "wins": 5, "losses": 2, "score": 1000,
-            "titles": ["新手", "戰新星"], "achievements": ["首次登入異世界"], "medals": 1, "nickname": "測試玩家",
-            "gold": 500 # 測試金幣
+            "titles": ["新手", "戰新星"], "achievements": ["首次登入異世界"], "medals": 1, "nickname": "測試玩家"
         },
         "lastSave": int(time.time()),
         "nickname": "測試玩家"
     }
     print(f"\n玩家遊戲數據範例: 持有DNA數量 (包括空槽位) {len(test_player_game_data['playerOwnedDNA'])}")
     print(f"  第一個DNA: {test_player_game_data['playerOwnedDNA'][0].get('name') if test_player_game_data['playerOwnedDNA'][0] else '空'}")
-    print(f"  玩家金幣: {test_player_game_data['playerStats']['gold']}")
-
 
     # 測試 MonsterRecipe
     test_recipe: MonsterRecipe = {
