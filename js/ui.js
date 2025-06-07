@@ -650,8 +650,9 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = '';
+    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
 
+    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
@@ -686,9 +687,6 @@ function renderMonsterFarm() {
             }
         }
 
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
-        const displayName = monster.custom_element_nickname || defaultElementName;
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
@@ -702,7 +700,7 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <strong class="monster-name-display text-rarity-${rarityKey}">${displayName}</strong>
+                <strong class="monster-name-display text-rarity-${rarityKey}">${monster.nickname}</strong>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
                 </div>
