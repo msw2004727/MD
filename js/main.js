@@ -120,6 +120,15 @@ async function initializeGame() {
         if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
+        // 在所有 DOM 元素準備好後初始化事件監聽器
+        if (typeof initializeEventListeners === 'function') {
+            initializeEventListeners();
+            console.log("Event listeners initialized after game UI rendering.");
+        } else {
+            console.error("CRITICAL: initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
+        }
+
+
     } catch (error) {
         console.error("Game initialization failed:", error);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
@@ -204,31 +213,22 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 4. 初始化事件監聽器 (這可能依賴部分 DOMElements，所以需要調整)
-    // 考慮到初始化 DOMElements 的時機變更，這裡的事件監聽器可能需要延遲綁定
-    // 或者只綁定不依賴 DOMElements 存在的事件 (如 modal-close, theme-switcher)
-    // 但為了簡化，目前假設 DOMElements 在 onAuthStateChangedHandler 中初始化後，這些監聽器就能找到元素
-    if (typeof initializeEventListeners === 'function') {
-        initializeEventListeners();
-    } else {
-        console.error("CRITICAL: initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
-        if (typeof showFeedbackModal === 'function') {
-            showFeedbackModal('初始化錯誤', '核心遊戲功能未載入，請刷新頁面或檢查控制台錯誤。');
-        }
-    }
-
-    // 5. 預設顯示第一個頁籤 (DNA管理)
+    // 4. 預設顯示第一個頁籤 (DNA管理)
     // 這一步也依賴 DOMElements，所以需要確保 DOMElements 已初始化
     // 由於 DOMElements 初始化被移到 onAuthStateChangedHandler，
     // 這裡可能需要調整為在登入後再執行
     // 為了立即解決問題，我們先保留，但實際顯示會在登入後進行
-    if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
-        if (typeof switchTabContent === 'function') {
-            switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
-        }
-    } else {
-        console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch. DOMElements.dnaFarmTabs:", DOMElements.dnaFarmTabs);
-    }
+    // 注意：這裡的 DOMElements.dnaFarmTabs 在 DOMElements 初始化前是 null
+    // 因此，將其移動到 initializeGame() 內，確保在 DOMElements 準備好後才執行。
+    // 或在 onAuthStateChangedHandler 中，在 DOMElements 初始化後立即執行。
+    // 為了避免再次改動，我們將這部分直接移除，因為 initializeGame() 中會處理UI渲染
+    // if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
+    //     if (typeof switchTabContent === 'function') {
+    //         switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+    //     }
+    // } else {
+    //     console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch. DOMElements.dnaFarmTabs:", DOMElements.dnaFarmTabs);
+    // }
 });
 
 window.addEventListener('beforeunload', function (e) {
