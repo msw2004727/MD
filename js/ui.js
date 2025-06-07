@@ -219,6 +219,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.innerHTML = `<img src="${monsterBannerPath}" alt="${monsterDetails.nickname || '新怪獸'} Banner" class="w-full h-auto rounded-md object-cover">`;
         DOMElements.feedbackModalTitle.after(bannerContainer);
 
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monsterDetails.rarity ? (rarityMap[monsterDetails.rarity] || 'common') : 'common';
+        
         // 基本數值欄
         const basicStatsContainer = document.createElement('div');
         basicStatsContainer.className = 'feedback-monster-basic-stats text-center py-3';
@@ -226,7 +229,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
             return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
         }).join('');
-        const rarityKey = typeof monsterDetails.rarity === 'string' ? monsterDetails.rarity.toLowerCase() : 'common';
         
         basicStatsContainer.innerHTML = `
             <div class="feedback-monster-stats-grid">
@@ -309,7 +311,8 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     DOMElements.confirmationModalTitle.textContent = title;
     
     if (monsterToRelease) {
-        const rarityKey = (monsterToRelease.rarity || 'common').toLowerCase();
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
         const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
         DOMElements.confirmationModalBody.innerHTML = `<p>${finalMessage}</p>`;
@@ -420,7 +423,9 @@ function updateMonsterSnapshot(monster) {
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        const rarityKey = (monster.rarity || 'common').toLowerCase();
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 1;
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
@@ -698,7 +703,8 @@ function renderMonsterFarm() {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
-        const rarityKey = String(monster.rarity).toLowerCase();
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
@@ -792,9 +798,10 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     if (playerData.farmedMonsters && playerData.farmedMonsters.length > 0) {
         const monsters = playerData.farmedMonsters;
         const previewLimit = 5;
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
-            const rarityKey = String(m.rarity).toLowerCase();
+            const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
             return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
         }).join('');
 
@@ -802,7 +809,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         if (monsters.length > previewLimit) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
                 monsters.slice(previewLimit).map(m => {
-                    const rarityKey = String(m.rarity).toLowerCase();
+                    const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
                     return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
                 }).join('')
             }</div>`;
@@ -876,7 +883,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return;
     }
 
-    const rarityKey = typeof monster.rarity === 'string' ? monster.rarity.toLowerCase() : 'common';
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
     DOMElements.monsterInfoModalHeader.innerHTML = `
@@ -1115,6 +1123,7 @@ function updateLeaderboardTable(tableType, data) {
         tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-3 text-[var(--text-secondary)]">排行榜無資料。</td></tr>`;
         return;
     }
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
         const row = tbody.insertCell();
@@ -1123,7 +1132,7 @@ function updateLeaderboardTable(tableType, data) {
         if (tableType === 'monster') {
             const nicknameCell = row.insertCell();
             const nicknameSpan = document.createElement('span');
-            const rarityKey = item.rarity.toLowerCase();
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             nicknameSpan.className = `text-rarity-${rarityKey}`;
             nicknameSpan.textContent = item.nickname;
             nicknameCell.appendChild(nicknameSpan);
@@ -1138,7 +1147,7 @@ function updateLeaderboardTable(tableType, data) {
             });
             const rarityCell = row.insertCell();
             rarityCell.textContent = item.rarity;
-            rarityCell.className = `text-rarity-${item.rarity.toLowerCase()}`;
+            rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';
 
             const scoreCell = row.insertCell();
