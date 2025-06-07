@@ -36,7 +36,8 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
         "max_monster_skills": 3,
         "max_battle_turns": 30,
         "max_inventory_slots": 12,
-        "max_temp_backpack_slots": 9
+        "max_temp_backpack_slots": 9,
+        "initial_gold": 0 # 新增預設金幣為0
     },
     "absorption_config": {},
     "cultivation_config": {},
@@ -50,13 +51,16 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     player_titles_list = game_configs.get("titles", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["titles"])
     default_player_title = player_titles_list[0] if player_titles_list else "新手" # type: ignore
 
+    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
+    initial_gold = value_settings.get("initial_gold", 0) # 獲取初始金幣數量 
+
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
         "titles": [default_player_title],
-        "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname
+        "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname,
+        "gold": initial_gold # 新增：初始化玩家金幣 
     }
 
-    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
     max_inventory_slots = value_settings.get("max_inventory_slots", 12)
     initial_dna_owned: List[Optional[PlayerOwnedDNA]] = [None] * max_inventory_slots
 
@@ -82,7 +86,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "playerStats": player_stats,
         "nickname": nickname,
         "lastSave": int(time.time()),
-        "selectedMonsterId": None # 新增：新玩家沒有預設出戰怪獸
+        "selectedMonsterId": None
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -147,13 +151,19 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 elif len(loaded_dna) > max_inventory_slots:
                     loaded_dna = loaded_dna[:max_inventory_slots]
 
+                # 確保 playerStats 中有 gold 字段，如果沒有則賦予初始值
+                player_stats_loaded = player_game_data_dict.get("playerStats", {})
+                if "gold" not in player_stats_loaded:
+                    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
+                    player_stats_loaded["gold"] = value_settings.get("initial_gold", 0) # 
+
                 player_game_data: PlayerGameData = {
                     "playerOwnedDNA": loaded_dna,
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                    "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
+                    "playerStats": player_stats_loaded, # 使用確保有 gold 字段的 stats 
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
-                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None) # 新增：讀取已儲存的出戰怪獸ID
+                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None)
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -189,11 +199,16 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
             "lastSave": int(time.time()),
-            "selectedMonsterId": game_data.get("selectedMonsterId") # 新增：儲存出戰怪獸ID
+            "selectedMonsterId": game_data.get("selectedMonsterId")
         }
+
+        # 確保金幣數據被保存 
+        if isinstance(data_to_save["playerStats"], dict) and "gold" in game_data["playerStats"]:
+            data_to_save["playerStats"]["gold"] = game_data["playerStats"]["gold"] # type: ignore
 
         player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
         player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 playerOwnedDNA: {data_to_save['playerOwnedDNA']}")
+        player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 Gold: {data_to_save['playerStats'].get('gold')}") # type: ignore
 
 
         if isinstance(data_to_save["playerStats"], dict) and \
