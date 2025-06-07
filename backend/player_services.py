@@ -4,12 +4,15 @@
 import time
 import logging
 from typing import List, Dict, Optional, Any
-import firebase_admin
-from firebase_admin import firestore
+# 移除頂層對 firebase_admin 的導入，因為它可能導致循環引用
+# import firebase_admin 
+# from firebase_admin import firestore # 移除此行
 import random # 引入 random 模組
 
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
+# 導入 MD_firebase_config 的 get_firestore_client 函數
+from .MD_firebase_config import get_firestore_client # 新增：導入獲取 db 客戶端的函數
 
 player_services_logger = logging.getLogger(__name__)
 
@@ -37,7 +40,7 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
         "max_battle_turns": 30,
         "max_inventory_slots": 12,
         "max_temp_backpack_slots": 9,
-        "initial_gold": 0 # 新增預設金幣為0
+        "initial_gold": 0
     },
     "absorption_config": {},
     "cultivation_config": {},
@@ -52,13 +55,13 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     default_player_title = player_titles_list[0] if player_titles_list else "新手" # type: ignore
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
-    initial_gold = value_settings.get("initial_gold", 0) # 獲取初始金幣數量 
+    initial_gold = value_settings.get("initial_gold", 0)
 
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
         "titles": [default_player_title],
         "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname,
-        "gold": initial_gold # 新增：初始化玩家金幣 
+        "gold": initial_gold
     }
 
     max_inventory_slots = value_settings.get("max_inventory_slots", 12)
@@ -93,12 +96,11 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
     """獲取玩家遊戲資料，如果不存在則初始化並儲存。"""
-    from .MD_firebase_config import db as firestore_db_instance
-    if not firestore_db_instance:
+    # 從函數內部獲取 db 實例
+    db = get_firestore_client() # 修改：使用 get_firestore_client 函數
+    if not db:
         player_services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
         return None
-
-    db = firestore_db_instance
 
     try:
         user_profile_ref = db.collection('users').document(player_id)
@@ -115,6 +117,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
+            # 確保導入 firestore 以使用 firestore.SERVER_TIMESTAMP
+            from firebase_admin import firestore # 新增：在需要時導入 firestore
             if not profile_data or profile_data.get("nickname") != authoritative_nickname:
                 try:
                     user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
@@ -129,6 +133,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         else:
             player_services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
             try:
+                from firebase_admin import firestore # 新增：在需要時導入 firestore
                 user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
                 player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
             except Exception as e:
@@ -155,12 +160,12 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 player_stats_loaded = player_game_data_dict.get("playerStats", {})
                 if "gold" not in player_stats_loaded:
                     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
-                    player_stats_loaded["gold"] = value_settings.get("initial_gold", 0) # 
+                    player_stats_loaded["gold"] = value_settings.get("initial_gold", 0)
 
                 player_game_data: PlayerGameData = {
                     "playerOwnedDNA": loaded_dna,
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                    "playerStats": player_stats_loaded, # 使用確保有 gold 字段的 stats 
+                    "playerStats": player_stats_loaded, # 使用確保有 gold 字段的 stats
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                     "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None)
@@ -185,12 +190,12 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     """儲存玩家遊戲資料到 Firestore。"""
-    from .MD_firebase_config import db as firestore_db_instance
-    if not firestore_db_instance:
+    # 從函數內部獲取 db 實例
+    db = get_firestore_client() # 修改：使用 get_firestore_client 函數
+    if not db:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
     
-    db = firestore_db_instance
 
     try:
         data_to_save: Dict[str, Any] = {
@@ -202,7 +207,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "selectedMonsterId": game_data.get("selectedMonsterId")
         }
 
-        # 確保金幣數據被保存 
+        # 確保金幣數據被保存
         if isinstance(data_to_save["playerStats"], dict) and "gold" in game_data["playerStats"]:
             data_to_save["playerStats"]["gold"] = game_data["playerStats"]["gold"] # type: ignore
 
