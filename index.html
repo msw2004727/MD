@@ -370,3 +370,15 @@
     <script src="js/main.js" defer></script>
 </body>
 </html>
+
+### **修改摘要**
+
+* **移除**: 上一個版本中，我將 `#farm-headers` 放到了 `#farmed-monsters-list` 裡面，這是錯誤的。我已將其還原。
+* **新增**: 在 `monster-farm-content` 中，我加入了一個新的 `<div id="farm-table-wrapper">`。
+* **結構調整**: 我將 `#farm-headers`（表頭）和 `#farmed-monsters-list`（列表內容）**並列**放在了新的 `#farm-table-wrapper` 容器中。這樣一來，`overflow-x: auto;` 的樣式會作用於整個容器，當您滑動時，兩個部分就會一起連動了。
+
+### **下一步計畫**
+
+請您再次測試這個版本。這次，當您在手機上左右滑動怪獸列表的任何地方時，表頭和內容應該會完美地一起移動。
+
+如果問題已解決，我們就可以繼續進行下一步的優化，例如將寫在 HTML 裡的 `style` 屬性整理到 CSS 檔案中，讓程式碼更乾淨。
