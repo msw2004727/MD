@@ -419,11 +419,12 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+
     DOMElements.monsterSnapshotBaseBg.src = "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true";
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
 
         DOMElements.monsterSnapshotBodySilhouette.src = "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true";
@@ -675,6 +676,8 @@ function renderMonsterFarm() {
     }
     farmHeaders.style.display = 'grid';
 
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
@@ -703,7 +706,6 @@ function renderMonsterFarm() {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const defaultElementName = gameState.gameConfigs?.element_nicknames?.[primaryElement] || monster.nickname;
         const displayName = monster.custom_element_nickname || defaultElementName;
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
