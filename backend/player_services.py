@@ -87,7 +87,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     return new_player_data
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
-    """獲取玩家遊戲資料，如果不存在則初始化。"""
+    """獲取玩家遊戲資料，如果不存在則初始化並儲存。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
@@ -110,7 +110,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
-            if profile_data and profile_data.get("nickname") != authoritative_nickname:
+            if not profile_data or profile_data.get("nickname") != authoritative_nickname:
                 try:
                     user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
                     player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
@@ -119,7 +119,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             else:
                 try:
                     user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                    player_services_logger.info(f"已更新玩家 {player_id} 的最後登入時間。")
                 except Exception as e:
                     player_services_logger.error(f"更新玩家 {player_id} 的最後登入時間失敗: {e}", exc_info=True)
         else:
@@ -152,16 +151,24 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
-                    "lastSave": int(time.time())
+                    "lastSave": player_game_data_dict.get("lastSave", int(time.time()))
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
                 return player_game_data
-
-        player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，使用暱稱: {authoritative_nickname}。")
+        
+        # --- 核心修改點 ---
+        player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，並執行首次儲存。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
-        return new_player_data
+        # 在返回前，先將這份新資料儲存到資料庫
+        if save_player_data_service(player_id, new_player_data):
+            player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
+            return new_player_data
+        else:
+            player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
+            # 即使儲存失敗，也返回數據給前端，讓用戶至少能看到介面，但後續操作可能會失敗
+            return new_player_data
 
     except Exception as e:
         player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
@@ -194,7 +201,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
-        game_data_ref.set(data_to_save, merge=True)
+        game_data_ref.set(data_to_save) # 使用 set 而非 merge=True，確保新創玩家資料完整寫入
         player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
