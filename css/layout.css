@@ -109,10 +109,19 @@
 /* ======================================= */
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
-#farmed-monsters-list {
-    overflow-x: auto; /* Allow horizontal scrolling on small screens */
-    padding-bottom: 5px; /* Add some space for the scrollbar */
+
+/* 新增：包裹整個農場表格的容器，負責橫向捲動 */
+#farm-table-wrapper {
+    overflow-x: auto;
+    padding-bottom: 5px;
 }
+
+/* 移除 #farmed-monsters-list 的 overflow-x: auto; */
+#farmed-monsters-list {
+    /* overflow-x: auto;  <-- 已移除此行 */
+    padding-bottom: 5px;
+}
+
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 6-COLUMN GRID: Deploy | Monster Info | Rarity | Score | Status | Actions */
