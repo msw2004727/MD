@@ -34,14 +34,15 @@ allowed_origins = [
     "http://localhost:5501"       # 備用端口
 ]
 
-# 採用更精確的資源路徑設定，這在某些代理環境後可能更穩定
-CORS(app, 
-     resources={r"/api/MD/*": {"origins": allowed_origins}},
-     supports_credentials=True, 
+# **修改點：簡化 CORS 設定，直接應用於整個應用程式**
+# 這樣可以避免因 resource 路徑匹配問題導致的錯誤，更為穩健
+CORS(app,
+     origins=allowed_origins,
+     supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
-app_logger.info(f"CORS configured to allow specific origins for /api/MD/* path: {allowed_origins}")
+app_logger.info(f"CORS configured to allow origins: {allowed_origins}")
 
 
 # 註冊藍圖
