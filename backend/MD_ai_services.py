@@ -18,13 +18,14 @@ DEEPSEEK_MODEL = "deepseek-chat" # 常用的 DeepSeek 模型，如有需要請�
 
 # 預設的 AI 生成內容，以防 API 呼叫失敗
 DEFAULT_AI_RESPONSES = {
-    "personalityName": "神秘",
+    "aiPersonality": "這隻怪獸的個性目前籠罩在神秘的面紗之下，似乎需要更多的時間與互動才能揭示其真實的內心世界。",
+    "aiIntroduction": "關於這隻怪獸的起源眾說紛紜，只知道牠是在一次強烈的元素碰撞中意外誕生的。",
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     """
-    使用 DeepSeek API 為指定的怪獸數據生成獨特的個性名稱和專屬的綜合評價。
+    使用 DeepSeek API 為指定的怪獸數據生成獨特的個性描述、背景介紹和專屬的綜合評價。
     """
     monster_nickname = monster_data.get('nickname', '一隻神秘怪獸')
     ai_logger.info(f"開始為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
@@ -39,12 +40,10 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     stats_str = f"HP: {monster_data.get('hp', 0)}, 攻擊: {monster_data.get('attack', 0)}, 防禦: {monster_data.get('defense', 0)}, 速度: {monster_data.get('speed', 0)}, 爆擊: {monster_data.get('crit', 0)}%"
     skills_list = monster_data.get('skills', [])
     skills_str = "、".join([f"{s.get('name', '未知技能')} (威力:{s.get('power', 0)})" for s in skills_list]) if skills_list else "無"
-    
-    # 參考的個性列表
-    personality_examples = "勇敢的、膽小的、貪吃的、懶散的、好奇的、溫馴的、暴躁的、愛炫耀的"
+    base_personality = monster_data.get('personality', {}).get('name', '未知')
 
     prompt = f"""
-請你扮演一位頂級的怪獸命名師與戰術分析家。你的任務是為一隻新誕生的怪獸賦予靈魂。
+請你扮演一位頂級的怪獸世界觀設定師與戰術分析家。你的任務是為一隻新誕生的怪獸賦予生命與深度。
 
 怪獸資料：
 - 稱號：{monster_nickname}
@@ -52,23 +51,25 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
 - 稀有度：{rarity}
 - 數值：{stats_str}
 - 技能：{skills_str}
+- 基礎個性：{base_personality}
 
 請根據以上所有資訊，嚴格按照以下JSON格式提供回應，不要有任何額外的解釋或開頭文字：
 
 {{
-  "personalityName": "（參考範例「{personality_examples}」，為這隻怪獸創造一個獨特的、2到4個字的中文個性名稱，例如：傲嬌、吃貨、戰狂、天然呆...）",
-  "aiEvaluation": "（綜合怪獸的屬性、數值、技能和剛才你為牠創造的個性，撰寫一段約100字左右的「綜合評價」。內容需包含對牠的戰術定位分析、優點、潛在缺點，以及一句畫龍點睛的培養建議。）"
+  "aiPersonality": "（基於怪獸的基礎個性、屬性和數值，撰寫一段約80-120字的生動【個性描述】，深入描寫牠的行為模式、偏好與脾氣。）",
+  "aiIntroduction": "（為這隻怪獸創造一段約80-120字的【背景故事或介紹】，說明牠的來歷、棲息地或與世界相關的傳說。）",
+  "aiEvaluation": "（綜合怪獸的所有數據，撰寫一段約100-150字的【綜合評價與培養建議】，分析牠的戰術定位、優缺點，並給出具體的培養方向。）"
 }}
 """
 
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位頂級的怪獸命名師與戰術分析家，精通中文，並且會嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記。"},
+            {"role": "system", "content": "你是一位頂級的怪獸世界觀設定師與戰術分析家，精通中文，並且會嚴格按照用戶要求的JSON格式進行回應，不添加任何額外的解釋或格式標記。"},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.9, # 提高溫度以增加創意
-        "max_tokens": 500, # 增加 token 數量以容納更長的評價
+        "temperature": 0.9,
+        "max_tokens": 500,
     }
 
     headers = {
@@ -109,7 +110,8 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
                     generated_content = json.loads(cleaned_json_str)
                     ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 成功解析 AI JSON 內容。")
                     ai_details = {
-                        "personalityName": generated_content.get("personalityName", DEFAULT_AI_RESPONSES["personalityName"]),
+                        "aiPersonality": generated_content.get("aiPersonality", DEFAULT_AI_RESPONSES["aiPersonality"]),
+                        "aiIntroduction": generated_content.get("aiIntroduction", DEFAULT_AI_RESPONSES["aiIntroduction"]),
                         "aiEvaluation": generated_content.get("aiEvaluation", DEFAULT_AI_RESPONSES["aiEvaluation"])
                     }
                     ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
@@ -162,9 +164,11 @@ if __name__ == '__main__':
         'skills': [
             {"name": "火焰爪", "power": 30},
             {"name": "小火球", "power": 35}
-        ]
+        ],
+        "personality": {"name": "勇敢的"}
     }
     ai_descriptions = generate_monster_ai_details(test_monster)
     print("\n--- AI 生成的怪獸詳細資訊 (DeepSeek) ---")
-    print(f"個性名稱: {ai_descriptions['personalityName']}")
-    print(f"綜合評價: {ai_descriptions['aiEvaluation']}")
+    print(f"個性描述: {ai_descriptions.get('aiPersonality')}")
+    print(f"背景介紹: {ai_descriptions.get('aiIntroduction')}")
+    print(f"綜合評價: {ai_descriptions.get('aiEvaluation')}")
