@@ -26,7 +26,8 @@ const gameState = {
             nickname: "玩家" // 確保 playerStats 內部也有 nickname
         },
         nickname: "玩家", // 頂層玩家暱稱
-        lastSave: null
+        lastSave: null,
+        selectedMonsterId: null, // 新增：用來儲存玩家選擇的出戰怪獸 ID
     },
     gameConfigs: null, // 從後端獲取的遊戲核心設定
     
@@ -103,12 +104,22 @@ function getSelectedMonster() {
 
 // 函數：獲取玩家農場中的第一隻怪獸作為預設選中
 function getDefaultSelectedMonster() {
-    if (gameState.playerData && gameState.playerData.farmedMonsters && gameState.playerData.farmedMonsters.length > 0) {
-        // 可以根據某種排序邏輯選擇，例如按評價高低或創建時間
-        // 暫時還是返回第一隻
-        return gameState.playerData.farmedMonsters[0];
+    const playerData = gameState.playerData;
+    if (!playerData || !playerData.farmedMonsters || playerData.farmedMonsters.length === 0) {
+        return null; // 如果沒有怪獸，返回 null
     }
-    return null;
+
+    // 優先使用儲存在 playerData 中的 selectedMonsterId
+    const savedSelectedId = playerData.selectedMonsterId;
+    if (savedSelectedId) {
+        const selectedMonster = playerData.farmedMonsters.find(m => m.id === savedSelectedId);
+        if (selectedMonster) {
+            return selectedMonster; // 找到已儲存的出戰怪獸，返回它
+        }
+    }
+
+    // 如果沒有儲存的ID，或ID無效（例如怪獸已被放生），則返回列表中的第一隻作為預設
+    return playerData.farmedMonsters[0];
 }
 
 // 函數：重設 DNA 組合槽
