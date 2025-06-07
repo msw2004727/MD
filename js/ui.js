@@ -576,7 +576,7 @@ function renderPlayerDNAInventory() {
         if (index === 11) {
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
-            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
+            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">拖曳至此</span>`;
             item.draggable = false; 
             item.dataset.inventoryIndex = index;
         } else {
