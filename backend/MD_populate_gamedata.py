@@ -106,33 +106,102 @@ def populate_game_configs():
     db_client = firestore_db_instance
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
 
-    # 1. DNA 碎片資料 (DNAFragments)
+    # 1. DNA 碎片資料 (DNAFragments) - 使用全新生成的275種DNA
     dna_fragments_data = [
-        { "id": "dna_fire_c01", "name": "初階火種", "type": "火", "attack": 18, "defense": 6, "speed": 9, "hp": 45, "mp": 22, "crit": 4, "description": "微弱燃燒的火種。", "rarity": "普通", "resistances": {'火': 2} },
-        { "id": "dna_water_c01", "name": "純淨水滴", "type": "水", "attack": 12, "defense": 12, "speed": 12, "hp": 55, "mp": 28, "crit": 3, "description": "純淨但普通的水滴。", "rarity": "普通", "resistances": {'水': 2} },
-        { "id": "dna_wood_c01", "name": "嫩綠葉芽", "type": "木", "attack": 10, "defense": 15, "speed": 7,  "hp": 60, "mp": 25, "crit": 2, "description": "充滿生機的普通葉芽。", "rarity": "普通", "resistances": {'木': 2} },
-        { "id": "dna_gold_c01", "name": "微光金屬", "type": "金", "attack": 15, "defense": 20, "speed": 8,  "hp": 50, "mp": 18, "crit": 3, "description": "帶有微弱光澤的金屬片。", "rarity": "普通", "resistances": {'金': 2} },
-        { "id": "dna_earth_c01", "name": "鬆軟泥土", "type": "土", "attack": 9, "defense": 18, "speed": 5,  "hp": 65, "mp": 20, "crit": 2, "description": "普通的鬆軟泥土塊。", "rarity": "普通", "resistances": {'土': 2} },
-        { "id": "dna_light_c01", "name": "微弱光塵", "type": "光", "attack": 14, "defense": 10, "speed": 11, "hp": 50, "mp": 26, "crit": 5, "description": "幾乎看不見的光粒子。", "rarity": "普通", "resistances": {'光': 2} },
-        { "id": "dna_dark_c01", "name": "稀薄暗影", "type": "暗", "attack": 16, "defense": 8, "speed": 10,  "hp": 48, "mp": 27, "crit": 6, "description": "一絲難以察覺的暗影。", "rarity": "普通", "resistances": {'暗': 2} },
-        { "id": "dna_poison_c01", "name": "淡綠毒霧", "type": "毒", "attack": 17, "defense": 7, "speed": 9,  "hp": 46, "mp": 23, "crit": 4, "description": "幾乎無害的稀薄毒霧。", "rarity": "普通", "resistances": {'毒': 2} },
-        { "id": "dna_wind_c01", "name": "輕柔微風", "type": "風", "attack": 13, "defense": 9, "speed": 15,  "hp": 47, "mp": 24, "crit": 5, "description": "幾乎感覺不到的微風。", "rarity": "普通", "resistances": {'風': 2} },
-        { "id": "dna_none_c01", "name": "中性細胞核", "type": "無", "attack": 10, "defense": 10, "speed": 10, "hp": 50, "mp": 20, "crit": 3, "description": "基礎的生命核心。", "rarity": "普通" },
-        { "id": "dna_earth_r01", "name": "堅硬岩片", "type": "土", "attack": 8, "defense": 28, "speed": 6,  "hp": 85, "mp": 15, "crit": 3, "description": "較為堅固的岩石碎片。", "rarity": "稀有", "resistances": {'土': 5} },
-        { "id": "dna_wind_r01", "name": "微風精華", "type": "風", "attack": 16, "defense": 10, "speed": 22, "hp": 58, "mp": 26, "crit": 8, "description": "蘊含少量風之力的精華。", "rarity": "稀有", "resistances": {'風': 5} },
-        { "id": "dna_poison_r01", "name": "弱效毒液", "type": "毒", "attack": 20, "defense": 8, "speed": 14, "hp": 50, "mp": 24, "crit": 6, "description": "帶有些許毒性的液體。", "rarity": "稀有", "resistances": {'毒': 5} },
-        { "id": "dna_fire_r01", "name": "熾熱餘燼", "type": "火", "attack": 25, "defense": 12, "speed": 15, "hp": 60, "mp": 30, "crit": 7, "description": "尚有餘溫的熾熱灰燼。", "rarity": "稀有", "resistances": {'火': 5, '水': -1} },
-        { "id": "dna_water_r01", "name": "凝結水珠", "type": "水", "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": "蘊含純淨能量的凝結水珠。", "rarity": "稀有", "resistances": {'水': 5, '木': -1} },
-        { "id": "dna_wood_r01", "name": "硬化樹皮塊", "type": "木", "attack": 15, "defense": 22, "speed": 10, "hp": 75, "mp": 32, "crit": 4, "description": "經過硬化的堅韌樹皮。", "rarity": "稀有", "resistances": {'木': 5, '金': -1} },
-        { "id": "dna_dark_e01", "name": "暗影殘片", "type": "暗", "attack": 28, "defense": 7, "speed": 12,  "hp": 48, "mp": 38, "crit": 9, "description": "凝聚了部分暗影力量的碎片。", "rarity": "菁英", "resistances": {'暗': 8} },
-        { "id": "dna_light_e01", "name": "光芒碎片", "type": "光", "attack": 20, "defense": 14, "speed": 15, "hp": 68, "mp": 30, "crit": 7, "description": "閃耀著純淨光芒的結晶碎片。", "rarity": "菁英", "resistances": {'光': 8} },
-        { "id": "dna_fire_e01", "name": "烈焰核心", "type": "火", "attack": 30, "defense": 10, "speed": 18, "hp": 60, "mp": 35, "crit": 10, "description": "燃燒旺盛的火焰核心。", "rarity": "菁英", "resistances": {'火': 8, '水': -3} },
-        { "id": "dna_gold_e01", "name": "精煉金塊", "type": "金", "attack": 22, "defense": 30, "speed": 12, "hp": 65, "mp": 28, "crit": 6, "description": "經過提煉的純淨金屬塊。", "rarity": "菁英", "resistances": {'金': 8, '火': -3} },
-        { "id": "dna_gold_l01", "name": "不朽金屬", "type": "金", "attack": 25, "defense": 35, "speed": 10,  "hp": 70, "mp": 20, "crit": 5, "description": "極其堅硬且帶有神秘力量的金屬。", "rarity": "傳奇", "resistances": {'金': 12, '土': 5} },
-        { "id": "dna_water_l01", "name": "深海之源", "type": "水", "attack": 22, "defense": 28, "speed": 25, "hp": 80, "mp": 45, "crit": 8, "description": "來自海洋深處的強大水能結晶。", "rarity": "傳奇", "resistances": {'水': 12, '火': -5} },
-        { "id": "dna_earth_l01", "name": "大地龍脈結晶", "type": "土", "attack": 18, "defense": 40, "speed": 8, "hp": 100, "mp": 25, "crit": 4, "description": "蘊含大地龍脈力量的稀有結晶。", "rarity": "傳奇", "resistances": {'土': 12, '風': -5} },
-        { "id": "dna_ancient_m01", "name": "遠古龍魂", "type": "無", "attack": 40, "defense": 40, "speed": 40, "hp": 120, "mp": 60, "crit": 15, "description": "蘊含遠古巨龍靈魂的神秘DNA。", "rarity": "神話", "resistances": {'火':8, '水':8, '木':8, '金':8, '土':8, "光": 5, "暗": 5} },
-        { "id": "dna_chaos_m01", "name": "混沌原核", "type": "混", "attack": 35, "defense": 35, "speed": 35, "hp": 110, "mp": 70, "crit": 12, "description": "來自世界誕生之初的混沌能量核心。", "rarity": "神話", "resistances": {'毒':10, '風':10} }
+        # 火 - 普通
+        { "id": "dna_fire_common_1", "name": "炎之微塵", "type": "火", "attack": 15, "defense": 8, "speed": 10, "hp": 45, "mp": 20, "crit": 5, "description": "蘊含火元素力量的普通碎片。", "rarity": "普通", "resistances": {'火': 2} },
+        { "id": "dna_fire_common_2", "name": "溫熱石子", "type": "火", "attack": 12, "defense": 11, "speed": 8, "hp": 50, "mp": 18, "crit": 4, "description": "蘊含火元素力量的普通碎片。", "rarity": "普通", "resistances": {'火': 1, '土': 1} },
+        { "id": "dna_fire_common_3", "name": "熾熱之心", "type": "火", "attack": 16, "defense": 7, "speed": 9, "hp": 42, "mp": 22, "crit": 6, "description": "蘊含火元素力量的普通碎片。", "rarity": "普通", "resistances": {'火': 2} },
+        { "id": "dna_fire_common_4", "name": "火焰之息", "type": "火", "attack": 14, "defense": 9, "speed": 11, "hp": 48, "mp": 21, "crit": 5, "description": "蘊含火元素力量的普通碎片。", "rarity": "普通", "resistances": {'火': 2} },
+        { "id": "dna_fire_common_5", "name": "不滅殘焰", "type": "火", "attack": 13, "defense": 10, "speed": 9, "hp": 46, "mp": 19, "crit": 4, "description": "蘊含火元素力量的普通碎片。", "rarity": "普通", "resistances": {'火': 1, '無': 1} },
+        # 水 - 普通
+        { "id": "dna_water_common_1", "name": "寒冷之泉", "type": "水", "attack": 10, "defense": 12, "speed": 11, "hp": 55, "mp": 25, "crit": 3, "description": "蘊含水元素力量的普通碎片。", "rarity": "普通", "resistances": {'水': 2} },
+        { "id": "dna_water_common_2", "name": "純淨水滴", "type": "水", "attack": 9, "defense": 13, "speed": 10, "hp": 58, "mp": 28, "crit": 2, "description": "蘊含水元素力量的普通碎片。", "rarity": "普通", "resistances": {'水': 2} },
+        { "id": "dna_water_common_3", "name": "冰涼碎片", "type": "水", "attack": 11, "defense": 11, "speed": 12, "hp": 52, "mp": 26, "crit": 4, "description": "蘊含水元素力量的普通碎片。", "rarity": "普通", "resistances": {'水': 1, '風': 1} },
+        { "id": "dna_water_common_4", "name": "寧靜溪流", "type": "水", "attack": 8, "defense": 14, "speed": 9, "hp": 60, "mp": 27, "crit": 2, "description": "蘊含水元素力量的普通碎片。", "rarity": "普通", "resistances": {'水': 2} },
+        { "id": "dna_water_common_5", "name": "霧氣凝珠", "type": "水", "attack": 10, "defense": 12, "speed": 11, "hp": 54, "mp": 24, "crit": 3, "description": "蘊含水元素力量的普通碎片。", "rarity": "普通", "resistances": {'水': 1, '風': 1} },
+        # 木 - 普通
+        { "id": "dna_wood_common_1", "name": "生命嫩芽", "type": "木", "attack": 8, "defense": 15, "speed": 7, "hp": 65, "mp": 22, "crit": 2, "description": "蘊含木元素力量的普通碎片。", "rarity": "普通", "resistances": {'木': 2} },
+        { "id": "dna_wood_common_2", "name": "堅韌樹皮", "type": "木", "attack": 7, "defense": 18, "speed": 5, "hp": 70, "mp": 20, "crit": 1, "description": "蘊含木元素力量的普通碎片。", "rarity": "普通", "resistances": {'木': 2} },
+        { "id": "dna_wood_common_3", "name": "盤結根鬚", "type": "木", "attack": 9, "defense": 16, "speed": 6, "hp": 68, "mp": 21, "crit": 2, "description": "蘊含木元素力量的普通碎片。", "rarity": "普通", "resistances": {'木': 1, '土': 1} },
+        { "id": "dna_wood_common_4", "name": "新生綠葉", "type": "木", "attack": 8, "defense": 14, "speed": 8, "hp": 62, "mp": 24, "crit": 3, "description": "蘊含木元素力量的普通碎片。", "rarity": "普通", "resistances": {'木': 2} },
+        { "id": "dna_wood_common_5", "name": "寄生種子", "type": "木", "attack": 10, "defense": 12, "speed": 7, "hp": 60, "mp": 23, "crit": 3, "description": "蘊含木元素力量的普通碎片。", "rarity": "普通", "resistances": {'木': 1, '毒': 1} },
+
+        # 火 - 稀有
+        { "id": "dna_fire_rare_1", "name": "烈焰之魂", "type": "火", "attack": 25, "defense": 12, "speed": 15, "hp": 65, "mp": 30, "crit": 8, "description": "蘊含火元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'火': 5, '水': -2} },
+        { "id": "dna_fire_rare_2", "name": "熔岩碎塊", "type": "火", "attack": 22, "defense": 16, "speed": 12, "hp": 75, "mp": 25, "crit": 7, "description": "蘊含火元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'火': 4, '土': 2} },
+        { "id": "dna_fire_rare_3", "name": "爆燃核心", "type": "火", "attack": 28, "defense": 10, "speed": 16, "hp": 60, "mp": 32, "crit": 9, "description": "蘊含火元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'火': 5, '風': -2} },
+        { "id": "dna_fire_rare_4", "name": "焚盡之爪", "type": "火", "attack": 26, "defense": 11, "speed": 17, "hp": 62, "mp": 28, "crit": 8, "description": "蘊含火元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'火': 5} },
+        { "id": "dna_fire_rare_5", "name": "地獄火石", "type": "火", "attack": 24, "defense": 14, "speed": 13, "hp": 70, "mp": 26, "crit": 7, "description": "蘊含火元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'火': 4, '暗': 2} },
+        # 水 - 稀有
+        { "id": "dna_water_rare_1", "name": "冰晶之淚", "type": "水", "attack": 18, "defense": 20, "speed": 18, "hp": 80, "mp": 40, "crit": 5, "description": "蘊含水元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'水': 5, '木': -2} },
+        { "id": "dna_water_rare_2", "name": "深海珍珠", "type": "水", "attack": 16, "defense": 22, "speed": 16, "hp": 85, "mp": 45, "crit": 4, "description": "蘊含水元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'水': 5, '光': 2} },
+        { "id": "dna_water_rare_3", "name": "寒冰之息", "type": "水", "attack": 20, "defense": 18, "speed": 20, "hp": 75, "mp": 38, "crit": 6, "description": "蘊含水元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'水': 4, '風': 2} },
+        { "id": "dna_water_rare_4", "name": "暴雨之核", "type": "水", "attack": 19, "defense": 19, "speed": 19, "hp": 78, "mp": 42, "crit": 5, "description": "蘊含水元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'水': 5} },
+        { "id": "dna_water_rare_5", "name": "治癒神泉", "type": "水", "attack": 15, "defense": 25, "speed": 15, "hp": 90, "mp": 50, "crit": 3, "description": "蘊含水元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'水': 6, '光': 1} },
+        # 木 - 稀有
+        { "id": "dna_wood_rare_1", "name": "千年古木", "type": "木", "attack": 15, "defense": 28, "speed": 10, "hp": 100, "mp": 35, "crit": 4, "description": "蘊含木元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'木': 5, '金': -2} },
+        { "id": "dna_wood_rare_2", "name": "森林之心", "type": "木", "attack": 12, "defense": 30, "speed": 8, "hp": 110, "mp": 38, "crit": 3, "description": "蘊含木元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'木': 6, '土': 1} },
+        { "id": "dna_wood_rare_3", "name": "劇毒藤蔓", "type": "木", "attack": 18, "defense": 25, "speed": 12, "hp": 95, "mp": 32, "crit": 5, "description": "蘊含木元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'木': 4, '毒': 3} },
+        { "id": "dna_wood_rare_4", "name": "守護樹靈", "type": "木", "attack": 14, "defense": 32, "speed": 9, "hp": 105, "mp": 36, "crit": 3, "description": "蘊含木元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'木': 5, '光': 2} },
+        { "id": "dna_wood_rare_5", "name": "翡翠之葉", "type": "木", "attack": 16, "defense": 26, "speed": 11, "hp": 98, "mp": 34, "crit": 4, "description": "蘊含木元素力量的稀有碎片。", "rarity": "稀有", "resistances": {'木': 5} },
+
+        # 火 - 菁英
+        { "id": "dna_fire_elite_1", "name": "炎龍鱗片", "type": "火", "attack": 35, "defense": 18, "speed": 22, "hp": 85, "mp": 40, "crit": 12, "description": "蘊含火元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'火': 8, '水': -5} },
+        { "id": "dna_fire_elite_2", "name": "太陽之石", "type": "火", "attack": 32, "defense": 20, "speed": 20, "hp": 90, "mp": 42, "crit": 11, "description": "蘊含火元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'火': 7, '光': 3} },
+        { "id": "dna_fire_elite_3", "name": "鳳凰之羽", "type": "火", "attack": 38, "defense": 15, "speed": 25, "hp": 80, "mp": 45, "crit": 13, "description": "蘊含火元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'火': 7, '風': 3} },
+        { "id": "dna_fire_elite_4", "name": "焚天之怒", "type": "火", "attack": 40, "defense": 14, "speed": 23, "hp": 78, "mp": 38, "crit": 14, "description": "蘊含火元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'火': 8, '暗': -4} },
+        { "id": "dna_fire_elite_5", "name": "煉獄之心", "type": "火", "attack": 36, "defense": 19, "speed": 21, "hp": 88, "mp": 35, "crit": 12, "description": "蘊含火元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'火': 8} },
+        # 水 - 菁英
+        { "id": "dna_water_elite_1", "name": "玄冰之魄", "type": "水", "attack": 28, "defense": 30, "speed": 28, "hp": 100, "mp": 55, "crit": 8, "description": "蘊含水元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'水': 8, '木': -5} },
+        { "id": "dna_water_elite_2", "name": "滄海龍珠", "type": "水", "attack": 25, "defense": 32, "speed": 25, "hp": 110, "mp": 60, "crit": 7, "description": "蘊含水元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'水': 7, '龍': 3} },
+        { "id": "dna_water_elite_3", "name": "潮汐之眼", "type": "水", "attack": 30, "defense": 28, "speed": 30, "hp": 95, "mp": 58, "crit": 9, "description": "蘊含水元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'水': 8, '風': -4} },
+        { "id": "dna_water_elite_4", "name": "絕對零度", "type": "水", "attack": 26, "defense": 29, "speed": 29, "hp": 105, "mp": 52, "crit": 8, "description": "蘊含水元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'水': 8} },
+        { "id": "dna_water_elite_5", "name": "生命源泉", "type": "水", "attack": 22, "defense": 35, "speed": 24, "hp": 120, "mp": 65, "crit": 6, "description": "蘊含水元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'水': 9, '光': 2} },
+        # 木 - 菁英
+        { "id": "dna_wood_elite_1", "name": "世界之樹", "type": "木", "attack": 22, "defense": 40, "speed": 15, "hp": 130, "mp": 50, "crit": 6, "description": "蘊含木元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'木': 8, '金': -5} },
+        { "id": "dna_wood_elite_2", "name": "森林主宰", "type": "木", "attack": 20, "defense": 42, "speed": 12, "hp": 140, "mp": 52, "crit": 5, "description": "蘊含木元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'木': 9, '土': 2} },
+        { "id": "dna_wood_elite_3", "name": "毒林之王", "type": "木", "attack": 25, "defense": 38, "speed": 18, "hp": 125, "mp": 48, "crit": 7, "description": "蘊含木元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'木': 7, '毒': 4} },
+        { "id": "dna_wood_elite_4", "name": "自然之怒", "type": "木", "attack": 28, "defense": 35, "speed": 20, "hp": 120, "mp": 45, "crit": 8, "description": "蘊含木元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'木': 8, '風': -4} },
+        { "id": "dna_wood_elite_5", "name": "蓋亞之心", "type": "木", "attack": 18, "defense": 45, "speed": 10, "hp": 150, "mp": 55, "crit": 4, "description": "蘊含木元素力量的菁英碎片。", "rarity": "菁英", "resistances": {'木': 10} },
+
+        # 火 - 傳奇
+        { "id": "dna_fire_legendary_1", "name": "炎帝聖印", "type": "火", "attack": 45, "defense": 25, "speed": 32, "hp": 110, "mp": 50, "crit": 18, "description": "蘊含火元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'火': 12, '水': -8} },
+        { "id": "dna_fire_legendary_2", "name": "金烏之瞳", "type": "火", "attack": 48, "defense": 22, "speed": 35, "hp": 105, "mp": 55, "crit": 20, "description": "蘊含火元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'火': 11, '光': 4} },
+        { "id": "dna_fire_legendary_3", "name": "祝融之怒", "type": "火", "attack": 50, "defense": 20, "speed": 33, "hp": 100, "mp": 48, "crit": 22, "description": "蘊含火元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'火': 12, '暗': -7} },
+        { "id": "dna_fire_legendary_4", "name": "紅蓮業火", "type": "火", "attack": 47, "defense": 24, "speed": 34, "hp": 108, "mp": 52, "crit": 19, "description": "蘊含火元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'火': 12} },
+        { "id": "dna_fire_legendary_5", "name": "太陽熔核", "type": "火", "attack": 42, "defense": 28, "speed": 30, "hp": 115, "mp": 45, "crit": 17, "description": "蘊含火元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'火': 11, '土': 4} },
+        # 水 - 傳奇
+        { "id": "dna_water_legendary_1", "name": "海皇三叉戟", "type": "水", "attack": 38, "defense": 40, "speed": 38, "hp": 130, "mp": 70, "crit": 12, "description": "蘊含水元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'水': 12, '木': -8} },
+        { "id": "dna_water_legendary_2", "name": "冰河世紀", "type": "水", "attack": 35, "defense": 42, "speed": 35, "hp": 140, "mp": 75, "crit": 10, "description": "蘊含水元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'水': 12, '風': -7} },
+        { "id": "dna_water_legendary_3", "name": "利維坦之魂", "type": "水", "attack": 40, "defense": 38, "speed": 40, "hp": 125, "mp": 72, "crit": 13, "description": "蘊含水元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'水': 11, '暗': 4} },
+        { "id": "dna_water_legendary_4", "name": "萬川歸海", "type": "水", "attack": 36, "defense": 41, "speed": 39, "hp": 135, "mp": 68, "crit": 11, "description": "蘊含水元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'水': 12} },
+        { "id": "dna_water_legendary_5", "name": "淨世甘霖", "type": "水", "attack": 32, "defense": 45, "speed": 34, "hp": 150, "mp": 80, "crit": 9, "description": "蘊含水元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'水': 13, '光': 3} },
+        # 木 - 傳奇
+        { "id": "dna_wood_legendary_1", "name": "建木之枝", "type": "木", "attack": 32, "defense": 50, "speed": 25, "hp": 160, "mp": 65, "crit": 9, "description": "蘊含木元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'木': 12, '金': -8} },
+        { "id": "dna_wood_legendary_2", "name": "豐饒女神", "type": "木", "attack": 30, "defense": 52, "speed": 22, "hp": 170, "mp": 70, "crit": 8, "description": "蘊含木元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'木': 13, '土': 3} },
+        { "id": "dna_wood_legendary_3", "name": "蠻荒之森", "type": "木", "attack": 35, "defense": 48, "speed": 28, "hp": 155, "mp": 60, "crit": 10, "description": "蘊含木元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'木': 12, '風': -7} },
+        { "id": "dna_wood_legendary_4", "name": "盤古之心", "type": "木", "attack": 28, "defense": 55, "speed": 20, "hp": 180, "mp": 75, "crit": 7, "description": "蘊含木元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'木': 14} },
+        { "id": "dna_wood_legendary_5", "name": "荊棘王冠", "type": "木", "attack": 34, "defense": 49, "speed": 26, "hp": 158, "mp": 62, "crit": 9, "description": "蘊含木元素力量的傳奇碎片。", "rarity": "傳奇", "resistances": {'木': 12, '暗': 3} },
+
+        # 火 - 神話
+        { "id": "dna_fire_mythical_1", "name": "創世之焰", "type": "火", "attack": 60, "defense": 35, "speed": 45, "hp": 140, "mp": 60, "crit": 25, "description": "蘊含火元素力量的神話碎片。", "rarity": "神話", "resistances": {'火': 20, '光': 5} },
+        { "id": "dna_fire_mythical_2", "name": "恆星核心", "type": "火", "attack": 58, "defense": 38, "speed": 42, "hp": 145, "mp": 62, "crit": 24, "description": "蘊含火元素力量的神話碎片。", "rarity": "神話", "resistances": {'火': 18, '土': 7} },
+        { "id": "dna_fire_mythical_3", "name": "宇宙劫火", "type": "火", "attack": 65, "defense": 32, "speed": 48, "hp": 135, "mp": 65, "crit": 28, "description": "蘊含火元素力量的神話碎片。", "rarity": "神話", "resistances": {'火': 18, '暗': 7} },
+        { "id": "dna_fire_mythical_4", "name": "萬火之源", "type": "火", "attack": 62, "defense": 36, "speed": 46, "hp": 138, "mp": 58, "crit": 26, "description": "蘊含火元素力量的神話碎片。", "rarity": "神話", "resistances": {'火': 20} },
+        { "id": "dna_fire_mythical_5", "name": "因果紅蓮", "type": "火", "attack": 55, "defense": 40, "speed": 40, "hp": 150, "mp": 55, "crit": 22, "description": "蘊含火元素力量的神話碎片。", "rarity": "神話", "resistances": {'火': 18, '混': 7} },
+        # 水 - 神話
+        { "id": "dna_water_mythical_1", "name": "初始之海", "type": "水", "attack": 50, "defense": 50, "speed": 50, "hp": 160, "mp": 90, "crit": 18, "description": "蘊含水元素力量的神話碎片。", "rarity": "神話", "resistances": {'水': 20, '木': -12} },
+        { "id": "dna_water_mythical_2", "name": "生命搖籃", "type": "水", "attack": 45, "defense": 55, "speed": 45, "hp": 180, "mp": 100, "crit": 15, "description": "蘊含水元素力量的神話碎片。", "rarity": "神話", "resistances": {'水': 18, '光': 7} },
+        { "id": "dna_water_mythical_3", "name": "終焉之凍", "type": "水", "attack": 52, "defense": 48, "speed": 52, "hp": 155, "mp": 85, "crit": 20, "description": "蘊含水元素力量的神話碎片。", "rarity": "神話", "resistances": {'水': 18, '暗': 7} },
+        { "id": "dna_water_mythical_4", "name": "時間之河", "type": "水", "attack": 48, "defense": 52, "speed": 48, "hp": 165, "mp": 95, "crit": 17, "description": "蘊含水元素力量的神話碎片。", "rarity": "神話", "resistances": {'水': 20} },
+        { "id": "dna_water_mythical_5", "name": "萬物之源", "type": "水", "attack": 47, "defense": 53, "speed": 47, "hp": 170, "mp": 92, "crit": 16, "description": "蘊含水元素力量的神話碎片。", "rarity": "神話", "resistances": {'水': 18, '混': 7} },
+        # 木 - 神話
+        { "id": "dna_wood_mythical_1", "name": "始源之種", "type": "木", "attack": 42, "defense": 60, "speed": 35, "hp": 200, "mp": 80, "crit": 12, "description": "蘊含木元素力量的神話碎片。", "rarity": "神話", "resistances": {'木': 20, '金': -12} },
+        { "id": "dna_wood_mythical_2", "name": "盤古巨木", "type": "木", "attack": 40, "defense": 65, "speed": 30, "hp": 220, "mp": 85, "crit": 10, "description": "蘊含木元素力量的神話碎片。", "rarity": "神話", "resistances": {'木': 22, '土': 5} },
+        { "id": "dna_wood_mythical_3", "name": "幻想之森", "type": "木", "attack": 45, "defense": 58, "speed": 40, "hp": 190, "mp": 78, "crit": 14, "description": "蘊含木元素力量的神話碎片。", "rarity": "神話", "resistances": {'木': 18, '混': 7} },
+        { "id": "dna_wood_mythical_4", "name": "涅槃聖樹", "type": "木", "attack": 44, "defense": 62, "speed": 38, "hp": 195, "mp": 82, "crit": 13, "description": "蘊含木元素力量的神話碎片。", "rarity": "神話", "resistances": {'木': 20, '光': 5} },
+        { "id": "dna_wood_mythical_5", "name": "輪迴之根", "type": "木", "attack": 38, "defense": 68, "speed": 28, "hp": 230, "mp": 90, "crit": 9, "description": "蘊含木元素力量的神話碎片。", "rarity": "神話", "resistances": {'木': 22, '暗': 5} }
     ]
     try:
         db_client.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
