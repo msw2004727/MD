@@ -192,7 +192,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
-    DOMElements.feedbackModalTitle.textContent = title;
     
     // 清理之前的內容
     DOMElements.feedbackModalMessage.innerHTML = ''; // 清空主訊息區域
@@ -201,73 +200,54 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
-    const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    const existingBanner = feedbackModalBody ? feedbackModalBody.querySelector('#monster-banner-container') : null;
+    // 從 modal-body 移除舊的 banner
+    const modalBody = DOMElements.feedbackModal.querySelector('.modal-body');
+    const existingBanner = modalBody ? modalBody.querySelector('#monster-banner-container') : null;
     if (existingBanner) existingBanner.remove();
-    const existingBasicStats = feedbackModalBody ? feedbackModalBody.querySelector('.feedback-monster-basic-stats') : null;
-    if (existingBasicStats) existingBasicStats.remove();
 
 
     if (monsterDetails) {
-        // 如果傳入怪獸物件，則渲染新的卡片式彈窗
-        toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
-
-        // 圖片預留位 (橫幅)
-        const monsterBannerPath = `https://placehold.co/700x150/4a5568/a0aec0?text=${encodeURIComponent(monsterDetails.nickname || '新怪獸')}+Banner&font=noto-sans-tc`;
+        // --- 合成成功的新版彈窗 ---
+        DOMElements.feedbackModalTitle.textContent = title; // '合成成功！'
+        
+        // 1. 創建並插入新的 Banner
         const bannerContainer = document.createElement('div');
         bannerContainer.id = 'monster-banner-container';
-        bannerContainer.innerHTML = `<img src="${monsterBannerPath}" alt="${monsterDetails.nickname || '新怪獸'} Banner" class="w-full h-auto rounded-md object-cover">`;
-        DOMElements.feedbackModalTitle.after(bannerContainer);
-
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-        const rarityKey = monsterDetails.rarity ? (rarityMap[monsterDetails.rarity] || 'common') : 'common';
+        bannerContainer.style.textAlign = 'center';
+        bannerContainer.style.marginBottom = '15px';
+        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true" alt="合成成功橫幅" style="max-width: 100%; border-radius: 6px;">`;
         
-        // 基本數值欄
-        const basicStatsContainer = document.createElement('div');
-        basicStatsContainer.className = 'feedback-monster-basic-stats text-center py-3';
-        let elementsDisplay = (monsterDetails.elements || []).map(el => {
-            const elClass = typeof el === 'string' ? el.toLowerCase() : '無';
-            return `<span class="text-xs px-2 py-1 rounded-full text-element-${elClass} bg-element-${elClass}-bg mr-1">${el}</span>`;
-        }).join('');
-        
-        basicStatsContainer.innerHTML = `
-            <div class="feedback-monster-stats-grid">
-                <div><strong>HP:</strong> ${monsterDetails.hp || 0}</div>
-                <div><strong>MP:</strong> ${monsterDetails.mp || 0}</div>
-                <div><strong>攻擊:</strong> ${monsterDetails.attack || 0}</div>
-                <div><strong>防禦:</strong> ${monsterDetails.defense || 0}</div>
-                <div><strong>速度:</strong> ${monsterDetails.speed || 0}</div>
-                <div><strong>爆擊:</strong> ${monsterDetails.crit || 0}%</div>
-            </div>
-            <p class="text-sm mt-2"><strong>元素:</strong> ${elementsDisplay || '無'}</p>
-            <p class="text-sm"><strong>稀有度:</strong> <span class="text-rarity-${rarityKey}">${monsterDetails.rarity || '普通'}</span></p>
-            <p class="text-base mt-2"><strong>總評價:</strong> <span class="text-[var(--success-color)] text-lg font-bold">${monsterDetails.score || 0}</span></p>
-        `;
-        bannerContainer.after(basicStatsContainer);
+        // 將 banner 插入到 modal-body 的最頂部
+        if(modalBody) modalBody.prepend(bannerContainer);
 
-        // 中間的文字訊息
-        let discoveryMessage = "是這個世界誕生的第 N 隻"; // Placeholder, N 可以在後端生成
+        // 2. 組合主要的訊息內容
+        const successMessage = "成功合成了新的怪獸";
+        let discoveryMessage = "";
         if (monsterDetails.activityLog && monsterDetails.activityLog.some(log => log.message.includes("首次發現新配方"))) {
-            discoveryMessage = "<span class='text-[var(--rarity-legendary-text)]'>是這個世界首次發現的稀有品種！</span>";
+            discoveryMessage = `<p class="text-center text-sm text-[var(--rarity-legendary-text)] mt-2">是這個世界首次發現的稀有品種！</p>`;
         }
-        
+
         DOMElements.feedbackModalMessage.innerHTML = `
-            <h4 class="text-lg font-semibold text-center text-rarity-${rarityKey} mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
-            <p class="text-center text-sm text-[var(--text-secondary)]">${message}</p>
-            <p class="text-center text-sm text-[var(--text-secondary)] mt-1">${discoveryMessage}</p>
+            <h4 class="text-xl font-bold text-center text-[var(--accent-color)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
+            <p class="text-center text-base text-[var(--text-secondary)]">${successMessage}</p>
+            ${discoveryMessage}
         `;
 
-        // 底部的 AI 生成內容 (只留綜合評價)
+        // 3. 只顯示綜合評價部分
+        toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
         DOMElements.feedbackMonsterDetails.innerHTML = `
-            <div class="details-section mt-3">
+            <div class="details-section mt-4">
                  <h5 class="details-section-title">綜合評價</h5>
                  <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價生成中或失敗...'}</p>
             </div>
-            <p class="creation-time-centered">創建時間: ${new Date(monsterDetails.creationTime * 1000).toLocaleString()}</p>
         `;
-        DOMElements.feedbackModal.querySelector('.modal-content').classList.add('large-feedback-modal');
+        
+        // 4. 調整 Modal 尺寸，移除 large class，使其與公告大小一致
+        DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
+
     } else {
-        // 如果沒有傳入怪獸物件，則使用舊的簡單訊息顯示方式
+        // --- 舊的簡單訊息顯示方式 (用於載入中、錯誤等) ---
+        DOMElements.feedbackModalTitle.textContent = title;
         DOMElements.feedbackModalMessage.innerHTML = message;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
     }
@@ -404,6 +384,7 @@ function clearMonsterBodyPartsDisplay() {
             applyDnaItemStyle(partElement, null); // Use the main styling function to clear
             partElement.innerHTML = ''; // Ensure no leftover text
             partElement.classList.add('empty-part');
+            partElement.style.visibility = 'hidden'; // Make empty parts invisible
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -469,9 +450,11 @@ function updateMonsterSnapshot(monster) {
                     if (dnaTemplate) {
                         partElement.innerHTML = `<span class="dna-name-text">${dnaTemplate.name}</span>`;
                         partElement.classList.remove('empty-part');
+                        partElement.style.visibility = 'visible'; // Make sure it's visible
                     } else {
                         partElement.innerHTML = '';
                         partElement.classList.add('empty-part');
+                        partElement.style.visibility = 'hidden';
                     }
                 }
             });
@@ -593,7 +576,7 @@ function renderPlayerDNAInventory() {
         if (index === 11) {
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
-            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">拖曳至此</span>`;
+            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
             item.draggable = false; 
             item.dataset.inventoryIndex = index;
         } else {
