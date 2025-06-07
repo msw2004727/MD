@@ -25,15 +25,23 @@ app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # --- CORS 配置 ---
-# 簡化並強化 CORS 設定，讓 Flask-CORS 處理所有路由
-# 允許所有來源(*)，支援憑證，並明確指定允許的方法和標頭
+# 定義一個允許來源的列表，而不是使用通配符 '*'
+# 這樣更安全，也能更好地解決 credentials 的問題
+allowed_origins = [
+    "https://msw2004727.github.io",  # 您部署在 GitHub Pages 的前端網址
+    "http://127.0.0.1:5500",       # 本地開發常用 Live Server 端口
+    "http://localhost:5500",      # 本地開發常用 Live Server 端口
+    "http://127.0.0.1:5501",       # 備用端口
+    "http://localhost:5501"       # 備用端口
+]
+
 CORS(app, 
-     origins="*", 
+     origins=allowed_origins, 
      supports_credentials=True, 
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
 )
-app_logger.info("CORS configured to allow all origins ('*').")
+app_logger.info(f"CORS configured to allow specific origins: {allowed_origins}")
 
 
 # 註冊藍圖
