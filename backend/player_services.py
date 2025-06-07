@@ -81,7 +81,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "farmedMonsters": [],
         "playerStats": player_stats,
         "nickname": nickname,
-        "lastSave": int(time.time())
+        "lastSave": int(time.time()),
+        "selectedMonsterId": None # 新增：新玩家沒有預設出戰怪獸
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -151,23 +152,21 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
-                    "lastSave": player_game_data_dict.get("lastSave", int(time.time()))
+                    "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
+                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None) # 新增：讀取已儲存的出戰怪獸ID
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
                 return player_game_data
         
-        # --- 核心修改點 ---
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，並執行首次儲存。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
-        # 在返回前，先將這份新資料儲存到資料庫
         if save_player_data_service(player_id, new_player_data):
             player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
             return new_player_data
         else:
             player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
-            # 即使儲存失敗，也返回數據給前端，讓用戶至少能看到介面，但後續操作可能會失敗
             return new_player_data
 
     except Exception as e:
@@ -189,7 +188,8 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "farmedMonsters": game_data.get("farmedMonsters", []),
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
-            "lastSave": int(time.time())
+            "lastSave": int(time.time()),
+            "selectedMonsterId": game_data.get("selectedMonsterId") # 新增：儲存出戰怪獸ID
         }
 
         player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
@@ -201,7 +201,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
-        game_data_ref.set(data_to_save) # 使用 set 而非 merge=True，確保新創玩家資料完整寫入
+        game_data_ref.set(data_to_save) 
         player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
@@ -217,7 +217,6 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     """
     player_services_logger.info("正在執行免費 DNA 抽取...")
     try:
-        # 從 MD_config_services 導入函式，以避免循環導入
         from .MD_config_services import load_all_game_configs_from_firestore
         game_configs = load_all_game_configs_from_firestore()
 
@@ -227,7 +226,6 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
 
         all_dna_fragments = game_configs['dna_fragments']
         
-        # 1. 篩選卡池，只保留 '普通' 和 '稀有'
         allowed_rarities = {"普通", "稀有"}
         filtered_pool = [
             dna for dna in all_dna_fragments 
@@ -238,16 +236,12 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
             player_services_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
             return []
             
-        # 2. 決定本次抽取的數量 (固定為 3)
         num_to_draw = 3
         
-        # 3. 從篩選後的卡池中隨機抽取 DNA
-        # random.choices 允許重複選取，適合模擬抽卡
         drawn_dna_templates = random.choices(filtered_pool, k=num_to_draw)
         
         player_services_logger.info(f"成功抽取了 {num_to_draw} 個 DNA。")
         
-        # 返回的是 DNA 的模板
         return drawn_dna_templates
 
     except Exception as e:
