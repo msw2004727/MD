@@ -120,17 +120,21 @@ async function drawFreeDNA() {
 
 
 /**
- * 模擬戰鬥
- * @param {object} monster1Data 怪獸1的資料
- * @param {object} monster2Data 怪獸2的資料
- * @returns {Promise<object>} 戰鬥結果
+ * 模擬戰鬥 (現在支援逐步返回日誌)
+ * @param {object} playerMonsterData 玩家怪獸的資料 (包含 current_hp, current_mp 等)
+ * @param {object} opponentMonsterData 對手怪獸的資料 (包含 current_hp, current_mp 等)
+ * @param {number} currentTurn 當前回合數 (從 0 開始)
+ * @param {Array<object>} battleLogSoFar 已經產生的戰鬥日誌
+ * @returns {Promise<object>} 戰鬥結果，包含 latest_log_entry 和 battle_end 標誌
  */
-async function simulateBattle(monster1Data, monster2Data) {
+async function simulateBattle(playerMonsterData, opponentMonsterData, currentTurn = 0, battleLogSoFar = []) {
     return fetchAPI('/battle/simulate', {
         method: 'POST',
         body: JSON.stringify({
-            monster1_data: monster1Data,
-            monster2_data: monster2Data,
+            monster1_data: playerMonsterData,
+            monster2_data: opponentMonsterData,
+            current_turn: currentTurn,
+            battle_log_so_far: battleLogSoFar,
         }),
     });
 }
