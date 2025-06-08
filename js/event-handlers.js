@@ -587,8 +587,11 @@ function handleLeaderboardSorting() {
                         [tableType]: { key: sortKey, order: newSortOrder }
                     };
 
-                    sortAndRenderLeaderboard(tableType);
-                    updateLeaderboardSortIcons(table, sortKey, newSortOrder);
+                    if (tableType === 'monster') {
+                        filterAndRenderMonsterLeaderboard();
+                    } else {
+                        sortAndRenderLeaderboard(tableType);
+                    }
                 });
             }
         }
