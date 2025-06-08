@@ -251,14 +251,27 @@ button.success, .button.success, #combine-button, .farm-monster-item button.farm
 button.success:hover, .button.success:hover, #combine-button:hover, .farm-monster-item button.farm-complete-btn:hover {
     background-color: var(--button-success-hover-bg);
 }
-button.warning, .button.warning, .farm-monster-item button.farm-monster-cultivate-btn {
+button.warning, .button.warning {
     background-color: var(--button-warning-bg);
     color: var(--button-warning-text);
     border-bottom-color: color-mix(in srgb, var(--button-warning-bg) 70%, black);
 }
-button.warning:hover, .button.warning:hover, .farm-monster-item button.farm-monster-cultivate-btn:hover {
+button.warning:hover, .button.warning:hover {
     background-color: var(--button-warning-hover-bg);
 }
+
+button.warning-outline, .button.warning-outline {
+    background-color: transparent;
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+    border-bottom-width: 2px;
+}
+button.warning-outline:hover, .button.warning-outline:hover {
+    background-color: var(--warning-color);
+    color: var(--button-warning-text);
+    border-color: var(--warning-color);
+}
+
 .action-button-main {
     height: 35px !important;
     padding: 0 15px !important;
@@ -719,13 +732,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .farm-monster-item .farm-monster-status.battling {
     color: var(--danger-color);
     font-weight: bold;
-}
-.farm-monster-item .farm-monster-cultivate-btn {
-    background-color: var(--button-warning-bg);
-    color: var(--button-warning-text);
-}
-.farm-monster-item .farm-monster-cultivate-btn:hover {
-    background-color: var(--button-warning-hover-bg);
 }
 #release-monster-image-placeholder {
     width: 100px;
