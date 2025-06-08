@@ -2,7 +2,7 @@
 # 定義「怪獸養成」遊戲的資料結構與模型
 # 使用 typing.TypedDict 以增強程式碼清晰度並支援潛在的靜態分析
 
-from typing import List, Dict, Optional, TypedDict, NotRequired, Union, Literal, Tuple
+from typing import List, Dict, Optional, TypedDict, NotRequired, Union, Literal, Tuple, Any # 新增 Any
 
 # --- 基本類型定義 ---
 ElementTypes = Literal[
