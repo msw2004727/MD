@@ -728,7 +728,7 @@ function renderMonsterFarm() {
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-
+        
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
@@ -736,7 +736,7 @@ function renderMonsterFarm() {
 
         if (isTraining) {
             cultivateBtnClasses += ' secondary';
-            cultivateBtnStyle = `background-color: #b19cd9; color: black; border-color: #9370DB;`;
+            cultivateBtnStyle = `background-color: #D8BFD8; color: black; border-color: #C8A2C8;`;
         } else {
             cultivateBtnClasses += ' warning';
         }
@@ -772,7 +772,6 @@ function renderMonsterFarm() {
             </div>
         `;
 
-        // Add event listeners to the dynamically created buttons
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
@@ -968,8 +967,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         `}).join('');
     }
 
-    const personality = monster.personality || { name: '未知' };
-    const aiPersonality = monster.aiPersonality || 'AI 個性生成中或失敗...';
+    const personality = monster.personality || { name: '未知', description: '無' };
     const aiIntroduction = monster.aiIntroduction || 'AI 介紹生成中或失敗...';
 
     let constituentDnaHtml = '';
@@ -1043,7 +1041,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             <h5 class="details-section-title">個性說明</h5>
             <p class="ai-generated-text text-sm" style="line-height: 1.6;">
                 <strong style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name || '未知'}:</strong><br>
-                ${aiPersonality}
+                ${personality.description || '暫無個性說明。'}
             </p>
         </div>
         <div class="details-section mt-3">
