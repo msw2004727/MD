@@ -301,6 +301,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     
     let bodyHtml = '';
 
+    // 新增：根據標題顯示特定Banner
     if (title === '提前結束修煉') {
         bodyHtml += `
             <div class="confirmation-banner" style="text-align: center; margin-bottom: 15px;">
@@ -728,11 +729,19 @@ function renderMonsterFarm() {
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-
+        
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
-        const cultivateBtnClass = isTraining ? 'warning-outline' : 'warning';
+        let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
+        let cultivateBtnStyle = '';
 
+        if (isTraining) {
+            // For "召回" (Recall) button, light purple bg + black text
+            cultivateBtnStyle = `background-color: #D8BFD8; color: #333; border-color: #C8A2C8;`;
+        } else {
+            // For "修煉" (Train) button, use the standard warning style
+            cultivateBtnClasses += ' warning';
+        }
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
@@ -754,7 +763,8 @@ function renderMonsterFarm() {
             </div>
             <div class="farm-col farm-col-actions">
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
-                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}" 
+                <button class="${cultivateBtnClasses}" 
+                        style="${cultivateBtnStyle}"
                         title="${isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
@@ -774,14 +784,17 @@ function renderMonsterFarm() {
             showModal('monster-info-modal');
         });
 
-        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (monster.farmStatus?.isTraining) {
-                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-            } else {
-                handleCultivateMonsterClick(e, monster.id);
-            }
-        });
+        const cultivateBtn = item.querySelector('.farm-monster-cultivate-btn');
+        if (cultivateBtn) {
+             cultivateBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (monster.farmStatus?.isTraining) {
+                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+                } else {
+                    handleCultivateMonsterClick(e, monster.id);
+                }
+            });
+        }
 
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
