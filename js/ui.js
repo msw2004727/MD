@@ -667,7 +667,6 @@ function renderMonsterFarm() {
 
     listContainer.innerHTML = ''; // 清空列表
 
-    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
@@ -689,11 +688,12 @@ function renderMonsterFarm() {
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
-        let statusClass = "status-idle";
+        let statusStyle = "color: var(--warning-color);"; // 黃色
+
         if (monster.farmStatus) {
             if (isDeployed) {
                 statusText = "出戰中"; 
-                statusClass = "status-battling";
+                statusStyle = "color: var(--danger-color); font-weight: bold;"; // 紅色
             } else if (monster.farmStatus.isTraining) {
                 const startTime = monster.farmStatus.trainingStartTime || 0;
                 const totalDuration = monster.farmStatus.trainingDuration || 0;
@@ -703,10 +703,10 @@ function renderMonsterFarm() {
 
                 if (elapsedTimeInSeconds < totalDurationInSeconds) {
                     statusText = `修煉中 (${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
-                    statusClass = "status-training";
+                    statusStyle = "color: var(--accent-color);"; // 藍色 (主題色)
                 } else {
                     statusText = "修煉完成";
-                    statusClass = "status-idle"; // 完成後變回待命狀態
+                    statusStyle = "color: var(--success-color); font-weight: bold;"; // 綠色
                 }
             }
         }
@@ -719,16 +719,7 @@ function renderMonsterFarm() {
 
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '結束' : '修煉';
-        let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
-        let cultivateBtnStyle = '';
-
-        if (isTraining) {
-            // For "結束" (End) button, create a red outline style
-            cultivateBtnStyle = `color: var(--danger-color); background-color: transparent; border: 1px solid var(--danger-color);`;
-        } else {
-            // For "修煉" (Start) button, use the standard warning style
-            cultivateBtnClasses += ' warning';
-        }
+        const cultivateBtnClass = isTraining ? 'danger' : 'warning';
 
 
         item.innerHTML = `
@@ -747,12 +738,11 @@ function renderMonsterFarm() {
                 <span class="score-value">${monster.score || 0}</span>
             </div>
             <div class="farm-col farm-col-status">
-                <span class="status-text ${statusClass}">${statusText}</span>
+                <span class="status-text" style="${statusStyle}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
-                <button class="${cultivateBtnClasses}" 
-                        style="${cultivateBtnStyle}"
+                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}"
                         title="${isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
@@ -761,7 +751,6 @@ function renderMonsterFarm() {
             </div>
         `;
 
-        // Add event listeners to the dynamically created buttons
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
@@ -773,18 +762,15 @@ function renderMonsterFarm() {
             showModal('monster-info-modal');
         });
 
-        const cultivateBtn = item.querySelector('.farm-monster-cultivate-btn');
-        if (cultivateBtn) {
-            cultivateBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (monster.farmStatus?.isTraining) {
-                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-                } else {
-                    handleCultivateMonsterClick(e, monster.id);
-                }
-            });
-        }
-        
+        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (monster.farmStatus?.isTraining) {
+                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+            } else {
+                handleCultivateMonsterClick(e, monster.id);
+            }
+        });
+
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleReleaseMonsterClick(e, monster.id);
