@@ -130,13 +130,13 @@
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* NEW 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 50px 1fr 60px 80px 150px;
+    /* NEW 5-COLUMN GRID (Further Adjusted): Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 45px 1fr 55px 75px 135px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 520px; /* Adjusted minimum width for 5 columns */
+    min-width: 540px; /* Adjusted minimum width for better name visibility */
 }
 
 /* Center align all header and column content by default */
