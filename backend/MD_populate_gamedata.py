@@ -7,7 +7,7 @@ import os
 import json
 import logging
 import sys
-import csv # 新增：導入CSV模組
+import csv 
 
 # 導入 Firebase Admin SDK
 import firebase_admin
@@ -256,13 +256,11 @@ def populate_game_configs():
     db_client.collection('MD_GameConfigs').document('AbsorptionSettings').set(absorption_settings_data)
 
     # 修煉系統設定 (CultivationSettings)
+    default_stat_weights = { "hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10 }
     cultivation_settings_data = {
         "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
         "skill_exp_gain_range": (15, 75), "max_skill_level": 10,
         "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 },
-        "stat_growth_weights": {
-            "hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10
-        },
         "stat_growth_duration_divisor": 900, "dna_find_chance": 0.5,
         "dna_find_duration_divisor": 1200,
         "dna_find_loot_table": {
@@ -271,6 +269,23 @@ def populate_game_configs():
             "菁英": {"普通": 0.2, "稀有": 0.5, "菁英": 0.25, "傳奇": 0.05},
             "傳奇": {"稀有": 0.4, "菁英": 0.4, "傳奇": 0.15, "神話": 0.05},
             "神話": {"菁英": 0.5, "傳奇": 0.4, "神話": 0.1}
+        },
+        "location_biases": {
+            "gaia": {
+                "name": "蓋亞的搖籃",
+                "stat_growth_weights": default_stat_weights,
+                "element_bias": ["木", "水", "土", "毒"]
+            },
+            "sky": {
+                "name": "天空的怒火",
+                "stat_growth_weights": default_stat_weights,
+                "element_bias": ["火", "風", "光"]
+            },
+            "crystal": {
+                "name": "人智的結晶",
+                "stat_growth_weights": default_stat_weights,
+                "element_bias": ["金", "暗", "混"]
+            }
         }
     }
     db_client.collection('MD_GameConfigs').document('CultivationSettings').set(cultivation_settings_data)
