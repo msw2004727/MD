@@ -446,8 +446,17 @@ function handleConfirmationActions() {
 }
 
 function handleCultivationModals() {
-    if (DOMElements.startCultivationBtn) {
-        DOMElements.startCultivationBtn.addEventListener('click', async () => {
+    // 獲取養成計畫彈窗的按鈕容器
+    const cultivationActionButtonsContainer = document.querySelector('.cultivation-action-buttons');
+
+    if (cultivationActionButtonsContainer) {
+        cultivationActionButtonsContainer.addEventListener('click', async (event) => {
+            const clickedButton = event.target.closest('button');
+            if (!clickedButton) return;
+
+            const location = clickedButton.dataset.location; // 獲取按鈕的 data-location 屬性
+            if (!location) return; // 如果沒有 location 數據，則不是預期的按鈕
+
             if (!gameState.cultivationMonsterId) {
                 showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
                 return;
@@ -456,20 +465,28 @@ function handleCultivationModals() {
 
             const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === gameState.cultivationMonsterId);
             if (monsterInFarm) {
+                // 檢查怪獸是否已在訓練中或戰鬥中
+                if (monsterInFarm.farmStatus?.isTraining || monsterInFarm.farmStatus?.isBattling) {
+                    showFeedbackModal('提示', `怪獸 ${monsterInFarm.nickname} 目前正在忙碌中，無法開始新的修煉。`);
+                    return;
+                }
+
                 monsterInFarm.farmStatus = monsterInFarm.farmStatus || {};
                 monsterInFarm.farmStatus.isTraining = true;
                 monsterInFarm.farmStatus.trainingStartTime = Date.now();
                 monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
+                // 可以將選擇的訓練地點也儲存到怪獸狀態中，如果後端需要
+                monsterInFarm.farmStatus.trainingLocation = location;
 
                 try {
                     await savePlayerData(gameState.playerId, gameState.playerData);
-                    console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存。`);
+                    console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存，地點: ${location}。`);
 
                     hideModal('cultivation-setup-modal');
-                    renderMonsterFarm();
+                    renderMonsterFarm(); // 重新渲染農場列表以更新狀態
                     showFeedbackModal(
                         '修煉開始！',
-                        `怪獸 ${monsterInFarm.nickname} 已開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉。`,
+                        `怪獸 ${monsterInFarm.nickname} 已開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉，地點：${location}。`,
                         false,
                         null,
                         [{ text: '好的', class: 'primary'}]
@@ -477,13 +494,16 @@ function handleCultivationModals() {
                 } catch (error) {
                     console.error("儲存修煉狀態失敗:", error);
                     showFeedbackModal('錯誤', '開始修煉失敗，無法儲存狀態，請稍後再試。');
+                    // 如果儲存失敗，恢復前端的狀態
                     monsterInFarm.farmStatus.isTraining = false;
                     monsterInFarm.farmStatus.trainingStartTime = null;
                     monsterInFarm.farmStatus.trainingDuration = null;
+                    monsterInFarm.farmStatus.trainingLocation = null;
                 }
             }
         });
     }
+
 
     if (DOMElements.closeTrainingResultsBtn) DOMElements.closeTrainingResultsBtn.addEventListener('click', () => {
          if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
@@ -603,7 +623,7 @@ function handleBattleLogModalClose() {
 }
 
 function handleDnaDrawModal() {
-    if (DOMElements.closeDnaDrawBtn) DOMElements.closeDnaDrawBtn.addEventListener('click', () => {
+    if (DOMElements.closeDnaDrawBtn) DOMEElements.closeDnaDrawBtn.addEventListener('click', () => {
         hideModal('dna-draw-modal');
     });
     if (DOMElements.dnaDrawButton) DOMElements.dnaDrawButton.addEventListener('click', handleDrawDNAClick);
