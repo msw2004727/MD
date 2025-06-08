@@ -1382,9 +1382,8 @@ function showBattleLogModal(logEntries, playerNickname, opponentNickname) {
     }
 
     logEntries.forEach(logEntry => {
-        // 使用 styled_log_message，如果不存在則回退到 raw_log_messages
-        // 注意：這裡假設 logEntry.raw_log_messages 總是陣列
-        const message = logEntry.styled_log_message || (Array.isArray(logEntry.raw_log_messages) ? logEntry.raw_log_messages.join('\n') : logEntry.raw_log_messages);
+        // 確保 message 是一個字串，以避免在 undefined 上呼叫 startsWith()
+        const message = String(logEntry.styled_log_message || (Array.isArray(logEntry.raw_log_messages) ? logEntry.raw_log_messages.join('\n') : logEntry.raw_log_messages) || '');
 
         const p = document.createElement('p');
         // 根據訊息內容應用樣式，這部分應與後端生成的日誌內容匹配
