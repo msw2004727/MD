@@ -409,18 +409,17 @@ function handleTabSwitching() {
 }
 
 async function handleCombineDna() {
-    const dnaInstanceIdsForCombination = gameState.dnaCombinationSlots
-        .filter(slot => slot && slot.id)
-        .map(slot => slot.id);
+    const dnaObjectsForCombination = gameState.dnaCombinationSlots
+        .filter(slot => slot && slot.id);
 
-    if (dnaInstanceIdsForCombination.length < 2) {
+    if (dnaObjectsForCombination.length < 2) {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
         return;
     }
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        const newMonster = await combineDNA(dnaInstanceIdsForCombination);
+        const newMonster = await combineDNA(dnaObjectsForCombination);
 
         if (newMonster && newMonster.id) {
             await refreshPlayerData(); 
