@@ -6,7 +6,7 @@ import json
 import requests # 用於發送 HTTP 請求
 import logging
 import time
-from typing import Dict, Any # 用於類型提示
+from typing import Dict, Any, List # 用於類型提示
 
 # 設定日誌記錄器
 ai_logger = logging.getLogger(__name__)
@@ -22,6 +22,8 @@ DEFAULT_AI_RESPONSES = {
     "aiIntroduction": "關於這隻怪獸的起源眾說紛紜，只知道牠是在一次強烈的元素碰撞中意外誕生的。",
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
+
+DEFAULT_ADVENTURE_STORY = "在這次修煉中，怪獸磨練了它的意志，感覺自己又變強了一些。"
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     """
@@ -154,6 +156,67 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     ai_logger.error(f"ERROR AI: 所有重試均失敗，無法為 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
     return DEFAULT_AI_RESPONSES.copy()
 
+def generate_cultivation_story(monster_name: str, duration_percentage: float, skill_updates_log: List[str], items_obtained: List[Dict]) -> str:
+    """
+    使用 DeepSeek API 為修煉過程生成一個冒險故事。
+    """
+    ai_logger.info(f"為怪獸 '{monster_name}' 的修煉過程生成AI冒險故事。")
+
+    if not DEEPSEEK_API_KEY:
+        ai_logger.error("DeepSeek API 金鑰未設定，無法生成修煉故事。")
+        return DEFAULT_ADVENTURE_STORY
+
+    # 組合給AI的資訊
+    trained_skills_str = "、".join([log.split("'")[1] for log in skill_updates_log if "技能" in log]) or "現有技能"
+    found_items_str = "、".join([item.get('name', '神秘碎片') for item in items_obtained]) if items_obtained else "任何物品"
+    
+    # 根據完成度決定故事階段和要求
+    story_prompt = f"我的怪獸 '{monster_name}' 剛剛完成了一次修煉。請你為牠撰寫一段生動的冒險故事。\n"
+    story_prompt += f"- 在這次修煉中，牠主要鍛鍊了 {trained_skills_str}。\n"
+    if items_obtained:
+        story_prompt += f"- 牠還幸運地拾獲了 {found_items_str}。\n"
+    story_prompt += "- 請將以上元素巧妙地融入故事中。\n"
+
+    if duration_percentage <= 0.25:
+        story_prompt += "故事風格：初步冒險。描述牠小心翼翼地探索周遭，進行基礎的練習，並在不經意間有所發現。總字數約100字。"
+    elif duration_percentage <= 0.5:
+        story_prompt += "故事風格：深入歷險。描述牠進入更具挑戰性的區域，透過技能克服了一些小困難，並找到了更有價值的物品。總字數約200字，前後連貫。"
+    elif duration_percentage <= 0.75:
+        story_prompt += "故事風格：遇上危機。描述牠遭遇了意想不到的危機或強大的野生怪獸，必須活用所有技能才能化險為夷。總字數約300字，情節要有起伏。"
+    else: # 100%
+        story_prompt += "故事風格：歷劫歸來。描述牠在克服巨大危機後，獲得了深刻的感悟和寶貴的戰利品，最終滿載而歸的完整經歷。總字數約400字，故事要有完整的開頭、危機、高潮和結局。"
+        
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": "你是一位才華洋溢的奇幻故事作家，擅長用生動的中文描寫怪獸的冒險經歷。"},
+            {"role": "user", "content": story_prompt}
+        ],
+        "temperature": 0.8,
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=120)
+        response.raise_for_status()
+        response_json = response.json()
+        
+        if (response_json.get("choices") and response_json["choices"][0].get("message")):
+            story = response_json["choices"][0]["message"].get("content", DEFAULT_ADVENTURE_STORY)
+            ai_logger.info(f"成功為 '{monster_name}' 生成修煉故事。")
+            return story.strip()
+        else:
+            ai_logger.error(f"DeepSeek API 回應格式不符，使用預設故事。回應: {response_json}")
+            return DEFAULT_ADVENTURE_STORY
+            
+    except Exception as e:
+        ai_logger.error(f"呼叫 DeepSeek API 生成修煉故事時發生錯誤: {e}", exc_info=True)
+        return DEFAULT_ADVENTURE_STORY
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     test_monster = {
@@ -172,3 +235,12 @@ if __name__ == '__main__':
     print(f"個性描述: {ai_descriptions.get('aiPersonality')}")
     print(f"背景介紹: {ai_descriptions.get('aiIntroduction')}")
     print(f"綜合評價: {ai_descriptions.get('aiEvaluation')}")
+    
+    print("\n--- AI 生成的修煉故事測試 ---")
+    test_story = generate_cultivation_story(
+        monster_name="烈焰幼龍",
+        duration_percentage=0.6, # 深入歷險+遇上危機
+        skill_updates_log=["技能 '火焰爪' 等級提升！"],
+        items_obtained=[{"name": "熾熱餘燼"}]
+    )
+    print(test_story)
