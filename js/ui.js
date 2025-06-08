@@ -532,13 +532,13 @@ function applyDnaItemStyle(element, dnaData) {
         '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical'
     };
     const rarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
-    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
+
+    let rarityTextColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
+
+    element.style.color = rarityTextColorVar;
+    element.style.borderColor = rarityTextColorVar;
     
-    // 文字顏色跟隨元素，邊框顏色跟隨稀有度
-    const elementTextColorVar = `var(--element-${typeKey}-text, var(--text-primary))`;
-    element.style.color = elementTextColorVar;
-    element.style.borderColor = rarityColorVar;
-    
+    // Ensure the name is displayed
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
         nameSpan.textContent = dnaData.name || '未知DNA';
@@ -668,6 +668,7 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
+    // 動態產生表頭
     farmHeaders.innerHTML = `
         <div>出戰</div>
         <div>怪獸</div>
