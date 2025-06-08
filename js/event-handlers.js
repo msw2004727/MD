@@ -24,7 +24,7 @@ async function handleDeployMonsterClick(monsterId) {
         await savePlayerData(gameState.playerId, gameState.playerData);
         console.log(`怪獸 ${monsterId} 已設定為出戰狀態並成功儲存。`);
         // 成功儲存後才更新本地UI狀態
-        gameState.selectedMonsterId = monsterId; 
+        gameState.selectedMonsterId = monsterId;
         const selectedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
         if (typeof updateMonsterSnapshot === 'function' && selectedMonster) {
             updateMonsterSnapshot(selectedMonster);
@@ -112,7 +112,7 @@ async function handleDrop(event) {
         return;
     }
     dropTargetElement.classList.remove('drag-over');
-    
+
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
@@ -127,20 +127,20 @@ async function handleDrop(event) {
             renderPlayerDNAInventory();
             renderDNACombinationSlots();
             renderTemporaryBackpack();
-            await savePlayerData(gameState.playerId, gameState.playerData); 
+            await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
-            handleDragEnd(event); 
+            handleDragEnd(event);
             return;
         }
-        
+
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
         if (isNaN(targetSlotIndex)) { handleDragEnd(event); return; }
-        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex]; 
-        
+        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex];
+
         if (draggedSourceType === 'inventory') {
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemOriginallyInTargetSlot;
         } else if (draggedSourceType === 'combination') {
@@ -149,22 +149,22 @@ async function handleDrop(event) {
             }
         }
         gameState.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
-        
+
         renderDNACombinationSlots();
-        renderPlayerDNAInventory(); 
+        renderPlayerDNAInventory();
         renderTemporaryBackpack();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('dna-item') && dropTargetElement.closest('#inventory-items')) {
         const targetInventoryIndex = parseInt(dropTargetElement.dataset.inventoryIndex, 10);
         if (isNaN(targetInventoryIndex)) { handleDragEnd(event); return; }
-        
+
         const itemAtTargetInventorySlot = gameState.playerData.playerOwnedDNA[targetInventoryIndex];
-        
+
         if (draggedSourceType === 'inventory') {
-            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; 
+            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot;
         } else if (draggedSourceType === 'combination') {
-            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
+            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot;
         } else if (draggedSourceType === 'temporaryBackpack') {
             if(itemAtTargetInventorySlot) { // 如果目標格有東西，則不移動
                 showFeedbackModal('操作失敗', '目標庫存格非空格，請先將物品移至空格。');
@@ -175,7 +175,7 @@ async function handleDrop(event) {
              dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
              dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
         }
-        
+
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
 
         renderPlayerDNAInventory();
@@ -204,13 +204,13 @@ async function handleDrop(event) {
             if (freeSlotIndex !== -1) {
                 if (draggedSourceType === 'inventory') gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
                 else if (draggedSourceType === 'combination') gameState.dnaCombinationSlots[draggedSourceIndex] = null;
-                
+
                 gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
             } else {
                 showFeedbackModal('背包已滿', '臨時背包已滿，無法放入更多物品。');
             }
         }
-        
+
         renderPlayerDNAInventory();
         renderTemporaryBackpack();
         renderDNACombinationSlots();
@@ -422,7 +422,7 @@ async function handleCombineDna() {
         const newMonster = await combineDNA(dnaObjectsForCombination);
 
         if (newMonster && newMonster.id) {
-            await refreshPlayerData(); 
+            await refreshPlayerData();
             resetDNACombinationSlots();
             showFeedbackModal('合成成功！', '', false, newMonster, [{ text: '好的', class: 'primary' }]);
         } else if (newMonster && newMonster.error) {
@@ -460,7 +460,7 @@ function handleCultivationModals() {
                 monsterInFarm.farmStatus.isTraining = true;
                 monsterInFarm.farmStatus.trainingStartTime = Date.now();
                 monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
-                
+
                 try {
                     await savePlayerData(gameState.playerId, gameState.playerData);
                     console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存。`);
@@ -565,38 +565,36 @@ function handleLeaderboardSorting() {
     const tables = [DOMElements.monsterLeaderboardTable, DOMElements.playerLeaderboardTable];
     tables.forEach(table => {
         if (table) {
-            const headerRow = table.querySelector('thead tr');
-            if (headerRow) {
-                headerRow.addEventListener('click', (event) => {
-                    const th = event.target.closest('th');
-                    if (!th || !th.dataset.sortKey) return;
+            // 將事件監聽器綁定到 table 元素，使用事件代理
+            table.addEventListener('click', (event) => {
+                const th = event.target.closest('th');
+                if (!th || !th.dataset.sortKey) return; // 確保點擊的是 th 且有 sortKey
 
-                    const sortKey = th.dataset.sortKey;
-                    const tableType = table.id.includes('monster') ? 'monster' : 'player';
+                const sortKey = th.dataset.sortKey;
+                const tableType = table.id.includes('monster') ? 'monster' : 'player';
 
-                    let currentSortConfig = gameState.leaderboardSortConfig?.[tableType] || {};
-                    let newSortOrder = 'desc';
-                    if (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') {
-                        newSortOrder = 'asc';
-                    } else if (currentSortConfig.key === sortKey && currentSortConfig.order === 'asc') {
-                        newSortOrder = 'desc';
-                    }
+                let currentSortConfig = gameState.leaderboardSortConfig?.[tableType] || {};
+                let newSortOrder = 'desc';
+                if (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') {
+                    newSortOrder = 'asc';
+                } else if (currentSortConfig.key === sortKey && currentSortConfig.order === 'asc') {
+                    newSortOrder = 'desc';
+                }
 
-                    gameState.leaderboardSortConfig = {
-                        ...gameState.leaderboardSortConfig,
-                        [tableType]: { key: sortKey, order: newSortOrder }
-                    };
+                gameState.leaderboardSortConfig = {
+                    ...gameState.leaderboardSortConfig,
+                    [tableType]: { key: sortKey, order: newSortOrder }
+                };
 
-                    if (tableType === 'monster') {
-                        filterAndRenderMonsterLeaderboard();
-                    } else {
-                        sortAndRenderLeaderboard(tableType);
-                    }
-                });
-            }
+                if (tableType === 'monster') {
+                    filterAndRenderMonsterLeaderboard();
+                } else {
+                    sortAndRenderLeaderboard(tableType);
+                }
+            });
         }
     });
-} 
+}
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
@@ -643,7 +641,7 @@ async function handleClickInventory(event) {
     const inventoryIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
     const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
     if (!dnaObject) return;
-    
+
     // 尋找組合槽中的第一個空格
     const targetSlotIndex = gameState.dnaCombinationSlots.findIndex(slot => slot === null);
 
@@ -723,7 +721,7 @@ function initializeEventListeners() {
     if (deleteSlot) {
         deleteSlot.addEventListener('drop', handleDrop);
     }
-    
+
     // 新增：為庫存區和組合區添加點擊事件監聽
     if (DOMElements.inventoryItemsContainer) {
         DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
