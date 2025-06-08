@@ -192,10 +192,11 @@ def combine_dna_api_route():
         return error_response
 
     data = request.json
-    if not data or 'dna_ids' not in data or not isinstance(data['dna_ids'], list):
-        return jsonify({"error": "請求格式錯誤，需要包含 'dna_ids' 列表"}), 400
+    # 修改：預期收到 'dna_data' 包含完整物件的列表
+    if not data or 'dna_data' not in data or not isinstance(data['dna_data'], list):
+        return jsonify({"error": "請求格式錯誤，需要包含 'dna_data' 列表"}), 400
 
-    dna_ids_from_request = data['dna_ids']
+    dna_objects_from_request = data['dna_data']
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法組合DNA。"}), 500
@@ -205,17 +206,15 @@ def combine_dna_api_route():
         routes_logger.error(f"組合DNA前無法獲取玩家 {user_id} 的資料。")
         return jsonify({"error": "無法獲取玩家資料以進行DNA組合。"}), 500
 
-    combine_result = combine_dna_service(dna_ids_from_request, game_configs, player_data, user_id)
+    # 修改：將完整的 DNA 物件列表傳遞給服務
+    combine_result = combine_dna_service(dna_objects_from_request, game_configs, player_data, user_id)
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
-        consumed_dna_indices = combine_result.get("consumed_dna_indices", [])
-
+        
         # 後端直接處理資料更新
-        # 1. 將消耗掉的 DNA 設置為 None
-        for index in consumed_dna_indices:
-            if 0 <= index < len(player_data["playerOwnedDNA"]):
-                player_data["playerOwnedDNA"][index] = None
+        # 1. 前端已經將組合槽中的DNA從庫存中移除並存檔，所以後端無需再次移除。
+        #    這裡的邏輯是信任前端的狀態，並直接將新怪獸加入農場。
         
         # 2. 加入新怪獸到農場
         current_farmed_monsters = player_data.get("farmedMonsters", [])
