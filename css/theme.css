@@ -258,18 +258,18 @@ body.light-theme {
     --default-rgb: var(--default-rgb-light); /* Applied default RGB for light theme */
 }
 
-/* Helper classes for element text colors */
-.text-element-fire { color: var(--element-fire-text); }
-.text-element-water { color: var(--element-water-text); }
-.text-element-wood { color: var(--element-wood-text); }
-.text-element-gold { color: var(--element-gold-text); }
-.text-element-earth { color: var(--element-earth-text); }
-.text-element-light { color: var(--element-light-text); }
-.text-element-dark { color: var(--element-dark-text); }
-.text-element-poison { color: var(--element-poison-text); }
-.text-element-wind { color: var(--element-wind-text); }
-.text-element-mix { color: var(--element-mix-text); }
-.text-element-無 { color: var(--element-無-text); }
+/* Helper classes for element text colors (Increased Specificity) */
+.leaderboard-table .text-element-fire, .tab-button.text-element-fire { color: var(--element-fire-text); }
+.leaderboard-table .text-element-water, .tab-button.text-element-water { color: var(--element-water-text); }
+.leaderboard-table .text-element-wood, .tab-button.text-element-wood { color: var(--element-wood-text); }
+.leaderboard-table .text-element-gold, .tab-button.text-element-gold { color: var(--element-gold-text); }
+.leaderboard-table .text-element-earth, .tab-button.text-element-earth { color: var(--element-earth-text); }
+.leaderboard-table .text-element-light, .tab-button.text-element-light { color: var(--element-light-text); }
+.leaderboard-table .text-element-dark, .tab-button.text-element-dark { color: var(--element-dark-text); }
+.leaderboard-table .text-element-poison, .tab-button.text-element-poison { color: var(--element-poison-text); }
+.leaderboard-table .text-element-wind, .tab-button.text-element-wind { color: var(--element-wind-text); }
+.leaderboard-table .text-element-mix, .tab-button.text-element-mix { color: var(--element-mix-text); }
+.leaderboard-table .text-element-無, .tab-button.text-element-無 { color: var(--element-無-text); }
 
 
 /* Helper classes for rarity text colors */
