@@ -110,27 +110,13 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
-/* 新增：包裹整個農場表格的容器，負責橫向捲動 */
 #farm-table-wrapper {
     overflow-x: auto;
     padding-bottom: 5px;
 }
 
-/* 移除 #farmed-monsters-list 的 overflow-x: auto; */
 #farmed-monsters-list {
-    /* overflow-x: auto;  <-- 已移除此行 */
     padding-bottom: 5px;
-}
-
-.farm-header-grid, .farm-monster-item {
-    display: grid;
-    /* 6-COLUMN GRID: Deploy | Monster Info | Rarity | Score | Status | Actions */
-    grid-template-columns: auto 1fr auto auto auto auto;
-    gap: 0.75rem; /* Increased gap for better spacing */
-    padding: 0.5rem;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    min-width: 600px; /* Adjusted minimum width */
 }
 
 .farm-header-grid {
@@ -140,6 +126,17 @@
     padding-bottom: 0.5rem;
     text-align: center;
     border-bottom: 2px solid var(--accent-color);
+}
+
+.farm-header-grid, .farm-monster-item {
+    display: grid;
+    /* NEW 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 50px 1fr 60px 80px 150px;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    min-width: 520px; /* Adjusted minimum width for 5 columns */
 }
 
 /* Center align all header and column content by default */
@@ -159,11 +156,6 @@
     justify-self: start;
     justify-content: flex-start; /* Align flex items to the start */
     display: block; /* Revert to block for normal text flow */
-}
-
-/* Adjust column widths */
-.farm-header-grid, .farm-monster-item {
-    grid-template-columns: 50px 1fr 80px 60px 80px 150px; /* Fine-tuned column widths */
 }
 
 .farm-monster-item:last-child { 
