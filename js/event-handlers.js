@@ -709,7 +709,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒，生成戰報...', true);
                     // 調用 simulateBattle API，它現在會返回完整的戰報
-                    const response = await simulateBattle(playerMonster, opponentMonster); // 這是 apiClient.js 中的函數
+                    // 修正：這裡需要將 playerMonster 和 opponentMonster 作為物件傳遞，而不是直接傳入
+                    const response = await simulateBattle({player_monster_data: playerMonster, opponent_monster_data: opponentMonster}); 
                     const battleResult = response.battle_result;
 
                     await refreshPlayerData(); // 戰鬥結束後刷新數據，確保狀態同步
