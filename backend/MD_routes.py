@@ -20,9 +20,10 @@ from .monster_cultivation_services import complete_cultivation_service, replace_
 from .monster_absorption_services import absorb_defeated_monster_service
 
 from .leaderboard_search_services import (
-    get_monster_leaderboard_service,
+    # get_monster_leaderboard_service, # 不再直接調用這個服務來獲取所有怪獸
     get_player_leaderboard_service,
-    search_players_service
+    search_players_service,
+    get_all_player_selected_monsters_service # 新增導入這個服務
 )
 
 # 從設定和 AI 服務模組引入函式
@@ -584,15 +585,9 @@ def replace_monster_skill_route(monster_id: str):
 def get_monster_leaderboard_route():
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
     if error_response:
-        # 如果無法驗證用戶，則返回未經處理的 NPC 和其他玩家怪獸（如果設計允許）
-        # 或者直接拒絕請求。這裡我們假設未登入用戶看不到任何怪獸。
-        # 如果需要讓未登入用戶看到排行榜但無法挑戰，可以調整這裡的邏輯
-        routes_logger.warning("未授權請求怪獸排行榜，只返回 NPC 怪獸。")
-        game_configs = _get_game_configs_data_from_app_context()
-        if not game_configs:
-            return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
-        npc_monsters = get_monster_leaderboard_service(game_configs, 20) # 獲取 NPC 怪獸
-        return jsonify(npc_monsters), 200 # 假設未登入只能看到 NPC
+        # 未授權請求，返回空列表，因為沒有玩家所屬怪獸可顯示
+        routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
+        return jsonify([]), 200
 
 
     top_n_str = request.args.get('top_n', '10')
@@ -606,50 +601,14 @@ def get_monster_leaderboard_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
 
-    # 1. 獲取當前玩家的選定出戰怪獸
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
-    player_selected_monster: Optional[Monster] = None
-    if player_data and player_data.get("selectedMonsterId"):
-        for monster in player_data.get("farmedMonsters", []):
-            if monster.get("id") == player_data["selectedMonsterId"]:
-                selected_monster_copy = copy.deepcopy(monster)
-                selected_monster_copy["owner_id"] = user_id
-                selected_monster_copy["owner_nickname"] = player_data.get("nickname", "玩家") # type: ignore
-                # 確保 farmStatus 存在，即使是空字典
-                if "farmStatus" not in selected_monster_copy:
-                    selected_monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False}
-                player_selected_monster = selected_monster_copy
-                break
+    # 獲取所有玩家的「出戰」怪獸
+    all_player_selected_monsters = get_all_player_selected_monsters_service(game_configs)
+
+    # 根據分數重新排序
+    all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
     
-    # 2. 獲取 NPC 怪獸
-    npc_monsters = get_monster_leaderboard_service(game_configs, top_n) # 這個服務現在只返回 NPC
-
-    all_eligible_monsters: List[Monster] = []
-
-    # 將玩家出戰怪獸加入列表 (如果存在)
-    if player_selected_monster:
-        all_eligible_monsters.append(player_selected_monster)
-
-    # 將 NPC 怪獸加入列表，避免重複
-    # 如果 NPC 怪獸和玩家怪獸有相同的 ID 規則，需要更精確的去重
-    npc_ids = {m["id"] for m in npc_monsters}
-    if player_selected_monster and player_selected_monster["id"] in npc_ids:
-        routes_logger.warning(f"玩家出戰怪獸ID {player_selected_monster['id']} 與 NPC ID 重複，移除 NPC 怪獸。")
-        # 這裡可以選擇保留哪個，目前是優先保留玩家怪獸
-        npc_monsters = [m for m in npc_monsters if m["id"] != player_selected_monster["id"]]
-
-    all_eligible_monsters.extend(npc_monsters)
-
-    # 根據分數重新排序並截取 Top N
-    all_eligible_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
-    
-    # 返回 Top N 的怪獸，確保包含所有必要的屬性
-    final_leaderboard = []
-    for monster in all_eligible_monsters[:top_n]:
-        # 確保每個怪獸字典都包含 farmStatus
-        if "farmStatus" not in monster:
-            monster["farmStatus"] = {"isTraining": False, "isBattling": False}
-        final_leaderboard.append(monster)
+    # 返回 Top N 的怪獸
+    final_leaderboard = all_player_selected_monsters[:top_n]
 
     return jsonify(final_leaderboard), 200
 
