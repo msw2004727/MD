@@ -137,16 +137,17 @@ class ValueSettings(TypedDict):
     max_farm_slots: NotRequired[int] # 新增農場上限
     max_monster_skills: NotRequired[int] # 新增怪獸最大技能數
     max_battle_turns: NotRequired[int] # 新增戰鬥最大回合數
-    # 修改點：新增 DNA 庫存和臨時背包的最大槽位數設定
     max_inventory_slots: NotRequired[int]
     max_temp_backpack_slots: NotRequired[int]
+    max_cultivation_time_seconds: NotRequired[int]
+    starting_gold: NotRequired[int]
 
 
 class NamingConstraints(TypedDict): # 新增：命名限制設定
-    max_player_title_len: int         # 玩家稱號最大長度 (需求3)
-    max_monster_achievement_len: int  # 怪物成就最大長度 (需求4)
-    max_element_nickname_len: int     # (怪物)屬性名字最大長度 (需求5 & 6)
-    max_monster_full_nickname_len: int # 怪物完整暱稱最大長度 (需求2)
+    max_player_title_len: int
+    max_monster_achievement_len: int
+    max_element_nickname_len: int
+    max_monster_full_nickname_len: int
 
 
 # --- 玩家及怪獸資料模型 ---
@@ -182,7 +183,7 @@ class MonsterResume(TypedDict):
 class Monster(TypedDict):
     """怪獸實例模型"""
     id: str
-    nickname: str # 由 玩家稱號+怪物成就+屬性名 組成，總長不超過15字
+    nickname: str
     elements: List[ElementTypes]
     elementComposition: Dict[ElementTypes, float]
     hp: int
@@ -195,15 +196,15 @@ class Monster(TypedDict):
     crit: int
     skills: List[Skill]
     rarity: RarityNames
-    title: NotRequired[str] # 這是怪獸本身可能有的稱號/頭銜，用於命名中的「怪物成就」部分
-    custom_element_nickname: NotRequired[str] # 新增：玩家自定義的屬性名字 (<=5字)
+    title: NotRequired[str]
+    custom_element_nickname: NotRequired[str]
     description: str
     personality: Personality
-    aiPersonality: NotRequired[str] # AI 生成的個性描述
-    aiIntroduction: NotRequired[str] # AI 生成的背景介紹
-    aiEvaluation: NotRequired[str] # AI 生成的綜合評價
+    aiPersonality: NotRequired[str]
+    aiIntroduction: NotRequired[str]
+    aiEvaluation: NotRequired[str]
     creationTime: int
-    monsterTitles: NotRequired[List[str]] # 與上面的 title 欄位用途相似，選擇一個使用或整合
+    monsterTitles: NotRequired[List[str]]
     monsterMedals: NotRequired[int]
     farmStatus: MonsterFarmStatus
     activityLog: NotRequired[List[MonsterActivityLogEntry]]
@@ -214,6 +215,7 @@ class Monster(TypedDict):
     baseId: NotRequired[str]
     resume: NotRequired[MonsterResume]
     constituent_dna_ids: NotRequired[List[str]]
+    cultivation_gains: NotRequired[Dict[str, int]] # 新增：用於儲存修煉獲得的額外數值
 
 
 class PlayerStats(TypedDict):
@@ -221,7 +223,7 @@ class PlayerStats(TypedDict):
     wins: int
     losses: int
     score: int
-    titles: List[str] # 玩家稱號列表，每個稱號應 <= 5字
+    titles: List[str]
     achievements: List[str]
     medals: int
     nickname: str
@@ -232,11 +234,12 @@ class PlayerOwnedDNA(DNAFragment):
 
 
 class PlayerGameData(TypedDict):
-    playerOwnedDNA: List[Optional[PlayerOwnedDNA]] # 修改為 Optional[PlayerOwnedDNA] 允許 None
+    playerOwnedDNA: List[Optional[PlayerOwnedDNA]]
     farmedMonsters: List[Monster]
     playerStats: PlayerStats
     lastSave: NotRequired[int]
     nickname: NotRequired[str]
+    selectedMonsterId: NotRequired[Optional[str]]
 
 
 # --- 新增的組合配方模型 (MonsterRecipes) ---
@@ -245,10 +248,10 @@ class MonsterRecipe(TypedDict):
     用於存儲已發現的 DNA 組合配方及其產生的標準怪獸數據。
     每個文檔的 ID 應為 combinationKey。
     """
-    combinationKey: str # 根據 DNA 模板 ID 列表生成的唯一標識碼
-    resultingMonsterData: Monster # 此配方產生的怪獸的完整且固定的數據
-    creationTimestamp: int # 配方首次被發現並記錄的時間
-    discoveredByPlayerId: NotRequired[str] # 記錄首次發現此配方的玩家 ID (可選)
+    combinationKey: str 
+    resultingMonsterData: Monster 
+    creationTimestamp: int
+    discoveredByPlayerId: NotRequired[str]
 
 
 # --- 完整的遊戲設定檔模型 ---
@@ -260,91 +263,21 @@ class GameConfigs(TypedDict):
     """
     dna_fragments: List[DNAFragment]
     rarities: Dict[str, RarityDetail]
-    skills: Dict[ElementTypes, List[Skill]] # 技能定義列表
+    skills: Dict[ElementTypes, List[Skill]] 
     personalities: List[Personality]
-    titles: List[str] # 玩家可獲得的稱號列表 (每個應 <= 5字)
-    monster_achievements_list: NotRequired[List[str]] # 新增：怪物可獲得的成就/稱號列表 (每個應 <= 5字)
-    element_nicknames: NotRequired[Dict[ElementTypes, str]] # 新增：元素對應的預設屬性名字 (每個應 <= 5字)
-    naming_constraints: NotRequired[NamingConstraints] # 新增：命名相關的長度限制
+    titles: List[str]
+    monster_achievements_list: NotRequired[List[str]] 
+    element_nicknames: NotRequired[Dict[ElementTypes, str]]
+    naming_constraints: NotRequired[NamingConstraints] 
     health_conditions: List[HealthCondition]
     newbie_guide: List[NewbieGuideEntry]
     npc_monsters: NotRequired[List[Monster]]
     value_settings: NotRequired[ValueSettings]
     absorption_config: NotRequired[AbsorptionConfig]
     cultivation_config: NotRequired[CultivationConfig]
-    elemental_advantage_chart: NotRequired[Dict[ElementTypes, Dict[ElementTypes, float]]] # 新增：元素克制表
+    elemental_advantage_chart: NotRequired[Dict[ElementTypes, Dict[ElementTypes, float]]] 
 
 
 if __name__ == '__main__':
     import time
     print("MD_models.py 已執行。TypedDict 定義可用。")
-
-    # 範例 (僅供說明，非實際測試)
-    test_naming_constraints: NamingConstraints = {
-        "max_player_title_len": 5,
-        "max_monster_achievement_len": 5,
-        "max_element_nickname_len": 5,
-        "max_monster_full_nickname_len": 15
-    }
-    print(f"\n命名限制範例 (玩家稱號最大長度): {test_naming_constraints['max_player_title_len']}")
-
-    test_monster_with_custom_name: Monster = {
-        "id": "m_test_002", "nickname": "炎龍[新晉]赤炎魂", # 假設這是組合後的
-        "elements": ["火"], "elementComposition": {"火": 100.0},
-        "hp": 100, "mp": 50, "initial_max_hp": 100, "initial_max_mp": 50,
-        "attack": 20, "defense": 15, "speed": 10, "crit": 5, "skills": [],
-        "rarity": "稀有", "title": "新晉炎王", # 假設這是「怪物成就」部分
-        "custom_element_nickname": "赤炎魂", # 玩家自定義的屬性名
-        "description": "...", "personality": {"name":"勇敢的", "description":"...", "colorDark":"...", "colorLight":"..."},
-        "creationTime": int(time.time()),
-        "farmStatus": {"active": False, "isBattling": False, "isTraining": False, "completed": False, "boosts": {}}, # 添加缺失的鍵
-        "resistances": {"火": 5},
-        "aiPersonality": "這隻怪獸的個性活潑開朗...",
-        "aiIntroduction": "牠是一隻火焰構成的生物...",
-        "aiEvaluation": "烈焰幼龍適合擔任隊伍的先鋒..."
-    }
-    print(f"\n帶自定義屬性名的怪獸範例: {test_monster_with_custom_name['nickname']}")
-    print(f"  其自定義屬性名: {test_monster_with_custom_name.get('custom_element_nickname')}")
-    print(f"  其怪物成就/稱號: {test_monster_with_custom_name.get('title')}")
-    print(f"  AI 個性: {test_monster_with_custom_name.get('aiPersonality')[:20]}...")
-
-    # 測試 ValueSettings
-    test_value_settings: ValueSettings = {
-        "element_value_factors": {"火": 1.2, "水": 1.1},
-        "dna_recharge_conversion_factor": 0.15,
-        "max_inventory_slots": 12,
-        "max_temp_backpack_slots": 9
-    }
-    print(f"\nValueSettings 範例: 最大庫存槽位 {test_value_settings['max_inventory_slots']}")
-    print(f"ValueSettings 範例: 最大臨時背包槽位 {test_value_settings['max_temp_backpack_slots']}")
-
-    # 測試 PlayerGameData
-    test_player_owned_dna: List[Optional[PlayerOwnedDNA]] = [
-        {"id": "dna_fire_c01_inst1", "name": "初階火種", "type": "火", "attack": 18, "defense": 6, "speed": 9, "hp": 45, "mp": 22, "crit": 4, "description": "微弱燃燒的火種。", "rarity": "普通", "resistances": {'火': 2}, "baseId": "dna_fire_c01"},
-        None, # 空槽位
-        {"id": "dna_water_r01_inst1", "name": "凝結水珠", "type": "水", "attack": 18, "defense": 18, "speed": 16, "hp": 70, "mp": 35, "crit": 6, "description": "蘊含純淨能量的凝結水珠。", "rarity": "稀有", "resistances": {'水': 5, '木': -1}, "baseId": "dna_water_r01"},
-        # 繼續填充到 12 個
-        None, None, None, None, None, None, None, None
-    ]
-    test_player_game_data: PlayerGameData = {
-        "playerOwnedDNA": test_player_owned_dna,
-        "farmedMonsters": [],
-        "playerStats": {
-            "rank": "B", "wins": 5, "losses": 2, "score": 1000,
-            "titles": ["新手", "戰新星"], "achievements": ["首次登入異世界"], "medals": 1, "nickname": "測試玩家"
-        },
-        "lastSave": int(time.time()),
-        "nickname": "測試玩家"
-    }
-    print(f"\n玩家遊戲數據範例: 持有DNA數量 (包括空槽位) {len(test_player_game_data['playerOwnedDNA'])}")
-    print(f"  第一個DNA: {test_player_game_data['playerOwnedDNA'][0].get('name') if test_player_game_data['playerOwnedDNA'][0] else '空'}")
-
-    # 測試 MonsterRecipe
-    test_recipe: MonsterRecipe = {
-        "combinationKey": "dna_fire_c01_dna_water_r01",
-        "resultingMonsterData": test_monster_with_custom_name,
-        "creationTimestamp": int(time.time()),
-        "discoveredByPlayerId": "test_player_id_123"
-    }
-    print(f"\n怪獸配方範例: 組合鍵 '{test_recipe['combinationKey']}'")
-    print(f"  配方產生的怪獸暱稱: '{test_recipe['resultingMonsterData']['nickname']}'")
