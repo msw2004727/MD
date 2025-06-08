@@ -576,7 +576,7 @@ function renderPlayerDNAInventory() {
         if (index === 11) {
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
-            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">拖曳至此</span>`;
+            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
             item.draggable = false; 
             item.dataset.inventoryIndex = index;
         } else {
@@ -650,9 +650,8 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
+    listContainer.innerHTML = '';
 
-    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
@@ -680,10 +679,19 @@ function renderMonsterFarm() {
                 statusText = "出戰中"; 
                 statusClass = "status-battling";
             } else if (monster.farmStatus.isTraining) {
-                const endTime = (monster.farmStatus.trainingStartTime || 0) + (monster.farmStatus.trainingDuration || 0);
-                let remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-                statusText = remainingTime > 0 ? `修煉中 (${remainingTime}s)` : "發呆中";
-                statusClass = remainingTime > 0 ? "status-training" : "status-idle";
+                const startTime = monster.farmStatus.trainingStartTime || 0;
+                const totalDuration = monster.farmStatus.trainingDuration || 0;
+                const totalDurationInSeconds = Math.floor(totalDuration / 1000);
+                
+                const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+                if (elapsedTimeInSeconds < totalDurationInSeconds) {
+                    statusText = `修煉中 (${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
+                    statusClass = "status-training";
+                } else {
+                    statusText = "修煉完成";
+                    statusClass = "status-idle";
+                }
             }
         }
 
