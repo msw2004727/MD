@@ -310,7 +310,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     }
 
     if (monsterToRelease) {
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythishal'};
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
         const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
@@ -1153,7 +1153,6 @@ function updateLeaderboardTable(tableType, data) {
             { text: '元素', key: 'elements', align: 'center' },
             { text: '稀有度', key: 'rarity', align: 'center' },
             { text: '總評價', key: 'score', align: 'center' },
-            { text: '狀態', key: 'farmStatus', align: 'center' }, // 新增狀態欄位
             { text: '勝/敗', key: 'resume', align: 'center' },
             { text: '擁有者', key: 'owner_nickname' },
             { text: '操作', key: 'actions', align: 'center' }
@@ -1221,56 +1220,49 @@ function updateLeaderboardTable(tableType, data) {
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
 
-            // Cell 6: Status (新增的狀態欄位)
-            const statusCell = row.insertCell();
-            statusCell.style.textAlign = 'center';
-            let statusText = "待命中";
-            let statusClass = "text-[var(--warning-color)]"; // Default: orange for idle
-
-            if (isTraining) {
-                statusText = "修煉中";
-                statusClass = "text-[var(--accent-color)]"; // Blue for training
-            } else if (isBattling) {
-                statusText = "戰鬥中";
-                statusClass = "text-[var(--danger-color)]"; // Red for battling
-            } else if (item.owner_id === gameState.playerId && gameState.selectedMonsterId === item.id) {
-                statusText = "出戰中"; // 玩家自己正在出戰的怪獸
-                statusClass = "text-[var(--success-color)]"; // Green for deployed
-            }
-            statusCell.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
-
-
-            // Cell 7: Resume (原來的 Cell 6 變為 Cell 7)
+            // Cell 6: Resume
             const resumeCell = row.insertCell();
             resumeCell.textContent = `${item.resume?.wins || 0} / ${item.resume?.losses || 0}`;
             resumeCell.style.textAlign = 'center';
 
-            // Cell 8: Owner (原來的 Cell 7 變為 Cell 8)
-            row.insertCell().textContent = item.owner_nickname || 'N/A';
+            // Cell 7: Owner
+            const ownerCell = row.insertCell();
+            ownerCell.textContent = item.owner_nickname || 'N/A';
+            // 如果是自己的怪獸，可以高亮顯示
+            if (item.owner_id === gameState.playerId) {
+                ownerCell.style.fontWeight = 'bold';
+                ownerCell.style.color = 'var(--accent-color)';
+            }
 
-            // Cell 9: Actions (原來的 Cell 8 變為 Cell 9)
+
+            // Cell 8: Actions
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
 
-            const challengeBtn = document.createElement('button');
-            challengeBtn.textContent = '挑戰';
-            challengeBtn.className = 'button primary text-xs py-1 px-2';
+            const actionButton = document.createElement('button');
+            actionButton.className = 'button primary text-xs py-1 px-2';
 
-            if (isTraining || isBattling) { // 如果在修煉中或戰鬥中
-                challengeBtn.textContent = '修煉中'; // 顯示修煉中
-                challengeBtn.disabled = true; // 禁用按鈕
-                challengeBtn.style.cursor = 'not-allowed'; // 更改鼠標樣式
-            } else if (item.isNPC) {
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, null, null, item.id);
-            } else if (item.owner_id && item.owner_id !== gameState.playerId) {
-                challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
-            } else {
-                challengeBtn.disabled = true; // 自己的怪獸或沒有對象時禁用
-                challengeBtn.style.cursor = 'not-allowed';
+            if (item.owner_id === gameState.playerId) { // 如果是玩家自己的怪獸
+                if (isTraining || isBattling) {
+                    actionButton.textContent = '剛出門修煉'; // 顯示修煉中
+                    actionButton.disabled = true; // 禁用按鈕
+                    actionButton.style.cursor = 'not-allowed'; // 更改鼠標樣式
+                    actionButton.style.backgroundColor = 'var(--button-secondary-bg)'; // 更改為次要按鈕顏色
+                    actionButton.style.color = 'var(--text-secondary)'; // 更改文本顏色
+                } else {
+                    actionButton.textContent = '我的怪獸'; // 是自己的怪獸，但不是挑戰對象
+                    actionButton.disabled = true;
+                    actionButton.style.cursor = 'not-allowed';
+                    actionButton.style.backgroundColor = 'var(--button-secondary-bg)';
+                    actionButton.style.color = 'var(--text-secondary)';
+                }
+            } else { // 其他玩家的怪獸
+                actionButton.textContent = '挑戰';
+                actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
             }
-            actionsCell.appendChild(challengeBtn);
+            actionsCell.appendChild(actionButton);
 
-        } else { // Player Leaderboard
+        } else { // Player Leaderboard (保持不變)
             // Cell 1: Rank
             const rankCell = row.insertCell();
             rankCell.textContent = index + 1;
@@ -1343,9 +1335,9 @@ function updateMonsterLeaderboardElementTabs(elements) {
             button.textContent = elementTypeMap[elementKey.toLowerCase()] || elementKey;
             button.classList.add(`text-element-${elementKey.toLowerCase()}`);
         }
-
+        
         button.dataset.elementFilter = elementKey;
-
+        
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
             button.classList.add('active');
         }
