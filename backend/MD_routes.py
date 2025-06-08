@@ -10,7 +10,6 @@ import copy # 用於深拷貝怪獸數據
 
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna
-from .monster_combination_services import combine_dna_service
 
 # 直接從更細分的怪物管理服務模組中導入
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -18,13 +17,12 @@ from .monster_healing_services import heal_monster_service, recharge_monster_wit
 from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
-from .battle_services import simulate_battle_turn_by_turn # 導入新的戰鬥服務
+from .battle_services import simulate_battle_full # 導入新的完整戰鬥服務，而不是逐回合
 
 from .leaderboard_search_services import (
-    # get_monster_leaderboard_service, # 不再直接調用這個服務來獲取所有怪獸
     get_player_leaderboard_service,
     search_players_service,
-    get_all_player_selected_monsters_service # 新增導入這個服務
+    get_all_player_selected_monsters_service
 )
 
 # 從設定和 AI 服務模組引入函式
@@ -65,27 +63,6 @@ def _get_authenticated_user_id():
     except Exception as e:
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
-
-
-# --- 佔位符函式 (Placeholder Function) ---
-# 這個函數將被新的 battle_services.simulate_battle_turn_by_turn 替換
-# 這裡保留其定義以避免衝突，但不再調用它
-# def simulate_battle_service(monster1, monster2, game_configs):
-#     """Placeholder for battle simulation logic."""
-#     routes_logger.warning("正在使用佔位符 (placeholder) 的戰鬥模擬服務!")
-#     winner = random.choice([monster1, monster2])
-#     loser = monster2 if winner['id'] == monster1['id'] else monster1
-#     return {
-#         "log": [
-#             f"--- 戰鬥開始: {monster1['nickname']} vs {monster2['nickname']} ---",
-#             "這是一場激烈的模擬戰鬥...",
-#             f"最終，{winner['nickname']} 獲勝！"
-#         ],
-#         "winner_id": winner['id'],
-#         "loser_id": loser['id'],
-#         "monster1_updated_skills": monster1.get('skills', []), # 返回原始技能以避免錯誤
-#         "monster2_updated_skills": monster2.get('skills', [])
-#     }
 
 
 # --- API 端點 ---
@@ -247,11 +224,6 @@ def combine_dna_api_route():
             routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
             # 注意：這裡我們不儲存，因為怪獸沒有地方放。但前端仍然會收到怪獸物件和警告。
             return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200
-    else:
-        error_message = "DNA 組合失敗，未能生成怪獸。"
-        if combine_result and combine_result.get("error"):
-            error_message = combine_result["error"]
-        return jsonify({"error": error_message}), 400
 
 
 @md_bp.route('/players/search', methods=['GET'])
@@ -281,13 +253,8 @@ def simulate_battle_api_route():
         return error_response
 
     data = request.json
-    player_monster_data_req = data.get('monster1_data') # 玩家怪獸數據
-    opponent_monster_data_req = data.get('monster2_data') # 對手怪獸數據
-    # 這裡可以選擇性地從請求中獲取 current_turn 和 battle_log_so_far
-    # 為了實現逐步顯示，前端需要每次發送請求時帶上這些信息
-    current_turn = data.get('current_turn', 0)
-    battle_log_so_far = data.get('battle_log_so_far', [])
-
+    player_monster_data_req = data.get('player_monster_data') # 玩家怪獸數據
+    opponent_monster_data_req = data.get('opponent_monster_data') # 對手怪獸數據
 
     if not player_monster_data_req or not opponent_monster_data_req:
         return jsonify({"error": "請求中必須包含兩隻怪獸的資料。"}), 400
@@ -296,16 +263,15 @@ def simulate_battle_api_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法模擬戰鬥。"}), 500
     
-    # 調用新的戰鬥服務
-    battle_result: BattleResult = simulate_battle_turn_by_turn(
+    # 調用新的完整戰鬥服務，一次性完成所有回合的模擬
+    battle_result: BattleResult = simulate_battle_full( # 更換為 simulate_battle_full
         player_monster_data_req,
         opponent_monster_data_req,
         game_configs,
-        current_turn=current_turn,
-        battle_log_so_far=battle_log_so_far
     )
 
     # 戰鬥結束後更新玩家數據 (勝敗場次，HP/MP，技能)
+    # 此處的邏輯與之前基本相同，因為只需要處理最終結果
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'): # 確保是玩家自己的怪獸
             player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
@@ -319,18 +285,18 @@ def simulate_battle_api_route():
                         player_stats["losses"] = player_stats.get("losses", 0) + 1
                     player_data["playerStats"] = player_stats
 
-                    # 更新玩家怪獸的狀態 (HP/MP, 技能, 戰績)
+                    # 更新玩家怪獸的狀態 (HP/MP，戰績)
                     farmed_monsters = player_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(farmed_monsters):
                         if monster_in_farm.get("id") == player_monster_data_req['id']:
-                            monster_in_farm["current_hp"] = battle_result["player_monster_final_hp"] # type: ignore
-                            monster_in_farm["current_mp"] = battle_result["player_monster_final_mp"] # type: ignore
-                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"] # type: ignore
-                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"] # type: ignore
+                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"] # 更新為最終血量
+                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"] # 更新為最終魔量
+                            # 注意：current_hp/current_mp 只是戰鬥期間的臨時屬性，無需持久化
                             
                             # 更新戰績
                             monster_in_farm["resume"] = battle_result["player_monster_final_resume"] # type: ignore
-                            # 更新技能
+                            # 更新技能 (如果戰鬥可能導致技能變化，例如獲得新技能)
+                            # 從 battle_services 返回的 player_monster_final_skills 是戰鬥後的技能狀態
                             monster_in_farm["skills"] = battle_result["player_monster_final_skills"] # type: ignore
                             
                             # 重置戰鬥狀態標誌
@@ -340,6 +306,7 @@ def simulate_battle_api_route():
                     player_data["farmedMonsters"] = farmed_monsters # type: ignore
                     
                     # 處理吸收 (如果戰鬥勝利且對手不是NPC)
+                    # 吸收邏輯現在會修改 player_data 中的怪獸狀態和 DNA 庫存
                     if battle_result.get("winner_id") == player_monster_data_req.get('id') and \
                        battle_result.get("loser_id") == opponent_monster_data_req.get('id') and \
                        not opponent_monster_data_req.get('isNPC'):
@@ -349,7 +316,7 @@ def simulate_battle_api_route():
                             winning_monster_id=player_monster_data_req['id'],
                             defeated_monster_snapshot=opponent_monster_data_req,
                             game_configs=game_configs,
-                            player_data=player_data
+                            player_data=player_data # 將更新後的 player_data 傳入
                         )
                         if absorption_result and absorption_result.get("success"):
                             battle_result["absorption_details"] = absorption_result # 將吸收結果也回傳
@@ -363,24 +330,8 @@ def simulate_battle_api_route():
             else:
                 routes_logger.warning(f"無法獲取玩家 {user_id} 資料以更新戰績。")
     
-    # 返回最新的一回合日誌
-    if battle_result["log_entries"]:
-        latest_log_entry = battle_result["log_entries"][-1]
-        response_data = {
-            "success": True,
-            "latest_log_entry": latest_log_entry,
-            "player_monster_data": player_monster_data_req, # 返回最新狀態的玩家怪獸
-            "opponent_monster_data": opponent_monster_data_req # 返回最新狀態的對手怪獸
-        }
-        # 如果戰鬥結束，則包含最終結果
-        if latest_log_entry.get("battle_end"):
-            response_data["battle_end"] = True
-            response_data["winner_id"] = battle_result["winner_id"]
-            response_data["loser_id"] = battle_result["loser_id"]
-            response_data["absorption_details"] = battle_result.get("absorption_details")
-        return jsonify(response_data), 200
-    else:
-        return jsonify({"success": False, "error": "戰鬥模擬未生成日誌。"})
+    # 返回完整的戰鬥結果，現在包含 AI 戰報內容
+    return jsonify({"success": True, "battle_result": battle_result}), 200
 
 
 @md_bp.route('/generate-ai-descriptions', methods=['POST'])
