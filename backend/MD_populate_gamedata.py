@@ -291,13 +291,13 @@ def populate_game_configs():
             "光": 1.5, "暗": 1.4, "毒": 0.8, "風": 1.0, "無": 0.7, "混": 0.6
         },
         "dna_recharge_conversion_factor": 0.15,
-        "max_farm_slots": 10, # 農場上限
-        "max_monster_skills": 3, # 怪獸最大技能數
-        "max_battle_turns": 30, # 戰鬥最大回合數
-        # 修改點：增加 DNA 庫存和臨時背包的最大槽位數設定
-        "max_inventory_slots": 12, # DNA 庫存格數設定
-        "max_temp_backpack_slots": 9, # 臨時背包格數設定
-        "starting_gold": 500 # 新增：新玩家的初始金幣
+        "max_farm_slots": 10, 
+        "max_monster_skills": 3,
+        "max_battle_turns": 30,
+        "max_inventory_slots": 12,
+        "max_temp_backpack_slots": 9,
+        "max_cultivation_time_seconds": 3600, # 新增：最大修煉時長
+        "starting_gold": 500
     }
     try:
         db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
