@@ -656,8 +656,9 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = '';
+    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
 
+    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
@@ -1383,7 +1384,7 @@ function updateTrainingResultsModal(results, monsterName) {
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid'; // 復用庫存網格樣式
-        items.forEach((item, index) => {
+        items.forEach((item) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'dna-item'; // 復用DNA物品樣式
             applyDnaItemStyle(itemDiv, item);
@@ -1391,14 +1392,22 @@ function updateTrainingResultsModal(results, monsterName) {
             
             itemDiv.addEventListener('click', function handleItemClick() {
                 addDnaToTemporaryBackpack(item);
+                
+                // 從待領取清單中移除，避免重複提醒
+                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndex > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
+                }
+
                 // 視覺上表示已拾取
                 itemDiv.style.opacity = '0.5';
                 itemDiv.style.pointerEvents = 'none';
-                const originalText = itemDiv.querySelector('.dna-name-text').textContent;
-                itemDiv.querySelector('.dna-name-text').textContent = `${originalText} (已拾取)`;
-                // 移除監聽器避免重複添加
-                itemDiv.removeEventListener('click', handleItemClick);
-            }, { once: true });
+                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
+                if(originalTextSpan) {
+                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
+                }
+                
+            }, { once: true }); //確保只觸發一次
 
             itemsGrid.appendChild(itemDiv);
         });
