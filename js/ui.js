@@ -1130,6 +1130,16 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
     tbody.innerHTML = '';
 }
 
+// 輔助函數：將中文元素名稱轉換為對應的英文 CSS 類名鍵
+function getElementCssClassKey(chineseElement) {
+    const elementTypeMap = {
+        '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
+        '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
+    };
+    return elementTypeMap[chineseElement] || '無'; // 預設為 '無'
+}
+
+
 function updateLeaderboardTable(tableType, data) {
     const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
     const table = document.getElementById(tableId);
@@ -1190,8 +1200,9 @@ function updateLeaderboardTable(tableType, data) {
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
+                // 使用 getElementCssClassKey 輔助函數來獲取正確的 CSS 類名
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-element-${el.toLowerCase()} font-bold mr-2">${el}</span>`
+                    `<span class="text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
             }
 
