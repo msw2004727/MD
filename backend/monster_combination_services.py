@@ -168,6 +168,7 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         new_monster_instance["creationTime"] = int(time.time())
         new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
         new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "從既有配方召喚。"}]
+        new_monster_instance["cultivation_gains"] = {} # 新增：確保舊配方產生的怪獸也有此欄位
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
             skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100))
@@ -216,13 +217,12 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
                 generated_skills.append(_get_skill_from_template(template, game_configs, monster_rarity_data))
         
         if not generated_skills:
-            monster_combination_services_logger.warning(f"怪獸屬性 {elements_present} 無可用技能，將指派預設'無'屬性技能。")
             default_skill_template = all_skills_db.get("無", [{}])[0]
             if default_skill_template:
                 generated_skills.append(_get_skill_from_template(default_skill_template, game_configs, monster_rarity_data))
             else:
-                monster_combination_services_logger.error("連預設的'無'屬性技能都找不到，怪獸將沒有技能！")
-
+                monster_combination_services_logger.warning("找不到預設'無'屬性技能，怪獸將沒有技能！")
+        
         player_stats = player_data.get("playerStats", {})
         player_title = player_stats.get("titles", ["新手"])[0]
         monster_achievement = random.choice(game_configs.get("monster_achievements_list", ["新秀"]))
@@ -263,8 +263,9 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
             "resistances": {},
             "resume": {"wins": 0, "losses": 0},
             "constituent_dna_ids": constituent_dna_template_ids,
+            "cultivation_gains": {}  # 新增：為全新怪獸初始化空的加成欄位
         }
-
+        
         base_resistances = Counter()
         for dna_frag in combined_dnas_data:
             base_resistances.update(dna_frag.get("resistances", {}))
@@ -272,13 +273,13 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         for el in elements_present:
             base_resistances[el] = base_resistances.get(el, 0) + resistance_bonus
         standard_monster_data["resistances"] = dict(base_resistances)
-
+        
         ai_details = generate_monster_ai_details(standard_monster_data)
         standard_monster_data.update(ai_details)
 
         score = (standard_monster_data["initial_max_hp"] // 10) + standard_monster_data["attack"] + standard_monster_data["defense"] + (standard_monster_data["speed"] // 2) + (standard_monster_data["crit"] * 2) + (len(standard_monster_data["skills"]) * 15) + (rarity_order.index(standard_monster_data["rarity"]) * 30)
         standard_monster_data["score"] = score
-
+        
         new_recipe_entry = {
             "combinationKey": combination_key,
             "resultingMonsterData": standard_monster_data,
