@@ -214,7 +214,7 @@ def complete_cultivation_service(
             dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
             if not dna_pool: dna_pool = all_dna_templates
             for _ in range(num_items):
-                if not dna_pool: break
+                if not dna_pool or not loot_table: break
                 rarity_pool, rarity_weights = zip(*loot_table.items())
                 chosen_rarity = random.choices(rarity_pool, weights=rarity_weights, k=1)[0]
                 quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
