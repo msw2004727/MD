@@ -1380,17 +1380,17 @@ function showBattleLogModal(battleReportContent) {
 
         // 定義元素和技能的關鍵字列表，以及它們對應的 CSS 類別或顏色
         const elementMap = {
-            '火': { class: 'text-element-fire', emoji: '🔥' },
-            '水': { class: 'text-element-water', emoji: '💧' },
-            '木': { class: 'text-element-wood', emoji: '🌿' },
-            '金': { class: 'text-element-gold', emoji: '⚙️' },
-            '土': { class: 'text-element-earth', emoji: '⛰️' },
-            '光': { class: 'text-element-light', emoji: '✨' },
-            '暗': { class: 'text-element-dark', emoji: '🌑' },
-            '毒': { class: 'text-element-poison', emoji: '☣️' },
-            '風': { class: 'text-element-wind', emoji: '💨' },
-            '混': { class: 'text-element-mix', emoji: '🌀' },
-            '無': { class: 'text-element-無', emoji: '⚪' },
+            '火': { class: 'text-element-fire' },
+            '水': { class: 'text-element-water' },
+            '木': { class: 'text-element-wood' },
+            '金': { class: 'text-element-gold' },
+            '土': { class: 'text-element-earth' },
+            '光': { class: 'text-element-light' },
+            '暗': { class: 'text-element-dark' },
+            '毒': { class: 'text-element-poison' },
+            '風': { class: 'text-element-wind' },
+            '混': { class: 'text-element-mix' },
+            '無': { class: 'text-element-無' },
         };
         const skillNames = [
             "火焰拳", "爆炎衝", "火星彈", "追蹤火球", "燃燒術", "大字爆", "暖身", "烈日祝福", "熱砂踢", "火山踢", "點燃", "煉獄之火", "威嚇", "熔化", "靜電火花", "自爆",
@@ -1401,28 +1401,61 @@ function showBattleLogModal(battleReportContent) {
             "欺詐", "地獄突刺", "暗影球", "惡之波動", "詭計", "暗黑爆破", "挑釁", "查封", "偷盜", "拍落", "臨別禮物", "懲罰", "再來一次", "無理取鬧", "大快朵頤",
             "落石", "地震", "泥巴射擊", "大地之力", "大地波動", "沙塵暴", "變硬", "沙地獄", "骨棒", "骨頭迴力鏢", "撒菱", "隱形岩", "玩泥巴", "詛咒", "挖洞", "地裂"
         ]; // 確保這裡是完整的技能名稱列表
+        // 新增：技能等級顏色映射
+        const skillLevelColors = {
+            1: 'var(--text-secondary)',  // 等級1 灰色
+            2: 'var(--text-secondary)',
+            3: 'var(--text-primary)',    // 等級3 基礎色
+            4: 'var(--text-primary)',
+            5: 'var(--accent-color)',    // 等級5 基礎強調色
+            6: 'var(--accent-color)',
+            7: 'var(--success-color)',   // 等級7 成功色
+            8: 'var(--success-color)',
+            9: 'var(--rarity-legendary-text)', // 等級9 傳奇色
+            10: 'var(--rarity-mythical-text)'  // 等級10 神話色
+        };
+        // 新增：怪獸稀有度顏色映射 (與 theme.css 中的 text-rarity-* 匹配)
+        const rarityColors = {
+            '普通': 'var(--rarity-common-text)',
+            '稀有': 'var(--rarity-rare-text)',
+            '菁英': 'var(--rarity-elite-text)',
+            '傳奇': 'var(--rarity-legendary-text)',
+            '神話': 'var(--rarity-mythical-text)'
+        };
 
-        // 對元素名稱進行上色和添加 emoji
-        for (const element in elementMap) {
-            const regex = new RegExp(`(${element})`, 'g');
-            formattedText = formattedText.replace(regex, `<span class="${elementMap[element].class}">$1${elementMap[element].emoji}</span>`);
+        // 替換 AI 生成的粗體 **Text** 為 <strong>Text</strong>
+        formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // 對怪獸名字上色 (稀有度顏色)
+        // 假設 monster_intro 會包含怪獸的稀有度信息，或者我們可以從 gameState 中獲取
+        // 為了通用性，我們在此處假設 AI 會把怪獸名稱粗體
+        if (battleReportContent.player_monster_data && text.includes(battleReportContent.player_monster_data.nickname)) {
+            const playerRarityKey = battleReportContent.player_monster_data.rarity || '普通';
+            const playerColor = rarityColors[playerRarityKey] || 'var(--text-primary)';
+            formattedText = formattedText.replace(new RegExp(battleReportContent.player_monster_data.nickname, 'g'), `<span style="color: ${playerColor}; font-weight: bold;">${battleReportContent.player_monster_data.nickname}</span>`);
         }
-
-        // 對技能名稱進行上色
+        if (battleReportContent.opponent_monster_data && text.includes(battleReportContent.opponent_monster_data.nickname)) {
+            const opponentRarityKey = battleReportContent.opponent_monster_data.rarity || '普通';
+            const opponentColor = rarityColors[opponentRarityKey] || 'var(--text-primary)';
+            formattedText = formattedText.replace(new RegExp(battleReportContent.opponent_monster_data.nickname, 'g'), `<span style="color: ${opponentColor}; font-weight: bold;">${battleReportContent.opponent_monster_data.nickname}</span>`);
+        }
+        
+        // 對技能名稱上色 (等級顏色) - 這需要 AI 在技能名稱後提供等級信息，或者我們在前端解析
+        // 鑒於 AI 提示控制難度，我們將在前端進行更精確的匹配和上色
         skillNames.forEach(skillName => {
-            // 使用正則表達式，確保只匹配完整的單詞，避免部分匹配
-            const regex = new RegExp(`\\b(${skillName})\\b`, 'g'); 
-            formattedText = formattedText.replace(regex, `<span style="color: var(--accent-hover); font-weight: bold;">$1</span>`);
+            // 匹配 "技能名稱 (Lv.X)" 或 "技能名稱"
+            // 這是一個簡化，假設 AI 會輸出 "技能名稱 (Lv.X)"。如果AI只輸出名稱，則需要更複雜的解析
+            const regex = new RegExp(`(${skillName})( \\(Lv\\.(\\d+)\\))?`, 'g');
+            formattedText = formattedText.replace(regex, (match, name, levelPart, levelNum) => {
+                const level = parseInt(levelNum) || 1; // 默認等級1
+                const color = skillLevelColors[level] || skillLevelColors[1];
+                return `<span style="color: ${color}; font-weight: bold;">${name}</span>${levelPart || ''}`;
+            });
         });
 
-        // 對「致命一擊」、「恢復」、「擊倒」、「平手」等關鍵字上色
-        formattedText = formattedText.replace(/致命一擊！/g, '<span style="color: var(--danger-color); font-weight: bold;">致命一擊！</span>');
-        formattedText = formattedText.replace(/恢復了/g, '<span style="color: var(--success-color); font-weight: bold;">恢復了</span>');
-        formattedText = formattedText.replace(/被擊倒了！/g, '<span style="color: var(--danger-color); font-weight: bold;">被擊倒了！</span>');
-        formattedText = formattedText.replace(/獲勝！/g, '<span style="color: var(--success-color); font-weight: bold;">獲勝！</span>');
-        formattedText = formattedText.replace(/平手！/g, '<span style="color: var(--warning-color); font-weight: bold;">平手！</span>');
-        formattedText = formattedText.replace(/無法行動/g, '<span style="color: var(--danger-color); font-weight: bold;">無法行動</span>');
-        formattedText = formattedText.replace(/閃避了！/g, '<span style="color: var(--warning-color); font-weight: bold;">閃避了！</span>');
+        // 移除所有 emoji，如果 AI 不小心生成了
+        formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
+
 
         return formattedText;
     }
@@ -1431,7 +1464,8 @@ function showBattleLogModal(battleReportContent) {
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
 
-    // 雙方怪獸介紹
+    // 2. 戰鬥對陣欄位，分別兩隻怪獸左右各自的獨立欄位。
+    //    戰鬥對陣下方設計一個banner位置，圖片來源：https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
@@ -1439,29 +1473,61 @@ function showBattleLogModal(battleReportContent) {
                 <p class="monster-intro-text player-monster-intro">${formatReportText(battleReportContent.player_monster_intro)}</p>
                 <p class="monster-intro-text opponent-monster-intro">${formatReportText(battleReportContent.opponent_monster_intro)}</p>
             </div>
+            <div class="battle-banner">
+                <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥橫幅">
+            </div>
         </div>
     `;
 
-    // 精彩交戰描述
+    // 3. 精彩交戰內每回合用分隔線區隔開
+    //    由於 AI 生成的 battle_description 可能包含回合標記，我們在前端處理它們。
+    //    確保 AI 在生成時包含 "--- 回合 X 開始 ---"
+    let formattedBattleDescription = formatReportText(battleReportContent.battle_description);
+    const battleDescriptionParts = formattedBattleDescription.split(/--- 回合 (\d+) 開始 ---/g);
+    let battleDescriptionHtml = '';
+    for (let i = 0; i < battleDescriptionParts.length; i++) {
+        if (i % 2 === 0) {
+            // This is the text content between markers or initial text
+            if (battleDescriptionParts[i].trim()) {
+                battleDescriptionHtml += `<p>${battleDescriptionParts[i].trim()}</p>`;
+            }
+        } else {
+            // This is the turn number
+            const turnNumber = battleDescriptionParts[i];
+            battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${turnNumber} 開始 ---</div>`;
+        }
+    }
+
+
     reportContainer.innerHTML += `
         <div class="report-section battle-description-section">
             <h4 class="report-section-title">精彩交戰</h4>
-            <p class="battle-description-text">${formatReportText(battleReportContent.battle_description)}</p>
+            <div class="battle-description-content">
+                ${battleDescriptionHtml}
+            </div>
         </div>
     `;
 
-    // 最終戰報總結
+    // 4. 戰報總結依據勝或敗給我一個banner圖片位置
+    let summaryBannerSrc = '';
+    if (gameState.selectedMonsterId === battleReportContent.winner_id) { // 玩家怪獸獲勝
+        summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/win001.png?raw=true";
+    } else if (gameState.selectedMonsterId === battleReportContent.loser_id) { // 玩家怪獸戰敗
+        summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/lose001.png?raw=true";
+    }
+    
     reportContainer.innerHTML += `
         <div class="report-section battle-summary-section">
             <h4 class="report-section-title">戰報總結</h4>
+            ${summaryBannerSrc ? `<div class="summary-banner"><img src="${summaryBannerSrc}" alt="戰鬥結果"></div>` : ''}
             <p class="battle-summary-text">${formatReportText(battleReportContent.battle_summary)}</p>
         </div>
     `;
 
-    // 預留戰利品與怪獸成長欄位
+    // 預留戰利品與怪獸成長欄位 (由後端填充)
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
-            <h4 class="report-section-title">戰鬥結果</h4>
+            <h4 class="report-section-title">戰鬥結果細項</h4>
             <p class="loot-info-text">${formatReportText(battleReportContent.loot_info)}</p>
             <p class="growth-info-text">${formatReportText(battleReportContent.growth_info)}</p>
         </div>
