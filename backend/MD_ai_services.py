@@ -23,7 +23,8 @@ DEFAULT_AI_RESPONSES = {
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
-DEFAULT_ADVENTURE_STORY = "在這次修煉中，怪獸磨練了它的意志，感覺自己又變強了一些。"
+# 修改：將預設故事改為更明確的錯誤提示
+DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗，請稍後再試或檢查後台日誌。"
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     """
