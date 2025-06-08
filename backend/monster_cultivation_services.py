@@ -13,7 +13,7 @@ from .MD_models import (
 )
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
-# 從 player_services 導入 get_player_data_service，因為修煉結算時可能需要重新獲取玩家數據
+# 從 player_services 導入 get_player_data_service
 from .player_services import get_player_data_service
 # 從 ai_services 導入新的故事生成函式
 from .MD_ai_services import generate_cultivation_story
@@ -193,7 +193,7 @@ def complete_cultivation_service(
             if stat in ["hp", "mp"]:
                 max_stat_key = f"initial_max_{stat}"
                 monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + total_gain
-                monster_to_update[stat] = monster_to_update.get(max_stat_key", 0) # 同時補滿
+                monster_to_update[stat] = monster_to_update.get(max_stat_key, 0) # 同時補滿
             else:
                 monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain
             skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 提升了 {total_gain} 點！")
@@ -224,7 +224,8 @@ def complete_cultivation_service(
             if quality_pool:
                 found_item = random.choice(quality_pool)
                 items_obtained.append(found_item)
-                skill_updates_log.append(f"💎 拾獲了DNA碎片：[{found_item.get('rarity')}] {found_item.get('name')}！")
+                # 這條日誌現在由AI故事整合，所以可以選擇性移除
+                # skill_updates_log.append(f"💎 拾獲了DNA碎片：[{found_item.get('rarity')}] {found_item.get('name')}！")
 
     # 5. 重新計算總評價
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
