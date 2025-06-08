@@ -9,6 +9,14 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
+// 新增：戰鬥相關的全局變數，用於逐步模擬
+let battleIntervalId = null;
+let currentBattleTurn = 0;
+let battlePlayerMonster = null;
+let battleOpponentMonster = null;
+let fullBattleLog = []; // 儲存所有回合的完整日誌
+
+
 /**
  * 新增：處理點擊“出戰”按鈕的邏輯
  * @param {string} monsterId - 被點擊的出戰按鈕對應的怪獸ID
@@ -24,7 +32,7 @@ async function handleDeployMonsterClick(monsterId) {
         await savePlayerData(gameState.playerId, gameState.playerData);
         console.log(`怪獸 ${monsterId} 已設定為出戰狀態並成功儲存。`);
         // 成功儲存後才更新本地UI狀態
-        gameState.selectedMonsterId = monsterId;
+        gameState.selectedMonsterId = monsterId; 
         const selectedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
         if (typeof updateMonsterSnapshot === 'function' && selectedMonster) {
             updateMonsterSnapshot(selectedMonster);
@@ -112,7 +120,7 @@ async function handleDrop(event) {
         return;
     }
     dropTargetElement.classList.remove('drag-over');
-
+    
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
@@ -127,20 +135,20 @@ async function handleDrop(event) {
             renderPlayerDNAInventory();
             renderDNACombinationSlots();
             renderTemporaryBackpack();
-            await savePlayerData(gameState.playerId, gameState.playerData);
+            await savePlayerData(gameState.playerId, gameState.playerData); 
             showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
-            handleDragEnd(event);
+            handleDragEnd(event); 
             return;
         }
-
+        
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
         if (isNaN(targetSlotIndex)) { handleDragEnd(event); return; }
-        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex];
-
+        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex]; 
+        
         if (draggedSourceType === 'inventory') {
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemOriginallyInTargetSlot;
         } else if (draggedSourceType === 'combination') {
@@ -149,22 +157,22 @@ async function handleDrop(event) {
             }
         }
         gameState.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
-
+        
         renderDNACombinationSlots();
-        renderPlayerDNAInventory();
+        renderPlayerDNAInventory(); 
         renderTemporaryBackpack();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('dna-item') && dropTargetElement.closest('#inventory-items')) {
         const targetInventoryIndex = parseInt(dropTargetElement.dataset.inventoryIndex, 10);
         if (isNaN(targetInventoryIndex)) { handleDragEnd(event); return; }
-
+        
         const itemAtTargetInventorySlot = gameState.playerData.playerOwnedDNA[targetInventoryIndex];
-
+        
         if (draggedSourceType === 'inventory') {
-            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot;
+            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'combination') {
-            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot;
+            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'temporaryBackpack') {
             if(itemAtTargetInventorySlot) { // 如果目標格有東西，則不移動
                 showFeedbackModal('操作失敗', '目標庫存格非空格，請先將物品移至空格。');
@@ -175,7 +183,7 @@ async function handleDrop(event) {
              dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
              dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
         }
-
+        
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
 
         renderPlayerDNAInventory();
@@ -204,13 +212,13 @@ async function handleDrop(event) {
             if (freeSlotIndex !== -1) {
                 if (draggedSourceType === 'inventory') gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
                 else if (draggedSourceType === 'combination') gameState.dnaCombinationSlots[draggedSourceIndex] = null;
-
+                
                 gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
             } else {
                 showFeedbackModal('背包已滿', '臨時背包已滿，無法放入更多物品。');
             }
         }
-
+        
         renderPlayerDNAInventory();
         renderTemporaryBackpack();
         renderDNACombinationSlots();
@@ -422,7 +430,7 @@ async function handleCombineDna() {
         const newMonster = await combineDNA(dnaObjectsForCombination);
 
         if (newMonster && newMonster.id) {
-            await refreshPlayerData();
+            await refreshPlayerData(); 
             resetDNACombinationSlots();
             showFeedbackModal('合成成功！', '', false, newMonster, [{ text: '好的', class: 'primary' }]);
         } else if (newMonster && newMonster.error) {
@@ -614,16 +622,196 @@ function handleLeaderboardSorting() {
             });
         }
     });
+} 
+
+// 新增：處理戰鬥模擬的定時器邏輯
+async function startBattleSimulation(playerMonster, opponentMonster, initialLogEntry) {
+    // 初始化戰鬥狀態
+    battlePlayerMonster = { ...playerMonster };
+    battleOpponentMonster = { ...opponentMonster };
+    currentBattleTurn = 0;
+    fullBattleLog = [];
+
+    // 顯示戰鬥日誌模態框
+    showBattleLogModal([], battlePlayerMonster.nickname, battleOpponentMonster.nickname); // 清空並初始化日誌顯示
+
+    // 開始每3秒請求一次新的回合日誌
+    if (battleIntervalId) clearInterval(battleIntervalId); // 清除舊的定時器以防萬一
+
+    showFeedbackModal('戰鬥開始！', `${battlePlayerMonster.nickname} vs ${battleOpponentMonster.nickname}`, true); // 顯示戰鬥開始提示
+
+    battleIntervalId = setInterval(async () => {
+        try {
+            // 從後端獲取下一回合的日誌
+            const response = await simulateBattle(
+                battlePlayerMonster,
+                battleOpponentMonster,
+                currentBattleTurn,
+                fullBattleLog
+            );
+
+            if (!response || !response.latest_log_entry) {
+                throw new Error("無效的戰鬥日誌響應。");
+            }
+
+            const latestLogEntry = response.latest_log_entry;
+            const logMessage = latestLogEntry.styled_log_message || latestLogEntry.raw_log_messages.join('\n');
+            fullBattleLog.push(latestLogEntry); // 將最新回合日誌加入完整日誌
+
+            // 更新前端顯示
+            showBattleLogModal(fullBattleLog.map(entry => entry.styled_log_message || entry.raw_log_messages.join('\n')),
+                                response.battle_end ? response.winner_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : battleOpponentMonster.nickname : null,
+                                response.battle_end ? response.loser_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : battleOpponentMonster.nickname : null); // 更新日誌顯示
+
+            // 更新怪獸的當前HP和MP（這是後端返回的最新狀態，用於下次回合發送）
+            battlePlayerMonster = response.player_monster_data || battlePlayerMonster;
+            battleOpponentMonster = response.opponent_monster_data || battleOpponentMonster;
+
+            currentBattleTurn = latestLogEntry.turn;
+
+            if (response.battle_end) {
+                clearInterval(battleIntervalId);
+                battleIntervalId = null;
+                hideModal('feedback-modal'); // 隱藏載入提示
+                await refreshPlayerData(); // 戰鬥結束後刷新玩家數據
+                updateMonsterSnapshot(getSelectedMonster()); // 更新快照
+                if (response.absorption_details && response.absorption_details.success) {
+                    showFeedbackModal('吸收成功！', response.absorption_details.message);
+                } else if (response.absorption_details && response.absorption_details.error) {
+                    showFeedbackModal('吸收失敗！', response.absorption_details.error);
+                }
+            }
+
+        } catch (error) {
+            console.error("戰鬥模擬時發生錯誤:", error);
+            clearInterval(battleIntervalId); // 發生錯誤時停止模擬
+            battleIntervalId = null;
+            hideModal('feedback-modal');
+            showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${error.message}`);
+            // 確保怪獸狀態在錯誤後被重置
+            await refreshPlayerData();
+        }
+    }, 3000); // 每 3 秒發送一次請求
+
 }
+
+// 修改：處理挑戰按鈕點擊，開始逐步戰鬥模擬
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null) {
+    if(event) event.stopPropagation();
+
+    const playerMonster = getSelectedMonster();
+    if (!playerMonster) {
+        showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
+        return;
+    }
+    if (playerMonster.farmStatus?.isTraining) {
+         showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
+        return;
+    }
+
+    let opponentMonster = null;
+
+    try {
+        showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
+        
+        // 暫時將玩家怪獸設為戰鬥中狀態，以便UI更新
+        // 注意：這是一個前端的臨時狀態，真實狀態由後端確認
+        playerMonster.farmStatus = { ...playerMonster.farmStatus, isBattling: true };
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
+
+        // 如果是從排行榜挑戰其他玩家的怪獸
+        if (monsterIdToChallenge && ownerId && ownerId !== gameState.playerId) {
+            const opponentPlayerData = await getPlayerData(ownerId);
+            if (!opponentPlayerData || !opponentPlayerData.farmedMonsters) throw new Error('無法獲取對手玩家資料。');
+            opponentMonster = opponentPlayerData.farmedMonsters.find(m => m.id === monsterIdToChallenge);
+            if (!opponentMonster) throw new Error(`找不到對手玩家的怪獸ID ${monsterIdToChallenge}。`);
+            // 確保對手怪獸也有 farmStatus 屬性
+            if (!opponentMonster.farmStatus) {
+                opponentMonster.farmStatus = { isTraining: false, isBattling: false };
+            }
+        }
+        // 如果是挑戰 NPC，NPC 數據應該已經包含在 gameConfigs 裡了
+        else if (npcId) {
+             const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
+            opponentMonster = npcTemplates.find(npc => npc.id === npcId);
+            if (!opponentMonster) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
+            opponentMonster = JSON.parse(JSON.stringify(opponentMonster)); // 複製一份，避免修改原始配置
+            opponentMonster.isNPC = true;
+            if (!opponentMonster.farmStatus) { // 確保 NPC 怪獸也有 farmStatus 屬性
+                opponentMonster.farmStatus = { isTraining: false, isBattling: false };
+            }
+        }
+        else {
+             // 如果沒有指定對手，則隨機選擇一個 NPC 對手
+            const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
+            if (npcTemplates.length > 0) {
+                opponentMonster = JSON.parse(JSON.stringify(npcTemplates[Math.floor(Math.random() * npcTemplates.length)]));
+                opponentMonster.isNPC = true;
+                if (!opponentMonster.farmStatus) { // 確保 NPC 怪獸也有 farmStatus 屬性
+                    opponentMonster.farmStatus = { isTraining: false, isBattling: false };
+                }
+                console.log(`為玩家怪獸 ${playerMonster.nickname} 匹配到NPC對手: ${opponentMonster.nickname}`);
+            } else {
+                throw new Error('沒有可用的NPC對手進行挑戰。');
+            }
+        }
+        
+        hideModal('feedback-modal'); // 隱藏獲取對手資訊的提示
+
+        if (!opponentMonster) {
+            showFeedbackModal('錯誤', '未能找到合適的挑戰對手。');
+            playerMonster.farmStatus.isBattling = false;
+            renderMonsterFarm();
+            updateMonsterSnapshot(playerMonster);
+            return;
+        }
+
+        gameState.battleTargetMonster = opponentMonster; // 儲存對手信息
+
+        showConfirmationModal(
+            '確認出戰',
+            `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${opponentMonster.nickname} (評價: ${opponentMonster.score}) 嗎？`,
+            async () => {
+                // 在確認後才真正開始戰鬥模擬的定時器
+                showFeedbackModal('戰鬥初始化中...', '正在為戰鬥數據進行最終準備...', true);
+
+                // 將怪獸的當前HP和MP初始化為滿值，並確保它們是數字類型
+                playerMonster.current_hp = playerMonster.hp;
+                playerMonster.current_mp = playerMonster.mp;
+                opponentMonster.current_hp = opponentMonster.hp;
+                opponentMonster.current_mp = opponentMonster.mp;
+
+                // 開始戰鬥模擬的定時器
+                startBattleSimulation(playerMonster, opponentMonster);
+
+            },
+            'primary',
+            '開始戰鬥'
+        );
+
+    } catch (error) {
+        showFeedbackModal('錯誤', `準備戰鬥失敗: ${error.message}`);
+        console.error("準備戰鬥錯誤:", error);
+        playerMonster.farmStatus.isBattling = false; // 重置戰鬥狀態
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
+    }
+}
+
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
+        clearInterval(battleIntervalId); // 關閉日誌時清除定時器
+        battleIntervalId = null;
         hideModal('battle-log-modal');
+        // 確保怪獸狀態在日誌關閉時被重置（如果沒有在戰鬥結束時自動刷新）
+        refreshPlayerData();
     });
 }
 
 function handleDnaDrawModal() {
-    if (DOMElements.closeDnaDrawBtn) DOMEElements.closeDnaDrawBtn.addEventListener('click', () => {
+    if (DOMElements.closeDnaDrawBtn) DOMElements.closeDnaDrawBtn.addEventListener('click', () => {
         hideModal('dna-draw-modal');
     });
     if (DOMElements.dnaDrawButton) DOMElements.dnaDrawButton.addEventListener('click', handleDrawDNAClick);
@@ -661,7 +849,7 @@ async function handleClickInventory(event) {
     const inventoryIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
     const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
     if (!dnaObject) return;
-
+    
     // 尋找組合槽中的第一個空格
     const targetSlotIndex = gameState.dnaCombinationSlots.findIndex(slot => slot === null);
 
@@ -741,7 +929,7 @@ function initializeEventListeners() {
     if (deleteSlot) {
         deleteSlot.addEventListener('drop', handleDrop);
     }
-
+    
     // 新增：為庫存區和組合區添加點擊事件監聽
     if (DOMElements.inventoryItemsContainer) {
         DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
