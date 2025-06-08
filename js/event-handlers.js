@@ -9,12 +9,12 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
-// 新增：戰鬥相關的全局變數，用於逐步模擬
-let battleIntervalId = null;
-let currentBattleTurn = 0;
-let battlePlayerMonster = null;
-let battleOpponentMonster = null;
-let fullBattleLog = []; // 儲存所有回合的完整日誌
+// 移除戰鬥相關的全局變數，因為將改為單頁戰報
+// let battleIntervalId = null;
+// let currentBattleTurn = 0;
+// let battlePlayerMonster = null;
+// let battleOpponentMonster = null;
+// let fullBattleLog = []; // 儲存所有回合的完整日誌
 
 
 /**
@@ -354,7 +354,8 @@ function handleTopNavButtons() {
                 filterAndRenderMonsterLeaderboard();
                 hideModal('feedback-modal');
                 showModal('monster-leaderboard-modal');
-            } catch (error) {
+            }
+            catch (error) {
                 showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
             }
         });
@@ -624,77 +625,11 @@ function handleLeaderboardSorting() {
     });
 } 
 
-// 新增：處理戰鬥模擬的定時器邏輯
-async function startBattleSimulation(playerMonster, opponentMonster) {
-    // 初始化戰鬥狀態
-    battlePlayerMonster = { ...playerMonster };
-    battleOpponentMonster = { ...opponentMonster };
-    currentBattleTurn = 0;
-    fullBattleLog = []; // 每次新戰鬥開始時，清空完整日誌
+// 移除 startBattleSimulation，改為一次性調用
+// async function startBattleSimulation(...) { ... }
 
-    // 顯示戰鬥日誌模態框（初始空白，只顯示標題和開始提示）
-    showBattleLogModal([], battlePlayerMonster.nickname, battleOpponentMonster.nickname); 
 
-    // 開始每3秒請求一次新的回合日誌
-    if (battleIntervalId) clearInterval(battleIntervalId); // 清除舊的定時器以防萬一
-
-    showFeedbackModal('戰鬥開始！', `${battlePlayerMonster.nickname} vs ${battleOpponentMonster.nickname}`, true); // 顯示戰鬥開始提示
-
-    battleIntervalId = setInterval(async () => {
-        try {
-            // 從後端獲取下一回合的日誌
-            const response = await simulateBattle(
-                battlePlayerMonster,
-                battleOpponentMonster,
-                currentBattleTurn,
-                fullBattleLog // 將目前累積的日誌傳給後端
-            );
-
-            if (!response || !response.latest_log_entry) {
-                throw new Error("無效的戰鬥日誌響應。");
-            }
-
-            const latestLogEntry = response.latest_log_entry;
-            fullBattleLog.push(latestLogEntry); // 將最新回合日誌加入完整日誌
-
-            // 更新前端顯示
-            showBattleLogModal(fullBattleLog, // 將完整的日誌陣列傳遞給顯示函數
-                                response.battle_end ? (response.winner_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : (response.winner_id === battleOpponentMonster.id ? battleOpponentMonster.nickname : null)) : null,
-                                response.battle_end ? (response.loser_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : (response.loser_id === battleOpponentMonster.id ? battleOpponentMonster.nickname : null)) : null); // 更新日誌顯示
-
-            // 更新怪獸的當前HP和MP（這是後端返回的最新狀態，用於下次回合發送）
-            battlePlayerMonster = response.player_monster_data || battlePlayerMonster;
-            battleOpponentMonster = response.opponent_monster_data || battleOpponentMonster;
-
-            currentBattleTurn = latestLogEntry.turn;
-
-            if (response.battle_end) {
-                clearInterval(battleIntervalId);
-                battleIntervalId = null;
-                hideModal('feedback-modal'); // 隱藏載入提示
-                await refreshPlayerData(); // 戰鬥結束後刷新玩家數據
-                updateMonsterSnapshot(getSelectedMonster()); // 更新快照
-                if (response.absorption_details && response.absorption_details.success) {
-                    showFeedbackModal('吸收成功！', response.absorption_details.message);
-                } else if (response.absorption_details && response.absorption_details.error) {
-                    showFeedbackModal('吸收失敗！', response.absorption_details.error);
-                }
-            }
-
-        } catch (error) {
-            console.error("戰鬥模擬時發生錯誤:", error);
-            clearInterval(battleIntervalId); // 發生錯誤時停止模擬
-            battleIntervalId = null;
-            hideModal('feedback-modal');
-            showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${error.message}`);
-            // 確保怪獸狀態在錯誤後被重置
-            await refreshPlayerData();
-        }
-    }, 3000); // 每 3 秒發送一次請求
-
-}
-
-// 修改：處理挑戰按鈕點擊，開始逐步戰鬥模擬
+// 修改：處理挑戰按鈕點擊，發送一次性戰鬥模擬請求
 async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null) {
     if(event) event.stopPropagation();
 
@@ -772,18 +707,42 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
             '確認出戰',
             `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${opponentMonster.nickname} (評價: ${opponentMonster.score}) 嗎？`,
             async () => {
-                // 在確認後才真正開始戰鬥模擬的定時器
-                showFeedbackModal('戰鬥初始化中...', '正在為戰鬥數據進行最終準備...', true);
+                try {
+                    showFeedbackModal('戰鬥中...', '正在激烈交鋒，生成戰報...', true);
+                    // 調用新的 simulateBattle API，它現在會返回完整的戰報
+                    const response = await simulateBattle(playerMonster, opponentMonster); // 注意：這裡的 simulateBattle 應該是 apiClient.js 中的函數
+                    const battleResult = response.battle_result;
 
-                // 將怪獸的當前HP和MP初始化為滿值，並確保它們是數字類型
-                playerMonster.current_hp = playerMonster.hp;
-                playerMonster.current_mp = playerMonster.mp;
-                opponentMonster.current_hp = opponentMonster.hp;
-                opponentMonster.current_mp = opponentMonster.mp;
+                    await refreshPlayerData(); // 戰鬥結束後刷新數據，確保狀態同步
+                    updateMonsterSnapshot(getSelectedMonster()); // 更新快照為當前選中怪獸
 
-                // 開始戰鬥模擬的定時器
-                startBattleSimulation(playerMonster, opponentMonster);
+                    // 呼叫 showBattleLogModal 顯示完整的戰報內容
+                    if (battleResult && battleResult.ai_battle_report_content) {
+                        showBattleLogModal(battleResult.ai_battle_report_content); // 將 AI 生成的戰報內容傳入
+                    } else {
+                        showFeedbackModal('錯誤', '戰鬥結果中缺少 AI 戰報內容。');
+                    }
+                    
+                    hideModal('feedback-modal'); // 隱藏載入提示
 
+                    // 顯示吸收結果 (如果有的話)
+                    if (battleResult.absorption_details && battleResult.absorption_details.success) {
+                        // 可以選擇在這裡顯示一個單獨的吸收成功提示，或者將其內容整合到戰報中
+                        // 目前先保持獨立提示
+                        setTimeout(() => { // 延遲顯示，避免與戰報彈窗重疊
+                            showFeedbackModal('吸收成功！', battleResult.absorption_details.message);
+                        }, 500);
+                    } else if (battleResult.absorption_details && battleResult.absorption_details.error) {
+                         setTimeout(() => {
+                            showFeedbackModal('吸收失敗！', battleResult.absorption_details.error);
+                        }, 500);
+                    }
+
+                } catch (battleError) {
+                    showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
+                    console.error("模擬戰鬥錯誤:", battleError);
+                    await refreshPlayerData(); // 即使戰鬥出錯，也刷新數據以同步狀態
+                }
             },
             'primary',
             '開始戰鬥'
@@ -801,8 +760,9 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
-        clearInterval(battleIntervalId); // 關閉日誌時清除定時器
-        battleIntervalId = null;
+        // 清除定時器的邏輯現在不再需要，因為是單頁戰報
+        // clearInterval(battleIntervalId); 
+        // battleIntervalId = null;
         hideModal('battle-log-modal');
         // 確保怪獸狀態在日誌關閉時被重置（如果沒有在戰鬥結束時自動刷新）
         refreshPlayerData();
