@@ -194,33 +194,27 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
     
     // 清理之前的內容
-    DOMElements.feedbackModalMessage.innerHTML = ''; // 清空主訊息區域
+    DOMElements.feedbackModalMessage.innerHTML = ''; 
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
-    // 從 modal-body 移除舊的 banner
     const modalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    const existingBanner = modalBody ? modalBody.querySelector('#monster-banner-container') : null;
+    const existingBanner = modalBody ? modalBody.querySelector('.feedback-banner') : null;
     if (existingBanner) existingBanner.remove();
 
+    DOMElements.feedbackModalTitle.textContent = title;
 
     if (monsterDetails) {
         // --- 合成成功的新版彈窗 ---
-        DOMElements.feedbackModalTitle.textContent = title; // '合成成功！'
-        
-        // 1. 創建並插入新的 Banner
         const bannerContainer = document.createElement('div');
-        bannerContainer.id = 'monster-banner-container';
+        bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
         bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true" alt="合成成功橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        
-        // 將 banner 插入到 modal-body 的最頂部
         if(modalBody) modalBody.prepend(bannerContainer);
 
-        // 2. 組合主要的訊息內容
         const successMessage = "成功合成了新的怪獸";
         let discoveryMessage = "";
         if (monsterDetails.activityLog && monsterDetails.activityLog.some(log => log.message.includes("首次發現新配方"))) {
@@ -233,7 +227,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             ${discoveryMessage}
         `;
 
-        // 3. 只顯示綜合評價部分
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
         DOMElements.feedbackMonsterDetails.innerHTML = `
             <div class="details-section mt-4">
@@ -242,12 +235,28 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             </div>
         `;
         
-        // 4. 調整 Modal 尺寸，移除 large class，使其與公告大小一致
+        DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
+
+    } else if (title === '修煉開始！') {
+        // --- 修煉開始的新版彈窗 ---
+        let monsterName = '未知怪獸';
+        const parts = message.split(' 已開始為期');
+        if (parts.length > 0 && parts[0].startsWith('怪獸 ')) {
+            monsterName = parts[0].substring(3);
+        }
+
+        const bannerContainer = document.createElement('div');
+        bannerContainer.className = 'feedback-banner';
+        bannerContainer.style.textAlign = 'center';
+        bannerContainer.style.marginBottom = '15px';
+        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        if(modalBody) modalBody.prepend(bannerContainer);
+
+        DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-[var(--accent-color)]">${monsterName}</strong> 已開始修煉。</p>`;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
 
     } else {
         // --- 舊的簡單訊息顯示方式 (用於載入中、錯誤等) ---
-        DOMElements.feedbackModalTitle.textContent = title;
         DOMElements.feedbackModalMessage.innerHTML = message;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
     }
@@ -384,7 +393,6 @@ function clearMonsterBodyPartsDisplay() {
             applyDnaItemStyle(partElement, null); // Use the main styling function to clear
             partElement.innerHTML = ''; // Ensure no leftover text
             partElement.classList.add('empty-part');
-            partElement.style.visibility = 'hidden'; // Make empty parts invisible
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -450,11 +458,9 @@ function updateMonsterSnapshot(monster) {
                     if (dnaTemplate) {
                         partElement.innerHTML = `<span class="dna-name-text">${dnaTemplate.name}</span>`;
                         partElement.classList.remove('empty-part');
-                        partElement.style.visibility = 'visible'; // Make sure it's visible
                     } else {
                         partElement.innerHTML = '';
                         partElement.classList.add('empty-part');
-                        partElement.style.visibility = 'hidden';
                     }
                 }
             });
@@ -650,13 +656,17 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = '';
+    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
 
+    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
-        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
+        const emptyMessage = listContainer.parentNode.querySelector('.empty-farm-message');
+        if (emptyMessage) emptyMessage.style.display = 'block';
         farmHeaders.style.display = 'none';
         return;
     }
+    const emptyMessage = listContainer.parentNode.querySelector('.empty-farm-message');
+    if (emptyMessage) emptyMessage.style.display = 'none';
     farmHeaders.style.display = 'grid';
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
