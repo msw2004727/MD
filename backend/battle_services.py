@@ -13,7 +13,7 @@ from .MD_models import (
     BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory
 )
 # 從 MD_ai_services 導入實際的 AI 文本生成函數
-from .MD_ai_services import generate_battle_log_text as generate_battle_log_text_from_ai
+from .MD_ai_services import generate_battle_report_content
 
 
 battle_logger = logging.getLogger(__name__)
@@ -273,21 +273,18 @@ def _process_health_conditions(monster: Monster) -> Tuple[bool, List[str]]:
 
 
 # --- 戰鬥服務核心 ---
-def simulate_battle_turn_by_turn(
+def simulate_battle_full(
     player_monster_data: Monster,
     opponent_monster_data: Monster,
     game_configs: GameConfigs,
-    current_turn: int = 0,
-    battle_log_so_far: List[BattleLogEntry] = []
 ) -> BattleResult:
     """
-    逐步模擬怪獸戰鬥，返回包含每個回合詳細信息的 BattleResult。
-    這是為了支援前端每 N 秒顯示一回合的功能。
+    一次性模擬整個怪獸戰鬥，並返回所有回合的詳細日誌和最終結果。
     """
     player_monster = copy.deepcopy(player_monster_data)
     opponent_monster = copy.deepcopy(opponent_monster_data)
 
-    # 初始化當前 HP/MP (如果沒有的話)
+    # 初始化當前 HP/MP
     player_monster["current_hp"] = player_monster.get("current_hp", player_monster["hp"])
     player_monster["current_mp"] = player_monster.get("current_mp", player_monster["mp"])
     opponent_monster["current_hp"] = opponent_monster.get("current_hp", opponent_monster["hp"])
@@ -310,148 +307,121 @@ def simulate_battle_turn_by_turn(
     opponent_monster.setdefault("temp_evasion_modifier", 0)
     opponent_monster.setdefault("healthConditions", [])
 
-    all_log_entries = battle_log_so_far # 接收之前的日誌
+    all_raw_log_messages: List[str] = [] # 儲存所有回合的原始日誌訊息
+    all_turn_actions: List[BattleAction] = [] # 儲存所有回合的行動細節
 
     max_turns = game_configs.get("value_settings", {}).get("max_battle_turns", 30)
 
-    # 只模擬一個新回合，因為前端會逐步請求
-    if current_turn >= max_turns: # 達到最大回合數則直接進入判斷階段
-        raw_log_messages: List[str] = [f"--- 戰鬥達到最大回合數 ({max_turns})！ ---"]
-        turn_actions: List[BattleAction] = []
-        # 直接跳轉到戰鬥結束判斷
-    else:
-        turn_num = current_turn + 1
-        raw_log_messages: List[str] = [f"--- 回合 {turn_num} 開始 ---"]
-        turn_actions: List[BattleAction] = []
-        
-        # 檢查是否已分出勝負（主要針對上一回合結束時的血量判斷，這裡是一個額外檢查）
+    for turn_num in range(1, max_turns + 2): # 加 1 處理最終回判斷平手
+        # 如果已經分出勝負，則跳出循環
         if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
-            # 戰鬥應該在上一個回合就結束了，這裡只是為了安全，避免多跑一回合
+            break
+
+        turn_raw_log_messages: List[str] = [f"--- 回合 {turn_num} 開始 ---"]
+        
+        # 處理回合開始時的健康狀態效果
+        player_skip, player_status_logs = _process_health_conditions(player_monster)
+        turn_raw_log_messages.extend(player_status_logs)
+        opponent_skip, opponent_status_logs = _process_health_conditions(opponent_monster)
+        turn_raw_log_messages.extend(opponent_status_logs)
+
+        # 如果任何一方在狀態處理後 HP 歸零，則直接結束行動階段
+        if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
+            # 戰鬥在狀態處理後結束，後面的勝負判斷會處理
             pass 
         else:
-            # 處理回合開始時的健康狀態效果
-            player_skip, player_status_logs = _process_health_conditions(player_monster)
-            raw_log_messages.extend(player_status_logs)
-            opponent_skip, opponent_status_logs = _process_health_conditions(opponent_monster)
-            raw_log_messages.extend(opponent_status_logs)
+            # 判斷行動順序 (速度快者先行動)
+            player_speed = _get_monster_current_stats(player_monster)["speed"]
+            opponent_speed = _get_monster_current_stats(opponent_monster)["speed"]
 
-            # 如果任何一方在狀態處理後 HP 歸零，則直接結束行動階段
-            if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
-                pass # 會在後面的勝負判斷處理
+            acting_order: List[Monster] = []
+            if player_speed >= opponent_speed:
+                acting_order.append(player_monster)
+                acting_order.append(opponent_monster)
             else:
-                # 判斷行動順序 (速度快者先行動)
-                player_speed = _get_monster_current_stats(player_monster)["speed"]
-                opponent_speed = _get_monster_current_stats(opponent_monster)["speed"]
-
-                acting_order: List[Monster] = []
-                if player_speed >= opponent_speed:
-                    acting_order.append(player_monster)
-                    acting_order.append(opponent_monster)
-                else:
-                    acting_order.append(opponent_monster)
-                    acting_order.append(player_monster)
+                acting_order.append(opponent_monster)
+                acting_order.append(player_monster)
+            
+            # 執行行動
+            for i, current_actor in enumerate(acting_order):
+                target_actor = opponent_monster if current_actor["id"] == player_monster["id"] else player_monster
                 
-                # 執行行動
-                for i, current_actor in enumerate(acting_order):
-                    target_actor = opponent_monster if current_actor["id"] == player_monster["id"] else player_monster
-                    
-                    # 檢查是否被擊倒或跳過回合
-                    if current_actor["current_hp"] <= 0:
-                        continue # 被擊倒無法行動
-                    
-                    if (current_actor["id"] == player_monster["id"] and player_skip) or \
-                       (current_actor["id"] == opponent_monster["id"] and opponent_skip):
-                        raw_log_messages.append(f"{current_actor['nickname']} 本回合無法行動。")
-                        continue # 跳過回合
+                # 檢查是否被擊倒或跳過回合
+                if current_actor["current_hp"] <= 0:
+                    continue # 被擊倒無法行動
+                
+                if (current_actor["id"] == player_monster["id"] and player_skip) or \
+                   (current_actor["id"] == opponent_monster["id"] and opponent_skip):
+                    turn_raw_log_messages.append(f"{current_actor['nickname']} 本回合無法行動。")
+                    continue # 跳過回合
 
-                    chosen_skill = _choose_action(current_actor, target_actor, game_configs)
-                    if chosen_skill:
-                        action_result = _apply_skill_effect(current_actor, target_actor, chosen_skill, game_configs)
-                        raw_log_messages.append(action_result["log_message"])
-                        turn_actions.append(BattleAction(
-                            performer_id=current_actor["id"],
-                            target_id=target_actor["id"],
-                            skill_name=chosen_skill["name"],
-                            damage_dealt=action_result.get("damage_dealt"),
-                            damage_healed=action_result.get("damage_healed"),
-                            status_applied=action_result.get("status_applied"),
-                            is_crit=action_result.get("is_crit"),
-                            is_miss=action_result.get("is_miss"),
-                            log_message=action_result["log_message"]
-                        ))
-                    else:
-                        raw_log_messages.append(f"{current_actor['nickname']} 無法行動，等待機會。") # 無法行動時的日誌
+                chosen_skill = _choose_action(current_actor, target_actor, game_configs)
+                if chosen_skill:
+                    action_result = _apply_skill_effect(current_actor, target_actor, chosen_skill, game_configs)
+                    turn_raw_log_messages.append(action_result["log_message"])
+                    all_turn_actions.append(BattleAction( # 將每次行動加入總行動列表
+                        performer_id=current_actor["id"],
+                        target_id=target_actor["id"],
+                        skill_name=chosen_skill["name"],
+                        damage_dealt=action_result.get("damage_dealt"),
+                        damage_healed=action_result.get("damage_healed"),
+                        status_applied=action_result.get("status_applied"),
+                        is_crit=action_result.get("is_crit"),
+                        is_miss=action_result.get("is_miss"),
+                        log_message=action_result["log_message"]
+                    ))
+                else:
+                    turn_raw_log_messages.append(f"{current_actor['nickname']} 無法行動，等待機會。") # 無法行動時的日誌
 
-                    # 每次行動後檢查是否分出勝負
-                    if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
-                        break # 勝負已分，結束本回合行動
+                # 每次行動後檢查是否分出勝負
+                if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
+                    break # 勝負已分，結束本回合行動
 
-    # 戰鬥結束判斷
+        all_raw_log_messages.extend(turn_raw_log_messages) # 將本回合的原始日誌加入總列表
+
+    # 戰鬥結束，判斷勝負
     winner_id: Optional[str] = None
     loser_id: Optional[str] = None
-    battle_end = False
+    battle_end = True # 戰鬥結束
 
     if player_monster["current_hp"] <= 0 and opponent_monster["current_hp"] <= 0:
         winner_id = "平手" # 特殊標記平手
         loser_id = "平手"
-        raw_log_messages.append("戰鬥結束！雙方同歸於盡，平手！")
-        battle_end = True
+        all_raw_log_messages.append("戰鬥結束！雙方同歸於盡，平手！")
     elif player_monster["current_hp"] <= 0:
         winner_id = opponent_monster["id"]
         loser_id = player_monster["id"]
-        raw_log_messages.append(f"戰鬥結束！{opponent_monster['nickname']} 獲勝！")
-        battle_end = True
+        all_raw_log_messages.append(f"戰鬥結束！{opponent_monster['nickname']} 獲勝！")
     elif opponent_monster["current_hp"] <= 0:
         winner_id = player_monster["id"]
         loser_id = opponent_monster["id"]
-        raw_log_messages.append(f"戰鬥結束！{player_monster['nickname']} 獲勝！")
-        battle_end = True
-    elif turn_num >= max_turns: # 達到最大回合數，判斷平手
+        all_raw_log_messages.append(f"戰鬥結束！{player_monster['nickname']} 獲勝！")
+    else: # 達到最大回合數，判斷平手
         winner_id = "平手"
         loser_id = "平手"
-        raw_log_messages.append(f"戰鬥達到最大回合數 ({max_turns})！雙方精疲力盡，平手！")
-        battle_end = True
+        all_raw_log_messages.append(f"戰鬥達到最大回合數 ({max_turns})！雙方精疲力盡，平手！")
 
-    # 準備本回合的日誌條目
-    current_turn_log_entry: BattleLogEntry = {
-        "turn": turn_num, # 修正回合數為當前回合
-        "player_monster_hp": player_monster["current_hp"],
-        "player_monster_mp": player_monster["current_mp"],
-        "opponent_monster_hp": opponent_monster["current_hp"],
-        "opponent_monster_mp": opponent_monster["current_mp"],
-        "actions": turn_actions,
-        "raw_log_messages": raw_log_messages,
-        # 在這裡呼叫 AI 服務來填充 styled_log_message
-        "styled_log_message": generate_battle_log_text_from_ai(raw_log_messages, game_configs), # 使用 AI 生成風格化日誌
-        "battle_end": battle_end,
-        "winner_id": winner_id,
-        "loser_id": loser_id
-    }
-    all_log_entries.append(current_turn_log_entry) # 將最新回合日誌加入完整日誌
 
-    final_result: BattleResult = {
-        "log_entries": all_log_entries,
+    final_battle_result: BattleResult = {
+        "log_entries": [], # 在此模式下，這個列表不再用於前端的逐回合顯示，但可以保留。
+        "raw_full_log": all_raw_log_messages, # 儲存完整的原始日誌供 AI 生成戰報
         "winner_id": winner_id,
         "loser_id": loser_id,
+        "battle_end": battle_end,
         "player_monster_final_hp": player_monster["current_hp"],
         "player_monster_final_mp": player_monster["current_mp"],
         "player_monster_final_skills": player_monster.get("skills", []), # 返回最終技能狀態
         "player_monster_final_resume": player_monster.get("resume", {"wins": 0, "losses": 0}),
     }
     
-    battle_logger.info(f"戰鬥模擬結束。勝利者: {winner_id}, 失敗者: {loser_id}")
-    return final_result
+    # 呼叫 AI 服務生成戰報內容
+    ai_battle_report = generate_battle_report_content(
+        player_monster_data, # 傳入原始怪獸數據，AI可能需要更詳細的初始屬性
+        opponent_monster_data,
+        final_battle_result, # 包含勝負等最終結果
+        all_raw_log_messages # 完整的原始日誌供 AI 總結
+    )
+    final_battle_result["ai_battle_report_content"] = ai_battle_report # 將 AI 生成的戰報內容加入結果
 
-# 未來可擴展的 AI 文本生成函數
-def generate_battle_log_text(raw_log_messages: List[str], game_configs: GameConfigs, style: Optional[Literal["嚴肅", "幽默", "武俠", "科幻", "驚悚", "獵奇"]] = None) -> str:
-    """
-    根據原始日誌信息和指定風格，使用 AI 生成風格化的戰鬥日誌文本。
-    此為佔位符，實際 AI 調用將在 MD_ai_services 中實現。
-    """
-    # 這裡的實現應呼叫實際的 AI 服務，而不是簡單地返回原始訊息
-    # 暫時為了測試，先直接返回原始訊息
-    if style:
-        return f"({style}風格) " + "\n".join(raw_log_messages)
-    
-    # 確保每個原始日誌條目都在新行顯示
-    return "\n".join(raw_log_messages)
+    battle_logger.info(f"完整戰鬥模擬結束。勝利者: {winner_id}, 失敗者: {loser_id}")
+    return final_battle_result
