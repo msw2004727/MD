@@ -718,8 +718,8 @@ function renderMonsterFarm() {
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
 
         const isTraining = monster.farmStatus?.isTraining;
-        const cultivateBtnText = isTraining ? '結束' : '修煉';
-        const cultivateBtnClass = isTraining ? 'danger' : 'warning';
+        const cultivateBtnText = isTraining ? '召回' : '修煉';
+        const cultivateBtnClass = isTraining ? 'warning-outline' : 'warning';
 
 
         item.innerHTML = `
@@ -742,7 +742,7 @@ function renderMonsterFarm() {
             </div>
             <div class="farm-col farm-col-actions">
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
-                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}"
+                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}" 
                         title="${isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
