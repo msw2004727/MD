@@ -1410,7 +1410,8 @@ function showBattleLogModal(battleReportContent) {
 
         // 對技能名稱進行上色
         skillNames.forEach(skillName => {
-            const regex = new RegExp(`(${skillName})`, 'g');
+            // 使用正則表達式，確保只匹配完整的單詞，避免部分匹配
+            const regex = new RegExp(`\\b(${skillName})\\b`, 'g'); 
             formattedText = formattedText.replace(regex, `<span style="color: var(--accent-hover); font-weight: bold;">$1</span>`);
         });
 
@@ -1420,7 +1421,8 @@ function showBattleLogModal(battleReportContent) {
         formattedText = formattedText.replace(/被擊倒了！/g, '<span style="color: var(--danger-color); font-weight: bold;">被擊倒了！</span>');
         formattedText = formattedText.replace(/獲勝！/g, '<span style="color: var(--success-color); font-weight: bold;">獲勝！</span>');
         formattedText = formattedText.replace(/平手！/g, '<span style="color: var(--warning-color); font-weight: bold;">平手！</span>');
-
+        formattedText = formattedText.replace(/無法行動/g, '<span style="color: var(--danger-color); font-weight: bold;">無法行動</span>');
+        formattedText = formattedText.replace(/閃避了！/g, '<span style="color: var(--warning-color); font-weight: bold;">閃避了！</span>');
 
         return formattedText;
     }
