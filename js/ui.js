@@ -299,12 +299,22 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     }
     DOMElements.confirmationModalTitle.textContent = title;
     
+    let bodyHtml = '';
+
+    if (title === '提前結束修煉') {
+        bodyHtml += `
+            <div class="confirmation-banner" style="text-align: center; margin-bottom: 15px;">
+                <img src="https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true" alt="提前結束修煉橫幅" style="max-width: 100%; border-radius: 6px;">
+            </div>
+        `;
+    }
+    
     if (monsterToRelease) {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
         const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
-        DOMElements.confirmationModalBody.innerHTML = `<p>${finalMessage}</p>`;
+        bodyHtml += `<p>${finalMessage}</p>`;
 
         const imgPlaceholder = DOMElements.releaseMonsterImagePlaceholder;
         const imgPreview = DOMElements.releaseMonsterImgPreview;
@@ -315,11 +325,13 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
             toggleElementDisplay(imgPlaceholder, true, 'flex');
         }
     } else {
-        DOMElements.confirmationModalBody.innerHTML = `<p>${message}</p>`;
+        bodyHtml += `<p>${message}</p>`;
         if (DOMElements.releaseMonsterImagePlaceholder) {
             toggleElementDisplay(DOMElements.releaseMonsterImagePlaceholder, false);
         }
     }
+
+    DOMElements.confirmationModalBody.innerHTML = bodyHtml;
 
     DOMElements.confirmActionBtn.textContent = confirmButtonText;
     DOMElements.confirmActionBtn.className = `button ${confirmButtonClass}`;
