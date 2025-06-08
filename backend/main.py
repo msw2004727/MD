@@ -9,33 +9,30 @@ import os
 import logging
 import json
 
-# 導入你的藍圖 (使用相對導入，修正)
-from .MD_routes import md_bp
-# 導入 Firebase 配置設定函式 (使用相對導入，修正)
+# --- 關鍵修改：調整導入順序 ---
+# 1. 先導入 firebase_config 和 models，它們沒有複雜的依賴
 from . import MD_firebase_config
-# 導入遊戲設定服務 (使用相對導入，修正)
-from .MD_config_services import load_all_game_configs_from_firestore
+from .MD_models import PlayerGameData, Monster
 
-# 設定日誌
-# 將日誌級別從 INFO 改為 DEBUG，以便看到詳細的偵錯訊息
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-app_logger = logging.getLogger(__name__)
-
-# 初始化 Flask 應用程式
+# 2. 初始化 Flask app
 app = Flask(__name__)
 
-# --- CORS 配置 ---
-# 定義一個允許來源的列表
-allowed_origins = [
-    "https://msw2004727.github.io",  # 您部署在 GitHub Pages 的前端網址
-    "http://127.0.0.1:5500",       # 本地開發常用 Live Server 端口
-    "http://localhost:5500",      # 本地開發常用 Live Server 端口
-    "http://127.0.0.1:5501",       # 備用端口
-    "http://localhost:5501"       # 備用端口
-]
+# 3. 再導入 services 和 routes，它們依賴於 app 或其他已建立的物件
+# (延後導入以避免循環)
 
-# **修改點：簡化 CORS 設定，直接應用於整個應用程式**
-# 這樣可以避免因 resource 路徑匹配問題導致的錯誤，更為穩健
+# 設定日誌
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+app_logger = logging.getLogger(__name__)
+
+
+# --- CORS 配置 ---
+allowed_origins = [
+    "https://msw2004727.github.io",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:5501",
+    "http://localhost:5501"
+]
 CORS(app,
      origins=allowed_origins,
      supports_credentials=True,
@@ -44,9 +41,6 @@ CORS(app,
 )
 app_logger.info(f"CORS configured to allow origins: {allowed_origins}")
 
-
-# 註冊藍圖
-app.register_blueprint(md_bp)
 
 # --- Firebase Admin SDK 初始化 ---
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
@@ -117,8 +111,16 @@ else:
     app_logger.error("因 Firebase Admin SDK 初始化問題，無法獲取 Firestore 客戶端。")
     firebase_app_initialized = False
 
-# 在應用程式啟動時載入遊戲設定
+# --- 關鍵修改：將這部分內容移到這裡 ---
+# 只有在 Firebase 初始化並注入 db 客戶端之後，才導入依賴它的模組
 if firebase_app_initialized and MD_firebase_config.db is not None:
+    from .MD_config_services import load_all_game_configs_from_firestore
+    from .MD_routes import md_bp
+
+    # 註冊藍圖
+    app.register_blueprint(md_bp)
+
+    # 在應用程式啟動時載入遊戲設定
     with app.app_context():
         app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
         if app.config.get('MD_GAME_CONFIGS'):
@@ -126,7 +128,7 @@ if firebase_app_initialized and MD_firebase_config.db is not None:
         else:
             app_logger.error("遊戲設定載入失敗或為空。")
 else:
-    app_logger.warning("由於 Firebase 初始化或 Firestore 客戶端設定問題 (MD_firebase_config.db is None)，未載入遊戲設定。")
+    app_logger.warning("由於 Firebase 初始化或 Firestore 客戶端設定問題 (MD_firebase_config.db is None)，未載入遊戲設定與路由。")
 
 
 # 健康檢查路由
