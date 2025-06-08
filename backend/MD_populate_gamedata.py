@@ -296,7 +296,8 @@ def populate_game_configs():
         "max_battle_turns": 30, # 戰鬥最大回合數
         # 修改點：增加 DNA 庫存和臨時背包的最大槽位數設定
         "max_inventory_slots": 12, # DNA 庫存格數設定
-        "max_temp_backpack_slots": 9 # 臨時背包格數設定
+        "max_temp_backpack_slots": 9, # 臨時背包格數設定
+        "starting_gold": 500 # 新增：新玩家的初始金幣
     }
     try:
         db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
@@ -327,7 +328,20 @@ def populate_game_configs():
         "new_skill_chance": 0.1,
         "skill_exp_gain_range": (15, 75),
         "max_skill_level": 10,
-        "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 }
+        "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 },
+        "stat_growth_weights": {
+            "hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10
+        },
+        "stat_growth_duration_divisor": 900,
+        "dna_find_chance": 0.5,
+        "dna_find_duration_divisor": 1200,
+        "dna_find_loot_table": {
+            "普通": {"普通": 0.8, "稀有": 0.2},
+            "稀有": {"普通": 0.5, "稀有": 0.4, "菁英": 0.1},
+            "菁英": {"普通": 0.2, "稀有": 0.5, "菁英": 0.25, "傳奇": 0.05},
+            "傳奇": {"稀有": 0.4, "菁英": 0.4, "傳奇": 0.15, "神話": 0.05},
+            "神話": {"菁英": 0.5, "傳奇": 0.4, "神話": 0.1}
+        }
     }
     try:
         db_client.collection('MD_GameConfigs').document('CultivationSettings').set(cultivation_settings_data)
@@ -335,28 +349,27 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"寫入 CultivationSettings 資料失敗: {e}")
 
-    # 14. 元素克制表 (ElementalAdvantageChart) - 新增
+    # 14. 元素克制表 (ElementalAdvantageChart)
     elemental_advantage_chart_data = {
         # 攻擊方: {防禦方: 倍率}
         "火": {"木": 1.5, "水": 0.5, "金": 1.2, "土": 0.8, "風":1.0, "毒":1.0, "光":1.0, "暗":1.0, "無":1.0, "混":1.0},
         "水": {"火": 1.5, "土": 1.2, "木": 0.5, "金": 0.8, "風":1.0, "毒":1.0, "光":1.0, "暗":1.0, "無":1.0, "混":1.0},
-        "木": {"水": 1.5, "土": 0.5, "金": 0.8, "火": 0.8, "風":1.0, "毒":1.2, "光":1.0, "暗":1.0, "無":1.0, "混":1.0}, # 木克水，被土克，被火微弱抵抗，對毒有優勢
-        "金": {"木": 1.5, "風": 1.2, "火": 0.5, "土": 1.2, "水": 0.8, "毒":0.8, "光":1.0, "暗":1.0, "無":1.0, "混":1.0}, # 金克木，對風和土有優勢，被火克，對水和毒抵抗
-        "土": {"火": 1.2, "金": 0.5, "水": 0.5, "木": 1.5, "風": 0.8, "毒":1.2, "光":1.0, "暗":1.0, "無":1.0, "混":1.0}, # 土對火優勢，被金水克，克木，對風毒有優勢
+        "木": {"水": 1.5, "土": 0.5, "金": 0.8, "火": 0.8, "風":1.0, "毒":1.2, "光":1.0, "暗":1.0, "無":1.0, "混":1.0},
+        "金": {"木": 1.5, "風": 1.2, "火": 0.5, "土": 1.2, "水": 0.8, "毒":0.8, "光":1.0, "暗":1.0, "無":1.0, "混":1.0},
+        "土": {"火": 1.2, "金": 0.5, "水": 0.5, "木": 1.5, "風": 0.8, "毒":1.2, "光":1.0, "暗":1.0, "無":1.0, "混":1.0},
         "光": {"暗": 1.75, "毒": 0.7, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "木": 1.0, "金": 1.0, "土": 1.0, "風": 1.0},
         "暗": {"光": 1.75, "風": 0.7, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "木": 1.0, "金": 1.0, "土": 1.0, "毒": 1.0},
-        "毒": {"木": 1.4, "草": 1.4, "土": 1.2, "光": 0.7, "金": 0.7, "風":0.8, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "暗": 1.0}, # 假設毒也克草(木)
-        "風": {"土": 1.4, "草": 1.4, "暗": 0.7, "金": 0.7, "毒":0.8, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "木": 1.0, "光": 1.0}, # 風克土、草(木)
+        "毒": {"木": 1.4, "草": 1.4, "土": 1.2, "光": 0.7, "金": 0.7, "風":0.8, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "暗": 1.0},
+        "風": {"土": 1.4, "草": 1.4, "暗": 0.7, "金": 0.7, "毒":0.8, "無": 1.0, "混": 1.0, "火": 1.0, "水": 1.0, "木": 1.0, "光": 1.0},
         "無": {el: 1.0 for el in ELEMENT_TYPES},
-        "混": {el: 1.0 for el in ELEMENT_TYPES} # 混屬性可以有更複雜的規則，例如根據自身主要構成元素決定克制
+        "混": {el: 1.0 for el in ELEMENT_TYPES}
     }
-    # 確保每個元素對其他所有元素都有定義 (預設為1.0)
     for attacker_el_str in ELEMENT_TYPES:
-        attacker_el = attacker_el_str # type: ignore
+        attacker_el = attacker_el_str 
         if attacker_el not in elemental_advantage_chart_data:
             elemental_advantage_chart_data[attacker_el] = {}
         for defender_el_str in ELEMENT_TYPES:
-            defender_el = defender_el_str # type: ignore
+            defender_el = defender_el_str 
             if defender_el not in elemental_advantage_chart_data[attacker_el]:
                 elemental_advantage_chart_data[attacker_el][defender_el] = 1.0
     try:
@@ -373,7 +386,7 @@ def populate_game_configs():
 
     npc_monsters_data = [
         {
-            "id": "npc_m_001", "nickname": "", # 暱稱將由服務層根據規則生成
+            "id": "npc_m_001", "nickname": "",
             "elements": ["火"], "elementComposition": {"火": 100.0},
             "hp": 80, "mp": 30, "initial_max_hp": 80, "initial_max_mp": 30,
             "attack": 15, "defense": 10, "speed": 12, "crit": 5,
@@ -395,7 +408,7 @@ def populate_game_configs():
             "attack": 10, "defense": 20, "speed": 8, "crit": 3,
             "skills": random.sample(skill_database_data["木"] + skill_database_data["土"] + skill_database_data["無"], min(len(skill_database_data["木"] + skill_database_data["土"] + skill_database_data["無"]), random.randint(2,3))) if skill_database_data.get("木") or skill_database_data.get("土") or skill_database_data.get("無") else [],
             "rarity": "稀有", "title": random.choice(_monster_achievements),
-            "custom_element_nickname": _element_nicknames.get("木", "木靈"), # 主屬性木
+            "custom_element_nickname": _element_nicknames.get("木", "木靈"),
             "description": "堅毅的森林守衛者幼苗，擁有大地與森林的祝福。",
             "personality": random.choice(_personalities),
             "creationTime": int(time.time()),
