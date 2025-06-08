@@ -301,7 +301,6 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     
     let bodyHtml = '';
 
-    // 新增：根據標題顯示特定Banner
     if (title === '提前結束修煉') {
         bodyHtml += `
             <div class="confirmation-banner" style="text-align: center; margin-bottom: 15px;">
@@ -669,7 +668,7 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    // 動態產生表頭，並移除「稀有度」
+    // 動態產生表頭
     farmHeaders.innerHTML = `
         <div>出戰</div>
         <div>怪獸</div>
@@ -678,7 +677,7 @@ function renderMonsterFarm() {
         <div>養成</div>
     `;
 
-    listContainer.innerHTML = ''; // 清空列表
+    listContainer.innerHTML = ''; 
 
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
@@ -701,12 +700,12 @@ function renderMonsterFarm() {
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
-        let statusStyle = "color: var(--warning-color);"; // 黃色
+        let statusStyle = "color: var(--warning-color); font-weight: bold;"; 
 
         if (monster.farmStatus) {
             if (isDeployed) {
                 statusText = "出戰中"; 
-                statusStyle = "color: var(--danger-color); font-weight: bold;"; // 紅色
+                statusStyle = "color: var(--danger-color); font-weight: bold;"; 
             } else if (monster.farmStatus.isTraining) {
                 const startTime = monster.farmStatus.trainingStartTime || 0;
                 const totalDuration = monster.farmStatus.trainingDuration || 0;
@@ -716,10 +715,10 @@ function renderMonsterFarm() {
 
                 if (elapsedTimeInSeconds < totalDurationInSeconds) {
                     statusText = `修煉中 (${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
-                    statusStyle = "color: var(--accent-color);"; // 藍色 (主題色)
+                    statusStyle = "color: var(--accent-color);";
                 } else {
                     statusText = "修煉完成";
-                    statusStyle = "color: var(--success-color); font-weight: bold;"; // 綠色
+                    statusStyle = "color: var(--success-color); font-weight: bold;";
                 }
             }
         }
@@ -729,19 +728,19 @@ function renderMonsterFarm() {
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-        
+
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
         let cultivateBtnStyle = '';
 
         if (isTraining) {
-            // For "召回" (Recall) button, light purple bg + black text
-            cultivateBtnStyle = `background-color: #D8BFD8; color: #333; border-color: #C8A2C8;`;
+            cultivateBtnClasses += ' secondary';
+            cultivateBtnStyle = `background-color: #b19cd9; color: black; border-color: #9370DB;`;
         } else {
-            // For "修煉" (Train) button, use the standard warning style
             cultivateBtnClasses += ' warning';
         }
+
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
@@ -765,7 +764,7 @@ function renderMonsterFarm() {
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
                 <button class="${cultivateBtnClasses}" 
                         style="${cultivateBtnStyle}"
-                        title="${isTraining ? '結束修煉' : '開始修煉'}"
+                        title="${isTraining ? '召回修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
                 </button>
@@ -773,6 +772,7 @@ function renderMonsterFarm() {
             </div>
         `;
 
+        // Add event listeners to the dynamically created buttons
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
@@ -795,7 +795,7 @@ function renderMonsterFarm() {
                 }
             });
         }
-
+        
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleReleaseMonsterClick(e, monster.id);
@@ -947,13 +947,23 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
             const skillTypeClass = typeof skill.type === 'string' ? `text-element-${skill.type.toLowerCase()}` : '';
-            const description = skill.description || '暫無描述';
+            const description = skill.description || skill.story || '暫無描述';
+            const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
+            const expBarHtml = `
+                <div style="margin-top: 5px;">
+                    <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px; max-width: 200px; height: 14px;">
+                        <div style="width: ${expPercentage}%; height: 100%; background-color: var(--accent-color); border-radius: 3px;"></div>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)]" style="margin-top: 2px;">經驗: ${skill.current_exp} / ${skill.exp_to_next_level || '-'}</p>
+                </div>
+            `;
+
             return `
             <div class="skill-entry">
                 <span class="skill-name ${skillTypeClass}">${skill.name} (Lv.${skill.level || 1})</span>
                 <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
-                ${skill.current_exp !== undefined ? `<p class="text-xs text-[var(--text-secondary)]">經驗: ${skill.current_exp}/${skill.exp_to_next_level || '-'}</p>` : ''}
+                ${skill.current_exp !== undefined ? expBarHtml : ''}
             </div>
         `}).join('');
     }
@@ -962,7 +972,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const aiPersonality = monster.aiPersonality || 'AI 個性生成中或失敗...';
     const aiIntroduction = monster.aiIntroduction || 'AI 介紹生成中或失敗...';
 
-    // --- 新增：產生怪獸組成DNA的HTML ---
     let constituentDnaHtml = '';
     const dnaSlots = new Array(5).fill(null);
     if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
@@ -975,7 +984,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            // 返回帶有特殊屬性的佔位符，以便稍後用 JS 上色
             return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
                         <span class="dna-name-text">${dna.name}</span>
                     </div>`;
@@ -992,7 +1000,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
     `;
-    // --- 結束：產生怪獸組成DNA的HTML ---
 
     const gains = monster.cultivation_gains || {};
     const getGainHtml = (statName) => {
@@ -1033,20 +1040,19 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
 
         <div class="details-section mt-3">
-            <h5 class="details-section-title">AI 生成個性</h5>
+            <h5 class="details-section-title">個性說明</h5>
             <p class="ai-generated-text text-sm" style="line-height: 1.6;">
                 <strong style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name || '未知'}:</strong><br>
                 ${aiPersonality}
             </p>
         </div>
         <div class="details-section mt-3">
-            <h5 class="details-section-title">AI 介紹</h5>
+            <h5 class="details-section-title">生物調查紀錄</h5>
             <p class="ai-generated-text text-sm">${aiIntroduction}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
 
-    // --- 新增：為組成DNA卡片應用樣式 ---
     detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
         const dnaId = el.dataset.dnaRefId;
         const dnaTemplate = gameState.gameConfigs?.dna_fragments.find(d => d.id === dnaId);
@@ -1054,7 +1060,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             applyDnaItemStyle(el, dnaTemplate);
         }
     });
-    // --- 結束 ---
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
