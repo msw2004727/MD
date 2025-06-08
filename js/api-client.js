@@ -30,10 +30,10 @@ async function fetchAPI(endpoint, options = {}) {
         if (!response.ok) {
             let errorData;
             try {
+                // 嘗試解析錯誤回應的 JSON，如果不是 JSON 格式則忽略
                 errorData = await response.json();
             } catch (e) {
-                // 如果回應不是 JSON，或者解析失敗
-                errorData = { message: response.statusText, status: response.status };
+                errorData = { message: response.statusText || 'Unknown error', status: response.status };
             }
             const error = new Error(errorData.error || errorData.message || `HTTP error ${response.status}`);
             error.status = response.status;
@@ -120,22 +120,17 @@ async function drawFreeDNA() {
 
 
 /**
- * 模擬戰鬥 (現在支援逐步返回日誌)
- * @param {object} playerMonsterData 玩家怪獸的資料 (包含 current_hp, current_mp 等)
- * @param {object} opponentMonsterData 對手怪獸的資料 (包含 current_hp, current_mp 等)
- * @param {number} currentTurn 當前回合數 (從 0 開始)
- * @param {Array<object>} battleLogSoFar 已經產生的戰鬥日誌
- * @returns {Promise<object>} 戰鬥結果，包含 latest_log_entry 和 battle_end 標誌
+ * 模擬戰鬥 (現在支援一次性返回完整戰報)
+ * @param {object} battleRequestData - 包含 player_monster_data 和 opponent_monster_data 的物件
+ * @returns {Promise<object>} 戰鬥結果，包含 AI 生成的戰報內容
  */
-async function simulateBattle(playerMonsterData, opponentMonsterData, currentTurn = 0, battleLogSoFar = []) {
+async function simulateBattle(battleRequestData) { // 修正：現在只接收一個參數
+    if (!battleRequestData || !battleRequestData.player_monster_data || !battleRequestData.opponent_monster_data) {
+        throw new Error("simulateBattle 函數需要一個包含 player_monster_data 和 opponent_monster_data 的物件。");
+    }
     return fetchAPI('/battle/simulate', {
         method: 'POST',
-        body: JSON.stringify({
-            monster1_data: playerMonsterData,
-            monster2_data: opponentMonsterData,
-            current_turn: currentTurn,
-            battle_log_so_far: battleLogSoFar,
-        }),
+        body: JSON.stringify(battleRequestData), // 修正：直接將傳入的物件字串化作為 body
     });
 }
 
