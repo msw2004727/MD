@@ -323,10 +323,10 @@ def populate_game_configs():
 
     # 13. 修煉系統設定 (CultivationSettings)
     cultivation_settings_data = {
-        "skill_exp_base_multiplier": 120,
-        "new_skill_chance": 0.08,
+        "skill_exp_base_multiplier": 100,
+        "new_skill_chance": 0.1,
         "skill_exp_gain_range": (15, 75),
-        "max_skill_level": 7,
+        "max_skill_level": 10,
         "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 }
     }
     try:
