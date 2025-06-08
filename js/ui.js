@@ -656,17 +656,13 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
+    listContainer.innerHTML = '';
 
-    // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
-        const emptyMessage = listContainer.parentNode.querySelector('.empty-farm-message');
-        if (emptyMessage) emptyMessage.style.display = 'block';
+        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
         return;
     }
-    const emptyMessage = listContainer.parentNode.querySelector('.empty-farm-message');
-    if (emptyMessage) emptyMessage.style.display = 'none';
     farmHeaders.style.display = 'grid';
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -700,7 +696,7 @@ function renderMonsterFarm() {
                     statusClass = "status-training";
                 } else {
                     statusText = "修煉完成";
-                    statusClass = "status-idle";
+                    statusClass = "status-idle"; // 完成後變回待命狀態
                 }
             }
         }
@@ -1344,5 +1340,75 @@ function updateAnnouncementPlayerName(playerName) {
         DOMElements.announcementPlayerName.textContent = playerName || "玩家";
     }
 }
+
+// 新增：用於更新修煉成果彈窗的函式
+function updateTrainingResultsModal(results, monsterName) {
+    if (!DOMElements.trainingResultsModal) return;
+
+    // 設定標題
+    DOMElements.trainingResultsModalTitle.textContent = `${monsterName} 的修煉成果`;
+
+    // 插入 Banner
+    const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
+    let banner = modalBody.querySelector('.training-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.className = 'training-banner';
+        banner.style.textAlign = 'center';
+        banner.style.marginBottom = '1rem';
+        modalBody.prepend(banner);
+    }
+    banner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
+
+    // 顯示 AI 冒險故事
+    DOMElements.trainingStoryResult.innerHTML = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
+
+    // 顯示成長紀錄 (技能和屬性)
+    let growthHtml = '<ul>';
+    const growthLogs = results.skill_updates_log.filter(log => !log.includes("拾獲了DNA碎片"));
+    if (growthLogs.length > 0) {
+        growthLogs.forEach(log => growthHtml += `<li>${log}</li>`);
+    } else {
+        growthHtml += "<li>能力沒有明顯變化。</li>";
+    }
+    growthHtml += "</ul>";
+    DOMElements.trainingGrowthResult.innerHTML = growthHtml;
+
+    // 顯示可拾獲的物品
+    const itemsContainer = DOMElements.trainingItemsResult;
+    itemsContainer.innerHTML = ''; // 清空舊內容
+    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false); // 隱藏舊的「一鍵加入」按鈕
+
+    const items = results.items_obtained || [];
+    if (items.length > 0) {
+        const itemsGrid = document.createElement('div');
+        itemsGrid.className = 'inventory-grid'; // 復用庫存網格樣式
+        items.forEach((item, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item'; // 復用DNA物品樣式
+            applyDnaItemStyle(itemDiv, item);
+            itemDiv.style.cursor = 'pointer';
+            
+            itemDiv.addEventListener('click', function handleItemClick() {
+                addDnaToTemporaryBackpack(item);
+                // 視覺上表示已拾取
+                itemDiv.style.opacity = '0.5';
+                itemDiv.style.pointerEvents = 'none';
+                const originalText = itemDiv.querySelector('.dna-name-text').textContent;
+                itemDiv.querySelector('.dna-name-text').textContent = `${originalText} (已拾取)`;
+                // 移除監聽器避免重複添加
+                itemDiv.removeEventListener('click', handleItemClick);
+            }, { once: true });
+
+            itemsGrid.appendChild(itemDiv);
+        });
+        itemsContainer.appendChild(itemsGrid);
+    } else {
+        itemsContainer.innerHTML = '<p>沒有拾獲任何物品。</p>';
+    }
+    
+    showModal('training-results-modal');
+}
+
 
 console.log("UI module loaded - v8 with farm layout fixes.");
