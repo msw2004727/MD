@@ -258,7 +258,7 @@ def generate_battle_log_text(raw_log_messages: List[str], game_configs: Dict[str
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位專業的電競解說員和奇幻文學作家，擅長用生動的中文將戰鬥日誌改寫成引人入勝的敘述。你會嚴格根據用戶提供的原始日誌進行創作，只返回敘述文本。"},
+            {"role": "system", "content": "你是一位專業的電競解說員和風趣文學作家，擅長用生動的中文將戰鬥日誌改寫成引人入勝的敘述。你會嚴格根據用戶提供的原始日誌進行創作，只返回敘述文本。"},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7, # 稍微降低溫度，讓敘述更穩定
