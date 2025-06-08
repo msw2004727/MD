@@ -192,9 +192,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
-    
+
     // 清理之前的內容
-    DOMElements.feedbackModalMessage.innerHTML = ''; 
+    DOMElements.feedbackModalMessage.innerHTML = '';
     toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
@@ -234,7 +234,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
                  <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價生成中或失敗...'}</p>
             </div>
         `;
-        
+
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
 
     } else if (title === '修煉開始！') {
@@ -287,7 +287,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackModalCloseX.setAttribute('data-modal-id', 'feedback-modal');
         DOMElements.feedbackModalCloseX.onclick = () => hideModal('feedback-modal');
     }
-    
+
     showModal('feedback-modal');
 }
 
@@ -298,7 +298,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
         return;
     }
     DOMElements.confirmationModalTitle.textContent = title;
-    
+
     let bodyHtml = '';
 
     if (title === '提前結束修煉') {
@@ -308,7 +308,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
             </div>
         `;
     }
-    
+
     if (monsterToRelease) {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
@@ -384,7 +384,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 
 function getMonsterPartImagePath(dnaTemplateId) {
     if (!dnaTemplateId || !gameState.gameConfigs || !gameState.gameConfigs.dna_fragments) {
-        return null; 
+        return null;
     }
     const dnaTemplate = gameState.gameConfigs.dna_fragments.find(d => d.id === dnaTemplateId);
     return dnaTemplate || null;
@@ -433,7 +433,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
-        
+
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
 
@@ -460,8 +460,8 @@ function updateMonsterSnapshot(monster) {
                 4: DOMElements.monsterPartRightLeg
             };
 
-            clearMonsterBodyPartsDisplay(); 
-            
+            clearMonsterBodyPartsDisplay();
+
             monster.constituent_dna_ids.forEach((dnaBaseId, index) => {
                 const partElement = partsMap[index];
                 if (partElement) {
@@ -484,7 +484,7 @@ function updateMonsterSnapshot(monster) {
     } else {
         DOMElements.monsterSnapshotBodySilhouette.src = "";
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
-        
+
         DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotNickname.className = ''; // 清除稀有度顏色
@@ -537,7 +537,7 @@ function applyDnaItemStyle(element, dnaData) {
 
     element.style.color = rarityTextColorVar;
     element.style.borderColor = rarityTextColorVar;
-    
+
     // Ensure the name is displayed
     const nameSpan = element.querySelector('.dna-name-text');
     if (nameSpan) {
@@ -590,12 +590,12 @@ function renderPlayerDNAInventory() {
     for (let index = 0; index < MAX_INVENTORY_SLOTS; index++) {
         const item = document.createElement('div');
         item.classList.add('dna-item');
-        
+
         if (index === 11) {
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
             item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
-            item.draggable = false; 
+            item.draggable = false;
             item.dataset.inventoryIndex = index;
         } else {
             const dna = ownedDna[index];
@@ -626,7 +626,7 @@ function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = 9; 
+    const MAX_TEMP_SLOTS = 9;
     const currentTempItems = gameState.temporaryBackpack || [];
 
     let tempBackpackArray = new Array(MAX_TEMP_SLOTS).fill(null);
@@ -677,7 +677,7 @@ function renderMonsterFarm() {
         <div>養成</div>
     `;
 
-    listContainer.innerHTML = ''; 
+    listContainer.innerHTML = '';
 
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
@@ -691,7 +691,7 @@ function renderMonsterFarm() {
     gameState.playerData.farmedMonsters.forEach(monster => {
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
-        
+
         const isDeployed = gameState.selectedMonsterId === monster.id;
         if (isDeployed) {
             item.classList.add('selected');
@@ -700,17 +700,17 @@ function renderMonsterFarm() {
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
-        let statusStyle = "color: var(--warning-color); font-weight: bold;"; 
+        let statusStyle = "color: var(--warning-color); font-weight: bold;";
 
         if (monster.farmStatus) {
             if (isDeployed) {
-                statusText = "出戰中"; 
-                statusStyle = "color: var(--danger-color); font-weight: bold;"; 
+                statusText = "出戰中";
+                statusStyle = "color: var(--danger-color); font-weight: bold;";
             } else if (monster.farmStatus.isTraining) {
                 const startTime = monster.farmStatus.trainingStartTime || 0;
                 const totalDuration = monster.farmStatus.trainingDuration || 0;
                 const totalDurationInSeconds = Math.floor(totalDuration / 1000);
-                
+
                 const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
 
                 if (elapsedTimeInSeconds < totalDurationInSeconds) {
@@ -724,11 +724,11 @@ function renderMonsterFarm() {
         }
 
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        
+
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-        
+
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
@@ -751,7 +751,7 @@ function renderMonsterFarm() {
             <div class="farm-col farm-col-info">
                 <strong class="monster-name-display text-rarity-${rarityKey}">${monster.nickname}</strong>
                 <div class="monster-details-display">
-                    ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
+                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${el.toLowerCase()}">${el}</span>`).join(' ')}
                 </div>
             </div>
             <div class="farm-col farm-col-score">
@@ -762,7 +762,7 @@ function renderMonsterFarm() {
             </div>
             <div class="farm-col farm-col-actions">
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
-                <button class="${cultivateBtnClasses}" 
+                <button class="${cultivateBtnClasses}"
                         style="${cultivateBtnStyle}"
                         title="${isTraining ? '召回修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
@@ -776,7 +776,7 @@ function renderMonsterFarm() {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
         });
-        
+
         item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             updateMonsterInfoModal(monster, gameState.gameConfigs);
@@ -794,7 +794,7 @@ function renderMonsterFarm() {
                 }
             });
         }
-        
+
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleReleaseMonsterClick(e, monster.id);
@@ -832,7 +832,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         const monsters = playerData.farmedMonsters;
         const previewLimit = 5;
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-        
+
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
             const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
             return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
@@ -847,7 +847,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 }).join('')
             }</div>`;
         }
-        
+
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
@@ -919,7 +919,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
-    
+
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
             ${monster.nickname}
@@ -989,7 +989,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
         }
     }).join('');
-    
+
     constituentDnaHtml = `
         <div class="details-section">
             <h5 class="details-section-title">怪獸DNA組成</h5>
@@ -1185,12 +1185,12 @@ function updateLeaderboardTable(tableType, data) {
             nicknameSpan.className = `text-rarity-${rarityKey}`;
             nicknameSpan.textContent = item.nickname;
             nicknameCell.appendChild(nicknameSpan);
-            
+
             // Cell 3: Elements
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
-                elementsCell.innerHTML = item.elements.map(el => 
+                elementsCell.innerHTML = item.elements.map(el =>
                     `<span class="text-element-${el.toLowerCase()} font-bold mr-2">${el}</span>`
                 ).join('');
             }
@@ -1218,7 +1218,7 @@ function updateLeaderboardTable(tableType, data) {
             // Cell 8: Actions
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.isNPC) { 
+            if (item.isNPC) {
                 const challengeBtn = document.createElement('button');
                 challengeBtn.textContent = '挑戰';
                 challengeBtn.className = 'button primary text-xs py-1 px-2';
@@ -1236,7 +1236,7 @@ function updateLeaderboardTable(tableType, data) {
             const rankCell = row.insertCell();
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
-            
+
             // Cell 2: Nickname
             row.insertCell().textContent = item.nickname;
 
@@ -1250,7 +1250,7 @@ function updateLeaderboardTable(tableType, data) {
             const winsCell = row.insertCell();
             winsCell.textContent = item.wins;
             winsCell.style.textAlign = 'center';
-            
+
             // Cell 5: Losses
             const lossesCell = row.insertCell();
             lossesCell.textContent = item.losses;
@@ -1268,9 +1268,17 @@ function updateLeaderboardSortHeader(tableElement, activeKey, activeOrder) {
     if (!tableElement) return;
     const headers = tableElement.querySelectorAll('thead th');
     headers.forEach(th => {
+        // 清除所有舊的排序箭頭
+        const oldArrow = th.querySelector('.sort-arrow');
+        if (oldArrow) oldArrow.remove();
+
         th.classList.remove('sorted-asc', 'sorted-desc');
         if (th.dataset.sortKey === activeKey) {
             th.classList.add(activeOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            const arrow = document.createElement('span');
+            arrow.classList.add('sort-arrow');
+            arrow.textContent = activeOrder === 'asc' ? ' ▲' : ' ▼';
+            th.appendChild(arrow);
         }
     });
 }
@@ -1290,7 +1298,7 @@ function updateMonsterLeaderboardElementTabs(elements) {
         button.classList.add('tab-button');
         button.textContent = elementKey === 'all' ? '全部' : (elementTypeMap[elementKey.toLowerCase()] || elementKey);
         button.dataset.elementFilter = elementKey;
-        
+
         if (elementKey !== 'all') {
             button.classList.add(`text-element-${elementKey.toLowerCase()}`);
             button.style.fontWeight = 'bold';
@@ -1461,10 +1469,10 @@ function updateTrainingResultsModal(results, monsterName) {
             itemDiv.className = 'dna-item'; // 復用DNA物品樣式
             applyDnaItemStyle(itemDiv, item);
             itemDiv.style.cursor = 'pointer';
-            
+
             itemDiv.addEventListener('click', function handleItemClick() {
                 addDnaToTemporaryBackpack(item);
-                
+
                 // 從待領取清單中移除，避免重複提醒
                 const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
                 if (itemIndex > -1) {
@@ -1478,7 +1486,7 @@ function updateTrainingResultsModal(results, monsterName) {
                 if(originalTextSpan) {
                     originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
                 }
-                
+
             }, { once: true }); //確保只觸發一次
 
             itemsGrid.appendChild(itemDiv);
@@ -1487,7 +1495,7 @@ function updateTrainingResultsModal(results, monsterName) {
     } else {
         itemsContainer.innerHTML = '<p>沒有拾獲任何物品。</p>';
     }
-    
+
     showModal('training-results-modal');
 }
 
