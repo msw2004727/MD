@@ -310,7 +310,7 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
     }
 
     if (monsterToRelease) {
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythishal'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
         const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
@@ -751,7 +751,7 @@ function renderMonsterFarm() {
             <div class="farm-col farm-col-info">
                 <strong class="monster-name-display text-rarity-${rarityKey}">${monster.nickname}</strong>
                 <div class="monster-details-display">
-                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${el.toLowerCase()}">${el}</span>`).join(' ')}
+                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
             </div>
             <div class="farm-col farm-col-score">
@@ -935,7 +935,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             if (value === 0) continue;
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
-            const elClass = typeof element === 'string' ? `text-element-${element.toLowerCase()}` : '';
+            const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
             resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
         }
         resistancesHtml += '</ul>';
@@ -945,7 +945,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            const skillTypeClass = typeof skill.type === 'string' ? `text-element-${skill.type.toLowerCase()}` : '';
+            const skillTypeClass = typeof skill.type === 'string' ? `text-element-${getElementCssClassKey(skill.type)}` : '';
             const description = skill.description || skill.story || '暫無描述';
             const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
             const expBarHtml = `
@@ -1153,6 +1153,7 @@ function updateLeaderboardTable(tableType, data) {
             { text: '元素', key: 'elements', align: 'center' },
             { text: '稀有度', key: 'rarity', align: 'center' },
             { text: '總評價', key: 'score', align: 'center' },
+            { text: '狀態', key: 'farmStatus', align: 'center' }, // 新增狀態欄位
             { text: '勝/敗', key: 'resume', align: 'center' },
             { text: '擁有者', key: 'owner_nickname' },
             { text: '操作', key: 'actions', align: 'center' }
@@ -1180,9 +1181,12 @@ function updateLeaderboardTable(tableType, data) {
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
-        const row = tbody.insertRow(); // Fix: Use insertRow() on tbody to create a <tr>
+        const row = tbody.insertRow();
 
         if (tableType === 'monster') {
+            const isTraining = item.farmStatus?.isTraining || false; // 檢查怪獸是否在修煉中
+            const isBattling = item.farmStatus?.isBattling || false; // 檢查怪獸是否在戰鬥中
+
             // Cell 1: Rank
             const rankCell = row.insertCell();
             rankCell.textContent = index + 1;
@@ -1200,7 +1204,6 @@ function updateLeaderboardTable(tableType, data) {
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
-                // 使用 getElementCssClassKey 輔助函數來獲取正確的 CSS 類名
                 elementsCell.innerHTML = item.elements.map(el =>
                     `<span class="text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
@@ -1218,30 +1221,55 @@ function updateLeaderboardTable(tableType, data) {
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
 
-            // Cell 6: Resume
+            // Cell 6: Status (新增的狀態欄位)
+            const statusCell = row.insertCell();
+            statusCell.style.textAlign = 'center';
+            let statusText = "待命中";
+            let statusClass = "text-[var(--warning-color)]"; // Default: orange for idle
+
+            if (isTraining) {
+                statusText = "修煉中";
+                statusClass = "text-[var(--accent-color)]"; // Blue for training
+            } else if (isBattling) {
+                statusText = "戰鬥中";
+                statusClass = "text-[var(--danger-color)]"; // Red for battling
+            } else if (item.owner_id === gameState.playerId && gameState.selectedMonsterId === item.id) {
+                statusText = "出戰中"; // 玩家自己正在出戰的怪獸
+                statusClass = "text-[var(--success-color)]"; // Green for deployed
+            }
+            statusCell.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+
+
+            // Cell 7: Resume (原來的 Cell 6 變為 Cell 7)
             const resumeCell = row.insertCell();
             resumeCell.textContent = `${item.resume?.wins || 0} / ${item.resume?.losses || 0}`;
             resumeCell.style.textAlign = 'center';
 
-            // Cell 7: Owner
+            // Cell 8: Owner (原來的 Cell 7 變為 Cell 8)
             row.insertCell().textContent = item.owner_nickname || 'N/A';
 
-            // Cell 8: Actions
+            // Cell 9: Actions (原來的 Cell 8 變為 Cell 9)
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-            if (item.isNPC) {
-                const challengeBtn = document.createElement('button');
-                challengeBtn.textContent = '挑戰';
-                challengeBtn.className = 'button primary text-xs py-1 px-2';
+
+            const challengeBtn = document.createElement('button');
+            challengeBtn.textContent = '挑戰';
+            challengeBtn.className = 'button primary text-xs py-1 px-2';
+
+            if (isTraining || isBattling) { // 如果在修煉中或戰鬥中
+                challengeBtn.textContent = '修煉中'; // 顯示修煉中
+                challengeBtn.disabled = true; // 禁用按鈕
+                challengeBtn.style.cursor = 'not-allowed'; // 更改鼠標樣式
+            } else if (item.isNPC) {
                 challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, null, null, item.id);
-                actionsCell.appendChild(challengeBtn);
             } else if (item.owner_id && item.owner_id !== gameState.playerId) {
-                const challengeBtn = document.createElement('button');
-                challengeBtn.textContent = '挑戰';
-                challengeBtn.className = 'button primary text-xs py-1 px-2';
                 challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
-                actionsCell.appendChild(challengeBtn);
+            } else {
+                challengeBtn.disabled = true; // 自己的怪獸或沒有對象時禁用
+                challengeBtn.style.cursor = 'not-allowed';
             }
+            actionsCell.appendChild(challengeBtn);
+
         } else { // Player Leaderboard
             // Cell 1: Rank
             const rankCell = row.insertCell();
@@ -1315,9 +1343,9 @@ function updateMonsterLeaderboardElementTabs(elements) {
             button.textContent = elementTypeMap[elementKey.toLowerCase()] || elementKey;
             button.classList.add(`text-element-${elementKey.toLowerCase()}`);
         }
-        
+
         button.dataset.elementFilter = elementKey;
-        
+
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
             button.classList.add('active');
         }
