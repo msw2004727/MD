@@ -6,6 +6,7 @@ import firebase_admin
 from firebase_admin import auth
 import logging
 import random
+import copy # 用於深拷貝怪獸數據
 
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna
@@ -581,15 +582,76 @@ def replace_monster_skill_route(monster_id: str):
 
 @md_bp.route('/leaderboard/monsters', methods=['GET'])
 def get_monster_leaderboard_route():
+    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
+    if error_response:
+        # 如果無法驗證用戶，則返回未經處理的 NPC 和其他玩家怪獸（如果設計允許）
+        # 或者直接拒絕請求。這裡我們假設未登入用戶看不到任何怪獸。
+        # 如果需要讓未登入用戶看到排行榜但無法挑戰，可以調整這裡的邏輯
+        routes_logger.warning("未授權請求怪獸排行榜，只返回 NPC 怪獸。")
+        game_configs = _get_game_configs_data_from_app_context()
+        if not game_configs:
+            return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
+        npc_monsters = get_monster_leaderboard_service(game_configs, 20) # 獲取 NPC 怪獸
+        return jsonify(npc_monsters), 200 # 假設未登入只能看到 NPC
+
+
     top_n_str = request.args.get('top_n', '10')
     try:
         top_n = int(top_n_str)
         if top_n <=0 or top_n > 50: top_n = 10
     except ValueError:
         top_n = 10
+
     game_configs = _get_game_configs_data_from_app_context()
-    leaderboard = get_monster_leaderboard_service(game_configs, top_n)
-    return jsonify(leaderboard), 200
+    if not game_configs:
+        return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
+
+    # 1. 獲取當前玩家的選定出戰怪獸
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_selected_monster: Optional[Monster] = None
+    if player_data and player_data.get("selectedMonsterId"):
+        for monster in player_data.get("farmedMonsters", []):
+            if monster.get("id") == player_data["selectedMonsterId"]:
+                selected_monster_copy = copy.deepcopy(monster)
+                selected_monster_copy["owner_id"] = user_id
+                selected_monster_copy["owner_nickname"] = player_data.get("nickname", "玩家") # type: ignore
+                # 確保 farmStatus 存在，即使是空字典
+                if "farmStatus" not in selected_monster_copy:
+                    selected_monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False}
+                player_selected_monster = selected_monster_copy
+                break
+    
+    # 2. 獲取 NPC 怪獸
+    npc_monsters = get_monster_leaderboard_service(game_configs, top_n) # 這個服務現在只返回 NPC
+
+    all_eligible_monsters: List[Monster] = []
+
+    # 將玩家出戰怪獸加入列表 (如果存在)
+    if player_selected_monster:
+        all_eligible_monsters.append(player_selected_monster)
+
+    # 將 NPC 怪獸加入列表，避免重複
+    # 如果 NPC 怪獸和玩家怪獸有相同的 ID 規則，需要更精確的去重
+    npc_ids = {m["id"] for m in npc_monsters}
+    if player_selected_monster and player_selected_monster["id"] in npc_ids:
+        routes_logger.warning(f"玩家出戰怪獸ID {player_selected_monster['id']} 與 NPC ID 重複，移除 NPC 怪獸。")
+        # 這裡可以選擇保留哪個，目前是優先保留玩家怪獸
+        npc_monsters = [m for m in npc_monsters if m["id"] != player_selected_monster["id"]]
+
+    all_eligible_monsters.extend(npc_monsters)
+
+    # 根據分數重新排序並截取 Top N
+    all_eligible_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
+    
+    # 返回 Top N 的怪獸，確保包含所有必要的屬性
+    final_leaderboard = []
+    for monster in all_eligible_monsters[:top_n]:
+        # 確保每個怪獸字典都包含 farmStatus
+        if "farmStatus" not in monster:
+            monster["farmStatus"] = {"isTraining": False, "isBattling": False}
+        final_leaderboard.append(monster)
+
+    return jsonify(final_leaderboard), 200
 
 @md_bp.route('/leaderboard/players', methods=['GET'])
 def get_player_leaderboard_route():
