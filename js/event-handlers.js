@@ -152,7 +152,8 @@ async function handleDrop(event) {
         
         renderDNACombinationSlots();
         renderPlayerDNAInventory(); 
-        renderTemporaryBackpack(); 
+        renderTemporaryBackpack();
+        await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('dna-item') && dropTargetElement.closest('#inventory-items')) {
         const targetInventoryIndex = parseInt(dropTargetElement.dataset.inventoryIndex, 10);
@@ -446,65 +447,45 @@ function handleConfirmationActions() {
 }
 
 function handleCultivationModals() {
-    // 統一處理三個修煉按鈕的點擊事件
-    const handleStartCultivation = async (event) => {
-        const location = event.target.dataset.location;
-        const locationNames = {
-            gaia: "蓋亞的搖籃",
-            sky: "天空的怒火",
-            crystal: "人智的結晶"
-        };
-        const locationName = locationNames[location] || "未知場所";
-
-        if (!location) return;
-
-        if (!gameState.cultivationMonsterId) {
-            showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
-            return;
-        }
-        const CULTIVATION_DURATION_SECONDS = gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600;
-
-        const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === gameState.cultivationMonsterId);
-        if (monsterInFarm) {
-            monsterInFarm.farmStatus = monsterInFarm.farmStatus || {};
-            monsterInFarm.farmStatus.isTraining = true;
-            monsterInFarm.farmStatus.trainingStartTime = Date.now();
-            monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
-            monsterInFarm.farmStatus.trainingLocation = location; // 儲存選擇的場所
-
-            try {
-                await savePlayerData(gameState.playerId, gameState.playerData);
-                console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存，地點: ${location}。`);
-
-                hideModal('cultivation-setup-modal');
-                renderMonsterFarm();
-                showFeedbackModal(
-                    '修煉開始！',
-                    `怪獸 ${monsterInFarm.nickname} 已在「${locationName}」開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉。`,
-                    false,
-                    null,
-                    [{ text: '好的', class: 'primary'}]
-                );
-            } catch (error) {
-                console.error("儲存修煉狀態失敗:", error);
-                showFeedbackModal('錯誤', '開始修煉失敗，無法儲存狀態，請稍後再試。');
-                monsterInFarm.farmStatus.isTraining = false; // 回滾狀態
-                monsterInFarm.farmStatus.trainingStartTime = null;
-                monsterInFarm.farmStatus.trainingDuration = null;
-                monsterInFarm.farmStatus.trainingLocation = null;
+    if (DOMElements.startCultivationBtn) {
+        DOMElements.startCultivationBtn.addEventListener('click', async () => {
+            if (!gameState.cultivationMonsterId) {
+                showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
+                return;
             }
-        }
-    };
+            const CULTIVATION_DURATION_SECONDS = gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600;
 
-    // 為新的三個按鈕綁定事件
-    const cultivationModal = document.getElementById('cultivation-setup-modal');
-    if (cultivationModal) {
-        cultivationModal.querySelector('#start-gaia-btn')?.addEventListener('click', handleStartCultivation);
-        cultivationModal.querySelector('#start-sky-btn')?.addEventListener('click', handleStartCultivation);
-        cultivationModal.querySelector('#start-crystal-btn')?.addEventListener('click', handleStartCultivation);
+            const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === gameState.cultivationMonsterId);
+            if (monsterInFarm) {
+                monsterInFarm.farmStatus = monsterInFarm.farmStatus || {};
+                monsterInFarm.farmStatus.isTraining = true;
+                monsterInFarm.farmStatus.trainingStartTime = Date.now();
+                monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
+                
+                try {
+                    await savePlayerData(gameState.playerId, gameState.playerData);
+                    console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存。`);
+
+                    hideModal('cultivation-setup-modal');
+                    renderMonsterFarm();
+                    showFeedbackModal(
+                        '修煉開始！',
+                        `怪獸 ${monsterInFarm.nickname} 已開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉。`,
+                        false,
+                        null,
+                        [{ text: '好的', class: 'primary'}]
+                    );
+                } catch (error) {
+                    console.error("儲存修煉狀態失敗:", error);
+                    showFeedbackModal('錯誤', '開始修煉失敗，無法儲存狀態，請稍後再試。');
+                    monsterInFarm.farmStatus.isTraining = false;
+                    monsterInFarm.farmStatus.trainingStartTime = null;
+                    monsterInFarm.farmStatus.trainingDuration = null;
+                }
+            }
+        });
     }
 
-    // 處理修煉成果彈窗的關閉邏輯
     if (DOMElements.closeTrainingResultsBtn) DOMElements.closeTrainingResultsBtn.addEventListener('click', () => {
          if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
             showModal('reminder-modal');
@@ -557,7 +538,7 @@ function handleFriendsListSearch() {
                     gameState.searchedPlayers = result.players || [];
                     updateFriendsListModal(gameState.searchedPlayers);
                 } catch (error) {
-                    console.error("搜尋玩家失敗:", error);
+                    console.error("搜尋玩家失败:", error);
                     updateFriendsListModal([]);
                 }
             } else if (query.length === 0) {
@@ -653,7 +634,7 @@ function handleAnnouncementModalClose() {
 
 
 // --- 新增：處理點擊事件以移動DNA ---
-function handleClickInventory(event) {
+async function handleClickInventory(event) {
     const itemElement = event.target.closest('.dna-item.occupied');
     if (!itemElement || !itemElement.closest('#inventory-items')) return;
 
@@ -670,12 +651,13 @@ function handleClickInventory(event) {
         gameState.dnaCombinationSlots[targetSlotIndex] = dnaObject;
         renderPlayerDNAInventory();
         renderDNACombinationSlots();
+        await savePlayerData(gameState.playerId, gameState.playerData);
     } else {
         showFeedbackModal('提示', 'DNA組合欄位已滿！');
     }
 }
 
-function handleClickCombinationSlot(event) {
+async function handleClickCombinationSlot(event) {
     const slotElement = event.target.closest('.dna-slot.occupied');
     if (!slotElement) return;
 
@@ -698,6 +680,7 @@ function handleClickCombinationSlot(event) {
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
         renderPlayerDNAInventory();
         renderDNACombinationSlots();
+        await savePlayerData(gameState.playerId, gameState.playerData);
     } else {
         showFeedbackModal('提示', 'DNA碎片庫存區已滿！');
     }
