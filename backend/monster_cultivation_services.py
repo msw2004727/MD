@@ -15,11 +15,12 @@ from .MD_models import (
 from . import MD_firebase_config
 # 從 player_services 導入 get_player_data_service，因為修煉結算時可能需要重新獲取玩家數據
 from .player_services import get_player_data_service
+# 從 ai_services 導入新的故事生成函式
+from .MD_ai_services import generate_cultivation_story
 
 monster_cultivation_services_logger = logging.getLogger(__name__)
 
 # --- 預設遊戲設定 (用於輔助函式，避免循環導入) ---
-# 這裡只包含這個模組需要的預設值
 DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
@@ -136,7 +137,6 @@ def complete_cultivation_service(
     cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"]) # type: ignore
     monster_cultivation_services_logger.info(f"開始為怪獸 {monster_to_update.get('nickname')} 結算修煉成果。時長: {duration_seconds}秒。")
     
-    adventure_story_parts = [f"{monster_to_update.get('nickname')}結束了長達{duration_seconds}秒的修煉，收穫滿滿。"]
     skill_updates_log: List[str] = []
     
     # 1. 技能經驗與升級
@@ -193,7 +193,7 @@ def complete_cultivation_service(
             if stat in ["hp", "mp"]:
                 max_stat_key = f"initial_max_{stat}"
                 monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + total_gain
-                monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain # 同時補滿
+                monster_to_update[stat] = monster_to_update.get(max_stat_key", 0) # 同時補滿
             else:
                 monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain
             skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 提升了 {total_gain} 點！")
@@ -226,13 +226,23 @@ def complete_cultivation_service(
                 items_obtained.append(found_item)
                 skill_updates_log.append(f"💎 拾獲了DNA碎片：[{found_item.get('rarity')}] {found_item.get('name')}！")
 
-    # 重新計算總評價
+    # 5. 重新計算總評價
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     monster_to_update["score"] = (monster_to_update.get("initial_max_hp",0) // 10) + \
                                    monster_to_update.get("attack",0) + monster_to_update.get("defense",0) + \
                                    (monster_to_update.get("speed",0) // 2) + (monster_to_update.get("crit",0) * 2) + \
                                    (len(monster_to_update.get("skills",[])) * 15) + \
                                    (rarity_order.index(monster_to_update.get("rarity","普通")) * 30)
+    
+    # 6. 生成AI冒險故事
+    max_duration = game_configs.get("value_settings", {}).get("max_cultivation_time_seconds", 3600)
+    duration_percentage = duration_seconds / max_duration
+    adventure_story = generate_cultivation_story(
+        monster_name=monster_to_update.get('nickname', '一隻怪獸'),
+        duration_percentage=duration_percentage,
+        skill_updates_log=skill_updates_log,
+        items_obtained=items_obtained
+    )
                                    
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
@@ -240,11 +250,10 @@ def complete_cultivation_service(
     if save_player_data_service(player_id, player_data):
         return {
             "success": True,
-            "monster_id": monster_id,
             "updated_monster_skills": monster_to_update.get("skills"),
             "learned_new_skill_template": learned_new_skill_template,
             "skill_updates_log": skill_updates_log,
-            "adventure_story": ". ".join(adventure_story_parts),
+            "adventure_story": adventure_story,
             "items_obtained": items_obtained 
         }
     else:
@@ -265,8 +274,7 @@ def replace_monster_skill_service(
         monster_cultivation_services_logger.error("Firestore 資料庫未初始化 (replace_monster_skill_service 內部)。")
         return None
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
-
+    db = MD_firebase_config.db
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"替換技能失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
@@ -283,14 +291,14 @@ def replace_monster_skill_service(
         monster_cultivation_services_logger.error(f"替換技能失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
         return None
 
-    current_skills: List[Skill] = monster_to_update.get("skills", []) # type: ignore
-    max_monster_skills = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["value_settings"]).get("max_monster_skills", 3) # type: ignore
+    current_skills: List[Skill] = monster_to_update.get("skills", [])
+    max_monster_skills = game_configs.get("value_settings", {}).get("max_monster_skills", 3)
 
-    monster_rarity_name: RarityNames = monster_to_update.get("rarity", "普通") # type: ignore
-    all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["rarities"]) # type: ignore
-    rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()} # type: ignore
+    monster_rarity_name: RarityNames = monster_to_update.get("rarity", "普通")
+    all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", {})
+    rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()}
     monster_rarity_key = rarity_key_lookup.get(monster_rarity_name, "COMMON")
-    monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["rarities"]["COMMON"]) # type: ignore
+    monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["rarities"]["COMMON"])
 
     new_skill_instance = _get_skill_from_template(new_skill_template_data, game_configs, monster_rarity_data, target_level=1)
 
@@ -304,10 +312,10 @@ def replace_monster_skill_service(
         monster_cultivation_services_logger.warning(f"怪獸 {monster_id} 技能槽已滿 ({len(current_skills)}/{max_monster_skills})，無法學習新技能 '{new_skill_instance['name']}'。")
         return player_data
 
-    monster_to_update["skills"] = current_skills # type: ignore
-    player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
+    monster_to_update["skills"] = current_skills
+    player_data["farmedMonsters"][monster_idx] = monster_to_update
 
-    from .player_services import save_player_data_service # 在這裡導入，避免循環
+    from .player_services import save_player_data_service
     if save_player_data_service(player_id, player_data):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
         return player_data
