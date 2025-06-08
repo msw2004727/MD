@@ -37,31 +37,20 @@ DEFAULT_GAME_CONFIGS_FOR_LEADERBOARD: GameConfigs = {
 
 
 # --- 排行榜與玩家搜尋服務 ---
+# 更改此服務，使其僅獲取 NPC 怪獸
 def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[Monster]:
-    """獲取怪獸排行榜。"""
+    """
+    獲取怪獸排行榜 (僅返回 NPC 怪獸，玩家怪獸將在路由層處理)。
+    """
     if not MD_firebase_config.db:
         leaderboard_search_services_logger.error("Firestore 資料庫未初始化 (get_monster_leaderboard_service 內部)。")
         return []
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+    # db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
 
     all_monsters: List[Monster] = []
     try:
-        users_ref = db.collection('users')
-        # 優化：對於大型用戶量，直接流式讀取所有用戶的 gameData/main 文檔可能導致效能問題
-        # 更好的做法是在後端維護一個專門的 leaderboard 集合，或者限制讀取數量
-        # 但目前為了功能實現，繼續遍歷所有用戶
-        for user_doc in users_ref.stream(): 
-            game_data_doc_ref = user_doc.reference.collection('gameData').document('main')
-            game_data_doc = game_data_doc_ref.get()
-            if game_data_doc.exists:
-                player_game_data = game_data_doc.to_dict()
-                if player_game_data and player_game_data.get("farmedMonsters"):
-                    for monster_dict in player_game_data["farmedMonsters"]:
-                        monster_dict["owner_nickname"] = player_game_data.get("nickname", user_doc.id) # type: ignore
-                        monster_dict["owner_id"] = user_doc.id # type: ignore
-                        all_monsters.append(monster_dict) # type: ignore
-
+        # 從 game_configs 中獲取 NPC 怪獸
         npc_monsters_templates: List[Monster] = game_configs.get("npc_monsters", DEFAULT_GAME_CONFIGS_FOR_LEADERBOARD["npc_monsters"]) # type: ignore
         if npc_monsters_templates:
             # 確保 NPC 怪獸有正確的 isNPC 標記和 owner_id (例如 "NPC")
@@ -72,12 +61,16 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) 
                     npc["owner_id"] = "NPC"
                 if "owner_nickname" not in npc:
                     npc["owner_nickname"] = "遊戲系統"
+                # 確保 NPC 怪獸也有 farmStatus 屬性，即使是空字典，以便前端統一處理
+                if "farmStatus" not in npc:
+                    npc["farmStatus"] = {"isTraining": False, "isBattling": False} # 預設為不在訓練或戰鬥
             all_monsters.extend(copied_npcs)
 
+        # 對 NPC 怪獸進行排序，雖然這裡只返回 NPC，但保持排序習慣
         all_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
         return all_monsters[:top_n]
     except Exception as e:
-        leaderboard_search_services_logger.error(f"獲取怪獸排行榜時發生錯誤: {e}", exc_info=True)
+        leaderboard_search_services_logger.error(f"獲取怪獸排行榜 (NPC) 時發生錯誤: {e}", exc_info=True)
         return []
 
 def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[PlayerStats]:
