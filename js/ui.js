@@ -443,7 +443,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
         if (DOMElements.snapshotMainContent) {
-            DOMElements.snapshotMainContent.innerHTML = '';
+            DOMEElements.snapshotMainContent.innerHTML = '';
         }
 
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -900,7 +900,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             const moreList = body.querySelector('#more-monsters-list');
             const isHidden = moreList.style.display === 'none';
             moreList.style.display = isHidden ? 'block' : 'none';
-            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${monsters.length - 5}隻)...`;
+            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${playerData.farmedMonsters.length - 5}隻)...`;
         });
     }
 }
@@ -1078,7 +1078,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 }
 
 
-// 新增：更新怪獸排行榜元素篩選按鈕的函數
 function updateMonsterLeaderboardElementTabs(elements) {
     const container = DOMElements.monsterLeaderboardElementTabs;
     if (!container) return;
@@ -1172,6 +1171,24 @@ function getElementCssClassKey(chineseElement) {
     return elementTypeMap[chineseElement] || '無'; // 預設為 '無'
 }
 
+// 新增：更新排行榜標頭排序箭頭的函數
+function updateLeaderboardSortHeader(table, sortKey, sortOrder) {
+    if (!table) return;
+
+    const headers = table.querySelectorAll('th');
+    headers.forEach(th => {
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) {
+            arrow.remove();
+        }
+        if (th.dataset.sortKey === sortKey) {
+            const newArrow = document.createElement('span');
+            newArrow.classList.add('sort-arrow', 'active');
+            newArrow.innerHTML = sortOrder === 'asc' ? ' &uarr;' : ' &darr;';
+            th.appendChild(newArrow);
+        }
+    });
+}
 
 function updateLeaderboardTable(tableType, data) {
     console.log("updateLeaderboardTable called with data:", data); // Debugging log
@@ -1241,7 +1258,7 @@ function updateLeaderboardTable(tableType, data) {
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
+                    `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`
                 ).join('');
             }
 
