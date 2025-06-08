@@ -1306,15 +1306,18 @@ function updateMonsterLeaderboardElementTabs(elements) {
 
     elements.forEach(elementKey => {
         const button = document.createElement('button');
-        button.classList.add('tab-button');
-        button.textContent = elementKey === 'all' ? '全部' : (elementTypeMap[elementKey.toLowerCase()] || elementKey);
-        button.dataset.elementFilter = elementKey;
-
-        if (elementKey !== 'all') {
+        button.classList.add('tab-button', 'leaderboard-element-tab'); // 新增 class
+        if (elementKey === 'all') { // "全部" 頁籤
+            button.textContent = '全部';
+            button.classList.add('element-all'); // 新增類別以控制樣式
+        } else {
+            // 確保這裡的 textContent 是中文
+            button.textContent = elementTypeMap[elementKey.toLowerCase()] || elementKey;
             button.classList.add(`text-element-${elementKey.toLowerCase()}`);
-            button.style.fontWeight = 'bold';
         }
-
+        
+        button.dataset.elementFilter = elementKey;
+        
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
             button.classList.add('active');
         }
