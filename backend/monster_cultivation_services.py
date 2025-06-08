@@ -54,7 +54,8 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
 def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
     """計算升到下一級所需的經驗值。"""
     if level <= 0: level = 1
-    return level * base_multiplier
+    # 新公式: (目前等級 + 1) * 基礎倍率 = 升到下一級所需經驗
+    return (level + 1) * base_multiplier
 
 def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
     """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。
@@ -65,10 +66,10 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
     cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
 
     if target_level is not None:
-        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 7)))
+        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 10)))
     else:
         skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
-        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 7))) # type: ignore
+        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 10))) # type: ignore
 
     new_skill_instance: Skill = {
         "name": skill_template.get("name", "未知技能"),
@@ -142,8 +143,8 @@ def complete_cultivation_service(
     skill_updates_log: List[str] = []
     current_skills: List[Skill] = monster_to_update.get("skills", []) # type: ignore
 
-    exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (10,50)) # type: ignore
-    max_skill_lvl = cultivation_cfg.get("max_skill_level", 7) # type: ignore
+    exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75)) # type: ignore
+    max_skill_lvl = cultivation_cfg.get("max_skill_level", 10) # type: ignore
     exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100) # type: ignore
 
     for skill in current_skills:
@@ -168,7 +169,7 @@ def complete_cultivation_service(
     monster_to_update["skills"] = current_skills # type: ignore
 
     learned_new_skill_template: Optional[Skill] = None
-    if random.random() < cultivation_cfg.get("new_skill_chance", 0.08): # type: ignore
+    if random.random() < cultivation_cfg.get("new_skill_chance", 0.1): # type: ignore
         monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"]) # type: ignore
         all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["skills"]) # type: ignore
 
