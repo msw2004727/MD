@@ -10,6 +10,7 @@ ElementTypes = Literal[
 ]
 RarityNames = Literal["普通", "稀有", "菁英", "傳奇", "神話"]
 SkillCategory = Literal["近戰", "遠程", "魔法", "輔助", "物理", "特殊", "變化", "其他"] # 技能類別
+BattleLogStyle = Literal["嚴肅", "幽默", "武俠", "科幻", "驚悚", "獵奇"] # 戰鬥日誌風格
 
 # --- 設定檔模型 (對應 Firestore 中 MD_GameConfigs 集合的結構) ---
 
@@ -46,7 +47,8 @@ class SkillEffectDetails(TypedDict):
         "buff", "debuff", "dot", "leech", "stun", "heal", "heal_large",
         "accuracy_debuff", "special_defense_buff", "all_stats_debuff",
         "all_stats_buff", "poison", "strong_poison", "aoe_dot",
-        "team_speed_buff", "recoil", "self_ko", "confusion"
+        "team_speed_buff", "recoil", "self_ko", "confusion", "status_change",
+        "stat_change", "damage_modifier"
     ]]
     stat: NotRequired[Union[str, List[str]]]
     amount: NotRequired[Union[int, List[int]]]
@@ -55,6 +57,7 @@ class SkillEffectDetails(TypedDict):
     chance: NotRequired[int]
     target: NotRequired[Literal["self", "enemy_single", "enemy_all", "team_single", "team_all"]]
     recoil_factor: NotRequired[float]
+    status_id: NotRequired[str] # for status_change effect
 
 
 class Skill(TypedDict):
@@ -79,7 +82,8 @@ class Skill(TypedDict):
     duration: NotRequired[int] # 持續回合
     damage: NotRequired[int] # 額外傷害或治療量 (非 DoT)
     recoilDamage: NotRequired[float] # 反傷比例
-
+    hit_chance: NotRequired[int] # 技能命中率 (0-100)，預設為 100
+    effect_target: NotRequired[Literal["self", "opponent"]] # 效果目標，例如提升自身屬性或削弱對方
 
 class Personality(TypedDict):
     """怪獸個性模型"""
@@ -99,7 +103,6 @@ class HealthConditionEffect(TypedDict):
     crit: NotRequired[int]
     hp_per_turn: NotRequired[int]
 
-
 class HealthCondition(TypedDict):
     id: str
     name: str
@@ -107,6 +110,9 @@ class HealthCondition(TypedDict):
     effects: HealthConditionEffect
     duration: NotRequired[int]
     icon: NotRequired[str]
+    chance_to_skip_turn: NotRequired[float] # 觸發跳過回合的機率 (0.0-1.0)
+    confusion_chance: NotRequired[float] # 觸發混亂自傷的機率 (0.0-1.0)
+    elemental_vulnerability: NotRequired[Dict[ElementTypes, float]] # 對某些元素的易傷倍率
 
 
 class NewbieGuideEntry(TypedDict):
@@ -129,6 +135,12 @@ class CultivationConfig(TypedDict):
     skill_exp_gain_range: Tuple[int, int]
     max_skill_level: int
     new_skill_rarity_bias: NotRequired[Dict[RarityNames, float]]
+    stat_growth_weights: NotRequired[Dict[str, int]] # for default stat growth
+    stat_growth_duration_divisor: NotRequired[int]
+    dna_find_chance: NotRequired[float]
+    dna_find_duration_divisor: NotRequired[int]
+    dna_find_loot_table: NotRequired[Dict[RarityNames, Dict[RarityNames, float]]]
+    location_biases: NotRequired[Dict[str, Dict[str, Any]]]
 
 
 class ValueSettings(TypedDict):
@@ -141,6 +153,11 @@ class ValueSettings(TypedDict):
     max_temp_backpack_slots: NotRequired[int]
     max_cultivation_time_seconds: NotRequired[int]
     starting_gold: NotRequired[int]
+    base_accuracy: NotRequired[int] # 基礎命中率，例如 80 (%)
+    base_evasion: NotRequired[int] # 基礎閃避率，例如 5 (%)
+    accuracy_per_speed: NotRequired[float] # 速度對命中率的影響，例如每點速度影響 0.1% 命中
+    evasion_per_speed: NotRequired[float] # 速度對閃避率的影響，例如每點速度影響 0.05% 閃避
+    crit_multiplier: NotRequired[float] # 暴擊傷害倍率，例如 1.5
 
 
 class NamingConstraints(TypedDict): # 新增：命名限制設定
@@ -162,6 +179,7 @@ class MonsterFarmStatus(TypedDict):
     isTraining: bool
     boosts: NotRequired[Dict[str, int]]
     timerId: NotRequired[Optional[int]]
+    trainingLocation: NotRequired[Optional[str]] # 新增訓練地點
 
 
 class MonsterActivityLogEntry(TypedDict):
@@ -188,6 +206,8 @@ class Monster(TypedDict):
     elementComposition: Dict[ElementTypes, float]
     hp: int
     mp: int
+    current_hp: NotRequired[int] # 新增：戰鬥中的當前 HP
+    current_mp: NotRequired[int] # 新增：戰鬥中的當前 MP
     initial_max_hp: int
     initial_max_mp: int
     attack: int
@@ -208,7 +228,7 @@ class Monster(TypedDict):
     monsterMedals: NotRequired[int]
     farmStatus: MonsterFarmStatus
     activityLog: NotRequired[List[MonsterActivityLogEntry]]
-    healthConditions: NotRequired[List[HealthCondition]]
+    healthConditions: NotRequired[List[HealthCondition]] # 戰鬥中的即時狀態
     resistances: Dict[ElementTypes, int]
     score: NotRequired[int]
     isNPC: NotRequired[bool]
@@ -216,6 +236,13 @@ class Monster(TypedDict):
     resume: NotRequired[MonsterResume]
     constituent_dna_ids: NotRequired[List[str]]
     cultivation_gains: NotRequired[Dict[str, int]] # 新增：用於儲存修煉獲得的額外數值
+    # 戰鬥相關動態數值 (非持久化，僅用於戰鬥模擬)
+    temp_attack_modifier: NotRequired[int]
+    temp_defense_modifier: NotRequired[int]
+    temp_speed_modifier: NotRequired[int]
+    temp_crit_modifier: NotRequired[int]
+    temp_accuracy_modifier: NotRequired[int]
+    temp_evasion_modifier: NotRequired[int]
 
 
 class PlayerStats(TypedDict):
@@ -252,6 +279,49 @@ class MonsterRecipe(TypedDict):
     resultingMonsterData: Monster 
     creationTimestamp: int
     discoveredByPlayerId: NotRequired[str]
+
+
+# --- 戰鬥系統相關模型 ---
+class BattleAction(TypedDict):
+    """單一回合中的一個戰鬥行動"""
+    performer_id: str
+    target_id: str
+    skill_name: str
+    damage_dealt: NotRequired[int]
+    damage_healed: NotRequired[int]
+    status_applied: NotRequired[str] # 狀態ID
+    status_removed: NotRequired[str]
+    stat_changes: NotRequired[Dict[str, int]]
+    is_crit: NotRequired[bool]
+    is_miss: NotRequired[bool]
+    log_message: str # 簡要的文字描述
+
+
+class BattleLogEntry(TypedDict):
+    """單一回合的戰鬥日誌"""
+    turn: int
+    player_monster_hp: int
+    player_monster_mp: int
+    opponent_monster_hp: int
+    opponent_monster_mp: int
+    actions: List[BattleAction]
+    raw_log_messages: List[str] # 原始日誌信息，供 AI 判斷和美化
+    styled_log_message: str # AI 生成的風格化日誌文本
+    winner_id: NotRequired[str] # 如果本回合結束戰鬥，則標記勝利者
+    loser_id: NotRequired[str] # 如果本回合結束戰鬥，則標記失敗者
+    battle_end: NotRequired[bool] # 標記戰鬥是否結束
+
+
+class BattleResult(TypedDict):
+    """整個戰鬥的最終結果"""
+    log_entries: List[BattleLogEntry]
+    winner_id: str
+    loser_id: str
+    player_monster_final_hp: int
+    player_monster_final_mp: int
+    player_monster_final_skills: List[Skill]
+    player_monster_final_resume: MonsterResume
+    absorption_details: NotRequired[Dict[str, Any]]
 
 
 # --- 完整的遊戲設定檔模型 ---
