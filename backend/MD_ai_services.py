@@ -23,7 +23,6 @@ DEFAULT_AI_RESPONSES = {
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
-# 修改：將預設故事改為更明確的錯誤提示
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗，請稍後再試或檢查後台日誌。"
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
@@ -167,30 +166,40 @@ def generate_cultivation_story(monster_name: str, duration_percentage: float, sk
         ai_logger.error("DeepSeek API 金鑰未設定，無法生成修煉故事。")
         return DEFAULT_ADVENTURE_STORY
 
-    # 組合給AI的資訊
-    trained_skills_str = "、".join([log.split("'")[1] for log in skill_updates_log if "技能" in log]) or "現有技能"
-    found_items_str = "、".join([item.get('name', '神秘碎片') for item in items_obtained]) if items_obtained else "任何物品"
-    
-    # 根據完成度決定故事階段和要求
-    story_prompt = f"我的怪獸 '{monster_name}' 剛剛完成了一次修煉。請你為牠撰寫一段生動的冒險故事。\n"
-    story_prompt += f"- 在這次修煉中，牠主要鍛鍊了 {trained_skills_str}。\n"
-    if items_obtained:
-        story_prompt += f"- 牠還幸運地拾獲了 {found_items_str}。\n"
-    story_prompt += "- 請將以上元素巧妙地融入故事中。\n"
+    # ---- 修改開始 ----
+    story_prompt = ""
+    # 判斷是否有實質收穫
+    has_gains = bool(skill_updates_log) or bool(items_obtained)
 
-    if duration_percentage <= 0.25:
-        story_prompt += "故事風格：初步冒險。描述牠小心翼翼地探索周遭，進行基礎的練習，並在不經意間有所發現。總字數約100字。"
-    elif duration_percentage <= 0.5:
-        story_prompt += "故事風格：深入歷險。描述牠進入更具挑戰性的區域，透過技能克服了一些小困難，並找到了更有價值的物品。總字數約200字，前後連貫。"
-    elif duration_percentage <= 0.75:
-        story_prompt += "故事風格：遇上危機。描述牠遭遇了意想不到的危機或強大的野生怪獸，必須活用所有技能才能化險為夷。總字數約300字，情節要有起伏。"
-    else: # 100%
-        story_prompt += "故事風格：歷劫歸來。描述牠在克服巨大危機後，獲得了深刻的感悟和寶貴的戰利品，最終滿載而歸的完整經歷。總字數約400字，故事要有完整的開頭、危機、高潮和結局。"
+    if not has_gains:
+        # 如果沒有任何收穫，使用「無功而返」的專屬指令
+        story_prompt = f"我的怪獸 '{monster_name}' 剛剛完成了一次修煉，但過程相當平順，沒有任何特別的戰鬥或發現。請你根據這個「一路順遂但無功而返」的主題，為牠撰寫一段約100字左右的冒險故事，描述牠在修煉地安靜度過時光的様子。"
+    else:
+        # 如果有收穫，使用原有的、包含細節的指令
+        trained_skills_str = "、".join([log.split("'")[1] for log in skill_updates_log if "技能" in log]) or "現有技能"
+        found_items_str = "、".join([item.get('name', '神秘碎片') for item in items_obtained]) if items_obtained else "任何物品"
         
+        story_prompt = f"我的怪獸 '{monster_name}' 剛剛完成了一次修煉。請你為牠撰寫一段生動的冒險故事。\n"
+        story_prompt += f"- 在這次修煉中，牠主要鍛鍊了 {trained_skills_str}。\n"
+        if items_obtained:
+            story_prompt += f"- 牠還幸運地拾獲了 {found_items_str}。\n"
+        story_prompt += "- 請將以上元素巧妙地融入故事中。\n"
+        story_prompt += "- 你的描述必須嚴格基於我提供的素材，不要杜撰不存在的成果。\n"
+
+        if duration_percentage <= 0.25:
+            story_prompt += "故事風格：初步冒險。總字數約100字。"
+        elif duration_percentage <= 0.5:
+            story_prompt += "故事風格：深入歷險。總字數約200字，前後連貫。"
+        elif duration_percentage <= 0.75:
+            story_prompt += "故事風格：遇上危機。總字數約300字，情節要有起伏。"
+        else: # 100%
+            story_prompt += "故事風格：歷劫歸來。總字數約400字，故事要有完整的開頭、危機、高潮和結局。"
+    # ---- 修改結束 ----
+
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位才華洋溢的奇幻故事作家，擅長用生動的中文描寫怪獸的冒險經歷。"},
+            {"role": "system", "content": "你是一位才華洋溢的奇幻故事作家，擅長用生動的中文描寫怪獸的冒險經歷。你會嚴格根據用戶提供的素材進行創作。"},
             {"role": "user", "content": story_prompt}
         ],
         "temperature": 0.8,
