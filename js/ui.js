@@ -1357,67 +1357,116 @@ function updateLeaderboardTable(tableType, data) {
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
-// 調整 showBattleLogModal 函數以顯示逐回合日誌
-function showBattleLogModal(logEntries, playerNickname, opponentNickname) {
+// 調整 showBattleLogModal 函數以顯示新的單頁戰報
+function showBattleLogModal(battleReportContent) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
     }
 
-    // 清空現有日誌，每次都重新渲染完整日誌
-    DOMElements.battleLogArea.innerHTML = '';
+    DOMElements.battleLogArea.innerHTML = ''; // 清空舊內容
 
-    // 確保 logEntries 是陣列，即使為空也沒問題
-    if (!Array.isArray(logEntries)) {
-        console.warn("showBattleLogModal received non-array logEntries:", logEntries);
-        logEntries = [];
+    if (!battleReportContent || !battleReportContent.battle_description) {
+        DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報內容生成失敗或為空。</p>';
+        return;
     }
 
-    // 添加戰鬥開始提示（僅在第一回合顯示）
-    if (logEntries.length === 0) {
-        const introP = document.createElement('p');
-        introP.className = 'battle-start';
-        introP.textContent = `--- 戰鬥開始: ${playerNickname} vs ${opponentNickname} ---`;
-        DOMElements.battleLogArea.appendChild(introP);
+    // 輔助函數：將文本中的粗體、元素名稱、技能名稱等關鍵字替換為帶有樣式的 HTML
+    function formatReportText(text) {
+        if (!text) return '';
+
+        // 替換 AI 生成的粗體 **Text** 為 <strong>Text</strong>
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // 定義元素和技能的關鍵字列表，以及它們對應的 CSS 類別或顏色
+        const elementMap = {
+            '火': { class: 'text-element-fire', emoji: '🔥' },
+            '水': { class: 'text-element-water', emoji: '💧' },
+            '木': { class: 'text-element-wood', emoji: '🌿' },
+            '金': { class: 'text-element-gold', emoji: '⚙️' },
+            '土': { class: 'text-element-earth', emoji: '⛰️' },
+            '光': { class: 'text-element-light', emoji: '✨' },
+            '暗': { class: 'text-element-dark', emoji: '🌑' },
+            '毒': { class: 'text-element-poison', emoji: '☣️' },
+            '風': { class: 'text-element-wind', emoji: '💨' },
+            '混': { class: 'text-element-mix', emoji: '🌀' },
+            '無': { class: 'text-element-無', emoji: '⚪' },
+        };
+        const skillNames = [
+            "火焰拳", "爆炎衝", "火星彈", "追蹤火球", "燃燒術", "大字爆", "暖身", "烈日祝福", "熱砂踢", "火山踢", "點燃", "煉獄之火", "威嚇", "熔化", "靜電火花", "自爆",
+            "潮旋", "深海衝擊", "水濺躍", "高壓水炮", "水之波動", "寒冰光束", "濕潤身體", "生命水滴", "拍擊", "攀瀑", "冰針", "鹽水", "變圓", "黑霧", "潛水", "鏡面反射",
+            "藤鞭", "寄生吸取", "種子機關槍", "日光束", "吸取", "終極吸取", "生長", "扎根", "滾動", "木槌", "催眠粉", "億萬噸吸收", "煩惱種子", "青草場地", "自然恩惠", "森林詛咒",
+            "金屬爪", "鐵頭功", "磁力炸彈", "加農光炮", "金屬音", "流星拳", "鐵壁", "換擋", "鋼翼", "重磅衝撞", "陀螺球", "金屬爆炸", "破甲", "王者之盾", "重力場", "鏡面鎧甲",
+            "閃光", "神聖之劍", "信號光束", "月亮之力", "魔法閃耀", "破壞光線", "治癒波動", "光牆", "光子噴湧", "鏡面屬性", "力量戲法",
+            "欺詐", "地獄突刺", "暗影球", "惡之波動", "詭計", "暗黑爆破", "挑釁", "查封", "偷盜", "拍落", "臨別禮物", "懲罰", "再來一次", "無理取鬧", "大快朵頤",
+            "落石", "地震", "泥巴射擊", "大地之力", "大地波動", "沙塵暴", "變硬", "沙地獄", "骨棒", "骨頭迴力鏢", "撒菱", "隱形岩", "玩泥巴", "詛咒", "挖洞", "地裂"
+        ]; // 確保這裡是完整的技能名稱列表
+
+        // 對元素名稱進行上色和添加 emoji
+        for (const element in elementMap) {
+            const regex = new RegExp(`(${element})`, 'g');
+            formattedText = formattedText.replace(regex, `<span class="${elementMap[element].class}">$1${elementMap[element].emoji}</span>`);
+        }
+
+        // 對技能名稱進行上色
+        skillNames.forEach(skillName => {
+            const regex = new RegExp(`(${skillName})`, 'g');
+            formattedText = formattedText.replace(regex, `<span style="color: var(--accent-hover); font-weight: bold;">$1</span>`);
+        });
+
+        // 對「致命一擊」、「恢復」、「擊倒」、「平手」等關鍵字上色
+        formattedText = formattedText.replace(/致命一擊！/g, '<span style="color: var(--danger-color); font-weight: bold;">致命一擊！</span>');
+        formattedText = formattedText.replace(/恢復了/g, '<span style="color: var(--success-color); font-weight: bold;">恢復了</span>');
+        formattedText = formattedText.replace(/被擊倒了！/g, '<span style="color: var(--danger-color); font-weight: bold;">被擊倒了！</span>');
+        formattedText = formattedText.replace(/獲勝！/g, '<span style="color: var(--success-color); font-weight: bold;">獲勝！</span>');
+        formattedText = formattedText.replace(/平手！/g, '<span style="color: var(--warning-color); font-weight: bold;">平手！</span>');
+
+
+        return formattedText;
     }
 
-    logEntries.forEach(logEntry => {
-        // 確保 message 是一個字串，以避免在 undefined 上呼叫 startsWith()
-        const message = String(logEntry.styled_log_message || (Array.isArray(logEntry.raw_log_messages) ? logEntry.raw_log_messages.join('\n') : logEntry.raw_log_messages) || '');
+    // 創建戰報容器
+    const reportContainer = document.createElement('div');
+    reportContainer.classList.add('battle-report-container');
 
-        const p = document.createElement('p');
-        // 根據訊息內容應用樣式，這部分應與後端生成的日誌內容匹配
-        if (message.startsWith('--- 回合')) {
-            p.className = 'turn-divider';
-        } else if (logEntry.battle_end) { // 檢查是否是戰鬥結束的回合
-            if (logEntry.winner_id && logEntry.winner_id !== '平手') {
-                 p.className = 'battle-end winner';
-                 p.textContent = `🏆 ${logEntry.winner_id === gameState.selectedMonsterId ? playerNickname : opponentNickname} 獲勝！🏆`; // 顯示正確的獲勝者暱稱
-            } else if (logEntry.winner_id === '平手') {
-                p.className = 'battle-end draw';
-                p.textContent = `🤝 平手！🤝`;
-            } else if (logEntry.loser_id) { // 如果有loser但沒有明確winner/draw，可能是被擊倒
-                p.className = 'defeated';
-            }
-        }
-        else if (message.includes('致命一擊！')) {
-            p.className = 'crit-hit';
-        } else if (message.includes('恢復了') && message.includes('HP')) {
-            p.className = 'heal-action';
-        } else if (message.includes('被擊倒了！') || message.includes('倒下了！')) { // 如果是中間回合的擊倒訊息
-            p.className = 'defeated';
-        }
+    // 雙方怪獸介紹
+    reportContainer.innerHTML += `
+        <div class="report-section battle-intro-section">
+            <h4 class="report-section-title">戰鬥對陣</h4>
+            <div class="monster-intro-grid">
+                <p class="monster-intro-text player-monster-intro">${formatReportText(battleReportContent.player_monster_intro)}</p>
+                <p class="monster-intro-text opponent-monster-intro">${formatReportText(battleReportContent.opponent_monster_intro)}</p>
+            </div>
+        </div>
+    `;
 
+    // 精彩交戰描述
+    reportContainer.innerHTML += `
+        <div class="report-section battle-description-section">
+            <h4 class="report-section-title">精彩交戰</h4>
+            <p class="battle-description-text">${formatReportText(battleReportContent.battle_description)}</p>
+        </div>
+    `;
 
-        if (!logEntry.battle_end) { // 如果不是最終回合的結果，則直接顯示原始或風格化訊息
-             p.textContent = message;
-        }
-       
-        DOMElements.battleLogArea.appendChild(p);
-    });
-    
-    // 自動滾動到底部
-    DOMElements.battleLogArea.scrollTop = DOMElements.battleLogArea.scrollHeight;
+    // 最終戰報總結
+    reportContainer.innerHTML += `
+        <div class="report-section battle-summary-section">
+            <h4 class="report-section-title">戰報總結</h4>
+            <p class="battle-summary-text">${formatReportText(battleReportContent.battle_summary)}</p>
+        </div>
+    `;
+
+    // 預留戰利品與怪獸成長欄位
+    reportContainer.innerHTML += `
+        <div class="report-section battle-outcome-section">
+            <h4 class="report-section-title">戰鬥結果</h4>
+            <p class="loot-info-text">${formatReportText(battleReportContent.loot_info)}</p>
+            <p class="growth-info-text">${formatReportText(battleReportContent.growth_info)}</p>
+        </div>
+    `;
+
+    DOMElements.battleLogArea.appendChild(reportContainer);
+    DOMElements.battleLogArea.scrollTop = 0; // 滾動到頂部顯示戰報開始
 
     showModal('battle-log-modal');
 }
