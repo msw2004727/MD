@@ -979,8 +979,9 @@ body.light-theme .leaderboard-table tr:hover td {
     white-space: pre-wrap;
     color: var(--text-primary);
 }
-#battle-log-area p { margin-bottom: 5px; }
-#battle-log-area .turn-divider {
+/* 移除舊的逐回合日誌樣式，因為將被新戰報取代 */
+/* #battle-log-area p { margin-bottom: 5px; } */
+/* #battle-log-area .turn-divider {
     border-top: 1px dashed var(--accent-color);
     margin-top: 10px;
     margin-bottom: 10px;
@@ -1003,7 +1004,78 @@ body.light-theme .leaderboard-table tr:hover td {
  #battle-log-area .battle-end.draw { color: var(--warning-color); border-color: var(--warning-color); }
 #battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
 #battle-log-area .heal-action { color: var(--success-color); }
-#battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
+#battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; } */
+
+/* 新增：戰報樣式 */
+.battle-report-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 5px; /* 內縮一點 */
+    line-height: 1.6;
+}
+
+.report-section {
+    background-color: var(--bg-panel); /* 使用不同的背景色區分區塊 */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.report-section-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border-color);
+    text-align: center;
+}
+
+.monster-intro-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 500px) {
+    .monster-intro-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.monster-intro-text,
+.battle-description-text,
+.battle-summary-text,
+.loot-info-text,
+.growth-info-text {
+    font-size: 1rem;
+    color: var(--text-primary);
+    text-align: justify; /* 讓文本兩端對齊 */
+}
+
+/* 確保強調文字的顏色正確 */
+.battle-description-text strong,
+.battle-summary-text strong,
+.loot-info-text strong,
+.growth-info-text strong {
+    color: var(--accent-hover); /* 或者其他強調色 */
+}
+
+/* 元素文字上色 */
+.text-element-fire { color: var(--element-fire-text); }
+.text-element-water { color: var(--element-water-text); }
+.text-element-wood { color: var(--element-wood-text); }
+.text-element-gold { color: var(--element-gold-text); }
+.text-element-earth { color: var(--element-earth-text); }
+.text-element-light { color: var(--element-light-text); }
+.text-element-dark { color: var(--element-dark-text); }
+.text-element-poison { color: var(--element-poison-text); }
+.text-element-wind { color: var(--element-wind-text); }
+.text-element-mix { color: var(--element-mix-text); }
+.text-element-無 { color: var(--element-無-text); }
+
+
 #dna-draw-modal .modal-content { max-width: 600px; }
 #dna-draw-results-grid {
     display: grid;
