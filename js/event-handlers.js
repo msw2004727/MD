@@ -131,10 +131,9 @@ async function handleDrop(event) {
             showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
-        // 新增：阻止從臨時背包直接拖到組合槽
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
-            handleDragEnd(event); // 中斷並結束拖曳
+            handleDragEnd(event); 
             return;
         }
         
@@ -161,21 +160,21 @@ async function handleDrop(event) {
         
         const itemAtTargetInventorySlot = gameState.playerData.playerOwnedDNA[targetInventoryIndex];
         
-        // 核心邏輯：先處理來源，再處理目標
-        // 1. 處理來源
         if (draggedSourceType === 'inventory') {
-            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; // 與目標交換
+            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'combination') {
-            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; // 與目標交換
+            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'temporaryBackpack') {
-             // 從臨時背包過來，直接清空來源，不交換
+            if(itemAtTargetInventorySlot) { // 如果目標格有東西，則不移動
+                showFeedbackModal('操作失敗', '目標庫存格非空格，請先將物品移至空格。');
+                handleDragEnd(event);
+                return;
+            }
             gameState.temporaryBackpack[draggedSourceIndex] = null;
-            // 並賦予新的實例ID
              dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
              dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
         }
         
-        // 2. 處理目標
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
 
         renderPlayerDNAInventory();
@@ -184,7 +183,6 @@ async function handleDrop(event) {
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('temp-backpack-slot') || dropTargetElement.closest('#temporary-backpack-items')) {
-        // 如果是從臨時背包內部移動
         if (draggedSourceType === 'temporaryBackpack') {
             const targetTempIndex = dropTargetElement.dataset.tempItemIndex ? parseInt(dropTargetElement.dataset.tempItemIndex, 10) : -1;
             if (targetTempIndex !== -1 && draggedSourceIndex !== targetTempIndex) {
@@ -193,7 +191,6 @@ async function handleDrop(event) {
                 gameState.temporaryBackpack[targetTempIndex] = temp;
             }
         } else {
-            // 從其他地方移入臨時背包
             const MAX_TEMP_SLOTS = gameState.gameConfigs?.value_settings?.max_temp_backpack_slots || 9;
             let freeSlotIndex = -1;
             for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
@@ -221,7 +218,6 @@ async function handleDrop(event) {
 
     handleDragEnd(event);
 }
-
 
 // --- Modal Close Button Handler ---
 function handleModalCloseButtons() {
@@ -635,6 +631,60 @@ function handleAnnouncementModalClose() {
     }
 }
 
+
+// --- 新增：處理點擊事件以移動DNA ---
+function handleClickInventory(event) {
+    const itemElement = event.target.closest('.dna-item.occupied');
+    if (!itemElement || !itemElement.closest('#inventory-items')) return;
+
+    const inventoryIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
+    const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
+    if (!dnaObject) return;
+    
+    // 尋找組合槽中的第一個空格
+    const targetSlotIndex = gameState.dnaCombinationSlots.findIndex(slot => slot === null);
+
+    if (targetSlotIndex !== -1) {
+        // 有空格，執行移動
+        gameState.playerData.playerOwnedDNA[inventoryIndex] = null;
+        gameState.dnaCombinationSlots[targetSlotIndex] = dnaObject;
+        renderPlayerDNAInventory();
+        renderDNACombinationSlots();
+    } else {
+        showFeedbackModal('提示', 'DNA組合欄位已滿！');
+    }
+}
+
+function handleClickCombinationSlot(event) {
+    const slotElement = event.target.closest('.dna-slot.occupied');
+    if (!slotElement) return;
+
+    const slotIndex = parseInt(slotElement.dataset.slotIndex, 10);
+    const dnaObject = gameState.dnaCombinationSlots[slotIndex];
+    if (!dnaObject) return;
+
+    // 尋找庫存中的第一個空格，避開刪除區
+    let targetInventoryIndex = -1;
+    for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
+        if (i !== 11 && gameState.playerData.playerOwnedDNA[i] === null) {
+            targetInventoryIndex = i;
+            break;
+        }
+    }
+
+    if (targetInventoryIndex !== -1) {
+        // 有空格，執行移動
+        gameState.dnaCombinationSlots[slotIndex] = null;
+        gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
+        renderPlayerDNAInventory();
+        renderDNACombinationSlots();
+    } else {
+        showFeedbackModal('提示', 'DNA碎片庫存區已滿！');
+    }
+}
+// --- 新增結束 ---
+
+
 function initializeEventListeners() {
     handleModalCloseButtons();
     handleThemeSwitch();
@@ -652,7 +702,6 @@ function initializeEventListeners() {
     const dropZones = [
         DOMElements.dnaCombinationSlotsContainer,
         DOMElements.inventoryItemsContainer,
-        document.getElementById('inventory-delete-slot'),
         DOMElements.temporaryBackpackContainer
     ];
 
@@ -663,6 +712,21 @@ function initializeEventListeners() {
             zone.addEventListener('drop', handleDrop);
         }
     });
+
+    // 為刪除區單獨添加 drop 事件
+    const deleteSlot = document.getElementById('inventory-delete-slot');
+    if (deleteSlot) {
+        deleteSlot.addEventListener('drop', handleDrop);
+    }
+    
+    // 新增：為庫存區和組合區添加點擊事件監聽
+    if (DOMElements.inventoryItemsContainer) {
+        DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
+    }
+    if (DOMElements.dnaCombinationSlotsContainer) {
+        DOMElements.dnaCombinationSlotsContainer.addEventListener('click', handleClickCombinationSlot);
+    }
+
 
     handleConfirmationActions();
     handleCultivationModals();
