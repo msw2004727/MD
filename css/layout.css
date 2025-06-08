@@ -38,7 +38,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 1000; /* 預設模態框的層級 */
     left: 0;
     top: 0;
     width: 100%;
@@ -49,6 +49,17 @@
     justify-content: center;
     padding: 1rem;
 }
+
+/* 確保確認彈窗的層級更高 */
+#confirmation-modal {
+    z-index: 1001; /* 設置為比普通模態框高 */
+}
+
+/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
+#training-results-modal {
+    z-index: 1000; 
+}
+
 
 .modal-content {
     background-color: var(--bg-panel);
