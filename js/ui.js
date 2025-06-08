@@ -1117,7 +1117,6 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
         const th = document.createElement('th');
         th.textContent = header.text;
         th.dataset.sortKey = header.key;
-        th.innerHTML += ' <span class="sort-arrow"></span>';
         if(header.align) th.style.textAlign = header.align;
         headerRow.appendChild(th);
     });
@@ -1191,12 +1190,9 @@ function updateLeaderboardTable(tableType, data) {
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
-                item.elements.forEach(el => {
-                     const elSpan = document.createElement('span');
-                     elSpan.textContent = el;
-                     elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
-                     elementsCell.appendChild(elSpan);
-                });
+                elementsCell.innerHTML = item.elements.map(el => 
+                    `<span class="text-element-${el.toLowerCase()} font-bold mr-2">${el}</span>`
+                ).join('');
             }
 
             // Cell 4: Rarity
@@ -1265,22 +1261,16 @@ function updateLeaderboardTable(tableType, data) {
             titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
         }
     });
-    updateLeaderboardSortIcons(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
+    updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
-function updateLeaderboardSortIcons(tableElement, activeKey, activeOrder) {
+function updateLeaderboardSortHeader(tableElement, activeKey, activeOrder) {
     if (!tableElement) return;
     const headers = tableElement.querySelectorAll('thead th');
     headers.forEach(th => {
-        const arrowSpan = th.querySelector('.sort-arrow');
-        if (arrowSpan) {
-            if (th.dataset.sortKey === activeKey) {
-                arrowSpan.textContent = activeOrder === 'asc' ? '▲' : '▼';
-                arrowSpan.classList.add('active');
-            } else {
-                arrowSpan.textContent = '';
-                arrowSpan.classList.remove('active');
-            }
+        th.classList.remove('sorted-asc', 'sorted-desc');
+        if (th.dataset.sortKey === activeKey) {
+            th.classList.add(activeOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
         }
     });
 }
@@ -1300,6 +1290,12 @@ function updateMonsterLeaderboardElementTabs(elements) {
         button.classList.add('tab-button');
         button.textContent = elementKey === 'all' ? '全部' : (elementTypeMap[elementKey.toLowerCase()] || elementKey);
         button.dataset.elementFilter = elementKey;
+        
+        if (elementKey !== 'all') {
+            button.classList.add(`text-element-${elementKey.toLowerCase()}`);
+            button.style.fontWeight = 'bold';
+        }
+
         if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
             button.classList.add('active');
         }
