@@ -1,252 +1,316 @@
-# MD_config_services.py
-# 負責從 Firestore 載入遊戲核心設定資料
+# backend/monster_cultivation_services.py
+# 處理怪獸的修煉與技能成長服務
 
-# 移除頂層的 from MD_firebase_config import db
-# 讓 db 的獲取在函數內部進行，確保它在 main.py 設置後才被使用
-
+import random
 import logging
-from firebase_admin import firestore # 僅用於類型提示或直接訪問 firestore 服務
+import math
+from typing import List, Dict, Optional, Union, Tuple, Any
 
-# 設定日誌記錄器
-config_logger = logging.getLogger(__name__)
+# 從 MD_models 導入相關的 TypedDict 定義
+from .MD_models import (
+    PlayerGameData, Monster, Skill, RarityDetail, GameConfigs, ElementTypes, RarityNames,
+    CultivationConfig, ValueSettings, Personality, HealthCondition, DNAFragment
+)
+# 從 MD_firebase_config 導入 db 實例
+from . import MD_firebase_config
+# 從 player_services 導入 get_player_data_service
+from .player_services import get_player_data_service
+# 從 ai_services 導入新的故事生成函式
+from .MD_ai_services import generate_cultivation_story
 
-# 定義預期的遊戲設定文件名稱和其在返回字典中的鍵名
-CONFIG_DOCUMENTS_MAP = {
-    "DNAFragments": "dna_fragments",
-    "Rarities": "rarities",
-    "Skills": "skills",
-    "Personalities": "personalities",
-    "Titles": "titles",
-    "MonsterAchievementsList": "monster_achievements_list",
-    "ElementNicknames": "element_nicknames",
-    "NamingConstraints": "naming_constraints",
-    "HealthConditions": "health_conditions",
-    "NewbieGuide": "newbie_guide",
-    "ValueSettings": "value_settings",
-    "NPCMonsters": "npc_monsters",
-    "AbsorptionSettings": "absorption_config",
-    "CultivationSettings": "cultivation_config",
-    "ElementalAdvantageChart": "elemental_advantage_chart" # 新增：元素克制表
-}
+monster_cultivation_services_logger = logging.getLogger(__name__)
 
-# 為每個設定項定義預設值，以防資料庫中缺少對應文件
-DEFAULT_GAME_CONFIGS = {
-    "dna_fragments": [],
-    "rarities": {
-        "COMMON": {"name": "普通", "textVarKey": "--rarity-common-text", "statMultiplier": 1.0, "skillLevelBonus": 0, "resistanceBonus": 1, "value_factor": 10},
-    },
-    "skills": {
-        "無": [{"name": "猛撞", "power": 20, "crit": 5, "probability": 70, "story": "用身體猛烈撞擊。", "type": "無", "baseLevel": 1, "mp_cost": 3, "skill_category": "近戰"}]
-    },
-    "personalities": [
-        {"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰": 1.0}}
-    ],
-    "titles": ["新手"],
-    "monster_achievements_list": ["新秀"],
-    "element_nicknames": {
-        "火": "炎獸", "水": "水靈", "木": "木精", "金": "金剛", "土": "岩怪",
-        "光": "光使", "暗": "暗裔", "毒": "毒物", "風": "風靈", "無": "元氣", "混": "奇體"
-    },
-    "naming_constraints": {
-        "max_player_title_len": 5, "max_monster_achievement_len": 5,
-        "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
-    },
-    "health_conditions": [
-        {"id": "healthy", "name": "健康", "description": "狀態良好。", "effects": {}, "duration": 0, "icon": "😊"}
-    ],
-    "newbie_guide": [
-        {"title": "歡迎", "content": "歡迎來到怪獸異世界！"}
-    ],
-    "value_settings": {
-        "element_value_factors": {"火": 1.2, "水": 1.1, "無": 0.7, "混": 0.6},
-        "dna_recharge_conversion_factor": 0.15
-    },
+# --- 預設遊戲設定 (用於輔助函式，避免循環導入) ---
+DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
+    "dna_fragments": [], 
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
+    "skills": {"無": [{"name":"撞擊", "power":10, "crit":5, "probability":100, "type":"無", "baseLevel":1, "mp_cost":0, "skill_category":"物理"}]}, # type: ignore
+    "personalities": [{"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰":1.0}}], # type: ignore
+    "titles": [],
+    "monster_achievements_list": [],
+    "element_nicknames": {},
+    "naming_constraints": {},
+    "health_conditions": [],
+    "newbie_guide": [],
     "npc_monsters": [],
-    "absorption_config": {
-        "base_stat_gain_factor": 0.03, "score_diff_exponent": 0.3,
-        "max_stat_gain_percentage": 0.015, "min_stat_gain": 1,
-        "dna_extraction_chance_base": 0.75,
-        "dna_extraction_rarity_modifier": {"普通": 1.0, "稀有": 0.9}
+    "value_settings": { 
+        "element_value_factors": {},
+        "dna_recharge_conversion_factor": 0.15,
+        "max_farm_slots": 10,
+        "max_monster_skills": 3,
+        "max_battle_turns": 30,
+        "max_inventory_slots": 12,
+        "max_temp_backpack_slots": 9
     },
+    "absorption_config": {},
     "cultivation_config": {
-        "skill_exp_base_multiplier": 120, "new_skill_chance": 0.08,
-        "skill_exp_gain_range": (15, 75), "max_skill_level": 7,
-        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3}
+        "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
+        "skill_exp_gain_range": (10,30), "max_skill_level": 10,
+        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1}, # type: ignore
+        "stat_growth_weights": {"hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10},
+        "stat_growth_duration_divisor": 900,
+        "dna_find_chance": 0.5,
+        "dna_find_duration_divisor": 1200,
+        "dna_find_loot_table": {}
     },
-    "elemental_advantage_chart": { # 新增：元素克制表的預設值 (簡化)
-        "火": {"木": 1.5, "水": 0.5}, "水": {"火": 1.5, "木": 0.5},
-        "木": {"水": 1.5, "火": 0.5}, "光": {"暗": 1.5}, "暗": {"光": 1.5},
-        # 其他元素對其他元素預設為 1.0 (無克制或被克)
-    }
+    "elemental_advantage_chart": {},
 }
 
-def load_all_game_configs_from_firestore() -> dict: # 實際返回類型應為 GameConfigs
-    """
-    從 Firestore 的 'MD_GameConfigs' 集合中載入所有遊戲設定。
-    如果特定設定文件不存在或讀取失敗，將使用預設值。
-    """
-    # **修正：在函數內部重新獲取 db 實例，確保它已經被 main.py 設置**
-    # 這是為了避免在模組加載時 db 還是 None 的情況
-    from .MD_firebase_config import db as firestore_db_instance # 重新導入並賦予別名
 
-    if not firestore_db_instance:
-        config_logger.error("Firestore 資料庫未初始化 (load_all_game_configs_from_firestore)。將返回所有預設設定。")
-        return DEFAULT_GAME_CONFIGS.copy()
+# --- 輔助函式 (僅用於此模組) ---
+def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
+    """計算升到下一級所需的經驗值。"""
+    if level <= 0: level = 1
+    return (level + 1) * base_multiplier
 
-    loaded_configs = {}
-    config_logger.info("開始從 Firestore 載入遊戲設定...")
+def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
+    """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。"""
+    cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
 
-    for doc_name, config_key in CONFIG_DOCUMENTS_MAP.items():
-        try:
-            doc_ref = firestore_db_instance.collection('MD_GameConfigs').document(doc_name)
-            doc = doc_ref.get()
-            if doc.exists:
-                doc_data = doc.to_dict()
-                if doc_data:
-                    if doc_name == "DNAFragments" and 'all_fragments' in doc_data:
-                        loaded_configs[config_key] = doc_data['all_fragments']
-                    elif doc_name == "Rarities" and 'dna_rarities' in doc_data:
-                        loaded_configs[config_key] = doc_data['dna_rarities']
-                    elif doc_name == "Skills" and 'skill_database' in doc_data:
-                        loaded_configs[config_key] = doc_data['skill_database']
-                    elif doc_name == "Personalities" and 'types' in doc_data:
-                        loaded_configs[config_key] = doc_data['types']
-                    elif doc_name == "Titles" and 'player_titles' in doc_data:
-                        loaded_configs[config_key] = doc_data['player_titles']
-                    elif doc_name == "MonsterAchievementsList" and 'achievements' in doc_data:
-                        loaded_configs[config_key] = doc_data['achievements']
-                    elif doc_name == "ElementNicknames" and 'nicknames' in doc_data:
-                        loaded_configs[config_key] = doc_data['nicknames']
-                    elif doc_name == "HealthConditions" and 'conditions_list' in doc_data:
-                        loaded_configs[config_key] = doc_data['conditions_list']
-                    elif doc_name == "NewbieGuide" and 'guide_entries' in doc_data:
-                        loaded_configs[config_key] = doc_data['guide_entries']
-                    elif doc_name == "NPCMonsters" and 'monsters' in doc_data:
-                        loaded_configs[config_key] = doc_data['monsters']
-                    elif doc_name in ["ValueSettings", "AbsorptionSettings", "CultivationSettings", "NamingConstraints", "ElementalAdvantageChart"]:
-                        # 這些設定文件直接將字典作為文件內容儲存
-                        loaded_configs[config_key] = doc_data
-                    else:
-                        config_logger.warning(f"文件 '{doc_name}' 存在，但資料結構未被特定處理，直接使用整個文件內容作為 '{config_key}'。")
-                        loaded_configs[config_key] = doc_data
-                    config_logger.info(f"成功從 Firestore 載入 '{doc_name}' 設定到鍵 '{config_key}'。")
-                else:
-                    config_logger.warning(f"Firestore 文件 '{doc_name}' 存在但為空。將使用預設 '{config_key}' 設定。")
-                    loaded_configs[config_key] = DEFAULT_GAME_CONFIGS.get(config_key, {})
-            else:
-                config_logger.warning(f"在 Firestore 中找不到設定文件 '{doc_name}'。將使用預設 '{config_key}' 設定。")
-                loaded_configs[config_key] = DEFAULT_GAME_CONFIGS.get(config_key, {})
-        except Exception as e:
-            config_logger.error(f"從 Firestore 載入 '{doc_name}' 設定時發生錯誤: {e}", exc_info=True)
-            loaded_configs[config_key] = DEFAULT_GAME_CONFIGS.get(config_key, {})
-
-    for default_key, default_value in DEFAULT_GAME_CONFIGS.items():
-        if default_key not in loaded_configs:
-            config_logger.info(f"設定 '{default_key}' 未從 Firestore 載入，將從預設值補充。")
-            loaded_configs[default_key] = default_value
-
-    config_logger.info("所有遊戲設定載入完成。")
-    return loaded_configs
-
-# --- 單個設定獲取函式 (可選) ---
-# 這些函數也需要修改，以確保它們在調用 load_all_game_configs_from_firestore 時 db 已經設置
-def get_dna_fragments() -> list:
-    return load_all_game_configs_from_firestore().get("dna_fragments", DEFAULT_GAME_CONFIGS["dna_fragments"])
-
-def get_rarities() -> dict:
-    return load_all_game_configs_from_firestore().get("rarities", DEFAULT_GAME_CONFIGS["rarities"])
-
-def get_skills_database() -> dict:
-    return load_all_game_configs_from_firestore().get("skills", DEFAULT_GAME_CONFIGS["skills"])
-
-def get_personalities() -> list:
-    return load_all_game_configs_from_firestore().get("personalities", DEFAULT_GAME_CONFIGS["personalities"])
-
-def get_player_titles() -> list:
-    return load_all_game_configs_from_firestore().get("titles", DEFAULT_GAME_CONFIGS["titles"])
-
-def get_monster_achievements_list() -> list:
-    return load_all_game_configs_from_firestore().get("monster_achievements_list", DEFAULT_GAME_CONFIGS["monster_achievements_list"])
-
-def get_element_nicknames() -> dict:
-    return load_all_game_configs_from_firestore().get("element_nicknames", DEFAULT_GAME_CONFIGS["element_nicknames"])
-
-def get_naming_constraints() -> dict:
-    return load_all_game_configs_from_firestore().get("naming_constraints", DEFAULT_GAME_CONFIGS["naming_constraints"])
-
-def get_value_settings() -> dict:
-    return load_all_game_configs_from_firestore().get("value_settings", DEFAULT_GAME_CONFIGS["value_settings"])
-
-def get_npc_monsters() -> list:
-    return load_all_game_configs_from_firestore().get("npc_monsters", DEFAULT_GAME_CONFIGS["npc_monsters"])
-
-def get_absorption_config() -> dict:
-    return load_all_game_configs_from_firestore().get("absorption_config", DEFAULT_GAME_CONFIGS["absorption_config"])
-
-def get_cultivation_config() -> dict:
-    return load_all_game_configs_from_firestore().get("cultivation_config", DEFAULT_GAME_CONFIGS["cultivation_config"])
-
-def get_elemental_advantage_chart() -> dict: # 新增
-    return load_all_game_configs_from_firestore().get("elemental_advantage_chart", DEFAULT_GAME_CONFIGS["elemental_advantage_chart"])
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    config_logger.info("正在測試 MD_config_services.py...")
-
-    # 為了在獨立運行時測試，需要模擬 db 的設置
-    try:
-        # 這裡假設在測試環境下可以這樣初始化
-        import firebase_admin
-        from firebase_admin import credentials
-        # 這裡需要一個有效的服務帳戶金鑰路徑或環境變數
-        # 為了測試方便，如果沒有實際憑證，可能會失敗
-        # 或者使用 Mock 對象
-        if not firebase_admin._apps: # 避免重複初始化
-            # 嘗試從環境變數獲取，或者使用一個測試用的憑證
-            test_firebase_credentials_json = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
-            if test_firebase_credentials_json:
-                cred = credentials.Certificate(json.loads(test_firebase_credentials_json))
-                firebase_admin.initialize_app(cred)
-            else:
-                config_logger.warning("測試環境下未找到 FIREBASE_SERVICE_ACCOUNT_KEY，可能無法連接 Firestore。")
-                # 如果沒有憑證，這裡的測試會失敗，因為無法連接 Firestore
-                # 實際運行時由 main.py 負責初始化
-                # 為了讓測試不報錯，可以考慮 mock firestore_db_instance
-        
-        from MD_firebase_config import set_firestore_client, db as current_db_instance
-        if not current_db_instance: # 如果還沒設置，則設置
-            set_firestore_client(firestore.client())
-            config_logger.info("測試模式下 Firestore client 已設定。")
-
-    except Exception as e:
-        config_logger.error(f"測試模式下 Firebase 初始化失敗: {e}", exc_info=True)
-
-
-    game_configurations = load_all_game_configs_from_firestore()
-
-    if game_configurations:
-        print("\n成功載入的遊戲設定 (部分預覽):")
-        for key in game_configurations.keys():
-            value = game_configurations[key]
-            if isinstance(value, list):
-                print(f"  {key}: (共 {len(value)} 項)")
-                if value: print(f"    示例第一項: {value[0]}")
-            elif isinstance(value, dict):
-                print(f"  {key}: (共 {len(value)} 鍵)")
-                if value:
-                    first_item_key = next(iter(value), None)
-                    if first_item_key: print(f"    示例第一項/鍵 [{first_item_key}]: {value[first_item_key]}")
-            else:
-                print(f"  {key}: {value}")
-        
-        print("\n--- 單獨獲取 ElementalAdvantageChart 測試 ---")
-        elemental_chart_cfg = get_elemental_advantage_chart()
-        if elemental_chart_cfg and isinstance(elemental_chart_cfg.get("火"), dict):
-            print(f"  火對木的克制倍率: {elemental_chart_cfg['火'].get('木')}")
-            print(f"  水對火的克制倍率: {elemental_chart_cfg.get('水', {}).get('火')}")
-        else:
-            print("未能正確獲取到 ElementalAdvantageChart 或其結構不符。")
+    if target_level is not None:
+        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 10)))
     else:
-        print("載入遊戲設定失敗 (返回為 None 或空)。")
+        skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
+        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 10))) # type: ignore
 
+    new_skill_instance: Skill = {
+        "name": skill_template.get("name", "未知技能"),
+        "power": skill_template.get("power", 10),
+        "crit": skill_template.get("crit", 5),
+        "probability": skill_template.get("probability", 50),
+        "story": skill_template.get("story", skill_template.get("description", "一個神秘的招式")),
+        "type": skill_template.get("type", "無"), # type: ignore
+        "baseLevel": skill_template.get("baseLevel", 1),
+        "level": skill_level,
+        "mp_cost": skill_template.get("mp_cost", 0),
+        "skill_category": skill_template.get("skill_category", "其他"), # type: ignore
+        "current_exp": 0,
+        "exp_to_next_level": _calculate_exp_to_next_level(skill_level, cultivation_cfg.get("skill_exp_base_multiplier", 100)), # type: ignore
+        "effect": skill_template.get("effect"),
+        "stat": skill_template.get("stat"),
+        "amount": skill_template.get("amount"),
+        "duration": skill_template.get("duration"),
+        "damage": skill_template.get("damage"),
+        "recoilDamage": skill_template.get("recoilDamage")
+    }
+    return new_skill_instance
+
+
+# --- 修煉與技能成長服務 ---
+def complete_cultivation_service(
+    player_id: str,
+    monster_id: str,
+    duration_seconds: int,
+    game_configs: GameConfigs
+) -> Optional[Dict[str, Any]]:
+    """完成怪獸修煉，計算經驗、潛在新技能、數值成長和物品拾獲。"""
+    if not MD_firebase_config.db:
+        monster_cultivation_services_logger.error("Firestore 資料庫未初始化 (complete_cultivation_service 內部)。")
+        return {"success": False, "error": "Firestore 資料庫未初始化。", "status_code": 500}
+    
+    db = MD_firebase_config.db
+    
+    player_data = get_player_data_service(player_id, None, game_configs) 
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_cultivation_services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return {"success": False, "error": "找不到玩家資料或農場無怪獸。", "status_code": 404}
+
+    monster_to_update: Optional[Monster] = None
+    monster_idx = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_update = m
+            monster_idx = idx
+            break
+
+    if not monster_to_update or monster_idx == -1:
+        monster_cultivation_services_logger.error(f"完成修煉失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。", "status_code": 404}
+
+    # 重設修煉狀態
+    if not monster_to_update.get("farmStatus"):
+        monster_to_update["farmStatus"] = {}
+    monster_to_update["farmStatus"]["isTraining"] = False
+    monster_to_update["farmStatus"]["trainingStartTime"] = None
+    monster_to_update["farmStatus"]["trainingDuration"] = None
+    
+    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"]) # type: ignore
+    
+    # 初始化回傳變數
+    adventure_story = ""
+    skill_updates_log: List[str] = []
+    items_obtained: List[DNAFragment] = []
+    learned_new_skill_template: Optional[Skill] = None
+    
+    # 計算修煉完成度
+    max_duration = game_configs.get("value_settings", {}).get("max_cultivation_time_seconds", 3600)
+    duration_percentage = duration_seconds / max_duration if max_duration > 0 else 0
+
+    # 門檻檢查
+    if duration_percentage < 0.25:
+        adventure_story = "修煉時間過短，怪獸稍微活動了一下筋骨，但沒有任何實質性的收穫。"
+        skill_updates_log.append("沒有任何成長。")
+    else:
+        monster_cultivation_services_logger.info(f"開始為怪獸 {monster_to_update.get('nickname')} 結算修煉成果。時長: {duration_seconds}秒。")
+        
+        # 1. 技能經驗與升級
+        current_skills: List[Skill] = monster_to_update.get("skills", [])
+        exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75))
+        max_skill_lvl = cultivation_cfg.get("max_skill_level", 10)
+        exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100)
+        for skill in current_skills:
+            if skill.get("level", 1) >= max_skill_lvl: continue
+            exp_gained = random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)
+            skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
+            while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
+                skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
+                skill["level"] = skill.get("level", 1) + 1
+                skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill["level"], exp_multiplier)
+                skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
+        monster_to_update["skills"] = current_skills
+
+        # 2. 領悟新技能
+        if random.random() < cultivation_cfg.get("new_skill_chance", 0.1):
+            monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"])
+            all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
+            potential_new_skills: List[Skill] = []
+            current_skill_names = {s.get("name") for s in current_skills}
+            for el in monster_elements: potential_new_skills.extend(all_skills_db.get(el, []))
+            if "無" not in monster_elements and "無" in all_skills_db: potential_new_skills.extend(all_skills_db.get("無", []))
+            learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
+            if learnable_skills:
+                learned_new_skill_template = random.choice(learnable_skills)
+                skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
+
+        # 3. 基礎數值成長
+        stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
+        growth_chances = math.floor(duration_seconds / stat_divisor)
+        if growth_chances > 0:
+            growth_weights_map = cultivation_cfg.get("stat_growth_weights", {})
+            stats_pool = list(growth_weights_map.keys())
+            weights = list(growth_weights_map.values())
+            stats_to_grow = random.choices(stats_pool, weights=weights, k=growth_chances)
+            stat_growth_log_map = {}
+            for stat in stats_to_grow:
+                gain = random.randint(1, 2)
+                stat_growth_log_map[stat] = stat_growth_log_map.get(stat, 0) + gain
+            for stat, total_gain in stat_growth_log_map.items():
+                if stat in ["hp", "mp"]:
+                    max_stat_key = f"initial_max_{stat}"
+                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + total_gain
+                    monster_to_update[stat] = monster_to_update.get(max_stat_key, 0)
+                else:
+                    monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain
+                skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 提升了 {total_gain} 點！")
+
+        # 4. 拾獲DNA碎片
+        if random.random() < cultivation_cfg.get("dna_find_chance", 0.5):
+            dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
+            num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
+            monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
+            loot_table = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
+            all_dna_templates = game_configs.get("dna_fragments", [])
+            monster_elements = monster_to_update.get("elements", ["無"])
+            dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
+            if not dna_pool: dna_pool = all_dna_templates
+            for _ in range(num_items):
+                if not dna_pool: break
+                rarity_pool, rarity_weights = zip(*loot_table.items())
+                chosen_rarity = random.choices(rarity_pool, weights=rarity_weights, k=1)[0]
+                quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
+                if quality_pool:
+                    items_obtained.append(random.choice(quality_pool))
+        
+        # 5. 生成AI故事
+        adventure_story = generate_cultivation_story(
+            monster_name=monster_to_update.get('nickname', '一隻怪獸'),
+            duration_percentage=duration_percentage,
+            skill_updates_log=skill_updates_log,
+            items_obtained=items_obtained
+        )
+
+    # 重新計算總評價
+    rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
+    monster_to_update["score"] = (monster_to_update.get("initial_max_hp",0) // 10) + \
+                                   monster_to_update.get("attack",0) + monster_to_update.get("defense",0) + \
+                                   (monster_to_update.get("speed",0) // 2) + (monster_to_update.get("crit",0) * 2) + \
+                                   (len(monster_to_update.get("skills",[])) * 15) + \
+                                   (rarity_order.index(monster_to_update.get("rarity","普通")) * 30)
+                                   
+    player_data["farmedMonsters"][monster_idx] = monster_to_update
+    
+    from .player_services import save_player_data_service
+    if save_player_data_service(player_id, player_data):
+        return {
+            "success": True,
+            "updated_monster_skills": monster_to_update.get("skills"),
+            "learned_new_skill_template": learned_new_skill_template,
+            "skill_updates_log": skill_updates_log,
+            "adventure_story": adventure_story,
+            "items_obtained": items_obtained 
+        }
+    else:
+        monster_cultivation_services_logger.error(f"完成修煉後儲存玩家 {player_id} 資料失敗。")
+        return {"success": False, "error": "完成修煉後儲存資料失敗。", "status_code": 500}
+
+
+def replace_monster_skill_service(
+    player_id: str,
+    monster_id: str,
+    slot_to_replace_index: Optional[int],
+    new_skill_template_data: Skill,
+    game_configs: GameConfigs,
+    player_data: PlayerGameData
+) -> Optional[PlayerGameData]:
+    if not MD_firebase_config.db:
+        monster_cultivation_services_logger.error("Firestore 資料庫未初始化 (replace_monster_skill_service 內部)。")
+        return None
+    
+    db = MD_firebase_config.db
+    if not player_data or not player_data.get("farmedMonsters"):
+        monster_cultivation_services_logger.error(f"替換技能失敗：找不到玩家 {player_id} 或其無怪獸。")
+        return None
+
+    monster_to_update: Optional[Monster] = None
+    monster_idx = -1
+    for idx, m in enumerate(player_data["farmedMonsters"]):
+        if m.get("id") == monster_id:
+            monster_to_update = m
+            monster_idx = idx
+            break
+
+    if not monster_to_update or monster_idx == -1:
+        monster_cultivation_services_logger.error(f"替換技能失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
+        return None
+
+    current_skills: List[Skill] = monster_to_update.get("skills", [])
+    max_monster_skills = game_configs.get("value_settings", {}).get("max_monster_skills", 3)
+
+    monster_rarity_name: RarityNames = monster_to_update.get("rarity", "普通")
+    all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", {})
+    rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()}
+    monster_rarity_key = rarity_key_lookup.get(monster_rarity_name, "COMMON")
+    monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["rarities"]["COMMON"])
+
+    new_skill_instance = _get_skill_from_template(new_skill_template_data, game_configs, monster_rarity_data, target_level=1)
+
+    if slot_to_replace_index is not None and 0 <= slot_to_replace_index < len(current_skills):
+        monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能槽 {slot_to_replace_index} 將被替換為 '{new_skill_instance['name']}'。")
+        current_skills[slot_to_replace_index] = new_skill_instance
+    elif len(current_skills) < max_monster_skills:
+        monster_cultivation_services_logger.info(f"怪獸 {monster_id} 學習了新技能 '{new_skill_instance['name']}' 到新槽位。")
+        current_skills.append(new_skill_instance)
+    else:
+        monster_cultivation_services_logger.warning(f"怪獸 {monster_id} 技能槽已滿 ({len(current_skills)}/{max_monster_skills})，無法學習新技能 '{new_skill_instance['name']}'。")
+        return player_data
+
+    monster_to_update["skills"] = current_skills
+    player_data["farmedMonsters"][monster_idx] = monster_to_update
+
+    from .player_services import save_player_data_service
+    if save_player_data_service(player_id, player_data):
+        monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
+        return player_data
+    else:
+        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {player_id} 資料失敗。")
+        return None
