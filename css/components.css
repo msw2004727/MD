@@ -1335,3 +1335,34 @@ body.light-theme .leaderboard-table tr:hover td {
         grid-template-columns: 1fr;
     }
 }
+
+/* --- Leaderboard Optimizations --- */
+#monster-leaderboard-table-container,
+#player-leaderboard-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.leaderboard-table {
+    min-width: 720px;
+}
+
+.leaderboard-table th, .leaderboard-table td {
+    white-space: nowrap;
+}
+
+.leaderboard-table td:nth-child(2), /* Nickname Column */
+.leaderboard-table th:nth-child(2) {
+    width: 25%;
+    white-space: normal; /* Allow nickname to wrap if necessary on very wide tables */
+}
+
+.leaderboard-table td:nth-child(8), /* Action Column */
+.leaderboard-table th:nth-child(8) {
+    text-align: center;
+}
+
+.leaderboard-table .button {
+    white-space: nowrap;
+    padding: 4px 12px; /* Make button slightly smaller */
+}
