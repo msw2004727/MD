@@ -13,7 +13,7 @@ from .MD_models import (
     BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory
 )
 # 從 MD_ai_services 導入實際的 AI 文本生成函數
-from .MD_ai_services import generate_battle_report_content
+from .MD_ai_services import generate_battle_report_content # 確保這裡正確導入新的函數
 
 
 battle_logger = logging.getLogger(__name__)
@@ -30,8 +30,8 @@ DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "element_nicknames": {},
     "naming_constraints": {},
     "health_conditions": [ # 至少包含一些預設狀態
-        {"id": "poisoned", "name": "中毒", "description": "", "effects": {"hp_per_turn": -5}, "duration": 3},
-        {"id": "paralyzed", "name": "麻痺", "description": "", "effects": {}, "chance_to_skip_turn": 0.5, "duration": 2},
+        {"id": "poisoned", "name": "中毒", "description": "", "effects": {"hp_per_turn": -8}, "duration": 3},
+        {"id": "paralyzed", "name": "麻痺", "description": "", "effects": {}, "chance_to_skip_turn": 0.3, "duration": 2},
         {"id": "burned", "name": "燒傷", "description": "", "effects": {"hp_per_turn": -5, "attack": -10}, "duration": 3},
         {"id": "confused", "name": "混亂", "description": "", "effects": {}, "confusion_chance": 0.5, "duration": 2}
     ],
@@ -65,6 +65,7 @@ def _calculate_elemental_advantage(attacker_element: ElementTypes, defender_elem
     chart = game_configs.get("elemental_advantage_chart", {})
     total_multiplier = 1.0
     for def_el in defender_elements:
+        # 確保 defender_elements 中的每個元素都在 chart 中有定義，否則使用 1.0
         total_multiplier *= chart.get(attacker_element, {}).get(def_el, 1.0)
     return total_multiplier
 
@@ -175,9 +176,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     # 傷害計算
     damage = 0
     if skill.get("power", 0) > 0:
-        # D&D 風格傷害計算
-        # 傷害骰 (假設技能威力 / 10 決定骰子面數或數量)
-        # 這裡簡化為直接使用 power 作為基礎傷害
         base_damage = skill["power"]
         
         # 攻擊力 vs 防禦力
