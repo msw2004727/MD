@@ -1,12 +1,12 @@
-# MD_ai_services.py
+# backend/MD_ai_services.py
 # 負責與 AI 模型互動，為怪獸生成描述性內容
 
 import os
 import json
-import requests # 用於發送 HTTP 請求
+import requests # 用於發送 HTTP 請求 
 import logging
 import time
-from typing import Dict, Any, List # 用於類型提示
+from typing import Dict, Any, List, Optional # 用於類型提示
 
 # 設定日誌記錄器
 ai_logger = logging.getLogger(__name__)
@@ -23,6 +23,8 @@ DEFAULT_AI_RESPONSES = {
 }
 
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗，請稍後再試或檢查後台日誌。"
+DEFAULT_BATTLE_LOG_TEXT = "戰鬥過程未生成 AI 敘述。"
+
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
     """
@@ -220,6 +222,109 @@ def generate_cultivation_story(monster_name: str, duration_percentage: float, sk
         ai_logger.error(f"呼叫 DeepSeek API 生成修煉故事時發生錯誤: {e}", exc_info=True)
         return DEFAULT_ADVENTURE_STORY
 
+
+def generate_battle_log_text(raw_log_messages: List[str], game_configs: Dict[str, Any], style: Optional[str] = None) -> str:
+    """
+    根據原始日誌信息和指定風格，使用 DeepSeek AI 生成風格化的戰鬥日誌文本。
+    """
+    ai_logger.info(f"開始為戰鬥日誌生成 AI 敘述 (使用 DeepSeek)。")
+
+    if not DEEPSEEK_API_KEY:
+        ai_logger.error("DeepSeek API 金鑰未設定。無法為戰鬥日誌生成 AI 敘述。")
+        return "\n".join(raw_log_messages) # 如果沒有金鑰，直接返回原始日誌
+
+    # 組合原始日誌，作為 AI 的輸入
+    combined_raw_log = "\n".join(raw_log_messages)
+    
+    # 根據戰鬥日誌的特點，設計 AI 提示
+    prompt = f"""
+你是一位專業的電競解說員和風趣文學作家，請你根據以下戰鬥回合的原始日誌，
+將其改寫成一段生動、簡潔且富有張力的中文敘述。
+你的目標是將枯燥的系統訊息轉化為令人興奮的戰鬥報導。
+
+原始日誌:
+{combined_raw_log}
+
+請注意以下幾點：
+- 戰鬥回合數標記請保留原始格式，例如「--- 回合 X 開始 ---」。
+- 戰鬥結束的結果請保持清晰和強調。
+- 請避免重複訊息，將多條相關的訊息融合成一句話。
+- 如果有「致命一擊！」、「恢復了 HP」、「被擊倒了！」等關鍵字，請在敘述中加以強調。
+- 無需包含「AI 戰鬥敘述待生成...」或任何原始日誌中不必要的 Debug 資訊。
+- 字數限制在 100-150 字之間，保持精煉。
+- 直接給出敘述文本，不要包含任何開頭或結尾的解釋，也不要用 JSON 包裹。
+"""
+    # 可以根據需要調整 temperature 和 max_tokens
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": "你是一位專業的電競解說員和奇幻文學作家，擅長用生動的中文將戰鬥日誌改寫成引人入勝的敘述。你會嚴格根據用戶提供的原始日誌進行創作，只返回敘述文本。"},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7, # 稍微降低溫度，讓敘述更穩定
+        "max_tokens": 300,  # 增加最大生成字數，確保足夠的描述
+    }
+
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    max_retries = 3
+    retry_delay = 5
+
+    for attempt in range(max_retries):
+        try:
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 發送戰鬥日誌請求...")
+            response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=90)
+            response.raise_for_status() 
+
+            response_json = response.json()
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 收到原始戰鬥日誌 JSON 響應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+
+            if (response_json.get("choices") and
+                len(response_json["choices"]) > 0 and
+                response_json["choices"][0].get("message") and
+                response_json["choices"][0]["message"].get("content")):
+
+                generated_text = response_json["choices"][0]["message"]["content"]
+                ai_logger.info(f"成功為戰鬥日誌生成 AI 敘述。")
+                return generated_text.strip() # 直接返回文本內容
+            else:
+                error_detail = response_json.get("error", {})
+                error_message = error_detail.get("message", "DeepSeek API 回應格式不符合預期或包含錯誤。")
+                ai_logger.error(f"ERROR AI: DeepSeek API 回應無效。完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                return DEFAULT_BATTLE_LOG_TEXT
+        except requests.exceptions.HTTPError as http_err:
+            status_code = http_err.response.status_code if http_err.response else 'N/A'
+            ai_logger.error(f"ERROR AI: DeepSeek API HTTP 錯誤 (嘗試 {attempt+1}): {http_err}. 狀態碼: {status_code}.")
+            if status_code == 401:
+                ai_logger.error("ERROR AI: DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
+                return DEFAULT_BATTLE_LOG_TEXT
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_BATTLE_LOG_TEXT
+        except requests.exceptions.RequestException as req_err:
+            ai_logger.error(f"ERROR AI: DeepSeek API 請求錯誤 (嘗試 {attempt+1}): {req_err}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_BATTLE_LOG_TEXT
+        except Exception as e:
+            ai_logger.error(f"ERROR AI: 生成 AI 戰鬥日誌時發生未知錯誤 (嘗試 {attempt+1}): {e}", exc_info=True)
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_BATTLE_LOG_TEXT
+
+    ai_logger.error(f"ERROR AI: 所有重試均失敗，無法為戰鬥日誌生成 AI 敘述。")
+    return DEFAULT_BATTLE_LOG_TEXT
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     test_monster = {
@@ -247,3 +352,19 @@ if __name__ == '__main__':
         items_obtained=[{"name": "熾熱餘燼"}]
     )
     print(test_story)
+
+    print("\n--- AI 生成的戰鬥日誌測試 ---")
+    test_raw_log = [
+        "--- 回合 1 開始 ---",
+        "烈焰幼龍 對 冰霜巨魔 發動了 火焰爪！造成 45 點傷害。",
+        "冰霜巨魔 對 烈焰幼龍 發動了 冰錐術！烈焰幼龍陷入了 冰凍 狀態。",
+        "--- 回合 2 開始 ---",
+        "烈焰幼龍 因 冰凍 狀態無法行動！",
+        "冰霜巨魔 對 烈焰幼龍 發動了 冰錐術！造成 30 點傷害。",
+        "--- 回合 3 開始 ---",
+        "烈焰幼龍 的 冰凍 狀態解除了！",
+        "烈焰幼龍 對 冰霜巨魔 發動了 火焰爪！致命一擊！造成 90 點傷害。冰霜巨魔 被擊倒了！",
+        "戰鬥結束！烈焰幼龍 獲勝！"
+    ]
+    test_battle_log = generate_battle_log_text(test_raw_log, {})
+    print(test_battle_log)
