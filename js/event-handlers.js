@@ -625,15 +625,15 @@ function handleLeaderboardSorting() {
 } 
 
 // 新增：處理戰鬥模擬的定時器邏輯
-async function startBattleSimulation(playerMonster, opponentMonster, initialLogEntry) {
+async function startBattleSimulation(playerMonster, opponentMonster) {
     // 初始化戰鬥狀態
     battlePlayerMonster = { ...playerMonster };
     battleOpponentMonster = { ...opponentMonster };
     currentBattleTurn = 0;
-    fullBattleLog = [];
+    fullBattleLog = []; // 每次新戰鬥開始時，清空完整日誌
 
-    // 顯示戰鬥日誌模態框
-    showBattleLogModal([], battlePlayerMonster.nickname, battleOpponentMonster.nickname); // 清空並初始化日誌顯示
+    // 顯示戰鬥日誌模態框（初始空白，只顯示標題和開始提示）
+    showBattleLogModal([], battlePlayerMonster.nickname, battleOpponentMonster.nickname); 
 
     // 開始每3秒請求一次新的回合日誌
     if (battleIntervalId) clearInterval(battleIntervalId); // 清除舊的定時器以防萬一
@@ -647,7 +647,7 @@ async function startBattleSimulation(playerMonster, opponentMonster, initialLogE
                 battlePlayerMonster,
                 battleOpponentMonster,
                 currentBattleTurn,
-                fullBattleLog
+                fullBattleLog // 將目前累積的日誌傳給後端
             );
 
             if (!response || !response.latest_log_entry) {
@@ -655,13 +655,12 @@ async function startBattleSimulation(playerMonster, opponentMonster, initialLogE
             }
 
             const latestLogEntry = response.latest_log_entry;
-            const logMessage = latestLogEntry.styled_log_message || latestLogEntry.raw_log_messages.join('\n');
             fullBattleLog.push(latestLogEntry); // 將最新回合日誌加入完整日誌
 
             // 更新前端顯示
-            showBattleLogModal(fullBattleLog.map(entry => entry.styled_log_message || entry.raw_log_messages.join('\n')),
-                                response.battle_end ? response.winner_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : battleOpponentMonster.nickname : null,
-                                response.battle_end ? response.loser_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : battleOpponentMonster.nickname : null); // 更新日誌顯示
+            showBattleLogModal(fullBattleLog, // 將完整的日誌陣列傳遞給顯示函數
+                                response.battle_end ? (response.winner_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : (response.winner_id === battleOpponentMonster.id ? battleOpponentMonster.nickname : null)) : null,
+                                response.battle_end ? (response.loser_id === battlePlayerMonster.id ? battlePlayerMonster.nickname : (response.loser_id === battleOpponentMonster.id ? battleOpponentMonster.nickname : null)) : null); // 更新日誌顯示
 
             // 更新怪獸的當前HP和MP（這是後端返回的最新狀態，用於下次回合發送）
             battlePlayerMonster = response.player_monster_data || battlePlayerMonster;
