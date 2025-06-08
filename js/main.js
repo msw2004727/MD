@@ -107,10 +107,14 @@ async function initializeGame() {
         if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
 
         const defaultMonster = getDefaultSelectedMonster();
-        if (typeof updateMonsterSnapshot === 'function') {
-            updateMonsterSnapshot(defaultMonster || null);
-        }
-        
+        // 延遲更新怪獸快照，確保 DOMElements 完全可用
+        setTimeout(() => {
+            if (typeof updateMonsterSnapshot === 'function') {
+                updateMonsterSnapshot(defaultMonster || null);
+            }
+        }, 100); // 延遲 100 毫秒
+
+
         // 切換主畫面顯示
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
@@ -166,11 +170,14 @@ async function onAuthStateChangedHandler(user) {
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
         
         // 清理UI
-        if (typeof updateMonsterSnapshot === 'function') updateMonsterSnapshot(null);
-        if (typeof resetDNACombinationSlots === 'function') resetDNACombinationSlots();
-        if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
-        if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
-        if (typeof hideAllModals === 'function') hideAllModals();
+        // 延遲更新怪獸快照，確保 DOMElements 完全可用
+        setTimeout(() => {
+            if (typeof updateMonsterSnapshot === 'function') updateMonsterSnapshot(null);
+            if (typeof resetDNACombinationSlots === 'function') resetDNACombinationSlots();
+            if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
+            if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
+            if (typeof hideAllModals === 'function') hideAllModals();
+        }, 100);
     }
 }
 
