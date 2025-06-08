@@ -89,7 +89,7 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
         "stat": skill_template.get("stat"),     # 影響的數值
         "amount": skill_template.get("amount"),   # 影響的量
         "duration": skill_template.get("duration"), # 持續回合
-        "damage": skill_template.get("damage"),   # 額外傷害或治療量
+        "damage": skill_template.get("damage"),   # 額外傷害或治療量 (非 DoT)
         "recoilDamage": skill_template.get("recoilDamage") # 反傷比例
     }
     return new_skill_instance
@@ -114,9 +114,9 @@ def _generate_combination_key(dna_template_ids: List[str]) -> str:
 
 
 # --- DNA 組合與怪獸生成服務 ---
-def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfigs, player_data: PlayerGameData, player_id: str) -> Optional[Dict[str, Any]]:
+def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_configs: GameConfigs, player_data: PlayerGameData, player_id: str) -> Optional[Dict[str, Any]]:
     """
-    根據提供的 DNA ID 列表、遊戲設定和玩家資料來組合生成新的怪獸。
+    根據前端傳來的、已在組合槽中的完整 DNA 物件列表來生成新的怪獸。
     """
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
@@ -125,35 +125,14 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
 
     db = firestore_db_instance
 
-    if not dna_ids_from_request:
-        monster_combination_services_logger.warning("DNA 組合請求中的 DNA ID 列表為空。")
+    if not dna_objects_from_request or len(dna_objects_from_request) < 2:
+        monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空或數量不足。")
         return None
 
-    combined_dnas_data: List[DNAFragment] = []
-    constituent_dna_template_ids: List[str] = []
-    consumed_dna_instance_indices: List[int] = [] # 新增：記錄被消耗的 DNA 在玩家庫存中的索引
-    
-    for req_dna_instance_id in dna_ids_from_request:
-        found_dna_instance = None
-        found_dna_index = -1
-        for idx, dna_item in enumerate(player_data.get("playerOwnedDNA", [])):
-            if dna_item and dna_item.get("id") == req_dna_instance_id:
-                found_dna_instance = dna_item
-                found_dna_index = idx
-                break
-        
-        if found_dna_instance:
-            dna_base_id_to_use = found_dna_instance.get("baseId") or found_dna_instance.get("id")
-            if dna_base_id_to_use:
-                combined_dnas_data.append(found_dna_instance)
-                constituent_dna_template_ids.append(dna_base_id_to_use)
-                consumed_dna_instance_indices.append(found_dna_index) # 記錄索引
-            else:
-                monster_combination_services_logger.warning(f"在玩家庫存中找到 ID 為 {req_dna_instance_id} 的 DNA 實例，但缺少 baseId。")
-                return None
-        else:
-            monster_combination_services_logger.warning(f"在玩家庫存中找不到 ID 為 {req_dna_instance_id} 的 DNA 實例。")
-            return None
+    # 直接使用從請求中傳來的 DNA 物件資料
+    combined_dnas_data: List[DNAFragment] = dna_objects_from_request
+    # 提取 DNA 模板 ID (baseId) 用於生成配方鍵值
+    constituent_dna_template_ids: List[str] = [dna.get("baseId") or dna.get("id", "") for dna in combined_dnas_data if dna]
 
     if len(combined_dnas_data) < 2:
         monster_combination_services_logger.error("組合 DNA 數量不足 (至少需要 2 個)。")
@@ -184,7 +163,8 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
-        return {"monster": new_monster_instance, "consumed_dna_indices": consumed_dna_instance_indices}
+        # 返回怪獸物件，讓路由層處理後續
+        return {"monster": new_monster_instance}
 
     else:
         monster_combination_services_logger.info(f"配方 '{combination_key}' 為全新發現，開始生成新怪獸。")
@@ -309,4 +289,4 @@ def combine_dna_service(dna_ids_from_request: List[str], game_configs: GameConfi
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
         new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
         
-        return {"monster": new_monster_instance, "consumed_dna_indices": consumed_dna_instance_indices}
+        return {"monster": new_monster_instance}
