@@ -95,16 +95,16 @@ async function savePlayerData(playerId, playerData) {
 
 /**
  * 組合 DNA 生成新怪獸
- * @param {string[]} dnaInstanceIds 要組合的 DNA 實例 ID 列表
+ * @param {object[]} dnaObjects 要組合的 DNA 物件列表
  * @returns {Promise<object>} 新生成的怪獸對象或錯誤訊息
  */
-async function combineDNA(dnaInstanceIds) {
-    if (!dnaInstanceIds || dnaInstanceIds.length === 0) {
-        throw new Error("DNA 組合需要提供 DNA 實例 ID 列表。");
+async function combineDNA(dnaObjects) {
+    if (!dnaObjects || dnaObjects.length === 0) {
+        throw new Error("DNA 組合需要提供 DNA 物件列表。");
     }
     return fetchAPI('/combine', {
         method: 'POST',
-        body: JSON.stringify({ dna_ids: dnaInstanceIds }),
+        body: JSON.stringify({ dna_data: dnaObjects }),
     });
 }
 
