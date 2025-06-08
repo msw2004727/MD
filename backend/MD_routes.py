@@ -7,10 +7,11 @@ from firebase_admin import auth
 import logging
 import random
 import copy # 用於深拷貝怪獸數據
+from flask_cors import cross_origin # 修正：導入 cross_origin
 
 # 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna
-from .monster_combination_services import combine_dna_service # <--- 修正：確保 combine_dna_service 被正確導入
+from .monster_combination_services import combine_dna_service 
 
 # 直接從更細分的怪物管理服務模組中導入
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -70,6 +71,15 @@ def _get_authenticated_user_id():
 @md_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok", "message": "MD API 運作中！"})
+
+@md_bp.route('/game-configs', methods=['GET'])
+@cross_origin() # 修正：為 game-configs 路由明確添加 cross_origin 裝飾器
+def get_game_configs_route():
+    configs = _get_game_configs_data_from_app_context()
+    if not configs or not configs.get("dna_fragments"):
+        routes_logger.error("遊戲設定未能成功載入或為空。")
+        return jsonify({"error": "無法載入遊戲核心設定，請稍後再試或聯繫管理員。"}), 500
+    return jsonify(configs), 200
 
 @md_bp.route('/dna/draw-free', methods=['POST'])
 def draw_free_dna_route():
@@ -262,7 +272,7 @@ def simulate_battle_api_route():
         return jsonify({"error": "遊戲設定載入失敗，無法模擬戰鬥。"}), 500
     
     # 調用新的完整戰鬥服務，一次性完成所有回合的模擬
-    battle_result: BattleResult = simulate_battle_full( # 更換為 simulate_battle_full
+    battle_result: BattleResult = simulate_battle_full( 
         player_monster_data_req,
         opponent_monster_data_req,
         game_configs,
