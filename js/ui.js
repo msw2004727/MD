@@ -1148,7 +1148,7 @@ function updateLeaderboardTable(tableType, data) {
             { text: '擁有者', key: 'owner_nickname' },
             { text: '操作', key: 'actions', align: 'center' }
         ];
-    } else {
+    } else { // player
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
             { text: '玩家暱稱', key: 'nickname' },
@@ -1171,10 +1171,15 @@ function updateLeaderboardTable(tableType, data) {
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
-        const row = tbody.insertCell();
-        row.textContent = index + 1;
+        const row = tbody.insertRow(); // Fix: Use insertRow() on tbody to create a <tr>
 
         if (tableType === 'monster') {
+            // Cell 1: Rank
+            const rankCell = row.insertCell();
+            rankCell.textContent = index + 1;
+            rankCell.style.textAlign = 'center';
+
+            // Cell 2: Nickname
             const nicknameCell = row.insertCell();
             const nicknameSpan = document.createElement('span');
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
@@ -1182,29 +1187,39 @@ function updateLeaderboardTable(tableType, data) {
             nicknameSpan.textContent = item.nickname;
             nicknameCell.appendChild(nicknameSpan);
             
+            // Cell 3: Elements
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
-            item.elements.forEach(el => {
-                 const elSpan = document.createElement('span');
-                 elSpan.textContent = el;
-                 elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
-                 elementsCell.appendChild(elSpan);
-            });
+            if(item.elements && Array.isArray(item.elements)) {
+                item.elements.forEach(el => {
+                     const elSpan = document.createElement('span');
+                     elSpan.textContent = el;
+                     elSpan.className = `text-xs px-1.5 py-0.5 rounded-full text-element-${el.toLowerCase()} bg-element-${el.toLowerCase()}-bg mr-1`;
+                     elementsCell.appendChild(elSpan);
+                });
+            }
+
+            // Cell 4: Rarity
             const rarityCell = row.insertCell();
             rarityCell.textContent = item.rarity;
             rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';
 
+            // Cell 5: Score
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
 
+            // Cell 6: Resume
             const resumeCell = row.insertCell();
             resumeCell.textContent = `${item.resume?.wins || 0} / ${item.resume?.losses || 0}`;
             resumeCell.style.textAlign = 'center';
 
+            // Cell 7: Owner
             row.insertCell().textContent = item.owner_nickname || 'N/A';
+
+            // Cell 8: Actions
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
             if (item.isNPC) { 
@@ -1220,18 +1235,32 @@ function updateLeaderboardTable(tableType, data) {
                 challengeBtn.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
                 actionsCell.appendChild(challengeBtn);
             }
-        } else {
+        } else { // Player Leaderboard
+            // Cell 1: Rank
+            const rankCell = row.insertCell();
+            rankCell.textContent = index + 1;
+            rankCell.style.textAlign = 'center';
+            
+            // Cell 2: Nickname
             row.insertCell().textContent = item.nickname;
+
+            // Cell 3: Score
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
+
+            // Cell 4: Wins
             const winsCell = row.insertCell();
             winsCell.textContent = item.wins;
             winsCell.style.textAlign = 'center';
+            
+            // Cell 5: Losses
             const lossesCell = row.insertCell();
             lossesCell.textContent = item.losses;
             lossesCell.style.textAlign = 'center';
+
+            // Cell 6: Titles
             const titlesCell = row.insertCell();
             titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
         }
