@@ -2,7 +2,7 @@
 # Flask 應用程式主啟動點
 
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS # 確保 Flask-CORS 已導入
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
@@ -34,8 +34,8 @@ allowed_origins = [
     "http://localhost:5501"       # 備用端口
 ]
 
-# **修改點：簡化 CORS 設定，直接應用於整個應用程式**
-# 這樣可以避免因 resource 路徑匹配問題導致的錯誤，更為穩健
+# **關鍵修正：將 CORS 實例直接應用於整個 Flask 應用程式 'app'**
+# 這樣可以確保所有路由，包括預檢請求 (OPTIONS)，都能正確處理 CORS 頭。
 CORS(app,
      origins=allowed_origins,
      supports_credentials=True,
