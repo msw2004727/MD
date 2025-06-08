@@ -131,8 +131,6 @@ function deleteDNAFromInventory(dnaInstanceId) {
 
 /**
  * 處理玩家點擊農場中怪獸的“修煉”按鈕。
- * @param {Event} event 事件對象。
- * @param {string} monsterId 怪獸 ID。
  */
 function handleCultivateMonsterClick(event, monsterId) {
     event.stopPropagation();
@@ -148,7 +146,12 @@ function handleCultivateMonsterClick(event, monsterId) {
     }
 
     gameState.cultivationMonsterId = monsterId;
-    if (DOMElements.cultivationMonsterNameText) DOMElements.cultivationMonsterNameText.textContent = monster.nickname;
+    // 為養成彈窗內的怪獸名稱上色
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+    DOMElements.cultivationMonsterNameText.textContent = monster.nickname;
+    DOMElements.cultivationMonsterNameText.className = `text-rarity-${rarityKey}`;
+
     const maxTime = gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600;
     if (DOMElements.maxCultivationTimeText) DOMElements.maxCultivationTimeText.textContent = maxTime;
     showModal('cultivation-setup-modal');
@@ -245,55 +248,27 @@ async function handleCompleteCultivation(monsterId, durationSeconds) {
         if (result && result.success) {
             const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
             if (monsterInFarm) {
+                // 更新本地的怪獸狀態
                 monsterInFarm.skills = result.updated_monster_skills || monsterInFarm.skills;
-                monsterInFarm.farmStatus = monsterInFarm.farmStatus || {};
-                monsterInFarm.farmStatus.isTraining = false;
-                monsterInFarm.farmStatus.trainingStartTime = null;
-                monsterInFarm.farmStatus.trainingDuration = null;
-                if(monsterInFarm.farmStatus && monsterInFarm.farmStatus.hasOwnProperty('isTraining')) {
+                if(monsterInFarm.farmStatus) {
                     monsterInFarm.farmStatus.isTraining = false;
                 }
             }
             renderMonsterFarm();
             updateMonsterSnapshot(getSelectedMonster() || getDefaultSelectedMonster());
-
-
-            if (DOMElements.trainingResultsModalTitle) DOMElements.trainingResultsModalTitle.textContent = `${monsterInFarm ? monsterInFarm.nickname : '怪獸'}的修煉成果`;
-            if (DOMElements.trainingStoryResult) DOMElements.trainingStoryResult.textContent = result.adventure_story || "沒有特別的故事發生。";
-
-            let growthHtml = "<ul>";
-            if (result.skill_updates_log && result.skill_updates_log.length > 0) {
-                result.skill_updates_log.forEach(log => growthHtml += `<li>${log}</li>`);
-            } else {
-                growthHtml += "<li>技能沒有明顯變化。</li>";
-            }
-            growthHtml += "</ul>";
-            if (DOMElements.trainingGrowthResult) DOMElements.trainingGrowthResult.innerHTML = growthHtml;
-
-            let itemsHtml = "<p>沒有拾獲任何物品。</p>";
-            gameState.lastCultivationResult = result;
-            if (result.items_obtained && result.items_obtained.length > 0) {
-                itemsHtml = "<ul>";
-                result.items_obtained.forEach(item => {
-                    itemsHtml += `<li>拾獲: ${item.name} (${item.rarity} ${item.type}屬性)</li>`;
-                });
-                itemsHtml += "</ul>";
-                if (DOMElements.addAllToTempBackpackBtn) {
-                    DOMElements.addAllToTempBackpackBtn.disabled = false;
-                    DOMElements.addAllToTempBackpackBtn.textContent = "一鍵全數加入背包";
-                }
-            } else {
-                 if (DOMElements.addAllToTempBackpackBtn) {
-                    DOMElements.addAllToTempBackpackBtn.disabled = true;
-                    DOMElements.addAllToTempBackpackBtn.textContent = "無物品可加入";
-                }
-            }
-            if (DOMElements.trainingItemsResult) DOMElements.trainingItemsResult.innerHTML = itemsHtml;
-
-
+            
+            gameState.lastCultivationResult = result; // 保存結果以供關閉時提醒
             hideModal('feedback-modal');
-            showModal('training-results-modal');
 
+            // 使用新的UI函式來顯示成果
+            if (typeof updateTrainingResultsModal === 'function') {
+                updateTrainingResultsModal(result, monsterInFarm ? monsterInFarm.nickname : '怪獸');
+            } else {
+                console.error("updateTrainingResultsModal is not defined. Cannot show results.");
+                showFeedbackModal('錯誤', '無法顯示修煉成果。');
+            }
+
+            // 處理學習新技能的獨立邏輯
             if (result.learned_new_skill_template) {
                 promptLearnNewSkill(monsterId, result.learned_new_skill_template, monsterInFarm ? monsterInFarm.skills : []);
             }
