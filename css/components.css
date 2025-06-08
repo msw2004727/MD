@@ -370,6 +370,7 @@ button.warning-outline:hover, .button.warning-outline:hover {
     justify-content: center;
     border-radius: 50%;
     transition: background-color 0.2s, color 0.2s;
+    z-index: 990;
 }
 .modal-close:hover, .modal-close:focus {
     color: var(--text-primary);
@@ -665,6 +666,67 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+/* NEW: Styles for monster leaderboard element tabs */
+#monster-leaderboard-element-tabs {
+    display: flex; /* Use flexbox for horizontal layout */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: center; /* Center tabs */
+    gap: 4px; /* Spacing between tabs */
+    margin-bottom: 15px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.leaderboard-element-tab {
+    padding: 8px 10px; /* Default padding */
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--text-secondary); /* Default text color */
+    font-size: 1rem;
+    font-weight: bold; /* Make element names stand out */
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, background-color 0.2s;
+    white-space: nowrap; /* Prevent text wrapping by default */
+    text-align: center;
+    border-radius: 4px;
+    flex-grow: 0; /* Don't grow by default */
+    flex-shrink: 0; /* Don't shrink by default */
+    min-width: 1em; /* Ensure minimum width for a single character */
+}
+
+/* Specific styling for the "全部" tab in the leaderboard */
+.leaderboard-element-tab.element-all {
+    color: var(--accent-color); /* Default color for "All" */
+}
+
+/* Active state for leaderboard tabs */
+.leaderboard-element-tab.active {
+    color: var(--accent-color); /* Active color */
+    background-color: var(--bg-panel); /* Active background */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Hover state for non-active leaderboard tabs */
+.leaderboard-element-tab:not(.active):hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* Media query for smaller screens: Make tabs compact */
+@media (max-width: 768px) {
+    .leaderboard-element-tab {
+        padding: 6px 4px; /* Reduce padding for smaller screens */
+        font-size: 0.9rem; /* Slightly smaller font if needed */
+        flex-basis: auto; /* Allow content to dictate initial size */
+        flex-grow: 0; /* Prevent tabs from growing to fill space */
+        min-width: 1em; /* Minimum width for one character */
+    }
+}
+
 
 .leaderboard-table {
     width: 100%;
