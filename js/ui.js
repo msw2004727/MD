@@ -1,4 +1,5 @@
 // js/ui.js
+console.log("DEBUG: ui.js starting to load and define functions."); // Add this line
 
 // 注意：此檔案會依賴 gameState (來自 js/game-state.js) 和其他輔助函數
 
@@ -1474,4 +1475,4 @@ function updateTrainingResultsModal(results, monsterName) {
 }
 
 
-console.log("UI module loaded - v8 with farm layout fixes.");
+console.log("UI module loaded - v8 with farm layout fixes."); // Add this line
