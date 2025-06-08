@@ -257,9 +257,11 @@
         <div class="modal-content large">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
             <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成計畫</h3>
-            <div class="modal-body text-center py-4">
-                <p class="mb-2 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 選擇修煉場所。</p>
-                <p class="text-sm text-[var(--text-secondary)] mb-4">不同的場所有不同的元素加成，請謹慎選擇！</p>
+            <div class="modal-body py-4">
+                <div class="text-center">
+                    <p class="mb-2 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 選擇修煉場所。</p>
+                    <p class="text-sm text-[var(--text-secondary)] mb-4">不同的場所有不同的元素加成，請謹慎選擇！</p>
+                </div>
                 
                 <div class="cultivation-locations-container">
                     <div class="cultivation-location-card" id="location-gaia">
@@ -281,11 +283,11 @@
 
                 <div class="cultivation-action-buttons">
                      <button id="start-gaia-btn" class="button success" data-location="gaia">前往蓋亞</button>
-                     <button id="start-sky-btn" class="button success" data-location="sky">前往天空</button>
-                     <button id="start-crystal-btn" class="button success" data-location="crystal">前往結晶</button>
+                     <button id="start-sky-btn" class="button warning" data-location="sky">前往天空</button>
+                     <button id="start-crystal-btn" class="button" data-location="crystal" style="background-color: #b19cd9; color: black; border-color: #9370DB;">前往結晶</button>
                 </div>
                 
-                <p class="cultivation-hint text-xs mt-3">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。修煉期間，怪獸將無法放生或出戰。</p>
+                <p class="cultivation-hint text-xs mt-3 text-center">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。修煉期間，怪獸將無法放生或出戰。</p>
             </div>
         </div>
     </div>
