@@ -900,7 +900,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             const moreList = body.querySelector('#more-monsters-list');
             const isHidden = moreList.style.display === 'none';
             moreList.style.display = isHidden ? 'block' : 'none';
-            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${playerData.farmedMonsters.length - 5}隻)...`;
+            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${monsters.length - 5}隻)...`;
         });
     }
 }
@@ -937,7 +937,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
-            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
+            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -1077,6 +1077,38 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 }
 
+
+// 新增：更新怪獸排行榜元素篩選按鈕的函數
+function updateMonsterLeaderboardElementTabs(elements) {
+    const container = DOMElements.monsterLeaderboardElementTabs;
+    if (!container) return;
+    container.innerHTML = '';
+
+    const allButton = document.createElement('button');
+    allButton.classList.add('tab-button', 'leaderboard-element-tab', 'element-all');
+    allButton.dataset.elementFilter = 'all';
+    allButton.textContent = '全部';
+    if (gameState.currentMonsterLeaderboardElementFilter === 'all') {
+        allButton.classList.add('active');
+    }
+    container.appendChild(allButton);
+
+    const elementTypeMap = {
+        '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
+        '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
+    };
+
+    elements.filter(e => e !== 'all').forEach(element => { // 排除 'all' 再次生成
+        const button = document.createElement('button');
+        button.classList.add('tab-button', 'leaderboard-element-tab', `text-element-${getElementCssClassKey(element)}`);
+        button.dataset.elementFilter = element;
+        button.textContent = element;
+        if (gameState.currentMonsterLeaderboardElementFilter === element) {
+            button.classList.add('active');
+        }
+        container.appendChild(button);
+    });
+}
 
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
