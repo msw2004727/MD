@@ -1,9 +1,9 @@
 // js/ui.js
-console.log("DEBUG: ui.js starting to load and define functions."); // Add this line
+console.log("DEBUG: ui.js starting to load and define functions.");
 
-// 注意：此檔案會依賴 gameState (來自 js/game-state.js) 和其他輔助函數
-
-let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
+// 將 DOMElements 聲明和初始化放在最頂層，確保其在任何函數調用前被聲明。
+// 注意：實際的 DOM 元素獲取會在 initializeDOMElements 函數被調用時執行。
+let DOMElements = {}; 
 
 // ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
@@ -15,6 +15,11 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
         tabButtonsContainer = modalElement.querySelector('.tab-buttons');
         tabContentsContainer = modalElement;
     } else {
+        // 確保 DOMElements.dnaFarmTabs 存在才使用
+        if (!DOMElements.dnaFarmTabs) {
+            console.error("DOMElements.dnaFarmTabs is not initialized yet in switchTabContent.");
+            return;
+        }
         tabButtonsContainer = DOMElements.dnaFarmTabs;
         tabContentsContainer = DOMElements.dnaFarmTabs.parentNode;
     }
@@ -412,12 +417,15 @@ function clearMonsterBodyPartsDisplay() {
 }
 
 function updateMonsterSnapshot(monster) {
-    if (!DOMElements.monsterSnapshotArea || !DOMElements.snapshotAchievementTitle ||
+    // 關鍵的檢查，確保 DOMElements 及其屬性已被初始化
+    if (!DOMElements || Object.keys(DOMElements).length === 0 || 
+        !DOMElements.monsterSnapshotArea || !DOMElements.snapshotAchievementTitle ||
         !DOMElements.snapshotNickname || !DOMElements.snapshotWinLoss ||
         !DOMElements.snapshotEvaluation || !DOMElements.monsterInfoButton ||
         !DOMElements.monsterSnapshotBaseBg || !DOMElements.monsterSnapshotBodySilhouette ||
         !DOMElements.monsterPartsContainer) {
-        console.error("一個或多個怪獸快照相關的 DOM 元素未找到。");
+        console.error("DOMElements 或其部分成員尚未完全初始化，無法更新怪獸快照。");
+        // 可以選擇在此處添加一個小型延遲重試機制，或者直接返回避免錯誤
         return;
     }
 
@@ -443,7 +451,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
         if (DOMElements.snapshotMainContent) {
-            DOMEElements.snapshotMainContent.innerHTML = '';
+            DOMElements.snapshotMainContent.innerHTML = '';
         }
 
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -1171,7 +1179,7 @@ function getElementCssClassKey(chineseElement) {
     return elementTypeMap[chineseElement] || '無'; // 預設為 '無'
 }
 
-// 新增：更新排行榜標頭排序箭頭的函數
+// 更新排行榜標頭排序箭頭的函數
 function updateLeaderboardSortHeader(table, sortKey, sortOrder) {
     if (!table) return;
 
@@ -1524,4 +1532,4 @@ function updateTrainingResultsModal(results, monsterName) {
 }
 
 
-console.log("UI module loaded - v8 with farm layout fixes."); // Add this line
+console.log("UI module loaded - v8 with farm layout fixes.");
