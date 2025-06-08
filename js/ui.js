@@ -719,9 +719,16 @@ function renderMonsterFarm() {
 
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '結束' : '修煉';
-        const cultivateBtnClass = isTraining ? 'secondary' : 'warning';
-        // 針對「結束」按鈕，改為灰色底紅色字
-        const cultivateBtnStyle = isTraining ? 'color: var(--danger-color);' : '';
+        let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
+        let cultivateBtnStyle = '';
+
+        if (isTraining) {
+            // For "結束" (End) button, create a red outline style
+            cultivateBtnStyle = `color: var(--danger-color); background-color: transparent; border: 1px solid var(--danger-color);`;
+        } else {
+            // For "修煉" (Start) button, use the standard warning style
+            cultivateBtnClasses += ' warning';
+        }
 
 
         item.innerHTML = `
@@ -744,7 +751,7 @@ function renderMonsterFarm() {
             </div>
             <div class="farm-col farm-col-actions">
                 <button class="farm-monster-info-btn button primary text-xs">資訊</button>
-                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}" 
+                <button class="${cultivateBtnClasses}" 
                         style="${cultivateBtnStyle}"
                         title="${isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
@@ -754,6 +761,7 @@ function renderMonsterFarm() {
             </div>
         `;
 
+        // Add event listeners to the dynamically created buttons
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
@@ -765,15 +773,18 @@ function renderMonsterFarm() {
             showModal('monster-info-modal');
         });
 
-        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (monster.farmStatus?.isTraining) {
-                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-            } else {
-                handleCultivateMonsterClick(e, monster.id);
-            }
-        });
-
+        const cultivateBtn = item.querySelector('.farm-monster-cultivate-btn');
+        if (cultivateBtn) {
+            cultivateBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (monster.farmStatus?.isTraining) {
+                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+                } else {
+                    handleCultivateMonsterClick(e, monster.id);
+                }
+            });
+        }
+        
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleReleaseMonsterClick(e, monster.id);
@@ -972,6 +983,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     `;
     // --- 結束：產生怪獸組成DNA的HTML ---
 
+    const gains = monster.cultivation_gains || {};
+    const getGainHtml = (statName) => {
+        const gain = gains[statName] || 0;
+        if (gain > 0) {
+            return ` <span style="color: var(--success-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
+        }
+        return '';
+    };
 
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
@@ -979,12 +998,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
