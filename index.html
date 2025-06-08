@@ -153,12 +153,6 @@
                     </div>
                     <div id="farm-table-wrapper" style="overflow-x: auto; padding-bottom: 5px;">
                         <div id="farm-headers" class="farm-header-grid mt-2">
-                            <div>出戰</div>
-                            <div>怪獸</div>
-                            <div>稀有度</div>
-                            <div>評價</div>
-                            <div>狀態</div>
-                            <div>養成</div>
                         </div>
                         <div id="farmed-monsters-list">
                             <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>
@@ -260,17 +254,38 @@
     </div>
 
     <div id="cultivation-setup-modal" class="modal">
-        <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-content large">
             <span class="modal-close" data-modal-id="cultivation-setup-modal">&times;</span>
-            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成</h3>
+            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成計畫</h3>
             <div class="modal-body text-center py-4">
-                <div class="mb-4">
-                    <img src="https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true" alt="修煉橫幅" class="w-full h-auto rounded-md object-cover">
+                <p class="mb-2 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 選擇修煉場所。</p>
+                <p class="text-sm text-[var(--text-secondary)] mb-4">不同的場所有不同的元素加成，請謹慎選擇！</p>
+                
+                <div class="cultivation-locations-container">
+                    <div class="cultivation-location-card" id="location-gaia">
+                        <img src="https://github.com/msw2004727/MD/blob/main/images/ZL001.png?raw=true" alt="蓋亞的搖籃">
+                        <h5>蓋亞的搖籃 (自然系)</h5>
+                        <p>充滿生命氣息的原始叢林，適合木、水、土、毒屬性的怪獸。</p>
+                    </div>
+                    <div class="cultivation-location-card" id="location-sky">
+                         <img src="https://github.com/msw2004727/MD/blob/main/images/ZL003.png?raw=true" alt="天空的怒火">
+                        <h5>天空的怒火 (能量系)</h5>
+                        <p>時而烈日曝曬、時而狂風呼嘯的高地，適合火、風、光屬性的怪獸。</p>
+                    </div>
+                    <div class="cultivation-location-card" id="location-crystal">
+                         <img src="https://github.com/msw2004727/MD/blob/main/images/ZL002.png?raw=true" alt="人智的結晶">
+                        <h5>人智的結晶 (法則系)</h5>
+                        <p>被遺棄的古代鍊金都市，充滿了人造與形而上的法則元素，適合金、暗、混屬性。</p>
+                    </div>
                 </div>
-                <p class="mb-3 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 進行養成計畫。</p>
-                <button id="start-cultivation-btn" class="w-full primary button">💪 開始修煉</button>
-                <p class="cultivation-hint text-sm mt-3">提示：修煉期間，怪獸將無法放生或出戰。</p>
-                <p class="cultivation-hint text-xs mt-1">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。</p>
+
+                <div class="cultivation-action-buttons">
+                     <button id="start-gaia-btn" class="button success" data-location="gaia">前往蓋亞</button>
+                     <button id="start-sky-btn" class="button success" data-location="sky">前往天空</button>
+                     <button id="start-crystal-btn" class="button success" data-location="crystal">前往結晶</button>
+                </div>
+                
+                <p class="cultivation-hint text-xs mt-3">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。修煉期間，怪獸將無法放生或出戰。</p>
             </div>
         </div>
     </div>
