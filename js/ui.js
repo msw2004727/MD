@@ -656,7 +656,16 @@ function renderMonsterFarm() {
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
 
-    listContainer.innerHTML = ''; // 清空列表，但不包含表頭
+    // 動態產生表頭，並移除「稀有度」
+    farmHeaders.innerHTML = `
+        <div>出戰</div>
+        <div>怪獸</div>
+        <div>評價</div>
+        <div>狀態</div>
+        <div>養成</div>
+    `;
+
+    listContainer.innerHTML = ''; // 清空列表
 
     // 檢查是否有怪獸，以決定是否顯示表頭和空訊息
     if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
@@ -708,6 +717,13 @@ function renderMonsterFarm() {
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
 
+        const isTraining = monster.farmStatus?.isTraining;
+        const cultivateBtnText = isTraining ? '結束' : '修煉';
+        const cultivateBtnClass = isTraining ? 'secondary' : 'warning';
+        // 針對「結束」按鈕，改為灰色底紅色字
+        const cultivateBtnStyle = isTraining ? 'color: var(--danger-color);' : '';
+
+
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
                 <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
@@ -720,23 +736,21 @@ function renderMonsterFarm() {
                     ${(monster.elements || []).map(el => `<span class="text-xs">${el}</span>`).join(' ')}
                 </div>
             </div>
-            <div class="farm-col farm-col-rarity">
-                <span class="text-rarity-${rarityKey}">${monster.rarity}</span>
-            </div>
-             <div class="farm-col farm-col-score">
+            <div class="farm-col farm-col-score">
                 <span class="score-value">${monster.score || 0}</span>
             </div>
             <div class="farm-col farm-col-status">
                 <span class="status-text ${statusClass}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button secondary text-xs">資訊</button>
-                <button class="farm-monster-cultivate-btn button text-xs ${monster.farmStatus?.isTraining ? 'danger' : 'warning'}" 
-                        title="${monster.farmStatus?.isTraining ? '結束修煉' : '開始修煉'}"
+                <button class="farm-monster-info-btn button primary text-xs">資訊</button>
+                <button class="farm-monster-cultivate-btn button text-xs ${cultivateBtnClass}" 
+                        style="${cultivateBtnStyle}"
+                        title="${isTraining ? '結束修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
-                    ${monster.farmStatus?.isTraining ? '結束' : '修煉'}
+                    ${cultivateBtnText}
                 </button>
-                <button class="farm-monster-release-btn button danger text-xs" ${monster.farmStatus?.isTraining || isDeployed ? 'disabled' : ''}>放生</button>
+                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>放生</button>
             </div>
         `;
 
