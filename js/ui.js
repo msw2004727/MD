@@ -1141,9 +1141,13 @@ function getElementCssClassKey(chineseElement) {
 
 
 function updateLeaderboardTable(tableType, data) {
+    console.log("updateLeaderboardTable called with data:", data); // Debugging log
     const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
     const table = document.getElementById(tableId);
-    if (!table) return;
+    if (!table) {
+        console.error("Leaderboard table element not found:", tableId); // Debugging error
+        return;
+    }
 
     let headersConfig;
     if (tableType === 'monster') {
@@ -1296,8 +1300,11 @@ function updateLeaderboardTable(tableType, data) {
 }
 
 // 調整 showBattleLogModal 函數以顯示逐回合日誌
-function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
-    if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) return;
+function showBattleLogModal(logEntries, playerNickname, opponentNickname) {
+    if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
+        console.error("Battle log modal elements not found in DOMElements.");
+        return;
+    }
 
     // 清空現有日誌，每次都重新渲染完整日誌
     DOMElements.battleLogArea.innerHTML = '';
@@ -1308,40 +1315,49 @@ function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
         logEntries = [];
     }
 
+    // 添加戰鬥開始提示（僅在第一回合顯示）
+    if (logEntries.length === 0) {
+        const introP = document.createElement('p');
+        introP.className = 'battle-start';
+        introP.textContent = `--- 戰鬥開始: ${playerNickname} vs ${opponentNickname} ---`;
+        DOMElements.battleLogArea.appendChild(introP);
+    }
+
     logEntries.forEach(logEntry => {
         // 使用 styled_log_message，如果不存在則回退到 raw_log_messages
+        // 注意：這裡假設 logEntry.raw_log_messages 總是陣列
         const message = logEntry.styled_log_message || (Array.isArray(logEntry.raw_log_messages) ? logEntry.raw_log_messages.join('\n') : logEntry.raw_log_messages);
 
         const p = document.createElement('p');
         // 根據訊息內容應用樣式，這部分應與後端生成的日誌內容匹配
         if (message.startsWith('--- 回合')) {
             p.className = 'turn-divider';
-        } else if (message.includes('獲勝！') || message.includes('被擊倒了！') || message.includes('平手！')) {
-            // 這些應由最後的winner/loser判斷
+        } else if (logEntry.battle_end) { // 檢查是否是戰鬥結束的回合
             if (logEntry.winner_id && logEntry.winner_id !== '平手') {
                  p.className = 'battle-end winner';
-            } else if (logEntry.loser_id && logEntry.loser_id !== '平手') {
-                p.className = 'defeated'; // 如果是被擊倒，但不是贏家
+                 p.textContent = `🏆 ${logEntry.winner_id === gameState.selectedMonsterId ? playerNickname : opponentNickname} 獲勝！🏆`; // 顯示正確的獲勝者暱稱
             } else if (logEntry.winner_id === '平手') {
                 p.className = 'battle-end draw';
+                p.textContent = `🤝 平手！🤝`;
+            } else if (logEntry.loser_id) { // 如果有loser但沒有明確winner/draw，可能是被擊倒
+                p.className = 'defeated';
             }
-        } else if (message.includes('致命一擊！')) {
+        }
+        else if (message.includes('致命一擊！')) {
             p.className = 'crit-hit';
         } else if (message.includes('恢復了') && message.includes('HP')) {
             p.className = 'heal-action';
+        } else if (message.includes('被擊倒了！') || message.includes('倒下了！')) { // 如果是中間回合的擊倒訊息
+            p.className = 'defeated';
         }
-        p.textContent = message;
+
+
+        if (!logEntry.battle_end) { // 如果不是最終回合的結果，則直接顯示原始或風格化訊息
+             p.textContent = message;
+        }
+       
         DOMElements.battleLogArea.appendChild(p);
     });
-
-    // 戰鬥結束的最終結果由後端判斷，並在最後一回合的 logEntry 中帶上 winner_id/loser_id
-    // 所以這裡不需要額外處理 winnerName/loserName，除非是初始標題
-    if (logEntries.length === 0) {
-        const introP = document.createElement('p');
-        introP.className = 'battle-start';
-        introP.textContent = `--- 戰鬥開始: ${winnerName} vs ${loserName} ---`;
-        DOMElements.battleLogArea.appendChild(introP);
-    }
     
     // 自動滾動到底部
     DOMElements.battleLogArea.scrollTop = DOMElements.battleLogArea.scrollHeight;
