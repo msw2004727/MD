@@ -626,7 +626,6 @@ function handleLeaderboardSorting() {
 } 
 
 // 移除 startBattleSimulation，改為一次性調用
-// async function startBattleSimulation(...) { ... }
 
 
 // 修改：處理挑戰按鈕點擊，發送一次性戰鬥模擬請求
@@ -709,8 +708,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
             async () => {
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒，生成戰報...', true);
-                    // 調用新的 simulateBattle API，它現在會返回完整的戰報
-                    const response = await simulateBattle(playerMonster, opponentMonster); // 注意：這裡的 simulateBattle 應該是 apiClient.js 中的函數
+                    // 調用 simulateBattle API，它現在會返回完整的戰報
+                    const response = await simulateBattle(playerMonster, opponentMonster); // 這是 apiClient.js 中的函數
                     const battleResult = response.battle_result;
 
                     await refreshPlayerData(); // 戰鬥結束後刷新數據，確保狀態同步
