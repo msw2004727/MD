@@ -182,7 +182,7 @@ async function handleEndCultivationClick(event, monsterId, trainingStartTime, tr
     if (elapsedTimeSeconds < totalDurationSeconds) {
         showConfirmationModal(
             '提前結束修煉',
-            `怪獸 <span class="math-inline">\{monster\.nickname\} 的修煉時間尚未結束 \(</span>{totalDurationSeconds - elapsedTimeSeconds}秒剩餘)。提前結束將無法獲得完整獎勵。確定要結束嗎？`,
+            `怪獸 ${monster.nickname} 的修煉時間尚未結束 (${totalDurationSeconds - elapsedTimeSeconds}秒剩餘)。提前結束將無法獲得完整獎勵。確定要結束嗎？`,
             async () => {
                 await handleCompleteCultivation(monsterId, elapsedTimeSeconds);
             },
@@ -249,19 +249,13 @@ async function handleCompleteCultivation(monsterId, durationSeconds) {
         const result = await completeCultivation(monsterId, durationSeconds);
 
         if (result && result.success) {
-            const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-            if (monsterInFarm) {
-                monsterInFarm.skills = result.updated_monster_skills || monsterInFarm.skills;
-                if(monsterInFarm.farmStatus) {
-                    monsterInFarm.farmStatus.isTraining = false;
-                }
-            }
-            renderMonsterFarm();
-            updateMonsterSnapshot(getSelectedMonster() || getDefaultSelectedMonster());
+            await refreshPlayerData();
             
             gameState.lastCultivationResult = result;
             hideModal('feedback-modal');
 
+            const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+            
             if (typeof updateTrainingResultsModal === 'function') {
                 updateTrainingResultsModal(result, monsterInFarm ? monsterInFarm.nickname : '怪獸');
             } else {
@@ -302,7 +296,7 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
     if (!monster) return;
 
     const maxSkills = gameState.gameConfigs.value_settings?.max_monster_skills || 3;
-    let message = `<span class="math-inline">\{monster\.nickname\} 領悟了新技能：<strong\></span>{newSkillTemplate.name}</strong> (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
+    let message = `${monster.nickname} 領悟了新技能：<strong>${newSkillTemplate.name}</strong> (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
 
     if (currentSkills.length < maxSkills) {
         message += "是否要學習這個技能？";
@@ -327,13 +321,13 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
             '學習'
         );
     } else {
-        message += `但技能槽已滿 (<span class="math-inline">\{currentSkills\.length\}/</span>{maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
+        message += `但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
 
         let skillOptionsHtml = '<div class="my-2 space-y-1">';
         currentSkills.forEach((skill, index) => {
             skillOptionsHtml += `
-                <button class="skill-replace-option-btn button secondary text-sm p-1 w-full text-left" data-skill-slot="<span class="math-inline">\{index\}"\>
-替換：</span>{skill.name} (Lv.${skill.level || 1})
+                <button class="skill-replace-option-btn button secondary text-sm p-1 w-full text-left" data-skill-slot="${index}">
+                    替換：${skill.name} (Lv.${skill.level || 1})
                 </button>`;
         });
         skillOptionsHtml += '</div>';
@@ -467,7 +461,8 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
             renderPlayerDNAInventory();
             updateMonsterSnapshot(getSelectedMonster() || null);
             await savePlayerData(gameState.playerId, gameState.playerData);
-
+            
+            // 已移除「物品已移動」的提示彈窗
         } else {
             showFeedbackModal('庫存已滿', '您的 DNA 庫存已滿，無法再從臨時背包移動物品。請清理後再試。');
         }
