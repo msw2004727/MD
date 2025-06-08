@@ -135,115 +135,108 @@ def complete_cultivation_service(
     monster_to_update["farmStatus"]["trainingDuration"] = None
     
     cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"]) # type: ignore
-    monster_cultivation_services_logger.info(f"開始為怪獸 {monster_to_update.get('nickname')} 結算修煉成果。時長: {duration_seconds}秒。")
     
+    # 初始化回傳變數
+    adventure_story = ""
     skill_updates_log: List[str] = []
-    
-    # 1. 技能經驗與升級
-    current_skills: List[Skill] = monster_to_update.get("skills", [])
-    exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75))
-    max_skill_lvl = cultivation_cfg.get("max_skill_level", 10)
-    exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100)
-
-    for skill in current_skills:
-        if skill.get("level", 1) >= max_skill_lvl:
-            continue
-        exp_gained = random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)
-        skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
-        
-        while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
-            skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
-            skill["level"] = skill.get("level", 1) + 1
-            skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill["level"], exp_multiplier)
-            skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
-    monster_to_update["skills"] = current_skills
-
-    # 2. 領悟新技能
-    learned_new_skill_template: Optional[Skill] = None
-    if random.random() < cultivation_cfg.get("new_skill_chance", 0.1):
-        monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"]) # type: ignore
-        all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
-        potential_new_skills: List[Skill] = []
-        current_skill_names = {s.get("name") for s in current_skills}
-        for el_str_learn in monster_elements:
-            potential_new_skills.extend(all_skills_db.get(el_str_learn, [])) # type: ignore
-        if "無" not in monster_elements and "無" in all_skills_db:
-            potential_new_skills.extend(all_skills_db.get("無", []))
-        learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
-        if learnable_skills:
-            learned_new_skill_template = random.choice(learnable_skills)
-            skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
-
-    # 3. 基礎數值成長
-    stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
-    growth_chances = math.floor(duration_seconds / stat_divisor)
-    if growth_chances > 0:
-        growth_weights_map = cultivation_cfg.get("stat_growth_weights", {})
-        stats_pool = list(growth_weights_map.keys())
-        weights = list(growth_weights_map.values())
-        
-        stats_to_grow = random.choices(stats_pool, weights=weights, k=growth_chances)
-        
-        stat_growth_log_map = {}
-        for stat in stats_to_grow:
-            gain = random.randint(1, 2) # 每次固定提升1-2點
-            stat_growth_log_map[stat] = stat_growth_log_map.get(stat, 0) + gain
-
-        for stat, total_gain in stat_growth_log_map.items():
-            if stat in ["hp", "mp"]:
-                max_stat_key = f"initial_max_{stat}"
-                monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + total_gain
-                monster_to_update[stat] = monster_to_update.get(max_stat_key, 0) # 同時補滿
-            else:
-                monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain
-            skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 提升了 {total_gain} 點！")
-
-    # 4. 拾獲DNA碎片
     items_obtained: List[DNAFragment] = []
-    if random.random() < cultivation_cfg.get("dna_find_chance", 0.5):
-        dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
-        num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
-        
-        monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
-        loot_table: Dict[RarityNames, float] = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
-        
-        all_dna_templates: List[DNAFragment] = game_configs.get("dna_fragments", [])
-        monster_elements = monster_to_update.get("elements", ["無"])
-        
-        dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
-        if not dna_pool: dna_pool = all_dna_templates
+    learned_new_skill_template: Optional[Skill] = None
+    
+    # 計算修煉完成度
+    max_duration = game_configs.get("value_settings", {}).get("max_cultivation_time_seconds", 3600)
+    duration_percentage = duration_seconds / max_duration if max_duration > 0 else 0
 
-        for _ in range(num_items):
-            if not dna_pool: break
-            
-            rarity_pool = list(loot_table.keys())
-            rarity_weights = list(loot_table.values())
-            chosen_rarity = random.choices(rarity_pool, weights=rarity_weights, k=1)[0]
-            
-            quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
-            if quality_pool:
-                found_item = random.choice(quality_pool)
-                items_obtained.append(found_item)
-                # 這條日誌現在由AI故事整合，所以可以選擇性移除
-                # skill_updates_log.append(f"💎 拾獲了DNA碎片：[{found_item.get('rarity')}] {found_item.get('name')}！")
+    # 新增：門檻檢查
+    if duration_percentage < 0.25:
+        adventure_story = "修煉時間過短，怪獸稍微活動了一下筋骨，但沒有任何實質性的收穫。"
+        skill_updates_log.append("沒有任何成長。")
+    else:
+        # 如果達到門檻，才執行所有獎勵計算
+        monster_cultivation_services_logger.info(f"開始為怪獸 {monster_to_update.get('nickname')} 結算修煉成果。時長: {duration_seconds}秒。")
+        
+        # 1. 技能經驗與升級
+        current_skills: List[Skill] = monster_to_update.get("skills", [])
+        exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75))
+        max_skill_lvl = cultivation_cfg.get("max_skill_level", 10)
+        exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100)
+        for skill in current_skills:
+            if skill.get("level", 1) >= max_skill_lvl: continue
+            exp_gained = random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)
+            skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
+            while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
+                skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
+                skill["level"] = skill.get("level", 1) + 1
+                skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill["level"], exp_multiplier)
+                skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
+        monster_to_update["skills"] = current_skills
 
-    # 5. 重新計算總評價
+        # 2. 領悟新技能
+        if random.random() < cultivation_cfg.get("new_skill_chance", 0.1):
+            monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"])
+            all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
+            potential_new_skills: List[Skill] = []
+            current_skill_names = {s.get("name") for s in current_skills}
+            for el in monster_elements: potential_new_skills.extend(all_skills_db.get(el, []))
+            if "無" not in monster_elements and "無" in all_skills_db: potential_new_skills.extend(all_skills_db.get("無", []))
+            learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
+            if learnable_skills:
+                learned_new_skill_template = random.choice(learnable_skills)
+                skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
+
+        # 3. 基礎數值成長
+        stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
+        growth_chances = math.floor(duration_seconds / stat_divisor)
+        if growth_chances > 0:
+            growth_weights_map = cultivation_cfg.get("stat_growth_weights", {})
+            stats_pool = list(growth_weights_map.keys())
+            weights = list(growth_weights_map.values())
+            stats_to_grow = random.choices(stats_pool, weights=weights, k=growth_chances)
+            stat_growth_log_map = {}
+            for stat in stats_to_grow:
+                gain = random.randint(1, 2)
+                stat_growth_log_map[stat] = stat_growth_log_map.get(stat, 0) + gain
+            for stat, total_gain in stat_growth_log_map.items():
+                if stat in ["hp", "mp"]:
+                    max_stat_key = f"initial_max_{stat}"
+                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + total_gain
+                    monster_to_update[stat] = monster_to_update.get(max_stat_key, 0)
+                else:
+                    monster_to_update[stat] = monster_to_update.get(stat, 0) + total_gain
+                skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 提升了 {total_gain} 點！")
+
+        # 4. 拾獲DNA碎片
+        if random.random() < cultivation_cfg.get("dna_find_chance", 0.5):
+            dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
+            num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
+            monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
+            loot_table = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
+            all_dna_templates = game_configs.get("dna_fragments", [])
+            monster_elements = monster_to_update.get("elements", ["無"])
+            dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
+            if not dna_pool: dna_pool = all_dna_templates
+            for _ in range(num_items):
+                if not dna_pool: break
+                rarity_pool, rarity_weights = zip(*loot_table.items())
+                chosen_rarity = random.choices(rarity_pool, weights=rarity_weights, k=1)[0]
+                quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
+                if quality_pool:
+                    items_obtained.append(random.choice(quality_pool))
+        
+        # 5. 產生AI故事
+        adventure_story = generate_cultivation_story(
+            monster_name=monster_to_update.get('nickname', '一隻怪獸'),
+            duration_percentage=duration_percentage,
+            skill_updates_log=skill_updates_log,
+            items_obtained=items_obtained
+        )
+
+    # 重新計算總評價
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     monster_to_update["score"] = (monster_to_update.get("initial_max_hp",0) // 10) + \
                                    monster_to_update.get("attack",0) + monster_to_update.get("defense",0) + \
                                    (monster_to_update.get("speed",0) // 2) + (monster_to_update.get("crit",0) * 2) + \
                                    (len(monster_to_update.get("skills",[])) * 15) + \
                                    (rarity_order.index(monster_to_update.get("rarity","普通")) * 30)
-    
-    # 6. 生成AI冒險故事
-    max_duration = game_configs.get("value_settings", {}).get("max_cultivation_time_seconds", 3600)
-    duration_percentage = duration_seconds / max_duration
-    adventure_story = generate_cultivation_story(
-        monster_name=monster_to_update.get('nickname', '一隻怪獸'),
-        duration_percentage=duration_percentage,
-        skill_updates_log=skill_updates_log,
-        items_obtained=items_obtained
-    )
                                    
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
@@ -270,7 +263,6 @@ def replace_monster_skill_service(
     game_configs: GameConfigs,
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
-    # ... (此函數維持不變) ...
     if not MD_firebase_config.db:
         monster_cultivation_services_logger.error("Firestore 資料庫未初始化 (replace_monster_skill_service 內部)。")
         return None
