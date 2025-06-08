@@ -1295,133 +1295,57 @@ function updateLeaderboardTable(tableType, data) {
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
-function updateLeaderboardSortHeader(tableElement, activeKey, activeOrder) {
-    if (!tableElement) return;
-    const headers = tableElement.querySelectorAll('thead th');
-    headers.forEach(th => {
-        // 清除所有舊的排序箭頭
-        const oldArrow = th.querySelector('.sort-arrow');
-        if (oldArrow) oldArrow.remove();
-
-        th.classList.remove('sorted-asc', 'sorted-desc');
-        if (th.dataset.sortKey === activeKey) {
-            th.classList.add(activeOrder === 'asc' ? 'sorted-asc' : 'sorted-desc');
-            const arrow = document.createElement('span');
-            arrow.classList.add('sort-arrow');
-            arrow.textContent = activeOrder === 'asc' ? ' ▲' : ' ▼';
-            th.appendChild(arrow);
-        }
-    });
-}
-
-function updateMonsterLeaderboardElementTabs(elements) {
-    const tabsContainer = DOMElements.monsterLeaderboardElementTabs;
-    if (!tabsContainer) return;
-    tabsContainer.innerHTML = '';
-
-    const elementTypeMap = {
-        'fire':'火','water':'水','wood':'木','gold':'金','earth':'土',
-        'light':'光','dark':'暗','poison':'毒','wind':'風','mix':'混','無':'無'
-    };
-
-    elements.forEach(elementKey => {
-        const button = document.createElement('button');
-        button.classList.add('tab-button', 'leaderboard-element-tab'); // 新增 class
-        if (elementKey === 'all') { // "全部" 頁籤
-            button.textContent = '全部';
-            button.classList.add('element-all'); // 新增類別以控制樣式
-        } else {
-            // 確保這裡的 textContent 是中文
-            button.textContent = elementTypeMap[elementKey.toLowerCase()] || elementKey;
-            button.classList.add(`text-element-${elementKey.toLowerCase()}`);
-        }
-        
-        button.dataset.elementFilter = elementKey;
-        
-        if (elementKey === gameState.currentMonsterLeaderboardElementFilter) {
-            button.classList.add('active');
-        }
-        tabsContainer.appendChild(button);
-    });
-}
-
-function updateFriendsListModal(players) {
-    const container = DOMElements.friendsListContainer;
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (players.length === 0) {
-        container.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)]">找不到玩家或好友列表為空。</p>';
-        return;
-    }
-
-    players.forEach(player => {
-        const itemDiv = document.createElement('div');
-        itemDiv.classList.add('friend-item');
-        const status = player.status || (Math.random() > 0.5 ? 'online' : 'offline');
-        const statusClass = status === 'online' ? 'online' : 'offline';
-
-        itemDiv.innerHTML = `
-            <span class="friend-name">${player.nickname}</span>
-            <div class="flex items-center space-x-2">
-                <span class="friend-status ${statusClass}">${status === 'online' ? '線上' : '離線'}</span>
-                <button class="text-xs secondary p-1 view-player-btn button" data-player-id="${player.uid}" data-player-nickname="${player.nickname}">查看</button>
-            </div>
-        `;
-        container.appendChild(itemDiv);
-
-        itemDiv.querySelector('.view-player-btn').addEventListener('click', async (e) => {
-            const playerId = e.target.dataset.playerId;
-            const playerNickname = e.target.dataset.playerNickname;
-            showFeedbackModal('載入中...', `正在獲取玩家 ${playerNickname} 的資訊...`, true);
-            try {
-                const playerData = await getPlayerData(playerId);
-                hideModal('feedback-modal');
-                if (playerData) {
-                    updatePlayerInfoModal(playerData, gameState.gameConfigs);
-                    showModal('player-info-modal');
-                } else {
-                    showFeedbackModal('錯誤', `無法獲取玩家 ${playerNickname} 的資訊。`);
-                }
-            } catch (error) {
-                showFeedbackModal('錯誤', `獲取玩家資訊失敗: ${error.message}`);
-            }
-        });
-    });
-}
-
+// 調整 showBattleLogModal 函數以顯示逐回合日誌
 function showBattleLogModal(logEntries, winnerName = null, loserName = null) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) return;
+
+    // 清空現有日誌，每次都重新渲染完整日誌
     DOMElements.battleLogArea.innerHTML = '';
 
-    logEntries.forEach(entry => {
+    // 確保 logEntries 是陣列，即使為空也沒問題
+    if (!Array.isArray(logEntries)) {
+        console.warn("showBattleLogModal received non-array logEntries:", logEntries);
+        logEntries = [];
+    }
+
+    logEntries.forEach(logEntry => {
+        // 使用 styled_log_message，如果不存在則回退到 raw_log_messages
+        const message = logEntry.styled_log_message || (Array.isArray(logEntry.raw_log_messages) ? logEntry.raw_log_messages.join('\n') : logEntry.raw_log_messages);
+
         const p = document.createElement('p');
-        if (entry.startsWith('--- 回合')) {
+        // 根據訊息內容應用樣式，這部分應與後端生成的日誌內容匹配
+        if (message.startsWith('--- 回合')) {
             p.className = 'turn-divider';
-        } else if (entry.includes('獲勝！')) {
-            p.className = 'battle-end winner';
-        } else if (entry.includes('被擊倒了！') || entry.includes('倒下了！')) {
-            p.className = 'defeated';
-        } else if (entry.includes('致命一擊！')) {
+        } else if (message.includes('獲勝！') || message.includes('被擊倒了！') || message.includes('平手！')) {
+            // 這些應由最後的winner/loser判斷
+            if (logEntry.winner_id && logEntry.winner_id !== '平手') {
+                 p.className = 'battle-end winner';
+            } else if (logEntry.loser_id && logEntry.loser_id !== '平手') {
+                p.className = 'defeated'; // 如果是被擊倒，但不是贏家
+            } else if (logEntry.winner_id === '平手') {
+                p.className = 'battle-end draw';
+            }
+        } else if (message.includes('致命一擊！')) {
             p.className = 'crit-hit';
-        } else if (entry.includes('恢復了') && entry.includes('HP')) {
+        } else if (message.includes('恢復了') && message.includes('HP')) {
             p.className = 'heal-action';
         }
-        p.textContent = entry;
+        p.textContent = message;
         DOMElements.battleLogArea.appendChild(p);
     });
 
-    if (winnerName) {
-        const winnerP = document.createElement('p');
-        winnerP.className = 'battle-end winner mt-3';
-        winnerP.textContent = `🏆 ${winnerName} 獲勝！🏆`;
-        DOMElements.battleLogArea.appendChild(winnerP);
-    } else if (loserName && logEntries.some(l => l.includes("平手"))) {
-         const drawP = document.createElement('p');
-        drawP.className = 'battle-end draw mt-3';
-        drawP.textContent = `🤝 平手！🤝`;
-        DOMElements.battleLogArea.appendChild(drawP);
+    // 戰鬥結束的最終結果由後端判斷，並在最後一回合的 logEntry 中帶上 winner_id/loser_id
+    // 所以這裡不需要額外處理 winnerName/loserName，除非是初始標題
+    if (logEntries.length === 0) {
+        const introP = document.createElement('p');
+        introP.className = 'battle-start';
+        introP.textContent = `--- 戰鬥開始: ${winnerName} vs ${loserName} ---`;
+        DOMElements.battleLogArea.appendChild(introP);
     }
+    
+    // 自動滾動到底部
+    DOMElements.battleLogArea.scrollTop = DOMElements.battleLogArea.scrollHeight;
+
     showModal('battle-log-modal');
 }
 
