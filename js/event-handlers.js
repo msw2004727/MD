@@ -541,7 +541,6 @@ function handleTabSwitching() {
 }
 
 async function handleCombineDna() {
-    // 收集 DNA 的實例 ID (slot.id)
     const dnaInstanceIdsForCombination = gameState.dnaCombinationSlots
         .filter(slot => slot && slot.id)
         .map(slot => slot.id);
@@ -553,26 +552,20 @@ async function handleCombineDna() {
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
-        // 後端現在會處理資料更新與儲存，只返回新怪獸物件
         const newMonster = await combineDNA(dnaInstanceIdsForCombination);
 
         if (newMonster && newMonster.id) {
-            
-            // 後端已處理資料，前端只需刷新即可
-            // 為了更佳的即時體驗，可以手動更新本地狀態，或直接重新載入玩家資料
-            await refreshPlayerData(); // 重新載入以確保狀態完全同步
+            await refreshPlayerData(); 
 
-            // 清空組合槽狀態
             resetDNACombinationSlots();
 
-            // 顯示成功回饋
             let feedbackMessage = `成功合成了新的怪獸`;
             showFeedbackModal(
                 '合成成功！',
                 feedbackMessage,
                 false,
                 newMonster,
-                null // 傳入 null 來移除所有按鈕
+                null 
             );
 
         } else if (newMonster && newMonster.error) {
@@ -602,28 +595,37 @@ function handleCultivationModals() {
                 showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
                 return;
             }
-            const MOCK_CULTIVATION_DURATION_SECONDS = gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 10;
-
-            gameState.cultivationStartTime = Date.now();
-            gameState.cultivationDurationSet = MOCK_CULTIVATION_DURATION_SECONDS;
+            const CULTIVATION_DURATION_SECONDS = gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600;
 
             const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === gameState.cultivationMonsterId);
             if (monsterInFarm) {
                 monsterInFarm.farmStatus = monsterInFarm.farmStatus || {};
                 monsterInFarm.farmStatus.isTraining = true;
-                monsterInFarm.farmStatus.trainingStartTime = gameState.cultivationStartTime;
-                monsterInFarm.farmStatus.trainingDuration = MOCK_CULTIVATION_DURATION_SECONDS * 1000;
-                renderMonsterFarm();
-            }
+                monsterInFarm.farmStatus.trainingStartTime = Date.now();
+                monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
+                
+                try {
+                    await savePlayerData(gameState.playerId, gameState.playerData);
+                    console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存。`);
 
-            hideModal('cultivation-setup-modal');
-            showFeedbackModal(
-                '修煉開始！',
-                `怪獸 ${monsterInFarm ? monsterInFarm.nickname : ''} 已開始為期 ${MOCK_CULTIVATION_DURATION_SECONDS} 秒的修煉。請稍後在農場列表查看成果。`,
-                false,
-                null,
-                [{ text: '好的', class: 'primary'}]
-            );
+                    hideModal('cultivation-setup-modal');
+                    renderMonsterFarm();
+                    showFeedbackModal(
+                        '修煉開始！',
+                        `怪獸 ${monsterInFarm.nickname} 已開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉。`,
+                        false,
+                        null,
+                        [{ text: '好的', class: 'primary'}]
+                    );
+                } catch (error) {
+                    console.error("儲存修煉狀態失敗:", error);
+                    showFeedbackModal('錯誤', '開始修煉失敗，無法儲存狀態，請稍後再試。');
+                    // 還原狀態
+                    monsterInFarm.farmStatus.isTraining = false;
+                    monsterInFarm.farmStatus.trainingStartTime = null;
+                    monsterInFarm.farmStatus.trainingDuration = null;
+                }
+            }
         });
     }
 
