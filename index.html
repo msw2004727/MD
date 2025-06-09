@@ -107,6 +107,7 @@
                     </div>
                 </div>
                 <div class="top-buttons-container">
+                    <button id="monster-info-button" class="top-nav-button button" disabled>當前怪獸</button> 
                     <button id="player-info-button" class="top-nav-button button">玩家資訊</button>
                     <button id="show-monster-leaderboard-btn" class="top-nav-button button">怪獸排行</button>
                     <button id="show-player-leaderboard-btn" class="top-nav-button button">玩家排行</button>
@@ -127,7 +128,7 @@
 
                 <div id="dna-inventory-content" class="tab-content active">
                     <div id="dna-combination-panel-wrapper" class="panel mb-4">
-                        <h2 class="panel-title dna-panel-title dna-panel-title-small">🧬 DNA組合</h2>
+                        <h2 class="panel-title dna-panel-title">🧬 DNA組合</h2>
                         <div id="dna-combination-slots" class="dna-combination-grid mt-2"></div>
                         <div class="action-buttons-grid dual-buttons mt-3">
                             <button id="combine-button" class="success action-button-main button" disabled>怪獸合成</button>
@@ -135,12 +136,12 @@
                         </div>
                     </div>
                     <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
-                         <h2 class="panel-title dna-panel-title dna-panel-title-small">🔬 DNA碎片</h2>
+                         <h2 class="panel-title dna-panel-title">🔬 DNA碎片</h2>
                          <span class="panel-title-hint dna-panel-hint">※DNA可拖曳、點擊，拉至刪除區可刪</span>
                     </div>
                     <div id="inventory-items" class="inventory-grid mt-2"></div>
                     <div class="mt-4">
-                        <h3 class="panel-title dna-panel-title dna-panel-title-small">🎒 暫存背包</h3>
+                        <h3 class="panel-title dna-panel-title text-sm mb-2">🎒 暫存背包</h3>
                         <div id="temporary-backpack-items" class="temp-backpack-grid"></div>
                     </div>
                 </div>

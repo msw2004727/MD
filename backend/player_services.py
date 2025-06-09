@@ -142,10 +142,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
                 max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
                 
-                # IMPORTANT: 過濾掉任何 None 值，以確保資料庫中不會有 null 元素
-                loaded_dna = [dna for dna in loaded_dna if dna is not None]
-
-                # 填充或截斷到最大庫存槽位數
                 if len(loaded_dna) < max_inventory_slots:
                     loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
                 elif len(loaded_dna) > max_inventory_slots:
@@ -187,12 +183,8 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     db = firestore_db_instance
 
     try:
-        # 在保存前，從 playerOwnedDNA 列表中移除所有 None 值
-        # 這樣 Firestore 就不會儲存這些 null 元素，從而達到「刪除」的效果
-        cleaned_dna_list = [dna for dna in game_data.get("playerOwnedDNA", []) if dna is not None]
-
         data_to_save: Dict[str, Any] = {
-            "playerOwnedDNA": cleaned_dna_list, # 使用清理後的列表
+            "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
