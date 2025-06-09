@@ -439,22 +439,34 @@ def simulate_battle_full(
         "最強妨礙者": "status_applied", "最強肉盾": "damage_tanked"
     }
     
+    # 修正：亮點生成邏輯，確保即使數據為 0 或相等也能有亮點，或至少說明
     for text, key in highlight_map.items():
-        # --- FIX START: 僅在雙方數據不為0且不相等時才產生亮點 ---
-        if player_battle_stats.get(key, 0) > 0 or opponent_battle_stats.get(key, 0) > 0:
-            winner_name = get_highlight_winner(key, player_battle_stats, opponent_battle_stats)
-            if winner_name:
-                battle_highlights.append(f"{text}：{winner_name}")
-        # --- FIX END ---
+        p_val = player_battle_stats.get(key, 0)
+        o_val = opponent_battle_stats.get(key, 0)
+
+        if p_val > o_val:
+            battle_highlights.append(f"{text}：{player_monster['nickname']} ({p_val})")
+        elif o_val > p_val:
+            battle_highlights.append(f"{text}：{opponent_monster['nickname']} ({o_val})")
+        elif p_val > 0 and o_val > 0 and p_val == o_val:
+            battle_highlights.append(f"{text}：雙方勢均力敵 ({p_val})")
+        elif p_val == 0 and o_val == 0:
+            # 如果雙方都為0，則不添加該亮點，除非該亮點有特殊意義
+            pass 
+        else: # 只有一方有數據，另一方為 0
+            if p_val > 0:
+                 battle_highlights.append(f"{text}：{player_monster['nickname']} ({p_val})")
+            elif o_val > 0:
+                 battle_highlights.append(f"{text}：{opponent_monster['nickname']} ({o_val})")
+
 
     if first_striker_name:
         battle_highlights.append(f"先發制人者：{first_striker_name}")
 
-    # --- FIX START: 移除重複的「最終致勝者」亮點 ---
-    # if winner_id != "平手":
-    #     winner_monster_name = player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname']
-    #     battle_highlights.append(f"最終致勝者：{winner_monster_name}")
-    # --- FIX END ---
+    # 重新啟用「最終致勝者」亮點
+    if winner_id != "平手":
+        winner_monster_name = player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname']
+        battle_highlights.append(f"最終致勝者：{winner_monster_name}")
 
     # 產生戰鬥活動日誌
     player_activity_log: Optional[MonsterActivityLogEntry] = None
