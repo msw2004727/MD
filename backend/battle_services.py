@@ -286,7 +286,7 @@ def simulate_battle_full(
     """
     player_monster = copy.deepcopy(player_monster_data)
     opponent_monster = copy.deepcopy(opponent_monster_data)
-    
+
     # 初始化戰鬥統計數據
     player_battle_stats = {"total_damage_dealt": 0, "crit_hits": 0, "successful_evasions": 0, "highest_single_hit": 0, "skills_used": 0, "total_healing": 0, "damage_tanked": 0, "status_applied": 0}
     opponent_battle_stats = {"total_damage_dealt": 0, "crit_hits": 0, "successful_evasions": 0, "highest_single_hit": 0, "skills_used": 0, "total_healing": 0, "damage_tanked": 0, "status_applied": 0}
@@ -450,25 +450,32 @@ def simulate_battle_full(
     # 產生戰鬥活動日誌
     player_activity_log: Optional[MonsterActivityLogEntry] = None
     opponent_activity_log: Optional[MonsterActivityLogEntry] = None
-    opponent_owner_name = opponent_monster.get('owner_nickname', '一名訓練師')
-    if opponent_monster.get('isNPC'):
-        opponent_display = f"{opponent_monster.get('nickname', '一個對手')}"
-    else:
-        opponent_display = f"{opponent_owner_name} 的 {opponent_monster.get('nickname', '一個對手')}"
-    player_display = f"{player_nickname} 的 {player_monster.get('nickname', '一個挑戰者')}"
 
-    if winner_id == player_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {opponent_display} 勝利！"}
+    # 為日誌準備挑戰方和被挑戰方的顯示名稱
+    challenger_name = player_nickname
+    challenger_monster_name = player_monster.get('nickname', '一個挑戰者')
+    
+    defender_name = opponent_monster.get('owner_nickname', 'NPC')
+    defender_monster_name = opponent_monster.get('nickname', '一個對手')
+
+    # 格式化顯示字串
+    challenger_display = f"「{challenger_name}」的「{challenger_monster_name}」"
+    defender_display = f"「{defender_name}」的「{defender_monster_name}」"
+
+
+    if winner_id == player_monster['id']: # 玩家勝利
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您獲勝了！"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"被 {player_display} 挑戰，戰敗。"}
-    elif winner_id == opponent_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {opponent_display} 戰敗。"}
+            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，您不幸戰敗。"}
+    elif winner_id == opponent_monster['id']: # 玩家失敗
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"被 {player_display} 挑戰，勝利！"}
-    else:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {opponent_display} 戰成平手。"}
+            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
+    else: # 平手
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {defender_display} 戰成平手。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {player_display} 戰成平手。"}
+            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，雙方戰成平手。"}
+
 
     final_battle_result: BattleResult = {
         "log_entries": [], "raw_full_log": all_raw_log_messages,
