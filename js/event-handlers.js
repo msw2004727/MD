@@ -244,6 +244,29 @@ function handleModalCloseButtons() {
     });
 }
 
+// --- Leaderboard Helper Function ---
+async function fetchAndDisplayMonsterLeaderboard() {
+    try {
+        showFeedbackModal('載入中...', '正在獲取最新的怪獸排行榜...', true);
+        const leaderboardData = await getMonsterLeaderboard(20);
+        gameState.monsterLeaderboard = leaderboardData;
+
+        let elementsForTabs = ['all'];
+        if (gameState.gameConfigs && gameState.gameConfigs.element_nicknames) {
+            elementsForTabs = ['all', ...Object.keys(gameState.gameConfigs.element_nicknames)];
+        }
+        if (typeof updateMonsterLeaderboardElementTabs === 'function') {
+           updateMonsterLeaderboardElementTabs(elementsForTabs);
+        }
+        
+        filterAndRenderMonsterLeaderboard();
+        hideModal('feedback-modal');
+    } catch (error) {
+        showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
+    }
+}
+
+
 // --- 其他事件處理函數 ---
 function handleThemeSwitch() {
     if (DOMElements.themeSwitcherBtn) {
@@ -341,23 +364,8 @@ function handleTopNavButtons() {
 
     if (DOMElements.showMonsterLeaderboardBtn) {
         DOMElements.showMonsterLeaderboardBtn.addEventListener('click', async () => {
-            try {
-                showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
-                const leaderboardData = await getMonsterLeaderboard(20);
-                gameState.monsterLeaderboard = leaderboardData;
-
-                let elementsForTabs = ['all'];
-                if (gameState.gameConfigs && gameState.gameConfigs.element_nicknames) {
-                    elementsForTabs = ['all', ...Object.keys(gameState.gameConfigs.element_nicknames)];
-                }
-                updateMonsterLeaderboardElementTabs(elementsForTabs);
-                filterAndRenderMonsterLeaderboard();
-                hideModal('feedback-modal');
-                showModal('monster-leaderboard-modal');
-            }
-            catch (error) {
-                showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
-            }
+            await fetchAndDisplayMonsterLeaderboard();
+            showModal('monster-leaderboard-modal');
         });
     }
 
@@ -744,8 +752,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     await refreshPlayerData(); // 即使戰鬥出錯，也刷新數據以同步狀態
                 }
             },
-            'primary',
-            '開始戰鬥'
+            { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
         );
 
     } catch (error) {
@@ -906,6 +913,11 @@ function initializeEventListeners() {
     handleBattleLogModalClose();
     handleDnaDrawModal();
     handleAnnouncementModalClose();
+
+    // 為新的刷新按鈕添加事件監聽
+    if (DOMElements.refreshMonsterLeaderboardBtn) {
+        DOMElements.refreshMonsterLeaderboardBtn.addEventListener('click', fetchAndDisplayMonsterLeaderboard);
+    }
 
     console.log("All event listeners initialized with enhanced drag-drop logic for temporary backpack.");
 }
