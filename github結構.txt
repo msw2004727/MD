@@ -7,6 +7,11 @@ MD/
 │   ├── MD_populate_gamedata.py
 │   ├── MD_routes.py
 │   ├── api_key.txt
+│   ├── battle_services.py
+│   ├── data/
+│   │   ├── dna_fragments.json
+│   │   ├── personalities.csv
+│   │   └── skills.json
 │   ├── leaderboard_search_services.py
 │   ├── main.py
 │   ├── monster_absorption_services.py
