@@ -1301,6 +1301,29 @@ function updateLeaderboardTable(tableType, data) {
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
+// 新增：更新排行榜頁籤的函式
+function updateMonsterLeaderboardElementTabs(elements) {
+    const container = DOMElements.monsterLeaderboardElementTabs;
+    if (!container) return;
+    container.innerHTML = ''; // 清空現有頁籤
+
+    elements.forEach(element => {
+        const tab = document.createElement('button');
+        tab.className = 'button tab-button leaderboard-element-tab';
+        tab.dataset.elementFilter = element;
+
+        if (element === 'all') {
+            tab.textContent = '全部';
+            tab.classList.add('active'); // 預設選中 "全部"
+        } else {
+            tab.textContent = element;
+            const cssClassKey = getElementCssClassKey(element);
+            tab.classList.add(`text-element-${cssClassKey}`);
+        }
+        container.appendChild(tab);
+    });
+}
+
 // 調整 showBattleLogModal 函數以顯示新的單頁戰報
 function showBattleLogModal(battleReportContent) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
@@ -1473,7 +1496,7 @@ function showBattleLogModal(battleReportContent) {
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
             <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
-            <p class="growth-info-text">${formatBasicText(applyDynamicStyling(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>
     `;
 
