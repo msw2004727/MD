@@ -79,7 +79,8 @@ async function initializeGame() {
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
-            playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
+            playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家",
+            selectedMonsterId: playerData.selectedMonsterId
         });
         console.log("Game configs and player data loaded and saved to gameState.");
 
