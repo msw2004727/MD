@@ -73,7 +73,6 @@ def health_check():
     return jsonify({"status": "ok", "message": "MD API 運作中！"})
 
 @md_bp.route('/game-configs', methods=['GET'])
-@cross_origin() # 修正：為 game-configs 路由明確添加 cross_origin 裝飾器
 def get_game_configs_route():
     configs = _get_game_configs_data_from_app_context()
     if not configs or not configs.get("dna_fragments"):
