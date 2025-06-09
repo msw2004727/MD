@@ -317,10 +317,16 @@ class BattleResult(TypedDict):
     log_entries: List[BattleLogEntry]
     winner_id: str
     loser_id: str
+    battle_end: bool
+    raw_full_log: List[str]
     player_monster_final_hp: int
     player_monster_final_mp: int
     player_monster_final_skills: List[Skill]
     player_monster_final_resume: MonsterResume
+    player_activity_log: Optional[MonsterActivityLogEntry]
+    opponent_activity_log: Optional[MonsterActivityLogEntry]
+    battle_highlights: List[str]
+    ai_battle_report_content: Dict[str, str]
     absorption_details: NotRequired[Dict[str, Any]]
 
 
