@@ -976,7 +976,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     line-height: 1.5;
-    white-space: pre-wrap;
     color: var(--text-primary);
 }
 #battle-log-area p { margin-bottom: 5px; }
@@ -1443,7 +1442,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     line-height: 1.5;
-    white-space: pre-wrap;
     color: var(--text-primary);
 }
 .battle-report-container {
