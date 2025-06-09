@@ -47,7 +47,7 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "absorption_config": {},
     "cultivation_config": {
         "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
-        "skill_exp_gain_range": (10,30), "max_skill_level": 10,
+        "skill_exp_gain_range": (15,30), "max_skill_level": 10,
         "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1}, # type: ignore
         "stat_growth_weights": {"hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10},
         "stat_growth_duration_divisor": 900,
@@ -193,7 +193,8 @@ def complete_cultivation_service(
 
         # 3. 基礎數值成長 (新邏輯)
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
-        growth_chances = math.floor(duration_seconds / stat_divisor) # 根據時長獲得多少次成長機會
+        # 強制至少有 1 次成長機會，確保即使時長不足也能有機會提升
+        growth_chances = max(1, math.floor(duration_seconds / stat_divisor)) # 強制至少有1次機會
         
         # 考慮修煉地點的數值成長偏好
         selected_location = monster_to_update["farmStatus"].get("trainingLocation") # 從怪獸狀態中獲取訓練地點
@@ -216,7 +217,7 @@ def complete_cultivation_service(
                 final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * 1.2)
 
 
-        if growth_chances > 0 and final_growth_weights and sum(final_growth_weights.values()) > 0: # 確保有可供抽取的權重
+        if final_growth_weights and sum(final_growth_weights.values()) > 0: # 確保有可供抽取的權重
             stats_pool = list(final_growth_weights.keys())
             weights = list(final_growth_weights.values())
             
@@ -257,7 +258,9 @@ def complete_cultivation_service(
             monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) 
 
         # NEW: 如果沒有基礎數值提升的日誌，則添加提示
-        if not any(log.startswith("💪") for log in skill_updates_log):
+        # 檢查是否有任何數值成長日誌（包括HP, MP, ATTACK, DEFENSE, SPEED, CRIT）
+        has_stat_growth_log = any(log.startswith("💪") for log in skill_updates_log)
+        if not has_stat_growth_log:
             skill_updates_log.append("這趟試煉基礎數值沒有提升。")
 
 
