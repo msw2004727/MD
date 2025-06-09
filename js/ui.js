@@ -1243,7 +1243,7 @@ function updateLeaderboardTable(tableType, data) {
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
-        const row = tbody.insertRow();
+        const row = tbody.insertCell();
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false; // 檢查怪獸是否在修煉中
@@ -1406,15 +1406,27 @@ function showBattleLogModal(battleReportContent) {
             if (monsterData && monsterData.nickname && monsterData.rarity) {
                 const rarityKey = monsterData.rarity;
                 const monsterColor = rarityColors[rarityKey] || 'var(--text-primary)';
-                // 使用正則表達式進行全局替換，並避免嵌套
-                formattedText = formattedText.replace(new RegExp(`(?<!<span[^>]*?>)(${monsterData.nickname})(?!<\\/span>)`, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">$1</span>`);
+                // 使用正則表達式進行全局替換，並避免嵌套。只替換非已上色部分
+                formattedText = formattedText.replace(new RegExp(`(?<!<span[^>]*?>|<strong>)(${monsterData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">$1</span>`);
             }
         };
-        applyMonsterNameColor(playerMonster);
-        applyMonsterNameColor(opponentMonster);
+        // 確保 playerMonsterData 和 opponentMonsterData 存在
+        if (playerMonster) {
+            applyMonsterNameColor(playerMonster);
+        }
+        if (opponentMonster) {
+            applyMonsterNameColor(opponentMonster);
+        }
+        
 
         // 2. 技能名稱上色 (等級顏色)
-        const allSkills = [...(playerMonster ? playerMonster.skills : []), ...(opponentMonster ? opponentMonster.skills : [])];
+        const allSkills = [];
+        if (playerMonster && playerMonster.skills) {
+            allSkills.push(...playerMonster.skills);
+        }
+        if (opponentMonster && opponentMonster.skills) {
+            allSkills.push(...opponentMonster.skills);
+        }
         const uniqueSkillNames = new Set(allSkills.map(s => s.name));
 
         uniqueSkillNames.forEach(skillName => {
@@ -1432,22 +1444,6 @@ function showBattleLogModal(battleReportContent) {
 
         // 4. 移除所有 emoji (在最後處理，避免干擾匹配)
         formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
-
-
-        // 5. 確保其他關鍵字沒有上色，因為需求是"內文全部不要有emoji與其他上色，唯獨技能依據等級(1~10級)上色，怪獸名字也上色"
-        // 這些行應該被移除，或確保它們不會覆蓋技能/怪獸名上色。
-        // formattedText = formattedText.replace(/致命一擊！/g, '<span style="color: var(--danger-color); font-weight: bold;">致命一擊！</span>');
-        // formattedText = formattedText.replace(/恢復了/g, '<span style="color: var(--success-color); font-weight: bold;">恢復了</span>');
-        // formattedText = formattedText.replace(/被擊倒了！/g, '<span style="color: var(--danger-color); font-weight: bold;">被擊倒了！</span>');
-        // formattedText = formattedText.replace(/獲勝！/g, '<span style="color: var(--success-color); font-weight: bold;">獲勝！</span>');
-        // formattedText = formattedText.replace(/平手！/g, '<span style="color: var(--warning-color); font-weight: bold;">平手！</span>');
-        // formattedText = formattedText.replace(/無法行動/g, '<span style="color: var(--danger-color); font-weight: bold;">無法行動</span>');
-        // formattedText = formattedText.replace(/閃避了！/g, '<span style="color: var(--warning-color); font-weight: bold;">閃避了！</span>');
-        // 元素名稱也不再上色，因為需求是怪獸名字和技能
-        // for (const element in elementMap) {
-        //     const regex = new RegExp(`(${element})`, 'g');
-        //     formattedText = formattedText.replace(regex, `<span class="${elementMap[element].class}">$1</span>`);
-        // }
 
 
         return formattedText;
@@ -1481,6 +1477,8 @@ function showBattleLogModal(battleReportContent) {
     `;
 
     // 3. 精彩交戰內每回合用分隔線區隔開
+    //    由於 AI 生成的 battle_description 可能包含回合標記，我們在前端處理它們。
+    //    確保 AI 在生成時包含 "--- 回合 X 開始 ---"
     let formattedBattleDescription = battleReportContent.battle_description;
     const battleDescriptionParts = formattedBattleDescription.split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
