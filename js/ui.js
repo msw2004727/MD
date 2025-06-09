@@ -1398,7 +1398,7 @@ function updateMonsterLeaderboardElementTabs(elements) {
 }
 
 // 調整 showBattleLogModal 函數以顯示新的單頁戰報
-function showBattleLogModal(battleReportContent) {
+function showBattleLogModal(battleResult) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
@@ -1406,105 +1406,74 @@ function showBattleLogModal(battleReportContent) {
 
     DOMElements.battleLogArea.innerHTML = ''; // 清空舊內容
 
+    const battleReportContent = battleResult.ai_battle_report_content;
+
     if (!battleReportContent || !battleReportContent.battle_description) {
         DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報內容生成失敗或為空。</p>';
+        showModal('battle-log-modal');
         return;
     }
 
-    // 獲取實際的玩家和對手怪獸數據，用於精確上色
-    const playerMonsterData = gameState.playerData.farmedMonsters.find(m => m.id === gameState.selectedMonsterId);
+    const playerMonsterData = getSelectedMonster();
     const opponentMonsterData = gameState.battleTargetMonster;
 
-    // 輔助函數：僅將 AI 生成的粗體 **Text** 替換為 <strong>Text</strong> 並移除 emoji
     function formatBasicText(text) {
         if (!text) return '';
         let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // 移除所有 emoji
         formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
         return formattedText;
     }
-
-    // 定義技能等級顏色映射
+    
     const skillLevelColors = {
-        1: 'var(--text-secondary)',
-        2: 'var(--text-secondary)',
-        3: 'var(--text-primary)',
-        4: 'var(--text-primary)',
-        5: 'var(--accent-color)',
-        6: 'var(--accent-color)',
-        7: 'var(--success-color)',
-        8: 'var(--success-color)',
-        9: 'var(--rarity-legendary-text)',
+        1: 'var(--text-secondary)', 2: 'var(--text-secondary)', 3: 'var(--text-primary)',
+        4: 'var(--text-primary)', 5: 'var(--accent-color)', 6: 'var(--accent-color)',
+        7: 'var(--success-color)', 8: 'var(--success-color)', 9: 'var(--rarity-legendary-text)',
         10: 'var(--rarity-mythical-text)'
     };
-    // 怪獸稀有度顏色映射 (與 theme.css 中的 text-rarity-* 匹配)
     const rarityColors = {
-        '普通': 'var(--rarity-common-text)',
-        '稀有': 'var(--rarity-rare-text)',
-        '菁英': 'var(--rarity-elite-text)',
-        '傳奇': 'var(--rarity-legendary-text)',
+        '普通': 'var(--rarity-common-text)', '稀有': 'var(--rarity-rare-text)',
+        '菁英': 'var(--rarity-elite-text)', '傳奇': 'var(--rarity-legendary-text)',
         '神話': 'var(--rarity-mythical-text)'
     };
 
-    // 輔助函數：為文本應用怪獸名稱和技能名稱的樣式
-    // 這個函數會接收一個原始文本段落，然後在其內部尋找怪獸/技能名稱並上色
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         let styledText = text;
-
-        // 應用怪獸名字上色
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
-                const rarityKey = monData.rarity;
-                const monColor = rarityColors[rarityKey] || 'var(--text-primary)';
-                // 只替換未被其他 span 或 strong 包裹的怪獸名稱
+                const monColor = rarityColors[monData.rarity] || 'var(--text-primary)';
                 styledText = styledText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monColor}; font-weight: bold;">$1</span>`);
             }
         };
         if (playerMon) applyMonNameColor(playerMon);
         if (opponentMon) applyMonNameColor(opponentMon);
 
-        // 應用技能名稱上色
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
         if (opponentMon && opponentMon.skills) allSkills.push(...opponentMon.skills);
         const uniqueSkillNames = new Set(allSkills.map(s => s.name));
-
         uniqueSkillNames.forEach(skillName => {
             const skillInfo = allSkills.find(s => s.name === skillName);
             if (skillInfo && skillInfo.level !== undefined) {
-                const level = skillInfo.level;
-                const color = skillLevelColors[level] || skillLevelColors[1];
-                // 僅替換未被其他 span 或 strong 包裹的技能名稱
+                const color = skillLevelColors[skillInfo.level] || skillLevelColors[1];
                 styledText = styledText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${color}; font-weight: bold;">$1</span>`);
             }
         });
         return styledText;
     }
 
-
-    // 創建戰報容器
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
 
-    // 2. 圖片來源：https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true，這圖片要在戰鬥紀錄內最頂位置呈現
-    // 將這個 banner 直接添加到 modal-content 的最頂部
     const battleHeaderBanner = document.createElement('div');
     battleHeaderBanner.classList.add('battle-header-banner');
     battleHeaderBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥記錄橫幅">`;
     const modalContent = DOMElements.battleLogModal.querySelector('.modal-content');
     if (modalContent) {
-        // 確保在插入新的 banner 之前移除舊的，以避免重複
         const existingBanner = modalContent.querySelector('.battle-header-banner');
-        if (existingBanner) {
-            existingBanner.remove();
-        }
+        if (existingBanner) existingBanner.remove();
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
-    } else {
-        console.error("Could not find .modal-content inside battleLogModal.");
     }
 
-
-    // 戰鬥對陣欄位，分別兩隻怪獸左右各自的獨立欄位。
     let playerIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData);
     let opponentIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData);
 
@@ -1512,73 +1481,93 @@ function showBattleLogModal(battleReportContent) {
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-intro-grid">
-                <p class="monster-intro-text player-monster-intro">${formatBasicText(playerIntroHtml)}</p>
-                <p class="monster-intro-text opponent-monster-intro">${formatBasicText(opponentIntroHtml)}</p>
+                <p class="monster-intro-text player-monster-intro">⚔️ ${formatBasicText(playerIntroHtml)}</p>
+                <p class="monster-intro-text opponent-monster-intro">🛡️ ${formatBasicText(opponentIntroHtml)}</p>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    // 3. 精彩交戰內每回合用分隔線區隔開
-    let battleDescriptionText = battleReportContent.battle_description;
-    const battleDescriptionParts = battleDescriptionText.split(/--- 回合 (\d+) 開始 ---/g);
+    const battleDescriptionParts = (battleReportContent.battle_description || "").split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
-    // 遍歷 AI 生成的描述，並在回合標記處插入分隔線
     for (let i = 0; i < battleDescriptionParts.length; i++) {
         if (i % 2 === 0) {
-            // 文本內容
             if (battleDescriptionParts[i].trim()) {
                 battleDescriptionHtml += `<p>${formatBasicText(applyDynamicStylingToBattleReport(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData))}</p>`;
             }
         } else {
-            // 回合標記（奇數索引是實際的回合數字）
-            const turnNumber = battleDescriptionParts[i];
-            battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${turnNumber} 開始 ---</div>`;
+            battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${battleDescriptionParts[i]} 開始 ---</div>`;
         }
     }
-
 
     reportContainer.innerHTML += `
         <div class="report-section battle-description-section">
             <h4 class="report-section-title">精彩交戰</h4>
-            <div class="battle-description-content">
-                ${battleDescriptionHtml}
-            </div>
-        </div>
-    `;
-
-    // 4. 戰報總結依據勝或敗給我一個banner圖片位置
-    let summaryBannerSrc = '';
-    // battleReportContent.winner_id 會是怪獸ID，需要與 gameState.selectedMonsterId 比較
-    if (battleReportContent.winner_id === playerMonsterData.id) { // 玩家怪獸獲勝
-        summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/win001.png?raw=true";
-    } else if (battleReportContent.loser_id === playerMonsterData.id) { // 玩家怪獸戰敗
-        summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/lose001.png?raw=true";
-    }
-    // 如果是平手或者對手獲勝但不是玩家怪獸，則不顯示特定 banner (或者顯示一個平手 banner)
+            <div class="battle-description-content">${battleDescriptionHtml}</div>
+        </div>`;
     
+    let resultBannerHtml = '';
+    if (battleResult.winner_id === playerMonsterData.id) {
+        resultBannerHtml = `<h1 class="battle-result-win">勝</h1>`;
+    } else if (battleResult.winner_id === '平手') {
+        resultBannerHtml = `<h1 class="battle-result-draw">合</h1>`;
+    } else {
+        resultBannerHtml = `<h1 class="battle-result-loss">敗</h1>`;
+    }
+
     reportContainer.innerHTML += `
+        <div class="report-section battle-result-banner">
+            ${resultBannerHtml}
+        </div>
         <div class="report-section battle-summary-section">
             <h4 class="report-section-title">戰報總結</h4>
-            ${summaryBannerSrc ? `<div class="summary-banner"><img src="${summaryBannerSrc}" alt="戰鬥結果"></div>` : ''}
             <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
-        </div>
-    `;
+        </div>`;
 
-    // 預留戰利品與怪獸成長欄位 (由後端填充)
+    const highlights = battleResult.battle_highlights || [];
+    if (highlights.length > 0) {
+        let highlightsHtml = highlights.map((item, index) => 
+            `<li class="highlight-item" ${index >= 3 ? 'style="display:none;"' : ''}>${item}</li>`
+        ).join('');
+        
+        let showMoreBtnHtml = '';
+        if (highlights.length > 3) {
+            showMoreBtnHtml = `<button id="toggle-highlights-btn" class="button secondary text-xs w-full mt-2">顯示更多...</button>`;
+        }
+
+        reportContainer.innerHTML += `
+            <div class="report-section battle-highlights-section">
+                <h4 class="report-section-title">戰鬥亮點</h4>
+                <ul id="battle-highlights-list">${highlightsHtml}</ul>
+                ${showMoreBtnHtml}
+            </div>`;
+    }
+
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
             <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
             <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
-        </div>
-    `;
+        </div>`;
 
     DOMElements.battleLogArea.appendChild(reportContainer);
-    
-    DOMElements.battleLogArea.scrollTop = 0; // 滾動到頂部顯示戰報開始
 
+    const toggleBtn = DOMElements.battleLogArea.querySelector('#toggle-highlights-btn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const list = DOMElements.battleLogArea.querySelector('#battle-highlights-list');
+            const isExpanded = toggleBtn.textContent === '收合列表';
+            list.querySelectorAll('.highlight-item').forEach((item, index) => {
+                if (index >= 3) {
+                    item.style.display = isExpanded ? 'none' : 'list-item';
+                }
+            });
+            toggleBtn.textContent = isExpanded ? `顯示更多...` : '收合列表';
+        });
+    }
+
+    DOMElements.battleLogArea.scrollTop = 0;
     showModal('battle-log-modal');
 }
+
 
 function showDnaDrawModal(drawnItems) {
     if (!DOMElements.dnaDrawResultsGrid || !DOMElements.dnaDrawModal) return;
