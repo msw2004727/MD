@@ -866,7 +866,8 @@ function handleMonsterNicknameEvents() {
     // 使用事件代理，因為彈窗內容是動態生成的
     if (DOMElements.monsterInfoModalHeader) {
         DOMElements.monsterInfoModalHeader.addEventListener('click', async (event) => {
-            const monsterId = gameState.selectedMonsterId;
+            // 從彈窗標題的 data attribute 獲取正確的怪獸ID
+            const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
             if (!monsterId) return;
 
             const displayContainer = document.getElementById('monster-nickname-display-container');
