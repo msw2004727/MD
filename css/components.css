@@ -1089,11 +1089,12 @@ body.light-theme .leaderboard-table tr:hover td {
 .battle-header-banner {
     width: 100%;
     margin-bottom: 0px; /* 移除 banner 下方的間距 */
+    text-align: center; /* 讓圖片居中 */
 }
 .battle-header-banner img {
     max-width: 100%;
     height: auto; /* 高度自適應 */
-    display: block;
+    display: inline-block; /* 讓圖片可以居中 */
     border-radius: 6px;
     margin: 0; /* 移除 img 預設的 margin */
 }
