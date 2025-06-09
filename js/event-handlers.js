@@ -147,7 +147,8 @@ async function handleDrop(event) {
             
             // 調用 savePlayerData 將修改後的 gameState 儲存到後端
             await savePlayerData(gameState.playerId, gameState.playerData); 
-            showFeedbackModal('操作成功', `DNA "${dnaNameToDelete}" 已被刪除並保存。`);
+            const successMessage = `隨著一陣清脆的碎裂聲，DNA碎片「${dnaNameToDelete}」化為點點光芒消散，其結構已從這個世界中抹除。`;
+            showFeedbackModal('刪除成功', successMessage);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
