@@ -34,13 +34,14 @@ allowed_origins = [
     "http://localhost:5501"       # 備用端口
 ]
 
-# **關鍵修正：將 CORS 實例直接應用於整個 Flask 應用程式 'app'**
+# 將 CORS 實例直接應用於整個 Flask 應用程式 'app'
 # 這樣可以確保所有路由，包括預檢請求 (OPTIONS)，都能正確處理 CORS 頭。
 CORS(app,
      origins=allowed_origins,
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization", "X-Requested-With"]
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     expose_headers=["Content-Type", "Authorization"] # 新增：明確暴露標頭
 )
 app_logger.info(f"CORS configured to allow origins: {allowed_origins}")
 
