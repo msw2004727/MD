@@ -1007,6 +1007,18 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const personality = monster.personality || { name: '未知', description: '無' };
     const aiIntroduction = monster.aiIntroduction || 'AI 介紹生成中或失敗...';
+    
+    const resume = monster.resume || { wins: 0, losses: 0 };
+    const challengeInfoHtml = `
+        <div class="details-section">
+            <h5 class="details-section-title">挑戰資訊</h5>
+            <div class="details-item"><span class="details-label">勝場:</span><span class="details-value text-[var(--success-color)]">${resume.wins}</span></div>
+            <div class="details-item"><span class="details-label">敗場:</span><span class="details-value text-[var(--danger-color)]">${resume.losses}</span></div>
+            <div class="details-item"><span class="details-label">打出最高傷害:</span><span class="details-value">-</span></div>
+            <div class="details-item"><span class="details-label">承受最高傷害:</span><span class="details-value">-</span></div>
+            <div class="details-item"><span class="details-label">吞噬紀錄:</span><span class="details-value">-</span></div>
+        </div>
+    `;
 
     let constituentDnaHtml = '';
     const dnaSlots = new Array(5).fill(null);
@@ -1064,6 +1076,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
 
             <div class="details-column-right">
+                ${challengeInfoHtml}
                 <div class="details-section">
                     <h5 class="details-section-title">元素抗性</h5>
                     ${resistancesHtml}
