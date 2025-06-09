@@ -734,7 +734,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
                     // 呼叫 showBattleLogModal 顯示完整的戰報內容
                     if (battleResult && battleResult.ai_battle_report_content) {
-                        showBattleLogModal(battleResult); // 將完整的 battleResult 傳入
+                        showBattleLogModal(battleResult);
                     } else {
                         showFeedbackModal('錯誤', '戰鬥結果中缺少 AI 戰報內容。');
                     }
