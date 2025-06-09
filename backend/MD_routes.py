@@ -277,6 +277,7 @@ def simulate_battle_api_route():
         player_monster_data_req,
         opponent_monster_data_req,
         game_configs,
+        player_nickname=nickname_from_token
     )
 
     # 戰鬥結束後更新玩家數據 (勝敗場次，HP/MP，技能)
