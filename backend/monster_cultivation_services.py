@@ -236,8 +236,8 @@ def complete_cultivation_service(
                     skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
                 elif chosen_stat in ['hp', 'mp']:
                     # 對於HP和MP，增加其最大值，並確保當前值也同步增加
-                    max_stat_key = f'initial_max_{chosen_stat}'
-                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
+                    # 如果 initial_max_hp/mp 不存在，給予默認值
+                    monster_to_update[f'initial_max_{chosen_stat}'] = monster_to_update.get(f'initial_max_{chosen_stat}', 0) + gain_amount
                     # 同步增加當前值，但不要超過新的最大值
                     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount # type: ignore
                     cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
@@ -246,9 +246,9 @@ def complete_cultivation_service(
             monster_to_update["cultivation_gains"] = cultivation_gains
             
             # 確保 HP/MP 補滿到更新後的初始最大值
-            # 注意：這裡應該使用已經累計了 cultivation_gains 的 initial_max_hp/mp
-            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + monster_to_update.get("cultivation_gains",{}).get("hp",0)
-            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + monster_to_update.get("cultivation_gains",{}).get("mp",0)
+            # 這裡應該使用已經累計了 cultivation_gains 的 initial_max_hp/mp
+            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) # 取得更新後的初始最大HP
+            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) # 取得更新後的初始最大MP
 
 
         # 4. 拾獲DNA碎片
@@ -297,13 +297,17 @@ def complete_cultivation_service(
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     
     # 使用 .get() 並提供預設值，確保即使某些欄位缺失也不會報錯
-    current_hp = monster_to_update.get("initial_max_hp", 0) + gains.get("hp",0) # 評價基於最大HP
+    # 這裡的 current_hp 和 current_mp 應該是怪獸的最大值，而不是實際數值
+    # 因為評價是基於怪獸的潛力（最大值）來計算的
+    current_hp_for_score = monster_to_update.get("initial_max_hp", 0)
+    current_mp_for_score = monster_to_update.get("initial_max_mp", 0) # 添加MP到總評價計算
     current_attack = monster_to_update.get("attack", 0)
     current_defense = monster_to_update.get("defense", 0)
     current_speed = monster_to_update.get("speed", 0)
     current_crit = monster_to_update.get("crit", 0)
     
-    monster_to_update["score"] = (current_hp // 10) + \
+    monster_to_update["score"] = (current_hp_for_score // 10) + \
+                                   (current_mp_for_score // 10) + \
                                    current_attack + \
                                    current_defense + \
                                    (current_speed // 2) + \
