@@ -231,24 +231,34 @@ def complete_cultivation_service(
                 gain_amount = random.randint(1, 2) # 每抽取一次，增加 1-2 點
 
                 if chosen_stat in ['attack', 'defense', 'speed', 'crit']:
+                    # 直接將增加的數值加到怪獸的實際屬性上
                     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
                     cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                    skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+                    # 只有當數值確實增加時才記錄到日誌
+                    if gain_amount > 0:
+                        skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
                 elif chosen_stat in ['hp', 'mp']:
                     # 對於HP和MP，增加其最大值，並確保當前值也同步增加
                     # 如果 initial_max_hp/mp 不存在，給予默認值
-                    monster_to_update[f'initial_max_{chosen_stat}'] = monster_to_update.get(f'initial_max_{chosen_stat}', 0) + gain_amount
-                    # 同步增加當前值，但不要超過新的最大值
+                    max_stat_key = f'initial_max_{chosen_stat}'
+                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
+                    # 同步增加當前值，使其與最大值同步
                     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount # type: ignore
                     cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                    skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+                    # 只有當數值確實增加時才記錄到日誌
+                    if gain_amount > 0:
+                        skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
             
             monster_to_update["cultivation_gains"] = cultivation_gains
             
             # 確保 HP/MP 補滿到更新後的初始最大值
-            # 這裡應該使用已經累計了 cultivation_gains 的 initial_max_hp/mp
-            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) # 取得更新後的初始最大HP
-            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) # 取得更新後的初始最大MP
+            # 這裡直接將 current_hp 和 current_mp 設定為更新後的 initial_max_hp 和 initial_max_mp
+            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) 
+            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) 
+
+        # NEW: 如果沒有基礎數值提升的日誌，則添加提示
+        if not any(log.startswith("💪") for log in skill_updates_log):
+            skill_updates_log.append("這趟試煉基礎數值沒有提升。")
 
 
         # 4. 拾獲DNA碎片
