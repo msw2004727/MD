@@ -9,13 +9,6 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
-// 移除戰鬥相關的全局變數，因為將改為單頁戰報
-// let battleIntervalId = null;
-// let currentBattleTurn = 0;
-// let battlePlayerMonster = null;
-// let battleOpponentMonster = null;
-// let fullBattleLog = []; // 儲存所有回合的完整日誌
-
 
 /**
  * 新增：處理點擊“出戰”按鈕的邏輯
@@ -133,6 +126,7 @@ async function handleDrop(event) {
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaDataToMove.name || '該DNA'}" 嗎？此操作無法復原。`, async () => {
+            // 從 gameState 中移除被拖曳的 DNA
             if (draggedSourceType === 'inventory') {
                 gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
             } else if (draggedSourceType === 'combination') {
@@ -140,9 +134,13 @@ async function handleDrop(event) {
             } else if (draggedSourceType === 'temporaryBackpack') {
                 gameState.temporaryBackpack[draggedSourceIndex] = null;
             }
+            
+            // 更新 UI
             renderPlayerDNAInventory();
             renderDNACombinationSlots();
             renderTemporaryBackpack();
+            
+            // 調用 savePlayerData 將修改後的 gameState 儲存到後端
             await savePlayerData(gameState.playerId, gameState.playerData); 
             showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
         });
@@ -582,7 +580,7 @@ function handleFriendsListSearch() {
                     gameState.searchedPlayers = result.players || [];
                     updateFriendsListModal(gameState.searchedPlayers);
                 } catch (error) {
-                    console.error("搜尋玩家失败:", error);
+                    console.error("搜尋玩家失敗:", error);
                     updateFriendsListModal([]);
                 }
             } else if (query.length === 0) {
@@ -710,7 +708,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
         if (!opponentMonster) {
             showFeedbackModal('錯誤', '未能找到合適的挑戰對手。');
-            playerMonster.farmStatus.isBattling = false;
+            playerMonster.farmStatus.isBattling = false; // 重置戰鬥狀態
             renderMonsterFarm();
             updateMonsterSnapshot(playerMonster);
             return;
@@ -748,19 +746,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     
                     hideModal('feedback-modal'); // 隱藏載入提示
 
-                    // 顯示吸收結果 (如果有的話)
-                    if (battleResult.absorption_details && battleResult.absorption_details.success) {
-                        // 可以選擇在這裡顯示一個單獨的吸收成功提示，或者將其內容整合到戰報中
-                        // 目前先保持獨立提示
-                        setTimeout(() => { // 延遲顯示，避免與戰報彈窗重疊
-                            showFeedbackModal('吸收成功！', battleResult.absorption_details.message);
-                        }, 500);
-                    } else if (battleResult.absorption_details && battleResult.absorption_details.error) {
-                         setTimeout(() => {
-                            showFeedbackModal('吸收失敗！', battleResult.absorption_details.error);
-                        }, 500);
-                    }
-
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
                     console.error("模擬戰鬥錯誤:", battleError);
@@ -782,11 +767,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
 function handleBattleLogModalClose() {
     if (DOMElements.closeBattleLogBtn) DOMElements.closeBattleLogBtn.addEventListener('click', () => {
-        // 清除定時器的邏輯現在不再需要，因為是單頁戰報
-        // clearInterval(battleIntervalId); 
-        // battleIntervalId = null;
         hideModal('battle-log-modal');
-        // 確保怪獸狀態在日誌關閉時被重置（如果沒有在戰鬥結束時自動刷新）
         refreshPlayerData();
     });
 }
@@ -935,4 +916,3 @@ function initializeEventListeners() {
     }
 
     console.log("All event listeners initialized with enhanced drag-drop logic for temporary backpack.");
-}
