@@ -230,7 +230,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         `;
 
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
-        DOMElements.feedbackMonsterDetails.innerHTML = `
+        DOMEElements.feedbackMonsterDetails.innerHTML = `
             <div class="details-section mt-4">
                  <h5 class="details-section-title">綜合評價</h5>
                  <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價生成中或失敗...'}</p>
@@ -974,7 +974,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
-            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
+            resistancesHtml += `<li><span class="capitalize ${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -1514,7 +1514,7 @@ function showBattleLogModal(battleResult) {
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    // NEW: 戰鬥對陣 (顯示基礎數值、勝率、個性)
+    // NEW: 戰鬥對陣 (顯示基礎數值、歷史勝率、個性)
     const renderMonsterStats = (monster, isPlayer) => { // 增加 isPlayer 參數
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
@@ -1555,10 +1555,6 @@ function showBattleLogModal(battleResult) {
     `;
 
 
-    // let playerIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData);
-    // let opponentIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData);
-
-
     const battleDescriptionParts = (battleReportContent.battle_description || "").split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
     for (let i = 0; i < battleDescriptionParts.length; i++) {
@@ -1594,6 +1590,24 @@ function showBattleLogModal(battleResult) {
             <h4 class="report-section-title">戰報總結</h4>
             <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
+
+    // NEW: 基礎數值提升區塊
+    const statGains = battleResult.stat_gains_summary || []; // 從後端獲取，如果沒有則為空
+    if (statGains.length > 0) {
+        let statGainsHtml = statGains.map(gain => `<li>${formatBasicText(gain)}</li>`).join('');
+        reportContainer.innerHTML += `
+            <div class="report-section battle-stat-gains-section">
+                <h4 class="report-section-title">📈 基礎數值提升</h4>
+                <ul class="stat-gains-list">${statGainsHtml}</ul>
+            </div>`;
+    } else {
+        reportContainer.innerHTML += `
+            <div class="report-section battle-stat-gains-section">
+                <h4 class="report-section-title">📈 基礎數值提升</h4>
+                <p>這趟試煉基礎數值沒有提升。</p>
+            </div>`;
+    }
+
 
     const highlights = battleResult.battle_highlights || [];
     if (highlights.length > 0) {
@@ -1695,16 +1709,39 @@ function updateTrainingResultsModal(results, monsterName) {
     // 顯示 AI 冒險故事
     DOMElements.trainingStoryResult.innerHTML = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
 
-    // 顯示成長紀錄 (技能和屬性)
-    let growthHtml = '<ul>';
-    const growthLogs = results.skill_updates_log.filter(log => !log.includes("拾獲了DNA碎片"));
-    if (growthLogs.length > 0) {
-        growthLogs.forEach(log => growthHtml += `<li>${log}</li>`);
+    // NEW: 處理基礎數值提升的總結欄位
+    const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
+    let statGrowthHtml = '<ul>';
+    if (statGrowthLogs.length > 0) {
+        statGrowthLogs.forEach(log => statGrowthHtml += `<li>${log}</li>`);
     } else {
-        growthHtml += "<li>能力沒有明顯變化。</li>";
+        statGrowthHtml += "<li>這趟試煉基礎數值沒有提升。</li>";
     }
-    growthHtml += "</ul>";
-    DOMElements.trainingGrowthResult.innerHTML = growthHtml;
+    statGrowthHtml += "</ul>";
+
+    // 顯示成長紀錄 (技能和屬性)
+    // 這裡只顯示技能和新技能的日誌
+    let skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
+    let skillGrowthHtml = '<ul>';
+    if (skillAndNewSkillLogs.length > 0) {
+        skillAndNewSkillLogs.forEach(log => skillGrowthHtml += `<li>${log}</li>`);
+    } else {
+        skillGrowthHtml += "<li>能力沒有明顯變化。</li>";
+    }
+    skillGrowthHtml += "</ul>";
+
+
+    // 組合新的成長紀錄區塊
+    DOMElements.trainingGrowthResult.innerHTML = `
+        <div class="training-result-subsection">
+            <h5>📈 技能成長</h5>
+            ${skillGrowthHtml}
+        </div>
+        <div class="training-result-subsection mt-3">
+            <h5>💪 基礎數值提升</h5>
+            ${statGrowthHtml}
+        </div>
+    `;
 
     // 顯示可拾獲的物品
     const itemsContainer = DOMElements.trainingItemsResult;
