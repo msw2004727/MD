@@ -1320,7 +1320,9 @@ function updateLeaderboardTable(tableType, data) {
                     actionButton.style.color = 'var(--text-secondary)';
                 } else {
                     actionButton.textContent = '挑戰';
-                    actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
+                    // --- FIX START: 將對手的暱稱 (item.owner_nickname) 也傳遞過去 ---
+                    actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null, item.owner_nickname);
+                    // --- FIX END ---
                 }
             }
             actionsCell.appendChild(actionButton);
