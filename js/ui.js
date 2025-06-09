@@ -1301,6 +1301,22 @@ function updateLeaderboardTable(tableType, data) {
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
+function updateLeaderboardSortHeader(table, sortKey, order) {
+    if (!table) return;
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach(th => {
+        const arrow = th.querySelector('.sort-arrow');
+        if (arrow) arrow.remove();
+
+        if (th.dataset.sortKey === sortKey) {
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'sort-arrow active';
+            arrowSpan.textContent = order === 'asc' ? ' ▲' : ' ▼';
+            th.appendChild(arrowSpan);
+        }
+    });
+}
+
 // 新增：更新排行榜頁籤的函式
 function updateMonsterLeaderboardElementTabs(elements) {
     const container = DOMElements.monsterLeaderboardElementTabs;
