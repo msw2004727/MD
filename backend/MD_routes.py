@@ -278,7 +278,6 @@ def simulate_battle_api_route():
     )
 
     # 戰鬥結束後更新玩家數據 (勝敗場次，HP/MP，技能)
-    # 此處的邏輯與之前基本相同，因為只需要處理最終結果
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'): # 確保是玩家自己的怪獸
             player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
@@ -296,24 +295,32 @@ def simulate_battle_api_route():
                     farmed_monsters = player_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(farmed_monsters):
                         if monster_in_farm.get("id") == player_monster_data_req['id']:
-                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"] # 更新為最終血量
-                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"] # 更新為最終魔量
-                            # 注意：current_hp/current_mp 只是戰鬥期間的臨時屬性，無需持久化
+                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
+                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
                             
-                            # 更新戰績
-                            monster_in_farm["resume"] = battle_result["player_monster_final_resume"] # type: ignore
-                            # 更新技能 (如果戰鬥可能導致技能變化，例如獲得新技能)
-                            # 從 battle_services 返回的 player_monster_final_skills 是戰鬥後的技能狀態
-                            monster_in_farm["skills"] = battle_result["player_monster_final_skills"] # type: ignore
+                            if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
+                                monster_in_farm["resume"] = {"wins": 0, "losses": 0}
+
+                            if battle_result.get("winner_id") == player_monster_data_req['id']:
+                                monster_in_farm["resume"]["wins"] = monster_in_farm["resume"].get("wins", 0) + 1
+                            elif battle_result.get("loser_id") == player_monster_data_req['id']:
+                                monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
                             
-                            # 重置戰鬥狀態標誌
+                            monster_in_farm["skills"] = battle_result["player_monster_final_skills"]
+                            
                             if monster_in_farm.get("farmStatus"):
                                 monster_in_farm["farmStatus"]["isBattling"] = False
+
+                            # 新增：將戰鬥結果的活動紀錄加入怪獸的日誌中
+                            if battle_result.get("player_activity_log"):
+                                if "activityLog" not in monster_in_farm:
+                                    monster_in_farm["activityLog"] = []
+                                # 將新紀錄插入到最前面
+                                monster_in_farm["activityLog"].insert(0, battle_result["player_activity_log"])
+
                             break
-                    player_data["farmedMonsters"] = farmed_monsters # type: ignore
+                    player_data["farmedMonsters"] = farmed_monsters
                     
-                    # 處理吸收 (如果戰鬥勝利且對手不是NPC)
-                    # 吸收邏輯現在會修改 player_data 中的怪獸狀態和 DNA 庫存
                     if battle_result.get("winner_id") == player_monster_data_req.get('id') and \
                        battle_result.get("loser_id") == opponent_monster_data_req.get('id') and \
                        not opponent_monster_data_req.get('isNPC'):
@@ -323,10 +330,10 @@ def simulate_battle_api_route():
                             winning_monster_id=player_monster_data_req['id'],
                             defeated_monster_snapshot=opponent_monster_data_req,
                             game_configs=game_configs,
-                            player_data=player_data # 將更新後的 player_data 傳入
+                            player_data=player_data
                         )
                         if absorption_result and absorption_result.get("success"):
-                            battle_result["absorption_details"] = absorption_result # 將吸收結果也回傳
+                            battle_result["absorption_details"] = absorption_result
                         elif absorption_result:
                             battle_result["absorption_details"] = {"error": absorption_result.get("error")}
                     
@@ -337,7 +344,6 @@ def simulate_battle_api_route():
             else:
                 routes_logger.warning(f"無法獲取玩家 {user_id} 資料以更新戰績。")
     
-    # 返回完整的戰鬥結果，現在包含 AI 戰報內容
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
 
