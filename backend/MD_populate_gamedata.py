@@ -261,6 +261,7 @@ def populate_game_configs():
         "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
         "skill_exp_gain_range": (15, 75), "max_skill_level": 10,
         "new_skill_rarity_bias": { "普通": 0.6, "稀有": 0.3, "菁英": 0.1 },
+        "stat_growth_weights": default_stat_weights,
         "stat_growth_duration_divisor": 900, "dna_find_chance": 0.5,
         "dna_find_duration_divisor": 1200,
         "dna_find_loot_table": {
