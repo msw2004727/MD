@@ -150,5 +150,4 @@ function getValidDNAIdsFromCombinationSlots() {
     return gameState.dnaCombinationSlots.filter(slot => slot && slot.id).map(slot => slot.id);
 }
 
-
 console.log("Game state module loaded with body part mapping and sort config.");
