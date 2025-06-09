@@ -152,6 +152,7 @@ function initializeDOMElements() {
         officialAnnouncementModal: document.getElementById('official-announcement-modal'),
         officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
         announcementPlayerName: document.getElementById('announcement-player-name'),
+        refreshMonsterLeaderboardBtn: document.getElementById('refresh-monster-leaderboard-btn'),
     };
     console.log("DOMElements initialized in ui.js");
 }
@@ -1298,8 +1299,16 @@ function updateLeaderboardTable(tableType, data) {
                     actionButton.style.color = 'var(--text-secondary)';
                 }
             } else { // 其他玩家的怪獸
-                actionButton.textContent = '挑戰';
-                actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
+                if (isTraining || isBattling) {
+                    actionButton.textContent = '忙碌中';
+                    actionButton.disabled = true;
+                    actionButton.style.cursor = 'not-allowed';
+                    actionButton.style.backgroundColor = 'var(--button-secondary-bg)';
+                    actionButton.style.color = 'var(--text-secondary)';
+                } else {
+                    actionButton.textContent = '挑戰';
+                    actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null);
+                }
             }
             actionsCell.appendChild(actionButton);
 
