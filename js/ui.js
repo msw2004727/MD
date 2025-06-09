@@ -293,7 +293,13 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 }
 
 
-function showConfirmationModal(title, message, onConfirm, confirmButtonClass = 'danger', confirmButtonText = '確定', monsterToRelease = null) {
+function showConfirmationModal(title, message, onConfirm, options = {}) {
+    const {
+        confirmButtonClass = 'danger',
+        confirmButtonText = '確定',
+        monsterToRelease = null
+    } = options;
+
     if (!DOMElements.confirmationModal || !DOMElements.confirmationModalTitle || !DOMElements.confirmationModalBody || !DOMElements.confirmActionBtn) {
         console.error("Confirmation modal elements not found in DOMElements.");
         return;
@@ -302,16 +308,45 @@ function showConfirmationModal(title, message, onConfirm, confirmButtonClass = '
 
     let bodyHtml = '';
 
-    if (title === '提前結束修煉') {
+    // NEW: Special layout for battle confirmation
+    if (title === '確認出戰') {
+        const playerMonster = getSelectedMonster();
+        const opponentMonster = gameState.battleTargetMonster;
+
+        if (playerMonster && opponentMonster) {
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
+            const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
+            
+            bodyHtml = `
+                <div class="confirmation-banner" style="text-align: center; margin-bottom: 1rem;">
+                    <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="對戰" style="max-width: 100%; border-radius: 6px;">
+                </div>
+                <div class="battle-confirm-grid">
+                    <div class="monster-confirm-details player">
+                        <p class="monster-role">您的怪獸</p>
+                        <p class="monster-name text-rarity-${playerRarityKey}">${playerMonster.nickname}</p>
+                        <p class="monster-score">(評價: ${playerMonster.score})</p>
+                    </div>
+                    <div class="monster-confirm-details opponent">
+                        <p class="monster-role">對手的怪獸</p>
+                        <p class="monster-name text-rarity-${opponentRarityKey}">${opponentMonster.nickname}</p>
+                        <p class="monster-score">(評價: ${opponentMonster.score})</p>
+                    </div>
+                </div>
+                <p class="text-center mt-4">確定挑戰嗎?</p>
+            `;
+        } else {
+             bodyHtml = `<p>${message}</p>`; // Fallback
+        }
+    } else if (title === '提前結束修煉') {
         bodyHtml += `
             <div class="confirmation-banner" style="text-align: center; margin-bottom: 15px;">
-                <img src="https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true" alt="提前結束修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        bodyHtml += `
+                <img src="https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true" alt="提前結束修煉橫幅" style="max-width: 100%; border-radius: 6px;">
             </div>
+            <p>${message}</p>
         `;
-    }
-
-    if (monsterToRelease) {
+    } else if (monsterToRelease) {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
         const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
