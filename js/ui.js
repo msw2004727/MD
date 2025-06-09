@@ -1476,17 +1476,54 @@ function showBattleLogModal(battleResult) {
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    let playerIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData);
-    let opponentIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData);
+    // NEW: 戰鬥對陣 (顯示基礎數值、勝率、個性)
+    const renderMonsterStats = (monster) => {
+        const rarityKey = monster.rarity ? (Object.keys(rarityColors).find(key => rarityColors[key] === rarityColors[monster.rarity]) || 'common') : 'common';
+        const personalityName = monster.personality?.name || '未知';
+        const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
+            ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
+            : 'N/A';
+
+        return `
+            <div class="monster-stats-card text-rarity-${rarityKey}">
+                <h5 class="monster-name">${monster.nickname}</h5>
+                <p class="monster-personality">個性: ${personalityName}</p>
+                <div class="stats-grid">
+                    <span>HP: ${monster.initial_max_hp}</span>
+                    <span>攻擊: ${monster.attack}</span>
+                    <span>防禦: ${monster.defense}</span>
+                    <span>速度: ${monster.speed}</span>
+                    <span>爆擊: ${monster.crit}%</span>
+                    <span>勝率: ${winRate}%</span>
+                </div>
+            </div>
+        `;
+    };
 
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
-            <div class="monster-intro-grid">
-                <p class="monster-intro-text player-monster-intro">⚔️ ${formatBasicText(playerIntroHtml)}</p>
-                <p class="monster-intro-text opponent-monster-intro">🛡️ ${formatBasicText(opponentIntroHtml)}</p>
+            <div class="monster-vs-grid">
+                ${renderMonsterStats(playerMonsterData)}
+                <div class="vs-divider">VS</div>
+                ${renderMonsterStats(opponentMonsterData)}
             </div>
-        </div>`;
+        </div>
+    `;
+
+
+    let playerIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData);
+    let opponentIntroHtml = applyDynamicStylingToBattleReport(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData);
+
+    // OLD INTRO SECTION - REMOVED
+    // reportContainer.innerHTML += `
+    //     <div class="report-section battle-intro-section">
+    //         <h4 class="report-section-title">戰鬥對陣</h4>
+    //         <div class="monster-intro-grid">
+    //             <p class="monster-intro-text player-monster-intro">⚔️ ${formatBasicText(playerIntroHtml)}</p>
+    //             <p class="monster-intro-text opponent-monster-intro">🛡️ ${formatBasicText(opponentIntroHtml)}</p>
+    //         </div>
+    //     </div>`;
 
     const battleDescriptionParts = (battleReportContent.battle_description || "").split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
