@@ -304,8 +304,8 @@ def simulate_battle_api_route():
                     farmed_monsters = player_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(farmed_monsters):
                         if monster_in_farm.get("id") == player_monster_data_req['id']:
-                            # monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
-                            # monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
+                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
+                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
                             
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
                                 monster_in_farm["resume"] = {"wins": 0, "losses": 0}
