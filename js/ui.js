@@ -632,7 +632,7 @@ function renderPlayerDNAInventory() {
         if (index === 11) {
             item.id = 'inventory-delete-slot';
             item.classList.add('inventory-delete-slot');
-            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">拖曳至此</span>`;
+            item.innerHTML = `<span class="delete-slot-main-text">刪除區</span><span class="delete-slot-sub-text">※拖曳至此</span>`;
             item.draggable = false;
             item.dataset.inventoryIndex = index;
         } else {
@@ -1423,6 +1423,12 @@ function showBattleLogModal(battleResult) {
         if (!text) return '';
         let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
+        
+        // 新增：處理傷害、治療和MP消耗的標籤
+        formattedText = formattedText.replace(/<damage>(\d+)<\/damage>/g, `<span style="color:var(--danger-color); font-weight:bold;">$1</span>`);
+        formattedText = formattedText.replace(/<heal>(\d+)<\/heal>/g, `<span style="color:var(--success-color); font-weight:bold;">$1</span>`);
+        formattedText = formattedText.replace(/\(MP-(\d+)\)/g, `<span style="color:var(--accent-color); font-style:italic;">(MP-$1)</span>`);
+        
         return formattedText;
     }
     
