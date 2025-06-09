@@ -108,6 +108,11 @@ def disassemble_monster_service(
 
     # 從玩家的農場中移除該怪獸
     player_data["farmedMonsters"].pop(monster_index) # type: ignore
+
+    # *** 新增：檢查被放生的怪獸是否為出戰怪獸，如果是，則清除出戰設定 ***
+    if player_data.get("selectedMonsterId") == monster_id:
+        player_data["selectedMonsterId"] = None
+        monster_disassembly_services_logger.info(f"玩家 {player_id} 放生了出戰怪獸，已將 selectedMonsterId 清除。")
     
     # 將分解出的 DNA 實例化並加入玩家庫存的 None 槽位，或臨時背包
     current_owned_dna = player_data.get("playerOwnedDNA", [])
