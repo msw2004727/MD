@@ -47,7 +47,7 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "absorption_config": {},
     "cultivation_config": {
         "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
-        "skill_exp_gain_range": (15,30), "max_skill_level": 10,
+        "skill_exp_gain_range": (10,30), "max_skill_level": 5,
         "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1}, # type: ignore
         "stat_growth_weights": {"hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10},
         "stat_growth_duration_divisor": 900,
@@ -191,81 +191,54 @@ def complete_cultivation_service(
                 learned_new_skill_template = random.choice(biased_skills_pool)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
 
-        # 3. 基礎數值成長 (新邏輯)
+        # 3. 基礎數值成長 (修正後的新邏輯)
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
-        # 強制至少有 1 次成長機會，確保即使時長不足也能有機會提升
-        growth_chances = max(1, math.floor(duration_seconds / stat_divisor)) # 強制至少有1次機會
+        growth_chances = max(1, math.floor(duration_seconds / stat_divisor))
         
-        # 考慮修煉地點的數值成長偏好
-        selected_location = monster_to_update["farmStatus"].get("trainingLocation") # 從怪獸狀態中獲取訓練地點
+        selected_location = monster_to_update["farmStatus"].get("trainingLocation")
         location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {}) # type: ignore
         current_location_bias = location_configs.get(selected_location, {}) # type: ignore
-        
-        # 確保有默認的 stat_growth_weights
         default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
         growth_weights_map = current_location_bias.get("stat_growth_weights", default_stat_growth_weights) # type: ignore
         
-        # 根據元素偏好調整權重
         monster_primary_element = monster_to_update.get("elements", ["無"])[0]
         element_bias_list = current_location_bias.get("element_bias", []) # type: ignore
         
-        final_growth_weights = {**growth_weights_map} # 複製一份，以免修改原始配置
+        final_growth_weights = {**growth_weights_map}
         if monster_primary_element in element_bias_list:
-            # 如果怪獸主屬性與地點偏好元素匹配，給予額外權重
-            # 這裡可以根據實際設計調整權重增加的邏輯，例如：所有屬性權重 * 1.2
             for stat_key in final_growth_weights:
                 final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * 1.2)
 
-
-        if final_growth_weights and sum(final_growth_weights.values()) > 0: # 確保有可供抽取的權重
+        if final_growth_weights and sum(final_growth_weights.values()) > 0:
             stats_pool = list(final_growth_weights.keys())
             weights = list(final_growth_weights.values())
             
             cultivation_gains = monster_to_update.get("cultivation_gains", {})
-            if not isinstance(cultivation_gains, dict): # 確保 cultivation_gains 是字典
+            if not isinstance(cultivation_gains, dict):
                 cultivation_gains = {}
 
-            # 進行多次抽取並累積總增益
             for _ in range(growth_chances):
-                # 每次抽取可能導致一個屬性增加
-                chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0] # 每次只抽一個
-                gain_amount = random.randint(1, 2) # 每抽取一次，增加 1-2 點
+                chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
+                gain_amount = random.randint(1, 2)
 
-                if chosen_stat in ['attack', 'defense', 'speed', 'crit']:
-                    # 直接將增加的數值加到怪獸的實際屬性上
-                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
-                    cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                    # 只有當數值確實增加時才記錄到日誌
-                    if gain_amount > 0:
-                        skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
-                elif chosen_stat in ['hp', 'mp']:
-                    # 對於HP和MP，增加其最大值，並確保當前值也同步增加
-                    # 如果 initial_max_hp/mp 不存在，給予默認值
+                # 統一更新永久數值和增益紀錄
+                if chosen_stat in ['hp', 'mp']:
                     max_stat_key = f'initial_max_{chosen_stat}'
                     monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
-                    # 同步增加當前值，使其與最大值同步
-                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount # type: ignore
-                    cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                    # 只有當數值確實增加時才記錄到日誌
-                    if gain_amount > 0:
-                        skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+                else:
+                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
+
+                cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
+                skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
             
             monster_to_update["cultivation_gains"] = cultivation_gains
             
-            # 確保 HP/MP 補滿到更新後的初始最大值
-            # 這裡直接將 current_hp 和 current_mp 設定為更新後的 initial_max_hp 和 initial_max_mp
-            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) 
-            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) 
-
-        # NEW: 如果沒有基礎數值提升的日誌，則添加提示
-        # 檢查是否有任何數值成長日誌（包括HP, MP, ATTACK, DEFENSE, SPEED, CRIT）
         has_stat_growth_log = any(log.startswith("💪") for log in skill_updates_log)
         if not has_stat_growth_log:
             skill_updates_log.append("這趟試煉基礎數值沒有提升。")
 
 
         # 4. 拾獲DNA碎片
-        # 新增：DNA 拾獲機率也應隨著修煉時長而增加
         actual_dna_find_chance = cultivation_cfg.get("dna_find_chance", 0.5) * (1 + duration_percentage)
         if random.random() < actual_dna_find_chance:
             dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
@@ -275,18 +248,16 @@ def complete_cultivation_service(
             all_dna_templates = game_configs.get("dna_fragments", [])
             monster_elements = monster_to_update.get("elements", ["無"])
             
-            # 根據怪獸元素和地點偏好元素調整 DNA 掉落池
             dna_pool = []
-            if element_bias_list: # 如果訓練地點有元素偏好
-                # 優先掉落與地點偏好元素匹配的 DNA
+            if element_bias_list:
                 dna_pool = [dna for dna in all_dna_templates if dna.get("type") in element_bias_list]
-            if not dna_pool: # 如果地點偏好池為空或沒有匹配的，則使用怪獸自身元素匹配的 DNA
+            if not dna_pool:
                 dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
-            if not dna_pool: # 最後的兜底：所有 DNA
+            if not dna_pool:
                 dna_pool = all_dna_templates
                 
             for _ in range(min(num_items, len(dna_pool))):
-                if not dna_pool or not loot_table: break # 避免在空列表上 random.choice
+                if not dna_pool or not loot_table: break
                 rarity_pool, rarity_weights = zip(*loot_table.items())
                 chosen_rarity = random.choices(rarity_pool, weights=rarity_weights, k=1)[0]
                 quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
@@ -303,17 +274,12 @@ def complete_cultivation_service(
             )
         except Exception as ai_e:
             monster_cultivation_services_logger.error(f"生成AI修煉故事失敗: {ai_e}", exc_info=True)
-            adventure_story = "在修煉過程中，似乎發生了一些無法言喻的經歷，但最終安全歸來。" # 提供一個後備故事
+            adventure_story = "在修煉過程中，似乎發生了一些無法言喻的經歷，但最終安全歸來。"
 
-    # 6. 重新計算總評價
-    gains = monster_to_update.get("cultivation_gains", {})
+    # 6. 重新計算總評價 (使用更新後的基礎數值)
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
-    
-    # 使用 .get() 並提供預設值，確保即使某些欄位缺失也不會報錯
-    # 這裡的 current_hp 和 current_mp 應該是怪獸的最大值，而不是實際數值
-    # 因為評價是基於怪獸的潛力（最大值）來計算的
     current_hp_for_score = monster_to_update.get("initial_max_hp", 0)
-    current_mp_for_score = monster_to_update.get("initial_max_mp", 0) # 添加MP到總評價計算
+    current_mp_for_score = monster_to_update.get("initial_max_mp", 0)
     current_attack = monster_to_update.get("attack", 0)
     current_defense = monster_to_update.get("defense", 0)
     current_speed = monster_to_update.get("speed", 0)
@@ -344,12 +310,13 @@ def complete_cultivation_service(
     }
     if "activityLog" not in monster_to_update: monster_to_update["activityLog"] = []
     monster_to_update["activityLog"].insert(0, new_log_entry)
+    
+    # 8. 確保修煉後 HP/MP 為滿值
+    monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0)
+    monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0)
                                    
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
-    # from .player_services import save_player_data_service # 已在檔案開頭導入
-
-    # 確保儲存操作的成功與否會影響函數的返回值
     if save_player_data_service(player_id, player_data):
         return {
             "success": True,
@@ -361,7 +328,6 @@ def complete_cultivation_service(
         }
     else:
         monster_cultivation_services_logger.error(f"完成修煉後儲存玩家 {player_id} 資料失敗。")
-        # 如果儲存失敗，即使計算成功，也返回失敗狀態
         return {"success": False, "error": "完成修煉後儲存資料失敗。", "status_code": 500}
 
 
@@ -373,8 +339,6 @@ def replace_monster_skill_service(
     game_configs: GameConfigs,
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
-    # 在這裡同樣移除對 MD_firebase_config.db 的直接檢查，依賴 player_services 內部處理 db 實例
-    
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"替換技能失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
@@ -415,7 +379,6 @@ def replace_monster_skill_service(
     monster_to_update["skills"] = current_skills
     player_data["farmedMonsters"][monster_idx] = monster_to_update
 
-    # from .player_services import save_player_data_service # 已在檔案開頭導入
     if save_player_data_service(player_id, player_data):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
         return player_data
