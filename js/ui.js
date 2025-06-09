@@ -954,6 +954,9 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return;
     }
 
+    // 將怪獸 ID 附加到 header 元素上，以便事件處理器讀取
+    DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
+
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
