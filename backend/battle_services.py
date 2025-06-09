@@ -161,16 +161,19 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     hit_roll = random.randint(1, 100) # d100 命中擲骰
     
     is_hit = hit_roll <= (final_accuracy - final_evasion)
-    is_crit = False
-    is_miss = not is_hit
-
-    action_details["is_crit"] = is_crit
-    action_details["is_miss"] = is_miss
-
+    
     if not is_hit:
+        action_details["is_miss"] = True
+        action_details["is_crit"] = False
         action_details["log_message"] = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}，但 {target['nickname']} 靈巧地閃避了！"
         action_details["damage_dealt"] = 0
         return action_details
+
+    # --- FIX START: 新增爆擊判定邏輯 ---
+    is_crit = random.randint(1, 100) <= attacker_current_stats["crit"]
+    action_details["is_crit"] = is_crit
+    action_details["is_miss"] = False
+    # --- FIX END ---
 
     # 傷害計算
     damage = 0
@@ -437,16 +440,21 @@ def simulate_battle_full(
     }
     
     for text, key in highlight_map.items():
-        winner_name = get_highlight_winner(key, player_battle_stats, opponent_battle_stats)
-        if winner_name:
-            battle_highlights.append(f"{text}：{winner_name}")
+        # --- FIX START: 僅在雙方數據不為0且不相等時才產生亮點 ---
+        if player_battle_stats.get(key, 0) > 0 or opponent_battle_stats.get(key, 0) > 0:
+            winner_name = get_highlight_winner(key, player_battle_stats, opponent_battle_stats)
+            if winner_name:
+                battle_highlights.append(f"{text}：{winner_name}")
+        # --- FIX END ---
 
     if first_striker_name:
         battle_highlights.append(f"先發制人者：{first_striker_name}")
 
-    if winner_id != "平手":
-        winner_monster_name = player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname']
-        battle_highlights.append(f"最終致勝者：{winner_monster_name}")
+    # --- FIX START: 移除重複的「最終致勝者」亮點 ---
+    # if winner_id != "平手":
+    #     winner_monster_name = player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname']
+    #     battle_highlights.append(f"最終致勝者：{winner_monster_name}")
+    # --- FIX END ---
 
     # 產生戰鬥活動日誌
     player_activity_log: Optional[MonsterActivityLogEntry] = None
@@ -456,13 +464,11 @@ def simulate_battle_full(
     challenger_name = player_nickname
     challenger_monster_name = player_monster.get('nickname', '一個挑戰者')
     
-    # --- FIX START: 修改對手名稱的取得邏輯 ---
     if opponent_monster.get('isNPC'):
         defender_name = "NPC" # 如果是 NPC，名稱就是 "NPC"
     else:
         # 如果不是 NPC，則使用傳入的 opponent_nickname，若無則給予預設值
         defender_name = opponent_nickname if opponent_nickname else '另一位玩家'
-    # --- FIX END ---
     
     defender_monster_name = opponent_monster.get('nickname', '一個對手')
 
