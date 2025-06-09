@@ -230,9 +230,9 @@ async function handleDrop(event) {
         renderDNACombinationSlots();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
+    // 解決語法錯誤，這裡應該是函數的結束大括號，沒有其他的代碼邏輯
+} // <-- 這裡就是缺少的大括號，用於結束 handleDrop 函數
 
-    handleDragEnd(event);
-}
 
 // --- Modal Close Button Handler ---
 function handleModalCloseButtons() {
