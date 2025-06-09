@@ -226,7 +226,7 @@ def complete_cultivation_service(
                     skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 潛力提升了 {total_gain} 點！")
             
             monster_to_update["cultivation_gains"] = cultivation_gains
-
+            
             # --- FIX START: 將潛力點數應用於基礎屬性 ---
             for stat, gain in stat_gain_counts.items():
                 if stat in ['attack', 'defense', 'speed', 'crit']:
@@ -237,10 +237,10 @@ def complete_cultivation_service(
                     max_stat_key = f'initial_max_{stat}'
                     monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain
             # --- FIX END ---
-            
+
             # 將HP/MP補滿到新的最大值
-            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + cultivation_gains.get("hp", 0)
-            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + cultivation_gains.get("mp", 0)
+            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0)
+            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0)
 
         # 4. 拾獲DNA碎片
         if random.random() < cultivation_cfg.get("dna_find_chance", 0.5):
@@ -286,11 +286,11 @@ def complete_cultivation_service(
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     
     # 使用 .get() 並提供預設值，確保即使某些欄位缺失也不會報錯
-    current_hp = monster_to_update.get("initial_max_hp", 0) + gains.get("hp", 0)
-    current_attack = monster_to_update.get("attack", 0) + gains.get("attack", 0)
-    current_defense = monster_to_update.get("defense", 0) + gains.get("defense", 0)
-    current_speed = monster_to_update.get("speed", 0) + gains.get("speed", 0)
-    current_crit = monster_to_update.get("crit", 0) + gains.get("crit", 0)
+    current_hp = monster_to_update.get("initial_max_hp", 0)
+    current_attack = monster_to_update.get("attack", 0)
+    current_defense = monster_to_update.get("defense", 0)
+    current_speed = monster_to_update.get("speed", 0)
+    current_crit = monster_to_update.get("crit", 0)
     
     monster_to_update["score"] = (current_hp // 10) + \
                                    current_attack + \
