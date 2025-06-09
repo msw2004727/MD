@@ -186,8 +186,7 @@ async function handleEndCultivationClick(event, monsterId, trainingStartTime, tr
             async () => {
                 await handleCompleteCultivation(monsterId, elapsedTimeSeconds);
             },
-            'danger',
-            '強制結束'
+            { confirmButtonClass: 'danger', confirmButtonText: '強制結束' }
         );
     } else {
         await handleCompleteCultivation(monsterId, totalDurationSeconds);
@@ -230,9 +229,11 @@ async function handleReleaseMonsterClick(event, monsterId) {
                 showFeedbackModal('放生失敗', `請求錯誤: ${error.message}`);
             }
         },
-        'danger',
-        '確定放生',
-        monster
+        { 
+            confirmButtonClass: 'danger', 
+            confirmButtonText: '確定放生', 
+            monsterToRelease: monster 
+        }
     );
 }
 
@@ -295,40 +296,57 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
     const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
     if (!monster) return;
 
+    const skillDescription = newSkillTemplate.description || newSkillTemplate.story || '暫無描述。';
+
     const maxSkills = gameState.gameConfigs.value_settings?.max_monster_skills || 3;
     let message = `${monster.nickname} 領悟了新技能：<strong>${newSkillTemplate.name}</strong> (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
+    message += `<p class="text-sm text-[var(--text-secondary)] mt-2" style="font-size: 0.9em !important;">技能簡述：${skillDescription}</p><br>`;
+
+    const onLearn = async (slotToReplace = null) => {
+        const actionText = slotToReplace !== null ? '替換技能中...' : '學習中...';
+        const successText = slotToReplace !== null ? `${monster.nickname} 成功學習了 ${newSkillTemplate.name}，替換了原技能！` : `${monster.nickname} 成功學習了 ${newSkillTemplate.name}！`;
+        const errorText = slotToReplace !== null ? '替換技能失敗' : '學習失敗';
+        
+        try {
+            showFeedbackModal(actionText, `正在為 ${monster.nickname} 處理技能...`, true);
+            const result = await replaceMonsterSkill(monsterId, slotToReplace, newSkillTemplate);
+            if (result && result.success) {
+                await refreshPlayerData();
+                showFeedbackModal('操作成功！', successText);
+            } else {
+                showFeedbackModal(errorText, result.error || '學習新技能時發生錯誤。');
+            }
+        } catch (error) {
+            showFeedbackModal(errorText, `請求錯誤: ${error.message}`);
+        }
+    };
 
     if (currentSkills.length < maxSkills) {
         message += "是否要學習這個技能？";
-        showConfirmationModal(
+        showFeedbackModal(
             '領悟新技能！',
             message,
-            async () => {
-                try {
-                    showFeedbackModal('學習中...', `正在為 ${monster.nickname} 學習新技能...`, true);
-                    const result = await replaceMonsterSkill(monsterId, null, newSkillTemplate);
-                    if (result && result.success) {
-                        await refreshPlayerData();
-                        showFeedbackModal('學習成功！', `${monster.nickname} 成功學習了 ${newSkillTemplate.name}！`);
-                    } else {
-                        showFeedbackModal('學習失敗', result.error || '學習新技能時發生錯誤。');
-                    }
-                } catch (error) {
-                    showFeedbackModal('學習失敗', `請求錯誤: ${error.message}`);
-                }
-            },
-            'success',
-            '學習'
+            false,
+            null,
+            [
+                { text: '學習', class: 'success', onClick: () => onLearn(null) },
+                { text: '放棄', class: 'secondary', onClick: () => {} }
+            ]
         );
     } else {
         message += `但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
 
         let skillOptionsHtml = '<div class="my-2 space-y-1">';
-        currentSkills.forEach((skill, index) => {
+        currentSkills.forEach((skill) => {
+            const currentSkillDescription = skill.story || skill.description || '無描述';
             skillOptionsHtml += `
-                <button class="skill-replace-option-btn button secondary text-sm p-1 w-full text-left" data-skill-slot="${index}">
-                    替換：${skill.name} (Lv.${skill.level || 1})
-                </button>`;
+                <div class="skill-replace-option button secondary text-sm p-2 w-full text-left" data-skill-name="${skill.name}">
+                    <div class="flex justify-between items-center">
+                        <span>替換：${skill.name} (Lv.${skill.level || 1})</span>
+                        <button class="learn-replace-btn button success text-xs py-1 px-2" data-skill-name="${skill.name}">選擇</button>
+                    </div>
+                    <span class="block text-xs text-[var(--text-secondary)] pl-2 mt-1" style="font-size: 0.85em !important;">└ ${currentSkillDescription}</span>
+                </div>`;
         });
         skillOptionsHtml += '</div>';
         message += skillOptionsHtml;
@@ -338,27 +356,16 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
             message,
             false,
             null,
-            [{ text: '不學習', class: 'secondary', onClick: () => { hideModal('feedback-modal');} }]
+            [{ text: '不學習', class: 'secondary', onClick: () => { hideModal('feedback-modal'); } }]
         );
 
         const feedbackModalBody = DOMElements.feedbackModal.querySelector('.modal-body');
         if (feedbackModalBody) {
-            feedbackModalBody.querySelectorAll('.skill-replace-option-btn').forEach(button => {
-                button.onclick = async () => {
-                    const slotToReplace = parseInt(button.dataset.skillSlot, 10);
+            feedbackModalBody.querySelectorAll('.learn-replace-btn').forEach((button, index) => {
+                button.onclick = (e) => {
+                    e.stopPropagation();
                     hideModal('feedback-modal');
-                    try {
-                        showFeedbackModal('替換技能中...', `正在為 ${monster.nickname} 替換技能中...`, true);
-                        const result = await replaceMonsterSkill(monsterId, slotToReplace, newSkillTemplate);
-                        if (result && result.success) {
-                            await refreshPlayerData();
-                            showFeedbackModal('替換成功！', `${monster.nickname} 成功學習了 ${newSkillTemplate.name}，替換了原技能！`);
-                        } else {
-                            showFeedbackModal('替換失敗', result.error || '學習新技能時發生錯誤。');
-                        }
-                    } catch (error) {
-                        showFeedbackModal('替換失敗', `請求錯誤: ${error.message}`);
-                    }
+                    onLearn(index);
                 };
             });
         }
@@ -637,8 +644,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     await refreshPlayerData(); // 即使戰鬥出錯，也刷新數據以同步狀態
                 }
             },
-            'primary',
-            '開始戰鬥'
+            { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
         );
 
     } catch (error) {
