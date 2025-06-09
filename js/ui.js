@@ -845,7 +845,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
             const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-            return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
+            return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
         }).join('');
 
         let moreMonstersHtml = '';
@@ -853,7 +853,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
                 monsters.slice(previewLimit).map(m => {
                     const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
+                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
                 }).join('')
             }</div>`;
         }
@@ -946,7 +946,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
-            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
+            resistancesHtml += `<li><span class="${elClass}">${element}</span>: <span class="${colorClass}">${effect} ${Math.abs(value)}%</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -1087,37 +1087,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 }
 
 
-function updateMonsterLeaderboardElementTabs(elements) {
-    const container = DOMElements.monsterLeaderboardElementTabs;
-    if (!container) return;
-    container.innerHTML = '';
-
-    const allButton = document.createElement('button');
-    allButton.classList.add('tab-button', 'leaderboard-element-tab', 'element-all');
-    allButton.dataset.elementFilter = 'all';
-    allButton.textContent = '全部';
-    if (gameState.currentMonsterLeaderboardElementFilter === 'all') {
-        allButton.classList.add('active');
-    }
-    container.appendChild(allButton);
-
-    const elementTypeMap = {
-        '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
-        '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
-    };
-
-    elements.filter(e => e !== 'all').forEach(element => { // 排除 'all' 再次生成
-        const button = document.createElement('button');
-        button.classList.add('tab-button', 'leaderboard-element-tab', `text-element-${getElementCssClassKey(element)}`);
-        button.dataset.elementFilter = element;
-        button.textContent = element;
-        if (gameState.currentMonsterLeaderboardElementFilter === element) {
-            button.classList.add('active');
-        }
-        container.appendChild(button);
-    });
-}
-
 function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     const container = DOMElements.newbieGuideContentArea;
     if (!container) return;
@@ -1180,24 +1149,6 @@ function getElementCssClassKey(chineseElement) {
     return elementTypeMap[chineseElement] || '無'; // 預設為 '無'
 }
 
-// 更新排行榜標頭排序箭頭的函數
-function updateLeaderboardSortHeader(table, sortKey, sortOrder) {
-    if (!table) return;
-
-    const headers = table.querySelectorAll('th');
-    headers.forEach(th => {
-        const arrow = th.querySelector('.sort-arrow');
-        if (arrow) {
-            arrow.remove();
-        }
-        if (th.dataset.sortKey === sortKey) {
-            const newArrow = document.createElement('span');
-            newArrow.classList.add('sort-arrow', 'active');
-            newArrow.innerHTML = sortOrder === 'asc' ? ' &uarr;' : ' &darr;';
-            th.appendChild(newArrow);
-        }
-    });
-}
 
 function updateLeaderboardTable(tableType, data) {
     console.log("updateLeaderboardTable called with data:", data); // Debugging log
@@ -1243,7 +1194,7 @@ function updateLeaderboardTable(tableType, data) {
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
-        const row = tbody.insertCell();
+        const row = tbody.insertRow();
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false; // 檢查怪獸是否在修煉中
@@ -1267,7 +1218,7 @@ function updateLeaderboardTable(tableType, data) {
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`
+                    `<span class="text-xs text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
             }
 
@@ -1372,58 +1323,64 @@ function showBattleLogModal(battleReportContent) {
         return;
     }
 
-    // 輔助函數：將文本中的粗體、元素名稱、技能名稱等關鍵字替換為帶有樣式的 HTML
-    function formatReportTextInternal(text, playerMonster, opponentMonster) {
+    // 獲取實際的玩家和對手怪獸數據，用於 formatReportText 的精確上色
+    const playerMonsterData = gameState.playerData.farmedMonsters.find(m => m.id === gameState.selectedMonsterId);
+    const opponentMonsterData = gameState.battleTargetMonster;
+
+    // 輔助函數：處理文本中的粗體和特定的上色
+    // 這個函數只負責 `**粗體**` 轉換，不負責其他文本內容的上色。
+    // 怪獸名稱和技能名稱的上色將在組裝 HTML 時進行。
+    function formatBasicText(text) {
         if (!text) return '';
+        // 替換 AI 生成的粗體 **Text** 為 <strong>Text</strong>
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // 移除所有 emoji
+        formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
+        return formattedText;
+    }
 
-        // 定義技能等級顏色映射
-        const skillLevelColors = {
-            1: 'var(--text-secondary)',
-            2: 'var(--text-secondary)',
-            3: 'var(--text-primary)',
-            4: 'var(--text-primary)',
-            5: 'var(--accent-color)',
-            6: 'var(--accent-color)',
-            7: 'var(--success-color)',
-            8: 'var(--success-color)',
-            9: 'var(--rarity-legendary-text)',
-            10: 'var(--rarity-mythical-text)'
-        };
-        // 怪獸稀有度顏色映射 (與 theme.css 中的 text-rarity-* 匹配)
-        const rarityColors = {
-            '普通': 'var(--rarity-common-text)',
-            '稀有': 'var(--rarity-rare-text)',
-            '菁英': 'var(--rarity-elite-text)',
-            '傳奇': 'var(--rarity-legendary-text)',
-            '神話': 'var(--rarity-mythical-text)'
-        };
+    // 定義技能等級顏色映射
+    const skillLevelColors = {
+        1: 'var(--text-secondary)',
+        2: 'var(--text-secondary)',
+        3: 'var(--text-primary)',
+        4: 'var(--text-primary)',
+        5: 'var(--accent-color)',
+        6: 'var(--accent-color)',
+        7: 'var(--success-color)',
+        8: 'var(--success-color)',
+        9: 'var(--rarity-legendary-text)',
+        10: 'var(--rarity-mythical-text)'
+    };
+    // 怪獸稀有度顏色映射 (與 theme.css 中的 text-rarity-* 匹配)
+    const rarityColors = {
+        '普通': 'var(--rarity-common-text)',
+        '稀有': 'var(--rarity-rare-text)',
+        '菁英': 'var(--rarity-elite-text)',
+        '傳奇': 'var(--rarity-legendary-text)',
+        '神話': 'var(--rarity-mythical-text)'
+    };
 
-        let formattedText = text;
+    // 輔助函數：為特定文本應用怪獸名稱或技能名稱的樣式
+    // 這個函數會接收一個原始文本段落，然後在其內部尋找怪獸/技能名稱並上色
+    function applyDynamicStyling(text, playerMonster, opponentMonster) {
+        let styledText = text;
 
-        // 1. 怪獸名字上色 (稀有度顏色)
+        // 應用怪獸名字上色
         const applyMonsterNameColor = (monsterData) => {
             if (monsterData && monsterData.nickname && monsterData.rarity) {
                 const rarityKey = monsterData.rarity;
                 const monsterColor = rarityColors[rarityKey] || 'var(--text-primary)';
-                // 僅替換未被其他 span 或 strong 包裹的怪獸名稱
-                formattedText = formattedText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monsterData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">$1</span>`);
+                styledText = styledText.replace(new RegExp(monsterData.nickname, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">${monsterData.nickname}</span>`);
             }
         };
-        if (playerMonster) {
-            applyMonsterNameColor(playerMonster);
-        }
-        if (opponentMonster) {
-            applyMonsterNameColor(opponentMonster);
-        }
-        
-        // 2. 技能名稱上色 (等級顏色)
+        if (playerMonster) applyMonsterNameColor(playerMonster);
+        if (opponentMonster) applyMonsterNameColor(opponentMonster);
+
+        // 應用技能名稱上色 (這裡需要從 playerMonster 和 opponentMonster 中獲取技能等級信息)
         const allSkills = [];
-        if (playerMonster && playerMonster.skills) {
-            allSkills.push(...playerMonster.skills);
-        }
-        if (opponentMonster && opponentMonster.skills) {
-            allSkills.push(...opponentMonster.skills);
-        }
+        if (playerMonster && playerMonster.skills) allSkills.push(...playerMonster.skills);
+        if (opponentMonster && opponentMonster.skills) allSkills.push(...opponentMonster.skills);
         const uniqueSkillNames = new Set(allSkills.map(s => s.name));
 
         uniqueSkillNames.forEach(skillName => {
@@ -1431,23 +1388,13 @@ function showBattleLogModal(battleReportContent) {
             if (skillInfo && skillInfo.level !== undefined) {
                 const level = skillInfo.level;
                 const color = skillLevelColors[level] || skillLevelColors[1];
-                // 僅替換未被其他 span 或 strong 包裹的技能名稱
-                formattedText = formattedText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${color}; font-weight: bold;">$1</span>`);
+                // 替換所有出現的技能名稱，確保不重複上色
+                styledText = styledText.replace(new RegExp(skillName, 'g'), `<span style="color: ${color}; font-weight: bold;">${skillName}</span>`);
             }
         });
 
-        // 3. 替換 AI 生成的粗體 **Text** 為 <strong>Text</strong> (保持這個，因為AI可能用於其他強調)
-        formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-        // 4. 移除所有 emoji (在最後處理，避免干擾匹配)
-        formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
-
-        return formattedText;
+        return styledText;
     }
-
-    // 獲取實際的玩家和對手怪獸數據，用於 formatReportText 的精確上色
-    const playerMonsterData = gameState.playerData.farmedMonsters.find(m => m.id === gameState.selectedMonsterId);
-    const opponentMonsterData = gameState.battleTargetMonster;
 
 
     // 創建戰報容器
@@ -1455,36 +1402,44 @@ function showBattleLogModal(battleReportContent) {
     reportContainer.classList.add('battle-report-container');
 
     // 2. 圖片來源：https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true，這圖片要在戰鬥紀錄內最頂位置呈現
-    // 圖片應該在 modal-body 的最頂端，而不是 battle-report-container 內部，
-    // 以便它能佔據 modal-body 的整個寬度，並且與標題緊密結合。
-    // 但是為了控制 CSS，我們先放在這裡，並用 CSS 調整其位置。
-    reportContainer.innerHTML += `
-        <div class="battle-header-banner">
-            <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥記錄橫幅">
-        </div>
-    `;
+    // 將這個 banner 直接添加到 modal-body 的最頂部
+    const battleHeaderBanner = document.createElement('div');
+    battleHeaderBanner.classList.add('battle-header-banner');
+    battleHeaderBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥記錄橫幅">`;
+    // 將 banner 添加到 DOMElements.battleLogModal 的 modal-content 裡面，但位於其他內容之前
+    // 這樣它就可以佔據 modal-content 的整個寬度，並且與標題緊密結合
+    const modalContent = DOMElements.battleLogModal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
+    } else {
+        console.error("Could not find .modal-content inside battleLogModal.");
+    }
+
 
     // 戰鬥對陣欄位，分別兩隻怪獸左右各自的獨立欄位。
+    let playerIntroFormatted = applyDynamicStyling(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData);
+    let opponentIntroFormatted = applyDynamicStyling(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData);
+
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-intro-grid">
-                <p class="monster-intro-text player-monster-intro">${formatReportTextInternal(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData)}</p>
-                <p class="monster-intro-text opponent-monster-intro">${formatReportTextInternal(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData)}</p>
+                <p class="monster-intro-text player-monster-intro">${formatBasicText(playerIntroFormatted)}</p>
+                <p class="monster-intro-text opponent-monster-intro">${formatBasicText(opponentIntroFormatted)}</p>
             </div>
         </div>
     `;
 
     // 3. 精彩交戰內每回合用分隔線區隔開
-    let formattedBattleDescription = battleReportContent.battle_description;
-    const battleDescriptionParts = formattedBattleDescription.split(/--- 回合 (\d+) 開始 ---/g);
+    let battleDescriptionText = battleReportContent.battle_description;
+    const battleDescriptionParts = battleDescriptionText.split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
     // 遍歷 AI 生成的描述，並在回合標記處插入分隔線
     for (let i = 0; i < battleDescriptionParts.length; i++) {
         if (i % 2 === 0) {
             // 文本內容
             if (battleDescriptionParts[i].trim()) {
-                battleDescriptionHtml += `<p>${formatReportTextInternal(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData)}</p>`;
+                battleDescriptionHtml += `<p>${formatBasicText(applyDynamicStyling(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData))}</p>`;
             }
         } else {
             // 回合標記（奇數索引是實際的回合數字）
@@ -1506,9 +1461,9 @@ function showBattleLogModal(battleReportContent) {
     // 4. 戰報總結依據勝或敗給我一個banner圖片位置
     let summaryBannerSrc = '';
     // battleReportContent.winner_id 會是怪獸ID，需要與 gameState.selectedMonsterId 比較
-    if (battleReportContent.winner_id === gameState.selectedMonsterId) { // 玩家怪獸獲勝
+    if (battleReportContent.winner_id === playerMonsterData.id) { // 玩家怪獸獲勝
         summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/win001.png?raw=true";
-    } else if (battleReportContent.loser_id === gameState.selectedMonsterId) { // 玩家怪獸戰敗
+    } else if (battleReportContent.loser_id === playerMonsterData.id) { // 玩家怪獸戰敗
         summaryBannerSrc = "https://github.com/msw2004727/MD/blob/main/images/lose001.png?raw=true";
     }
     // 如果是平手或者對手獲勝但不是玩家怪獸，則不顯示特定 banner (或者顯示一個平手 banner)
@@ -1517,7 +1472,7 @@ function showBattleLogModal(battleReportContent) {
         <div class="report-section battle-summary-section">
             <h4 class="report-section-title">戰報總結</h4>
             ${summaryBannerSrc ? `<div class="summary-banner"><img src="${summaryBannerSrc}" alt="戰鬥結果"></div>` : ''}
-            <p class="battle-summary-text">${formatReportTextInternal(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData)}</p>
+            <p class="battle-summary-text">${formatBasicText(applyDynamicStyling(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>
     `;
 
@@ -1525,8 +1480,8 @@ function showBattleLogModal(battleReportContent) {
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
-            <p class="loot-info-text">${formatReportTextInternal(battleReportContent.loot_info, playerMonsterData, opponentMonsterData)}</p>
-            <p class="growth-info-text">${formatReportTextInternal(battleReportContent.growth_info, playerMonsterData, opponentMonsterData)}</p>
+            <p class="loot-info-text">${formatBasicText(applyDynamicStyling(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="growth-info-text">${formatBasicText(applyDynamicStyling(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>
     `;
 
