@@ -125,14 +125,19 @@ async function handleDrop(event) {
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
-        showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaDataToMove.name || '該DNA'}" 嗎？此操作無法復原。`, async () => {
-            // 從 gameState 中移除被拖曳的 DNA
-            if (draggedSourceType === 'inventory') {
-                gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
-            } else if (draggedSourceType === 'combination') {
-                gameState.dnaCombinationSlots[draggedSourceIndex] = null;
-            } else if (draggedSourceType === 'temporaryBackpack') {
-                gameState.temporaryBackpack[draggedSourceIndex] = null;
+        // 捕獲當前拖曳的物品資訊，因為全域變數會在確認前回覆
+        const sourceTypeToDelete = draggedSourceType;
+        const sourceIndexToDelete = draggedSourceIndex;
+        const dnaNameToDelete = dnaDataToMove.name || '該DNA';
+
+        showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaNameToDelete}" 嗎？此操作無法復原。`, async () => {
+            // 使用捕獲的局部變數進行操作
+            if (sourceTypeToDelete === 'inventory') {
+                gameState.playerData.playerOwnedDNA[sourceIndexToDelete] = null;
+            } else if (sourceTypeToDelete === 'combination') {
+                gameState.dnaCombinationSlots[sourceIndexToDelete] = null;
+            } else if (sourceTypeToDelete === 'temporaryBackpack') {
+                gameState.temporaryBackpack[sourceIndexToDelete] = null;
             }
             
             // 更新 UI
@@ -142,7 +147,7 @@ async function handleDrop(event) {
             
             // 調用 savePlayerData 將修改後的 gameState 儲存到後端
             await savePlayerData(gameState.playerId, gameState.playerData); 
-            showFeedbackModal('操作成功', `DNA "${dnaDataToMove.name || '該DNA'}" 已被刪除並保存。`);
+            showFeedbackModal('操作成功', `DNA "${dnaNameToDelete}" 已被刪除並保存。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
