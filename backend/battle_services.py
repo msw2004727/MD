@@ -5,12 +5,13 @@ import random
 import logging
 import math
 import copy
+import time
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
 
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
     Monster, Skill, HealthCondition, ElementTypes, RarityDetail, GameConfigs,
-    BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory
+    BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory, MonsterActivityLogEntry
 )
 # 從 MD_ai_services 導入實際的 AI 文本生成函數
 from .MD_ai_services import generate_battle_report_content # 確保這裡正確導入新的函數
@@ -162,7 +163,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     is_crit = False
     is_miss = not is_hit
 
-    if skill.get("crit", 0) > 0 and random.randint(1, 100) <= skill["crit"]:
+    if is_hit and skill.get("crit", 0) > 0 and random.randint(1, 100) <= skill["crit"]:
         is_crit = True
     
     action_details["is_crit"] = is_crit
@@ -190,15 +191,20 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         raw_damage = max(1, (base_damage + (attacker_attack_stat / 2) - (defender_defense_stat / 4)))
         damage = int(raw_damage * element_multiplier)
 
+        log_message = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}！"
+        
         if is_crit:
             damage = int(damage * crit_multiplier) # 暴擊傷害倍率
-            action_details["log_message"] = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}！致命一擊！"
-        else:
-            action_details["log_message"] = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}！"
+            log_message += " 致命一擊！"
         
+        if element_multiplier > 1.0:
+            log_message += " 效果拔群！"
+        elif element_multiplier < 1.0 and element_multiplier > 0:
+            log_message += " 效果不太好..."
+            
         target["current_hp"] = target.get("current_hp", target["hp"]) - damage
         action_details["damage_dealt"] = damage
-        action_details["log_message"] += f" 造成 {damage} 點傷害。"
+        action_details["log_message"] = log_message + f" 造成 {damage} 點傷害。"
         
         if target["current_hp"] <= 0:
             action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
@@ -399,27 +405,42 @@ def simulate_battle_full(
         loser_id = "平手"
         all_raw_log_messages.append(f"戰鬥達到最大回合數 ({max_turns})！雙方精疲力盡，平手！")
 
+    # 新增：產生戰鬥活動日誌
+    player_activity_log: Optional[MonsterActivityLogEntry] = None
+    opponent_activity_log: Optional[MonsterActivityLogEntry] = None
+
+    if winner_id == player_monster['id']: # 玩家勝利
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {opponent_monster.get('nickname', '一個對手')} 勝利！"}
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"被 {player_monster.get('nickname', '一個挑戰者')} 挑戰，戰敗。"}
+    elif winner_id == opponent_monster['id']: # 玩家失敗
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {opponent_monster.get('nickname', '一個對手')} 戰敗。"}
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"被 {player_monster.get('nickname', '一個挑戰者')} 挑戰，勝利！"}
+    else: # 平手
+        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {opponent_monster.get('nickname', '一個對手')} 戰成平手。"}
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {player_monster.get('nickname', '一個挑戰者')} 戰成平手。"}
 
     final_battle_result: BattleResult = {
-        "log_entries": [], # 在此模式下，這個列表不再用於前端的逐回合顯示，但可以保留。
-        "raw_full_log": all_raw_log_messages, # 儲存完整的原始日誌供 AI 生成戰報
+        "log_entries": [],
+        "raw_full_log": all_raw_log_messages,
         "winner_id": winner_id,
         "loser_id": loser_id,
         "battle_end": battle_end,
         "player_monster_final_hp": player_monster["current_hp"],
         "player_monster_final_mp": player_monster["current_mp"],
-        "player_monster_final_skills": player_monster.get("skills", []), # 返回最終技能狀態
+        "player_monster_final_skills": player_monster.get("skills", []),
         "player_monster_final_resume": player_monster.get("resume", {"wins": 0, "losses": 0}),
+        "player_activity_log": player_activity_log,
+        "opponent_activity_log": opponent_activity_log,
     }
     
     # 呼叫 AI 服務生成戰報內容
     ai_battle_report = generate_battle_report_content(
-        player_monster_data, # 傳入原始怪獸數據，AI可能需要更詳細的初始屬性
+        player_monster_data,
         opponent_monster_data,
-        final_battle_result, # 包含勝負等最終結果
-        all_raw_log_messages # 完整的原始日誌供 AI 總結
+        final_battle_result,
+        all_raw_log_messages
     )
-    final_battle_result["ai_battle_report_content"] = ai_battle_report # 將 AI 生成的戰報內容加入結果
+    final_battle_result["ai_battle_report_content"] = ai_battle_report
 
     battle_logger.info(f"完整戰鬥模擬結束。勝利者: {winner_id}, 失敗者: {loser_id}")
     return final_battle_result
