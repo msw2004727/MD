@@ -645,7 +645,7 @@ function handleLeaderboardSorting() {
 
 
 // 修改：處理挑戰按鈕點擊，發送一次性戰鬥模擬請求
-async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null) {
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
     if(event) event.stopPropagation();
 
     const playerMonster = getSelectedMonster();
@@ -724,9 +724,16 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
             async () => {
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒，生成戰報...', true);
-                    // 調用 simulateBattle API，它現在會返回完整的戰報
-                    // 修正：這裡需要將 playerMonster 和 opponentMonster 作為物件傳遞，而不是直接傳入
-                    const response = await simulateBattle({player_monster_data: playerMonster, opponent_monster_data: opponentMonster}); 
+                    
+                    // --- FIX START: 呼叫 simulateBattle API 時，附加上對手的擁有者資訊 ---
+                    const response = await simulateBattle({
+                        player_monster_data: playerMonster,
+                        opponent_monster_data: opponentMonster,
+                        opponent_owner_id: ownerId, 
+                        opponent_owner_nickname: ownerNickname
+                    });
+                    // --- FIX END ---
+
                     const battleResult = response.battle_result;
 
                     await refreshPlayerData(); // 戰鬥結束後刷新數據，確保狀態同步
