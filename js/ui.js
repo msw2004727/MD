@@ -1373,7 +1373,7 @@ function showBattleLogModal(battleReportContent) {
     }
 
     // 輔助函數：將文本中的粗體、元素名稱、技能名稱等關鍵字替換為帶有樣式的 HTML
-    function formatReportText(text, playerMonster, opponentMonster) {
+    function formatReportTextInternal(text, playerMonster, opponentMonster) {
         if (!text) return '';
 
         // 定義技能等級顏色映射
@@ -1401,16 +1401,14 @@ function showBattleLogModal(battleReportContent) {
         let formattedText = text;
 
         // 1. 怪獸名字上色 (稀有度顏色)
-        // 確保怪獸數據存在且包含稀有度信息
         const applyMonsterNameColor = (monsterData) => {
             if (monsterData && monsterData.nickname && monsterData.rarity) {
                 const rarityKey = monsterData.rarity;
                 const monsterColor = rarityColors[rarityKey] || 'var(--text-primary)';
-                // 使用正則表達式進行全局替換，並避免嵌套。只替換非已上色部分
-                formattedText = formattedText.replace(new RegExp(`(?<!<span[^>]*?>|<strong>)(${monsterData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">$1</span>`);
+                // 僅替換未被其他 span 或 strong 包裹的怪獸名稱
+                formattedText = formattedText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monsterData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monsterColor}; font-weight: bold;">$1</span>`);
             }
         };
-        // 確保 playerMonsterData 和 opponentMonsterData 存在
         if (playerMonster) {
             applyMonsterNameColor(playerMonster);
         }
@@ -1418,7 +1416,6 @@ function showBattleLogModal(battleReportContent) {
             applyMonsterNameColor(opponentMonster);
         }
         
-
         // 2. 技能名稱上色 (等級顏色)
         const allSkills = [];
         if (playerMonster && playerMonster.skills) {
@@ -1434,8 +1431,8 @@ function showBattleLogModal(battleReportContent) {
             if (skillInfo && skillInfo.level !== undefined) {
                 const level = skillInfo.level;
                 const color = skillLevelColors[level] || skillLevelColors[1];
-                // 匹配完整的技能名稱單詞，並應用顏色，避免重複上色或錯誤替換
-                formattedText = formattedText.replace(new RegExp(`(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${color}; font-weight: bold;">$1</span>`);
+                // 僅替換未被其他 span 或 strong 包裹的技能名稱
+                formattedText = formattedText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${color}; font-weight: bold;">$1</span>`);
             }
         });
 
@@ -1444,7 +1441,6 @@ function showBattleLogModal(battleReportContent) {
 
         // 4. 移除所有 emoji (在最後處理，避免干擾匹配)
         formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
-
 
         return formattedText;
     }
@@ -1459,6 +1455,9 @@ function showBattleLogModal(battleReportContent) {
     reportContainer.classList.add('battle-report-container');
 
     // 2. 圖片來源：https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true，這圖片要在戰鬥紀錄內最頂位置呈現
+    // 圖片應該在 modal-body 的最頂端，而不是 battle-report-container 內部，
+    // 以便它能佔據 modal-body 的整個寬度，並且與標題緊密結合。
+    // 但是為了控制 CSS，我們先放在這裡，並用 CSS 調整其位置。
     reportContainer.innerHTML += `
         <div class="battle-header-banner">
             <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥記錄橫幅">
@@ -1470,15 +1469,13 @@ function showBattleLogModal(battleReportContent) {
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-intro-grid">
-                <p class="monster-intro-text player-monster-intro">${formatReportText(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData)}</p>
-                <p class="monster-intro-text opponent-monster-intro">${formatReportText(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData)}</p>
+                <p class="monster-intro-text player-monster-intro">${formatReportTextInternal(battleReportContent.player_monster_intro, playerMonsterData, opponentMonsterData)}</p>
+                <p class="monster-intro-text opponent-monster-intro">${formatReportTextInternal(battleReportContent.opponent_monster_intro, playerMonsterData, opponentMonsterData)}</p>
             </div>
         </div>
     `;
 
     // 3. 精彩交戰內每回合用分隔線區隔開
-    //    由於 AI 生成的 battle_description 可能包含回合標記，我們在前端處理它們。
-    //    確保 AI 在生成時包含 "--- 回合 X 開始 ---"
     let formattedBattleDescription = battleReportContent.battle_description;
     const battleDescriptionParts = formattedBattleDescription.split(/--- 回合 (\d+) 開始 ---/g);
     let battleDescriptionHtml = '';
@@ -1487,7 +1484,7 @@ function showBattleLogModal(battleReportContent) {
         if (i % 2 === 0) {
             // 文本內容
             if (battleDescriptionParts[i].trim()) {
-                battleDescriptionHtml += `<p>${formatReportText(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData)}</p>`;
+                battleDescriptionHtml += `<p>${formatReportTextInternal(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData)}</p>`;
             }
         } else {
             // 回合標記（奇數索引是實際的回合數字）
@@ -1520,7 +1517,7 @@ function showBattleLogModal(battleReportContent) {
         <div class="report-section battle-summary-section">
             <h4 class="report-section-title">戰報總結</h4>
             ${summaryBannerSrc ? `<div class="summary-banner"><img src="${summaryBannerSrc}" alt="戰鬥結果"></div>` : ''}
-            <p class="battle-summary-text">${formatReportText(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData)}</p>
+            <p class="battle-summary-text">${formatReportTextInternal(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData)}</p>
         </div>
     `;
 
@@ -1528,24 +1525,13 @@ function showBattleLogModal(battleReportContent) {
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
-            <p class="loot-info-text">${formatReportText(battleReportContent.loot_info, playerMonsterData, opponentMonsterData)}</p>
-            <p class="growth-info-text">${formatReportText(battleReportContent.growth_info, playerMonsterData, opponentMonsterData)}</p>
+            <p class="loot-info-text">${formatReportTextInternal(battleReportContent.loot_info, playerMonsterData, opponentMonsterData)}</p>
+            <p class="growth-info-text">${formatReportTextInternal(battleReportContent.growth_info, playerMonsterData, opponentMonsterData)}</p>
         </div>
     `;
 
     DOMElements.battleLogArea.appendChild(reportContainer);
-    // 1. 內文全部不要有emoji與其他上色，唯獨技能依據等級(1~10級)上色，怪獸名字也上色，顏色以稀有度為主。
-    // 這個已經在 formatReportText 函數中處理。
-
-    // 2. 戰鬥對陣欄位，分別兩隻怪獸左右各自的獨立欄位。
-    // 已經在 HTML 結構中調整為 monster-intro-grid。
-
-    // 3. 精彩交戰內每回合用分隔線區隔開
-    // 已經在 formattedBattleDescription 處理。
-
-    // 4. 戰報總結依據勝或敗給我一個banner圖片位置
-    // 已經在 HTML 結構中處理。
-
+    
     DOMElements.battleLogArea.scrollTop = 0; // 滾動到頂部顯示戰報開始
 
     showModal('battle-log-modal');
