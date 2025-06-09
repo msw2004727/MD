@@ -1431,3 +1431,72 @@ body.light-theme .leaderboard-table tr:hover td {
     white-space: nowrap;
     padding: 4px 12px; /* Make button slightly smaller */
 }
+
+/* --- Battle Report Redesign --- */
+#battle-log-area {
+    padding: 0.75rem; /* Reduce overall padding */
+    height: 50vh; /* Adjust height */
+}
+.battle-report-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* Compact spacing between sections */
+}
+
+.report-section {
+    background-color: var(--bg-primary); /* Slightly different background for the "card" effect */
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+}
+
+.report-section-title {
+    font-size: 1rem; /* Smaller, less intrusive title */
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.monster-intro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    gap: 1rem;
+}
+
+.monster-intro-text, .battle-summary-text, .loot-info-text, .growth-info-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.battle-description-content p {
+    margin-bottom: 0.5rem;
+}
+
+.turn-divider-line {
+    text-align: center;
+    color: var(--text-secondary);
+    margin: 1rem 0;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.summary-banner {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.summary-banner img {
+    max-width: 80%;
+    border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+    .monster-intro-grid {
+        grid-template-columns: 1fr; /* Stack columns on smaller screens */
+        gap: 0.75rem;
+    }
+}
