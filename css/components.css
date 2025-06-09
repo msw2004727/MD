@@ -1578,3 +1578,48 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-left: 1rem;
     border-radius: 50%;
 }
+
+
+/* --- NEW: Battle Report Enhancements --- */
+.battle-result-banner {
+    text-align: center;
+    padding: 1rem 0;
+    margin: 0.5rem 0;
+}
+
+.battle-result-banner h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.battle-result-win {
+    color: var(--danger-color); /* Per user request: Win is Red */
+}
+
+.battle-result-loss {
+    color: var(--success-color); /* Per user request: Loss is Green */
+}
+
+.battle-result-draw {
+    color: var(--text-primary);
+}
+
+.battle-highlights-section ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+}
+
+.highlight-item {
+    padding: 8px 5px;
+    font-size: 1rem;
+    border-bottom: 1px dashed var(--border-color);
+    color: var(--text-secondary);
+}
+.highlight-item:last-child {
+    border-bottom: none;
+}
