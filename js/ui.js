@@ -230,7 +230,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         `;
 
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, true, 'block');
-        DOMEElements.feedbackMonsterDetails.innerHTML = `
+        DOMElements.feedbackMonsterDetails.innerHTML = `
             <div class="details-section mt-4">
                  <h5 class="details-section-title">綜合評價</h5>
                  <p class="ai-generated-text text-sm">${monsterDetails.aiEvaluation || 'AI 綜合評價生成中或失敗...'}</p>
@@ -1734,11 +1734,10 @@ function updateTrainingResultsModal(results, monsterName) {
     // 組合新的成長紀錄區塊
     DOMElements.trainingGrowthResult.innerHTML = `
         <div class="training-result-subsection">
-            <h5>📈 技能成長</h5>
             ${skillGrowthHtml}
         </div>
         <div class="training-result-subsection mt-3">
-            <h5>💪 基礎數值提升</h5>
+            <h5>💪 數值提升</h5>
             ${statGrowthHtml}
         </div>
     `;
