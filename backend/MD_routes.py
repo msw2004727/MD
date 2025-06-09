@@ -262,8 +262,12 @@ def simulate_battle_api_route():
         return error_response
 
     data = request.json
-    player_monster_data_req = data.get('player_monster_data') # 玩家怪獸數據
-    opponent_monster_data_req = data.get('opponent_monster_data') # 對手怪獸數據
+    player_monster_data_req = data.get('player_monster_data')
+    opponent_monster_data_req = data.get('opponent_monster_data')
+    # --- FIX START: 接收對手擁有者的資訊 ---
+    opponent_owner_id_req = data.get('opponent_owner_id')
+    opponent_owner_nickname_req = data.get('opponent_owner_nickname')
+    # --- FIX END ---
 
     if not player_monster_data_req or not opponent_monster_data_req:
         return jsonify({"error": "請求中必須包含兩隻怪獸的資料。"}), 400
@@ -277,31 +281,31 @@ def simulate_battle_api_route():
         player_monster_data_req,
         opponent_monster_data_req,
         game_configs,
-        player_nickname=nickname_from_token
+        player_nickname=nickname_from_token,
+        # --- FIX START: 將對手暱稱傳遞給服務 ---
+        opponent_nickname=opponent_owner_nickname_req
+        # --- FIX END ---
     )
 
     # 戰鬥結束後更新玩家數據 (勝敗場次，HP/MP，技能)
     if battle_result.get("battle_end"):
-        if user_id and player_monster_data_req.get('id'): # 確保是玩家自己的怪獸
+        # --- 更新攻擊方 (user_id) 的資料 ---
+        if user_id and player_monster_data_req.get('id'):
             player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
             if player_data:
                 player_stats = player_data.get("playerStats")
                 if player_stats and isinstance(player_stats, dict):
-                    # 更新玩家總勝敗場次
                     if battle_result.get("winner_id") == player_monster_data_req['id']:
                         player_stats["wins"] = player_stats.get("wins", 0) + 1
                     elif battle_result.get("loser_id") == player_monster_data_req['id']:
                         player_stats["losses"] = player_stats.get("losses", 0) + 1
                     player_data["playerStats"] = player_stats
 
-                    # 更新玩家怪獸的狀態 (HP/MP，戰績)
                     farmed_monsters = player_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(farmed_monsters):
                         if monster_in_farm.get("id") == player_monster_data_req['id']:
-                            # --- FIX START: 暫時關閉戰後HP/MP歸零功能 ---
                             # monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
                             # monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
-                            # --- FIX END ---
                             
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
                                 monster_in_farm["resume"] = {"wins": 0, "losses": 0}
@@ -316,13 +320,10 @@ def simulate_battle_api_route():
                             if monster_in_farm.get("farmStatus"):
                                 monster_in_farm["farmStatus"]["isBattling"] = False
 
-                            # 新增：將戰鬥結果的活動紀錄加入怪獸的日誌中
                             if battle_result.get("player_activity_log"):
                                 if "activityLog" not in monster_in_farm:
                                     monster_in_farm["activityLog"] = []
-                                # 將新紀錄插入到最前面
                                 monster_in_farm["activityLog"].insert(0, battle_result["player_activity_log"])
-                            
                             break
                     player_data["farmedMonsters"] = farmed_monsters
                     
@@ -343,11 +344,47 @@ def simulate_battle_api_route():
                             battle_result["absorption_details"] = {"error": absorption_result.get("error")}
                     
                     if not save_player_data_service(user_id, player_data):
-                        routes_logger.warning(f"警告：戰鬥結果/吸收後，儲存玩家 {user_id} 資料失敗。")
+                        routes_logger.warning(f"警告：戰鬥結果/吸收後，儲存攻擊方玩家 {user_id} 資料失敗。")
                 else:
-                    routes_logger.warning(f"無法獲取玩家 {user_id} 資料以更新戰績，或 player_stats 結構不正確。")
+                    routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績，或 player_stats 結構不正確。")
             else:
-                routes_logger.warning(f"無法獲取玩家 {user_id} 資料以更新戰績。")
+                routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
+        
+        # --- FIX START: 新增更新被挑戰方 (opponent) 的資料 ---
+        if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
+            opponent_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
+            if opponent_data:
+                opponent_stats = opponent_data.get("playerStats")
+                if opponent_stats and isinstance(opponent_stats, dict):
+                    if battle_result.get("winner_id") == opponent_monster_data_req['id']:
+                        opponent_stats["wins"] = opponent_stats.get("wins", 0) + 1
+                    elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
+                        opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
+                    opponent_data["playerStats"] = opponent_stats
+
+                    opponent_farm = opponent_data.get("farmedMonsters", [])
+                    for m_idx, monster_in_farm in enumerate(opponent_farm):
+                        if monster_in_farm.get("id") == opponent_monster_data_req['id']:
+                            if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
+                                monster_in_farm["resume"] = {"wins": 0, "losses": 0}
+
+                            if battle_result.get("winner_id") == opponent_monster_data_req['id']:
+                                monster_in_farm["resume"]["wins"] = monster_in_farm["resume"].get("wins", 0) + 1
+                            elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
+                                monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
+
+                            if battle_result.get("opponent_activity_log"):
+                                if "activityLog" not in monster_in_farm:
+                                    monster_in_farm["activityLog"] = []
+                                monster_in_farm["activityLog"].insert(0, battle_result["opponent_activity_log"])
+                            break
+                    opponent_data["farmedMonsters"] = opponent_farm
+
+                    if not save_player_data_service(opponent_owner_id_req, opponent_data):
+                        routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
+            else:
+                routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
+        # --- FIX END ---
     
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
