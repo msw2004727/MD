@@ -1434,12 +1434,12 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* --- Battle Report Redesign --- */
 #battle-log-area {
-    padding: 0.75rem;
-    max-height: 60vh;
-    overflow-y: auto;
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
+    padding: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     line-height: 1.5;
@@ -1456,15 +1456,15 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
 }
 
 .report-section-title {
     font-size: 1rem;
     font-weight: 600;
     color: var(--accent-color);
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid var(--border-color);
 }
 
