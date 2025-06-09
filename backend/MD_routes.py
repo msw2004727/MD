@@ -7,6 +7,8 @@ from firebase_admin import auth
 import logging
 import random
 import copy # 用於深拷貝怪獸數據
+import time # 導入 time 模組
+
 from flask_cors import cross_origin # 修正：導入 cross_origin
 
 # 從拆分後的新服務模組中導入函式
@@ -317,7 +319,7 @@ def simulate_battle_api_route():
                                     monster_in_farm["activityLog"] = []
                                 # 將新紀錄插入到最前面
                                 monster_in_farm["activityLog"].insert(0, battle_result["player_activity_log"])
-
+                            
                             break
                     player_data["farmedMonsters"] = farmed_monsters
                     
