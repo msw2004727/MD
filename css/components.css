@@ -1222,6 +1222,10 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .monster-part.empty-part {
     visibility: hidden;
+    /* 新增：為空卡片格子添加虛線外框 */
+    border-style: dashed;
+    border-width: 2px;
+    background-color: color-mix(in srgb, var(--bg-primary) 30%, transparent); /* 可選的淺色背景 */
 }
 
 #monster-part-head { grid-area: head; }
