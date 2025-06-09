@@ -226,6 +226,17 @@ def complete_cultivation_service(
                     skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 潛力提升了 {total_gain} 點！")
             
             monster_to_update["cultivation_gains"] = cultivation_gains
+
+            # --- FIX START: 將潛力點數應用於基礎屬性 ---
+            for stat, gain in stat_gain_counts.items():
+                if stat in ['attack', 'defense', 'speed', 'crit']:
+                     # 將增加的潛力點數直接加到基礎屬性上
+                    monster_to_update[stat] = monster_to_update.get(stat, 0) + gain
+                elif stat in ['hp', 'mp']:
+                     # 對於HP和MP，我們增加其最大值
+                    max_stat_key = f'initial_max_{stat}'
+                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain
+            # --- FIX END ---
             
             # 將HP/MP補滿到新的最大值
             monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + cultivation_gains.get("hp", 0)
