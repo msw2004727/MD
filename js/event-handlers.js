@@ -24,6 +24,14 @@ let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引
 async function handleDeployMonsterClick(monsterId) {
     if (!monsterId) return;
 
+    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+
+    // 新增：檢查怪獸是否正在修煉中
+    if (monster && monster.farmStatus && monster.farmStatus.isTraining) {
+        showFeedbackModal('無法出戰', '怪獸尚未回來，需召回才可出戰');
+        return; // 中斷函式執行
+    }
+
     if (gameState.playerData) {
         gameState.playerData.selectedMonsterId = monsterId;
     }
