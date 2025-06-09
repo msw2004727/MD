@@ -861,6 +861,62 @@ async function handleClickCombinationSlot(event) {
 }
 // --- 新增結束 ---
 
+// --- 新增：處理怪獸改名事件 ---
+function handleMonsterNicknameEvents() {
+    // 使用事件代理，因為彈窗內容是動態生成的
+    if (DOMElements.monsterInfoModalHeader) {
+        DOMElements.monsterInfoModalHeader.addEventListener('click', async (event) => {
+            const monsterId = gameState.selectedMonsterId;
+            if (!monsterId) return;
+
+            const displayContainer = document.getElementById('monster-nickname-display-container');
+            const editContainer = document.getElementById('monster-nickname-edit-container');
+
+            // --- 處理點擊「編輯」按鈕 ---
+            if (event.target.id === 'edit-monster-nickname-btn') {
+                if(displayContainer) displayContainer.style.display = 'none';
+                if(editContainer) {
+                    editContainer.style.display = 'flex'; // 使用 flex 以匹配 inline style
+                    const input = editContainer.querySelector('#monster-nickname-input');
+                    if(input) input.focus(); // 自動聚焦到輸入框
+                }
+            }
+
+            // --- 處理點擊「取消」按鈕 ---
+            if (event.target.id === 'cancel-nickname-change-btn') {
+                if(displayContainer) displayContainer.style.display = 'flex';
+                if(editContainer) editContainer.style.display = 'none';
+            }
+
+            // --- 處理點擊「確認」按鈕 ---
+            if (event.target.id === 'confirm-nickname-change-btn') {
+                const input = document.getElementById('monster-nickname-input');
+                const newCustomName = input ? input.value.trim() : '';
+
+                showFeedbackModal('更新中...', '正在為您的怪獸更名...', true);
+                try {
+                    await updateMonsterCustomNickname(monsterId, newCustomName);
+                    await refreshPlayerData(); 
+                    
+                    // 刷新後，重新渲染當前彈窗以顯示最新名稱
+                    const updatedMonster = getSelectedMonster();
+                    if(updatedMonster) {
+                        updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
+                    }
+                    hideModal('feedback-modal');
+                    showFeedbackModal('更新成功', '您的怪獸有了新的名字！');
+
+                } catch (error) {
+                    hideModal('feedback-modal');
+                    showFeedbackModal('更新失敗', `發生錯誤：${error.message}`);
+                    // 失敗時也恢復為顯示模式
+                    if(displayContainer) displayContainer.style.display = 'flex';
+                    if(editContainer) editContainer.style.display = 'none';
+                }
+            }
+        });
+    }
+}
 
 function initializeEventListeners() {
     handleModalCloseButtons();
@@ -869,6 +925,7 @@ function initializeEventListeners() {
     handleTopNavButtons();
     handleTabSwitching();
     handleLeaderboardSorting();
+    handleMonsterNicknameEvents(); // 啟用改名功能的事件監聽
 
     if (DOMElements.combineButton) DOMElements.combineButton.addEventListener('click', handleCombineDna);
 
