@@ -279,7 +279,8 @@ def simulate_battle_full(
     player_monster_data: Monster,
     opponent_monster_data: Monster,
     game_configs: GameConfigs,
-    player_nickname: str
+    player_nickname: str,
+    opponent_nickname: Optional[str] = None
 ) -> BattleResult:
     """
     一次性模擬整個怪獸戰鬥，並返回所有回合的詳細日誌和最終結果。
@@ -455,7 +456,14 @@ def simulate_battle_full(
     challenger_name = player_nickname
     challenger_monster_name = player_monster.get('nickname', '一個挑戰者')
     
-    defender_name = opponent_monster.get('owner_nickname', 'NPC')
+    # --- FIX START: 修改對手名稱的取得邏輯 ---
+    if opponent_monster.get('isNPC'):
+        defender_name = "NPC" # 如果是 NPC，名稱就是 "NPC"
+    else:
+        # 如果不是 NPC，則使用傳入的 opponent_nickname，若無則給予預設值
+        defender_name = opponent_nickname if opponent_nickname else '另一位玩家'
+    # --- FIX END ---
+    
     defender_monster_name = opponent_monster.get('nickname', '一個對手')
 
     # 格式化顯示字串
