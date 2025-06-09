@@ -143,7 +143,7 @@ def complete_cultivation_service(
     max_duration = game_configs.get("value_settings", {}).get("max_cultivation_time_seconds", 3600)
     duration_percentage = duration_seconds / max_duration if max_duration > 0 else 0
 
-    if duration_percentage < 0.25:
+    if duration_percentage < 0.01: # 將門檻設置得更低一些，避免短時間修煉完全沒收益
         adventure_story = "修煉時間過短，怪獸稍微活動了一下筋骨，但沒有任何實質性的收穫。"
         skill_updates_log.append("沒有任何成長。")
     else:
@@ -166,7 +166,9 @@ def complete_cultivation_service(
         monster_to_update["skills"] = current_skills
 
         # 2. 領悟新技能
-        if random.random() < cultivation_cfg.get("new_skill_chance", 0.1):
+        # 新增：新技能的機率也應隨著修煉時長而增加
+        actual_new_skill_chance = cultivation_cfg.get("new_skill_chance", 0.1) * (1 + duration_percentage)
+        if random.random() < actual_new_skill_chance:
             monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"])
             all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
             potential_new_skills: List[Skill] = []
@@ -191,13 +193,16 @@ def complete_cultivation_service(
 
         # 3. 基礎數值成長 (新邏輯)
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
-        growth_chances = math.floor(duration_seconds / stat_divisor)
+        growth_chances = math.floor(duration_seconds / stat_divisor) # 根據時長獲得多少次成長機會
         
         # 考慮修煉地點的數值成長偏好
         selected_location = monster_to_update["farmStatus"].get("trainingLocation") # 從怪獸狀態中獲取訓練地點
         location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {}) # type: ignore
         current_location_bias = location_configs.get(selected_location, {}) # type: ignore
-        growth_weights_map = current_location_bias.get("stat_growth_weights", cultivation_cfg.get("stat_growth_weights", {})) # type: ignore
+        
+        # 確保有默認的 stat_growth_weights
+        default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
+        growth_weights_map = current_location_bias.get("stat_growth_weights", default_stat_growth_weights) # type: ignore
         
         # 根據元素偏好調整權重
         monster_primary_element = monster_to_update.get("elements", ["無"])[0]
@@ -211,39 +216,45 @@ def complete_cultivation_service(
                 final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * 1.2)
 
 
-        if growth_chances > 0 and final_growth_weights:
+        if growth_chances > 0 and final_growth_weights and sum(final_growth_weights.values()) > 0: # 確保有可供抽取的權重
             stats_pool = list(final_growth_weights.keys())
             weights = list(final_growth_weights.values())
-            stats_to_grow = random.choices(stats_pool, weights=weights, k=growth_chances)
-            stat_gain_counts = Counter(stats_to_grow)
             
             cultivation_gains = monster_to_update.get("cultivation_gains", {})
+            if not isinstance(cultivation_gains, dict): # 確保 cultivation_gains 是字典
+                cultivation_gains = {}
 
-            for stat, num_increases in stat_gain_counts.items():
-                total_gain = num_increases * random.randint(1, 2)
-                if total_gain > 0:
-                    cultivation_gains[stat] = cultivation_gains.get(stat, 0) + total_gain
-                    skill_updates_log.append(f"💪 基礎能力 '{stat.upper()}' 潛力提升了 {total_gain} 點！")
+            # 進行多次抽取並累積總增益
+            for _ in range(growth_chances):
+                # 每次抽取可能導致一個屬性增加
+                chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0] # 每次只抽一個
+                gain_amount = random.randint(1, 2) # 每抽取一次，增加 1-2 點
+
+                if chosen_stat in ['attack', 'defense', 'speed', 'crit']:
+                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
+                    cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
+                    skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+                elif chosen_stat in ['hp', 'mp']:
+                    # 對於HP和MP，增加其最大值，並確保當前值也同步增加
+                    max_stat_key = f'initial_max_{chosen_stat}'
+                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
+                    # 同步增加當前值，但不要超過新的最大值
+                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount # type: ignore
+                    cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
+                    skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
             
             monster_to_update["cultivation_gains"] = cultivation_gains
             
-            # --- FIX START: 將潛力點數應用於基礎屬性 ---
-            for stat, gain in stat_gain_counts.items():
-                if stat in ['attack', 'defense', 'speed', 'crit']:
-                     # 將增加的潛力點數直接加到基礎屬性上
-                    monster_to_update[stat] = monster_to_update.get(stat, 0) + gain
-                elif stat in ['hp', 'mp']:
-                     # 對於HP和MP，我們增加其最大值
-                    max_stat_key = f'initial_max_{stat}'
-                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain
-            # --- FIX END ---
+            # 確保 HP/MP 補滿到更新後的初始最大值
+            # 注意：這裡應該使用已經累計了 cultivation_gains 的 initial_max_hp/mp
+            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + monster_to_update.get("cultivation_gains",{}).get("hp",0)
+            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + monster_to_update.get("cultivation_gains",{}).get("mp",0)
 
-            # 將HP/MP補滿到新的最大值
-            monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0)
-            monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0)
 
         # 4. 拾獲DNA碎片
-        if random.random() < cultivation_cfg.get("dna_find_chance", 0.5):
+        # 新增：DNA 拾獲機率也應隨著修煉時長而增加
+        actual_dna_find_chance = cultivation_cfg.get("dna_find_chance", 0.5) * (1 + duration_percentage)
+        if random.random() < actual_dna_find_chance:
             dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
             num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
             monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
@@ -260,7 +271,7 @@ def complete_cultivation_service(
                 dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
             if not dna_pool: # 最後的兜底：所有 DNA
                 dna_pool = all_dna_templates
-
+                
             for _ in range(min(num_items, len(dna_pool))):
                 if not dna_pool or not loot_table: break # 避免在空列表上 random.choice
                 rarity_pool, rarity_weights = zip(*loot_table.items())
@@ -286,7 +297,7 @@ def complete_cultivation_service(
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     
     # 使用 .get() 並提供預設值，確保即使某些欄位缺失也不會報錯
-    current_hp = monster_to_update.get("initial_max_hp", 0)
+    current_hp = monster_to_update.get("initial_max_hp", 0) + gains.get("hp",0) # 評價基於最大HP
     current_attack = monster_to_update.get("attack", 0)
     current_defense = monster_to_update.get("defense", 0)
     current_speed = monster_to_update.get("speed", 0)
