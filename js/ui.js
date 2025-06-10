@@ -310,8 +310,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
 
         DOMElements.feedbackModalMessage.innerHTML = `
-            <h4 class="text-xl font-bold text-center text-[var(--accent-color)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
-            <p class="text-center text-base text-[var(--text-secondary)]">${successMessage}</p>
+            <h4 class="text-xl font-bold text-center text-[var(--accent-color)] mb-2"><span class="math-inline">\{monsterDetails\.nickname \|\| '未知怪獸'\}</h4\>
+<p class\="text\-center text\-base text\-\[var\(\-\-text\-secondary\)\]"\></span>{successMessage}</p>
             ${discoveryMessage}
         `;
 
@@ -412,12 +412,12 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
                 <div class="battle-confirm-grid">
                     <div class="monster-confirm-details player">
                         <p class="monster-role">您的怪獸</p>
-                        <p class="monster-name text-rarity-${playerRarityKey}">${playerMonster.nickname}</p>
-                        <p class="monster-score">(評價: ${playerMonster.score})</p>
-                    </div>
-                    <div class="monster-confirm-details opponent">
-                        <p class="monster-role">對手的怪獸</p>
-                        <p class="monster-name text-rarity-${opponentRarityKey}">${opponentMonster.nickname}</p>
+                        <p class="monster-name text-rarity-<span class="math-inline">\{playerRarityKey\}"\></span>{playerMonster.nickname}</p>
+                        <p class="monster-score">(評價: <span class="math-inline">\{playerMonster\.score\}\)</p\>
+</div\>
+<div class\="monster\-confirm\-details opponent"\>
+<p class\="monster\-role"\>對手的怪獸</p\>
+<p class\="monster\-name text\-rarity\-</span>{opponentRarityKey}">${opponentMonster.nickname}</p>
                         <p class="monster-score">(評價: ${opponentMonster.score})</p>
                     </div>
                 </div>
@@ -436,7 +436,7 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
     } else if (monsterToRelease) {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
-        const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
+        const coloredNickname = `<span class="text-rarity-<span class="math-inline">\{rarityKey\} font\-bold"\></span>{monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
         bodyHtml += `<p>${finalMessage}</p>`;
 
@@ -503,7 +503,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
         '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
     const colorPair = colors[primaryElement] || colors['無'];
-    return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
+    return `https://placehold.co/120x90/<span class="math-inline">\{colorPair\}?text\=</span>{encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
 function getMonsterPartImagePath(dnaTemplateId) {
@@ -557,19 +557,8 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
-        
-        // 決定要顯示的名字
-        let displayName = '未知怪獸';
-        if (monster.custom_element_nickname) {
-            displayName = monster.custom_element_nickname;
-        } else if (monster.elements && monster.elements.length > 0 && gameState.gameConfigs?.element_nicknames) {
-            const primaryElement = monster.elements[0];
-            displayName = gameState.gameConfigs.element_nicknames[primaryElement] || monster.nickname;
-        } else {
-            displayName = monster.nickname; // Fallback to full nickname
-        }
-        
-        DOMElements.snapshotNickname.textContent = displayName;
+
+        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
 
         const resume = monster.resume || { wins: 0, losses: 0 };
@@ -643,10 +632,7 @@ function applyDnaItemStyle(element, dnaData) {
         element.style.backgroundColor = '';
         element.style.color = '';
         element.style.borderColor = '';
-        const nameSpan = element.querySelector('.dna-name-text');
-        if (nameSpan) {
-            nameSpan.textContent = "空位";
-        }
+        element.innerHTML = `<span class="dna-name-text">空位</span>`;
         element.classList.add('empty');
         element.classList.remove('occupied');
         return;
@@ -654,6 +640,12 @@ function applyDnaItemStyle(element, dnaData) {
 
     element.classList.remove('empty');
     element.classList.add('occupied');
+    
+    // 生成兩行內容
+    element.innerHTML = `
+        <span class="dna-name-text"><span class="math-inline">\{dnaData\.name \|\| '未知DNA'\}</span\>
+<span class\="dna\-element\-text"\></span>{dnaData.type || '無'}屬性</span>
+    `;
 
     const elementTypeMap = {
         '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
@@ -672,14 +664,6 @@ function applyDnaItemStyle(element, dnaData) {
 
     element.style.color = rarityTextColorVar;
     element.style.borderColor = rarityTextColorVar;
-
-    // Ensure the name is displayed
-    const nameSpan = element.querySelector('.dna-name-text');
-    if (nameSpan) {
-        nameSpan.textContent = dnaData.name || '未知DNA';
-    } else {
-        element.innerHTML = `<span class="dna-name-text">${dnaData.name || '未知DNA'}</span>`;
-    }
 }
 
 
@@ -691,24 +675,19 @@ function renderDNACombinationSlots() {
         const slot = document.createElement('div');
         slot.classList.add('dna-slot');
         slot.dataset.slotIndex = index;
-        const nameSpan = document.createElement('span');
-        nameSpan.classList.add('dna-name-text');
-        slot.appendChild(nameSpan);
 
         if (dna && dna.id) {
             slot.classList.add('occupied');
-            nameSpan.textContent = dna.name || '未知DNA';
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
             slot.dataset.dnaBaseId = dna.baseId;
             slot.dataset.dnaSource = 'combination';
-            slot.dataset.slotIndex = index;
         } else {
-            nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.classList.add('empty');
             applyDnaItemStyle(slot, null);
-            slot.dataset.slotIndex = index;
+            // 修改空槽位的文字
+            slot.innerHTML = `<span class="dna-name-text">組合槽 ${index + 1}</span>`;
         }
         container.appendChild(slot);
     });
@@ -736,10 +715,6 @@ function renderPlayerDNAInventory() {
             const dna = ownedDna[index];
             item.dataset.inventoryIndex = index;
 
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('dna-name-text');
-            item.appendChild(nameSpan);
-
             if (dna) {
                 item.draggable = true;
                 item.dataset.dnaId = dna.id;
@@ -747,10 +722,9 @@ function renderPlayerDNAInventory() {
                 item.dataset.dnaSource = 'inventory';
                 applyDnaItemStyle(item, dna);
             } else {
-                item.draggable = true;
+                item.draggable = false; // 空的 inventory slot 不應該能被拖曳
                 item.dataset.dnaSource = 'inventory';
                 applyDnaItemStyle(item, null);
-                nameSpan.textContent = '空位';
             }
         }
         container.appendChild(item);
@@ -778,10 +752,6 @@ function renderTemporaryBackpack() {
 
         if (item) {
             slot.classList.add('occupied');
-            const nameSpan = document.createElement('span');
-            nameSpan.classList.add('dna-name-text');
-            nameSpan.textContent = item.data.name || '未知物品';
-            slot.appendChild(nameSpan);
             applyDnaItemStyle(slot, item.data);
             slot.draggable = true;
             slot.dataset.dnaId = item.data.id;
@@ -790,7 +760,6 @@ function renderTemporaryBackpack() {
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
         } else {
             slot.classList.add('empty');
-            slot.innerHTML = `<span class="dna-name-text">空位</span>`;
             applyDnaItemStyle(slot, null);
             slot.draggable = false;
         }
@@ -892,7 +861,7 @@ function renderMonsterFarm() {
                 const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
 
                 if (elapsedTimeInSeconds < totalDurationInSeconds) {
-                    statusText = `修煉中 (${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
+                    statusText = `修煉中 (<span class="math-inline">\{elapsedTimeInSeconds\}/</span>{totalDurationInSeconds}s)`;
                     statusStyle = "color: var(--accent-color);";
                 } else {
                     statusText = "修煉完成";
@@ -922,26 +891,26 @@ function renderMonsterFarm() {
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
-                <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
-                    ${battleButtonIcon}
-                </button>
-            </div>
-            <div class="farm-col farm-col-info">
-                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
+                <button class="farm-battle-btn button <span class="math-inline">\{battleButtonClass\}" title\="</span>{battleButtonTitle}">
+                    <span class="math-inline">\{battleButtonIcon\}
+</button\>
+</div\>
+<div class\="farm\-col farm\-col\-info"\>
+<a href\="\#" class\="farm\-monster\-name\-link monster\-name\-display text\-rarity\-</span>{rarityKey}">${monster.nickname}</a>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
             </div>
             <div class="farm-col farm-col-score">
-                <span class="score-value">${monster.score || 0}</span>
-            </div>
-            <div class="farm-col farm-col-status">
-                <span class="status-text" style="${statusStyle}">${statusText}</span>
-            </div>
-            <div class="farm-col farm-col-actions">
-                <button class="${cultivateBtnClasses}"
-                        style="${cultivateBtnStyle}"
-                        title="${isTraining ? '召回修煉' : '開始修煉'}"
+                <span class="score-value"><span class="math-inline">\{monster\.score \|\| 0\}</span\>
+</div\>
+<div class\="farm\-col farm\-col\-status"\>
+<span class\="status\-text" style\="</span>{statusStyle}"><span class="math-inline">\{statusText\}</span\>
+</div\>
+<div class\="farm\-col farm\-col\-actions"\>
+<button class\="</span>{cultivateBtnClasses}"
+                        style="<span class="math-inline">\{cultivateBtnStyle\}"
+title\="</span>{isTraining ? '召回修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
                 </button>
