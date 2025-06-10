@@ -138,9 +138,10 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     crit_multiplier = value_settings.get("crit_multiplier", 1.5)
 
     # 消耗 MP
-    performer["current_mp"] = performer.get("current_mp", performer["mp"]) - skill.get("mp_cost", 0)
+    mp_cost = skill.get("mp_cost", 0)
+    performer["current_mp"] = performer.get("current_mp", performer["mp"]) - mp_cost
     if performer["current_mp"] < 0: performer["current_mp"] = 0 # 確保不為負值
-    action_details["mp_used"] = skill.get("mp_cost", 0)
+    action_details["mp_used"] = mp_cost
 
     # 計算命中和閃避
     attacker_current_stats = _get_monster_current_stats(performer)
@@ -165,7 +166,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     if not is_hit:
         action_details["is_miss"] = True
         action_details["is_crit"] = False
-        action_details["log_message"] = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}，但 {target['nickname']} 靈巧地閃避了！"
+        action_details["log_message"] = f"- {performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}，但 {target['nickname']} 靈巧地閃避了！"
         action_details["damage_dealt"] = 0
         return action_details
 
@@ -192,20 +193,24 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         raw_damage = max(1, (base_damage + (attacker_attack_stat / 2) - (defender_defense_stat / 4)))
         damage = int(raw_damage * element_multiplier)
 
-        log_message = f"{performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}！"
+        log_message = f"- {performer['nickname']} 使用了 {skill['name']} 攻擊 {target['nickname']}"
         
         if is_crit:
             damage = int(damage * crit_multiplier) # 暴擊傷害倍率
-            log_message += " 致命一擊！"
+            log_message += "，造成**暴擊**！"
         
-        if element_multiplier > 1.0:
-            log_message += " 效果拔群！"
-        elif element_multiplier < 1.0 and element_multiplier > 0:
+        if element_multiplier > 1.5:
+            log_message += " 效果絕佳！"
+        elif element_multiplier > 1.0:
+            log_message += " 效果不錯。"
+        elif element_multiplier < 1.0 and element_multiplier > 0.6:
             log_message += " 效果不太好..."
+        elif element_multiplier <= 0.6:
+             log_message += " 幾乎沒有效果。"
             
         target["current_hp"] = target.get("current_hp", target["hp"]) - damage
         action_details["damage_dealt"] = damage
-        action_details["log_message"] = log_message + f" 造成 {damage} 點傷害。"
+        action_details["log_message"] = log_message + f"造成 <damage>{damage}</damage> 點傷害 (消耗MP: {mp_cost})。"
         
         if target["current_hp"] <= 0:
             action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
@@ -217,7 +222,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             heal_amount = skill["amount"]
             performer["current_hp"] = min(performer["hp"] + performer.get("cultivation_gains", {}).get("hp",0), performer.get("current_hp", performer["hp"]) + heal_amount)
             action_details["damage_healed"] = heal_amount
-            action_details["log_message"] += f" {performer['nickname']} 恢復了 {heal_amount} 點 HP。"
+            action_details["log_message"] += f" {performer['nickname']} 恢復了 <heal>{heal_amount}</heal> 點 HP。"
         elif skill["effect"] == "status_change" and skill.get("status_id") and skill.get("effect_target"):
             status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == skill["status_id"]), None)
             if status_template:
@@ -231,7 +236,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                     new_status["duration"] = status_template.get("duration", 1) # 設定初始持續回合
                     target_monster_for_status["healthConditions"].append(new_status)
                     action_details["status_applied"] = status_template["id"]
-                    action_details["log_message"] += f" {target_monster_for_status['nickname']} 陷入了 {status_template['name']} 狀態。"
+                    action_details["log_message"] += f" {target_monster_for_status['nickname']} 陷入了**{status_template['name']}**狀態。"
         # 更多效果...
     
     return action_details
@@ -251,25 +256,25 @@ def _process_health_conditions(monster: Monster) -> Tuple[bool, List[str]]:
             hp_change = condition["effects"]["hp_per_turn"]
             monster["current_hp"] = monster.get("current_hp", monster["hp"]) + hp_change
             monster["current_hp"] = max(0, min(monster["hp"] + monster.get("cultivation_gains",{}).get("hp",0), monster["current_hp"])) # 確保不超過最大生命值且不低於0
-            log_messages.append(f"{monster['nickname']} 因 {condition['name']} 狀態 {'損失' if hp_change < 0 else '恢復'} 了 {abs(hp_change)} 點 HP。")
+            log_messages.append(f"- {monster['nickname']} 因**{condition['name']}**狀態{'損失' if hp_change < 0 else '恢復'}了 {abs(hp_change)} 點 HP。")
 
         # 檢查是否跳過回合
         if condition.get("chance_to_skip_turn", 0) > 0 and random.random() < condition["chance_to_skip_turn"]:
             skip_turn = True
-            log_messages.append(f"{monster['nickname']} 因 {condition['name']} 狀態無法行動！")
+            log_messages.append(f"- {monster['nickname']} 因**{condition['name']}**狀態無法行動！")
         
         # 檢查混亂自傷
         if condition.get("confusion_chance", 0) > 0 and random.random() < condition["confusion_chance"]:
             confusion_damage = int(monster["attack"] * 0.1) # 簡化為攻擊力10%的自傷
             monster["current_hp"] = monster.get("current_hp", monster["hp"]) - confusion_damage
-            log_messages.append(f"{monster['nickname']} 陷入混亂，攻擊了自己，造成 {confusion_damage} 點傷害！")
+            log_messages.append(f"- {monster['nickname']} 陷入**混亂**，攻擊了自己，造成 {confusion_damage} 點傷害！")
 
 
         # 減少持續回合數
         if condition.get("duration") is not None:
             condition["duration"] -= 1
             if condition["duration"] <= 0:
-                log_messages.append(f"{monster['nickname']} 的 {condition['name']} 狀態解除了！")
+                log_messages.append(f"- {monster['nickname']} 的**{condition['name']}**狀態解除了！")
                 continue # 狀態結束，不加入新列表
         new_conditions.append(condition)
     
@@ -297,10 +302,10 @@ def simulate_battle_full(
 
 
     # 初始化當前 HP/MP
-    player_monster["current_hp"] = player_monster.get("current_hp", player_monster["hp"])
-    player_monster["current_mp"] = player_monster.get("current_mp", player_monster["mp"])
-    opponent_monster["current_hp"] = opponent_monster.get("current_hp", opponent_monster["hp"])
-    opponent_monster["current_mp"] = opponent_monster.get("current_mp", opponent_monster["mp"])
+    player_monster["current_hp"] = player_monster.get("hp", 0)
+    player_monster["current_mp"] = player_monster.get("mp", 0)
+    opponent_monster["current_hp"] = opponent_monster.get("hp", 0)
+    opponent_monster["current_mp"] = opponent_monster.get("mp", 0)
     
     # 初始化臨時數值修正和健康狀態列表
     player_monster.setdefault("temp_attack_modifier", 0)
@@ -332,6 +337,14 @@ def simulate_battle_full(
 
         turn_raw_log_messages: List[str] = [f"--- 回合 {turn_num} 開始 ---"]
         
+        # 新增：在回合開始時記錄雙方狀態
+        turn_raw_log_messages.append(f"PlayerName: {player_monster['nickname']}")
+        turn_raw_log_messages.append(f"PlayerHP: {player_monster['current_hp']}/{player_monster['initial_max_hp']}")
+        turn_raw_log_messages.append(f"PlayerMP: {player_monster['current_mp']}/{player_monster['initial_max_mp']}")
+        turn_raw_log_messages.append(f"OpponentName: {opponent_monster['nickname']}")
+        turn_raw_log_messages.append(f"OpponentHP: {opponent_monster['current_hp']}/{opponent_monster['initial_max_hp']}")
+        turn_raw_log_messages.append(f"OpponentMP: {opponent_monster['current_mp']}/{opponent_monster['initial_max_mp']}")
+        
         player_skip, player_status_logs = _process_health_conditions(player_monster)
         turn_raw_log_messages.extend(player_status_logs)
         opponent_skip, opponent_status_logs = _process_health_conditions(opponent_monster)
@@ -362,7 +375,7 @@ def simulate_battle_full(
                 
                 if (current_actor["id"] == player_monster["id"] and player_skip) or \
                    (current_actor["id"] == opponent_monster["id"] and opponent_skip):
-                    turn_raw_log_messages.append(f"{current_actor['nickname']} 本回合無法行動。")
+                    turn_raw_log_messages.append(f"- {current_actor['nickname']} 本回合無法行動。")
                     continue
 
                 chosen_skill = _choose_action(current_actor, target_actor, game_configs)
@@ -397,7 +410,7 @@ def simulate_battle_full(
                         is_miss=action_result.get("is_miss"), log_message=action_result["log_message"]
                     ))
                 else:
-                    turn_raw_log_messages.append(f"{current_actor['nickname']} 無法行動，等待機會。")
+                    turn_raw_log_messages.append(f"- {current_actor['nickname']} 無法行動，等待機會。")
 
                 if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
                     break
@@ -411,19 +424,19 @@ def simulate_battle_full(
     if player_monster["current_hp"] <= 0 and opponent_monster["current_hp"] <= 0:
         winner_id = "平手"
         loser_id = "平手"
-        all_raw_log_messages.append("戰鬥結束！雙方同歸於盡，平手！")
+        all_raw_log_messages.append("--- 戰鬥結束 ---\n雙方同時倒下，戰鬥以平手收場。")
     elif player_monster["current_hp"] <= 0:
         winner_id = opponent_monster["id"]
         loser_id = player_monster["id"]
-        all_raw_log_messages.append(f"戰鬥結束！{opponent_monster['nickname']} 獲勝！")
+        all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{opponent_monster['nickname']} 獲勝！")
     elif opponent_monster["current_hp"] <= 0:
         winner_id = player_monster["id"]
         loser_id = opponent_monster["id"]
-        all_raw_log_messages.append(f"戰鬥結束！{player_monster['nickname']} 獲勝！")
+        all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{player_monster['nickname']} 獲勝！")
     else:
         winner_id = "平手"
         loser_id = "平手"
-        all_raw_log_messages.append(f"戰鬥達到最大回合數 ({max_turns})！雙方精疲力盡，平手！")
+        all_raw_log_messages.append(f"--- 戰鬥結束 ---\n戰鬥達到最大回合數 ({max_turns})！雙方精疲力盡，平手！")
         
     # 產生戰鬥亮點
     battle_highlights = []
@@ -492,7 +505,7 @@ def simulate_battle_full(
     if winner_id == player_monster['id']: # 玩家勝利
         player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您獲勝了！"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，您不幸戰敗。"}
+            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
     elif winner_id == opponent_monster['id']: # 玩家失敗
         player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
         if not opponent_monster.get('isNPC'):
@@ -514,7 +527,7 @@ def simulate_battle_full(
     }
     
     ai_battle_report = generate_battle_report_content(
-        player_monster_data, opponent_monster_data, final_battle_result, all_raw_log_messages
+        player_monster, opponent_monster, final_battle_result, all_raw_log_messages
     )
     final_battle_result["ai_battle_report_content"] = ai_battle_report
 
