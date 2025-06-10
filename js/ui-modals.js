@@ -605,7 +605,8 @@ function showBattleLogModal(battleResult) {
             const skillInfo = allSkills.find(s => s.name === skillName);
             if (skillInfo && skillInfo.level !== undefined) {
                 const color = skillLevelColors[skillInfo.level] || skillLevelColors[1];
-                styledText = styledText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${color}; font-weight: bold;">$1</span>`);
+                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
+                styledText = styledText.replace(regex, `<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="color: ${color}; font-weight: bold; text-decoration: none;">$1</a>`);
             }
         });
 
@@ -921,14 +922,22 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     statGrowthHtml += "</ul>";
 
-    let skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
+    const skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
-        skillAndNewSkillLogs.forEach(log => skillGrowthHtml += `<li>${log}</li>`);
+        skillAndNewSkillLogs.forEach(log => {
+            // 使用正則表達式尋找單引號內的技能名稱
+            const updatedLog = log.replace(/'(.+?)'/g, (match, skillName) => {
+                // 將匹配到的技能名稱轉換為帶有連結的 HTML
+                return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
+            });
+            skillGrowthHtml += `<li>${updatedLog}</li>`;
+        });
     } else {
         skillGrowthHtml += "<li>能力沒有明顯變化。</li>";
     }
     skillGrowthHtml += "</ul>";
+
 
     DOMElements.trainingGrowthResult.innerHTML = `
         <div class="training-result-subsection">
