@@ -927,6 +927,48 @@ function handleMonsterNicknameEvents() {
     }
 }
 
+async function handleSkillLinkClick(event) {
+    const target = event.target.closest('.skill-name-link');
+    if (!target) return;
+
+    event.preventDefault();
+
+    const skillName = target.dataset.skillName;
+    if (!skillName) return;
+
+    let skillDetails = null;
+    if (gameState.gameConfigs && gameState.gameConfigs.skills) {
+        for (const elementType in gameState.gameConfigs.skills) {
+            const skillsInElement = gameState.gameConfigs.skills[elementType];
+            if (Array.isArray(skillsInElement)) {
+                const foundSkill = skillsInElement.find(s => s.name === skillName);
+                if (foundSkill) {
+                    skillDetails = foundSkill;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (skillDetails) {
+        const description = skillDetails.description || skillDetails.story || '暫無描述。';
+        const mpCost = skillDetails.mp_cost !== undefined ? skillDetails.mp_cost : 'N/A';
+        const power = skillDetails.power !== undefined ? skillDetails.power : 'N/A';
+        const category = skillDetails.skill_category || '未知';
+        
+        const message = `
+            <div style="text-align: left;">
+                <p><strong>類別:</strong> ${category} &nbsp;&nbsp; <strong>威力:</strong> ${power} &nbsp;&nbsp; <strong>消耗MP:</strong> ${mpCost}</p>
+                <hr style="margin: 8px 0; border-color: var(--border-color);">
+                <p>${description}</p>
+            </div>
+        `;
+        showFeedbackModal(`技能: ${skillName}`, message);
+    } else {
+        showFeedbackModal('錯誤', `找不到名為 "${skillName}" 的技能詳細資料。`);
+    }
+}
+
 function initializeEventListeners() {
     handleModalCloseButtons();
     handleThemeSwitch();
@@ -935,6 +977,8 @@ function initializeEventListeners() {
     handleTabSwitching();
     handleLeaderboardSorting();
     handleMonsterNicknameEvents(); // 啟用改名功能的事件監聽
+    document.body.addEventListener('click', handleSkillLinkClick);
+
 
     if (DOMElements.combineButton) DOMElements.combineButton.addEventListener('click', handleCombineDna);
 
