@@ -480,6 +480,14 @@ async function handleCombineDna() {
         showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
         return;
     }
+    
+    const maxFarmSlots = gameState.gameConfigs?.value_settings?.max_farm_slots || 10;
+    const currentMonsterCount = gameState.playerData?.farmedMonsters?.length || 0;
+
+    if (currentMonsterCount >= maxFarmSlots) {
+        showFeedbackModal('合成失敗', `您的怪獸農場已滿 (上限 ${maxFarmSlots} 隻)，無法再合成新的怪獸。請先放生部分怪獸再來。`);
+        return;
+    }
 
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
