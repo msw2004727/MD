@@ -234,7 +234,7 @@ def generate_battle_report_content(
     player_monster: Dict[str, Any],
     opponent_monster: Dict[str, Any],
     battle_result: Dict[str, Any],
-    full_raw_battle_log: List[Dict[str, Any]] 
+    full_raw_battle_log: List[str] 
 ) -> Dict[str, str]:
     """
     根據戰鬥數據，使用 DeepSeek AI 生成完整的戰報內容。
@@ -263,35 +263,22 @@ def generate_battle_report_content(
 
     player_intro_prompt = _get_monster_intro_prompt(player_monster, "玩家怪獸")
     opponent_intro_prompt = _get_monster_intro_prompt(opponent_monster, "對手怪獸")
-
-    strength_diff_info = ""
-    player_score = player_monster.get('score', 0)
-    opponent_score = opponent_monster.get('score', 0)
-
-    if player_score > opponent_score * 1.2:
-        strength_diff_info = f"玩家怪獸({player_monster.get('nickname')}, 評價:{player_score})實力遠超對手({opponent_monster.get('nickname')}, 評價:{opponent_score})。"
-    elif opponent_score > player_score * 1.2:
-        strength_diff_info = f"對手怪獸({opponent_monster.get('nickname')}, 評價:{opponent_score})實力遠超玩家({player_monster.get('nickname')}, 評價:{player_score})。"
-    else:
-        strength_diff_info = "雙方實力接近，勢均力敵。"
             
     combined_raw_log = "\n".join(full_raw_battle_log)
 
     battle_description_prompt = f"""
-你是一位身經百戰的戰場解說員，請你根據以下戰鬥的原始日誌和雙方實力對比，撰寫一段約200字的【精彩交戰描述】。
-重點是要有戲劇性、緊張感和高潮，並強調戰鬥中發生的關鍵時刻、致命一擊、技能對決、HP恢復、或狀態變化。
-{strength_diff_info}
+你是一位冷靜的戰術分析師，請根據以下戰鬥的原始日誌，以清晰、條列式的方式，逐一分析每個回合的行動。不要使用任何emoji。
 
-你的任務是將枯燥的日誌轉化為生動的故事。當你描述一個造成傷害或治療的動作時，必須在描述後緊跟著用括號附上具體數值，並用特殊標籤包裹。
-- 造成傷害的格式：`(<damage>傷害數值</damage>)`
-- 造成治療的格式：`(<heal>治療數值</heal>)`
-- 消耗MP的格式：`(MP-數值)` (這部分你需要自行根據技能名稱判斷，如果MP消耗大於0)
+你的任務是將日誌轉化為結構清晰、易於理解的戰鬥流程。
+每一回合的行動都應包含【行動發起者】、【使用的技能】、【對目標造成的影響】。
+- 傷害/治療數值必須用特殊標籤包裹：`<damage>數值</damage>` 或 `<heal>數值</heal>`。
+- 消耗的MP請用 `(消耗MP: X)` 格式標註。
+- 關鍵字（怪獸名、技能名、屬性、暴擊、閃避等）請用 **粗體** 標註。
 
-請將關鍵文字，如怪獸名稱、技能名稱、致命一擊、恢復、擊倒、屬性名稱(火, 水, 木, 金, 土, 光, 暗, 毒, 風, 無, 混)等，用**粗體**標註，並在日誌中加入適當的表情符號 (例如: 🔥💧💪💥✨🛡️)。
-
-範例：
-原始日誌：...烈焰幼龍 對 冰霜巨魔 發動了 火焰爪！造成 45 點傷害...
-你的輸出可能包含：...**烈焰幼龍**的**火焰爪**燃燒著怒火抓向對手(<damage>45</damage>)(MP-6)...
+範例格式：
+--- 回合 1 開始 ---
+- **烈焰幼龍** 使用了 **火焰爪** 攻擊 **冰霜巨魔**，造成 <damage>45</damage> 點傷害 (消耗MP: 6)。
+- **冰霜巨魔** 使用了 **冰針** 反擊，但被 **烈焰幼龍** 閃避了。
 
 原始日誌:
 {combined_raw_log}
