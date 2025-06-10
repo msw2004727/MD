@@ -455,7 +455,6 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
-        row.dataset.monsterId = item.id; // 新增：為 tr 加上怪獸ID
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -466,13 +465,11 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
-            const nicknameLink = document.createElement('a');
-            nicknameLink.href = '#';
-            nicknameLink.className = 'leaderboard-monster-link'; // 確保事件能監聽到
+            const nicknameSpan = document.createElement('span');
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
-            nicknameLink.classList.add(`text-rarity-${rarityKey}`);
-            nicknameLink.textContent = item.nickname;
-            nicknameCell.appendChild(nicknameLink);
+            nicknameSpan.className = `text-rarity-${rarityKey}`;
+            nicknameSpan.textContent = item.nickname;
+            nicknameCell.appendChild(nicknameSpan);
 
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
@@ -1012,43 +1009,32 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const itemsContainer = DOMElements.trainingItemsResult;
     itemsContainer.innerHTML = ''; 
+    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false);
 
     const items = results.items_obtained || [];
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
-        itemsGrid.className = 'dna-draw-results-grid';
-
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-
+        itemsGrid.className = 'inventory-grid';
         items.forEach((item) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-draw-result-item';
-            
+            itemDiv.className = 'dna-item';
             applyDnaItemStyle(itemDiv, item);
+            itemDiv.style.cursor = 'pointer';
 
-            const rarityKey = item.rarity ? (rarityMap[item.rarity] || item.rarity.toLowerCase()) : 'common';
-            
-            itemDiv.innerHTML = `
-                <span class="dna-name">${item.name}</span>
-                <span class="dna-type">${item.type}屬性</span>
-                <span class="dna-rarity text-rarity-${rarityKey}">${item.rarity}</span>
-                <button class="pickup-btn button primary text-xs mt-2">拾取</button>
-            `;
+            itemDiv.addEventListener('click', function handleItemClick() {
+                addDnaToTemporaryBackpack(item);
+                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndex > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
+                }
+                itemDiv.style.opacity = '0.5';
+                itemDiv.style.pointerEvents = 'none';
+                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
+                if(originalTextSpan) {
+                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
+                }
+            }, { once: true });
 
-            const pickupButton = itemDiv.querySelector('.pickup-btn');
-            if (pickupButton) {
-                pickupButton.addEventListener('click', function handlePickupClick() {
-                    addDnaToTemporaryBackpack(item);
-                    this.disabled = true;
-                    this.textContent = '已拾取';
-                    itemDiv.style.opacity = '0.5';
-                    
-                    const itemIndexInResults = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                    if (itemIndexInResults > -1) {
-                        gameState.lastCultivationResult.items_obtained.splice(itemIndexInResults, 1);
-                    }
-                }, { once: true });
-            }
             itemsGrid.appendChild(itemDiv);
         });
         itemsContainer.appendChild(itemsGrid);
