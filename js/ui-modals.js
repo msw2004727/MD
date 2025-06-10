@@ -455,6 +455,7 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
+        row.dataset.monsterId = item.id; // 新增：為 tr 加上怪獸ID
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -465,11 +466,13 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
-            const nicknameSpan = document.createElement('span');
+            const nicknameLink = document.createElement('a');
+            nicknameLink.href = '#';
+            nicknameLink.className = 'leaderboard-monster-link'; // 確保事件能監聽到
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
-            nicknameSpan.className = `text-rarity-${rarityKey}`;
-            nicknameSpan.textContent = item.nickname;
-            nicknameCell.appendChild(nicknameSpan);
+            nicknameLink.classList.add(`text-rarity-${rarityKey}`);
+            nicknameLink.textContent = item.nickname;
+            nicknameCell.appendChild(nicknameLink);
 
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
@@ -1008,33 +1011,45 @@ function updateTrainingResultsModal(results, monsterName) {
     `;
 
     const itemsContainer = DOMElements.trainingItemsResult;
-    itemsContainer.innerHTML = ''; 
-    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false);
+    itemsContainer.innerHTML = '';
+    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false); // Keep this button hidden for now
 
     const items = results.items_obtained || [];
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
-        itemsGrid.className = 'inventory-grid';
+        itemsGrid.className = 'dna-draw-results-grid'; // Reuse class for styling
         items.forEach((item) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
+            itemDiv.className = 'dna-draw-result-item'; // Use card style
+            
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || item.rarity.toLowerCase()) : 'common';
+
+            // Apply background/border color based on rarity
             applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
 
-            itemDiv.addEventListener('click', function handleItemClick() {
-                addDnaToTemporaryBackpack(item);
-                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                if (itemIndex > -1) {
-                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
-                }
-                itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
-                }
-            }, { once: true });
+            // Build the inner HTML for the card
+            itemDiv.innerHTML = `
+                <span class="dna-name">${item.name}</span>
+                <span class="dna-type">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}">${item.rarity}</span>
+                <button class="pickup-btn button primary text-xs mt-2">拾取</button>
+            `;
 
+            const pickupButton = itemDiv.querySelector('.pickup-btn');
+            if (pickupButton) {
+                pickupButton.addEventListener('click', function handlePickupClick() {
+                    addDnaToTemporaryBackpack(item);
+                    this.disabled = true;
+                    this.textContent = '已拾取';
+                    itemDiv.style.opacity = '0.6';
+                    
+                    const itemIndexInResults = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                    if (itemIndexInResults > -1) {
+                        gameState.lastCultivationResult.items_obtained.splice(itemIndexInResults, 1);
+                    }
+                }, { once: true });
+            }
             itemsGrid.appendChild(itemDiv);
         });
         itemsContainer.appendChild(itemsGrid);
