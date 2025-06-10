@@ -916,7 +916,7 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <strong class="monster-name-display text-rarity-${rarityKey}">${monster.nickname}</strong>
+                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
@@ -942,6 +942,13 @@ function renderMonsterFarm() {
         item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
+        });
+
+        item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            updateMonsterInfoModal(monster, gameState.gameConfigs);
+            showModal('monster-info-modal');
         });
 
         item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
