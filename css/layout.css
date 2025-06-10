@@ -15,6 +15,7 @@
     position: relative;
     transition: background-color 0.3s, border-color 0.3s;
     margin: 1rem auto;
+    padding-top: 50px; /* 增加頂部內邊距以容納圓形按鈕 */
 }
 
 @media (min-width: 768px) {
