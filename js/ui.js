@@ -8,7 +8,7 @@ let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始�
 
 const TRAINING_GAME_HINTS = [
     "修煉時間越長，獲得的技能經驗值也越多。",
-    "完成修煉是領悟新技能的主要途徑！",
+    "完成修煉是領悟新技能的主要途途徑！",
     "在不同的修煉地點，怪獸的數值成長方向和可能拾獲的DNA類型會有所不同。",
     "即使修煉被中斷，已經過的時間仍然會提供部分獎勵。",
     "稀有度越高的怪獸，在修煉中越有可能找到更高品質的DNA碎片。",
@@ -791,19 +791,52 @@ function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersListContainer;
     const farmHeaders = DOMElements.farmHeaders;
     if (!listContainer || !farmHeaders) return;
+    
+    // --- 排序邏輯開始 ---
+    const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
+    const key = sortConfig.key;
+    const order = sortConfig.order;
+    const sortedMonsters = [...(gameState.playerData?.farmedMonsters || [])].sort((a, b) => {
+        let valA, valB;
 
-    // 動態產生表頭
+        if (key === 'nickname') {
+            valA = a.nickname || '';
+            valB = b.nickname || '';
+            return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else if (key === 'status') {
+             // 狀態排序較複雜，此處簡化為訓練中 > 完成 > 瀕死 > 出戰中 > 待命
+            const getStatusValue = (monster) => {
+                if(monster.hp <= monster.initial_max_hp * 0.25) return 3; // 瀕死
+                if(monster.farmStatus?.isTraining) {
+                    const trainingComplete = (Date.now() - (monster.farmStatus.trainingStartTime || 0)) >= (monster.farmStatus.trainingDuration || Infinity);
+                    return trainingComplete ? 4 : 5; // 訓練完成 > 訓練中
+                }
+                if(gameState.selectedMonsterId === monster.id) return 2; // 出戰中
+                return 1; // 待命中
+            };
+            valA = getStatusValue(a);
+            valB = getStatusValue(b);
+        } else { // 默認為數字排序 (如 score)
+            valA = a[key] || 0;
+            valB = b[key] || 0;
+        }
+
+        return order === 'asc' ? valA - valB : valB - valA;
+    });
+    // --- 排序邏輯結束 ---
+
+    // 動態產生可點擊的表頭
     farmHeaders.innerHTML = `
-        <div>出戰</div>
-        <div>怪獸</div>
-        <div>評價</div>
-        <div>狀態</div>
-        <div>養成</div>
+        <div class="sortable" data-sort-key="battle">出戰</div>
+        <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
+        <div class="sortable" data-sort-key="score">評價 ${key === 'score' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
+        <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
+        <div class="sortable" data-sort-key="actions">養成</div>
     `;
 
     listContainer.innerHTML = '';
 
-    if (!gameState.playerData || !gameState.playerData.farmedMonsters || gameState.playerData.farmedMonsters.length === 0) {
+    if (!sortedMonsters || sortedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
         farmHeaders.style.display = 'none';
         return;
@@ -812,7 +845,7 @@ function renderMonsterFarm() {
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
-    gameState.playerData.farmedMonsters.forEach(monster => {
+    sortedMonsters.forEach(monster => { // 使用排序後的陣列
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
 
