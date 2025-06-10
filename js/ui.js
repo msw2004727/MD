@@ -1631,10 +1631,8 @@ function updateAnnouncementPlayerName(playerName) {
 function updateTrainingResultsModal(results, monsterName) {
     if (!DOMElements.trainingResultsModal) return;
 
-    // 設定標題
     DOMElements.trainingResultsModalTitle.textContent = `${monsterName} 的修煉成果`;
 
-    // 插入 Banner
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
     let banner = modalBody.querySelector('.training-banner');
     if (!banner) {
@@ -1646,10 +1644,29 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     banner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
 
-    // 顯示 AI 冒險故事
-    DOMElements.trainingStoryResult.innerHTML = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
+    const storySection = DOMElements.trainingStoryResult.parentNode;
+    if (storySection) {
+        const storyContent = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
+        storySection.innerHTML = `
+            <h5>📜 冒險故事</h5>
+            <div id="adventure-story-container" style="display: none; padding: 5px; border-left: 3px solid var(--border-color); margin-top: 5px;">
+                <p>${storyContent}</p>
+            </div>
+            <a href="#" id="toggle-story-btn" style="display: block; text-align: center; margin-top: 8px; color: var(--accent-color); cursor: pointer; text-decoration: underline;">點此查看此趟的冒險故事 ▼</a>
+        `;
+        
+        const toggleBtn = storySection.querySelector('#toggle-story-btn');
+        const storyContainer = storySection.querySelector('#adventure-story-container');
+        if (toggleBtn && storyContainer) {
+            toggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isHidden = storyContainer.style.display === 'none';
+                storyContainer.style.display = isHidden ? 'block' : 'none';
+                toggleBtn.innerHTML = isHidden ? '收合冒險故事 ▲' : '點此查看此趟的冒險故事 ▼';
+            });
+        }
+    }
 
-    // NEW: 處理基礎數值提升的總結欄位
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
     if (statGrowthLogs.length > 0) {
@@ -1659,8 +1676,6 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     statGrowthHtml += "</ul>";
 
-    // 顯示成長紀錄 (技能和屬性)
-    // 這裡只顯示技能和新技能的日誌
     let skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
@@ -1670,8 +1685,6 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     skillGrowthHtml += "</ul>";
 
-
-    // 組合新的成長紀錄區塊
     DOMElements.trainingGrowthResult.innerHTML = `
         <div class="training-result-subsection">
             ${skillGrowthHtml}
@@ -1682,39 +1695,33 @@ function updateTrainingResultsModal(results, monsterName) {
         </div>
     `;
 
-    // 顯示可拾獲的物品
     const itemsContainer = DOMElements.trainingItemsResult;
-    itemsContainer.innerHTML = ''; // 清空舊內容
-    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false); // 隱藏舊的「一鍵加入」按鈕
+    itemsContainer.innerHTML = ''; 
+    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false);
 
     const items = results.items_obtained || [];
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
-        itemsGrid.className = 'inventory-grid'; // 復用庫存網格樣式
+        itemsGrid.className = 'inventory-grid';
         items.forEach((item) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item'; // 復用DNA物品樣式
+            itemDiv.className = 'dna-item';
             applyDnaItemStyle(itemDiv, item);
             itemDiv.style.cursor = 'pointer';
 
             itemDiv.addEventListener('click', function handleItemClick() {
                 addDnaToTemporaryBackpack(item);
-
-                // 從待領取清單中移除，避免重複提醒
                 const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
                 if (itemIndex > -1) {
                     gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
                 }
-
-                // 視覺上表示已拾取
                 itemDiv.style.opacity = '0.5';
                 itemDiv.style.pointerEvents = 'none';
                 const originalTextSpan = itemDiv.querySelector('.dna-name-text');
                 if(originalTextSpan) {
                     originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
                 }
-
-            }, { once: true }); //確保只觸發一次
+            }, { once: true });
 
             itemsGrid.appendChild(itemDiv);
         });
