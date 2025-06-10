@@ -82,6 +82,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "playerStats": player_stats,
         "nickname": nickname,
         "lastSave": int(time.time()),
+        "lastSeen": int(time.time()), # 新增：初始化 lastSeen
         "selectedMonsterId": None,
         "friends": [] # 為新玩家加入空的好友列表
     }
@@ -154,6 +155,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
+                    "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())), # 新增：讀取 lastSeen
                     "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
                     "friends": player_game_data_dict.get("friends", []) # 讀取好友列表
                 }
@@ -185,12 +187,14 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     db = firestore_db_instance
 
     try:
+        current_time = int(time.time()) # 取得當前時間戳
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
-            "lastSave": int(time.time()),
+            "lastSave": current_time,
+            "lastSeen": current_time, # 新增：每次儲存時都更新 lastSeen
             "selectedMonsterId": game_data.get("selectedMonsterId"),
             "friends": game_data.get("friends", []) # 儲存好友列表
         }
