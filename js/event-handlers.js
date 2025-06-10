@@ -281,7 +281,7 @@ async function handleDrop(event) {
         renderDNACombinationSlots();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
-} // 確定這裡有結束大括號
+} 
 
 // --- Modal Close Button Handler ---
 function handleModalCloseButtons() {
@@ -321,7 +321,7 @@ async function fetchAndDisplayMonsterLeaderboard() {
     }
 }
 
-// --- 新增：怪獸農場表頭排序事件處理 ---
+// --- 怪獸農場表頭排序事件處理 ---
 function handleFarmHeaderSorting() {
     if (DOMElements.farmHeaders) {
         DOMElements.farmHeaders.addEventListener('click', (event) => {
@@ -329,7 +329,6 @@ function handleFarmHeaderSorting() {
             if (!target) return;
 
             const sortKey = target.dataset.sortKey;
-            // 對於不可排序的欄位直接返回
             if (!sortKey || ['actions'].includes(sortKey)) return;
 
             const currentSortKey = gameState.farmSortConfig.key;
@@ -345,7 +344,7 @@ function handleFarmHeaderSorting() {
                 order: newSortOrder
             };
 
-            renderMonsterFarm(); // 重新渲染農場列表
+            renderMonsterFarm();
         });
     }
 }
@@ -353,10 +352,7 @@ function handleFarmHeaderSorting() {
 // --- 新增：處理排行榜中的點擊事件 ---
 function handleLeaderboardClicks() {
     if (DOMElements.monsterLeaderboardTable) {
-        const tableBody = DOMElements.monsterLeaderboardTable.querySelector('tbody');
-        if (!tableBody) return;
-
-        tableBody.addEventListener('click', (event) => {
+        DOMElements.monsterLeaderboardTable.addEventListener('click', (event) => {
             const link = event.target.closest('.leaderboard-monster-link');
             if (link) {
                 event.preventDefault();
