@@ -168,7 +168,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
             return `
             <div class="skill-entry">
-                <span class="skill-name ${skillTypeClass}">${skill.name} (Lv.${skill.level || 1})</span>
+                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>
                 <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
