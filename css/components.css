@@ -894,25 +894,6 @@ body.light-theme .leaderboard-table tr:hover td {
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
 }
-.friend-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border-color);
-}
-.friend-item:last-child {
-    border-bottom: none;
-}
-.friend-item .friend-name {
-    font-weight: 500;
-}
-.friend-item .friend-status {
-    font-size: 1rem;
-    color: var(--text-secondary);
-}
-.friend-item .friend-status.online { color: var(--success-color); }
-.friend-item .friend-status.offline { color: var(--text-secondary); }
 .auth-title {
     font-size: 1rem;
     font-weight: 700;
