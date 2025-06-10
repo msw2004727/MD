@@ -455,6 +455,7 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
+        row.dataset.monsterId = item.id; // 新增：在每一行儲存怪獸ID
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -465,11 +466,10 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
-            const nicknameSpan = document.createElement('span');
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
-            nicknameSpan.className = `text-rarity-${rarityKey}`;
-            nicknameSpan.textContent = item.nickname;
-            nicknameCell.appendChild(nicknameSpan);
+            // 新增：將暱稱改為超連結
+            nicknameCell.innerHTML = `<a href="#" class="leaderboard-monster-link text-rarity-${rarityKey}">${item.nickname}</a>`;
+
 
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
