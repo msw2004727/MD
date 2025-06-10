@@ -25,6 +25,7 @@ app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # --- CORS 配置 ---
+# 將 CORS 配置移至此處，確保在註冊藍圖前就設定好
 # 定義一個允許來源的列表
 allowed_origins = [
     "https://msw2004727.github.io",  # 您部署在 GitHub Pages 的前端網址
