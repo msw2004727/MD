@@ -1420,6 +1420,11 @@ function showBattleLogModal(battleResult) {
 
     const playerMonsterData = getSelectedMonster();
     const opponentMonsterData = gameState.battleTargetMonster;
+    if (!playerMonsterData || !opponentMonsterData) {
+        DOMElements.battleLogArea.innerHTML = '<p>遺失戰鬥怪獸資料，無法呈現戰報。</p>';
+        showModal('battle-log-modal');
+        return;
+    }
 
     // 修改：formatBasicText 函數以處理粗體，不再處理數字
     function formatBasicText(text) {
@@ -1523,13 +1528,96 @@ function showBattleLogModal(battleResult) {
         </div>
     `;
 
-    const battleDescriptionFormatted = formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_description, playerMonsterData, opponentMonsterData));
+    // ===== NEW: Battle Log Parsing Logic Start =====
+    const battleDescriptionContentDiv = document.createElement('div');
+    battleDescriptionContentDiv.classList.add('battle-description-content');
 
-    reportContainer.innerHTML += `
-        <div class="report-section battle-description-section">
-            <h4 class="report-section-title">精彩交戰</h4>
-            <div class="battle-description-content">${battleDescriptionFormatted.replace(/\n/g, '<br>')}</div>
-        </div>`;
+    const createStatusBar = (label, value, max, color) => {
+        const percentage = max > 0 ? (value / max) * 100 : 0;
+        // 使用內聯樣式設定顏色，避免修改CSS檔案
+        return `
+            <div class="status-bar-container">
+                <span class="status-bar-label">${label}</span>
+                <div class="status-bar-background">
+                    <div class="status-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+                </div>
+                <span class="status-bar-value">${value} / ${max}</span>
+            </div>
+        `;
+    };
+    
+    const rawLog = battleResult.raw_full_log || [];
+    const battleTurns = [];
+    let currentTurn = null;
+
+    rawLog.forEach(line => {
+        if (line.startsWith('--- 回合')) {
+            if (currentTurn) battleTurns.push(currentTurn);
+            currentTurn = { header: line, playerStatus: {}, opponentStatus: {}, actions: [] };
+        } else if (line.startsWith('PlayerHP:')) {
+            const [current, max] = line.split(':')[1].split('/');
+            if (currentTurn) currentTurn.playerStatus.hp = { current: parseInt(current), max: parseInt(max) };
+        } else if (line.startsWith('PlayerMP:')) {
+            const [current, max] = line.split(':')[1].split('/');
+            if (currentTurn) currentTurn.playerStatus.mp = { current: parseInt(current), max: parseInt(max) };
+        } else if (line.startsWith('OpponentHP:')) {
+            const [current, max] = line.split(':')[1].split('/');
+            if (currentTurn) currentTurn.opponentStatus.hp = { current: parseInt(current), max: parseInt(max) };
+        } else if (line.startsWith('OpponentMP:')) {
+            const [current, max] = line.split(':')[1].split('/');
+            if (currentTurn) currentTurn.opponentStatus.mp = { current: parseInt(current), max: parseInt(max) };
+        } else if (line.startsWith('- ')) {
+            if (currentTurn) currentTurn.actions.push(line.substring(2));
+        } else if (!line.startsWith('--- 戰鬥結束 ---') && !line.startsWith('PlayerName:') && !line.startsWith('OpponentName:')) {
+            if (currentTurn) currentTurn.actions.push(line);
+        }
+    });
+    if (currentTurn) battleTurns.push(currentTurn);
+
+    battleTurns.forEach(turn => {
+        const turnHeaderDiv = document.createElement('div');
+        turnHeaderDiv.className = 'turn-divider-line';
+        turnHeaderDiv.textContent = turn.header;
+        battleDescriptionContentDiv.appendChild(turnHeaderDiv);
+
+        const statusBlockDiv = document.createElement('div');
+        statusBlockDiv.className = 'turn-status-block';
+
+        let statusHtml = '';
+        const playerRarityKey = playerMonsterData.rarity ? rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common' : 'common';
+        const opponentRarityKey = opponentMonsterData.rarity ? rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common' : 'common';
+
+        if (turn.playerStatus.hp && turn.playerStatus.mp) {
+            statusHtml += `
+                <div class="font-bold text-rarity-${playerRarityKey}">${playerMonsterData.nickname}</div>
+                ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
+                ${createStatusBar('MP', turn.playerStatus.mp.current, turn.playerStatus.mp.max, 'var(--accent-color)')}
+            `;
+        }
+        if (turn.opponentStatus.hp && turn.opponentStatus.mp) {
+             statusHtml += `
+                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">${opponentMonsterData.nickname}</div>
+                ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
+                ${createStatusBar('MP', turn.opponentStatus.mp.current, turn.opponentStatus.mp.max, 'var(--accent-color)')}
+             `;
+        }
+        statusBlockDiv.innerHTML = statusHtml;
+        battleDescriptionContentDiv.appendChild(statusBlockDiv);
+
+        turn.actions.forEach(action => {
+            const p = document.createElement('p');
+            p.innerHTML = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
+            battleDescriptionContentDiv.appendChild(p);
+        });
+    });
+
+    const descriptionSection = document.createElement('div');
+    descriptionSection.className = 'report-section battle-description-section';
+    descriptionSection.innerHTML = `<h4 class="report-section-title">精彩交戰</h4>`;
+    descriptionSection.appendChild(battleDescriptionContentDiv);
+    reportContainer.appendChild(descriptionSection);
+    // ===== NEW: Battle Log Parsing Logic End =====
+
     
     let resultBannerHtml = '';
     if (battleResult.winner_id === playerMonsterData.id) {
