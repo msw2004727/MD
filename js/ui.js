@@ -1434,28 +1434,10 @@ function showBattleLogModal(battleResult) {
     const playerMonsterData = getSelectedMonster();
     const opponentMonsterData = gameState.battleTargetMonster;
 
-    // 修改：formatBasicText 函數以識別數字並加上顏色，但移除 emoji
+    // 修改：formatBasicText 函數以處理粗體，不再處理數字
     function formatBasicText(text) {
         if (!text) return '';
-        // 確保在處理數字前，先處理好粗體標記
-        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // 匹配所有數字（包括負數和帶小數點的）
-        formattedText = formattedText.replace(/(-?\d+(\.\d+)?)/g, (match, numberStr) => {
-            let colorClass = 'text-primary'; // 預設顏色
-            const num = parseFloat(numberStr);
-
-            if (num < 0) {
-                colorClass = 'text-danger';
-            } else if (num > 0 && (formattedText.includes('恢復') || formattedText.includes('治療'))) {
-                colorClass = 'text-success';
-            } else if (num > 0) {
-                colorClass = 'text-accent';
-            }
-
-            return `<span class="battle-number ${colorClass}">${match}</span>`;
-        });
-        return formattedText;
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
     
     const skillLevelColors = {
@@ -1551,33 +1533,12 @@ function showBattleLogModal(battleResult) {
         </div>
     `;
 
-
-    const battleDescriptionParts = (battleReportContent.battle_description || "").split(/--- 回合 (\d+) 開始 ---/g);
-    let battleDescriptionHtml = '';
-    for (let i = 0; i < battleDescriptionParts.length; i++) {
-        if (i % 2 === 0) {
-            if (battleDescriptionParts[i].trim()) {
-                const turnContent = battleDescriptionParts[i].trim();
-                const lines = turnContent.split('\n').filter(line => line.trim() !== '');
-                const listItemsHtml = lines.map(line => {
-                    let processedLine = line.trim();
-                    if (processedLine.startsWith('- ')) {
-                        processedLine = processedLine.substring(2);
-                    }
-                    const formattedLine = formatBasicText(applyDynamicStylingToBattleReport(processedLine, playerMonsterData, opponentMonsterData));
-                    return `<li style="list-style-type: none; padding-left: 0;">${formattedLine}</li>`;
-                }).join('');
-                battleDescriptionHtml += `<ul>${listItemsHtml}</ul>`;
-            }
-        } else {
-            battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${battleDescriptionParts[i]} 開始 ---</div>`;
-        }
-    }
+    const battleDescriptionFormatted = formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_description, playerMonsterData, opponentMonsterData));
 
     reportContainer.innerHTML += `
         <div class="report-section battle-description-section">
             <h4 class="report-section-title">精彩交戰</h4>
-            <div class="battle-description-content">${battleDescriptionHtml}</div>
+            <div class="battle-description-content">${battleDescriptionFormatted.replace(/\n/g, '<br>')}</div>
         </div>`;
     
     let resultBannerHtml = '';
