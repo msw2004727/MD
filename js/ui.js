@@ -58,6 +58,13 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
     if (targetContent) {
         targetContent.classList.add('active');
         targetContent.style.display = 'block';
+
+        // 當切換到特定頁籤時，觸發對應的渲染函式
+        if (targetTabId === 'friends-list-content') {
+            if (typeof renderFriendsList === 'function') {
+                renderFriendsList();
+            }
+        }
     }
 }
 // =============================================================
@@ -931,7 +938,6 @@ function renderMonsterFarm() {
     }
 }
 
-// 新增：渲染好友列表的函式
 function renderFriendsList() {
     const container = DOMElements.friendsListDisplayArea;
     if (!container) return;
@@ -945,13 +951,16 @@ function renderFriendsList() {
 
     container.innerHTML = `
         <div class="friends-list-grid">
-            ${friends.map(friend => `
+            ${friends.map(friend => {
+                // 注意：目前好友的 'title' 和 'isOnline' 是預設值，未來需要後端提供真實數據
+                const title = friend.title || '稱號未定';
+                const displayName = `${title} ${friend.nickname}`;
+                return `
                 <div class="friend-item-card">
                     <div class="friend-info">
                         <span class="online-status ${friend.isOnline ? 'online' : 'offline'}"></span>
                         <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
-                            <span class="friend-title">${friend.title || '稱號未定'}</span>
-                            <span class="friend-name">${friend.nickname}</span>
+                            ${displayName}
                         </a>
                     </div>
                     <div class="friend-actions">
@@ -959,45 +968,10 @@ function renderFriendsList() {
                         <button class="button secondary text-xs" title="聊天" disabled>💬</button>
                     </div>
                 </div>
-            `).join('')}
+            `}).join('')}
         </div>
     `;
 }
-
-function updateFriendsSearchResults(players) {
-    const container = DOMElements.friendsSearchResultsArea;
-    if (!container) return;
-
-    if (!players || players.length === 0) {
-        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-2">找不到符合條件的玩家。</p>`;
-        return;
-    }
-
-    container.innerHTML = players.map(player => {
-        const isFriend = gameState.playerData.friends?.some(f => f.uid === player.uid);
-        const isSelf = player.uid === gameState.playerId;
-        let buttonHtml;
-
-        if (isSelf) {
-            buttonHtml = `<button class="button secondary text-xs" disabled>這是您</button>`;
-        } else if (isFriend) {
-            buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
-        } else {
-            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
-        }
-
-        return `
-            <div class="friend-item">
-                <span class="friend-name">${player.nickname}</span>
-                <div class="friend-actions">
-                    <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
-                    ${buttonHtml}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
 
 function updateAnnouncementPlayerName(playerName) {
     if (DOMElements.announcementPlayerName) {
