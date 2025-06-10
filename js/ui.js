@@ -8,7 +8,7 @@ let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始�
 
 const TRAINING_GAME_HINTS = [
     "修煉時間越長，獲得的技能經驗值也越多。",
-    "完成修煉是領悟新技能的主要途途徑！",
+    "完成修煉是領悟新技能的主要途徑！",
     "在不同的修煉地點，怪獸的數值成長方向和可能拾獲的DNA類型會有所不同。",
     "即使修煉被中斷，已經過的時間仍然會提供部分獎勵。",
     "稀有度越高的怪獸，在修煉中越有可能找到更高品質的DNA碎片。",
@@ -816,7 +816,11 @@ function renderMonsterFarm() {
             };
             valA = getStatusValue(a);
             valB = getStatusValue(b);
-        } else { // 默認為數字排序 (如 score)
+        } else if (key === 'battle') {
+            valA = (a.id === gameState.selectedMonsterId) ? 1 : 0;
+            valB = (b.id === gameState.selectedMonsterId) ? 1 : 0;
+        }
+        else { // 默認為數字排序 (如 score)
             valA = a[key] || 0;
             valB = b[key] || 0;
         }
@@ -827,7 +831,7 @@ function renderMonsterFarm() {
 
     // 動態產生可點擊的表頭
     farmHeaders.innerHTML = `
-        <div class="sortable" data-sort-key="battle">出戰</div>
+        <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="score">評價 ${key === 'score' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
