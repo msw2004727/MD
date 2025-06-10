@@ -937,7 +937,7 @@ function renderMonsterFarm() {
             <div class="farm-col farm-col-info">
                 <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
                 <div class="monster-details-display">
-                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-<span class="math-inline">\{getElementCssClassKey\(el\)\}"\></span>{el}</span>`).join(' ')}
+                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
             </div>
             <div class="farm-col farm-col-score">
@@ -1032,8 +1032,8 @@ async function renderFriendsList() {
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
-                        <span class="online-status <span class="math-inline">\{isOnline ? 'online' \: 'offline'\}"\></span\>
-<a href\="\#" class\="friend\-name\-link" onclick\="viewPlayerInfo\('</span>{friend.uid}'); return false;">
+                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
+                        <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
                             ${displayName}
                         </a>
                     </div>
@@ -1162,16 +1162,14 @@ function updateLeaderboardTable(tableType, data) {
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
-                // *** MODIFIED: 確保這裡使用的是反引號 ` ***
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-xs text-element-<span class="math-inline">\{getElementCssClassKey\(el\)\} font\-bold mr\-2"\></span>{el}</span>`
+                    `<span class="text-xs text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
             }
 
             const rarityCell = row.insertCell();
-            const rarityKeyForColor = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             rarityCell.textContent = item.rarity;
-            rarityCell.className = `text-rarity-${rarityKeyForColor}`;
+            rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';
 
             const scoreCell = row.insertCell();
