@@ -249,16 +249,14 @@ def generate_battle_report_content(
         if line.startswith("- "):
             # 移除開頭的 "- "
             action_line = line[2:]
-            # 將內部的 <damage>標籤 替換為 -號
-            action_line = action_line.replace("<damage>", "-").replace("</damage>", "")
-            action_line = action_line.replace("<heal>", "+").replace("</heal>", "")
+            # 將內部的 <damage> 和 <heal> 標籤保留，以便前端處理
+            # action_line = action_line.replace("<damage>", "-").replace("</damage>", "")
+            # action_line = action_line.replace("<heal>", "+").replace("</heal>", "")
             battle_description_parts.append(action_line)
-        # 處理回合分隔線和戰鬥結束訊息
-        elif line.startswith("---"):
+        # 對於非行動日誌（如回合分隔線、HP/MP狀態），直接保留
+        else:
             battle_description_parts.append(line)
-        # 處理雙方倒下等特殊結束語句
-        elif "雙方同時倒下" in line:
-            battle_description_parts.append(line)
+
 
     formatted_description = "\n".join(battle_description_parts)
     if not formatted_description.strip():
