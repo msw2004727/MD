@@ -928,7 +928,6 @@ function renderMonsterFarm() {
                 <span class="status-text" style="${statusStyle}">${statusText}</span>
             </div>
             <div class="farm-col farm-col-actions">
-                <button class="farm-monster-info-btn button primary text-xs">資訊</button>
                 <button class="${cultivateBtnClasses}"
                         style="${cultivateBtnStyle}"
                         title="${isTraining ? '召回修煉' : '開始修煉'}"
@@ -946,12 +945,6 @@ function renderMonsterFarm() {
 
         item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            updateMonsterInfoModal(monster, gameState.gameConfigs);
-            showModal('monster-info-modal');
-        });
-
-        item.querySelector('.farm-monster-info-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             updateMonsterInfoModal(monster, gameState.gameConfigs);
             showModal('monster-info-modal');
