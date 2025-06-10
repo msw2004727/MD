@@ -271,5 +271,20 @@ async function searchPlayers(nicknameQuery, limit = 10) {
     return fetchAPI(`/players/search?nickname=${encodeURIComponent(nicknameQuery)}&limit=${limit}`);
 }
 
+/**
+ * 獲取好友的上線狀態
+ * @param {string[]} friendIds - 好友 UID 的陣列
+ * @returns {Promise<object>} - 包含好友狀態的物件，鍵為 UID，值為 lastSeen 時間戳
+ */
+async function getFriendsStatuses(friendIds) {
+    if (!friendIds || friendIds.length === 0) {
+        return Promise.resolve({ success: true, statuses: {} });
+    }
+    return fetchAPI('/friends/statuses', {
+        method: 'POST',
+        body: JSON.stringify({ friend_ids: friendIds }),
+    });
+}
+
 
 console.log("API client module loaded.");
