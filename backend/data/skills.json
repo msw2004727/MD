@@ -69,7 +69,7 @@
     {
       "name": "暖身",
       "rarity": "普通",
-      "description": "小幅提升自身的攻擊力。",
+      "description": "小幅提升自身的攻擊力(+5)。",
       "power": 0,
       "crit": 0,
       "type": "火",
@@ -84,7 +84,7 @@
     {
       "name": "烈日祝福",
       "rarity": "稀有",
-      "description": "大幅提升自身的攻擊與爆擊率。",
+      "description": "大幅提升自身的攻擊力(+10)與爆擊率(+5)。",
       "power": 0,
       "crit": 0,
       "type": "火",
@@ -121,7 +121,7 @@
     {
       "name": "點燃",
       "rarity": "普通",
-      "description": "使對手陷入「燒傷」狀態，持續受傷。",
+      "description": "有90%機率使對手陷入「燒傷」狀態，持續受傷。",
       "power": 10,
       "crit": 0,
       "type": "火",
@@ -135,7 +135,7 @@
     {
       "name": "煉獄之火",
       "rarity": "稀有",
-      "description": "用不滅的煉獄之火折磨對手，造成強力燒傷。",
+      "description": "用不滅的煉獄之火折磨對手，100%造成強力「燒傷」。",
       "power": 20,
       "crit": 5,
       "type": "火",
@@ -149,7 +149,7 @@
     {
       "name": "威嚇",
       "rarity": "普通",
-      "description": "降低對手的攻擊力。",
+      "description": "有85%機率降低對手的攻擊力(-5)。",
       "power": 0,
       "crit": 0,
       "type": "火",
@@ -164,7 +164,7 @@
     {
       "name": "熔化",
       "rarity": "稀有",
-      "description": "用高溫熔化對手的防具，大幅降低防禦力。",
+      "description": "用高溫熔化對手的防具，有90%機率大幅降低防禦力(-10)。",
       "power": 0,
       "crit": 0,
       "type": "火",
@@ -179,7 +179,7 @@
     {
       "name": "靜電火花",
       "rarity": "普通",
-      "description": "帶有靜電的火花，可能讓對手麻痺。",
+      "description": "帶有靜電的火花，有30%機率讓對手陷入「麻痺」狀態。",
       "power": 20,
       "crit": 5,
       "type": "火",
@@ -263,7 +263,7 @@
     {
       "name": "寒冰光束",
       "rarity": "稀有",
-      "description": "射出能使萬物凍結的寒冷光束。",
+      "description": "射出能使萬物凍結的寒冷光束，有10%機率使對手「冰凍」。",
       "power": 60,
       "crit": 10,
       "type": "水",
@@ -289,7 +289,7 @@
     {
       "name": "生命水滴",
       "rarity": "稀有",
-      "description": "恢復自身大量生命值。",
+      "description": "恢復自身50點生命值。",
       "power": 0,
       "crit": 0,
       "type": "水",
@@ -325,7 +325,7 @@
     {
       "name": "冰針",
       "rarity": "普通",
-      "description": "射出冰針，有機會讓對手「冰凍」。",
+      "description": "射出冰針，有20%機率讓對手陷入「冰凍」狀態。",
       "power": 15,
       "crit": 0,
       "type": "水",
@@ -350,7 +350,7 @@
     {
       "name": "變圓",
       "rarity": "普通",
-      "description": "縮成一團，提升自身防禦力。",
+      "description": "縮成一團，提升自身的防禦力(+8)。",
       "power": 0,
       "crit": 0,
       "type": "水",
@@ -412,7 +412,7 @@
     {
       "name": "寄生吸取",
       "rarity": "稀有",
-      "description": "近身攻擊並吸取對手生命。",
+      "description": "近身攻擊並吸取對手生命，回復造成傷害25%的HP。",
       "power": 50,
       "crit": 10,
       "type": "木",
@@ -448,7 +448,7 @@
     {
       "name": "吸取",
       "rarity": "普通",
-      "description": "吸取對手生命，回復自身。",
+      "description": "吸取對手生命，回復造成傷害15%的HP。",
       "power": 30,
       "crit": 0,
       "type": "木",
@@ -462,7 +462,7 @@
     {
       "name": "終極吸取",
       "rarity": "稀有",
-      "description": "大量吸取對手生命，回復自身。",
+      "description": "大量吸取對手生命，回復造成傷害30%的HP。",
       "power": 55,
       "crit": 5,
       "type": "木",
@@ -476,7 +476,7 @@
     {
       "name": "生長",
       "rarity": "普通",
-      "description": "小幅提升自身的攻擊與特攻。",
+      "description": "小幅提升自身的攻擊力(+5)。",
       "power": 0,
       "crit": 0,
       "type": "木",
@@ -514,7 +514,7 @@
     {
       "name": "木槌",
       "rarity": "稀有",
-      "description": "用堅硬的木槌重擊對手，自身會受少量傷害。",
+      "description": "用堅硬的木槌重擊對手，自身會受到25%的反傷。",
       "power": 60,
       "crit": 10,
       "type": "木",
@@ -528,7 +528,7 @@
     {
       "name": "催眠粉",
       "rarity": "普通",
-      "description": "灑出粉末，使對手陷入「睡眠」狀態。",
+      "description": "灑出粉末，有75%機率使對手陷入「睡眠」狀態。",
       "power": 0,
       "crit": 0,
       "type": "木",
@@ -647,7 +647,7 @@
     {
       "name": "金屬音",
       "rarity": "普通",
-      "description": "發出刺耳金屬音，大幅降低對手特防。",
+      "description": "發出刺耳金屬音，有90%機率大幅降低對手特防。",
       "power": 0,
       "crit": 0,
       "type": "金",
@@ -670,7 +670,7 @@
     {
       "name": "鐵壁",
       "rarity": "普通",
-      "description": "大幅提升自身的防禦力。",
+      "description": "大幅提升自身的防禦力(+15)。",
       "power": 0,
       "crit": 0,
       "type": "金",
@@ -685,7 +685,7 @@
     {
       "name": "換擋",
       "rarity": "稀有",
-      "description": "提升攻擊力與速度。",
+      "description": "提升自身的攻擊力(+8)與速度(+8)。",
       "power": 0,
       "crit": 0,
       "type": "金",
@@ -711,7 +711,7 @@
     {
       "name": "重磅衝撞",
       "rarity": "稀有",
-      "description": "用沉重的身體猛烈衝撞，自身也會受傷。",
+      "description": "用沉重的身體猛烈衝撞，自身會受到20%的反傷。",
       "power": 65,
       "crit": 10,
       "type": "金",
@@ -747,7 +747,7 @@
     {
       "name": "破甲",
       "rarity": "普通",
-      "description": "降低自身的防禦，但大幅提升攻擊。",
+      "description": "降低自身的防禦(-10)，但大幅提升攻擊(+15)。",
       "power": 0,
       "crit": 0,
       "type": "金",
@@ -820,7 +820,7 @@
     {
       "name": "泥巴射擊",
       "rarity": "普通",
-      "description": "投擲泥塊攻擊並降低對手速度。",
+      "description": "投擲泥塊攻擊並有95%機率降低對手速度(-5)。",
       "power": 25,
       "crit": 0,
       "type": "土",
@@ -868,7 +868,7 @@
     {
       "name": "變硬",
       "rarity": "普通",
-      "description": "使身體變硬，提升防禦力。",
+      "description": "使身體變硬，提升自身的防禦力(+10)。",
       "power": 0,
       "crit": 0,
       "type": "土",
@@ -984,7 +984,7 @@
     {
       "name": "閃光",
       "rarity": "普通",
-      "description": "發出強光，降低對手命中率。",
+      "description": "發出強光，有80%機率降低對手命中率(-10)。",
       "power": 0,
       "crit": 0,
       "type": "光",
@@ -1010,7 +1010,7 @@
     {
       "name": "信號光束",
       "rarity": "普通",
-      "description": "發射奇特的信號光束，有機會使對手混亂。",
+      "description": "發射奇特的信號光束，有20%機率使對手陷入「混亂」狀態。",
       "power": 35,
       "crit": 5,
       "type": "光",
@@ -1057,7 +1057,7 @@
     {
       "name": "治癒波動",
       "rarity": "普通",
-      "description": "釋放治癒波動，恢復目標一半的HP。",
+      "description": "釋放治癒波動，恢復目標40點生命值。",
       "power": 0,
       "crit": 0,
       "type": "光",
