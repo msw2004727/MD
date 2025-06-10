@@ -5,6 +5,29 @@ console.log("DEBUG: ui.js starting to load and define functions."); // Add this 
 
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
 
+const TRAINING_GAME_HINTS = [
+    "修煉時間越長，獲得的技能經驗值也越多。",
+    "完成修煉是領悟新技能的主要途徑！",
+    "在不同的修煉地點，怪獸的數值成長方向和可能拾獲的DNA類型會有所不同。",
+    "即使修煉被中斷，已經過的時間仍然會提供部分獎勵。",
+    "稀有度越高的怪獸，在修煉中越有可能找到更高品質的DNA碎片。",
+    "修煉歸來的怪獸HP和MP會完全恢復！",
+    "記得將修煉獲得的物品從「暫存背包」移入主庫存。",
+    "怪獸的「個性」會影響其在修煉故事中的行為。",
+    "累積足夠的技能經驗值後，技能等級會自動提升！",
+    "修煉是提升怪獸基礎數值(白值)的唯一方式。",
+    "修煉中，怪獸無法出戰或被放生。",
+    "想要特定屬性的DNA？試試去對應的元素修煉地冒險吧！",
+    "修煉時間越久，遭遇奇特事件的機率也越高。",
+    "看看修煉後的「活動紀錄」，那裡記載了怪獸的成長軌跡。",
+    "技能最高可升至10級，威力會大幅提升。",
+    "如果技能已滿，領悟新技能時將有機會替換掉舊的。",
+    "臨時背包空間有限，記得及時清理。",
+    "怪獸的元素屬性會影響牠在某些修煉地的成長效率。",
+    "有時候，一無所獲的修煉也是一種修行。",
+    "冒險故事是由AI生成的，每次修煉都獨一無二！"
+];
+
 // ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
     let tabButtonsContainer, tabContentsContainer;
@@ -180,12 +203,24 @@ function hideModal(modalId) {
         if (gameState.activeModalId === modalId) {
             gameState.activeModalId = null;
         }
+        // 新增：當修煉成果彈窗關閉時，清除提示輪播的計時器
+        if (modalId === 'training-results-modal' && gameState.trainingHintInterval) {
+            clearInterval(gameState.trainingHintInterval);
+            gameState.trainingHintInterval = null;
+        }
     }
 }
 
 function hideAllModals() {
     const modals = document.querySelectorAll('.modal');
-    modals.forEach(modal => modal.style.display = 'none');
+    modals.forEach(modal => {
+        // 新增：確保關閉所有視窗時，也會清除修煉成果的計時器
+        if (modal.id === 'training-results-modal' && gameState.trainingHintInterval) {
+            clearInterval(gameState.trainingHintInterval);
+            gameState.trainingHintInterval = null;
+        }
+        modal.style.display = 'none';
+    });
     gameState.activeModalId = null;
 }
 
@@ -1721,15 +1756,49 @@ function updateTrainingResultsModal(results, monsterName) {
     DOMElements.trainingResultsModalTitle.textContent = `${monsterName} 的修煉成果`;
 
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
-    let banner = modalBody.querySelector('.training-banner');
-    if (!banner) {
-        banner = document.createElement('div');
-        banner.className = 'training-banner';
-        banner.style.textAlign = 'center';
-        banner.style.marginBottom = '1rem';
-        modalBody.prepend(banner);
+
+    // 移除舊的橫幅，並加入新的
+    let existingBanner = modalBody.querySelector('.training-banner');
+    if (existingBanner) existingBanner.remove();
+    let existingHints = modalBody.querySelector('.training-hints-container');
+    if (existingHints) existingHints.remove();
+    
+    const newBanner = document.createElement('div');
+    newBanner.className = 'training-banner';
+    newBanner.style.textAlign = 'center';
+    newBanner.style.marginBottom = '1rem';
+    newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
+    modalBody.prepend(newBanner);
+    
+    // 新增遊戲提示輪播區塊
+    const hintsContainer = document.createElement('div');
+    hintsContainer.className = 'training-hints-container';
+    hintsContainer.style.marginBottom = '1rem';
+    hintsContainer.style.padding = '0.5rem';
+    hintsContainer.style.backgroundColor = 'var(--bg-primary)';
+    hintsContainer.style.border = '1px solid var(--border-color)';
+    hintsContainer.style.borderRadius = '6px';
+    hintsContainer.style.textAlign = 'center';
+    hintsContainer.style.fontStyle = 'italic';
+    hintsContainer.style.color = 'var(--text-secondary)';
+    hintsContainer.innerHTML = `<p id="training-hints-carousel">正在讀取提示...</p>`;
+    // 將提示區塊插入到新橫幅之後
+    newBanner.insertAdjacentElement('afterend', hintsContainer);
+
+    // 啟動輪播
+    if (gameState.trainingHintInterval) clearInterval(gameState.trainingHintInterval);
+    const hintElement = document.getElementById('training-hints-carousel');
+    if (hintElement) {
+        // 先顯示一則
+        const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+        hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
+        // 設定計時器
+        gameState.trainingHintInterval = setInterval(() => {
+            const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
+        }, 1500);
     }
-    banner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
+
 
     const storySection = DOMElements.trainingStoryResult.parentNode;
     if (storySection) {
