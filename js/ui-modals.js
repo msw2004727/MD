@@ -927,7 +927,6 @@ function updateTrainingResultsModal(results, monsterName) {
     newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
     modalBody.prepend(newBanner);
     
-    // 新增靜態遊戲提示區塊
     const hintsContainer = document.createElement('div');
     hintsContainer.className = 'training-hints-container';
     hintsContainer.style.marginBottom = '1rem';
@@ -939,7 +938,6 @@ function updateTrainingResultsModal(results, monsterName) {
     hintsContainer.style.fontStyle = 'italic';
     hintsContainer.style.color = 'var(--text-secondary)';
     
-    // 顯示隨機靜態提示
     if (TRAINING_GAME_HINTS.length > 0) {
         const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
         hintsContainer.innerHTML = `<p id="training-hints-carousel">💡 ${TRAINING_GAME_HINTS[randomIndex]}</p>`;
@@ -984,9 +982,7 @@ function updateTrainingResultsModal(results, monsterName) {
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
         skillAndNewSkillLogs.forEach(log => {
-            // 使用正則表達式尋找單引號內的技能名稱
             const updatedLog = log.replace(/'(.+?)'/g, (match, skillName) => {
-                // 將匹配到的技能名稱轉換為帶有連結的 HTML
                 return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
             });
             skillGrowthHtml += `<li>${updatedLog}</li>`;
@@ -1014,30 +1010,52 @@ function updateTrainingResultsModal(results, monsterName) {
     const items = results.items_obtained || [];
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
-        itemsGrid.className = 'inventory-grid';
-        items.forEach((item) => {
+        itemsGrid.className = 'inventory-grid'; // Re-use inventory grid style for consistency
+        items.forEach((item, index) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
+            itemDiv.classList.add('dna-draw-result-item'); // Use the same class as DNA draw
             applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
+            
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
 
-            itemDiv.addEventListener('click', function handleItemClick() {
+            itemDiv.innerHTML = `
+                <span class="dna-name">${item.name}</span>
+                <span class="dna-type">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}">${item.rarity}</span>
+                <button class="add-cultivation-item-btn button primary text-xs mt-2">加入背包</button>
+            `;
+            
+            const addButton = itemDiv.querySelector('.add-cultivation-item-btn');
+            addButton.addEventListener('click', function() {
                 addDnaToTemporaryBackpack(item);
-                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                if (itemIndex > -1) {
-                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
+                
+                const itemIndexInState = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndexInState > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndexInState, 1);
                 }
+
+                this.disabled = true;
+                this.textContent = '已加入';
                 itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
+
+                if (gameState.lastCultivationResult.items_obtained.length === 0 && DOMElements.addAllToTempBackpackBtn) {
+                     DOMElements.addAllToTempBackpackBtn.disabled = true;
+                     DOMElements.addAllToTempBackpackBtn.textContent = "已全數拾取";
                 }
             }, { once: true });
 
             itemsGrid.appendChild(itemDiv);
         });
         itemsContainer.appendChild(itemsGrid);
+
+        // Handle the "Add All" button
+        if (DOMElements.addAllToTempBackpackBtn) {
+            toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, true);
+            DOMElements.addAllToTempBackpackBtn.disabled = false;
+            DOMElements.addAllToTempBackpackBtn.textContent = "一鍵全數加入背包";
+        }
+
     } else {
         itemsContainer.innerHTML = '<p>沒有拾獲任何物品。</p>';
     }
