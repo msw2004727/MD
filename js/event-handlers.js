@@ -450,14 +450,6 @@ function handleTopNavButtons() {
             }
         });
     }
-
-    if (DOMElements.friendsListBtn) {
-        DOMElements.friendsListBtn.addEventListener('click', () => {
-            updateFriendsListModal([]);
-            if(DOMElements.friendsListSearchInput) DOMElements.friendsListSearchInput.value = '';
-            showModal('friends-list-modal');
-        });
-    }
 }
 
 function handleTabSwitching() {
@@ -620,20 +612,21 @@ function handleNewbieGuideSearch() {
 }
 
 function handleFriendsListSearch() {
-   if (DOMElements.friendsListSearchInput) {
-        DOMElements.friendsListSearchInput.addEventListener('input', async (event) => {
+   if (DOMElements.friendsTabSearchInput) { // 改為監聽新輸入框
+        DOMElements.friendsTabSearchInput.addEventListener('input', async (event) => {
             const query = event.target.value.trim();
             if (query.length > 1) {
                 try {
                     const result = await searchPlayers(query);
-                    gameState.searchedPlayers = result.players || [];
-                    updateFriendsListModal(gameState.searchedPlayers);
+                    // 注意：這裡我們將呼叫一個新的函式來渲染搜尋結果，而不是好友列表本身
+                    updateFriendsSearchResults(result.players || []);
                 } catch (error) {
                     console.error("搜尋玩家失敗:", error);
-                    updateFriendsListModal([]);
+                    updateFriendsSearchResults([]);
                 }
             } else if (query.length === 0) {
-                updateFriendsListModal([]);
+                // 清空搜尋結果
+                updateFriendsSearchResults([]);
             }
         });
    }
