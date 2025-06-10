@@ -740,6 +740,12 @@ function renderMonsterFarm() {
         let statusText = "待命中";
         let statusStyle = "color: var(--warning-color); font-weight: bold;";
 
+        // 新增：優先檢查瀕死狀態
+        if (monster.hp <= monster.initial_max_hp * 0.25) {
+            statusText = "瀕死";
+            statusStyle = "color: var(--danger-color); font-weight: bold;";
+        }
+
         if (monster.farmStatus) {
             if (isDeployed) {
                 statusText = "出戰中";
