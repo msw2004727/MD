@@ -204,10 +204,10 @@ function hideModal(modalId) {
         if (gameState.activeModalId === modalId) {
             gameState.activeModalId = null;
         }
-        // 新增：當修煉成果彈窗關閉時，清除提示輪播的計時器
-        if (modalId === 'training-results-modal' && gameState.trainingHintInterval) {
-            clearInterval(gameState.trainingHintInterval);
-            gameState.trainingHintInterval = null;
+        // 當回饋彈窗關閉時，清除提示輪播的計時器
+        if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
+            clearInterval(gameState.feedbackHintInterval);
+            gameState.feedbackHintInterval = null;
         }
     }
 }
@@ -215,10 +215,10 @@ function hideModal(modalId) {
 function hideAllModals() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        // 新增：確保關閉所有視窗時，也會清除修煉成果的計時器
-        if (modal.id === 'training-results-modal' && gameState.trainingHintInterval) {
-            clearInterval(gameState.trainingHintInterval);
-            gameState.trainingHintInterval = null;
+        // 確保關閉所有視窗時，也會清除計時器
+        if (modal.id === 'feedback-modal' && gameState.feedbackHintInterval) {
+            clearInterval(gameState.feedbackHintInterval);
+            gameState.feedbackHintInterval = null;
         }
         modal.style.display = 'none';
     });
@@ -239,10 +239,51 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
     const modalBody = DOMElements.feedbackModal.querySelector('.modal-body');
-    const existingBanner = modalBody ? modalBody.querySelector('.feedback-banner') : null;
+
+    // 每次都先移除可能存在的舊橫幅和提示
+    const existingBanner = modalBody.querySelector('.feedback-banner');
     if (existingBanner) existingBanner.remove();
+    const existingHints = modalBody.querySelector('.loading-hints-container');
+    if (existingHints) existingHints.remove();
+    // 清除可能正在運行的計時器
+    if (gameState.feedbackHintInterval) {
+        clearInterval(gameState.feedbackHintInterval);
+        gameState.feedbackHintInterval = null;
+    }
+
 
     DOMElements.feedbackModalTitle.textContent = title;
+
+    // --- 新增：為特定的讀取彈窗加上橫幅和提示輪播 ---
+    if (title === '結算中...' && isLoading) {
+        const bannerContainer = document.createElement('div');
+        bannerContainer.className = 'feedback-banner';
+        bannerContainer.style.textAlign = 'center';
+        bannerContainer.style.marginBottom = '15px';
+        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="結算中橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        modalBody.prepend(bannerContainer);
+
+        const hintsContainer = document.createElement('div');
+        hintsContainer.className = 'loading-hints-container';
+        hintsContainer.style.marginTop = '1rem';
+        hintsContainer.style.padding = '0.5rem';
+        hintsContainer.style.textAlign = 'center';
+        hintsContainer.style.fontStyle = 'italic';
+        hintsContainer.style.color = 'var(--text-secondary)';
+        hintsContainer.innerHTML = `<p id="loading-hints-carousel">正在讀取提示...</p>`;
+        DOMElements.feedbackModalMessage.insertAdjacentElement('afterend', hintsContainer);
+        
+        const hintElement = document.getElementById('loading-hints-carousel');
+        if (hintElement && TRAINING_GAME_HINTS.length > 0) {
+            const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
+            gameState.feedbackHintInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+                hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
+            }, 5000); // 5秒輪播一次
+        }
+    }
+
 
     if (monsterDetails) {
         // --- 合成成功的新版彈窗 ---
