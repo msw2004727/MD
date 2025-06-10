@@ -973,8 +973,25 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
+    const statNameMap = {
+        'HP': '生命',
+        'MP': '法力',
+        'ATTACK': '攻擊',
+        'DEFENSE': '防禦',
+        'SPEED': '速度',
+        'CRIT': '爆擊率'
+    };
     if (statGrowthLogs.length > 0) {
-        statGrowthLogs.forEach(log => statGrowthHtml += `<li>${log}</li>`);
+        statGrowthLogs.forEach(log => {
+            let translatedLog = log;
+            const match = log.match(/'([A-Z]+)'/);
+            if (match && match[1]) {
+                const englishStat = match[1];
+                const chineseStat = statNameMap[englishStat] || englishStat;
+                translatedLog = log.replace(`'${englishStat}'`, `'${chineseStat}'`);
+            }
+            statGrowthHtml += `<li>${translatedLog}</li>`;
+        });
     } else {
         statGrowthHtml += "<li>這趟試煉基礎數值沒有提升。</li>";
     }
