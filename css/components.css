@@ -189,14 +189,15 @@ body.light-theme .inventory-delete-slot.drag-over {
 
 .dna-type-text {
     color: var(--text-secondary);
-    margin-top: 2px;
     line-height: 1;
     font-size: 0.9em;
 }
 
-/* 針對組合槽內的文字縮小一號 */
+/* 針對組合槽內的文字縮小一號並水平排列 */
 #dna-combination-slots .dna-slot {
     font-size: 0.9rem;
+    flex-direction: row;
+    gap: 0.4em;
 }
 
 
