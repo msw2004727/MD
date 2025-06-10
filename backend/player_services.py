@@ -82,7 +82,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "playerStats": player_stats,
         "nickname": nickname,
         "lastSave": int(time.time()),
-        "selectedMonsterId": None # 新增：新玩家沒有預設出戰怪獸
+        "selectedMonsterId": None,
+        "friends": [] # 為新玩家加入空的好友列表
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -153,7 +154,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
-                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None) # 新增：讀取已儲存的出戰怪獸ID
+                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
+                    "friends": player_game_data_dict.get("friends", []) # 讀取好友列表
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -189,7 +191,8 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
             "lastSave": int(time.time()),
-            "selectedMonsterId": game_data.get("selectedMonsterId") # 新增：儲存出戰怪獸ID
+            "selectedMonsterId": game_data.get("selectedMonsterId"),
+            "friends": game_data.get("friends", []) # 儲存好友列表
         }
 
         player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
