@@ -1557,9 +1557,17 @@ function showBattleLogModal(battleResult) {
     for (let i = 0; i < battleDescriptionParts.length; i++) {
         if (i % 2 === 0) {
             if (battleDescriptionParts[i].trim()) {
-                let turnContent = battleDescriptionParts[i].trim().replace(/-\s/g, '<li style="margin-left: 15px;">').replace(/\n/g, '</li>');
-                if(turnContent.startsWith('<li')) turnContent += '</li>';
-                battleDescriptionHtml += `<ul>${formatBasicText(applyDynamicStylingToBattleReport(turnContent, playerMonsterData, opponentMonsterData))}</ul>`;
+                const turnContent = battleDescriptionParts[i].trim();
+                const lines = turnContent.split('\n').filter(line => line.trim() !== '');
+                const listItemsHtml = lines.map(line => {
+                    let processedLine = line.trim();
+                    if (processedLine.startsWith('- ')) {
+                        processedLine = processedLine.substring(2);
+                    }
+                    const formattedLine = formatBasicText(applyDynamicStylingToBattleReport(processedLine, playerMonsterData, opponentMonsterData));
+                    return `<li style="list-style-type: none; padding-left: 0;">${formattedLine}</li>`;
+                }).join('');
+                battleDescriptionHtml += `<ul>${listItemsHtml}</ul>`;
             }
         } else {
             battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${battleDescriptionParts[i]} 開始 ---</div>`;
