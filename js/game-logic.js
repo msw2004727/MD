@@ -297,9 +297,12 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
     if (!monster) return;
 
     const skillDescription = newSkillTemplate.description || newSkillTemplate.story || '暫無描述。';
+    
+    // 將技能名稱轉換為可點擊的連結
+    const newSkillLink = `<a href="#" class="skill-name-link" data-skill-name="${newSkillTemplate.name}" style="text-decoration: none; color: var(--rarity-legendary-text); font-weight: bold;">${newSkillTemplate.name}</a>`;
 
     const maxSkills = gameState.gameConfigs.value_settings?.max_monster_skills || 3;
-    let message = `${monster.nickname} 領悟了新技能：<strong>${newSkillTemplate.name}</strong> (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
+    let message = `${monster.nickname} 領悟了新技能：${newSkillLink} (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
     message += `<p class="text-sm text-[var(--text-secondary)] mt-2" style="font-size: 0.9em !important;">技能簡述：${skillDescription}</p><br>`;
 
     const onLearn = async (slotToReplace = null) => {
@@ -339,10 +342,12 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
         let skillOptionsHtml = '<div class="my-2 space-y-1">';
         currentSkills.forEach((skill) => {
             const currentSkillDescription = skill.story || skill.description || '無描述';
+            // 將現有技能名稱也轉換為可點擊的連結
+            const existingSkillLink = `<a href="#" class="skill-name-link" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>`;
             skillOptionsHtml += `
                 <div class="skill-replace-option button secondary text-sm p-2 w-full text-left" data-skill-name="${skill.name}">
                     <div class="flex justify-between items-center">
-                        <span>替換：${skill.name} (Lv.${skill.level || 1})</span>
+                        <span>替換：${existingSkillLink}</span>
                         <button class="learn-replace-btn button success text-xs py-1 px-2" data-skill-name="${skill.name}">選擇</button>
                     </div>
                     <span class="block text-xs text-[var(--text-secondary)] pl-2 mt-1" style="font-size: 0.85em !important;">└ ${currentSkillDescription}</span>
