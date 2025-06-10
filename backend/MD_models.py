@@ -264,9 +264,9 @@ class PlayerGameData(TypedDict):
     playerOwnedDNA: List[Optional[PlayerOwnedDNA]]
     farmedMonsters: List[Monster]
     playerStats: PlayerStats
-    lastSave: NotRequired[int]
     nickname: NotRequired[str]
     selectedMonsterId: NotRequired[Optional[str]]
+    lastSeen: NotRequired[int] # 新增：最後上線時間戳
 
 
 # --- 新增的組合配方模型 (MonsterRecipes) ---
