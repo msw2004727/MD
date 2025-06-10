@@ -741,6 +741,7 @@ body.light-theme .leaderboard-element-tab.active {
     padding: 8px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
 }
 .leaderboard-table th {
     color: var(--accent-color);
@@ -769,6 +770,13 @@ body.light-theme .leaderboard-table tr:hover td {
     opacity: 1;
     color: var(--accent-hover);
 }
+
+/* MODIFIED: Removed fixed width and white-space:normal for the nickname column */
+.leaderboard-table td:nth-child(2),
+.leaderboard-table th:nth-child(2) {
+    /* Styles removed to allow adaptive width and prevent wrapping */
+}
+
 .titles-medals-section { margin-top: 15px; }
 .titles-list, .achievements-list, .owned-monsters-list {
     list-style: none;
@@ -1386,8 +1394,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .leaderboard-table td:nth-child(2), /* Nickname Column */
 .leaderboard-table th:nth-child(2) {
-    width: 25%;
-    white-space: normal; /* Allow nickname to wrap if necessary on very wide tables */
+    /* Styles removed to allow adaptive width and prevent wrapping */
 }
 
 .leaderboard-table td:nth-child(8), /* Action Column */
