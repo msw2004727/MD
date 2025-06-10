@@ -13,11 +13,7 @@
 
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/lists.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/panels.css">
-    <link rel="stylesheet" href="css/snapshot.css">
+    <link rel="stylesheet" href="css/components.css">
     
 </head>
 <body>
@@ -359,6 +355,19 @@
             <div class="modal-footer">
                 <button id="reminder-confirm-close-btn" class="danger button">仍要關閉</button>
                 <button id="reminder-cancel-btn" class="secondary button" data-modal-id="reminder-modal">返回查看</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="friends-list-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="friends-list-modal">&times;</span>
+            <h3 class="modal-header">🧑‍🤝‍🧑 好友名單</h3>
+            <div class="modal-body">
+                <input type="text" id="friends-list-search-input" placeholder="搜尋玩家暱稱..." class="mb-3">
+                <div id="friends-list-container">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">輸入暱稱搜尋其他玩家。</p>
+                </div>
             </div>
         </div>
     </div>

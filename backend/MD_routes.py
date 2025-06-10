@@ -26,8 +26,7 @@ from .battle_services import simulate_battle_full # 導入新的完整戰鬥服�
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
-    get_all_player_selected_monsters_service,
-    get_friends_status_service # 新增：導入查詢好友狀態的服務
+    get_all_player_selected_monsters_service
 )
 
 # 從設定和 AI 服務模組引入函式
@@ -659,17 +658,3 @@ def get_player_leaderboard_route():
     game_configs = _get_game_configs_data_from_app_context()
     leaderboard = get_player_leaderboard_service(game_configs, top_n)
     return jsonify(leaderboard), 200
-
-@md_bp.route('/friends/status', methods=['POST']) # 新增：好友狀態查詢路由
-def get_friends_status_route():
-    user_id, _, error_response = _get_authenticated_user_id()
-    if error_response:
-        return error_response
-
-    data = request.json
-    friend_ids = data.get('friend_ids')
-    if not friend_ids or not isinstance(friend_ids, list):
-        return jsonify({"error": "請求格式錯誤，需要包含 'friend_ids' 列表。"}), 400
-
-    friend_statuses = get_friends_status_service(friend_ids)
-    return jsonify({"friends_status": friend_statuses}), 200
