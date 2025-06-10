@@ -238,7 +238,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
-    const modalBody = DOMElements.feedbackModal.querySelector('.modal-body');
+    const modalBody = DOMElements.feedbackModal.querySelector('#feedback-modal-body-content');
 
     // 每次都先移除可能存在的舊橫幅和提示
     const existingBanner = modalBody.querySelector('.feedback-banner');
@@ -251,22 +251,24 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         gameState.feedbackHintInterval = null;
     }
 
-
     DOMElements.feedbackModalTitle.textContent = title;
-
-    // --- 新增：為特定的讀取彈窗加上橫幅和提示輪播 ---
-    if (title === '結算中...' && isLoading) {
+    
+    // --- 為特定的讀取彈窗加上橫幅和提示輪播 ---
+    if ((title === '結算中...' || title === '怪獸合成中...') && isLoading) {
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="結算中橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="處理中橫幅" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
 
         const hintsContainer = document.createElement('div');
         hintsContainer.className = 'loading-hints-container';
         hintsContainer.style.marginTop = '1rem';
         hintsContainer.style.padding = '0.5rem';
+        hintsContainer.style.backgroundColor = 'var(--bg-primary)';
+        hintsContainer.style.border = '1px solid var(--border-color)';
+        hintsContainer.style.borderRadius = '6px';
         hintsContainer.style.textAlign = 'center';
         hintsContainer.style.fontStyle = 'italic';
         hintsContainer.style.color = 'var(--text-secondary)';
@@ -292,7 +294,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
         bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true" alt="合成成功橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        if(modalBody) modalBody.prepend(bannerContainer);
+        modalBody.prepend(bannerContainer);
 
         const successMessage = "成功合成了新的怪獸";
         let discoveryMessage = "";
@@ -329,7 +331,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
         bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        if(modalBody) modalBody.prepend(bannerContainer);
+        modalBody.prepend(bannerContainer);
 
         DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-[var(--accent-color)]">${monsterName}</strong> 已開始修煉。</p>`;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
