@@ -1778,13 +1778,6 @@ body.light-theme .leaderboard-table tr:hover td {
     border-radius: 6px;
 }
 
-.turn-status-block strong {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    color: var(--text-primary);
-}
-
 .status-bar-container {
     display: flex;
     align-items: center;
