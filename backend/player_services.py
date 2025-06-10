@@ -6,6 +6,8 @@ import logging
 from typing import List, Dict, Optional, Any
 import firebase_admin
 from firebase_admin import firestore
+# 新增導入 FieldPath
+from google.cloud.firestore_v1.field_path import FieldPath
 import random # 引入 random 模組
 
 # 從 MD_models 導入相關的 TypedDict 定義
@@ -282,7 +284,8 @@ def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[in
     for chunk in friend_id_chunks:
         try:
             # 查詢 users 集合，效率更高
-            docs = db.collection('users').where(firestore.FieldPath.document_id(), 'in', chunk).stream()
+            # 修正：使用更穩定的 FieldPath.document_id() 進行查詢
+            docs = db.collection('users').where(FieldPath.document_id(), 'in', chunk).stream()
             for doc in docs:
                 user_data = doc.to_dict()
                 if user_data and 'lastSeen' in user_data:
