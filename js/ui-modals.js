@@ -325,6 +325,27 @@ function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     });
 }
 
+function updateFriendsListModal(players) {
+    const container = DOMElements.friendsListContainer;
+    if (!container) return;
+
+    if (!players || players.length === 0) {
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">找不到符合條件的玩家，或尚未開始搜尋。</p>`;
+        return;
+    }
+
+    container.innerHTML = players.map(player => `
+        <div class="friend-item">
+            <span class="friend-name">${player.nickname}</span>
+            <div class="friend-actions">
+                <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
+                <button class="button primary text-xs" disabled>加為好友</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+
 function setupLeaderboardTableHeaders(tableId, headersConfig) {
     const table = document.getElementById(tableId);
     if (!table) return;
