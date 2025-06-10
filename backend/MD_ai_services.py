@@ -24,8 +24,6 @@ DEFAULT_AI_RESPONSES = {
 
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗，請稍後再試或檢查後台日誌。"
 DEFAULT_BATTLE_REPORT_CONTENT = {
-    "player_monster_intro": "玩家怪獸介紹生成失敗。",
-    "opponent_monster_intro": "對手怪獸介紹生成失敗。",
     "battle_description": "交戰描述生成失敗。",
     "battle_summary": "戰報總結生成失敗。",
     "loot_info": "戰利品資訊待補。",
@@ -238,179 +236,105 @@ def generate_battle_report_content(
 ) -> Dict[str, str]:
     """
     根據戰鬥數據，使用 DeepSeek AI 生成完整的戰報內容。
-    包含雙方怪獸介紹、精彩交戰描述和最終戰報總結。
-    返回結構化的 JSON 內容。
+    修改：為避免超時，此版本僅生成「戰報總結」，而「交戰描述」將由程式直接格式化。
     """
     ai_logger.info(f"開始為戰鬥生成 AI 戰報 (玩家: {player_monster.get('nickname')}, 對手: {opponent_monster.get('nickname')})。")
 
+    # --- 1. 由程式直接格式化交戰描述 (以避免AI超時) ---
+    battle_description_parts = []
+    current_turn = -1
+    for line in full_raw_battle_log:
+        if line.startswith('--- 回合'):
+            turn_num_str = ''.join(filter(str.isdigit, line))
+            if turn_num_str:
+                turn_num = int(turn_num_str)
+                if turn_num != current_turn:
+                    current_turn = turn_num
+                    if battle_description_parts: battle_description_parts.append("\n") # 在回合間加入空行
+                    battle_description_parts.append(f"**--- 回合 {current_turn} 開始 ---**")
+        elif line.startswith('PlayerName:'):
+            p_name = line.split(':', 1)[1]
+            p_hp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('PlayerHP:')), 'N/A')
+            p_mp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('PlayerMP:')), 'N/A')
+            battle_description_parts.append(f"**{p_name}** HP: {p_hp} | MP: {p_mp}")
+        elif line.startswith('OpponentName:'):
+            o_name = line.split(':', 1)[1]
+            o_hp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('OpponentHP:')), 'N/A')
+            o_mp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('OpponentMP:')), 'N/A')
+            battle_description_parts.append(f"**{o_name}** HP: {o_hp} | MP: {o_mp}")
+        elif line.startswith('- '):
+             battle_description_parts.append(line)
+    
+    formatted_description = "\n".join(battle_description_parts)
+
+
+    # --- 2. 準備給 AI 的 prompt (僅用於生成總結) ---
     if not DEEPSEEK_API_KEY:
-        ai_logger.error("DeepSeek API 金鑰未設定。無法為戰鬥生成 AI 戰報。")
-        return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-
-    def _get_monster_intro_prompt(monster: Dict[str, Any], role: str) -> str:
-        elements_str = "、".join(monster.get('elements', ['無']))
-        skills_str = "、".join([s.get('name', '') for s in monster.get('skills', []) if s.get('name')]) or "無"
-        personality_name = monster.get('personality', {}).get('name', '未知')
-        
-        return f"""
-請為以下怪獸撰寫一段約50字的簡潔介紹，內容需綜合其屬性、基礎數值、技能和個性。
-怪獸角色：{role}，名稱：{monster.get('nickname', '未知怪獸')}
-屬性：{elements_str}
-基礎數值：HP {monster.get('hp',0)}, 攻擊: {monster.get('attack',0)}, 防禦: {monster.get('defense',0)}, 速度: {monster.get('speed',0)}, 爆擊: {monster.get('crit',0)}%
-技能：{skills_str}
-個性：{personality_name}
-"""
-
-    player_intro_prompt = _get_monster_intro_prompt(player_monster, "玩家怪獸")
-    opponent_intro_prompt = _get_monster_intro_prompt(opponent_monster, "對手怪獸")
-            
-    combined_raw_log = "\n".join(full_raw_battle_log)
-
-    battle_description_prompt = f"""
-你是一位冷靜的戰術分析師，請根據以下戰鬥的原始日誌，以清晰、條列式的方式，逐一分析每個回合的行動。不要使用任何emoji。
-
-在每個回合開始時，你必須先根據日誌中的 `PlayerName`, `PlayerHP`, `PlayerMP`, `OpponentName`, `OpponentHP`, `OpponentMP` 資訊，生成雙方目前的狀態欄位。然後用分隔線 `-----------------------` 隔開，接著才開始條列式描述該回合的行動。
-
-範例格式：
---- 回合 1 開始 ---
-**{{玩家怪獸名稱}}**
-HP: {{當前HP}}/{{最大HP}}
-MP: {{當前MP}}/{{最大MP}}
-**{{對手怪獸名稱}}**
-HP: {{當前HP}}/{{最大HP}}
-MP: {{當前MP}}/{{最大MP}}
------------------------
-- **烈焰幼龍** 使用了 **火焰爪** 攻擊 **冰霜巨魔**，造成 <damage>45</damage> 點傷害 (消耗MP: 6)。
-- **冰霜巨魔** 使用了 **冰針** 反擊，但被 **烈焰幼龍** 閃避了。
-
-你的任務是將日誌轉化為結構清晰、易於理解的戰鬥流程。
-- 傷害/治療數值必須用特殊標籤包裹：`<damage>數值</damage>` 或 `<heal>數值</heal>`。
-- 消耗的MP請用 `(消耗MP: X)` 格式標註。
-- 關鍵字（怪獸名、技能名、屬性、暴擊、閃避等）請用 **粗體** 標註。
-
-原始日誌:
-{combined_raw_log}
-"""
-
-    summary_prompt = ""
+        ai_logger.error("DeepSeek API 金鑰未設定。無法為戰鬥生成 AI 總結。")
+        return {
+            "battle_description": formatted_description,
+            "battle_summary": "戰報總結生成失敗：AI服務未設定。",
+            "loot_info": "戰利品資訊待補。",
+            "growth_info": "怪獸成長資訊待補。"
+        }
+    
     winner_id = battle_result.get('winner_id')
     winner_name = player_monster.get('nickname') if winner_id == player_monster.get('id') else opponent_monster.get('nickname')
+    highlights_str = "、".join(battle_result.get("battle_highlights", []))
 
     if winner_id != "平手":
-        summary_prompt = f"最終，**{winner_name}** 贏得了這場戰鬥。請分析牠是如何取得勝利的，並簡要總結這場交鋒的關鍵點。約50字。"
+        summary_prompt = f"一場激烈的怪獸對戰剛剛結束，最終由「{winner_name}」取得了勝利。請你根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，為這場戰鬥撰寫一段約50-70字的精彩戰報總結。"
     else:
-        summary_prompt = f"這場戰鬥以 **平手** 告終。簡要總結雙方為何未能分出勝負的原因。約50字。"
-
-    full_prompt = f"""
-請你扮演一位資深怪獸戰報記者，為一場剛剛結束的怪獸對戰撰寫一份完整的戰報。
-請嚴格按照以下JSON格式輸出所有內容，不要有任何額外的解釋或前言後語，也不要包含外部的JSON標記，例如 ```json。
-
-{{
-  "player_monster_intro": "{player_intro_prompt}",
-  "opponent_monster_intro": "{opponent_intro_prompt}",
-  "battle_description": "{battle_description_prompt}",
-  "battle_summary": "{summary_prompt}"
-}}
-"""
+        summary_prompt = f"一場激烈的怪獸對戰剛剛以「平手」告終。請你根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，為這場戰鬥撰寫一段約50-70字的戰報總結，描述雙方勢均力敵的膠著戰況。"
 
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位專業的怪獸戰報記者，精通中文，擅長撰寫生動、有張力的戰鬥報告。你會嚴格按照用戶提供的JSON格式輸出內容，不添加任何額外文字或標記。"},
-            {"role": "user", "content": full_prompt}
+            {"role": "system", "content": "你是一位專業的怪獸戰報記者，精通中文，擅長撰寫生動、有張力的戰鬥報告。"},
+            {"role": "user", "content": summary_prompt}
         ],
         "temperature": 0.8,
-        "max_tokens": 1200, 
+        "max_tokens": 150, 
     }
     
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
     }
+    
+    ai_summary = DEFAULT_BATTLE_REPORT_CONTENT["battle_summary"]
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=25) # 將超時設為25秒，小於Gunicorn的30秒
+        response.raise_for_status()
+        response_json = response.json()
+        
+        if (response_json.get("choices") and response_json["choices"][0].get("message")):
+            ai_summary = response_json["choices"][0]["message"].get("content", ai_summary).strip()
+            ai_logger.info(f"成功為戰鬥生成 AI 總結。")
+    except Exception as e:
+        ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
 
-    max_retries = 3
-    retry_delay = 5
 
-    for attempt in range(max_retries):
-        try:
-            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 發送完整戰報請求...")
-            response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=180) 
-            response.raise_for_status() 
+    # --- 3. 組合最終結果 ---
+    absorption_details = battle_result.get("absorption_details", {})
+    loot_info_parts = []
+    if absorption_details.get("extracted_dna_templates"):
+        loot_names = [d.get('name', '未知DNA') for d in absorption_details["extracted_dna_templates"]]
+        loot_info_parts.append(f"戰利品：獲得 {len(loot_names)} 個 DNA 碎片（{', '.join(loot_names)}）。")
+    
+    growth_info_parts = []
+    if absorption_details.get("stat_gains"):
+        growth_details = [f"{stat.upper()} +{gain}" for stat, gain in absorption_details["stat_gains"].items()]
+        growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
 
-            response_json = response.json()
-            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 收到完整戰報原始 JSON 響應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+    final_report = {
+        "battle_description": formatted_description,
+        "battle_summary": ai_summary,
+        "loot_info": " ".join(loot_info_parts) or "戰利品：無",
+        "growth_info": " ".join(growth_info_parts) or "怪獸成長：無"
+    }
 
-            if (response_json.get("choices") and
-                len(response_json["choices"]) > 0 and
-                response_json["choices"][0].get("message") and
-                response_json["choices"][0]["message"].get("content")):
-
-                generated_text_json_str = response_json["choices"][0]["message"]["content"]
-                
-                cleaned_json_str = generated_text_json_str.strip()
-                if cleaned_json_str.startswith("```json"):
-                    cleaned_json_str = cleaned_json_str[7:]
-                if cleaned_json_str.endswith("```"):
-                    cleaned_json_str = cleaned_json_str[:-3]
-                cleaned_json_str = cleaned_json_str.strip()
-
-                try:
-                    generated_report_content = json.loads(cleaned_json_str)
-                    ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 成功解析 AI 戰報 JSON 內容。")
-                    
-                    absorption_details = battle_result.get("absorption_details", {})
-                    loot_info_parts = []
-                    if absorption_details.get("extracted_dna_templates"):
-                        loot_names = [d.get('name', '未知DNA') for d in absorption_details["extracted_dna_templates"]]
-                        loot_info_parts.append(f"戰利品：獲得 {len(loot_names)} 個 DNA 碎片（{', '.join(loot_names)}）。")
-                    
-                    growth_info_parts = []
-                    if absorption_details.get("stat_gains"):
-                        growth_details = [f"{stat.upper()} +{gain}" for stat, gain in absorption_details["stat_gains"].items()]
-                        growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
-
-                    generated_report_content["loot_info"] = " ".join(loot_info_parts) or "戰利品：無"
-                    generated_report_content["growth_info"] = " ".join(growth_info_parts) or "怪獸成長：無"
-
-                    ai_logger.info(f"成功為戰鬥生成完整 AI 戰報。")
-                    return generated_report_content
-                except json.JSONDecodeError as json_err:
-                    ai_logger.error(f"ERROR AI: 解析 DeepSeek API 回應中的 JSON 字串失敗: {json_err}。清理後的字串: '{cleaned_json_str}'。")
-                    return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-            else:
-                error_detail = response_json.get("error", {})
-                error_message = error_detail.get("message", "DeepSeek API 回應格式不符合預期或包含錯誤。")
-                ai_logger.error(f"ERROR AI: DeepSeek API 回應無效。完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    continue
-                return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-
-        except requests.exceptions.HTTPError as http_err:
-            status_code = http_err.response.status_code if http_err.response else 'N/A'
-            ai_logger.error(f"ERROR AI: DeepSeek API HTTP 錯誤 (嘗試 {attempt+1}): {http_err}. 狀態碼: {status_code}.")
-            if status_code == 401:
-                ai_logger.error("ERROR AI: DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
-                return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-                continue
-            return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-        except requests.exceptions.RequestException as req_err:
-            ai_logger.error(f"ERROR AI: DeepSeek API 請求錯誤 (嘗試 {attempt+1}): {req_err}")
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-                continue
-            return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-        except Exception as e:
-            ai_logger.error(f"ERROR AI: 生成 AI 戰報時發生未知錯誤 (嘗試 {attempt+1}): {e}", exc_info=True)
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-                continue
-            return DEFAULT_BATTLE_REPORT_CONTENT.copy()
-
-    ai_logger.error(f"ERROR AI: 所有重試均失敗，無法為戰鬥生成完整 AI 戰報。")
-    return DEFAULT_BATTLE_REPORT_CONTENT.copy()
+    return final_report
 
 
 if __name__ == '__main__':
