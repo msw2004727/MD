@@ -1498,7 +1498,7 @@ function showBattleLogModal(battleResult) {
         const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
-        const prefix = isPlayer ? '我方: ' : '敵方: ';
+        const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
         const nicknameSpan = `<span class="monster-name">${prefix}${monster.nickname}</span>`;
 
         return `
@@ -1584,19 +1584,19 @@ function showBattleLogModal(battleResult) {
         statusBlockDiv.className = 'turn-status-block';
 
         let statusHtml = '';
-        const playerRarityKey = playerMonsterData.rarity ? rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common' : 'common';
-        const opponentRarityKey = opponentMonsterData.rarity ? rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common' : 'common';
+        const playerRarityKey = playerMonsterData.rarity ? (rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common') : 'common';
+        const opponentRarityKey = opponentMonsterData.rarity ? (rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common') : 'common';
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             statusHtml += `
-                <div class="font-bold text-rarity-${playerRarityKey}">${playerMonsterData.nickname}</div>
+                <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerMonsterData.nickname}</div>
                 ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.playerStatus.mp.current, turn.playerStatus.mp.max, 'var(--accent-color)')}
             `;
         }
         if (turn.opponentStatus.hp && turn.opponentStatus.mp) {
              statusHtml += `
-                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">${opponentMonsterData.nickname}</div>
+                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">🛡️ ${opponentMonsterData.nickname}</div>
                 ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.opponentStatus.mp.current, turn.opponentStatus.mp.max, 'var(--accent-color)')}
              `;
@@ -1617,7 +1617,6 @@ function showBattleLogModal(battleResult) {
     descriptionSection.appendChild(battleDescriptionContentDiv);
     reportContainer.appendChild(descriptionSection);
     // ===== NEW: Battle Log Parsing Logic End =====
-
     
     let resultBannerHtml = '';
     if (battleResult.winner_id === playerMonsterData.id) {
