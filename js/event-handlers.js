@@ -655,6 +655,13 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
         return;
     }
+
+    // 新增：檢查怪獸是否瀕死
+    if (playerMonster.hp <= playerMonster.initial_max_hp * 0.25) {
+        showFeedbackModal('無法戰鬥', `您的怪獸 <strong>${playerMonster.nickname}</strong> (${playerMonster.hp}/${playerMonster.initial_max_hp} HP) 目前瀕死需要休息，無法出戰。`);
+        return;
+    }
+
     if (playerMonster.farmStatus?.isTraining) {
          showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
         return;
