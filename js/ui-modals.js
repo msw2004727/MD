@@ -54,7 +54,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     body.innerHTML = `
         <div class="text-center mb-4">
             <h4 class="text-2xl font-bold text-[var(--accent-color)]">${nickname}</h4>
-            <p class="text-sm text-[var(--text-secondary)]">UID: ${playerData.uid || gameState.playerId || 'N/A'}</p>
         </div>
         <div class="details-grid">
             <div class="details-section">
@@ -102,7 +101,7 @@ async function viewPlayerInfo(playerId) {
     if (!playerId) return;
 
     // 顯示載入中提示
-    showFeedbackModal('載入中...', `正在獲取玩家 ${playerId} 的資訊...`, true);
+    showFeedbackModal('載入中...', `正在獲取玩家資訊...`, true);
 
     try {
         const playerData = await getPlayerData(playerId);
