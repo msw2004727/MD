@@ -2,53 +2,6 @@
 // 注意：此檔案依賴 ui.js, gameState.js, game-logic.js 等檔案中的函式與變數。
 // 它專門負責生成與更新各種複雜彈窗的內容。
 
-/**
- * 新增：根據技能等級計算其有效數值並返回顯示用的字串
- * @param {object} skill - 技能物件
- * @param {string} statName - 要計算的屬性名稱 ('power', 'mp_cost', etc.)
- * @returns {string} 用於顯示的格式化字串
- */
-function getEffectiveSkillStatDisplay(skill, statName) {
-    const level = skill.level || 1;
-    const baseValue = skill[statName] || 0;
-
-    if (level <= 1) {
-        return baseValue;
-    }
-
-    let effectiveValue;
-    let diff;
-
-    switch (statName) {
-        case 'power':
-            effectiveValue = Math.floor(baseValue * (1 + (level - 1) * 0.08));
-            diff = effectiveValue - baseValue;
-            if (diff > 0) {
-                 return `${baseValue} <span style="color:var(--success-color); font-weight:bold;">(+${diff})</span>`;
-            }
-            break;
-        case 'mp_cost':
-            effectiveValue = Math.max(1, baseValue - Math.floor((level - 1) / 2));
-            diff = baseValue - effectiveValue;
-             if (diff > 0) {
-                return `${baseValue} <span style="color:var(--danger-color); font-weight:bold;">(-${diff})</span>`;
-            }
-            break;
-        // 未來可以擴充其他屬性，例如：
-        // case 'probability':
-        //     effectiveValue = Math.min(100, baseValue + (level - 1) * 3);
-        //     diff = effectiveValue - baseValue;
-        //     if (diff > 0) {
-        //         return `${baseValue}% <span style="color:var(--success-color);">(+${diff}%)</span>`;
-        //     }
-        //     break;
-    }
-    
-    // 如果沒有加成或未處理，返回基礎值
-    return baseValue;
-}
-
-
 function updatePlayerInfoModal(playerData, gameConfigs) {
     const body = DOMElements.playerInfoModalBody;
     if (!body || !playerData || !playerData.playerStats) {
@@ -84,7 +37,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
                 monsters.slice(previewLimit).map(m => {
                     const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-                    return `<li><span class="monster-name text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
                 }).join('')
             }</div>`;
         }
@@ -98,24 +51,23 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
     const medalsHtml = stats.medals > 0 ? `${'🥇'.repeat(Math.min(stats.medals, 5))} (${stats.medals})` : '無';
 
-    // *** MODIFIED: 確保這裡使用的是反引號 ` ***
     body.innerHTML = `
         <div class="text-center mb-4">
-            <h4 class="text-2xl font-bold text-[var(--accent-color)]"><span class="math-inline">\{nickname\}</h4\>
-</div\>
-<div class\="details\-grid"\>
-<div class\="details\-section"\>
-<h5 class\="details\-section\-title"\>基本統計</h5\>
-<div class\="details\-item"\><span class\="details\-label"\>等級/排名\:</span\> <span class\="details\-value"\></span>{stats.rank || 'N/A'}</span></div>
-                <div class="details-item"><span class="details-label">總勝場:</span> <span class="details-value text-[var(--success-color)]"><span class="math-inline">\{stats\.wins \|\| 0\}</span\></div\>
-<div class\="details\-item"\><span class\="details\-label"\>總敗場\:</span\> <span class\="details\-value text\-\[var\(\-\-danger\-color\)\]"\></span>{stats.losses || 0}</span></div>
-                <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value"><span class="math-inline">\{stats\.score \|\| 0\}</span\></div\>
-</div\>
-<div class\="details\-section"\>
-<h5 class\="details\-section\-title"\>榮譽</h5\>
-<div class\="mb\-2"\>
-<span class\="details\-label block mb\-1"\>當前稱號\:</span\>
-<div\></span>{titlesHtml}</div>
+            <h4 class="text-2xl font-bold text-[var(--accent-color)]">${nickname}</h4>
+        </div>
+        <div class="details-grid">
+            <div class="details-section">
+                <h5 class="details-section-title">基本統計</h5>
+                <div class="details-item"><span class="details-label">等級/排名:</span> <span class="details-value">${stats.rank || 'N/A'}</span></div>
+                <div class="details-item"><span class="details-label">總勝場:</span> <span class="details-value text-[var(--success-color)]">${stats.wins || 0}</span></div>
+                <div class="details-item"><span class="details-label">總敗場:</span> <span class="details-value text-[var(--danger-color)]">${stats.losses || 0}</span></div>
+                <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value">${stats.score || 0}</span></div>
+            </div>
+            <div class="details-section">
+                <h5 class="details-section-title">榮譽</h5>
+                <div class="mb-2">
+                    <span class="details-label block mb-1">當前稱號:</span>
+                    <div>${titlesHtml}</div>
                 </div>
                 <div class="mb-2">
                     <span class="details-label block mb-1">勳章:</span>
@@ -195,12 +147,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
             <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
-                <span class="math-inline">\{monster\.nickname\}
-</h4\>
-<button id\="edit\-monster\-nickname\-btn" class\="button secondary" title\="編輯名稱"\>✏️</button\>
-</div\>
-<div id\="monster\-nickname\-edit\-container" class\="monster\-nickname\-edit\-container" style\="display\: none;"\>
-<input type\="text" id\="monster\-nickname\-input" placeholder\="輸入5個字以內" value\="</span>{editableNickname}" maxlength="5">
+                ${monster.nickname}
+            </h4>
+            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
+        </div>
+        <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
+            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
             <button id="confirm-nickname-change-btn" class="button success" title="確認">✔️</button>
             <button id="cancel-nickname-change-btn" class="button danger" title="取消">❌</button>
         </div>
@@ -216,7 +168,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
-            resistancesHtml += `<li><span class="capitalize <span class="math-inline">\{elClass\}"\></span>{element}</span>: <span class="<span class="math-inline">\{colorClass\}"\></span>{Math.abs(value)}% ${effect}</span></li>`;
+            resistancesHtml += `<li><span class="capitalize ${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -237,15 +189,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 </div>
             `;
 
-            // *** MODIFIED: 使用新的輔助函式來顯示技能數值 ***
-            const powerDisplay = getEffectiveSkillStatDisplay(skill, 'power');
-            const mpCostDisplay = getEffectiveSkillStatDisplay(skill, 'mp_cost');
-
             return `
             <div class="skill-entry">
-                <a href="#" class="skill-name-link <span class="math-inline">\{skillTypeClass\}" data\-skill\-name\="</span>{skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;"><span class="math-inline">\{skill\.name\} \(Lv\.</span>{skill.level || 1})</a>
-                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: <span class="math-inline">\{skill\.skill\_category \|\| '未知'\}</p\>
-<p class\="skill\-details text\-xs"\></span>{description}</p>
+                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>
+                <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
+                <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
             </div>
         `}).join('');
@@ -258,8 +206,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const challengeInfoHtml = `
         <div class="details-section">
             <h5 class="details-section-title">挑戰資訊</h5>
-            <div class="details-item"><span class="details-label">勝場:</span><span class="details-value text-[var(--success-color)]"><span class="math-inline">\{resume\.wins\}</span\></div\>
-<div class\="details\-item"\><span class\="details\-label"\>敗場\:</span\><span class\="details\-value text\-\[var\(\-\-danger\-color\)\]"\></span>{resume.losses}</span></div>
+            <div class="details-item"><span class="details-label">勝場:</span><span class="details-value text-[var(--success-color)]">${resume.wins}</span></div>
+            <div class="details-item"><span class="details-label">敗場:</span><span class="details-value text-[var(--danger-color)]">${resume.losses}</span></div>
             <div class="details-item"><span class="details-label">打出最高傷害:</span><span class="details-value">-</span></div>
             <div class="details-item"><span class="details-label">承受最高傷害:</span><span class="details-value">-</span></div>
             <div class="details-item"><span class="details-label">吞噬紀錄:</span><span class="details-value">-</span></div>
@@ -278,8 +226,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            return `<div class="dna-item occupied" data-dna-ref-id="<span class="math-inline">\{dna\.id\}"\>
-<span class\="dna\-name\-text"\></span>{dna.name}</span>
+            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
+                        <span class="dna-name-text">${dna.name}</span>
                     </div>`;
         } else {
             return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
@@ -309,13 +257,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             <div class="details-column-left" style="display: flex; flex-direction: column;">
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
-                    <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value"><span class="math-inline">\{monster\.hp\}/</span>{monster.initial_max_hp}<span class="math-inline">\{getGainHtml\('hp'\)\}</span\></div\>
-<div class\="details\-item"\><span class\="details\-label"\>MP\:</span\> <span class\="details\-value"\></span>{monster.mp}/<span class="math-inline">\{monster\.initial\_max\_mp\}</span>{getGainHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value"><span class="math-inline">\{monster\.attack\}</span>{getGainHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value"><span class="math-inline">\{monster\.defense\}</span>{getGainHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value"><span class="math-inline">\{monster\.speed\}</span>{getGainHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value"><span class="math-inline">\{monster\.crit\}%</span>{getGainHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
@@ -337,13 +285,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         <div class="details-section mt-3">
             <h5 class="details-section-title">個性說明</h5>
             <p class="ai-generated-text text-sm" style="line-height: 1.6;">
-                <strong style="color: <span class="math-inline">\{personality\.colorDark \|\| 'var\(\-\-accent\-color\)'\};"\></span>{personality.name || '未知'}:</strong><br>
-                <span class="math-inline">\{personality\.description \|\| '暫無個性說明。'\}
-</p\>
-</div\>
-<div class\="details\-section mt\-3"\>
-<h5 class\="details\-section\-title"\>生物調查紀錄</h5\>
-<p class\="ai\-generated\-text text\-sm"\></span>{aiIntroduction}</p>
+                <strong style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name || '未知'}:</strong><br>
+                ${personality.description || '暫無個性說明。'}
+            </p>
+        </div>
+        <div class="details-section mt-3">
+            <h5 class="details-section-title">生物調查紀錄</h5>
+            <p class="ai-generated-text text-sm">${aiIntroduction}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
@@ -359,7 +307,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
         logsContainer.innerHTML = monster.activityLog.map(log =>
-            `<div class="log-entry"><span class="log-time"><span class="math-inline">\{log\.time\}</span\> <span class\="log\-message"\></span>{log.message}</span></div>`
+            `<div class="log-entry"><span class="log-time">${log.time}</span> <span class="log-message">${log.message}</span></div>`
         ).join('');
     } else {
         logsContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>';
@@ -393,8 +341,8 @@ function updateNewbieGuideModal(guideEntries, searchTerm = '') {
         const entryDiv = document.createElement('div');
         entryDiv.classList.add('mb-4', 'pb-3', 'border-b', 'border-[var(--border-color)]');
         entryDiv.innerHTML = `
-            <h5 class="text-lg font-semibold text-[var(--accent-color)] mb-1"><span class="math-inline">\{entry\.title\}</h5\>
-<p class\="text\-sm leading\-relaxed"\></span>{entry.content.replace(/\n/g, '<br>')}</p>
+            <h5 class="text-lg font-semibold text-[var(--accent-color)] mb-1">${entry.title}</h5>
+            <p class="text-sm leading-relaxed">${entry.content.replace(/\n/g, '<br>')}</p>
         `;
         container.appendChild(entryDiv);
     });
@@ -419,14 +367,14 @@ function updateFriendsSearchResults(players) {
         } else if (isFriend) {
             buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
         } else {
-            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('<span class="math-inline">\{player\.uid\}', '</span>{player.nickname}')">加為好友</button>`;
+            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
         }
 
         return `
             <div class="friend-item">
-                <span class="friend-name"><span class="math-inline">\{player\.nickname\}</span\>
-<div class\="friend\-actions"\>
-<button class\="button secondary text\-xs" onclick\="viewPlayerInfo\('</span>{player.uid}')">查看資訊</button>
+                <span class="friend-name">${player.nickname}</span>
+                <div class="friend-actions">
+                    <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
                     ${buttonHtml}
                 </div>
             </div>
@@ -527,7 +475,7 @@ function updateLeaderboardTable(tableType, data) {
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-xs text-element-<span class="math-inline">\{getElementCssClassKey\(el\)\} font\-bold mr\-2"\></span>{el}</span>`
+                    `<span class="text-xs text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
             }
 
@@ -750,7 +698,7 @@ function showBattleLogModal(battleResult) {
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        const nicknameSpan = `<span class="monster-name"><span class="math-inline">\{prefix\}</span>{monster.nickname}</span>`;
+        const nicknameSpan = `<span class="monster-name">${prefix}${monster.nickname}</span>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
@@ -772,9 +720,9 @@ function showBattleLogModal(battleResult) {
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-vs-grid">
-                <div class="player-side"><span class="math-inline">\{renderMonsterStats\(playerMonsterData, true\)\}</div\>
-<div class\="vs\-divider"\>VS</div\>
-<div class\="opponent\-side"\></span>{renderMonsterStats(opponentMonsterData, false)}</div>
+                <div class="player-side">${renderMonsterStats(playerMonsterData, true)}</div>
+                <div class="vs-divider">VS</div>
+                <div class="opponent-side">${renderMonsterStats(opponentMonsterData, false)}</div>
             </div>
         </div>
     `;
@@ -790,9 +738,9 @@ function showBattleLogModal(battleResult) {
             <div class="status-bar-container">
                 <span class="status-bar-label">${label}</span>
                 <div class="status-bar-background">
-                    <div class="status-bar-fill" style="width: ${percentage}%; background-color: <span class="math-inline">\{color\};"\></div\>
-</div\>
-<span class\="status\-bar\-value"\></span>{value} / ${max}</span>
+                    <div class="status-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+                </div>
+                <span class="status-bar-value">${value} / ${max}</span>
             </div>
         `;
     };
@@ -880,17 +828,17 @@ function showBattleLogModal(battleResult) {
 
     reportContainer.innerHTML += `
         <div class="report-section battle-result-banner">
-            <span class="math-inline">\{resultBannerHtml\}
-</div\>
-<div class\="report\-section battle\-summary\-section"\>
-<h4 class\="report\-section\-title"\>戰報總結</h4\>
-<p class\="battle\-summary\-text"\></span>{formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
+            ${resultBannerHtml}
+        </div>
+        <div class="report-section battle-summary-section">
+            <h4 class="report-section-title">戰報總結</h4>
+            <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     const highlights = battleResult.battle_highlights || [];
     if (highlights.length > 0) {
         let highlightsHtml = highlights.map((item, index) => 
-            `<li class="highlight-item" <span class="math-inline">\{index \>\= 3 ? 'style\="display\:none;"' \: ''\}\></span>{item}</li>`
+            `<li class="highlight-item" ${index >= 3 ? 'style="display:none;"' : ''}>${item}</li>`
         ).join('');
         
         let showMoreBtnHtml = '';
@@ -909,8 +857,8 @@ function showBattleLogModal(battleResult) {
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
-            <p class="loot-info-text"><span class="math-inline">\{formatBasicText\(applyDynamicStylingToBattleReport\(battleReportContent\.loot\_info, playerMonsterData, opponentMonsterData\)\)\}</p\>
-<p class\="growth\-info\-text"\></span>{formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     DOMElements.battleLogArea.appendChild(reportContainer);
@@ -948,9 +896,9 @@ function showDnaDrawModal(drawnItems) {
             applyDnaItemStyle(itemDiv, dna);
 
             itemDiv.innerHTML = `
-                <span class="dna-name"><span class="math-inline">\{dna\.name\}</span\>
-<span class\="dna\-type"\></span>{dna.type}屬性</span>
-                <span class="dna-rarity text-rarity-<span class="math-inline">\{dna\.rarity\.toLowerCase\(\)\}"\></span>{dna.rarity}</span>
+                <span class="dna-name">${dna.name}</span>
+                <span class="dna-type">${dna.type}屬性</span>
+                <span class="dna-rarity text-rarity-${dna.rarity.toLowerCase()}">${dna.rarity}</span>
                 <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
             `;
             grid.appendChild(itemDiv);
@@ -1025,25 +973,8 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
-    const statNameMap = {
-        'HP': '生命',
-        'MP': '法力',
-        'ATTACK': '攻擊',
-        'DEFENSE': '防禦',
-        'SPEED': '速度',
-        'CRIT': '爆擊率'
-    };
     if (statGrowthLogs.length > 0) {
-        statGrowthLogs.forEach(log => {
-            let translatedLog = log;
-            const match = log.match(/'([A-Z]+)'/);
-            if (match && match[1]) {
-                const englishStat = match[1];
-                const chineseStat = statNameMap[englishStat] || englishStat;
-                translatedLog = log.replace(`'${englishStat}'`, `'${chineseStat}'`);
-            }
-            statGrowthHtml += `<li>${translatedLog}</li>`;
-        });
+        statGrowthLogs.forEach(log => statGrowthHtml += `<li>${log}</li>`);
     } else {
         statGrowthHtml += "<li>這趟試煉基礎數值沒有提升。</li>";
     }
@@ -1056,7 +987,7 @@ function updateTrainingResultsModal(results, monsterName) {
             // 使用正則表達式尋找單引號內的技能名稱
             const updatedLog = log.replace(/'(.+?)'/g, (match, skillName) => {
                 // 將匹配到的技能名稱轉換為帶有連結的 HTML
-                return `'<a href="#" class="skill-name-link" data-skill-name="<span class="math-inline">\{skillName\}" style\="text\-decoration\: none; color\: inherit;"\></span>{skillName}</a>'`;
+                return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
             });
             skillGrowthHtml += `<li>${updatedLog}</li>`;
         });
@@ -1084,48 +1015,27 @@ function updateTrainingResultsModal(results, monsterName) {
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid';
-        itemsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(110px, 1fr))';
-
         items.forEach((item) => {
-            const itemCard = document.createElement('div');
-            itemCard.className = 'dna-draw-result-item'; // 重用 DNA 抽卡結果的樣式
-            
-            const elementTypeMap = {
-                '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
-                '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
-            };
-            const typeKey = item.type ? (elementTypeMap[item.type] || item.type.toLowerCase()) : '無';
-            itemCard.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
-            
-            const rarityMap = { '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical' };
-            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
-            const rarityColor = `var(--rarity-${rarityKey}-text)`;
-            itemCard.style.borderColor = rarityColor;
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item';
+            applyDnaItemStyle(itemDiv, item);
+            itemDiv.style.cursor = 'pointer';
 
-            itemCard.innerHTML = `
-                <span class="dna-name" style="color: <span class="math-inline">\{rarityColor\};"\></span>{item.name}</span>
-                <span class="dna-type">${item.type}屬性</span>
-                <span class="dna-rarity" style="color: <span class="math-inline">\{rarityColor\};"\></span>{item.rarity}</span>
-                <button class="add-to-backpack-btn button primary text-xs mt-2">加入背包</button>
-            `;
-
-            const button = itemCard.querySelector('.add-to-backpack-btn');
-            button.addEventListener('click', function(e) {
-                e.stopPropagation();
+            itemDiv.addEventListener('click', function handleItemClick() {
                 addDnaToTemporaryBackpack(item);
                 const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
                 if (itemIndex > -1) {
                     gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
                 }
-                
-                itemCard.style.opacity = '0.5';
-                button.disabled = true;
-                button.textContent = '已加入';
-                button.classList.remove('primary');
-                button.classList.add('secondary');
-            });
+                itemDiv.style.opacity = '0.5';
+                itemDiv.style.pointerEvents = 'none';
+                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
+                if(originalTextSpan) {
+                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
+                }
+            }, { once: true });
 
-            itemsGrid.appendChild(itemCard);
+            itemsGrid.appendChild(itemDiv);
         });
         itemsContainer.appendChild(itemsGrid);
     } else {
