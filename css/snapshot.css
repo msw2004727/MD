@@ -9,6 +9,13 @@
     overflow: hidden;
     padding: 8px;
     min-height: 230px;
+    /* 調整 top/right 偏移，讓按鈕不會被快照區域遮擋，並與快照邊框對齊 */
+    /* 這裡的 10px 應該與 .corner-button 的 top/left/right 設置匹配 */
+    margin-top: -38px; /* 向上移動，以彌補 main-container 的 padding-top */
+    margin-left: -10px;
+    margin-right: -10px;
+    width: calc(100% + 20px); /* 恢復因負邊距造成的寬度損失 */
+    box-sizing: border-box; /* 確保 padding 不增加總寬度 */
 }
  @media (min-width: 768px) {
     .monster-snapshot-area {
