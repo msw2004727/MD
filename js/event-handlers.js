@@ -330,7 +330,7 @@ function handleFarmHeaderSorting() {
 
             const sortKey = target.dataset.sortKey;
             // 對於不可排序的欄位直接返回
-            if (!sortKey || ['battle', 'actions'].includes(sortKey)) return;
+            if (!sortKey || ['actions'].includes(sortKey)) return;
 
             const currentSortKey = gameState.farmSortConfig.key;
             const currentSortOrder = gameState.farmSortConfig.order;
