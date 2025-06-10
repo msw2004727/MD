@@ -899,8 +899,8 @@ function handleMonsterNicknameEvents() {
                     await updateMonsterCustomNickname(monsterId, newCustomName);
                     await refreshPlayerData(); 
                     
-                    // 刷新後，重新渲染當前彈窗以顯示最新名稱
-                    const updatedMonster = getSelectedMonster();
+                    // 刷新後，使用 monsterId 重新找到怪獸並渲染當前彈窗
+                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                     if(updatedMonster) {
                         updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
                     }
