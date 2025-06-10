@@ -1015,27 +1015,48 @@ function updateTrainingResultsModal(results, monsterName) {
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid';
-        items.forEach((item) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
-            applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
+        itemsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(110px, 1fr))';
 
-            itemDiv.addEventListener('click', function handleItemClick() {
+        items.forEach((item) => {
+            const itemCard = document.createElement('div');
+            itemCard.className = 'dna-draw-result-item'; // 重用 DNA 抽卡結果的樣式
+            
+            const elementTypeMap = {
+                '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
+                '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
+            };
+            const typeKey = item.type ? (elementTypeMap[item.type] || item.type.toLowerCase()) : '無';
+            itemCard.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
+            
+            const rarityMap = { '普通': 'common', '稀有': 'rare', '菁英': 'elite', '傳奇': 'legendary', '神話': 'mythical' };
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
+            const rarityColor = `var(--rarity-${rarityKey}-text)`;
+            itemCard.style.borderColor = rarityColor;
+
+            itemCard.innerHTML = `
+                <span class="dna-name" style="color: ${rarityColor};">${item.name}</span>
+                <span class="dna-type">${item.type}屬性</span>
+                <span class="dna-rarity" style="color: ${rarityColor};">${item.rarity}</span>
+                <button class="add-to-backpack-btn button primary text-xs mt-2">加入背包</button>
+            `;
+
+            const button = itemCard.querySelector('.add-to-backpack-btn');
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
                 addDnaToTemporaryBackpack(item);
                 const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
                 if (itemIndex > -1) {
                     gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
                 }
-                itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
-                }
-            }, { once: true });
+                
+                itemCard.style.opacity = '0.5';
+                button.disabled = true;
+                button.textContent = '已加入';
+                button.classList.remove('primary');
+                button.classList.add('secondary');
+            });
 
-            itemsGrid.appendChild(itemDiv);
+            itemsGrid.appendChild(itemCard);
         });
         itemsContainer.appendChild(itemsGrid);
     } else {
