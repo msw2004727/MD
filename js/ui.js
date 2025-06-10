@@ -1434,42 +1434,26 @@ function showBattleLogModal(battleResult) {
     const playerMonsterData = getSelectedMonster();
     const opponentMonsterData = gameState.battleTargetMonster;
 
-    // 修改：formatBasicText 函數以識別數字並加上 emoji 和顏色
+    // 修改：formatBasicText 函數以識別數字並加上顏色，但移除 emoji
     function formatBasicText(text) {
         if (!text) return '';
-        // 確保在處理數字前，先處理好粗體標記，避免數字被包裹在粗體標記中而無法再次匹配
+        // 確保在處理數字前，先處理好粗體標記
         let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // 移除多餘的表情符號，只留下 AI 生成的，或我們手動添加的
-        formattedText = formattedText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '');
         
         // 匹配所有數字（包括負數和帶小數點的）
         formattedText = formattedText.replace(/(-?\d+(\.\d+)?)/g, (match, numberStr) => {
-            let emoji = '✨'; // 預設 emoji
             let colorClass = 'text-primary'; // 預設顏色
             const num = parseFloat(numberStr);
 
-            // 檢查是否是傷害或治療標籤內的數字
-            // 這部分邏輯需要注意，因為 formatBasicText 在處理 <damage> 和 <heal> 替換之前運行
-            // 所以這裡不能直接判斷 `match.includes('<damage>')` 或 `match.includes('<heal>')`
-            // 而是根據數字的正負和大小來判斷
-            if (num < 0) { // 負數通常表示傷害
-                emoji = '💔';
+            if (num < 0) {
                 colorClass = 'text-danger';
-            } else if (num > 0 && (formattedText.includes('恢復') || formattedText.includes('治療'))) { // 文本中包含恢復或治療的正面數字
-                emoji = '💚';
+            } else if (num > 0 && (formattedText.includes('恢復') || formattedText.includes('治療'))) {
                 colorClass = 'text-success';
-            } else if (num >= 50 && num < 100) { // 中等傷害/數值
-                emoji = '💥';
-                colorClass = 'text-warning';
-            } else if (num >= 100) { // 高傷害/數值
-                emoji = '🔥';
-                colorClass = 'text-danger';
-            } else if (num > 0) { // 一般正面數值
-                emoji = '➕';
+            } else if (num > 0) {
                 colorClass = 'text-accent';
             }
 
-            return `<span class="battle-number ${colorClass}">${emoji} ${match}</span>`;
+            return `<span class="battle-number ${colorClass}">${match}</span>`;
         });
         return formattedText;
     }
@@ -1510,8 +1494,8 @@ function showBattleLogModal(battleResult) {
         });
 
         // 處理 <damage> 和 <heal> 標籤
-        styledText = styledText.replace(/<damage>(.*?)<\/damage>/g, '<span class="battle-damage-value">$1</span>');
-        styledText = styledText.replace(/<heal>(.*?)<\/heal>/g, '<span class="battle-heal-value">$1</span>');
+        styledText = styledText.replace(/<damage>(.*?)<\/damage>/g, '<span class="battle-damage-value">-$1</span>');
+        styledText = styledText.replace(/<heal>(.*?)<\/heal>/g, '<span class="battle-heal-value">+$1</span>');
 
         return styledText;
     }
@@ -1529,18 +1513,16 @@ function showBattleLogModal(battleResult) {
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    // NEW: 戰鬥對陣 (顯示基礎數值、歷史勝率、個性)
-    const renderMonsterStats = (monster, isPlayer) => { // 增加 isPlayer 參數
+    // 戰鬥對陣 (顯示基礎數值、歷史勝率、個性)
+    const renderMonsterStats = (monster, isPlayer) => {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        const personalityName = monster.personality?.name?.replace('的', '') || '未知'; // 移除「的」字
+        const personalityName = monster.personality?.name?.replace('的', '') || '未知';
         const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
-
-        const prefixEmoji = isPlayer ? '⚔️ ' : '🛡️ '; // 根據攻防添加 emoji
-        const nicknameSpan = `<span class="monster-name">${prefixEmoji}${monster.nickname}</span>`;
-
+        const prefix = isPlayer ? '我方: ' : '敵方: ';
+        const nicknameSpan = `<span class="monster-name">${prefix}${monster.nickname}</span>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
@@ -1552,7 +1534,7 @@ function showBattleLogModal(battleResult) {
                     <span>防禦: ${monster.defense}</span>
                     <span>速度: ${monster.speed}</span>
                     <span>爆擊: ${monster.crit}%</span>
-                    <span>歷史勝率: ${winRate}%</span>
+                    <span>勝率: ${winRate}%</span>
                 </div>
             </div>
         `;
@@ -1575,7 +1557,9 @@ function showBattleLogModal(battleResult) {
     for (let i = 0; i < battleDescriptionParts.length; i++) {
         if (i % 2 === 0) {
             if (battleDescriptionParts[i].trim()) {
-                battleDescriptionHtml += `<p>${formatBasicText(applyDynamicStylingToBattleReport(battleDescriptionParts[i].trim(), playerMonsterData, opponentMonsterData))}</p>`;
+                let turnContent = battleDescriptionParts[i].trim().replace(/-\s/g, '<li style="margin-left: 15px;">').replace(/\n/g, '</li>');
+                if(turnContent.startsWith('<li')) turnContent += '</li>';
+                battleDescriptionHtml += `<ul>${formatBasicText(applyDynamicStylingToBattleReport(turnContent, playerMonsterData, opponentMonsterData))}</ul>`;
             }
         } else {
             battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${battleDescriptionParts[i]} 開始 ---</div>`;
@@ -1605,24 +1589,6 @@ function showBattleLogModal(battleResult) {
             <h4 class="report-section-title">戰報總結</h4>
             <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
-
-    // NEW: 基礎數值提升區塊
-    const statGains = battleResult.stat_gains_summary || []; // 從後端獲取，如果沒有則為空
-    if (statGains.length > 0) {
-        let statGainsHtml = statGains.map(gain => `<li>${formatBasicText(gain)}</li>`).join('');
-        reportContainer.innerHTML += `
-            <div class="report-section battle-stat-gains-section">
-                <h4 class="report-section-title">📈 基礎數值提升</h4>
-                <ul class="stat-gains-list">${statGainsHtml}</ul>
-            </div>`;
-    } else {
-        reportContainer.innerHTML += `
-            <div class="report-section battle-stat-gains-section">
-                <h4 class="report-section-title">📈 基礎數值提升</h4>
-                <p>這趟試煉基礎數值沒有提升。</p>
-            </div>`;
-    }
-
 
     const highlights = battleResult.battle_highlights || [];
     if (highlights.length > 0) {
