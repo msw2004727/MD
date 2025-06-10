@@ -24,14 +24,14 @@ function getEffectiveSkillStatDisplay(skill, statName) {
             effectiveValue = Math.floor(baseValue * (1 + (level - 1) * 0.08));
             diff = effectiveValue - baseValue;
             if (diff > 0) {
-                 return `<span class="math-inline">\{baseValue\} <span style\="color\:var\(\-\-success\-color\); font\-weight\:bold;"\>\(\+</span>{diff})</span>`;
+                 return `${baseValue} <span style="color:var(--success-color); font-weight:bold;">(+${diff})</span>`;
             }
             break;
         case 'mp_cost':
             effectiveValue = Math.max(1, baseValue - Math.floor((level - 1) / 2));
             diff = baseValue - effectiveValue;
              if (diff > 0) {
-                return `<span class="math-inline">\{baseValue\} <span style\="color\:var\(\-\-danger\-color\); font\-weight\:bold;"\>\(\-</span>{diff})</span>`;
+                return `${baseValue} <span style="color:var(--danger-color); font-weight:bold;">(-${diff})</span>`;
             }
             break;
         // 未來可以擴充其他屬性，例如：
@@ -39,7 +39,7 @@ function getEffectiveSkillStatDisplay(skill, statName) {
         //     effectiveValue = Math.min(100, baseValue + (level - 1) * 3);
         //     diff = effectiveValue - baseValue;
         //     if (diff > 0) {
-        //         return `<span class="math-inline">\{baseValue\}% <span style\="color\:var\(\-\-success\-color\);"\>\(\+</span>{diff}%)</span>`;
+        //         return `${baseValue}% <span style="color:var(--success-color);">(+${diff}%)</span>`;
         //     }
         //     break;
     }
@@ -76,7 +76,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
             const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-            return `<li><span class="monster-name text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+            return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
         }).join('');
 
         let moreMonstersHtml = '';
@@ -84,20 +84,21 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
                 monsters.slice(previewLimit).map(m => {
                     const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+                    return `<li><span class="monster-name text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
                 }).join('')
             }</div>`;
         }
 
-        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1"><span class="math-inline">\{previewHtml\}</span>{moreMonstersHtml}</ul>`;
+        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
             ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
         }
     }
 
-    const medalsHtml = stats.medals > 0 ? `<span class="math-inline">\{'🥇'\.repeat\(Math\.min\(stats\.medals, 5\)\)\} \(</span>{stats.medals})` : '無';
+    const medalsHtml = stats.medals > 0 ? `${'🥇'.repeat(Math.min(stats.medals, 5))} (${stats.medals})` : '無';
 
+    // *** MODIFIED: 確保這裡使用的是反引號 ` ***
     body.innerHTML = `
         <div class="text-center mb-4">
             <h4 class="text-2xl font-bold text-[var(--accent-color)]"><span class="math-inline">\{nickname\}</h4\>
