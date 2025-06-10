@@ -100,7 +100,6 @@ function initializeDOMElements() {
         playerInfoButton: document.getElementById('player-info-button'),
         showMonsterLeaderboardBtn: document.getElementById('show-monster-leaderboard-btn'),
         showPlayerLeaderboardBtn: document.getElementById('show-player-leaderboard-btn'),
-        friendsListBtn: document.getElementById('friends-list-btn'),
         newbieGuideBtn: document.getElementById('newbie-guide-btn'),
         dnaCombinationSlotsContainer: document.getElementById('dna-combination-slots'),
         combineButton: document.getElementById('combine-button'),
@@ -112,8 +111,10 @@ function initializeDOMElements() {
         dnaFarmTabs: document.getElementById('dna-farm-tabs'),
         dnaInventoryContent: document.getElementById('dna-inventory-content'),
         monsterFarmContent: document.getElementById('monster-farm-content'),
-        friendsListContent: document.getElementById('friends-list-content'), // 新增好友列表內容區塊
-        friendsListDisplayArea: document.getElementById('friends-list-display-area'), // 新增好友列表顯示容器
+        friendsListContent: document.getElementById('friends-list-content'),
+        friendsTabSearchInput: document.getElementById('friends-tab-search-input'),
+        friendsSearchResultsArea: document.getElementById('friends-search-results-area'),
+        friendsListDisplayArea: document.getElementById('friends-list-display-area'),
         trainingGroundContent: document.getElementById('training-ground-content'),
         exchangeContent: document.getElementById('exchange-content'),
         homesteadContent: document.getElementById('homestead-content'),
@@ -158,9 +159,6 @@ function initializeDOMElements() {
         reminderModal: document.getElementById('reminder-modal'),
         reminderConfirmCloseBtn: document.getElementById('reminder-confirm-close-btn'),
         reminderCancelBtn: document.getElementById('reminder-cancel-btn'),
-        friendsListModal: document.getElementById('friends-list-modal'),
-        friendsListSearchInput: document.getElementById('friends-list-search-input'),
-        friendsListContainer: document.getElementById('friends-list-container'),
         monsterLeaderboardModal: document.getElementById('monster-leaderboard-modal'),
         monsterLeaderboardTabsContainer: document.getElementById('monster-leaderboard-tabs-container'),
         monsterLeaderboardElementTabs: document.getElementById('monster-leaderboard-element-tabs'),
@@ -938,7 +936,6 @@ function renderFriendsList() {
     const container = DOMElements.friendsListDisplayArea;
     if (!container) return;
 
-    // 假設好友列表存在 gameState.playerData.friends
     const friends = gameState.playerData?.friends || [];
 
     if (friends.length === 0) {
@@ -952,7 +949,10 @@ function renderFriendsList() {
                 <div class="friend-item-card">
                     <div class="friend-info">
                         <span class="online-status ${friend.isOnline ? 'online' : 'offline'}"></span>
-                        <span class="friend-name">${friend.nickname}</span>
+                        <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
+                            <span class="friend-title">${friend.title || '稱號未定'}</span>
+                            <span class="friend-name">${friend.nickname}</span>
+                        </a>
                     </div>
                     <div class="friend-actions">
                         <button class="button secondary text-xs" title="送禮" disabled>🎁</button>
@@ -962,6 +962,40 @@ function renderFriendsList() {
             `).join('')}
         </div>
     `;
+}
+
+function updateFriendsSearchResults(players) {
+    const container = DOMElements.friendsSearchResultsArea;
+    if (!container) return;
+
+    if (!players || players.length === 0) {
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-2">找不到符合條件的玩家。</p>`;
+        return;
+    }
+
+    container.innerHTML = players.map(player => {
+        const isFriend = gameState.playerData.friends?.some(f => f.uid === player.uid);
+        const isSelf = player.uid === gameState.playerId;
+        let buttonHtml;
+
+        if (isSelf) {
+            buttonHtml = `<button class="button secondary text-xs" disabled>這是您</button>`;
+        } else if (isFriend) {
+            buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
+        } else {
+            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
+        }
+
+        return `
+            <div class="friend-item">
+                <span class="friend-name">${player.nickname}</span>
+                <div class="friend-actions">
+                    <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
+                    ${buttonHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 
