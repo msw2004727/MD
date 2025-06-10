@@ -966,16 +966,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const editableNickname = monster.custom_element_nickname || defaultElementNickname;
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
-        <div id="monster-nickname-display-container" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar}; margin: 0;">
+        <div id="monster-nickname-display-container" class="monster-nickname-display-container">
+            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
                 ${monster.nickname}
             </h4>
-            <button id="edit-monster-nickname-btn" class="button secondary" style="padding: 4px 8px; font-size: 1rem; line-height: 1; min-width: auto;" title="編輯名稱">✏️</button>
+            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
         </div>
-        <div id="monster-nickname-edit-container" style="display: none; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 5px;">
-            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); border-radius: 4px; padding: 6px 10px; font-size: 1rem; width: 150px;">
-            <button id="confirm-nickname-change-btn" class="button success" style="padding: 4px 8px; font-size: 1rem; line-height: 1;" title="確認">✔️</button>
-            <button id="cancel-nickname-change-btn" class="button danger" style="padding: 4px 8px; font-size: 1rem; line-height: 1;" title="取消">❌</button>
+        <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
+            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
+            <button id="confirm-nickname-change-btn" class="button success" title="確認">✔️</button>
+            <button id="cancel-nickname-change-btn" class="button danger" title="取消">❌</button>
         </div>
     `;
 
