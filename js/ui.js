@@ -112,6 +112,8 @@ function initializeDOMElements() {
         dnaFarmTabs: document.getElementById('dna-farm-tabs'),
         dnaInventoryContent: document.getElementById('dna-inventory-content'),
         monsterFarmContent: document.getElementById('monster-farm-content'),
+        friendsListContent: document.getElementById('friends-list-content'), // 新增好友列表內容區塊
+        friendsListDisplayArea: document.getElementById('friends-list-display-area'), // 新增好友列表顯示容器
         trainingGroundContent: document.getElementById('training-ground-content'),
         exchangeContent: document.getElementById('exchange-content'),
         homesteadContent: document.getElementById('homestead-content'),
@@ -930,6 +932,38 @@ function renderMonsterFarm() {
         gameState.farmTimerInterval = setInterval(renderMonsterFarm, 1000);
     }
 }
+
+// 新增：渲染好友列表的函式
+function renderFriendsList() {
+    const container = DOMElements.friendsListDisplayArea;
+    if (!container) return;
+
+    // 假設好友列表存在 gameState.playerData.friends
+    const friends = gameState.playerData?.friends || [];
+
+    if (friends.length === 0) {
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4">好友列表空空如也，快去搜尋並新增好友吧！</p>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="friends-list-grid">
+            ${friends.map(friend => `
+                <div class="friend-item-card">
+                    <div class="friend-info">
+                        <span class="online-status ${friend.isOnline ? 'online' : 'offline'}"></span>
+                        <span class="friend-name">${friend.nickname}</span>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="button secondary text-xs" title="送禮" disabled>🎁</button>
+                        <button class="button secondary text-xs" title="聊天" disabled>💬</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
 
 function updateAnnouncementPlayerName(playerName) {
     if (DOMElements.announcementPlayerName) {
