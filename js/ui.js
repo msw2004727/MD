@@ -938,7 +938,7 @@ function renderMonsterFarm() {
     }
 }
 
-function renderFriendsList() {
+async function renderFriendsList() {
     const container = DOMElements.friendsListDisplayArea;
     if (!container) return;
 
@@ -949,16 +949,34 @@ function renderFriendsList() {
         return;
     }
 
+    // 獲取所有好友的狀態
+    const friendIds = friends.map(f => f.uid);
+    let friendStatuses = {};
+    try {
+        const response = await getFriendsStatuses(friendIds);
+        if (response.success) {
+            friendStatuses = response.statuses;
+        }
+    } catch (error) {
+        console.error("無法獲取好友狀態:", error);
+    }
+    
     container.innerHTML = `
         <div class="friends-list-grid">
             ${friends.map(friend => {
-                // 注意：目前好友的 'title' 和 'isOnline' 是預設值，未來需要後端提供真實數據
                 const title = friend.title || '稱號未定';
                 const displayName = `${title} ${friend.nickname}`;
+                
+                // 判斷上線狀態
+                const lastSeen = friendStatuses[friend.uid];
+                const nowInSeconds = Date.now() / 1000;
+                // 5分鐘內算在線
+                const isOnline = lastSeen && (nowInSeconds - lastSeen < 300); 
+
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
-                        <span class="online-status ${friend.isOnline ? 'online' : 'offline'}"></span>
+                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
                         <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
                             ${displayName}
                         </a>
