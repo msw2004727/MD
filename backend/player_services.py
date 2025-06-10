@@ -152,9 +152,9 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
-                    "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())), # 新增：讀取 lastSeen
+                    "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                     "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
-                    "friends": player_game_data_dict.get("friends", []) # 讀取好友列表
+                    "friends": player_game_data_dict.get("friends", [])
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -175,37 +175,45 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         return None
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
-    """儲存玩家遊戲資料到 Firestore。"""
+    """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
     
     db = firestore_db_instance
+    current_time_unix = int(time.time())
 
     try:
-        current_time = int(time.time()) # 取得當前時間戳
+        # 準備要儲存到 gameData 子集合的資料
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
             "playerStats": game_data.get("playerStats", {}),
             "nickname": game_data.get("nickname", "未知玩家"),
-            "lastSave": current_time,
-            "lastSeen": current_time, # 新增：每次儲存時都更新 lastSeen
+            "lastSave": current_time_unix,
+            "lastSeen": current_time_unix,
             "selectedMonsterId": game_data.get("selectedMonsterId"),
-            "friends": game_data.get("friends", []) # 儲存好友列表
+            "friends": game_data.get("friends", [])
         }
-
-        player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
-        player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 playerOwnedDNA: {data_to_save['playerOwnedDNA']}")
-
 
         if isinstance(data_to_save["playerStats"], dict) and \
            data_to_save["playerStats"].get("nickname") != data_to_save["nickname"]:
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
 
+        # 寫入主要的遊戲資料
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_ref.set(data_to_save) 
+        
+        # 同步更新頂層 users 文件的 lastSeen，以便高效查詢
+        try:
+            user_profile_ref = db.collection('users').document(player_id)
+            user_profile_ref.update({"lastSeen": firestore.SERVER_TIMESTAMP})
+            player_services_logger.info(f"已同步更新玩家 {player_id} 的頂層 lastSeen 時間戳。")
+        except Exception as e:
+            player_services_logger.error(f"同步更新玩家 {player_id} 的頂層 lastSeen 時間戳失敗: {e}", exc_info=True)
+            # 此為非關鍵錯誤，不影響主要存檔結果，僅記錄日誌
+
         player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
