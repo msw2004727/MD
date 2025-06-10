@@ -182,53 +182,57 @@ async function onAuthStateChangedHandler(user) {
 }
 
 // --- Application Entry Point ---
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. 優先初始化 DOM 元素引用
-    if (typeof initializeDOMElements === 'function') {
+
+/**
+ * 嘗試執行遊戲初始化。
+ * 會檢查所有必要的函式是否已定義，如果尚未定義，會延遲後重試。
+ */
+function attemptToInitializeApp() {
+    // 檢查核心函式是否已載入
+    if (typeof initializeDOMElements === 'function' && 
+        typeof initializeEventListeners === 'function' &&
+        typeof RosterAuthListener === 'function') {
+        
+        console.log("所有核心函式已準備就緒，開始初始化應用程式。");
+
+        // 1. 優先初始化 DOM 元素引用
         initializeDOMElements(); 
-    } else {
-        console.error("CRITICAL: initializeDOMElements function is not defined! UI will not work.");
-        document.body.innerHTML = "遊戲介面關鍵組件初始化失敗，請刷新或聯繫管理員。";
-        return; 
-    }
-    
-    // 2. 清理緩存
-    clearGameCacheOnExitOrRefresh();
-    console.log("DOM fully loaded and parsed. DOMElements initialized.");
+        
+        // 2. 清理緩存
+        clearGameCacheOnExitOrRefresh();
+        console.log("DOM fully loaded and parsed. DOMElements initialized.");
 
-    // 3. 初始化 Firebase App
-    initializeFirebaseApp();
+        // 3. 初始化 Firebase App
+        initializeFirebaseApp();
 
-    // 4. 設置 Firebase Auth 狀態監聽器
-    if (typeof RosterAuthListener === 'function') {
+        // 4. 設置 Firebase Auth 狀態監聽器
         RosterAuthListener(onAuthStateChangedHandler);
-    } else {
-        console.error("RosterAuthListener is not defined. Ensure auth.js is loaded correctly.");
-        if (typeof showFeedbackModal === 'function') {
-            showFeedbackModal('嚴重錯誤', '遊戲認證服務載入失敗，請刷新頁面。');
-        }
-        return;
-    }
 
-    // 5. 初始化事件監聽器
-    if (typeof initializeEventListeners === 'function') {
+        // 5. 初始化事件監聽器
         initializeEventListeners();
-    } else {
-        console.error("CRITICAL: initializeEventListeners is not defined. Ensure event-handlers.js is loaded correctly.");
-        if (typeof showFeedbackModal === 'function') {
-            showFeedbackModal('初始化錯誤', '核心遊戲功能未載入，請刷新頁面或檢查控制台錯誤。');
-        }
-    }
 
-    // 6. 預設顯示第一個頁籤 (DNA管理)
-    if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
-        if (typeof switchTabContent === 'function') {
-            switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+        // 6. 預設顯示第一個頁籤 (DNA管理)
+        if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
+            if (typeof switchTabContent === 'function') {
+                switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
+            }
+        } else {
+            console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch.");
         }
+
     } else {
-        console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch. DOMElements.dnaFarmTabs:", DOMElements.dnaFarmTabs);
+        // 如果函式尚未定義，則稍後重試
+        console.warn("一個或多個核心初始化函式尚未定義，將在 100ms 後重試...");
+        setTimeout(attemptToInitializeApp, 100);
     }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 啟動初始化程序
+    attemptToInitializeApp();
 });
+
 
 window.addEventListener('beforeunload', function (e) {
     clearGameCacheOnExitOrRefresh();
