@@ -1405,8 +1405,7 @@ function showBattleLogModal(battleResult) {
 
     const battleReportContent = battleResult.ai_battle_report_content;
 
-    // 修正: 檢查條件更寬鬆，允許 battle_description 為空字串 ""
-    if (!battleReportContent || typeof battleReportContent.battle_description === 'undefined' || battleReportContent.battle_description === null) {
+    if (!battleReportContent || !battleReportContent.battle_description) {
         DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報內容生成失敗或為空。</p>';
         showModal('battle-log-modal');
         return;
@@ -1434,12 +1433,7 @@ function showBattleLogModal(battleResult) {
     };
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
-        // 修正: 增加對 text 的 null 或 undefined 檢查
-        if (text === null || typeof text === 'undefined') {
-            return '';
-        }
         let styledText = text;
-        
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
                 const monColor = rarityColors[monData.rarity] || 'var(--text-primary)';
