@@ -894,22 +894,6 @@ body.light-theme .leaderboard-table tr:hover td {
  #newbie-guide-search-results p:last-child {
     border-bottom: none;
 }
-#friends-list-search-input {
-    width: 100%;
-    padding: 8px 12px;
-    margin-bottom: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-#friends-list-container {
-    max-height: 250px;
-    overflow-y: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 8px;
-}
 .friend-item {
     display: flex;
     justify-content: space-between;
@@ -1490,7 +1474,7 @@ body.light-theme .leaderboard-table tr:hover td {
     .monster-vs-grid {
         grid-template-columns: 1fr; /* Stack vertically on small screens */
     }
-    .monster-vs-grid .vs-divider {
+    .vs-divider {
         margin: 0.5rem auto; /* Center VS divider when stacked */
         order: 1; /* Place VS divider between the two monster cards */
     }
@@ -1814,4 +1798,67 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: right;
     font-weight: bold;
     color: var(--text-primary);
+}
+
+/* NEW: Friends List Styles */
+.friend-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.5rem; /* 好友之間的距離 */
+}
+
+.friend-item-card:last-child {
+    margin-bottom: 0;
+}
+
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.online-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.online-status.online {
+    background-color: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
+}
+
+.online-status.offline {
+    background-color: var(--text-secondary);
+}
+
+.friend-name-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: color 0.2s;
+}
+.friend-name-link:hover {
+    color: var(--accent-color);
+}
+
+.friend-name-link .friend-title {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    margin-right: 0.5rem;
+}
+
+.friend-name-link .friend-name {
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 0.5rem;
 }
