@@ -12,7 +12,7 @@ import time # 導入 time 模組
 from flask_cors import cross_origin # 修正：導入 cross_origin
 
 # 從拆分後的新服務模組中導入函式
-from .player_services import get_player_data_service, save_player_data_service, draw_free_dna
+from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service
 from .monster_combination_services import combine_dna_service 
 
 # 直接從更細分的怪物管理服務模組中導入
@@ -658,3 +658,18 @@ def get_player_leaderboard_route():
     game_configs = _get_game_configs_data_from_app_context()
     leaderboard = get_player_leaderboard_service(game_configs, top_n)
     return jsonify(leaderboard), 200
+
+@md_bp.route('/friends/statuses', methods=['POST'])
+def get_friends_statuses_route():
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    friend_ids = data.get('friend_ids')
+
+    if not friend_ids or not isinstance(friend_ids, list):
+        return jsonify({"error": "請求中必須包含一個 'friend_ids' 列表。"}), 400
+
+    statuses = get_friends_statuses_service(friend_ids)
+    return jsonify({"success": True, "statuses": statuses}), 200
