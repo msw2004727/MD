@@ -684,20 +684,25 @@ function renderDNACombinationSlots() {
         nameSpan.classList.add('dna-name-text');
         slot.appendChild(nameSpan);
 
+        // 新增：屬性文字
+        const typeSpan = document.createElement('span');
+        typeSpan.classList.add('dna-type-text');
+        slot.appendChild(typeSpan);
+
         if (dna && dna.id) {
             slot.classList.add('occupied');
-            nameSpan.textContent = dna.name || '未知DNA';
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
             slot.dataset.dnaBaseId = dna.baseId;
             slot.dataset.dnaSource = 'combination';
             slot.dataset.slotIndex = index;
+            typeSpan.textContent = `${dna.type || '無'}屬性`; // 顯示屬性
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.classList.add('empty');
             applyDnaItemStyle(slot, null);
-            slot.dataset.slotIndex = index;
+            typeSpan.textContent = ''; // 空槽位不顯示屬性
         }
         container.appendChild(slot);
     });
@@ -729,17 +734,24 @@ function renderPlayerDNAInventory() {
             nameSpan.classList.add('dna-name-text');
             item.appendChild(nameSpan);
 
+            // 新增：屬性文字
+            const typeSpan = document.createElement('span');
+            typeSpan.classList.add('dna-type-text');
+            item.appendChild(typeSpan);
+
             if (dna) {
                 item.draggable = true;
                 item.dataset.dnaId = dna.id;
                 item.dataset.dnaBaseId = dna.baseId;
                 item.dataset.dnaSource = 'inventory';
                 applyDnaItemStyle(item, dna);
+                typeSpan.textContent = `${dna.type || '無'}屬性`; // 顯示屬性
             } else {
                 item.draggable = true;
                 item.dataset.dnaSource = 'inventory';
                 applyDnaItemStyle(item, null);
                 nameSpan.textContent = '空位';
+                typeSpan.textContent = ''; // 空槽位不顯示屬性
             }
         }
         container.appendChild(item);
@@ -769,9 +781,16 @@ function renderTemporaryBackpack() {
             slot.classList.add('occupied');
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('dna-name-text');
-            nameSpan.textContent = item.data.name || '未知物品';
             slot.appendChild(nameSpan);
+            
+            // 新增：屬性文字
+            const typeSpan = document.createElement('span');
+            typeSpan.classList.add('dna-type-text');
+            slot.appendChild(typeSpan);
+            
             applyDnaItemStyle(slot, item.data);
+            typeSpan.textContent = `${item.data.type || '無'}屬性`; // 顯示屬性
+
             slot.draggable = true;
             slot.dataset.dnaId = item.data.id;
             slot.dataset.dnaBaseId = item.data.baseId;
