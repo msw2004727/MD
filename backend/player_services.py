@@ -113,21 +113,18 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
+            update_fields = {"lastLogin": firestore.SERVER_TIMESTAMP, "lastSeen": firestore.SERVER_TIMESTAMP}
             if not profile_data or profile_data.get("nickname") != authoritative_nickname:
-                try:
-                    user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                    player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
-                except Exception as e:
-                    player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
-            else:
-                try:
-                    user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                except Exception as e:
-                    player_services_logger.error(f"更新玩家 {player_id} 的最後登入時間失敗: {e}", exc_info=True)
+                update_fields["nickname"] = authoritative_nickname
+                player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
+            try:
+                user_profile_ref.update(update_fields) # 一次性更新
+            except Exception as e:
+                player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
         else:
             player_services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
             try:
-                user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP, "lastSeen": firestore.SERVER_TIMESTAMP}) # type: ignore
                 player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
             except Exception as e:
                 player_services_logger.error(f"建立玩家 {player_id} 的 Firestore users 集合 profile 失敗: {e}", exc_info=True)
@@ -254,3 +251,40 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     except Exception as e:
         player_services_logger.error(f"執行免費 DNA 抽取時發生錯誤: {e}", exc_info=True)
         return None
+
+def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[int]]:
+    """
+    一次性獲取多個好友的 `lastSeen` 時間戳。
+    """
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
+        player_services_logger.error("Firestore 資料庫未初始化 (get_friends_statuses_service 內部)。")
+        return {friend_id: None for friend_id in friend_ids}
+    
+    db = firestore_db_instance
+    statuses: Dict[str, Optional[int]] = {friend_id: None for friend_id in friend_ids}
+
+    if not friend_ids:
+        return statuses
+
+    # Firestore 的 `in` 查詢一次最多支援 30 個元素
+    # 如果好友列表可能超過 30，需要分批處理
+    friend_id_chunks = [friend_ids[i:i + 30] for i in range(0, len(friend_ids), 30)]
+
+    for chunk in friend_id_chunks:
+        try:
+            # 查詢 users 集合，效率更高
+            docs = db.collection('users').where(firestore.FieldPath.document_id(), 'in', chunk).stream()
+            for doc in docs:
+                user_data = doc.to_dict()
+                if user_data and 'lastSeen' in user_data:
+                    last_seen_timestamp = user_data['lastSeen']
+                    # Firestore 的 SERVER_TIMESTAMP 會在讀取時轉換為 datetime 物件
+                    if hasattr(last_seen_timestamp, 'timestamp'):
+                        statuses[doc.id] = int(last_seen_timestamp.timestamp())
+                    elif isinstance(last_seen_timestamp, (int, float)):
+                        statuses[doc.id] = int(last_seen_timestamp)
+        except Exception as e:
+            player_services_logger.error(f"查詢好友狀態時發生錯誤 (chunk: {chunk}): {e}", exc_info=True)
+
+    return statuses
