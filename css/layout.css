@@ -55,6 +55,12 @@
     z-index: 1001; /* 設置為比普通模態框高 */
 }
 
+/* 確保技能說明彈窗的層級最高 */
+#feedback-modal {
+    z-index: 1002;
+}
+
+
 /* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
     z-index: 1000; 
