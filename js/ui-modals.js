@@ -865,7 +865,7 @@ function updateTrainingResultsModal(results, monsterName) {
     newBanner.className = 'training-banner';
     newBanner.style.textAlign = 'center';
     newBanner.style.marginBottom = '1rem';
-    newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
+    newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
     modalBody.prepend(newBanner);
     
     // 新增靜態遊戲提示區塊
