@@ -1011,48 +1011,60 @@ function updateTrainingResultsModal(results, monsterName) {
     `;
 
     const itemsContainer = DOMElements.trainingItemsResult;
-    itemsContainer.innerHTML = '';
-    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false); // Keep this button hidden for now
+    itemsContainer.innerHTML = ''; 
 
     const items = results.items_obtained || [];
     if (items.length > 0) {
-        const itemsGrid = document.createElement('div');
-        itemsGrid.className = 'dna-draw-results-grid'; // Reuse class for styling
+        const itemsListContainer = document.createElement('div');
+        itemsListContainer.style.display = 'flex';
+        itemsListContainer.style.flexDirection = 'column';
+        itemsListContainer.style.gap = '8px';
+        
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+
         items.forEach((item) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-draw-result-item'; // Use card style
-            
-            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || item.rarity.toLowerCase()) : 'common';
+            const rarityColor = `var(--rarity-${rarityKey}-text)`;
 
-            // Apply background/border color based on rarity
-            applyDnaItemStyle(itemDiv, item);
-
-            // Build the inner HTML for the card
-            itemDiv.innerHTML = `
-                <span class="dna-name">${item.name}</span>
-                <span class="dna-type">${item.type}屬性</span>
-                <span class="dna-rarity text-rarity-${rarityKey}">${item.rarity}</span>
-                <button class="pickup-btn button primary text-xs mt-2">拾取</button>
+            const itemCard = document.createElement('div');
+            itemCard.style.cssText = `
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                padding: 12px; 
+                border: 1px solid ${rarityColor}; 
+                border-radius: 6px; 
+                background-color: var(--bg-primary);
+                transition: opacity 0.3s;
+            `;
+            
+            itemCard.innerHTML = `
+                <div>
+                    <span style="font-weight: bold; color: ${rarityColor}; display: block;">${item.name}</span>
+                    <span style="color: var(--text-secondary); font-size: 0.9em; display: block;">${item.type}屬性</span>
+                    <span style="color: ${rarityColor}; font-size: 0.9em; display: block;">${item.rarity}</span>
+                </div>
+                <div>
+                    <button class="pickup-btn button primary text-xs">拾取</button>
+                </div>
             `;
 
-            const pickupButton = itemDiv.querySelector('.pickup-btn');
-            if (pickupButton) {
-                pickupButton.addEventListener('click', function handlePickupClick() {
-                    addDnaToTemporaryBackpack(item);
-                    this.disabled = true;
-                    this.textContent = '已拾取';
-                    itemDiv.style.opacity = '0.6';
-                    
-                    const itemIndexInResults = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                    if (itemIndexInResults > -1) {
-                        gameState.lastCultivationResult.items_obtained.splice(itemIndexInResults, 1);
-                    }
-                }, { once: true });
-            }
-            itemsGrid.appendChild(itemDiv);
+            const pickupButton = itemCard.querySelector('.pickup-btn');
+            pickupButton.addEventListener('click', function() {
+                addDnaToTemporaryBackpack(item);
+                this.disabled = true;
+                this.textContent = '已拾取';
+                itemCard.style.opacity = '0.5';
+                
+                const itemIndexInResults = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndexInResults > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndexInResults, 1);
+                }
+            }, { once: true });
+
+            itemsListContainer.appendChild(itemCard);
         });
-        itemsContainer.appendChild(itemsGrid);
+        itemsContainer.appendChild(itemsListContainer);
     } else {
         itemsContainer.innerHTML = '<p>沒有拾獲任何物品。</p>';
     }
