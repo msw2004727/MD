@@ -358,16 +358,31 @@ function updateFriendsListModal(players) {
         return;
     }
 
-    container.innerHTML = players.map(player => `
-        <div class="friend-item">
-            <span class="friend-name">${player.nickname}</span>
-            <div class="friend-actions">
-                <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
-                <button class="button primary text-xs" disabled>加為好友</button>
+    container.innerHTML = players.map(player => {
+        const isFriend = gameState.playerData.friends?.some(f => f.uid === player.uid);
+        const isSelf = player.uid === gameState.playerId;
+        let buttonHtml;
+
+        if (isSelf) {
+            buttonHtml = `<button class="button secondary text-xs" disabled>這是您</button>`;
+        } else if (isFriend) {
+            buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
+        } else {
+            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
+        }
+
+        return `
+            <div class="friend-item">
+                <span class="friend-name">${player.nickname}</span>
+                <div class="friend-actions">
+                    <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
+                    ${buttonHtml}
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
+
 
 
 function setupLeaderboardTableHeaders(tableId, headersConfig) {
