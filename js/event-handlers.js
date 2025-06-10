@@ -9,6 +9,51 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
+async function handleAddFriend(friendUid, friendNickname) {
+    if (!friendUid || !friendNickname) return;
+
+    // 確保 gameState 中的 friends 陣列存在
+    if (!gameState.playerData.friends) {
+        gameState.playerData.friends = [];
+    }
+
+    // 檢查是否已是好友
+    const isAlreadyFriend = gameState.playerData.friends.some(friend => friend.uid === friendUid);
+    if (isAlreadyFriend) {
+        showFeedbackModal('提示', `${friendNickname} 已在您的好友列表中。`);
+        return;
+    }
+    
+    // 新增好友到 gameState
+    gameState.playerData.friends.push({
+        uid: friendUid,
+        nickname: friendNickname,
+        isOnline: false // 預設為離線，未來可擴充
+    });
+
+    try {
+        // 顯示載入中
+        showFeedbackModal('處理中...', `正在新增好友 ${friendNickname}...`, true);
+        
+        // 儲存更新後的玩家資料到後端
+        await savePlayerData(gameState.playerId, gameState.playerData);
+        
+        // 刷新好友列表顯示
+        renderFriendsList();
+        
+        // 隱藏載入中並顯示成功訊息
+        hideModal('feedback-modal');
+        showFeedbackModal('成功', `已成功將 ${friendNickname} 加入好友列表！`);
+
+    } catch (error) {
+        console.error("新增好友失敗:", error);
+        // 如果失敗，從 gameState 中移除剛剛加入的好友以保持同步
+        gameState.playerData.friends = gameState.playerData.friends.filter(friend => friend.uid !== friendUid);
+        hideModal('feedback-modal');
+        showFeedbackModal('錯誤', `新增好友時發生錯誤，請稍後再試。`);
+    }
+}
+
 
 /**
  * 新增：處理點擊“出戰”按鈕的邏輯
