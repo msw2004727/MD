@@ -157,7 +157,6 @@ function initializeDOMElements() {
         trainingStoryResult: document.getElementById('training-story-result'),
         trainingGrowthResult: document.getElementById('training-growth-result'),
         trainingItemsResult: document.getElementById('training-items-result'),
-        addAllToTempBackpackBtn: document.getElementById('add-all-to-temp-backpack-btn'),
         closeTrainingResultsBtn: document.getElementById('close-training-results-btn'),
         finalCloseTrainingResultsBtn: document.getElementById('final-close-training-results-btn'),
         newbieGuideModal: document.getElementById('newbie-guide-modal'),
@@ -527,7 +526,6 @@ function clearMonsterBodyPartsDisplay() {
         const partElement = partsMap[partName];
         if (partElement) {
             applyDnaItemStyle(partElement, null); // Use the main styling function to clear
-            partElement.innerHTML = ''; // Ensure no leftover text
             partElement.classList.add('empty-part');
         }
     }
@@ -557,8 +555,19 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
-
-        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
+        
+        // 決定要顯示的名字
+        let displayName = '未知怪獸';
+        if (monster.custom_element_nickname) {
+            displayName = monster.custom_element_nickname;
+        } else if (monster.elements && monster.elements.length > 0 && gameState.gameConfigs?.element_nicknames) {
+            const primaryElement = monster.elements[0];
+            displayName = gameState.gameConfigs.element_nicknames[primaryElement] || monster.nickname;
+        } else {
+            displayName = monster.nickname; // Fallback to full nickname
+        }
+        
+        DOMElements.snapshotNickname.textContent = displayName;
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
 
         const resume = monster.resume || { wins: 0, losses: 0 };
@@ -591,13 +600,6 @@ function updateMonsterSnapshot(monster) {
                 if (partElement) {
                     const dnaTemplate = getMonsterPartImagePath(dnaBaseId);
                     applyDnaItemStyle(partElement, dnaTemplate); // Use the styling function
-                    if (dnaTemplate) {
-                        partElement.innerHTML = `<span class="dna-name-text">${dnaTemplate.name}</span>`;
-                        partElement.classList.remove('empty-part');
-                    } else {
-                        partElement.innerHTML = '';
-                        partElement.classList.add('empty-part');
-                    }
                 }
             });
             DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
@@ -632,7 +634,6 @@ function applyDnaItemStyle(element, dnaData) {
         element.style.backgroundColor = '';
         element.style.color = '';
         element.style.borderColor = '';
-        element.innerHTML = `<span class="dna-name-text">空位</span>`;
         element.classList.add('empty');
         element.classList.remove('occupied');
         return;
@@ -640,12 +641,6 @@ function applyDnaItemStyle(element, dnaData) {
 
     element.classList.remove('empty');
     element.classList.add('occupied');
-    
-    // 生成兩行內容
-    element.innerHTML = `
-        <span class="dna-name-text"><span class="math-inline">\{dnaData\.name \|\| '未知DNA'\}</span\>
-<span class\="dna\-element\-text"\></span>{dnaData.type || '無'}屬性</span>
-    `;
 
     const elementTypeMap = {
         '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
@@ -678,6 +673,10 @@ function renderDNACombinationSlots() {
 
         if (dna && dna.id) {
             slot.classList.add('occupied');
+            slot.innerHTML = `
+                <span class="dna-name-text"><span class="math-inline">\{dna\.name\}</span\>
+<span class\="dna\-element\-text"\></span>{dna.type}屬性</span>
+            `;
             applyDnaItemStyle(slot, dna);
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
@@ -686,7 +685,6 @@ function renderDNACombinationSlots() {
         } else {
             slot.classList.add('empty');
             applyDnaItemStyle(slot, null);
-            // 修改空槽位的文字
             slot.innerHTML = `<span class="dna-name-text">組合槽 ${index + 1}</span>`;
         }
         container.appendChild(slot);
@@ -720,10 +718,15 @@ function renderPlayerDNAInventory() {
                 item.dataset.dnaId = dna.id;
                 item.dataset.dnaBaseId = dna.baseId;
                 item.dataset.dnaSource = 'inventory';
+                item.innerHTML = `
+                    <span class="dna-name-text"><span class="math-inline">\{dna\.name\}</span\>
+<span class\="dna\-element\-text"\></span>{dna.type}屬性</span>
+                `;
                 applyDnaItemStyle(item, dna);
             } else {
-                item.draggable = false; // 空的 inventory slot 不應該能被拖曳
+                item.draggable = false; 
                 item.dataset.dnaSource = 'inventory';
+                item.innerHTML = `<span class="dna-name-text">空位</span>`;
                 applyDnaItemStyle(item, null);
             }
         }
@@ -752,6 +755,10 @@ function renderTemporaryBackpack() {
 
         if (item) {
             slot.classList.add('occupied');
+            slot.innerHTML = `
+                <span class="dna-name-text"><span class="math-inline">\{item\.data\.name\}</span\>
+<span class\="dna\-element\-text"\></span>{item.data.type}屬性</span>
+            `;
             applyDnaItemStyle(slot, item.data);
             slot.draggable = true;
             slot.dataset.dnaId = item.data.id;
@@ -760,6 +767,7 @@ function renderTemporaryBackpack() {
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
         } else {
             slot.classList.add('empty');
+            slot.innerHTML = `<span class="dna-name-text">空位</span>`;
             applyDnaItemStyle(slot, null);
             slot.draggable = false;
         }
