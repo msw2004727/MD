@@ -353,7 +353,7 @@ function updateFriendsSearchResults(players) {
     if (!container) return;
 
     if (!players || players.length === 0) {
-        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">找不到符合條件的玩家。</p>`;
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-2">找不到符合條件的玩家。</p>`;
         return;
     }
 
@@ -381,7 +381,6 @@ function updateFriendsSearchResults(players) {
         `;
     }).join('');
 }
-
 
 
 function setupLeaderboardTableHeaders(tableId, headersConfig) {
