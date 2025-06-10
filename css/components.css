@@ -182,24 +182,6 @@ body.light-theme .inventory-delete-slot.drag-over {
     background-color: var(--accent-hover);
 }
 
-.dna-name-text {
-    font-weight: 500;
-    line-height: 1.2;
-}
-
-.dna-type-text {
-    color: var(--text-secondary);
-    line-height: 1;
-    font-size: 0.9em;
-}
-
-/* 針對組合槽內的文字縮小一號並水平排列 */
-#dna-combination-slots .dna-slot {
-    font-size: 0.9rem;
-    flex-direction: row;
-    gap: 0.4em;
-}
-
 
 /* General Button Styling */
 button, .button {
