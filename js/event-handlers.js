@@ -658,7 +658,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
 
     // 新增：檢查怪獸是否瀕死
     if (playerMonster.hp <= playerMonster.initial_max_hp * 0.25) {
-        showFeedbackModal('無法戰鬥', `您的怪獸 <strong>${playerMonster.nickname}</strong> (${playerMonster.hp}/${playerMonster.initial_max_hp} HP) 目前瀕死需要休息，無法出戰。`);
+        const hpInfo = `<span style="color: var(--danger-color);">${playerMonster.hp}/${playerMonster.initial_max_hp} HP</span>`;
+        showFeedbackModal('無法戰鬥', `您的怪獸 <strong>${playerMonster.nickname}</strong> (${hpInfo}) 目前瀕死需要休息，無法出戰。`);
         return;
     }
 
