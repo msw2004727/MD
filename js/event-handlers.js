@@ -350,6 +350,32 @@ function handleFarmHeaderSorting() {
     }
 }
 
+// --- 新增：處理排行榜中的點擊事件 ---
+function handleLeaderboardClicks() {
+    if (DOMElements.monsterLeaderboardTable) {
+        const tableBody = DOMElements.monsterLeaderboardTable.querySelector('tbody');
+        if (!tableBody) return;
+
+        tableBody.addEventListener('click', (event) => {
+            const link = event.target.closest('.leaderboard-monster-link');
+            if (link) {
+                event.preventDefault();
+                const row = link.closest('tr');
+                const monsterId = row.dataset.monsterId;
+                if (!monsterId) return;
+
+                const monsterData = gameState.monsterLeaderboard.find(m => m.id === monsterId);
+                if (monsterData) {
+                    updateMonsterInfoModal(monsterData, gameState.gameConfigs);
+                    showModal('monster-info-modal');
+                } else {
+                    console.warn(`在排行榜中找不到 ID 為 ${monsterId} 的怪獸資料。`);
+                }
+            }
+        });
+    }
+}
+
 
 // --- 其他事件處理函數 ---
 function handleThemeSwitch() {
@@ -1049,8 +1075,9 @@ function initializeEventListeners() {
     handleTopNavButtons();
     handleTabSwitching();
     handleLeaderboardSorting();
-    handleMonsterNicknameEvents(); // 啟用改名功能的事件監聽
-    handleFarmHeaderSorting(); // 啟用農場排序功能的事件監聽
+    handleLeaderboardClicks(); // 新增的排行榜點擊處理
+    handleMonsterNicknameEvents();
+    handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
 
 
