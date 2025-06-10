@@ -235,38 +235,34 @@ def generate_battle_report_content(
     full_raw_battle_log: List[str] 
 ) -> Dict[str, str]:
     """
-    根據戰鬥數據，使用 DeepSeek AI 生成完整的戰報內容。
-    修改：為避免超時，此版本僅生成「戰報總結」，而「交戰描述」將由程式直接格式化。
+    根據戰鬥數據，生成完整的戰報內容。
+    修改：交戰描述將由此函式根據原始日誌重新格式化，以符合用戶需求。
     """
     ai_logger.info(f"開始為戰鬥生成 AI 戰報 (玩家: {player_monster.get('nickname')}, 對手: {opponent_monster.get('nickname')})。")
 
-    # --- 1. 由程式直接格式化交戰描述 (以避免AI超時) ---
+    # --- 1. 全新的日誌解析與格式化邏輯 ---
     battle_description_parts = []
-    current_turn = -1
-    for line in full_raw_battle_log:
-        if line.startswith('--- 回合'):
-            turn_num_str = ''.join(filter(str.isdigit, line))
-            if turn_num_str:
-                turn_num = int(turn_num_str)
-                if turn_num != current_turn:
-                    current_turn = turn_num
-                    if battle_description_parts: battle_description_parts.append("\n") # 在回合間加入空行
-                    battle_description_parts.append(f"**--- 回合 {current_turn} 開始 ---**")
-        elif line.startswith('PlayerName:'):
-            p_name = line.split(':', 1)[1]
-            p_hp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('PlayerHP:')), 'N/A')
-            p_mp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('PlayerMP:')), 'N/A')
-            battle_description_parts.append(f"**{p_name}** HP: {p_hp} | MP: {p_mp}")
-        elif line.startswith('OpponentName:'):
-            o_name = line.split(':', 1)[1]
-            o_hp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('OpponentHP:')), 'N/A')
-            o_mp = next((l.split(':', 1)[1] for l in full_raw_battle_log if l.startswith('OpponentMP:')), 'N/A')
-            battle_description_parts.append(f"**{o_name}** HP: {o_hp} | MP: {o_mp}")
-        elif line.startswith('- '):
-             battle_description_parts.append(line)
-    
-    formatted_description = "\n".join(battle_description_parts)
+    # 遍歷原始日誌，只提取並格式化需要的行動訊息
+    for raw_line in full_raw_battle_log:
+        line = raw_line.strip()
+        # 處理行動日誌 (以 "- " 開頭)
+        if line.startswith("- "):
+            # 移除開頭的 "- "
+            action_line = line[2:]
+            # 將內部的 <damage>標籤 替換為 -號
+            action_line = action_line.replace("<damage>", "-").replace("</damage>", "")
+            action_line = action_line.replace("<heal>", "+").replace("</heal>", "")
+            battle_description_parts.append(action_line)
+        # 處理回合分隔線和戰鬥結束訊息
+        elif line.startswith("---"):
+            battle_description_parts.append(line)
+        # 處理雙方倒下等特殊結束語句
+        elif "雙方同時倒下" in line:
+            battle_description_parts.append(line)
 
+    formatted_description = "\n".join(battle_description_parts)
+    if not formatted_description.strip():
+        formatted_description = "戰鬥瞬間結束，未能記錄詳細過程。"
 
     # --- 2. 準備給 AI 的 prompt (僅用於生成總結) ---
     if not DEEPSEEK_API_KEY:
@@ -313,7 +309,6 @@ def generate_battle_report_content(
             ai_logger.info(f"成功為戰鬥生成 AI 總結。")
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
-
 
     # --- 3. 組合最終結果 ---
     absorption_details = battle_result.get("absorption_details", {})
