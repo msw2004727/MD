@@ -321,6 +321,35 @@ async function fetchAndDisplayMonsterLeaderboard() {
     }
 }
 
+// --- 新增：怪獸農場表頭排序事件處理 ---
+function handleFarmHeaderSorting() {
+    if (DOMElements.farmHeaders) {
+        DOMElements.farmHeaders.addEventListener('click', (event) => {
+            const target = event.target.closest('.sortable');
+            if (!target) return;
+
+            const sortKey = target.dataset.sortKey;
+            // 對於不可排序的欄位直接返回
+            if (!sortKey || ['battle', 'actions'].includes(sortKey)) return;
+
+            const currentSortKey = gameState.farmSortConfig.key;
+            const currentSortOrder = gameState.farmSortConfig.order;
+
+            let newSortOrder = 'desc';
+            if (currentSortKey === sortKey && currentSortOrder === 'desc') {
+                newSortOrder = 'asc';
+            }
+            
+            gameState.farmSortConfig = {
+                key: sortKey,
+                order: newSortOrder
+            };
+
+            renderMonsterFarm(); // 重新渲染農場列表
+        });
+    }
+}
+
 
 // --- 其他事件處理函數 ---
 function handleThemeSwitch() {
@@ -1021,6 +1050,7 @@ function initializeEventListeners() {
     handleTabSwitching();
     handleLeaderboardSorting();
     handleMonsterNicknameEvents(); // 啟用改名功能的事件監聽
+    handleFarmHeaderSorting(); // 啟用農場排序功能的事件監聽
     document.body.addEventListener('click', handleSkillLinkClick);
 
 
