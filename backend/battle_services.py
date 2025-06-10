@@ -105,14 +105,53 @@ def _get_monster_current_stats(monster: Monster) -> Dict[str, int]:
                     stats[stat] += value
     return stats
 
+def _get_effective_skill_stats(skill: Skill) -> Skill:
+    """
+    根據技能等級計算其在戰鬥中的有效數值。
+    返回一個新的技能物件副本，不修改原始物件。
+    """
+    effective_skill = copy.deepcopy(skill)
+    level = effective_skill.get("level", 1)
+    
+    if level > 1:
+        # 威力: 每級提升基礎值的 8%
+        base_power = skill.get("power", 0)
+        if base_power > 0:
+            effective_skill["power"] = int(base_power * (1 + (level - 1) * 0.08))
+
+        # 效果機率: 每級提升 3%
+        base_probability = skill.get("probability", 100)
+        effective_skill["probability"] = min(100, base_probability + (level - 1) * 3)
+
+        # MP消耗: 每 2 級減少 1
+        base_mp_cost = skill.get("mp_cost", 0)
+        if base_mp_cost > 0:
+            effective_skill["mp_cost"] = max(1, base_mp_cost - math.floor((level - 1) / 2))
+
+        # 輔助/恢復量: 每級提升基礎值的 10%
+        base_amount = skill.get("amount")
+        if isinstance(base_amount, int):
+            effective_skill["amount"] = int(base_amount * (1 + (level - 1) * 0.1))
+        
+        # 效果持續時間: 每 3 級增加 1 回合
+        base_duration = skill.get("duration")
+        if isinstance(base_duration, int):
+            effective_skill["duration"] = base_duration + math.floor((level - 1) / 3)
+
+    return effective_skill
+
+
 def _get_active_skills(monster: Monster, current_mp: int) -> List[Skill]:
     """獲取怪獸當前 MP 足夠使用的技能。"""
     active_skills = []
     for skill in monster.get("skills", []):
-        mp_cost = skill.get("mp_cost", 0)
+        # 使用計算後的有效MP消耗來判斷
+        effective_skill = _get_effective_skill_stats(skill)
+        mp_cost = effective_skill.get("mp_cost", 0)
         if current_mp >= mp_cost:
-            active_skills.append(skill)
+            active_skills.append(skill) # 注意：這裡仍然是添加原始技能，決策後再計算有效值
     return active_skills
+
 
 def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfigs) -> Skill:
     """
@@ -145,18 +184,22 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 
 def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs) -> Dict[str, Any]:
     """應用技能效果，並返回日誌訊息和數值變化。"""
+    
+    # *** 新增：在應用效果前，先計算技能的有效數值 ***
+    effective_skill = _get_effective_skill_stats(skill)
+    
     action_details: Dict[str, Any] = {
         "performer_id": performer["id"],
         "target_id": target["id"],
-        "skill_name": skill["name"],
+        "skill_name": effective_skill["name"], # 使用有效技能的名稱
         "log_message": ""
     }
     
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_BATTLE["value_settings"]) # type: ignore
     crit_multiplier = value_settings.get("crit_multiplier", 1.5)
 
-    # 消耗 MP
-    mp_cost = skill.get("mp_cost", 0)
+    # 消耗 MP (使用有效MP消耗)
+    mp_cost = effective_skill.get("mp_cost", 0)
     performer["current_mp"] = performer.get("current_mp", performer["mp"]) - mp_cost
     if performer["current_mp"] < 0: performer["current_mp"] = 0 # 確保不為負值
     action_details["mp_used"] = mp_cost
@@ -173,7 +216,8 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     accuracy_modifier = int((attacker_current_stats["speed"] - defender_current_stats["speed"]) * acc_per_speed)
     evasion_modifier = int((defender_current_stats["speed"] - attacker_current_stats["speed"]) * eva_per_speed)
     
-    final_accuracy = base_accuracy + attacker_current_stats["accuracy"] + accuracy_modifier + skill.get("hit_chance", 0)
+    # 使用有效技能的命中機率 (如果有的話)
+    final_accuracy = base_accuracy + attacker_current_stats["accuracy"] + accuracy_modifier + effective_skill.get("hit_chance", 0)
     final_evasion = base_evasion + defender_current_stats["evasion"] + evasion_modifier
     
     hit_roll = random.randint(1, 100)
@@ -183,7 +227,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     if not is_hit:
         action_details["is_miss"] = True
         action_details["is_crit"] = False
-        action_details["log_message"] = f"- {performer['nickname']} 對 {target['nickname']} 發動了 {skill['name']}，但 {target['nickname']} 靈巧地閃避了！"
+        action_details["log_message"] = f"- {performer['nickname']} 對 {target['nickname']} 發動了 {effective_skill['name']}，但 {target['nickname']} 靈巧地閃避了！"
         action_details["damage_dealt"] = 0
         return action_details
 
@@ -191,20 +235,20 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     action_details["is_crit"] = is_crit
     action_details["is_miss"] = False
 
-    # 傷害計算
+    # 傷害計算 (使用有效威力)
     damage = 0
-    if skill.get("power", 0) > 0:
-        base_damage = skill["power"]
+    if effective_skill.get("power", 0) > 0:
+        base_damage = effective_skill["power"]
         
         attacker_attack_stat = attacker_current_stats["attack"]
         defender_defense_stat = defender_current_stats["defense"]
 
-        element_multiplier = _calculate_elemental_advantage(skill["type"], target["elements"], game_configs)
+        element_multiplier = _calculate_elemental_advantage(effective_skill["type"], target["elements"], game_configs)
 
         raw_damage = max(1, (base_damage + (attacker_attack_stat / 2) - (defender_defense_stat / 4)))
         damage = int(raw_damage * element_multiplier)
 
-        log_message = f"- {performer['nickname']} 使用了 {skill['name']} 攻擊 {target['nickname']}"
+        log_message = f"- {performer['nickname']} 使用了 {effective_skill['name']} 攻擊 {target['nickname']}"
         
         if is_crit:
             damage = int(damage * crit_multiplier)
@@ -229,24 +273,24 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
             target["current_hp"] = 0
 
-    # 新增：處理技能的附加效果，並加入機率判定
-    if skill.get("effect"):
-        skill_probability = skill.get("probability", 100)
+    # 處理技能的附加效果 (使用有效機率、量、持續時間)
+    if effective_skill.get("effect"):
+        skill_probability = effective_skill.get("probability", 100)
         if random.randint(1, 100) <= skill_probability:
-            if skill["effect"] == "heal" and skill.get("amount"):
-                heal_amount = skill["amount"]
+            if effective_skill["effect"] == "heal" and effective_skill.get("amount"):
+                heal_amount = effective_skill["amount"]
                 performer["current_hp"] = min(performer["hp"] + performer.get("cultivation_gains", {}).get("hp",0), performer.get("current_hp", performer["hp"]) + heal_amount)
                 action_details["damage_healed"] = heal_amount
                 action_details["log_message"] += f" {performer['nickname']} 恢復了 <heal>{heal_amount}</heal> 點 HP。"
-            elif skill["effect"] == "status_change" and skill.get("status_id"):
-                status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == skill["status_id"]), None)
+            elif effective_skill["effect"] == "status_change" and effective_skill.get("status_id"):
+                status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == effective_skill["status_id"]), None)
                 if status_template:
-                    target_monster_for_status = target if skill.get("effect_target", "opponent") == "opponent" else performer
+                    target_monster_for_status = target if effective_skill.get("effect_target", "opponent") == "opponent" else performer
                     if not any(cond["id"] == status_template["id"] for cond in target_monster_for_status.get("healthConditions", [])):
                         if "healthConditions" not in target_monster_for_status:
                             target_monster_for_status["healthConditions"] = []
                         new_status = copy.deepcopy(status_template)
-                        new_status["duration"] = status_template.get("duration", 1)
+                        new_status["duration"] = effective_skill.get("duration", status_template.get("duration", 1)) # 使用有效持續時間
                         target_monster_for_status["healthConditions"].append(new_status)
                         action_details["status_applied"] = status_template["id"]
                         action_details["log_message"] += f" {target_monster_for_status['nickname']} 陷入了**{status_template['name']}**狀態！"
