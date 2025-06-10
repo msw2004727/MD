@@ -83,7 +83,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "nickname": nickname,
         "lastSave": int(time.time()),
         "selectedMonsterId": None,
-        "friends": [] # 為新玩家加入空的好友列表
+        "friends": []
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -112,21 +112,24 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if user_profile_doc.exists:
             profile_data = user_profile_doc.to_dict()
+            update_data = {"lastSeen": firestore.SERVER_TIMESTAMP}
             if not profile_data or profile_data.get("nickname") != authoritative_nickname:
-                try:
-                    user_profile_ref.update({"nickname": authoritative_nickname, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                    player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
-                except Exception as e:
-                    player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
-            else:
-                try:
-                    user_profile_ref.update({"lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
-                except Exception as e:
-                    player_services_logger.error(f"更新玩家 {player_id} 的最後登入時間失敗: {e}", exc_info=True)
+                update_data["nickname"] = authoritative_nickname
+                player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
+            
+            try:
+                user_profile_ref.update(update_data)
+            except Exception as e:
+                player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
         else:
             player_services_logger.info(f"Firestore 中找不到玩家 {player_id} 的 users 集合 profile。嘗試建立。")
             try:
-                user_profile_ref.set({"uid": player_id, "nickname": authoritative_nickname, "createdAt": firestore.SERVER_TIMESTAMP, "lastLogin": firestore.SERVER_TIMESTAMP}) # type: ignore
+                user_profile_ref.set({
+                    "uid": player_id, 
+                    "nickname": authoritative_nickname, 
+                    "createdAt": firestore.SERVER_TIMESTAMP, 
+                    "lastSeen": firestore.SERVER_TIMESTAMP
+                })
                 player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
             except Exception as e:
                 player_services_logger.error(f"建立玩家 {player_id} 的 Firestore users 集合 profile 失敗: {e}", exc_info=True)
@@ -155,7 +158,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     "nickname": authoritative_nickname,
                     "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                     "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
-                    "friends": player_game_data_dict.get("friends", []) # 讀取好友列表
+                    "friends": player_game_data_dict.get("friends", [])
                 }
                 if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                     player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -192,7 +195,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "nickname": game_data.get("nickname", "未知玩家"),
             "lastSave": int(time.time()),
             "selectedMonsterId": game_data.get("selectedMonsterId"),
-            "friends": game_data.get("friends", []) # 儲存好友列表
+            "friends": game_data.get("friends", [])
         }
 
         player_services_logger.debug(f"DEBUG save_player_data_service: 玩家 {player_id} 即將保存的 farmedMonsters: {data_to_save['farmedMonsters']}")
