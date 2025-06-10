@@ -75,6 +75,10 @@
       "type": "火",
       "mp_cost": 8,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": "attack",
+      "amount": 5,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -86,6 +90,10 @@
       "type": "火",
       "mp_cost": 14,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": ["attack", "crit"],
+      "amount": [10, 5],
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -119,6 +127,9 @@
       "type": "火",
       "mp_cost": 7,
       "skill_category": "特殊",
+      "effect": "status_change",
+      "status_id": "burned",
+      "probability": 90,
       "baseLevel": 1
     },
     {
@@ -130,6 +141,9 @@
       "type": "火",
       "mp_cost": 13,
       "skill_category": "特殊",
+      "effect": "status_change",
+      "status_id": "burned",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -141,6 +155,10 @@
       "type": "火",
       "mp_cost": 6,
       "skill_category": "變化",
+      "effect": "stat_change",
+      "stat": "attack",
+      "amount": -5,
+      "probability": 85,
       "baseLevel": 1
     },
     {
@@ -152,6 +170,10 @@
       "type": "火",
       "mp_cost": 12,
       "skill_category": "變化",
+      "effect": "stat_change",
+      "stat": "defense",
+      "amount": -10,
+      "probability": 90,
       "baseLevel": 1
     },
     {
@@ -163,6 +185,9 @@
       "type": "火",
       "mp_cost": 6,
       "skill_category": "其他",
+      "effect": "status_change",
+      "status_id": "paralyzed",
+      "probability": 30,
       "baseLevel": 1
     },
     {
@@ -174,6 +199,8 @@
       "type": "火",
       "mp_cost": 20,
       "skill_category": "其他",
+      "effect": "self_ko",
+      "probability": 100,
       "baseLevel": 1
     }
   ],
@@ -242,6 +269,9 @@
       "type": "水",
       "mp_cost": 15,
       "skill_category": "魔法",
+      "effect": "status_change",
+      "status_id": "frozen",
+      "probability": 10,
       "baseLevel": 1
     },
     {
@@ -253,6 +283,7 @@
       "type": "水",
       "mp_cost": 8,
       "skill_category": "輔助",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -264,6 +295,9 @@
       "type": "水",
       "mp_cost": 16,
       "skill_category": "輔助",
+      "effect": "heal_large",
+      "amount": 50,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -297,6 +331,9 @@
       "type": "水",
       "mp_cost": 7,
       "skill_category": "特殊",
+      "effect": "status_change",
+      "status_id": "frozen",
+      "probability": 20,
       "baseLevel": 1
     },
     {
@@ -319,6 +356,10 @@
       "type": "水",
       "mp_cost": 6,
       "skill_category": "變化",
+      "effect": "stat_change",
+      "stat": "defense",
+      "amount": 8,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -330,6 +371,7 @@
       "type": "水",
       "mp_cost": 12,
       "skill_category": "變化",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -376,6 +418,9 @@
       "type": "木",
       "mp_cost": 12,
       "skill_category": "近戰",
+      "effect": "leech",
+      "amount": 25,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -409,6 +454,9 @@
       "type": "木",
       "mp_cost": 7,
       "skill_category": "魔法",
+      "effect": "leech",
+      "amount": 15,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -420,6 +468,9 @@
       "type": "木",
       "mp_cost": 14,
       "skill_category": "魔法",
+      "effect": "leech",
+      "amount": 30,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -431,6 +482,10 @@
       "type": "木",
       "mp_cost": 8,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": ["attack"],
+      "amount": [5],
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -442,6 +497,7 @@
       "type": "木",
       "mp_cost": 15,
       "skill_category": "輔助",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -464,6 +520,9 @@
       "type": "木",
       "mp_cost": 13,
       "skill_category": "物理",
+      "effect": "recoil",
+      "recoil_factor": 0.25,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -475,6 +534,7 @@
       "type": "木",
       "mp_cost": 8,
       "skill_category": "特殊",
+      "probability": 75,
       "baseLevel": 1
     },
     {
@@ -486,6 +546,9 @@
       "type": "木",
       "mp_cost": 16,
       "skill_category": "特殊",
+      "effect": "leech",
+      "amount": 35,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -497,6 +560,7 @@
       "type": "木",
       "mp_cost": 7,
       "skill_category": "變化",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -508,6 +572,7 @@
       "type": "木",
       "mp_cost": 14,
       "skill_category": "變化",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -530,6 +595,7 @@
       "type": "木",
       "mp_cost": 15,
       "skill_category": "其他",
+      "probability": 100,
       "baseLevel": 1
     }
   ],
@@ -587,6 +653,7 @@
       "type": "金",
       "mp_cost": 8,
       "skill_category": "魔法",
+      "probability": 90,
       "baseLevel": 1
     },
     {
@@ -609,6 +676,10 @@
       "type": "金",
       "mp_cost": 9,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": "defense",
+      "amount": 15,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -620,6 +691,10 @@
       "type": "金",
       "mp_cost": 15,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": ["attack", "speed"],
+      "amount": [8, 8],
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -642,6 +717,9 @@
       "type": "金",
       "mp_cost": 14,
       "skill_category": "物理",
+      "effect": "recoil",
+      "recoil_factor": 0.2,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -675,6 +753,10 @@
       "type": "金",
       "mp_cost": 7,
       "skill_category": "變化",
+      "effect": "stat_change",
+      "stat": ["defense", "attack"],
+      "amount": [-10, 15],
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -686,6 +768,7 @@
       "type": "金",
       "mp_cost": 16,
       "skill_category": "變化",
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -743,6 +826,10 @@
       "type": "土",
       "mp_cost": 7,
       "skill_category": "遠程",
+      "effect": "stat_change",
+      "stat": "speed",
+      "amount": -5,
+      "probability": 95,
       "baseLevel": 1
     },
     {
@@ -787,6 +874,10 @@
       "type": "土",
       "mp_cost": 7,
       "skill_category": "輔助",
+      "effect": "stat_change",
+      "stat": "defense",
+      "amount": 10,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -898,7 +989,11 @@
       "crit": 0,
       "type": "光",
       "mp_cost": 7,
-      "skill_category": "近戰",
+      "skill_category": "變化",
+      "effect": "stat_change",
+      "stat": "accuracy",
+      "amount": -10,
+      "probability": 80,
       "baseLevel": 1
     },
     {
@@ -921,6 +1016,9 @@
       "type": "光",
       "mp_cost": 9,
       "skill_category": "遠程",
+      "effect": "status_change",
+      "status_id": "confused",
+      "probability": 20,
       "baseLevel": 1
     },
     {
@@ -965,6 +1063,9 @@
       "type": "光",
       "mp_cost": 12,
       "skill_category": "輔助",
+      "effect": "heal_large",
+      "amount": 40,
+      "probability": 100,
       "baseLevel": 1
     },
     {
@@ -1012,173 +1113,7 @@
       "baseLevel": 1
     }
   ],
-  "暗": [
-    {
-      "name": "欺詐",
-      "rarity": "普通",
-      "description": "用對手的攻擊力來計算對自身的傷害。",
-      "power": 30,
-      "crit": 5,
-      "type": "暗",
-      "mp_cost": 8,
-      "skill_category": "近戰",
-      "baseLevel": 1
-    },
-    {
-      "name": "地獄突刺",
-      "rarity": "稀有",
-      "description": "用尖銳的黑暗能量突刺，使對手2回合內無法使用聲音類招式。",
-      "power": 55,
-      "crit": 10,
-      "type": "暗",
-      "mp_cost": 14,
-      "skill_category": "近戰",
-      "baseLevel": 1
-    },
-    {
-      "name": "暗影球",
-      "rarity": "普通",
-      "description": "投擲出黑色的影子能量球，有機會降低對手特防。",
-      "power": 40,
-      "crit": 5,
-      "type": "暗",
-      "mp_cost": 10,
-      "skill_category": "遠程",
-      "baseLevel": 1
-    },
-    {
-      "name": "惡之波動",
-      "rarity": "稀有",
-      "description": "從身體釋放出充滿惡意的波動，有機會使對手畏縮。",
-      "power": 60,
-      "crit": 10,
-      "type": "暗",
-      "mp_cost": 15,
-      "skill_category": "遠程",
-      "baseLevel": 1
-    },
-    {
-      "name": "詭計",
-      "rarity": "普通",
-      "description": "心懷詭計，大幅提升自身的特攻。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 12,
-      "skill_category": "魔法",
-      "baseLevel": 1
-    },
-    {
-      "name": "暗黑爆破",
-      "rarity": "稀有",
-      "description": "釋放強大的黑暗爆破，攻擊所有對手。",
-      "power": 70,
-      "crit": 5,
-      "type": "暗",
-      "mp_cost": 18,
-      "skill_category": "魔法",
-      "baseLevel": 1
-    },
-    {
-      "name": "挑釁",
-      "rarity": "普通",
-      "description": "挑釁對手，使其在3回合內只能使用攻擊招式。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 9,
-      "skill_category": "輔助",
-      "baseLevel": 1
-    },
-    {
-      "name": "查封",
-      "rarity": "稀有",
-      "description": "查封對手的道具，使其在5回合內無法使用。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 15,
-      "skill_category": "輔助",
-      "baseLevel": 1
-    },
-    {
-      "name": "偷盜",
-      "rarity": "普通",
-      "description": "攻擊對手的同時，偷取其攜帶的道具。",
-      "power": 25,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 7,
-      "skill_category": "物理",
-      "baseLevel": 1
-    },
-    {
-      "name": "拍落",
-      "rarity": "稀有",
-      "description": "拍落對手的道具使其無法使用。若對手持有道具，威力加倍。",
-      "power": 35,
-      "crit": 5,
-      "type": "暗",
-      "mp_cost": 13,
-      "skill_category": "物理",
-      "baseLevel": 1
-    },
-    {
-      "name": "臨別禮物",
-      "rarity": "普通",
-      "description": "自身陷入瀕死時，大幅降低對手的攻擊和特攻。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 10,
-      "skill_category": "特殊",
-      "baseLevel": 1
-    },
-    {
-      "name": "懲罰",
-      "rarity": "稀有",
-      "description": "對手能力提升的階段越高，威力越大。",
-      "power": 30,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 12,
-      "skill_category": "特殊",
-      "baseLevel": 1
-    },
-    {
-      "name": "再來一次",
-      "rarity": "普通",
-      "description": "強迫對手在3回合內重複使用最後使用的招式。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 11,
-      "skill_category": "變化",
-      "baseLevel": 1
-    },
-    {
-      "name": "無理取鬧",
-      "rarity": "稀有",
-      "description": "強迫對手和自身在3回合內無法交換。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 14,
-      "skill_category": "變化",
-      "baseLevel": 1
-    },
-    {
-      "name": "大快朵頤",
-      "rarity": "稀有",
-      "description": "吃掉攜帶的樹果，回復效果加倍。",
-      "power": 0,
-      "crit": 0,
-      "type": "暗",
-      "mp_cost": 16,
-      "skill_category": "其他",
-      "baseLevel": 1
-    }
-  ],
+  "暗": [],
   "毒": [],
   "風": [],
   "無": [],
