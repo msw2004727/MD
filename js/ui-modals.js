@@ -467,6 +467,7 @@ function updateLeaderboardTable(tableType, data) {
 
             const nicknameCell = row.insertCell();
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
+            // 新增：將暱稱改為超連結
             nicknameCell.innerHTML = `<a href="#" class="leaderboard-monster-link text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{item.nickname}</a>`;
 
 
@@ -898,7 +899,7 @@ function showDnaDrawModal(drawnItems) {
                 <span class="dna-name"><span class="math-inline">\{dna\.name\}</span\>
 <span class\="dna\-type"\></span>{dna.type}屬性</span>
                 <span class="dna-rarity text-rarity-<span class="math-inline">\{dna\.rarity\.toLowerCase\(\)\}"\></span>{dna.rarity}</span>
-                <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
+                <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">拾取</button>
             `;
             grid.appendChild(itemDiv);
         });
@@ -1008,43 +1009,43 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const itemsContainer = DOMElements.trainingItemsResult;
     itemsContainer.innerHTML = ''; 
-    toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, false);
 
     const items = results.items_obtained || [];
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid'; // Re-use inventory grid style for consistency
-        items.forEach((item) => {
+        items.forEach((item, index) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
+            itemDiv.classList.add('dna-draw-result-item'); // Use the same class as DNA draw
             applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
+            
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
 
-            itemDiv.addEventListener('click', function handleItemClick() {
+            itemDiv.innerHTML = `
+                <span class="dna-name"><span class="math-inline">\{item\.name\}</span\>
+<span class\="dna\-type"\></span>{item.type}屬性</span>
+                <span class="dna-rarity text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{item.rarity}</span>
+                <button class="add-cultivation-item-btn button primary text-xs mt-2">拾取</button>
+            `;
+            
+            const addButton = itemDiv.querySelector('.add-cultivation-item-btn');
+            addButton.addEventListener('click', function() {
                 addDnaToTemporaryBackpack(item);
-                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                if (itemIndex > -1) {
-                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
+                
+                const itemIndexInState = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndexInState > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndexInState, 1);
                 }
+
+                this.disabled = true;
+                this.textContent = '已拾取';
                 itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
-                }
             }, { once: true });
 
             itemsGrid.appendChild(itemDiv);
         });
         itemsContainer.appendChild(itemsGrid);
-
-        // Handle the "Add All" button
-        if (DOMElements.addAllToTempBackpackBtn) {
-            toggleElementDisplay(DOMElements.addAllToTempBackpackBtn, true);
-            DOMElements.addAllToTempBackpackBtn.disabled = false;
-            DOMElements.addAllToTempBackpackBtn.textContent = "一鍵全數加入背包";
-        }
-
     } else {
         itemsContainer.innerHTML = '<p>沒有拾獲任何物品。</p>';
     }
