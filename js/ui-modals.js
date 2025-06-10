@@ -348,12 +348,12 @@ function updateNewbieGuideModal(guideEntries, searchTerm = '') {
     });
 }
 
-function updateFriendsListModal(players) {
-    const container = DOMElements.friendsListContainer;
+function updateFriendsSearchResults(players) {
+    const container = DOMElements.friendsSearchResultsArea;
     if (!container) return;
 
     if (!players || players.length === 0) {
-        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">找不到符合條件的玩家，或尚未開始搜尋。</p>`;
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)]">找不到符合條件的玩家。</p>`;
         return;
     }
 
