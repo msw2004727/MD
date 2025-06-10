@@ -1405,8 +1405,9 @@ function showBattleLogModal(battleResult) {
 
     const battleReportContent = battleResult.ai_battle_report_content;
 
-    if (!battleReportContent || !battleReportContent.battle_description) {
-        DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報內容生成失敗或為空。</p>';
+    // 修改：即使 battleReportContent 為空，也繼續執行，以便顯示部分內容或錯誤
+    if (!battleReportContent) {
+        DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報資料結構錯誤，無法顯示。</p>';
         showModal('battle-log-modal');
         return;
     }
@@ -1417,6 +1418,7 @@ function showBattleLogModal(battleResult) {
     // 修改：formatBasicText 函數以處理粗體，不再處理數字
     function formatBasicText(text) {
         if (!text) return '';
+        // 將 **text** 替換為 <strong>text</strong>
         return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
     
@@ -1433,6 +1435,7 @@ function showBattleLogModal(battleResult) {
     };
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
+        if (!text) return '(內容為空)';
         let styledText = text;
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
@@ -1477,6 +1480,7 @@ function showBattleLogModal(battleResult) {
 
     // 戰鬥對陣 (顯示基礎數值、歷史勝率、個性)
     const renderMonsterStats = (monster, isPlayer) => {
+        if (!monster) return '<div>對手資料錯誤</div>'; // 防呆
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
