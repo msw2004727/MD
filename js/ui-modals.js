@@ -54,7 +54,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     body.innerHTML = `
         <div class="text-center mb-4">
             <h4 class="text-2xl font-bold text-[var(--accent-color)]">${nickname}</h4>
-            <p class="text-sm text-[var(--text-secondary)]">UID: ${gameState.playerId || 'N/A'}</p>
+            <p class="text-sm text-[var(--text-secondary)]">UID: ${playerData.uid || gameState.playerId || 'N/A'}</p>
         </div>
         <div class="details-grid">
             <div class="details-section">
@@ -97,6 +97,30 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         });
     }
 }
+
+async function viewPlayerInfo(playerId) {
+    if (!playerId) return;
+
+    // 顯示載入中提示
+    showFeedbackModal('載入中...', `正在獲取玩家 ${playerId} 的資訊...`, true);
+
+    try {
+        const playerData = await getPlayerData(playerId);
+        if (playerData) {
+            // 將玩家的 UID 加入到資料中，以便彈窗顯示
+            playerData.uid = playerId;
+            updatePlayerInfoModal(playerData, gameState.gameConfigs);
+            hideModal('feedback-modal'); // 隱藏載入提示
+            showModal('player-info-modal'); // 顯示玩家資訊彈窗
+        } else {
+            throw new Error('找不到該玩家的資料。');
+        }
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('錯誤', `無法載入玩家資訊：${error.message}`);
+    }
+}
+
 
 function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
