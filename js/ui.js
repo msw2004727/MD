@@ -1253,15 +1253,13 @@ function updateLeaderboardTable(tableType, data) {
         const row = tbody.insertRow();
 
         if (tableType === 'monster') {
-            const isTraining = item.farmStatus?.isTraining || false; // 檢查怪獸是否在修煉中
-            const isBattling = item.farmStatus?.isBattling || false; // 檢查怪獸是否在戰鬥中
+            const isTraining = item.farmStatus?.isTraining || false;
+            const isBattling = item.farmStatus?.isBattling || false;
 
-            // Cell 1: Rank
             const rankCell = row.insertCell();
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
 
-            // Cell 2: Nickname
             const nicknameCell = row.insertCell();
             const nicknameSpan = document.createElement('span');
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
@@ -1269,7 +1267,6 @@ function updateLeaderboardTable(tableType, data) {
             nicknameSpan.textContent = item.nickname;
             nicknameCell.appendChild(nicknameSpan);
 
-            // Cell 3: Elements
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
@@ -1278,56 +1275,47 @@ function updateLeaderboardTable(tableType, data) {
                 ).join('');
             }
 
-            // Cell 4: Rarity
             const rarityCell = row.insertCell();
             rarityCell.textContent = item.rarity;
             rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';
 
-            // Cell 5: Score
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
 
-            // Cell 6: Resume
             const resumeCell = row.insertCell();
             resumeCell.textContent = `${item.resume?.wins || 0} / ${item.resume?.losses || 0}`;
             resumeCell.style.textAlign = 'center';
 
-            // Cell 7: Owner
             const ownerCell = row.insertCell();
             ownerCell.textContent = item.owner_nickname || 'N/A';
-            // 如果是自己的怪獸，可以高亮顯示
             if (item.owner_id === gameState.playerId) {
                 ownerCell.style.fontWeight = 'bold';
                 ownerCell.style.color = 'var(--accent-color)';
             }
 
-
-            // Cell 8: Actions
             const actionsCell = row.insertCell();
             actionsCell.style.textAlign = 'center';
-
             const actionButton = document.createElement('button');
             actionButton.className = 'button primary text-xs py-1 px-2';
 
-            if (item.owner_id === gameState.playerId) { // 如果是玩家自己的怪獸
-                if (isTraining || isBattling) {
-                    actionButton.textContent = '剛出門修煉'; // 顯示修煉中
-                    actionButton.disabled = true; // 禁用按鈕
-                    actionButton.style.cursor = 'not-allowed'; // 更改鼠標樣式
-                    actionButton.style.backgroundColor = 'var(--button-secondary-bg)'; // 更改為次要按鈕顏色
-                    actionButton.style.color = 'var(--text-secondary)'; // 更改文本顏色
-                } else {
-                    actionButton.textContent = '我的怪獸'; // 是自己的怪獸，但不是挑戰對象
+            if (item.owner_id === gameState.playerId) {
+                actionButton.textContent = '我的怪獸';
+                actionButton.disabled = true;
+                actionButton.style.cursor = 'not-allowed';
+                actionButton.style.backgroundColor = 'var(--button-secondary-bg)';
+                actionButton.style.color = 'var(--text-secondary)';
+            } else {
+                if (item.hp / item.initial_max_hp < 0.25) {
+                    actionButton.textContent = '瀕死';
                     actionButton.disabled = true;
                     actionButton.style.cursor = 'not-allowed';
                     actionButton.style.backgroundColor = 'var(--button-secondary-bg)';
-                    actionButton.style.color = 'var(--text-secondary)';
-                }
-            } else { // 其他玩家的怪獸
-                if (isTraining || isBattling) {
+                    actionButton.style.color = 'var(--danger-color)';
+                    actionButton.style.fontWeight = 'bold';
+                } else if (isTraining || isBattling) {
                     actionButton.textContent = '忙碌中';
                     actionButton.disabled = true;
                     actionButton.style.cursor = 'not-allowed';
@@ -1335,39 +1323,31 @@ function updateLeaderboardTable(tableType, data) {
                     actionButton.style.color = 'var(--text-secondary)';
                 } else {
                     actionButton.textContent = '挑戰';
-                    // --- FIX START: 將對手的暱稱 (item.owner_nickname) 也傳遞過去 ---
                     actionButton.onclick = (e) => handleChallengeMonsterClick(e, item.id, item.owner_id, null, item.owner_nickname);
-                    // --- FIX END ---
                 }
             }
             actionsCell.appendChild(actionButton);
 
-        } else { // Player Leaderboard (保持不變)
-            // Cell 1: Rank
+        } else { // Player Leaderboard
             const rankCell = row.insertCell();
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
 
-            // Cell 2: Nickname
             row.insertCell().textContent = item.nickname;
 
-            // Cell 3: Score
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
             scoreCell.style.textAlign = 'center';
             scoreCell.style.color = 'var(--success-color)';
 
-            // Cell 4: Wins
             const winsCell = row.insertCell();
             winsCell.textContent = item.wins;
             winsCell.style.textAlign = 'center';
 
-            // Cell 5: Losses
             const lossesCell = row.insertCell();
             lossesCell.textContent = item.losses;
             lossesCell.style.textAlign = 'center';
 
-            // Cell 6: Titles
             const titlesCell = row.insertCell();
             titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
         }
@@ -1434,28 +1414,10 @@ function showBattleLogModal(battleResult) {
     const playerMonsterData = getSelectedMonster();
     const opponentMonsterData = gameState.battleTargetMonster;
 
-    // 修改：formatBasicText 函數以識別數字並加上顏色，但移除 emoji
+    // 修改：formatBasicText 函數以處理粗體，不再處理數字
     function formatBasicText(text) {
         if (!text) return '';
-        // 確保在處理數字前，先處理好粗體標記
-        let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // 匹配所有數字（包括負數和帶小數點的）
-        formattedText = formattedText.replace(/(-?\d+(\.\d+)?)/g, (match, numberStr) => {
-            let colorClass = 'text-primary'; // 預設顏色
-            const num = parseFloat(numberStr);
-
-            if (num < 0) {
-                colorClass = 'text-danger';
-            } else if (num > 0 && (formattedText.includes('恢復') || formattedText.includes('治療'))) {
-                colorClass = 'text-success';
-            } else if (num > 0) {
-                colorClass = 'text-accent';
-            }
-
-            return `<span class="battle-number ${colorClass}">${match}</span>`;
-        });
-        return formattedText;
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
     
     const skillLevelColors = {
@@ -1551,33 +1513,12 @@ function showBattleLogModal(battleResult) {
         </div>
     `;
 
-
-    const battleDescriptionParts = (battleReportContent.battle_description || "").split(/--- 回合 (\d+) 開始 ---/g);
-    let battleDescriptionHtml = '';
-    for (let i = 0; i < battleDescriptionParts.length; i++) {
-        if (i % 2 === 0) {
-            if (battleDescriptionParts[i].trim()) {
-                const turnContent = battleDescriptionParts[i].trim();
-                const lines = turnContent.split('\n').filter(line => line.trim() !== '');
-                const listItemsHtml = lines.map(line => {
-                    let processedLine = line.trim();
-                    if (processedLine.startsWith('- ')) {
-                        processedLine = processedLine.substring(2);
-                    }
-                    const formattedLine = formatBasicText(applyDynamicStylingToBattleReport(processedLine, playerMonsterData, opponentMonsterData));
-                    return `<li style="list-style-type: none; padding-left: 0;">${formattedLine}</li>`;
-                }).join('');
-                battleDescriptionHtml += `<ul>${listItemsHtml}</ul>`;
-            }
-        } else {
-            battleDescriptionHtml += `<div class="turn-divider-line">--- 回合 ${battleDescriptionParts[i]} 開始 ---</div>`;
-        }
-    }
+    const battleDescriptionFormatted = formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_description, playerMonsterData, opponentMonsterData));
 
     reportContainer.innerHTML += `
         <div class="report-section battle-description-section">
             <h4 class="report-section-title">精彩交戰</h4>
-            <div class="battle-description-content">${battleDescriptionHtml}</div>
+            <div class="battle-description-content">${battleDescriptionFormatted.replace(/\n/g, '<br>')}</div>
         </div>`;
     
     let resultBannerHtml = '';
