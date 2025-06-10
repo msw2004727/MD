@@ -49,7 +49,17 @@ async function fetchAPI(endpoint, options = {}) {
         return await response.json();
     } catch (error) {
         console.error(`Fetch API Error for ${url}:`, error);
-        // 向上拋出錯誤，讓調用者處理
+
+        // 檢查是否為網路錯誤 (例如伺服器無回應或CORS預檢失敗)
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+            const networkError = new Error(
+                '網路連線失敗：您所在的異世界網路環境不穩定或伺服器正在從休眠中甦醒。請稍後再試一次。'
+            );
+            networkError.name = 'NetworkError';
+            throw networkError;
+        }
+        
+        // 對於其他類型的錯誤，繼續向上拋出
         throw error;
     }
 }
