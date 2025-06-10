@@ -68,6 +68,9 @@ const gameState = {
         player: { key: 'score', order: 'desc' }   // 預設玩家排行榜按積分降序
     },
 
+    // 怪獸農場排序設定
+    farmSortConfig: { key: 'score', order: 'desc' },
+
     // 好友/搜尋相關
     searchedPlayers: [], // 搜尋到的玩家列表
 
