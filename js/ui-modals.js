@@ -855,7 +855,7 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
-    // 移除舊的橫幅，並加入新的
+    // 移除舊的橫幅和提示，並加入新的
     let existingBanner = modalBody.querySelector('.training-banner');
     if (existingBanner) existingBanner.remove();
     let existingHints = modalBody.querySelector('.training-hints-container');
@@ -868,7 +868,7 @@ function updateTrainingResultsModal(results, monsterName) {
     newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
     modalBody.prepend(newBanner);
     
-    // 新增遊戲提示輪播區塊
+    // 新增靜態遊戲提示區塊
     const hintsContainer = document.createElement('div');
     hintsContainer.className = 'training-hints-container';
     hintsContainer.style.marginBottom = '1rem';
@@ -879,24 +879,15 @@ function updateTrainingResultsModal(results, monsterName) {
     hintsContainer.style.textAlign = 'center';
     hintsContainer.style.fontStyle = 'italic';
     hintsContainer.style.color = 'var(--text-secondary)';
-    hintsContainer.innerHTML = `<p id="training-hints-carousel">正在讀取提示...</p>`;
-    // 將提示區塊插入到新橫幅之後
-    newBanner.insertAdjacentElement('afterend', hintsContainer);
-
-    // 啟動輪播
-    if (gameState.trainingHintInterval) clearInterval(gameState.trainingHintInterval);
-    const hintElement = document.getElementById('training-hints-carousel');
-    if (hintElement) {
-        // 先顯示一則
-        const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-        hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
-        // 設定計時器
-        gameState.trainingHintInterval = setInterval(() => {
-            const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
-        }, 1500);
+    
+    // 顯示隨機靜態提示
+    if (TRAINING_GAME_HINTS.length > 0) {
+        const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+        hintsContainer.innerHTML = `<p id="training-hints-carousel">💡 ${TRAINING_GAME_HINTS[randomIndex]}</p>`;
+    } else {
+        hintsContainer.innerHTML = `<p id="training-hints-carousel">💡 修煉可以讓怪獸變得更強！</p>`;
     }
-
+    newBanner.insertAdjacentElement('afterend', hintsContainer);
 
     const storySection = DOMElements.trainingStoryResult.parentNode;
     if (storySection) {
