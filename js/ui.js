@@ -557,8 +557,19 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
-
-        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
+        
+        // 決定要顯示的名字
+        let displayName = '未知怪獸';
+        if (monster.custom_element_nickname) {
+            displayName = monster.custom_element_nickname;
+        } else if (monster.elements && monster.elements.length > 0 && gameState.gameConfigs?.element_nicknames) {
+            const primaryElement = monster.elements[0];
+            displayName = gameState.gameConfigs.element_nicknames[primaryElement] || monster.nickname;
+        } else {
+            displayName = monster.nickname; // Fallback to full nickname
+        }
+        
+        DOMElements.snapshotNickname.textContent = displayName;
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
 
         const resume = monster.resume || { wins: 0, losses: 0 };
