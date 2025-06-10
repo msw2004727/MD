@@ -620,20 +620,18 @@ function handleNewbieGuideSearch() {
 }
 
 function handleFriendsListSearch() {
-   if (DOMElements.friendsTabSearchInput) { // 改為監聽新輸入框
+   if (DOMElements.friendsTabSearchInput) {
         DOMElements.friendsTabSearchInput.addEventListener('input', async (event) => {
             const query = event.target.value.trim();
             if (query.length > 1) {
                 try {
                     const result = await searchPlayers(query);
-                    // 注意：這裡我們將呼叫一個新的函式來渲染搜尋結果，而不是好友列表本身
                     updateFriendsSearchResults(result.players || []);
                 } catch (error) {
                     console.error("搜尋玩家失敗:", error);
                     updateFriendsSearchResults([]);
                 }
             } else if (query.length === 0) {
-                // 清空搜尋結果
                 updateFriendsSearchResults([]);
             }
         });
