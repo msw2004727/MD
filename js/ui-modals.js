@@ -614,7 +614,23 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
 
-            row.insertCell().textContent = item.nickname;
+            // 修改點: 將玩家暱稱從純文字改為可點擊的連結
+            const nicknameCell = row.insertCell();
+            if (item.uid) { // 確保 uid 存在
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = item.nickname;
+                link.style.textDecoration = 'none';
+                link.style.color = 'var(--accent-color)';
+                link.style.fontWeight = '500';
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    viewPlayerInfo(item.uid);
+                };
+                nicknameCell.appendChild(link);
+            } else {
+                nicknameCell.textContent = item.nickname; // 如果沒有 uid，則退回純文字
+            }
 
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
