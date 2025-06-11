@@ -316,12 +316,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const getGainHtml = (statName) => {
         const gain = gains[statName] || 0;
         if (gain > 0) {
-            return ` <span class="text-cultivation-buff" style="font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
+            return ` <span style="color: var(--success-color); font-weight: bold; font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
         }
         return '';
     };
 
-    // --- NEW: LOGIC TO GET AND DISPLAY TITLE BUFFS ---
     let titleBuffs = {};
     if (gameState.playerData && gameState.playerData.playerStats) {
         const playerStats = gameState.playerData.playerStats;
@@ -337,12 +336,10 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const getTitleBuffHtml = (statName) => {
         const buffValue = titleBuffs[statName] || 0;
         if (buffValue > 0) {
-            // Added a class 'text-title-buff' for styling
-            return ` <span class="text-title-buff" style="font-size: 0.9em; margin-left: 4px;">+${buffValue}</span>`;
+            return ` <span style="color: var(--danger-color); font-weight: bold; font-size: 0.9em; margin-left: 4px;">+${buffValue}</span>`;
         }
         return '';
     };
-    // --- END OF NEW LOGIC ---
 
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
