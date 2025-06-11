@@ -170,6 +170,19 @@ async function updateMonsterCustomNickname(monsterId, customElementNickname) {
 }
 
 /**
+ * 裝備一個稱號
+ * @param {string} titleId 要裝備的稱號 ID
+ * @returns {Promise<object>} 更新結果
+ */
+async function equipTitle(titleId) {
+    return fetchAPI('/player/equip-title', {
+        method: 'POST',
+        body: JSON.stringify({ title_id: titleId }),
+    });
+}
+
+
+/**
  * 治療怪獸
  * @param {string} monsterId 怪獸 ID
  * @param {'full_hp' | 'full_mp' | 'cure_conditions' | 'full_restore'} healType 治療類型
