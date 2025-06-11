@@ -1,19 +1,25 @@
 # MD_populate_gamedata.py
 # 用於將遊戲設定資料一次性匯入到 Firestore
 
+# --- 新增：路徑修正 ---
+import os
+import sys
+# 將專案根目錄（backend資料夾的上一層）添加到 Python 的模組搜索路徑
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# --- 路徑修正結束 ---
+
 import time
 import random
-import os 
 import json
 import logging
-import sys
 import csv 
 
 # 導入 Firebase Admin SDK
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from .MD_firebase_config import set_firestore_client
+# 將原本的相對導入改成從 backend 開始的絕對導入
+from backend.MD_firebase_config import set_firestore_client
 
 
 # 設定日誌記錄器
@@ -56,9 +62,10 @@ def initialize_firebase_for_script():
                 cred = None
         else:
             script_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
-            if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
+            # 修正路徑檢查
+            if os.path.exists(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH)):
                 try:
-                    cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
+                    cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH))
                     script_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
                 except Exception as e:
                     script_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
@@ -80,7 +87,7 @@ def initialize_firebase_for_script():
             script_logger.critical("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
             return False
     else:
-        from .MD_firebase_config import db as current_db_check
+        from backend.MD_firebase_config import db as current_db_check
         if current_db_check is None:
              set_firestore_client(firestore.client())
         script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
@@ -95,7 +102,7 @@ def populate_game_configs():
         script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
         return
 
-    from .MD_firebase_config import db as firestore_db_instance
+    from backend.MD_firebase_config import db as firestore_db_instance
     if firestore_db_instance is None:
         script_logger.error("錯誤：Firestore 資料庫未初始化 (在 populate_game_configs 內部)。無法執行資料填充。")
         return
