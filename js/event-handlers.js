@@ -289,11 +289,9 @@ function handleModalCloseButtons() {
         button.addEventListener('click', () => {
             const modalId = button.dataset.modalId || button.closest('.modal')?.id;
             if (modalId) {
-                if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
-                    showModal('reminder-modal');
-                } else {
-                    hideModal(modalId);
-                }
+                // 為了解決「修煉成果」彈窗關不掉的問題，我們簡化此處邏輯。
+                // 移除原有的物品檢查，讓所有 .modal-close 按鈕都直接關閉對應的彈窗。
+                hideModal(modalId);
             }
         });
     });
@@ -701,23 +699,27 @@ function handleCultivationModals() {
         });
     }
 
-    // 移除此處對 closeTrainingResultsBtn 和 finalCloseTrainingResultsBtn 的重複監聽
-    // 這兩個按鈕現在將由通用的 modal-close 處理器 handleModalCloseButtons 來統一管理
-
     if (DOMElements.addAllToTempBackpackBtn) {
         DOMElements.addAllToTempBackpackBtn.addEventListener('click', () => {
             addAllCultivationItemsToTempBackpack();
         });
     }
 
-    if (DOMElements.reminderConfirmCloseBtn) DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
-        hideModal('reminder-modal');
-        hideModal('training-results-modal');
-        gameState.lastCultivationResult.items_obtained = []; // 清空待領取列表
-    });
-    if (DOMElements.reminderCancelBtn) DOMElements.reminderCancelBtn.addEventListener('click', () => {
-        hideModal('reminder-modal');
-    });
+    if (DOMElements.reminderConfirmCloseBtn) {
+        DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
+            hideModal('reminder-modal');
+            hideModal('training-results-modal');
+            // 清空待領取列表，防止下次誤觸發
+            if (gameState.lastCultivationResult) {
+                gameState.lastCultivationResult.items_obtained = []; 
+            }
+        });
+    }
+    if (DOMElements.reminderCancelBtn) {
+        DOMElements.reminderCancelBtn.addEventListener('click', () => {
+            hideModal('reminder-modal');
+        });
+    }
 }
 
 function handleNewbieGuideSearch() {
