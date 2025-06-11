@@ -360,7 +360,7 @@ button.warning-outline:hover, .button.warning-outline:hover {
     position: absolute;
     top: 8px;
     right: 10px;
-    font-size: 1rem;
+    font-size: 1.5rem;
     font-weight: bold;
     cursor: pointer;
     width: 30px;
@@ -371,76 +371,51 @@ button.warning-outline:hover, .button.warning-outline:hover {
     border-radius: 50%;
     transition: background-color 0.2s, color 0.2s;
     z-index: 990;
+    line-height: 1;
 }
 .modal-close:hover, .modal-close:focus {
     color: var(--text-primary);
     background-color: var(--border-color);
     text-decoration: none;
 }
-#feedback-modal-close-x {
+#feedback-modal-close-x,
+#confirmation-modal-close-x,
+#official-announcement-close-x,
+#close-training-results-btn {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    cursor: pointer;
     background-color: var(--danger-color);
     color: var(--button-danger-text);
     width: 28px;
     height: 28px;
-    font-size: 1rem;
-    line-height: 28px;
-    text-align: center;
+    font-size: 1.2rem;
     border-radius: 50%;
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     border: 1px solid var(--danger-hover-dark);
     z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-#feedback-modal-close-x:hover {
+
+#feedback-modal-close-x:hover,
+#confirmation-modal-close-x:hover,
+#official-announcement-close-x:hover,
+#close-training-results-btn:hover {
     background-color: var(--danger-hover-dark);
     color: var(--button-danger-text);
 }
-body.light-theme #feedback-modal-close-x:hover {
+
+body.light-theme #feedback-modal-close-x:hover,
+body.light-theme #confirmation-modal-close-x:hover,
+body.light-theme #official-announcement-close-x:hover,
+body.light-theme #close-training-results-btn:hover {
     background-color: var(--danger-hover-light);
 }
 
-
-#confirmation-modal-close-x.modal-close {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
-    line-height: 26px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    border: 1px solid var(--danger-hover-dark);
-    z-index: 1050;
-}
-#confirmation-modal-close-x.modal-close:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-body.light-theme #confirmation-modal-close-x.modal-close:hover {
-    background-color: var(--danger-hover-light);
-}
-#official-announcement-close-x {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1rem;
-    line-height: 28px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    z-index: 1050;
-}
-#official-announcement-close-x:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-body.light-theme #official-announcement-close-x:hover {
-    background-color: var(--danger-hover-light);
-}
 .modal-header {
     font-size: 1rem;
     font-weight: 600;
@@ -1860,59 +1835,4 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .snapshot-mp-bar .snapshot-bar-fill {
     background-color: var(--accent-color);
-}
-
-/* 移除：原有的修煉成果關閉按鈕樣式 */
-/*
-#close-training-results-btn { ... }
-#close-training-results-btn:hover { ... }
-body.light-theme #close-training-results-btn:hover { ... }
-*/
-
-/* 新增：將修煉成果關閉按鈕的樣式與其他紅色圓圈按鈕合併 */
-#feedback-modal-close-x,
-#confirmation-modal-close-x,
-#official-announcement-close-x,
-#close-training-results-btn {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1.2rem; /* 稍微加大 "×" 符號 */
-    line-height: 28px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    border: 1px solid var(--danger-hover-dark);
-    z-index: 1050;
-    /* 使用偽元素來確保 "X" 的顯示 */
-    position: relative; 
-}
-
-#feedback-modal-close-x::before,
-#confirmation-modal-close-x::before,
-#official-announcement-close-x::before,
-#close-training-results-btn::before {
-    content: '\00d7'; /* Unicode for '×' */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    line-height: 1; /* 重設行高以精確控制垂直居中 */
-}
-
-#feedback-modal-close-x:hover,
-#confirmation-modal-close-x:hover,
-#official-announcement-close-x:hover,
-#close-training-results-btn:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-
-body.light-theme #feedback-modal-close-x:hover,
-body.light-theme #confirmation-modal-close-x:hover,
-body.light-theme #official-announcement-close-x:hover,
-body.light-theme #close-training-results-btn:hover {
-    background-color: var(--danger-hover-light);
 }
