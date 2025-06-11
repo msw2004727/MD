@@ -82,6 +82,7 @@ const gameState = {
     
     // 戰鬥相關
     battleTargetMonster: null, // 玩家選擇挑戰的對手怪獸資料
+    viewedPlayerData: null, // 新增：用於暫存正在查看的玩家資料
 
     // DNA 抽卡相關
     lastDnaDrawResult: null, // 保存上次抽卡結果，以便加入背包
