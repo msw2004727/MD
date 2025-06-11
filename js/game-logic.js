@@ -298,12 +298,33 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
 
     const skillDescription = newSkillTemplate.description || newSkillTemplate.story || '暫無描述。';
     
-    // 將技能名稱轉換為可點擊的連結
     const newSkillLink = `<a href="#" class="skill-name-link" data-skill-name="${newSkillTemplate.name}" style="text-decoration: none; color: var(--rarity-legendary-text); font-weight: bold;">${newSkillTemplate.name}</a>`;
 
     const maxSkills = gameState.gameConfigs.value_settings?.max_monster_skills || 3;
+    
+    // ===== 新增：產生「目前技能」的HTML =====
+    let currentSkillsHtml = '<div style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">';
+    currentSkillsHtml += `<h5 style="font-weight: bold; color: var(--text-secondary); margin-bottom: 0.5rem;">${monster.nickname} 的目前技能：</h5>`;
+    if (currentSkills.length > 0) {
+        currentSkillsHtml += '<ul>';
+        currentSkills.forEach(skill => {
+            currentSkillsHtml += `<li style="font-size: 0.9em; margin-bottom: 2px;">- <a href="#" class="skill-name-link" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name}</a> (Lv.${skill.level || 1})</li>`;
+        });
+        currentSkillsHtml += '</ul>';
+    } else {
+        currentSkillsHtml += '<p style="font-size: 0.9em; color: var(--text-secondary);">無</p>';
+    }
+    currentSkillsHtml += '</div>';
+    // =====================================
+
     let message = `${monster.nickname} 領悟了新技能：${newSkillLink} (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
-    message += `<p class="text-sm text-[var(--text-secondary)] mt-2" style="font-size: 0.9em !important;">技能簡述：${skillDescription}</p><br>`;
+    message += `<p class="text-sm text-[var(--text-secondary)] mt-2" style="font-size: 0.9em !important;">技能簡述：${skillDescription}</p>`;
+    
+    // 新增：為查看技能詳情預留的注入點
+    message += `<div id="skill-details-injection-point" class="mt-2"></div>`;
+    
+    // 新增：無論如何都顯示目前技能
+    message += currentSkillsHtml;
 
     const onLearn = async (slotToReplace = null) => {
         const actionText = slotToReplace !== null ? '替換技能中...' : '學習中...';
@@ -325,7 +346,7 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
     };
 
     if (currentSkills.length < maxSkills) {
-        message += "是否要學習這個技能？";
+        message += "<p class='mt-4'>是否要學習這個技能？</p>";
         showFeedbackModal(
             '領悟新技能！',
             message,
@@ -337,12 +358,11 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
             ]
         );
     } else {
-        message += `但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？<br><br>選擇要替換的技能：`;
+        message += `<p class='mt-4'>但技能槽已滿 (${currentSkills.length}/${maxSkills})。是否要替換一个現有技能來學習它？請選擇要替換的技能：</p>`;
 
         let skillOptionsHtml = '<div class="my-2 space-y-1">';
         currentSkills.forEach((skill) => {
             const currentSkillDescription = skill.story || skill.description || '無描述';
-            // 將現有技能名稱也轉換為可點擊的連結
             const existingSkillLink = `<a href="#" class="skill-name-link" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>`;
             skillOptionsHtml += `
                 <div class="skill-replace-option button secondary text-sm p-2 w-full text-left" data-skill-name="${skill.name}">
