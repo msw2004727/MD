@@ -701,21 +701,8 @@ function handleCultivationModals() {
         });
     }
 
-
-    if (DOMElements.closeTrainingResultsBtn) DOMElements.closeTrainingResultsBtn.addEventListener('click', () => {
-         if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
-            showModal('reminder-modal');
-        } else {
-            hideModal('training-results-modal');
-        }
-    });
-    if (DOMElements.finalCloseTrainingResultsBtn) DOMElements.finalCloseTrainingResultsBtn.addEventListener('click', () => {
-         if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
-            showModal('reminder-modal');
-        } else {
-            hideModal('training-results-modal');
-        }
-    });
+    // 移除此處對 closeTrainingResultsBtn 和 finalCloseTrainingResultsBtn 的重複監聽
+    // 這兩個按鈕現在將由通用的 modal-close 處理器 handleModalCloseButtons 來統一管理
 
     if (DOMElements.addAllToTempBackpackBtn) {
         DOMElements.addAllToTempBackpackBtn.addEventListener('click', () => {
