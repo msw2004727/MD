@@ -5,7 +5,7 @@ import random
 import logging
 import math
 import copy
-import time
+from datetime import datetime, timezone, timedelta # 新增
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
 
 # 從 MD_models 導入相關的 TypedDict 定義
@@ -591,6 +591,11 @@ def simulate_battle_full(
     # 產生戰鬥活動日誌
     player_activity_log: Optional[MonsterActivityLogEntry] = None
     opponent_activity_log: Optional[MonsterActivityLogEntry] = None
+    
+    # 建立時區物件 (UTC+8)
+    cst = timezone(timedelta(hours=8))
+    # 取得當前時間並格式化
+    current_time_str = datetime.now(cst).strftime("%Y-%m-%d %H:%M:%S")
 
     challenger_name = player_nickname
     challenger_monster_name = player_monster.get('nickname', '一個挑戰者')
@@ -607,17 +612,17 @@ def simulate_battle_full(
 
 
     if winner_id == player_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您獲勝了！"}
+        player_activity_log = {"time": current_time_str, "message": f"挑戰 {defender_display}，您獲勝了！"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
     elif winner_id == opponent_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
+        player_activity_log = {"time": current_time_str, "message": f"挑戰 {defender_display}，您不幸戰敗。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
     else:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {defender_display} 戰成平手。"}
+        player_activity_log = {"time": current_time_str, "message": f"與 {defender_display} 戰成平手。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，雙方戰成平手。"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，雙方戰成平手。"}
 
 
     final_battle_result: BattleResult = {
