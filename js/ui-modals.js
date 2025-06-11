@@ -12,9 +12,28 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     const nickname = playerData.nickname || stats.nickname || "未知玩家";
 
     let titlesHtml = '<p>尚無稱號</p>';
-    if (stats.titles && stats.titles.length > 0) {
-        titlesHtml = stats.titles.map(title => `<span class="inline-block bg-[var(--accent-color)] text-[var(--button-primary-text)] text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${title}</span>`).join('');
+    const ownedTitles = stats.titles || [];
+    const equippedTitleId = stats.equipped_title_id || (ownedTitles.length > 0 ? ownedTitles[0].id : null);
+
+    if (ownedTitles.length > 0) {
+        titlesHtml = ownedTitles.map(title => {
+            const isEquipped = title.id === equippedTitleId;
+            const buttonHtml = isEquipped
+                ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
+                : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
+
+            return `
+                <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-weight: bold; font-size: 1.1em; color: ${isEquipped ? 'gold' : 'var(--text-primary)'};">${title.name}</span>
+                        ${buttonHtml}
+                    </div>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${title.description || ''}</p>
+                </div>
+            `;
+        }).join('');
     }
+
 
     let achievementsHtml = '<p>尚無成就</p>';
     if (stats.achievements && stats.achievements.length > 0) {
@@ -64,10 +83,9 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value">${stats.score || 0}</span></div>
             </div>
             <div class="details-section">
-                <h5 class="details-section-title">榮譽</h5>
+                <h5 class="details-section-title">榮譽與稱號</h5>
                 <div class="mb-2">
-                    <span class="details-label block mb-1">當前稱號:</span>
-                    <div>${titlesHtml}</div>
+                    <div id="player-titles-list">${titlesHtml}</div>
                 </div>
                 <div class="mb-2">
                     <span class="details-label block mb-1">勳章:</span>
