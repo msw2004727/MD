@@ -50,19 +50,21 @@
     padding: 1rem;
 }
 
-/* 確保確認彈窗的層級更高 */
+/* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 1001; /* 設置為比普通模態框高 */
+    z-index: 1010; 
 }
 
-/* 確保玩家資訊彈窗層級也較高 */
 #player-info-modal {
-    z-index: 1001;
+    z-index: 1010;
 }
 
-/* 確保技能說明彈窗的層級最高 */
+#monster-info-modal {
+    z-index: 1020; /* 提高層級，確保能蓋過 player-info-modal */
+}
+
 #feedback-modal {
-    z-index: 1002;
+    z-index: 1030; /* 確保回饋/提示彈窗在最上層 */
 }
 
 
@@ -216,4 +218,6 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
+}
+
 }
