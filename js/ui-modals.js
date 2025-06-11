@@ -326,16 +326,30 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     };
 
     let titleBuffs = {};
-    if (isOwner && gameState.playerData && gameState.playerData.playerStats) {
-        const playerStats = gameState.playerData.playerStats;
-        const equippedId = playerStats.equipped_title_id;
-        if (equippedId && playerStats.titles) {
-            const equippedTitle = playerStats.titles.find(t => t.id === equippedId);
-            if (equippedTitle && equippedTitle.buffs) {
-                titleBuffs = equippedTitle.buffs;
+    // --- 修改：調整稱號加成獲取邏輯 ---
+    if (monster.owner_title_buffs) {
+        // 優先使用從後端（排行榜）附加的擁有者加成
+        titleBuffs = monster.owner_title_buffs;
+    } else {
+        // 否則，根據擁有者資料決定從哪個資料源讀取
+        let statsSource = null;
+        if (isOwner) {
+            statsSource = gameState.playerData.playerStats; // 自己
+        } else if (ownerData) {
+            statsSource = ownerData.playerStats; // 從他人資訊頁傳入的擁有者資料
+        }
+        
+        if (statsSource) {
+            const equippedId = statsSource.equipped_title_id;
+            if (equippedId && statsSource.titles) {
+                const equippedTitle = statsSource.titles.find(t => t.id === equippedId);
+                if (equippedTitle && equippedTitle.buffs) {
+                    titleBuffs = equippedTitle.buffs;
+                }
             }
         }
     }
+    // --- 修改結束 ---
     
     const getTitleBuffHtml = (statName) => {
         const buffValue = titleBuffs[statName] || 0;
