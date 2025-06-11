@@ -232,13 +232,13 @@ button.primary, .button.primary {
 button.primary:hover, .button.primary:hover {
     background-color: var(--button-primary-hover-bg);
 }
-button.secondary, .button.secondary, .farm-time-btn {
+button.secondary, .button.secondary, .top-nav-button, .farm-time-btn {
     background-color: var(--button-secondary-bg);
     color: var(--button-secondary-text);
     border: 1px solid var(--border-color);
     border-bottom: 2px solid var(--border-color);
 }
-button.secondary:hover, .button.secondary:hover, .farm-time-btn:hover {
+button.secondary:hover, .button.secondary:hover, .top-nav-button:hover, .farm-time-btn:hover {
     background-color: var(--button-secondary-hover-bg);
 }
 button.danger, .button.danger, .farm-monster-item button.farm-monster-release-btn, #confirm-action-btn.danger {
@@ -350,13 +350,13 @@ button.warning-outline:hover, .button.warning-outline:hover {
     flex-grow: 1;
     text-align: center;
     line-height: 1.2;
-    background-color: #0969da;
-    color: #ffffff;
-    border: 1px solid #0550ae;
+    background-color: var(--accent-color);
+    color: var(--button-primary-text);
+    border: 1px solid var(--accent-hover-dark);
     border-bottom-width: 2px;
 }
 .top-nav-button:hover {
-    background-color: #0550ae;
+    background-color: var(--accent-hover-dark);
 }
 .top-nav-button:disabled {
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
@@ -1782,15 +1782,12 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* --- 新增：怪獸快照狀態條樣式 --- */
 .snapshot-bars-container {
-    position: absolute;
-    top: 8px;
-    left: 10px;
-    z-index: 4;
+    margin-top: 6px;
     display: flex;
     flex-direction: column;
     gap: 4px;
     max-width: 120px;
-    pointer-events: auto;
+    pointer-events: auto; /* 確保容器本身可互動 (如果未來需要) */
 }
 
 .snapshot-bar {
@@ -1830,8 +1827,7 @@ body.light-theme .leaderboard-table tr:hover td {
     100% { transform: rotate(-1.5deg) scale(1.01); }
 }
 
-.inventory-jiggle-active .dna-item.occupied,
-.inventory-jiggle-active .dna-slot.occupied {
+.inventory-jiggle-active .dna-item.occupied {
     animation: jiggle 0.15s infinite;
 }
 
