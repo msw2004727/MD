@@ -38,7 +38,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000; /* 預設模態框的層級 */
+    z-index: 2010; /* MODIFIED: z-index increased from 1000 to 2010 */
     left: 0;
     top: 0;
     width: 100%;
@@ -52,25 +52,25 @@
 
 /* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 1010; 
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #player-info-modal {
-    z-index: 1010;
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #monster-info-modal {
-    z-index: 1020; /* 提高層級，確保能蓋過 player-info-modal */
+    z-index: 2030; /* MODIFIED: z-index increased */
 }
 
 #feedback-modal {
-    z-index: 1030; /* 確保回饋/提示彈窗在最上層 */
+    z-index: 2040; /* MODIFIED: z-index increased */
 }
 
 
 /* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
-    z-index: 1000; 
+    z-index: 2015; /* MODIFIED: z-index increased */
 }
 
 
