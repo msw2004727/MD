@@ -99,15 +99,19 @@ async function handleDeployMonsterClick(monsterId) {
 
 
 function handleDragStart(event) {
-    if (isJiggleModeActive) { // 新增：在抖動模式下禁止拖曳
-        event.preventDefault();
-        return;
-    }
     const target = event.target.closest('.dna-item.occupied, .dna-slot.occupied, .temp-backpack-slot.occupied');
     if (!target) {
         event.preventDefault();
         return;
     }
+
+    // 如果在抖動模式下開始拖曳，暫停該物品的動畫並隱藏刪除鈕
+    if (isJiggleModeActive && target.closest('.inventory-jiggle-active')) {
+        target.style.animation = 'none';
+        const deleteBtn = target.querySelector('.delete-dna-btn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+    }
+
     draggedElement = target;
     draggedSourceType = target.dataset.dnaSource;
 
@@ -141,6 +145,13 @@ function handleDragStart(event) {
 }
 
 function handleDragEnd(event) {
+    // 如果拖曳結束時仍在抖動模式，恢復物品的抖動動畫與刪除鈕
+    if (isJiggleModeActive && draggedElement) {
+        draggedElement.style.animation = ''; // 移除內聯樣式，讓CSS class接管
+        const deleteBtn = draggedElement.querySelector('.delete-dna-btn');
+        if (deleteBtn) deleteBtn.style.display = 'flex';
+    }
+
     if (draggedElement) draggedElement.classList.remove('dragging');
     draggedElement = null;
     draggedDnaObject = null;
@@ -344,9 +355,9 @@ function handleJiggleMode() {
     inventoryContainer.addEventListener('mouseleave', cancelPressHandler);
     // 觸控事件
     inventoryContainer.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // 防止長按觸發其他瀏覽器行為
+        // e.preventDefault(); // 移除這行以允許滾動
         pressHandler(e);
-    }, { passive: false });
+    }, { passive: true }); // passive: true 告訴瀏覽器我們不會阻止滾動
     inventoryContainer.addEventListener('touchend', cancelPressHandler);
     inventoryContainer.addEventListener('touchmove', cancelPressHandler); // 如果手指移動就取消長按
 
