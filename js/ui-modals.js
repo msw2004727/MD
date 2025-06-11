@@ -316,10 +316,33 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const getGainHtml = (statName) => {
         const gain = gains[statName] || 0;
         if (gain > 0) {
-            return ` <span style="color: var(--success-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
+            return ` <span class="text-cultivation-buff" style="font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
         }
         return '';
     };
+
+    // --- NEW: LOGIC TO GET AND DISPLAY TITLE BUFFS ---
+    let titleBuffs = {};
+    if (gameState.playerData && gameState.playerData.playerStats) {
+        const playerStats = gameState.playerData.playerStats;
+        const equippedId = playerStats.equipped_title_id;
+        if (equippedId && playerStats.titles) {
+            const equippedTitle = playerStats.titles.find(t => t.id === equippedId);
+            if (equippedTitle && equippedTitle.buffs) {
+                titleBuffs = equippedTitle.buffs;
+            }
+        }
+    }
+    
+    const getTitleBuffHtml = (statName) => {
+        const buffValue = titleBuffs[statName] || 0;
+        if (buffValue > 0) {
+            // Added a class 'text-title-buff' for styling
+            return ` <span class="text-title-buff" style="font-size: 0.9em; margin-left: 4px;">+${buffValue}</span>`;
+        }
+        return '';
+    };
+    // --- END OF NEW LOGIC ---
 
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
@@ -327,12 +350,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
