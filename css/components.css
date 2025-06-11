@@ -1782,12 +1782,15 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* --- 新增：怪獸快照狀態條樣式 --- */
 .snapshot-bars-container {
-    margin-top: 6px;
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 4;
     display: flex;
     flex-direction: column;
     gap: 4px;
     max-width: 120px;
-    pointer-events: auto; /* 確保容器本身可互動 (如果未來需要) */
+    pointer-events: auto;
 }
 
 .snapshot-bar {
