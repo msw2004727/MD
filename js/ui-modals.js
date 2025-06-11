@@ -204,6 +204,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
+            // 新增：產生里程碑效果的 HTML
             let milestonesHtml = '';
             let skillTemplate = null;
             if (gameState.gameConfigs && gameState.gameConfigs.skills) {
@@ -235,6 +236,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 }
                 milestonesHtml += `</div>`;
             }
+            // ===================================
 
             return `
             <div class="skill-entry">
