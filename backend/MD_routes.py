@@ -8,6 +8,7 @@ import logging
 import random
 import copy # 用於深拷貝怪獸數據
 import time # 導入 time 模組
+from typing import List, Dict, Any, Tuple # 引入 Tuple
 
 from flask_cors import cross_origin # 修正：導入 cross_origin
 
@@ -68,6 +69,44 @@ def _get_authenticated_user_id():
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
 
+# --- 新增：稱號授予檢查輔助函式 ---
+def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfigs) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
+    player_stats = player_data.get("playerStats", {})
+    if not player_stats:
+        return player_data, []
+
+    all_titles = game_configs.get("titles", [])
+    owned_title_ids = {t.get("id") for t in player_stats.get("titles", [])}
+    newly_awarded_titles = []
+
+    for title in all_titles:
+        title_id = title.get("id")
+        if not title_id or title_id in owned_title_ids:
+            continue
+
+        condition = title.get("condition", {})
+        cond_type = condition.get("type")
+        cond_value = condition.get("value")
+
+        unlocked = False
+        if cond_type == "wins" and player_stats.get("wins", 0) >= cond_value:
+            unlocked = True
+        elif cond_type == "monsters_owned" and len(player_data.get("farmedMonsters", [])) >= cond_value:
+            unlocked = True
+        # 在此處可以添加更多 elif 來檢查其他類型的條件...
+
+        if unlocked:
+            # 將新稱號物件插入到列表的最前面
+            player_stats.get("titles", []).insert(0, title)
+            # 將新稱號設為已裝備
+            player_stats["equipped_title_id"] = title_id
+            newly_awarded_titles.append(title)
+            routes_logger.info(f"玩家 {player_data.get('nickname')} 達成條件，授予新稱號: {title.get('name')}")
+    
+    if newly_awarded_titles:
+        player_data["playerStats"] = player_stats
+
+    return player_data, newly_awarded_titles
 
 # --- API 端點 ---
 @md_bp.route('/health', methods=['GET'])
@@ -84,15 +123,11 @@ def get_game_configs_route():
 
 @md_bp.route('/dna/draw-free', methods=['POST'])
 def draw_free_dna_route():
-    """
-    處理免費抽取 DNA 的請求。
-    """
     user_id, _, error_response = _get_authenticated_user_id()
     if error_response:
         return error_response
 
     try:
-        # 由於 player_services 中的函式已改為同步，這裡直接呼叫即可
         drawn_dna_templates = draw_free_dna()
         if drawn_dna_templates is not None:
             routes_logger.info(f"玩家 {user_id} 成功抽取 {len(drawn_dna_templates)} 個DNA。")
@@ -121,15 +156,12 @@ def equip_title_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
 
-    # 驗證玩家是否擁有該稱號
     owned_titles = player_data.get("playerStats", {}).get("titles", [])
     if not any(title.get("id") == title_id_to_equip for title in owned_titles):
         return jsonify({"error": "未授權：您尚未擁有此稱號，無法裝備。"}), 403
 
-    # 更新已裝備的稱號ID
     player_data["playerStats"]["equipped_title_id"] = title_id_to_equip
     
-    # 儲存更新後的玩家資料
     if save_player_data_service(user_id, player_data):
         routes_logger.info(f"玩家 {user_id} 成功裝備稱號 ID: {title_id_to_equip}")
         return jsonify({
@@ -215,7 +247,6 @@ def combine_dna_api_route():
         return error_response
 
     data = request.json
-    # 修改：預期收到 'dna_data' 包含完整物件的列表
     if not data or 'dna_data' not in data or not isinstance(data['dna_data'], list):
         return jsonify({"error": "請求格式錯誤，需要包含 'dna_data' 列表"}), 400
 
@@ -229,41 +260,32 @@ def combine_dna_api_route():
         routes_logger.error(f"組合DNA前無法獲取玩家 {user_id} 的資料。")
         return jsonify({"error": "無法獲取玩家資料以進行DNA組合。"}), 500
 
-    # 修改：將完整的 DNA 物件列表傳遞給服務
     combine_result = combine_dna_service(dna_objects_from_request, game_configs, player_data, user_id)
 
     if combine_result and combine_result.get("monster"):
         new_monster_object: Monster = combine_result["monster"]
         
-        # 後端直接處理資料更新
-        # 1. 前端已經將組合槽中的DNA從庫存中移除並存檔，所以後端無需再次移除。
-        #    這裡的邏輯是信任前端的狀態，並直接將新怪獸加入農場。
-        
-        # 2. 加入新怪獸到農場
         current_farmed_monsters = player_data.get("farmedMonsters", [])
         MAX_FARM_SLOTS = game_configs.get("value_settings", {}).get("max_farm_slots", 10)
 
         if len(current_farmed_monsters) < MAX_FARM_SLOTS:
             current_farmed_monsters.append(new_monster_object)
             player_data["farmedMonsters"] = current_farmed_monsters
-            # 3. 更新玩家成就
+            
             if "playerStats" in player_data and isinstance(player_data["playerStats"], dict):
                 player_stats_achievements = player_data["playerStats"].get("achievements", [])
                 if "首次組合怪獸" not in player_stats_achievements:
                     player_stats_achievements.append("首次組合怪獸")
                     player_data["playerStats"]["achievements"] = player_stats_achievements
             
-            # 4. 儲存更新後的完整玩家資料
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
                 return jsonify(new_monster_object), 201
             else:
                 routes_logger.warning(f"警告：新怪獸已生成，但儲存玩家 {user_id} 資料失敗。")
-                # 即使儲存失敗，也返回怪獸物件，讓前端至少可以顯示
                 return jsonify(new_monster_object), 201
         else:
             routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
-            # 注意：這裡我們不儲存，因為怪獸沒有地方放。但前端仍然會收到怪獸物件和警告。
             return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200
     else:
         error_message = "DNA 組合失敗，未能生成怪獸。"
@@ -301,10 +323,8 @@ def simulate_battle_api_route():
     data = request.json
     player_monster_data_req = data.get('player_monster_data')
     opponent_monster_data_req = data.get('opponent_monster_data')
-    # --- FIX START: 接收對手擁有者的資訊 ---
     opponent_owner_id_req = data.get('opponent_owner_id')
     opponent_owner_nickname_req = data.get('opponent_owner_nickname')
-    # --- FIX END ---
 
     if not player_monster_data_req or not opponent_monster_data_req:
         return jsonify({"error": "請求中必須包含兩隻怪獸的資料。"}), 400
@@ -313,20 +333,16 @@ def simulate_battle_api_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法模擬戰鬥。"}), 500
     
-    # 調用新的完整戰鬥服務，一次性完成所有回合的模擬
     battle_result: BattleResult = simulate_battle_full( 
         player_monster_data_req,
         opponent_monster_data_req,
         game_configs,
         player_nickname=nickname_from_token,
-        # --- FIX START: 將對手暱稱傳遞給服務 ---
         opponent_nickname=opponent_owner_nickname_req
-        # --- FIX END ---
     )
 
-    # 戰鬥結束後更新玩家數據 (勝敗場次，HP/MP，技能)
+    newly_awarded_titles = [] # 初始化
     if battle_result.get("battle_end"):
-        # --- 更新攻擊方 (user_id) 的資料 ---
         if user_id and player_monster_data_req.get('id'):
             player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
             if player_data:
@@ -334,8 +350,12 @@ def simulate_battle_api_route():
                 if player_stats and isinstance(player_stats, dict):
                     if battle_result.get("winner_id") == player_monster_data_req['id']:
                         player_stats["wins"] = player_stats.get("wins", 0) + 1
+                        # --- 稱號授予檢查點 ---
+                        player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
+                        # --- 稱號授予檢查點結束 ---
                     elif battle_result.get("loser_id") == player_monster_data_req['id']:
                         player_stats["losses"] = player_stats.get("losses", 0) + 1
+                    
                     player_data["playerStats"] = player_stats
 
                     farmed_monsters = player_data.get("farmedMonsters", [])
@@ -387,7 +407,6 @@ def simulate_battle_api_route():
             else:
                 routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
         
-        # --- FIX START: 新增更新被挑戰方 (opponent) 的資料 ---
         if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
             opponent_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
             if opponent_data:
@@ -421,7 +440,10 @@ def simulate_battle_api_route():
                         routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
             else:
                 routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
-        # --- FIX END ---
+
+    # 將新獲得的稱號資訊加入到回傳結果中
+    if newly_awarded_titles:
+        battle_result["newly_awarded_titles"] = newly_awarded_titles
     
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
