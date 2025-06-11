@@ -113,6 +113,7 @@ def _get_effective_skill_stats(skill: Skill) -> Skill:
     effective_skill = copy.deepcopy(skill)
     level = effective_skill.get("level", 1)
     
+    # 1. 標準等級加成
     if level > 1:
         # 威力: 每級提升基礎值的 8%
         base_power = skill.get("power", 0)
@@ -138,11 +139,27 @@ def _get_effective_skill_stats(skill: Skill) -> Skill:
         if isinstance(base_duration, int):
             effective_skill["duration"] = base_duration + math.floor((level - 1) / 3)
 
-        # 新增：爆擊率加成 - 每 2 級提升 1%
+        # 爆擊率加成 - 每 2 級提升 1%
         base_crit = skill.get("crit", 0)
-        if base_crit > 0:
+        if base_crit >= 0: # 允許0爆擊的技能也能成長
             effective_skill["crit"] = base_crit + math.floor((level - 1) / 2)
 
+    # 2. 新增：應用等級里程碑加成
+    milestones = skill.get("level_milestones")
+    if milestones and isinstance(milestones, dict):
+        # 確保按等級數字順序應用里程碑
+        for milestone_level_str in sorted(milestones.keys(), key=int):
+            if level >= int(milestone_level_str):
+                milestone_data = milestones[milestone_level_str]
+                
+                # 應用威力加成
+                if "add_power" in milestone_data:
+                    effective_skill["power"] = effective_skill.get("power", 0) + milestone_data["add_power"]
+                
+                # 應用效果加成/覆蓋
+                if "add_effect" in milestone_data and isinstance(milestone_data["add_effect"], dict):
+                    for key, value in milestone_data["add_effect"].items():
+                        effective_skill[key] = value
 
     return effective_skill
 
@@ -496,7 +513,7 @@ def simulate_battle_full(
         all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{opponent_monster['nickname']} 獲勝！")
     elif opponent_monster["current_hp"] <= 0:
         winner_id = player_monster["id"]
-        loser_id = player_monster["id"]
+        loser_id = opponent_monster["id"]
         all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{player_monster['nickname']} 獲勝！")
     else:
         winner_id = "平手"
