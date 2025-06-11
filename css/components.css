@@ -1819,3 +1819,40 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--rarity-legendary-text); /* Use the existing gold color for Legendary rarity */
     font-weight: bold;
 }
+
+/* NEW: Jiggle Mode for Deleting Items */
+@keyframes jiggle {
+    0% { transform: rotate(-1.5deg) scale(1.01); }
+    50% { transform: rotate(1.5deg) scale(1.01); }
+    100% { transform: rotate(-1.5deg) scale(1.01); }
+}
+
+.inventory-jiggle-active .dna-item.occupied {
+    animation: jiggle 0.15s infinite;
+}
+
+.delete-dna-btn {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 22px;
+    height: 22px;
+    background-color: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    border: 2px solid var(--bg-panel);
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    transition: transform 0.2s ease-out;
+    padding-bottom: 2px; /* For better 'x' alignment */
+}
+.delete-dna-btn:hover {
+    transform: scale(1.15);
+}
