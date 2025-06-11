@@ -985,6 +985,7 @@ function showDnaDrawModal(drawnItems) {
 function updateTrainingResultsModal(results, monsterName) {
     if (!DOMElements.trainingResultsModal) return;
 
+    // 將 monsterName 傳遞給標題，確保顯示的是正確的怪獸名稱
     DOMElements.trainingResultsModalTitle.textContent = `${monsterName} 的修煉成果`;
 
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
@@ -1110,7 +1111,7 @@ function updateTrainingResultsModal(results, monsterName) {
                 }
             }, { once: true });
 
-            itemsGrid.appendChild(itemDiv);
+            itemsGrid.appendChild(itemsGrid);
         });
         itemsContainer.appendChild(itemsGrid);
     } else {
