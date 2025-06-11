@@ -556,7 +556,8 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 1;
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        DOMElements.snapshotAchievementTitle.textContent = monster.title || (monster.monsterTitles && monster.monsterTitles.length > 0 ? monster.monsterTitles[0] : '新秀');
+        // 移除稱號，只顯示名字
+        DOMElements.snapshotAchievementTitle.style.display = 'none';
 
         DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
@@ -609,7 +610,8 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.src = "";
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
 
-        DOMElements.snapshotAchievementTitle.textContent = '初出茅廬';
+        // 隱藏稱號
+        DOMElements.snapshotAchievementTitle.style.display = 'none';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotNickname.className = ''; // 清除稀有度顏色
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
