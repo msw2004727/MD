@@ -250,10 +250,11 @@ class PlayerStats(TypedDict):
     wins: int
     losses: int
     score: int
-    titles: List[str]
+    titles: List[Dict[str, Any]] # 之前是 List[str]，現在是完整的物件列表
     achievements: List[str]
     medals: int
     nickname: str
+    equipped_title_id: NotRequired[Optional[str]] # 新增：儲存當前裝備的稱號ID
 
 
 class PlayerOwnedDNA(DNAFragment):
@@ -341,7 +342,7 @@ class GameConfigs(TypedDict):
     rarities: Dict[str, RarityDetail]
     skills: Dict[ElementTypes, List[Skill]] 
     personalities: List[Personality]
-    titles: List[str]
+    titles: List[Dict[str, Any]] # 之前是 List[str]，現在是完整的物件列表
     monster_achievements_list: NotRequired[List[str]] 
     element_nicknames: NotRequired[Dict[ElementTypes, str]]
     naming_constraints: NotRequired[NamingConstraints] 
