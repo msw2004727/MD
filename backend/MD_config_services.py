@@ -3,6 +3,8 @@
 
 import logging
 from typing import Dict, Any
+import os
+import json
 
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
@@ -15,6 +17,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
     """
     從 Firestore 的 MD_GameConfigs 集合中載入所有遊戲設定文檔，
     並將它們組合成一個符合 GameConfigs 型別的字典。
+    修煉故事庫將從本地檔案系統覆蓋。
     """
     db = MD_firebase_config.db
     if not db:
@@ -27,12 +30,12 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
         config_collection_ref = db.collection('MD_GameConfigs')
 
         # 定義 Firestore 文檔名稱與最終設定字典鍵名、以及資料欄位名的對應關係
+        # 我們已移除 CultivationStories，因為將從本地檔案讀取
         doc_map = {
             "DNAFragments": ("dna_fragments", "all_fragments"),
             "Rarities": ("rarities", "dna_rarities"),
             "Skills": ("skills", "skill_database"),
             "Personalities": ("personalities", "types"),
-            "CultivationStories": ("cultivation_stories", "story_library"),
             "Titles": ("titles", "player_titles"),
             "MonsterAchievementsList": ("monster_achievements_list", "achievements"),
             "ElementNicknames": ("element_nicknames", "nicknames"),
@@ -63,9 +66,35 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
                 is_list_type = any(s in config_key for s in ['list', 'fragments', 'personalities', 'guide', 'conditions'])
                 configs[config_key] = [] if is_list_type else {}
                 config_logger.warning(f"在 Firestore 中找不到設定文檔：'{doc_name}'，已使用預設空值。")
+        
+        config_logger.info("Firestore 遠端設定已載入。")
 
-        config_logger.info("遊戲設定成功從 Firestore 載入。")
-        return configs # type: ignore
     except Exception as e:
         config_logger.error(f"從 Firestore 載入遊戲設定時發生嚴重錯誤: {e}", exc_info=True)
-        return {}  # 發生錯誤時返回空字典
+        # 即使遠端失敗，也繼續嘗試載入本地故事
+    
+    # --- 新增：從本地檔案系統覆蓋修煉故事庫 ---
+    config_logger.info("正在嘗試從本地檔案系統載入修煉故事庫...")
+    try:
+        # 構建相對於當前文件的 data 資料夾路徑
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        stories_path = os.path.join(data_dir, 'cultivation_stories.json')
+        
+        if os.path.exists(stories_path):
+            with open(stories_path, 'r', encoding='utf-8') as f:
+                stories_data = json.load(f)
+            # 在主設定字典中新增或覆蓋 'cultivation_stories' 鍵
+            configs['cultivation_stories'] = stories_data
+            config_logger.info("成功從本地檔案 cultivation_stories.json 載入並覆蓋修煉故事設定。")
+        else:
+            config_logger.warning(f"在本地找不到 cultivation_stories.json，將使用 Firestore 中的版本（如果存在的話），否則為空。")
+            if 'cultivation_stories' not in configs:
+                configs['cultivation_stories'] = {} # 確保鍵存在
+            
+    except Exception as e:
+        config_logger.error(f"從本地檔案載入修煉故事時發生錯誤: {e}", exc_info=True)
+        if 'cultivation_stories' not in configs:
+            configs['cultivation_stories'] = {} # 確保鍵存在
+    # --- 新增結束 ---
+
+    return configs
