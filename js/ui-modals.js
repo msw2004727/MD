@@ -470,13 +470,12 @@ function updateLeaderboardTable(tableType, data) {
             const nicknameCell = row.insertCell();
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             
-            // 新增：將暱稱改為可點擊的連結
             const link = document.createElement('a');
             link.href = '#';
-            link.className = 'leaderboard-monster-link'; // Class for the event handler
+            link.className = 'leaderboard-monster-link';
             link.classList.add(`text-rarity-${rarityKey}`);
             link.style.textDecoration = 'none';
-            link.style.color = 'inherit'; // Let the rarity class take precedence
+            // 移除 style.color = 'inherit'
             link.textContent = item.nickname;
             nicknameCell.appendChild(link);
 
