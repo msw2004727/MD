@@ -13,7 +13,7 @@ import csv
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from MD_firebase_config import set_firestore_client
+from .MD_firebase_config import set_firestore_client
 
 
 # 設定日誌記錄器
@@ -80,7 +80,7 @@ def initialize_firebase_for_script():
             script_logger.critical("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
             return False
     else:
-        from MD_firebase_config import db as current_db_check
+        from .MD_firebase_config import db as current_db_check
         if current_db_check is None:
              set_firestore_client(firestore.client())
         script_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
@@ -95,7 +95,7 @@ def populate_game_configs():
         script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
         return
 
-    from MD_firebase_config import db as firestore_db_instance
+    from .MD_firebase_config import db as firestore_db_instance
     if firestore_db_instance is None:
         script_logger.error("錯誤：Firestore 資料庫未初始化 (在 populate_game_configs 內部)。無法執行資料填充。")
         return
