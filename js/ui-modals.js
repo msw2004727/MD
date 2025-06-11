@@ -153,29 +153,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return;
     }
 
-    // 將怪獸 ID 附加到 header 元素上，以便事件處理器讀取
-    DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
-
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-    const defaultElementNickname = gameConfigs.element_nicknames ? (gameConfigs.element_nicknames[primaryElement] || '') : '';
-    const editableNickname = monster.custom_element_nickname || defaultElementNickname;
-
+    // **FIX**: Reverted to the original, simple header to avoid errors.
     DOMElements.monsterInfoModalHeader.innerHTML = `
-        <div id="monster-nickname-display-container" class="monster-nickname-display-container">
-            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
-                ${monster.nickname}
-            </h4>
-            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
-        </div>
-        <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
-            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
-            <button id="confirm-nickname-change-btn" class="button success" title="確認">✔️</button>
-            <button id="cancel-nickname-change-btn" class="button danger" title="取消">❌</button>
-        </div>
+        <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
+            ${monster.nickname}
+        </h4>
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
