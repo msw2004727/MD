@@ -21,7 +21,7 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
     "skills": {}, 
     "personalities": [],
-    "titles": ["新手"],
+    "titles": [{"id": "title_001", "name": "新手", "description": "", "condition": {}, "buffs": {}}], # type: ignore
     "monster_achievements_list": ["新秀"],
     "element_nicknames": {"火": "炎獸"},
     "naming_constraints": {
@@ -49,13 +49,26 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
     """為新玩家初始化遊戲資料。"""
     player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
-    player_titles_list = game_configs.get("titles", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["titles"])
-    default_player_title = player_titles_list[0] if player_titles_list else "新手" # type: ignore
+    
+    all_titles_data = game_configs.get("titles", [])
+    # 尋找ID為 'title_001' 的預設稱號
+    default_title_object = next((t for t in all_titles_data if t.get("id") == "title_001"), None)
 
+    # 如果找不到，使用一個備用的預設值
+    if not default_title_object:
+        default_title_object = {
+            "id": "title_001", "name": "新手", "description": "踏入怪獸異世界的第一步。",
+            "condition": {"type": "default", "value": 0}, "buffs": {}
+        }
+
+    # 設置玩家的初始稱號資料
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
-        "titles": [default_player_title],
-        "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname
+        "titles": [default_title_object], # 玩家擁有的稱號列表（包含完整物件）
+        "achievements": ["首次登入異世界"],
+        "medals": 0,
+        "nickname": nickname,
+        "equipped_title_id": default_title_object["id"] # 預設裝備第一個稱號
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
@@ -140,6 +153,27 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if player_game_data_dict:
                 player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
                 
+                # 確保 playerStats 存在
+                if "playerStats" not in player_game_data_dict:
+                    player_game_data_dict["playerStats"] = {}
+
+                # 確保 titles 欄位是列表
+                if "titles" not in player_game_data_dict["playerStats"] or not isinstance(player_game_data_dict["playerStats"]["titles"], list):
+                     player_game_data_dict["playerStats"]["titles"] = []
+
+                # 確保 equipped_title_id 存在 (對於舊玩家的過渡處理)
+                if "equipped_title_id" not in player_game_data_dict["playerStats"]:
+                    current_titles = player_game_data_dict["playerStats"]["titles"]
+                    if current_titles and isinstance(current_titles[0], dict) and "id" in current_titles[0]:
+                        player_game_data_dict["playerStats"]["equipped_title_id"] = current_titles[0]["id"]
+                    else:
+                        # 如果連稱號列表都沒有，則賦予預設新手稱號
+                        all_titles = game_configs.get("titles", [])
+                        default_title = next((t for t in all_titles if t.get("id") == "title_001"), None)
+                        if default_title:
+                            player_game_data_dict["playerStats"]["titles"] = [default_title]
+                            player_game_data_dict["playerStats"]["equipped_title_id"] = "title_001"
+
                 loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
                 max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
                 
