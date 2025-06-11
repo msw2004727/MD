@@ -9,7 +9,7 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
-// --- 新增：抖動刪除模式相關的全域變數 ---
+// --- 抖動刪除模式相關的全域變數 ---
 let jiggleModeTimer = null;
 let isJiggleModeActive = false;
 
@@ -104,7 +104,7 @@ function handleDragStart(event) {
         event.preventDefault();
         return;
     }
-
+    
     // 如果在抖動模式下開始拖曳，暫停該物品的動畫並隱藏刪除鈕
     if (isJiggleModeActive && target.closest('.inventory-jiggle-active')) {
         target.style.animation = 'none';
@@ -303,94 +303,131 @@ async function handleDrop(event) {
     }
 } 
 
-// --- 新增：啟動/關閉抖動模式的函式 ---
+// --- 重構：抖動模式通用函式 ---
+
+// 啟動/關閉抖動模式
 function toggleJiggleMode(activate) {
-    const inventoryContainer = DOMElements.inventoryItemsContainer;
-    if (!inventoryContainer) return;
+    const containers = [
+        DOMElements.inventoryItemsContainer,
+        DOMElements.dnaCombinationSlotsContainer,
+        DOMElements.temporaryBackpackContainer
+    ];
 
     isJiggleModeActive = activate;
 
-    if (activate) {
-        inventoryContainer.classList.add('inventory-jiggle-active');
-        const occupiedItems = inventoryContainer.querySelectorAll('.dna-item.occupied');
-        occupiedItems.forEach(item => {
-            // 防止重複添加按鈕
-            if (item.querySelector('.delete-dna-btn')) return;
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-dna-btn';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.dataset.dnaId = item.dataset.dnaId;
-            item.appendChild(deleteBtn);
-        });
-    } else {
-        inventoryContainer.classList.remove('inventory-jiggle-active');
-        const deleteButtons = inventoryContainer.querySelectorAll('.delete-dna-btn');
-        deleteButtons.forEach(btn => btn.remove());
-    }
-}
-
-// --- 新增：處理抖動模式的事件監聽器 ---
-function handleJiggleMode() {
-    const inventoryContainer = DOMElements.inventoryItemsContainer;
-    if (!inventoryContainer) return;
-
-    // --- 啟動抖動模式：長按事件 ---
-    const pressHandler = (event) => {
-        const targetItem = event.target.closest('.dna-item.occupied');
-        if (!targetItem) return;
-        
-        // 開始計時
-        jiggleModeTimer = setTimeout(() => {
-            toggleJiggleMode(true);
-        }, 700); // 700毫秒視為長按
-    };
-
-    const cancelPressHandler = () => {
-        clearTimeout(jiggleModeTimer);
-    };
-
-    inventoryContainer.addEventListener('mousedown', pressHandler);
-    inventoryContainer.addEventListener('mouseup', cancelPressHandler);
-    inventoryContainer.addEventListener('mouseleave', cancelPressHandler);
-    // 觸控事件
-    inventoryContainer.addEventListener('touchstart', (e) => {
-        // e.preventDefault(); // 移除這行以允許滾動
-        pressHandler(e);
-    }, { passive: true }); // passive: true 告訴瀏覽器我們不會阻止滾動
-    inventoryContainer.addEventListener('touchend', cancelPressHandler);
-    inventoryContainer.addEventListener('touchmove', cancelPressHandler); // 如果手指移動就取消長按
-
-    // --- 關閉抖動模式：點擊空白處 ---
-    document.body.addEventListener('click', (event) => {
-        if (!isJiggleModeActive) return;
-        // 如果點擊的不是DNA物品或其子元素，就關閉抖動模式
-        if (!inventoryContainer.contains(event.target)) {
-            toggleJiggleMode(false);
+    containers.forEach(container => {
+        if (!container) return;
+        if (activate) {
+            container.classList.add('inventory-jiggle-active');
+            const occupiedItems = container.querySelectorAll('.dna-item.occupied, .dna-slot.occupied');
+            occupiedItems.forEach(item => {
+                if (item.querySelector('.delete-dna-btn')) return; // 防止重複添加
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-dna-btn';
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.dataset.dnaId = item.dataset.dnaId;
+                item.appendChild(deleteBtn);
+            });
+        } else {
+            container.classList.remove('inventory-jiggle-active');
+            const deleteButtons = container.querySelectorAll('.delete-dna-btn');
+            deleteButtons.forEach(btn => btn.remove());
         }
     });
+}
 
-    // --- 處理刪除按鈕點擊事件（事件委派） ---
-    inventoryContainer.addEventListener('click', (event) => {
-        const deleteButton = event.target.closest('.delete-dna-btn');
-        if (!deleteButton) return;
-        
-        event.stopPropagation(); // 阻止事件冒泡到關閉模式的監聽器
+// 輔助函式：從遊戲狀態中尋找並移除DNA
+function findAndRemoveDnaById(dnaIdToDelete) {
+    // 搜尋主庫存
+    let index = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === dnaIdToDelete);
+    if (index > -1) {
+        gameState.playerData.playerOwnedDNA[index] = null;
+        return { success: true };
+    }
+    // 搜尋組合槽
+    index = gameState.dnaCombinationSlots.findIndex(dna => dna && dna.id === dnaIdToDelete);
+    if (index > -1) {
+        gameState.dnaCombinationSlots[index] = null;
+        return { success: true };
+    }
+    // 搜尋暫存背包
+    index = gameState.temporaryBackpack.findIndex(item => item && item.data && item.data.id === dnaIdToDelete);
+    if (index > -1) {
+        gameState.temporaryBackpack[index] = null;
+        return { success: true };
+    }
+    return { success: false };
+}
 
-        const dnaIdToDelete = deleteButton.dataset.dnaId;
-        const itemToDelete = gameState.playerData.playerOwnedDNA.find(dna => dna && dna.id === dnaIdToDelete);
+// 統一的事件處理函式
+function setupAllJiggleModeHandlers() {
+    const containers = [
+        DOMElements.inventoryItemsContainer,
+        DOMElements.dnaCombinationSlotsContainer,
+        DOMElements.temporaryBackpackContainer
+    ];
 
-        if (itemToDelete) {
-            showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${itemToDelete.name}" 嗎？此操作無法復原。`, async () => {
-                const dnaIndex = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === dnaIdToDelete);
-                if (dnaIndex > -1) {
-                    gameState.playerData.playerOwnedDNA[dnaIndex] = null;
-                    await savePlayerData(gameState.playerId, gameState.playerData);
-                    renderPlayerDNAInventory(); // 重新渲染庫存
-                    toggleJiggleMode(false); // 刪除後自動關閉抖動模式
-                    showFeedbackModal('刪除成功', `DNA碎片「${itemToDelete.name}」已被成功刪除。`);
-                }
-            });
+    const pressHandler = (event) => {
+        if (isJiggleModeActive) return; // 如果已在抖動模式，則不觸發
+        const targetItem = event.target.closest('.dna-item.occupied, .dna-slot.occupied');
+        if (!targetItem) return;
+
+        jiggleModeTimer = setTimeout(() => {
+            toggleJiggleMode(true);
+        }, 700);
+    };
+
+    const cancelPressHandler = () => clearTimeout(jiggleModeTimer);
+
+    containers.forEach(container => {
+        if (!container) return;
+
+        // --- 1. 長按監聽 ---
+        container.addEventListener('mousedown', pressHandler);
+        container.addEventListener('mouseup', cancelPressHandler);
+        container.addEventListener('mouseleave', cancelPressHandler);
+        container.addEventListener('touchstart', pressHandler, { passive: true });
+        container.addEventListener('touchend', cancelPressHandler);
+        container.addEventListener('touchmove', cancelPressHandler);
+
+        // --- 2. 刪除按鈕點擊監聽 (事件委派) ---
+        container.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('.delete-dna-btn');
+            if (!deleteButton) return;
+            
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dnaIdToDelete = deleteButton.dataset.dnaId;
+            const allItems = [
+                ...gameState.playerData.playerOwnedDNA, 
+                ...gameState.dnaCombinationSlots,
+                ...gameState.temporaryBackpack.map(i => i ? i.data : null)
+            ].filter(Boolean); // 過濾掉 null
+            const itemToDelete = allItems.find(item => item.id === dnaIdToDelete);
+
+            if (itemToDelete) {
+                showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${itemToDelete.name}" 嗎？`, async () => {
+                    const removalResult = findAndRemoveDnaById(dnaIdToDelete);
+                    if (removalResult.success) {
+                        await savePlayerData(gameState.playerId, gameState.playerData);
+                        renderPlayerDNAInventory();
+                        renderDNACombinationSlots();
+                        renderTemporaryBackpack();
+                        toggleJiggleMode(false);
+                        showFeedbackModal('刪除成功', `DNA碎片「${itemToDelete.name}」已被成功刪除。`);
+                    }
+                });
+            }
+        });
+    });
+
+    // --- 3. 點擊外部關閉抖動模式 ---
+    document.body.addEventListener('click', (event) => {
+        if (!isJiggleModeActive) return;
+        const clickedInside = containers.some(container => container && container.contains(event.target));
+        if (!clickedInside) {
+            toggleJiggleMode(false);
         }
     });
 }
@@ -1305,7 +1342,7 @@ function initializeEventListeners() {
     handleBattleLogModalClose();
     handleDnaDrawModal();
     handleAnnouncementModalClose();
-    handleJiggleMode(); // 新增：啟動抖動模式的事件監聽
+    setupAllJiggleModeHandlers(); // 修改：呼叫重構後的統一函式
 
     // 為新的刷新按鈕添加事件監聽
     if (DOMElements.refreshMonsterLeaderboardBtn) {
