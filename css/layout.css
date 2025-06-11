@@ -52,19 +52,19 @@
 
 /* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 2050; /* MODIFIED: z-index increased */
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #player-info-modal {
-    z-index: 2050; /* MODIFIED: z-index increased */
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #monster-info-modal {
-    z-index: 2050; /* MODIFIED: z-index increased */
+    z-index: 2030; /* MODIFIED: z-index increased */
 }
 
 #feedback-modal {
-    z-index: 2050; /* MODIFIED: z-index increased */
+    z-index: 2040; /* MODIFIED: z-index increased */
 }
 
 
