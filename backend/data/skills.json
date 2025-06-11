@@ -9,7 +9,21 @@
       "type": "火",
       "mp_cost": 6,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": {
+            "description": "拳風帶有灼熱氣息，有20%機率使對手陷入「燒傷」狀態。",
+            "add_effect": {
+                "effect": "status_change",
+                "status_id": "burned",
+                "probability": 20
+            }
+        },
+        "10": {
+            "description": "威力永久提升15點。",
+            "add_power": 15
+        }
+      }
     },
     {
       "name": "爆炎衝",
