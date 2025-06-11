@@ -29,7 +29,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
             const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-            return `<li><a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">${m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
+            return `<li><a href="#" class="monster-name text-rarity-<span class="math-inline">\{rarityKey\} player\-info\-monster\-link" data\-monster\-id\="</span>{m.id}" data-owner-uid="<span class="math-inline">\{playerData\.uid\}" style\="text\-decoration\: none;"\></span>{m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
         }).join('');
 
         let moreMonstersHtml = '';
@@ -42,32 +42,32 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             }</div>`;
         }
 
-        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
+        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1"><span class="math-inline">\{previewHtml\}</span>{moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
             ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
         }
     }
 
-    const medalsHtml = stats.medals > 0 ? `${'🥇'.repeat(Math.min(stats.medals, 5))} (${stats.medals})` : '無';
+    const medalsHtml = stats.medals > 0 ? `<span class="math-inline">\{'🥇'\.repeat\(Math\.min\(stats\.medals, 5\)\)\} \(</span>{stats.medals})` : '無';
 
     body.innerHTML = `
         <div class="text-center mb-4">
-            <h4 class="text-2xl font-bold text-[var(--accent-color)]">${nickname}</h4>
-        </div>
-        <div class="details-grid">
-            <div class="details-section">
-                <h5 class="details-section-title">基本統計</h5>
-                <div class="details-item"><span class="details-label">等級/排名:</span> <span class="details-value">${stats.rank || 'N/A'}</span></div>
-                <div class="details-item"><span class="details-label">總勝場:</span> <span class="details-value text-[var(--success-color)]">${stats.wins || 0}</span></div>
-                <div class="details-item"><span class="details-label">總敗場:</span> <span class="details-value text-[var(--danger-color)]">${stats.losses || 0}</span></div>
-                <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value">${stats.score || 0}</span></div>
-            </div>
-            <div class="details-section">
-                <h5 class="details-section-title">榮譽</h5>
-                <div class="mb-2">
-                    <span class="details-label block mb-1">當前稱號:</span>
-                    <div>${titlesHtml}</div>
+            <h4 class="text-2xl font-bold text-[var(--accent-color)]"><span class="math-inline">\{nickname\}</h4\>
+</div\>
+<div class\="details\-grid"\>
+<div class\="details\-section"\>
+<h5 class\="details\-section\-title"\>基本統計</h5\>
+<div class\="details\-item"\><span class\="details\-label"\>等級/排名\:</span\> <span class\="details\-value"\></span>{stats.rank || 'N/A'}</span></div>
+                <div class="details-item"><span class="details-label">總勝場:</span> <span class="details-value text-[var(--success-color)]"><span class="math-inline">\{stats\.wins \|\| 0\}</span\></div\>
+<div class\="details\-item"\><span class\="details\-label"\>總敗場\:</span\> <span class\="details\-value text\-\[var\(\-\-danger\-color\)\]"\></span>{stats.losses || 0}</span></div>
+                <div class="details-item"><span class="details-label">總積分:</span> <span class="details-value"><span class="math-inline">\{stats\.score \|\| 0\}</span\></div\>
+</div\>
+<div class\="details\-section"\>
+<h5 class\="details\-section\-title"\>榮譽</h5\>
+<div class\="mb\-2"\>
+<span class\="details\-label block mb\-1"\>當前稱號\:</span\>
+<div\></span>{titlesHtml}</div>
                 </div>
                 <div class="mb-2">
                     <span class="details-label block mb-1">勳章:</span>
@@ -149,12 +149,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
             <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
-                ${monster.nickname}
-            </h4>
-            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
-        </div>
-        <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
-            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
+                <span class="math-inline">\{monster\.nickname\}
+</h4\>
+<button id\="edit\-monster\-nickname\-btn" class\="button secondary" title\="編輯名稱"\>✏️</button\>
+</div\>
+<div id\="monster\-nickname\-edit\-container" class\="monster\-nickname\-edit\-container" style\="display\: none;"\>
+<input type\="text" id\="monster\-nickname\-input" placeholder\="輸入5個字以內" value\="</span>{editableNickname}" maxlength="5">
             <button id="confirm-nickname-change-btn" class="button success" title="確認">✔️</button>
             <button id="cancel-nickname-change-btn" class="button danger" title="取消">❌</button>
         </div>
@@ -170,7 +170,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const effect = value > 0 ? '抗性' : '弱點';
             const colorClass = value > 0 ? 'text-[var(--success-color)]' : 'text-[var(--danger-color)]';
             const elClass = typeof element === 'string' ? `text-element-${getElementCssClassKey(element)}` : '';
-            resistancesHtml += `<li><span class="capitalize ${elClass}">${element}</span>: <span class="${colorClass}">${Math.abs(value)}% ${effect}</span></li>`;
+            resistancesHtml += `<li><span class="capitalize <span class="math-inline">\{elClass\}"\></span>{element}</span>: <span class="<span class="math-inline">\{colorClass\}"\></span>{Math.abs(value)}% ${effect}</span></li>`;
         }
         resistancesHtml += '</ul>';
     }
@@ -191,7 +191,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 </div>
             `;
             
-            // ===== 新增：計算加成後數值 =====
             const level = skill.level || 1;
             let powerDisplay = skill.power;
             if (level > 1 && skill.power > 0) {
@@ -204,14 +203,48 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 const effectiveMpCost = Math.max(1, skill.mp_cost - Math.floor((level - 1) / 2));
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
+
+            // 新增：產生里程碑效果的 HTML
+            let milestonesHtml = '';
+            let skillTemplate = null;
+            if (gameState.gameConfigs && gameState.gameConfigs.skills) {
+                for (const type in gameState.gameConfigs.skills) {
+                    const found = gameState.gameConfigs.skills[type].find(s => s.name === skill.name);
+                    if (found) {
+                        skillTemplate = found;
+                        break;
+                    }
+                }
+            }
+
+            if (skillTemplate && skillTemplate.level_milestones) {
+                milestonesHtml += `<div class="mt-2" style="font-size: 0.9em; border-top: 1px dashed var(--border-color); padding-top: 5px;">`;
+                for (const levelStr in skillTemplate.level_milestones) {
+                    const milestoneLevel = parseInt(levelStr, 10);
+                    const milestone = skillTemplate.level_milestones[levelStr];
+                    const isUnlocked = level >= milestoneLevel;
+
+                    const icon = isUnlocked ? '✔️' : '🔒';
+                    const color = isUnlocked ? 'var(--success-color)' : 'var(--text-secondary)';
+                    
+                    milestonesHtml += `
+                        <div style="color: <span class="math-inline">\{color\}; margin\-top\: 3px;"\>
+<span style\="font\-weight\: bold;"\></span>{icon} Lv.<span class="math-inline">\{milestoneLevel\}\:</span\>
+<span\></span>{milestone.description}</span>
+                        </div>
+                    `;
+                }
+                milestonesHtml += `</div>`;
+            }
             // ===================================
 
             return `
             <div class="skill-entry">
-                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>
-                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
-                <p class="skill-details text-xs">${description}</p>
+                <a href="#" class="skill-name-link <span class="math-inline">\{skillTypeClass\}" data\-skill\-name\="</span>{skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;"><span class="math-inline">\{skill\.name\} \(Lv\.</span>{level})</a>
+                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: <span class="math-inline">\{skill\.skill\_category \|\| '未知'\}</p\>
+<p class\="skill\-details text\-xs"\></span>{description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
+                ${milestonesHtml}
             </div>
         `}).join('');
     }
@@ -223,8 +256,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const challengeInfoHtml = `
         <div class="details-section">
             <h5 class="details-section-title">挑戰資訊</h5>
-            <div class="details-item"><span class="details-label">勝場:</span><span class="details-value text-[var(--success-color)]">${resume.wins}</span></div>
-            <div class="details-item"><span class="details-label">敗場:</span><span class="details-value text-[var(--danger-color)]">${resume.losses}</span></div>
+            <div class="details-item"><span class="details-label">勝場:</span><span class="details-value text-[var(--success-color)]"><span class="math-inline">\{resume\.wins\}</span\></div\>
+<div class\="details\-item"\><span class\="details\-label"\>敗場\:</span\><span class\="details\-value text\-\[var\(\-\-danger\-color\)\]"\></span>{resume.losses}</span></div>
             <div class="details-item"><span class="details-label">打出最高傷害:</span><span class="details-value">-</span></div>
             <div class="details-item"><span class="details-label">承受最高傷害:</span><span class="details-value">-</span></div>
             <div class="details-item"><span class="details-label">吞噬紀錄:</span><span class="details-value">-</span></div>
@@ -243,8 +276,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
-                        <span class="dna-name-text">${dna.name}</span>
+            return `<div class="dna-item occupied" data-dna-ref-id="<span class="math-inline">\{dna\.id\}"\>
+<span class\="dna\-name\-text"\></span>{dna.name}</span>
                     </div>`;
         } else {
             return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
@@ -274,13 +307,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             <div class="details-column-left" style="display: flex; flex-direction: column;">
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
-                    <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-<span class="math-inline">\{rarityKey\}"\></span>{monster.rarity}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value"><span class="math-inline">\{monster\.hp\}/</span>{monster.initial_max_hp}<span class="math-inline">\{getGainHtml\('hp'\)\}</span\></div\>
+<div class\="details\-item"\><span class\="details\-label"\>MP\:</span\> <span class\="details\-value"\></span>{monster.mp}/<span class="math-inline">\{monster\.initial\_max\_mp\}</span>{getGainHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value"><span class="math-inline">\{monster\.attack\}</span>{getGainHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value"><span class="math-inline">\{monster\.defense\}</span>{getGainHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value"><span class="math-inline">\{monster\.speed\}</span>{getGainHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value"><span class="math-inline">\{monster\.crit\}%</span>{getGainHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
@@ -302,13 +335,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         <div class="details-section mt-3">
             <h5 class="details-section-title">個性說明</h5>
             <p class="ai-generated-text text-sm" style="line-height: 1.6;">
-                <strong style="color: ${personality.colorDark || 'var(--accent-color)'};">${personality.name || '未知'}:</strong><br>
-                ${personality.description || '暫無個性說明。'}
-            </p>
-        </div>
-        <div class="details-section mt-3">
-            <h5 class="details-section-title">生物調查紀錄</h5>
-            <p class="ai-generated-text text-sm">${aiIntroduction}</p>
+                <strong style="color: <span class="math-inline">\{personality\.colorDark \|\| 'var\(\-\-accent\-color\)'\};"\></span>{personality.name || '未知'}:</strong><br>
+                <span class="math-inline">\{personality\.description \|\| '暫無個性說明。'\}
+</p\>
+</div\>
+<div class\="details\-section mt\-3"\>
+<h5 class\="details\-section\-title"\>生物調查紀錄</h5\>
+<p class\="ai\-generated\-text text\-sm"\></span>{aiIntroduction}</p>
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
@@ -324,7 +357,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
         logsContainer.innerHTML = monster.activityLog.map(log =>
-            `<div class="log-entry"><span class="log-time">${log.time}</span> <span class="log-message">${log.message}</span></div>`
+            `<div class="log-entry"><span class="log-time"><span class="math-inline">\{log\.time\}</span\> <span class\="log\-message"\></span>{log.message}</span></div>`
         ).join('');
     } else {
         logsContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>';
@@ -358,8 +391,8 @@ function updateNewbieGuideModal(guideEntries, searchTerm = '') {
         const entryDiv = document.createElement('div');
         entryDiv.classList.add('mb-4', 'pb-3', 'border-b', 'border-[var(--border-color)]');
         entryDiv.innerHTML = `
-            <h5 class="text-lg font-semibold text-[var(--accent-color)] mb-1">${entry.title}</h5>
-            <p class="text-sm leading-relaxed">${entry.content.replace(/\n/g, '<br>')}</p>
+            <h5 class="text-lg font-semibold text-[var(--accent-color)] mb-1"><span class="math-inline">\{entry\.title\}</h5\>
+<p class\="text\-sm leading\-relaxed"\></span>{entry.content.replace(/\n/g, '<br>')}</p>
         `;
         container.appendChild(entryDiv);
     });
@@ -384,14 +417,14 @@ function updateFriendsSearchResults(players) {
         } else if (isFriend) {
             buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
         } else {
-            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
+            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('<span class="math-inline">\{player\.uid\}', '</span>{player.nickname}')">加為好友</button>`;
         }
 
         return `
             <div class="friend-item">
-                <span class="friend-name">${player.nickname}</span>
-                <div class="friend-actions">
-                    <button class="button secondary text-xs" onclick="viewPlayerInfo('${player.uid}')">查看資訊</button>
+                <span class="friend-name"><span class="math-inline">\{player\.nickname\}</span\>
+<div class\="friend\-actions"\>
+<button class\="button secondary text\-xs" onclick\="viewPlayerInfo\('</span>{player.uid}')">查看資訊</button>
                     ${buttonHtml}
                 </div>
             </div>
@@ -472,7 +505,7 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
-        row.dataset.monsterId = item.id; // 新增：在tr上添加 data-monster-id
+        row.dataset.monsterId = item.id; 
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -490,7 +523,6 @@ function updateLeaderboardTable(tableType, data) {
             link.className = 'leaderboard-monster-link';
             link.classList.add(`text-rarity-${rarityKey}`);
             link.style.textDecoration = 'none';
-            // 移除 style.color = 'inherit'
             link.textContent = item.nickname;
             nicknameCell.appendChild(link);
 
@@ -499,7 +531,7 @@ function updateLeaderboardTable(tableType, data) {
             elementsCell.style.textAlign = 'center';
             if(item.elements && Array.isArray(item.elements)) {
                 elementsCell.innerHTML = item.elements.map(el =>
-                    `<span class="text-xs text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
+                    `<span class="text-xs text-element-<span class="math-inline">\{getElementCssClassKey\(el\)\} font\-bold mr\-2"\></span>{el}</span>`
                 ).join('');
             }
 
@@ -722,7 +754,7 @@ function showBattleLogModal(battleResult) {
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        const nicknameSpan = `<span class="monster-name">${prefix}${monster.nickname}</span>`;
+        const nicknameSpan = `<span class="monster-name"><span class="math-inline">\{prefix\}</span>{monster.nickname}</span>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
@@ -744,9 +776,9 @@ function showBattleLogModal(battleResult) {
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-vs-grid">
-                <div class="player-side">${renderMonsterStats(playerMonsterData, true)}</div>
-                <div class="vs-divider">VS</div>
-                <div class="opponent-side">${renderMonsterStats(opponentMonsterData, false)}</div>
+                <div class="player-side"><span class="math-inline">\{renderMonsterStats\(playerMonsterData, true\)\}</div\>
+<div class\="vs\-divider"\>VS</div\>
+<div class\="opponent\-side"\></span>{renderMonsterStats(opponentMonsterData, false)}</div>
             </div>
         </div>
     `;
@@ -762,9 +794,9 @@ function showBattleLogModal(battleResult) {
             <div class="status-bar-container">
                 <span class="status-bar-label">${label}</span>
                 <div class="status-bar-background">
-                    <div class="status-bar-fill" style="width: ${percentage}%; background-color: ${color};"></div>
-                </div>
-                <span class="status-bar-value">${value} / ${max}</span>
+                    <div class="status-bar-fill" style="width: ${percentage}%; background-color: <span class="math-inline">\{color\};"\></div\>
+</div\>
+<span class\="status\-bar\-value"\></span>{value} / ${max}</span>
             </div>
         `;
     };
@@ -852,17 +884,17 @@ function showBattleLogModal(battleResult) {
 
     reportContainer.innerHTML += `
         <div class="report-section battle-result-banner">
-            ${resultBannerHtml}
-        </div>
-        <div class="report-section battle-summary-section">
-            <h4 class="report-section-title">戰報總結</h4>
-            <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
+            <span class="math-inline">\{resultBannerHtml\}
+</div\>
+<div class\="report\-section battle\-summary\-section"\>
+<h4 class\="report\-section\-title"\>戰報總結</h4\>
+<p class\="battle\-summary\-text"\></span>{formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     const highlights = battleResult.battle_highlights || [];
     if (highlights.length > 0) {
         let highlightsHtml = highlights.map((item, index) => 
-            `<li class="highlight-item" ${index >= 3 ? 'style="display:none;"' : ''}>${item}</li>`
+            `<li class="highlight-item" <span class="math-inline">\{index \>\= 3 ? 'style\="display\:none;"' \: ''\}\></span>{item}</li>`
         ).join('');
         
         let showMoreBtnHtml = '';
@@ -881,8 +913,8 @@ function showBattleLogModal(battleResult) {
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
-            <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
-            <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="loot-info-text"><span class="math-inline">\{formatBasicText\(applyDynamicStylingToBattleReport\(battleReportContent\.loot\_info, playerMonsterData, opponentMonsterData\)\)\}</p\>
+<p class\="growth\-info\-text"\></span>{formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     DOMElements.battleLogArea.appendChild(reportContainer);
@@ -920,9 +952,9 @@ function showDnaDrawModal(drawnItems) {
             applyDnaItemStyle(itemDiv, dna);
 
             itemDiv.innerHTML = `
-                <span class="dna-name">${dna.name}</span>
-                <span class="dna-type">${dna.type}屬性</span>
-                <span class="dna-rarity text-rarity-${dna.rarity.toLowerCase()}">${dna.rarity}</span>
+                <span class="dna-name"><span class="math-inline">\{dna\.name\}</span\>
+<span class\="dna\-type"\></span>{dna.type}屬性</span>
+                <span class="dna-rarity text-rarity-<span class="math-inline">\{dna\.rarity\.toLowerCase\(\)\}"\></span>{dna.rarity}</span>
                 <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
             `;
             grid.appendChild(itemDiv);
@@ -1011,7 +1043,7 @@ function updateTrainingResultsModal(results, monsterName) {
             // 使用正則表達式尋找單引號內的技能名稱
             const updatedLog = log.replace(/'(.+?)'/g, (match, skillName) => {
                 // 將匹配到的技能名稱轉換為帶有連結的 HTML
-                return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
+                return `'<a href="#" class="skill-name-link" data-skill-name="<span class="math-inline">\{skillName\}" style\="text\-decoration\: none; color\: inherit;"\></span>{skillName}</a>'`;
             });
             skillGrowthHtml += `<li>${updatedLog}</li>`;
         });
