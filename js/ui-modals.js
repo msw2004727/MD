@@ -190,11 +190,26 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                     <p class="text-xs text-[var(--text-secondary)]" style="margin-top: 2px;">經驗: ${skill.current_exp} / ${skill.exp_to_next_level || '-'}</p>
                 </div>
             `;
+            
+            // ===== 新增：計算加成後數值 =====
+            const level = skill.level || 1;
+            let powerDisplay = skill.power;
+            if (level > 1 && skill.power > 0) {
+                const effectivePower = Math.floor(skill.power * (1 + (level - 1) * 0.08));
+                powerDisplay = `${skill.power} <span class="text-[var(--success-color)]" style="font-size:0.9em;">▸ ${effectivePower}</span>`;
+            }
+
+            let mpCostDisplay = skill.mp_cost || 0;
+            if (level > 1 && skill.mp_cost > 0) {
+                const effectiveMpCost = Math.max(1, skill.mp_cost - Math.floor((level - 1) / 2));
+                mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
+            }
+            // ===================================
 
             return `
             <div class="skill-entry">
                 <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${skill.level || 1})</a>
-                <p class="skill-details">威力: ${skill.power}, 消耗MP: ${skill.mp_cost || 0}, 類別: ${skill.skill_category || '未知'}</p>
+                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
             </div>
