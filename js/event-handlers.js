@@ -574,6 +574,9 @@ async function handleCombineDna() {
         return;
     }
 
+    // 新增：在異步操作前禁用按鈕
+    DOMElements.combineButton.disabled = true;
+
     try {
         showFeedbackModal('怪獸合成中...', '正在融合 DNA 的神秘力量...', true);
         const newMonster = await combineDNA(dnaObjectsForCombination);
@@ -594,6 +597,10 @@ async function handleCombineDna() {
         }
         showFeedbackModal('合成失敗', errorMessage);
         console.error("合成DNA錯誤:", error);
+    } finally {
+        // 新增：無論成功或失敗，都重新啟用按鈕
+        // 注意：成功時，resetDNACombinationSlots會因為槽位為空而再次禁用它，這是預期行為。
+        DOMElements.combineButton.disabled = false;
     }
 }
 
