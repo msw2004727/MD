@@ -303,7 +303,7 @@ function handleModalCloseButtons() {
 async function fetchAndDisplayMonsterLeaderboard() {
     try {
         showFeedbackModal('載入中...', '正在獲取最新的怪獸排行榜...', true);
-        const leaderboardData = await getMonsterLeaderboard(20);
+        const leaderboardData = await getMonsterLeaderboard(100);
         gameState.monsterLeaderboard = leaderboardData;
 
         let elementsForTabs = ['all'];
@@ -600,7 +600,10 @@ async function handleCombineDna() {
     } finally {
         // 新增：無論成功或失敗，都重新啟用按鈕
         // 注意：成功時，resetDNACombinationSlots會因為槽位為空而再次禁用它，這是預期行為。
-        DOMElements.combineButton.disabled = false;
+        if (DOMElements.combineButton) {
+            const combinationSlotsFilled = gameState.dnaCombinationSlots.filter(s => s !== null).length >= 2;
+            DOMElements.combineButton.disabled = !combinationSlotsFilled;
+        }
     }
 }
 
@@ -1093,13 +1096,22 @@ async function handleSkillLinkClick(event) {
         const category = skillDetails.skill_category || '未知';
         
         const message = `
-            <div style="text-align: left;">
+            <div style="text-align: left; background-color: var(--bg-primary); padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                <p><strong>技能: ${skillName}</strong></p>
                 <p><strong>類別:</strong> ${category} &nbsp;&nbsp; <strong>威力:</strong> ${power} &nbsp;&nbsp; <strong>消耗MP:</strong> ${mpCost}</p>
                 <hr style="margin: 8px 0; border-color: var(--border-color);">
                 <p>${description}</p>
             </div>
         `;
-        showFeedbackModal(`技能: ${skillName}`, message);
+        
+        const feedbackModalBody = target.closest('#feedback-modal-body-content');
+        const injectionPoint = document.getElementById('skill-details-injection-point');
+
+        if (feedbackModalBody && injectionPoint) {
+            injectionPoint.innerHTML = message;
+        } else {
+            showFeedbackModal(`技能: ${skillName}`, message);
+        }
     } else {
         showFeedbackModal('錯誤', `找不到名為 "${skillName}" 的技能詳細資料。`);
     }
@@ -1113,7 +1125,7 @@ function initializeEventListeners() {
     handleTabSwitching();
     handleLeaderboardSorting();
     handleLeaderboardClicks();
-    handlePlayerInfoMonsterClicks(); // 新增：註冊玩家資訊彈窗中的點擊事件
+    handlePlayerInfoMonsterClicks();
     handleMonsterNicknameEvents();
     handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
