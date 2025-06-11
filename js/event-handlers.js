@@ -289,9 +289,12 @@ function handleModalCloseButtons() {
         button.addEventListener('click', () => {
             const modalId = button.dataset.modalId || button.closest('.modal')?.id;
             if (modalId) {
-                // 為了解決「修煉成果」彈窗關不掉的問題，我們簡化此處邏輯。
-                // 移除原有的物品檢查，讓所有 .modal-close 按鈕都直接關閉對應的彈窗。
-                hideModal(modalId);
+                // 恢復對修煉成果彈窗的特殊檢查
+                if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
+                    showModal('reminder-modal');
+                } else {
+                    hideModal(modalId);
+                }
             }
         });
     });
