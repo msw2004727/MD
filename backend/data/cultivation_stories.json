@@ -1,0 +1,157 @@
+{
+  "gaia": {
+    "tier_25": {
+      "base_story": [
+        "在蓋亞的搖籃中，{monster_name}安靜地度過了一段時光，感受著自然的脈動。雖然沒有特別的發現，但牠感覺自己鍛鍊的{trained_skills}技巧更加穩固了。",
+        "沐浴在柔和的陽光下，{monster_name}在青翠的草地上小憩片刻，為下一次冒險養精蓄銳。牠反覆回味著{trained_skills}的訣竅，覺得受益匪淺。"
+      ],
+      "opening": [
+        "在蓋亞的搖籃中，{monster_name}小心翼翼地探索著，濕潤的空氣中充滿了生命的氣息。",
+        "{monster_name}穿梭在參天的古木之間，陽光透過葉隙灑下斑駁的光點。"
+      ],
+      "event": {
+        "item_found": [
+          "突然，牠的目光被一處閃爍著微光的草叢吸引，走近一看，竟然發現了{item_list}！",
+          "在一棵古老藤蔓的根部，牠找到了一個被遺忘的包裹，裡面裝著{item_list}。"
+        ],
+        "new_skill_learned": [
+          "在一場與原生生物的追逐中，{monster_name}靈光一閃，身體不由自主地使出了全新的招式——{new_skill_name}！",
+          "當牠專心致志地鍛鍊{trained_skills}時，一股新的力量在體內湧現，最終化為了一招強大的{new_skill_name}！"
+        ],
+        "item_and_new_skill": [
+          "真是一趟奇遇！{monster_name}在追逐一隻奇特生物時，不僅在其巢穴發現了{item_list}，還在戰鬥中福至心靈，領悟了{new_skill_name}！"
+        ]
+      },
+      "closing": [
+        "滿載而歸的牠，帶著新的力量與發現，踏上了歸途。",
+        "這次的修煉收穫頗豐，牠對下一次的冒險充滿了期待。"
+      ]
+    },
+    "tier_50": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_75": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_100": {
+      "base_story": [
+        "經過長時間的艱苦修行，{monster_name}的身心都達到了新的境界。牠對{trained_skills}的理解已臻化境，每一次呼吸都與蓋亞的脈動合而為一。雖然沒有遇到特別的奇遇，但這份純粹的成長本身就是最寶貴的財富。"
+      ],
+      "opening": [
+        "在蓋亞搖籃的最深處，{monster_name}挑戰著自己的極限，周圍環繞著最原始也最強大的自然之力。"
+      ],
+      "event": {
+        "item_found": [
+          "在克服了重重險阻，抵達一處無人涉足的秘境後，{monster_name}在古老的祭壇上發現了傳說中的寶物：{item_list}！"
+        ],
+        "new_skill_learned": [
+          "在與守護秘境的強大幻影進行了漫長的戰鬥後，{monster_name}在體力與意志都瀕臨極限的瞬間，突破了瓶頸，領悟了終極奧義：{new_skill_name}！"
+        ],
+        "item_and_new_skill": [
+          "這是一場傳奇般的試煉！牠擊敗了守護神物的古老精魂，不僅贏得了其守護的{item_list}，更在戰鬥中吸收了對方的力量，昇華了自身的技巧，領悟了驚天動地的{new_skill_name}！"
+        ]
+      },
+      "closing": [
+        "帶著足以撼動世界的力量與傳說中的秘寶，{monster_name}的身影消失在森林深處，牠已不再是昨日的自己。"
+      ]
+    }
+  },
+  "sky": {
+    "tier_25": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_50": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_75": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_100": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    }
+  },
+  "crystal": {
+    "tier_25": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_50": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_75": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    },
+    "tier_100": {
+      "base_story": [],
+      "opening": [],
+      "event": {
+        "item_found": [],
+        "new_skill_learned": [],
+        "item_and_new_skill": []
+      },
+      "closing": []
+    }
+  }
+}
