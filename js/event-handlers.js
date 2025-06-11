@@ -372,26 +372,24 @@ function handleLeaderboardClicks() {
     }
 }
 
-// 新增：處理玩家資訊彈窗中怪獸連結的點擊事件
-function handlePlayerInfoMonsterClicks() {
-    if (DOMElements.playerInfoModalBody) {
-        DOMElements.playerInfoModalBody.addEventListener('click', (event) => {
-            const link = event.target.closest('.player-info-monster-link');
-            if (!link) return;
+// --- 新增：處理玩家資訊彈窗內的所有點擊事件 ---
+function handlePlayerInfoModalEvents() {
+    if (!DOMElements.playerInfoModalBody) return;
 
+    DOMElements.playerInfoModalBody.addEventListener('click', async (event) => {
+        // 1. 處理點擊怪獸連結
+        const monsterLink = event.target.closest('.player-info-monster-link');
+        if (monsterLink) {
             event.preventDefault();
-            const monsterId = link.dataset.monsterId;
-            const ownerUid = link.dataset.ownerUid;
+            const monsterId = monsterLink.dataset.monsterId;
+            const ownerUid = monsterLink.dataset.ownerUid;
 
             if (!monsterId || !ownerUid) return;
 
             let monsterData = null;
-            // 檢查是看自己的資訊還是別人的
             if (ownerUid === gameState.playerId) {
-                // 從自己的玩家資料中尋找
                 monsterData = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
             } else if (gameState.viewedPlayerData && gameState.viewedPlayerData.uid === ownerUid) {
-                // 從暫存的被查看玩家資料中尋找
                 monsterData = gameState.viewedPlayerData.farmedMonsters.find(m => m.id === monsterId);
             }
 
@@ -402,8 +400,35 @@ function handlePlayerInfoMonsterClicks() {
                 console.error(`無法在玩家 ${ownerUid} 的資料中找到怪獸 ${monsterId}。`);
                 showFeedbackModal('錯誤', '無法載入該怪獸的詳細資訊。');
             }
-        });
-    }
+            return;
+        }
+
+        // 2. 處理點擊「裝備」稱號按鈕
+        const equipButton = event.target.closest('.equip-title-btn');
+        if (equipButton) {
+            event.preventDefault();
+            const titleId = equipButton.dataset.titleId;
+            if (!titleId) return;
+
+            equipButton.disabled = true;
+            equipButton.textContent = '處理中...';
+
+            try {
+                const result = await equipTitle(titleId);
+                if (result && result.success) {
+                    await refreshPlayerData(); // 刷新本地資料
+                    updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs); // 用最新資料重新渲染彈窗
+                } else {
+                    throw new Error(result.error || '裝備稱號時發生未知錯誤。');
+                }
+            } catch (error) {
+                showFeedbackModal('裝備失敗', `錯誤：${error.message}`);
+                // 失敗時也重新渲染，以恢復按鈕狀態
+                updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
+            }
+            return;
+        }
+    });
 }
 
 
@@ -1126,7 +1151,7 @@ function initializeEventListeners() {
     handleTabSwitching();
     handleLeaderboardSorting();
     handleLeaderboardClicks();
-    handlePlayerInfoMonsterClicks();
+    handlePlayerInfoModalEvents(); // 修改：調用新的整合函式
     handleMonsterNicknameEvents();
     handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
