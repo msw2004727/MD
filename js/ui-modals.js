@@ -157,7 +157,6 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    // --- 修改：恢復怪獸改名功能 ---
     const isOwner = !monster.owner_id || monster.owner_id === gameState.playerId;
     const ownerActionsHtml = isOwner ? `
         <button id="edit-monster-nickname-btn" class="button secondary" title="編輯屬性名" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✏️</button>
@@ -182,7 +181,6 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
         </div>
         ${editFormHtml}
     `;
-    // --- 修改結束 ---
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
@@ -328,7 +326,8 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     };
 
     let titleBuffs = {};
-    if (gameState.playerData && gameState.playerData.playerStats) {
+    // --- 修改：只在檢視自己的怪獸時，才計算稱號加成 ---
+    if (isOwner && gameState.playerData && gameState.playerData.playerStats) {
         const playerStats = gameState.playerData.playerStats;
         const equippedId = playerStats.equipped_title_id;
         if (equippedId && playerStats.titles) {
@@ -338,6 +337,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
             }
         }
     }
+    // --- 修改結束 ---
     
     const getTitleBuffHtml = (statName) => {
         const buffValue = titleBuffs[statName] || 0;
