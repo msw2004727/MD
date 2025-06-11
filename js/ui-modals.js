@@ -141,7 +141,7 @@ async function viewPlayerInfo(playerId) {
 }
 
 
-function updateMonsterInfoModal(monster, gameConfigs) {
+function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
         console.error("Monster info modal elements not found in DOMElements.");
         return;
@@ -157,12 +157,32 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    // **FIX**: Reverted to the original, simple header to avoid errors.
+    // --- 修改：恢復怪獸改名功能 ---
+    const isOwner = !monster.owner_id || monster.owner_id === gameState.playerId;
+    const ownerActionsHtml = isOwner ? `
+        <button id="edit-monster-nickname-btn" class="button secondary" title="編輯屬性名" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✏️</button>
+    ` : '';
+
+    const editFormHtml = isOwner ? `
+        <div id="monster-nickname-edit-container" style="display: none; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 5px;">
+            <input type="text" id="monster-nickname-input" value="${monster.custom_element_nickname || ''}" placeholder="新屬性名(最多5字)" maxlength="5" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); border-radius: 4px; padding: 6px 10px; font-size: 1rem; width: 150px;">
+            <button id="confirm-nickname-change-btn" class="button success" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✔️</button>
+            <button id="cancel-nickname-change-btn" class="button danger" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✖️</button>
+        </div>
+    ` : '';
+    
+    DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
+
     DOMElements.monsterInfoModalHeader.innerHTML = `
-        <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
-            ${monster.nickname}
-        </h4>
+        <div id="monster-nickname-display-container" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar}; margin: 0;">
+                ${monster.nickname}
+            </h4>
+            ${ownerActionsHtml}
+        </div>
+        ${editFormHtml}
     `;
+    // --- 修改結束 ---
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
