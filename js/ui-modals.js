@@ -326,7 +326,6 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     };
 
     let titleBuffs = {};
-    // --- 修改：只在檢視自己的怪獸時，才計算稱號加成 ---
     if (isOwner && gameState.playerData && gameState.playerData.playerStats) {
         const playerStats = gameState.playerData.playerStats;
         const equippedId = playerStats.equipped_title_id;
@@ -337,7 +336,6 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
             }
         }
     }
-    // --- 修改結束 ---
     
     const getTitleBuffHtml = (statName) => {
         const buffValue = titleBuffs[statName] || 0;
@@ -769,7 +767,7 @@ function showBattleLogModal(battleResult) {
     };
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
-        if (!text) return '(內容為空)';
+        if (!text) return '';
         let styledText = text;
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
@@ -929,9 +927,12 @@ function showBattleLogModal(battleResult) {
         battleDescriptionContentDiv.appendChild(statusBlockDiv);
 
         turn.actions.forEach(action => {
-            const p = document.createElement('p');
-            p.innerHTML = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
-            battleDescriptionContentDiv.appendChild(p);
+            const styledActionText = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
+            if (styledActionText.trim() !== '') {
+                const p = document.createElement('p');
+                p.innerHTML = styledActionText;
+                battleDescriptionContentDiv.appendChild(p);
+            }
         });
     });
 
