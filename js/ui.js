@@ -556,10 +556,16 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.opacity = 1;
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        // 移除稱號，只顯示名字
+        // 隱藏成就標題
         DOMElements.snapshotAchievementTitle.style.display = 'none';
 
-        DOMElements.snapshotNickname.textContent = monster.nickname || '未知怪獸';
+        // 決定要顯示的名稱
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const elementNickname = monster.custom_element_nickname || 
+                                (gameState.gameConfigs.element_nicknames ? 
+                                (gameState.gameConfigs.element_nicknames[primaryElement] || primaryElement) : primaryElement);
+
+        DOMElements.snapshotNickname.textContent = elementNickname;
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
 
         const resume = monster.resume || { wins: 0, losses: 0 };
@@ -610,10 +616,9 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.src = "";
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
 
-        // 隱藏稱號
         DOMElements.snapshotAchievementTitle.style.display = 'none';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
-        DOMElements.snapshotNickname.className = ''; // 清除稀有度顏色
+        DOMElements.snapshotNickname.className = '';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
