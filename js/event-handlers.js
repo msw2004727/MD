@@ -387,14 +387,17 @@ function handlePlayerInfoModalEvents() {
             if (!monsterId || !ownerUid) return;
 
             let monsterData = null;
+            let ownerData = null;
             if (ownerUid === gameState.playerId) {
                 monsterData = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                ownerData = gameState.playerData;
             } else if (gameState.viewedPlayerData && gameState.viewedPlayerData.uid === ownerUid) {
                 monsterData = gameState.viewedPlayerData.farmedMonsters.find(m => m.id === monsterId);
+                ownerData = gameState.viewedPlayerData;
             }
 
             if (monsterData) {
-                updateMonsterInfoModal(monsterData, gameState.gameConfigs);
+                updateMonsterInfoModal(monsterData, gameState.gameConfigs, ownerData);
                 showModal('monster-info-modal');
             } else {
                 console.error(`無法在玩家 ${ownerUid} 的資料中找到怪獸 ${monsterId}。`);
@@ -504,7 +507,9 @@ function handleTopNavButtons() {
             if (gameState.selectedMonsterId) {
                 const monster = getSelectedMonster();
                 if (monster) {
-                    updateMonsterInfoModal(monster, gameState.gameConfigs);
+                    // --- 修改開始：傳入第三個參數 gameState.playerData ---
+                    updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
+                    // --- 修改結束 ---
                     showModal('monster-info-modal');
                 } else {
                     showFeedbackModal('錯誤', '找不到選定的怪獸資料。');
