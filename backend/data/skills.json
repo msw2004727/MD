@@ -34,7 +34,11 @@
       "type": "火",
       "mp_cost": 12,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "衝撞時產生爆炸，有30%機率使對手陷入「燒傷」狀態。" },
+        "10": { "description": "威力永久提升20點，無視對手部分防禦。" }
+      }
     },
     {
       "name": "火星彈",
@@ -45,7 +49,11 @@
       "type": "火",
       "mp_cost": 5,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "變為連續發射2次火星彈，每次威力獨立計算。" },
+        "10": { "description": "每次攻擊的爆擊率額外提升5%。" }
+      }
     },
     {
       "name": "追蹤火球",
@@ -56,7 +64,11 @@
       "type": "火",
       "mp_cost": 11,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "火球變得更大，威力提升15點。" },
+        "10": { "description": "擊中後有50%機率降低對手的速度。" }
+      }
     },
     {
       "name": "燃燒術",
@@ -67,7 +79,11 @@
       "type": "火",
       "mp_cost": 7,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "施加的「燒傷」狀態每回合傷害增加50%。" },
+        "10": { "description": "技能威力提升10點，並有15%機率使對手魔防下降。" }
+      }
     },
     {
       "name": "大字爆",
@@ -78,7 +94,11 @@
       "type": "火",
       "mp_cost": 15,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "爆炸範圍擴大，有20%機率使對手攻擊力下降。" },
+        "10": { "description": "技能威力永久提升25點。" }
+      }
     },
     {
       "name": "暖身",
@@ -93,7 +113,11 @@
       "stat": "attack",
       "amount": 5,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果變為「攻擊力與防禦力同時小幅提升」。" },
+        "10": { "description": "效果持續時間延長2回合。" }
+      }
     },
     {
       "name": "烈日祝福",
@@ -108,7 +132,11 @@
       "stat": ["attack", "crit"],
       "amount": [10, 5],
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "祝福效果結束時，會回復自身少量MP。" },
+        "10": { "description": "祝福期間，自身對「冰凍」狀態免疫。" }
+      }
     },
     {
       "name": "熱砂踢",
@@ -119,7 +147,11 @@
       "type": "火",
       "mp_cost": 5,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "4": { "description": "揚起的沙塵有40%機率降低對手命中率。" },
+        "8": { "description": "威力提升10點，爆擊率提升10%。" }
+      }
     },
     {
       "name": "火山踢",
@@ -130,7 +162,11 @@
       "type": "火",
       "mp_cost": 11,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "30%機率使對手的防禦力下降。" },
+        "10": { "description": "威力永久提升15點，並附加「燒傷」效果。" }
+      }
     },
     {
       "name": "點燃",
@@ -144,7 +180,11 @@
       "effect": "status_change",
       "status_id": "burned",
       "probability": 90,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "狀態命中率提升至100%。" },
+        "10": { "description": "額外造成20點固定火焰傷害。" }
+      }
     },
     {
       "name": "煉獄之火",
@@ -158,7 +198,11 @@
       "effect": "status_change",
       "status_id": "burned",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "造成的「燒傷」狀態無法被常規方法解除。" },
+        "10": { "description": "對已經處於「燒傷」狀態的敵人造成1.5倍傷害。" }
+      }
     },
     {
       "name": "威嚇",
@@ -173,7 +217,11 @@
       "stat": "attack",
       "amount": -5,
       "probability": 85,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「有90%機率降低對手攻擊力(-8)」。" },
+        "10": { "description": "同時有30%機率讓對手陷入「麻痺」狀態1回合。" }
+      }
     },
     {
       "name": "熔化",
@@ -188,7 +236,11 @@
       "stat": "defense",
       "amount": -10,
       "probability": 90,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「100%機率大幅降低防禦力(-12)」。" },
+        "10": { "description": "效果變為持續3回合，每回合降低防禦力。" }
+      }
     },
     {
       "name": "靜電火花",
@@ -202,7 +254,11 @@
       "effect": "status_change",
       "status_id": "paralyzed",
       "probability": 30,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "「麻痺」機率提升至50%。" },
+        "10": { "description": "威力提升15點。" }
+      }
     },
     {
       "name": "自爆",
@@ -215,7 +271,11 @@
       "skill_category": "其他",
       "effect": "self_ko",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "爆炸後，有50%機率以1HP的狀態存活下來。" },
+        "10": { "description": "爆炸時，同時對對手造成「燒傷」與「麻痺」狀態。" }
+      }
     }
   ],
   "水": [
@@ -228,7 +288,11 @@
       "type": "水",
       "mp_cost": 6,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "旋轉時產生水流護盾，該回合自身防禦力提升。" },
+        "10": { "description": "威力提升15點，有30%機率清除自身一個負面狀態。" }
+      }
     },
     {
       "name": "深海衝擊",
@@ -239,7 +303,11 @@
       "type": "水",
       "mp_cost": 12,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "擊中後100%降低對手速度。" },
+        "10": { "description": "威力永久提升20點。" }
+      }
     },
     {
       "name": "水濺躍",
@@ -250,7 +318,11 @@
       "type": "水",
       "mp_cost": 5,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升15點。" },
+        "10": { "description": "攻擊時有30%機率降低對手攻擊力。" }
+      }
     },
     {
       "name": "高壓水炮",
@@ -261,7 +333,11 @@
       "type": "水",
       "mp_cost": 11,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "30%機率無視對手防禦力。" },
+        "10": { "description": "威力提升15點，MP消耗減少2點。" }
+      }
     },
     {
       "name": "水之波動",
@@ -272,7 +348,11 @@
       "type": "水",
       "mp_cost": 7,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "波動有20%機率使對手陷入「混亂」狀態。" },
+        "10": { "description": "威力提升15點。" }
+      }
     },
     {
       "name": "寒冰光束",
@@ -286,7 +366,11 @@
       "effect": "status_change",
       "status_id": "frozen",
       "probability": 10,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "「冰凍」機率提升至20%。" },
+        "10": { "description": "對「燒傷」狀態的敵人造成雙倍傷害。" }
+      }
     },
     {
       "name": "濕潤身體",
@@ -298,7 +382,11 @@
       "mp_cost": 8,
       "skill_category": "輔助",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "使用後，回復自身最大HP的10%。" },
+        "10": { "description": "使用後，下2回合對所有異常狀態免疫。" }
+      }
     },
     {
       "name": "生命水滴",
@@ -312,7 +400,11 @@
       "effect": "heal_large",
       "amount": 50,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "治療量提升至70點。" },
+        "10": { "description": "如果自身HP全滿，則改為治療我方另一位夥伴。" }
+      }
     },
     {
       "name": "拍擊",
@@ -323,7 +415,11 @@
       "type": "水",
       "mp_cost": 5,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "4": { "description": "攻擊時有50%機率使對手退縮，無法行動一回合。" },
+        "8": { "description": "威力提升12點，並變為攻擊2次。" }
+      }
     },
     {
       "name": "攀瀑",
@@ -334,7 +430,11 @@
       "type": "水",
       "mp_cost": 11,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升12點。" },
+        "10": { "description": "攻擊後，自身速度提升。" }
+      }
     },
     {
       "name": "冰針",
@@ -348,7 +448,11 @@
       "effect": "status_change",
       "status_id": "frozen",
       "probability": 20,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "「冰凍」機率提升至35%。" },
+        "10": { "description": "威力提升20點。" }
+      }
     },
     {
       "name": "鹽水",
@@ -359,7 +463,11 @@
       "type": "水",
       "mp_cost": 13,
       "skill_category": "特殊",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "對手生命值低於一半時，威力變為2.5倍。" },
+        "10": { "description": "該技能變為必定爆擊。" }
+      }
     },
     {
       "name": "變圓",
@@ -374,7 +482,11 @@
       "stat": "defense",
       "amount": 8,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「防禦力大幅提升(+12)」。" },
+        "10": { "description": "在變圓狀態下，受到的物理傷害減半。" }
+      }
     },
     {
       "name": "黑霧",
@@ -386,7 +498,11 @@
       "mp_cost": 12,
       "skill_category": "變化",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "清除能力變化後，使對手陷入「失明」狀態，命中率下降。" },
+        "10": { "description": "使用後，我方全體回復少量HP。" }
+      }
     },
     {
       "name": "潛水",
@@ -397,7 +513,11 @@
       "type": "水",
       "mp_cost": 6,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "在水下時，每回合回復HP。" },
+        "10": { "description": "浮上攻擊時，威力提升20點。" }
+      }
     },
     {
       "name": "鏡面反射",
@@ -408,7 +528,11 @@
       "type": "水",
       "mp_cost": 18,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "反射傷害提升至1.8倍。" },
+        "10": { "description": "成功反射後，使對手MP歸零。" }
+      }
     }
   ],
   "木": [
@@ -421,7 +545,11 @@
       "type": "木",
       "mp_cost": 6,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊距離變長，可攻擊後排敵人。" },
+        "10": { "description": "威力提升15點，有20%機率吸取少量生命。" }
+      }
     },
     {
       "name": "寄生吸取",
@@ -435,7 +563,11 @@
       "effect": "leech",
       "amount": 25,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "吸取HP比例提升至35%。" },
+        "10": { "description": "吸取時，有30%機率同時吸取少量MP。" }
+      }
     },
     {
       "name": "種子機關槍",
@@ -446,7 +578,11 @@
       "type": "木",
       "mp_cost": 8,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "最低射擊次數提升為3次。" },
+        "10": { "description": "每次射擊都有機率降低對手防禦。" }
+      }
     },
     {
       "name": "日光束",
@@ -457,7 +593,11 @@
       "type": "木",
       "mp_cost": 18,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "蓄力回合中，自身防禦力與特防提升。" },
+        "10": { "description": "在「晴天」天氣下無需蓄力，立即發射。" }
+      }
     },
     {
       "name": "吸取",
@@ -471,7 +611,11 @@
       "effect": "leech",
       "amount": 15,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "吸取HP比例提升至25%。" },
+        "10": { "description": "威力提升10點。" }
+      }
     },
     {
       "name": "終極吸取",
@@ -485,7 +629,11 @@
       "effect": "leech",
       "amount": 30,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "吸取HP比例提升至40%。" },
+        "10": { "description": "若此招擊倒對手，則回復所有MP。" }
+      }
     },
     {
       "name": "生長",
@@ -500,7 +648,11 @@
       "stat": ["attack"],
       "amount": [5],
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「攻擊力與速度小幅提升」。" },
+        "10": { "description": "變為群體效果，提升我方全體攻擊力。" }
+      }
     },
     {
       "name": "扎根",
@@ -512,7 +664,11 @@
       "mp_cost": 15,
       "skill_category": "輔助",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "每回合回復量增加。" },
+        "10": { "description": "扎根狀態下，免疫所有強制位移技能。" }
+      }
     },
     {
       "name": "滾動",
@@ -523,7 +679,11 @@
       "type": "木",
       "mp_cost": 5,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "每成功使用一次，威力增加5點，最多3次。" },
+        "10": { "description": "附加15%爆擊率。" }
+      }
     },
     {
       "name": "木槌",
@@ -537,7 +697,11 @@
       "effect": "recoil",
       "recoil_factor": 0.25,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "反傷比例降低至15%。" },
+        "10": { "description": "威力永久提升20點。" }
+      }
     },
     {
       "name": "催眠粉",
@@ -549,7 +713,11 @@
       "mp_cost": 8,
       "skill_category": "特殊",
       "probability": 75,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "命中率提升至85%。" },
+        "10": { "description": "同時有20%機率使對手陷入「中毒」狀態。" }
+      }
     },
     {
       "name": "億萬噸吸收",
@@ -563,7 +731,11 @@
       "effect": "leech",
       "amount": 35,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "吸取HP比例提升至60%。" },
+        "10": { "description": "威力提升10點，MP消耗降低3點。" }
+      }
     },
     {
       "name": "煩惱種子",
@@ -575,7 +747,11 @@
       "mp_cost": 7,
       "skill_category": "變化",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "額外每回合造成少量傷害。" },
+        "10": { "description": "同時降低對手攻擊與特攻。" }
+      }
     },
     {
       "name": "青草場地",
@@ -587,7 +763,11 @@
       "mp_cost": 14,
       "skill_category": "變化",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "持續時間延長至7回合。" },
+        "10": { "description": "場地存在時，我方全體免疫「地震」傷害。" }
+      }
     },
     {
       "name": "自然恩惠",
@@ -598,7 +778,11 @@
       "type": "木",
       "mp_cost": 10,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力獲得20%的加成。" },
+        "10": { "description": "使用後不會消耗果實。" }
+      }
     },
     {
       "name": "森林詛咒",
@@ -610,7 +794,11 @@
       "mp_cost": 15,
       "skill_category": "其他",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "使用後，對手所有抗性下降。" },
+        "10": { "description": "使用後，自身回復少量HP。" }
+      }
     }
   ],
   "金": [
@@ -623,7 +811,11 @@
       "type": "金",
       "mp_cost": 7,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊時有20%機率提升自身防禦力。" },
+        "10": { "description": "威力提升13點。" }
+      }
     },
     {
       "name": "鐵頭功",
@@ -634,7 +826,11 @@
       "type": "金",
       "mp_cost": 13,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "30%機率使對手退縮，無法行動一回合。" },
+        "10": { "description": "威力提升17點，無視對手部分防禦。" }
+      }
     },
     {
       "name": "磁力炸彈",
@@ -645,7 +841,11 @@
       "type": "金",
       "mp_cost": 6,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "對金屬性對手傷害加倍。" },
+        "10": { "description": "威力提升12點，有20%機率降低對手防禦。" }
+      }
     },
     {
       "name": "加農光炮",
@@ -656,7 +856,11 @@
       "type": "金",
       "mp_cost": 14,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "20%機率降低對手特防。" },
+        "10": { "description": "威力提升20點。" }
+      }
     },
     {
       "name": "金屬音",
@@ -668,7 +872,11 @@
       "mp_cost": 8,
       "skill_category": "魔法",
       "probability": 90,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "命中率提升至100%。" },
+        "10": { "description": "同時對對手造成少量固定傷害。" }
+      }
     },
     {
       "name": "流星拳",
@@ -679,7 +887,11 @@
       "type": "金",
       "mp_cost": 10,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊次數固定為3次。" },
+        "10": { "description": "每次攻擊的威力提升5點。" }
+      }
     },
     {
       "name": "鐵壁",
@@ -694,7 +906,11 @@
       "stat": "defense",
       "amount": 15,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「防禦力巨幅提升(+20)」。" },
+        "10": { "description": "使用後，下一回合受到的物理傷害減半。" }
+      }
     },
     {
       "name": "換擋",
@@ -709,7 +925,11 @@
       "stat": ["attack", "speed"],
       "amount": [8, 8],
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊力與速度提升效果增加至(+12)。" },
+        "10": { "description": "使用後清除自身所有負面狀態。" }
+      }
     },
     {
       "name": "鋼翼",
@@ -720,7 +940,11 @@
       "type": "金",
       "mp_cost": 6,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "有20%機率提升自身防禦。" },
+        "10": { "description": "威力提升15點，速度提升5點。" }
+      }
     },
     {
       "name": "重磅衝撞",
@@ -734,7 +958,11 @@
       "effect": "recoil",
       "recoil_factor": 0.2,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "反傷比例降低至10%。" },
+        "10": { "description": "威力提升25點。" }
+      }
     },
     {
       "name": "陀螺球",
@@ -745,7 +973,11 @@
       "type": "金",
       "mp_cost": 8,
       "skill_category": "特殊",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "傷害計算公式中的速度差權重增加。" },
+        "10": { "description": "若自身速度為全場最慢，此技能威力加倍。" }
+      }
     },
     {
       "name": "金屬爆炸",
@@ -756,7 +988,11 @@
       "type": "金",
       "mp_cost": 18,
       "skill_category": "特殊",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "反射傷害提升為2倍。" },
+        "10": { "description": "使用後若成功擊倒對手，自身不會陷入瀕死。" }
+      }
     },
     {
       "name": "破甲",
@@ -771,7 +1007,11 @@
       "stat": ["defense", "attack"],
       "amount": [-10, 15],
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊提升效果增加至(+20)。" },
+        "10": { "description": "額外提升爆擊率15%。" }
+      }
     },
     {
       "name": "王者之盾",
@@ -783,7 +1023,11 @@
       "mp_cost": 16,
       "skill_category": "變化",
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "防禦成功時，回復自身少量HP。" },
+        "10": { "description": "可抵擋部分穿透性技能。" }
+      }
     },
     {
       "name": "重力場",
@@ -794,7 +1038,11 @@
       "type": "金",
       "mp_cost": 10,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "場地持續時間延長至7回合。" },
+        "10": { "description": "重力場存在時，所有技能命中率提升。" }
+      }
     },
     {
       "name": "鏡面鎧甲",
@@ -805,7 +1053,11 @@
       "type": "金",
       "mp_cost": 17,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "反彈成功時，對手會受到少量傷害。" },
+        "10": { "description": "可反彈部分異常狀態效果。" }
+      }
     }
   ],
   "土": [
@@ -818,7 +1070,11 @@
       "type": "土",
       "mp_cost": 6,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升10點，有15%機率使對手退縮。" },
+        "10": { "description": "變為攻擊2次，但第二次威力減半。" }
+      }
     },
     {
       "name": "地震",
@@ -829,7 +1085,11 @@
       "type": "土",
       "mp_cost": 15,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升15點。" },
+        "10": { "description": "對飛行或浮空怪獸也能造成一半傷害。" }
+      }
     },
     {
       "name": "泥巴射擊",
@@ -844,7 +1104,11 @@
       "stat": "speed",
       "amount": -5,
       "probability": 95,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「100%降低對手速度(-8)」。" },
+        "10": { "description": "同時降低對手命中率。" }
+      }
     },
     {
       "name": "大地之力",
@@ -855,7 +1119,11 @@
       "type": "土",
       "mp_cost": 13,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "提升自身特防的機率增加至30%。" },
+        "10": { "description": "威力提升15點。" }
+      }
     },
     {
       "name": "大地波動",
@@ -866,7 +1134,11 @@
       "type": "土",
       "mp_cost": 8,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊時提升自身防禦力。" },
+        "10": { "description": "威力提升20點。" }
+      }
     },
     {
       "name": "沙塵暴",
@@ -877,7 +1149,11 @@
       "type": "土",
       "mp_cost": 12,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "持續時間延長至7回合。" },
+        "10": { "description": "沙塵暴天氣下，岩石屬性怪獸特防提升。" }
+      }
     },
     {
       "name": "變硬",
@@ -892,7 +1168,11 @@
       "stat": "defense",
       "amount": 10,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「防禦力大幅提升(+15)」。" },
+        "10": { "description": "使用後，下一次受到的物理攻擊傷害減少25%。" }
+      }
     },
     {
       "name": "沙地獄",
@@ -903,7 +1183,11 @@
       "type": "土",
       "mp_cost": 14,
       "skill_category": "輔助",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "每回合傷害增加。" },
+        "10": { "description": "被困住的對手無法交換。" }
+      }
     },
     {
       "name": "骨棒",
@@ -914,7 +1198,11 @@
       "type": "土",
       "mp_cost": 6,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "爆擊率提升10%。" },
+        "10": { "description": "威力提升15點。" }
+      }
     },
     {
       "name": "骨頭迴力鏢",
@@ -925,7 +1213,11 @@
       "type": "土",
       "mp_cost": 12,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "第二次攻擊的威力提升。" },
+        "10": { "description": "每次攻擊都有10%機率使對手退縮。" }
+      }
     },
     {
       "name": "撒菱",
@@ -936,7 +1228,11 @@
       "type": "土",
       "mp_cost": 9,
       "skill_category": "特殊",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "可疊加使用，最多2層，傷害增加。" },
+        "10": { "description": "踩到菱角的怪獸速度會下降。" }
+      }
     },
     {
       "name": "隱形岩",
@@ -947,7 +1243,11 @@
       "type": "土",
       "mp_cost": 16,
       "skill_category": "特殊",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "造成的傷害增加。" },
+        "10": { "description": "同時對場上所有敵人造成少量初始傷害。" }
+      }
     },
     {
       "name": "玩泥巴",
@@ -958,7 +1258,11 @@
       "type": "土",
       "mp_cost": 8,
       "skill_category": "變化",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果延長至7回合。" },
+        "10": { "description": "同時使水屬性技能威力也減半。" }
+      }
     },
     {
       "name": "詛咒",
@@ -969,7 +1273,11 @@
       "type": "土",
       "mp_cost": 15,
       "skill_category": "變化",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "攻擊與防禦提升幅度更大。" },
+        "10": { "description": "速度下降的副作用減少。" }
+      }
     },
     {
       "name": "挖洞",
@@ -980,7 +1288,11 @@
       "type": "土",
       "mp_cost": 10,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升至50。" },
+        "10": { "description": "在地下時，免疫所有攻擊。" }
+      }
     },
     {
       "name": "地裂",
@@ -991,7 +1303,11 @@
       "type": "土",
       "mp_cost": 20,
       "skill_category": "其他",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "命中率小幅提升。" },
+        "10": { "description": "若擊倒對手，回復自身最大HP的25%。" }
+      }
     }
   ],
   "光": [
@@ -1008,7 +1324,11 @@
       "stat": "accuracy",
       "amount": -10,
       "probability": 80,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "效果提升為「100%降低對手命中率(-12)」。" },
+        "10": { "description": "同時有20%機率使對手陷入「混亂」狀態。" }
+      }
     },
     {
       "name": "神聖之劍",
@@ -1019,7 +1339,11 @@
       "type": "光",
       "mp_cost": 14,
       "skill_category": "近戰",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升15點。" },
+        "10": { "description": "對暗屬性敵人必定爆擊。" }
+      }
     },
     {
       "name": "信號光束",
@@ -1033,7 +1357,11 @@
       "effect": "status_change",
       "status_id": "confused",
       "probability": 20,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "「混亂」機率提升至35%。" },
+        "10": { "description": "威力提升15點。" }
+      }
     },
     {
       "name": "月亮之力",
@@ -1044,7 +1372,11 @@
       "type": "光",
       "mp_cost": 15,
       "skill_category": "遠程",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "降低對手特攻的機率提升至40%。" },
+        "10": { "description": "MP消耗減少3點。" }
+      }
     },
     {
       "name": "魔法閃耀",
@@ -1055,7 +1387,11 @@
       "type": "光",
       "mp_cost": 10,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升10點。" },
+        "10": { "description": "同時降低所有對手的命中率。" }
+      }
     },
     {
       "name": "破壞光線",
@@ -1066,7 +1402,11 @@
       "type": "光",
       "mp_cost": 20,
       "skill_category": "魔法",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "若此招擊倒對手，則無須休息。" },
+        "10": { "description": "威力提升至100。" }
+      }
     },
     {
       "name": "治癒波動",
@@ -1080,7 +1420,11 @@
       "effect": "heal_large",
       "amount": 40,
       "probability": 100,
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "治療量提升至60點。" },
+        "10": { "description": "同時清除目標所有異常狀態。" }
+      }
     },
     {
       "name": "光牆",
@@ -1091,7 +1435,11 @@
       "type": "光",
       "mp_cost": 16,
       "skill_category": "輔助",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "持續時間延長至7回合。" },
+        "10": { "description": "光牆存在時，我方全體特攻提升。" }
+      }
     },
     {
       "name": "光子噴湧",
@@ -1102,7 +1450,11 @@
       "type": "光",
       "mp_cost": 18,
       "skill_category": "物理",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "威力提升15點。" },
+        "10": { "description": "使用後，自身較低的一項攻擊數值會獲得提升。" }
+      }
     },
     {
       "name": "鏡面屬性",
@@ -1113,7 +1465,11 @@
       "type": "光",
       "mp_cost": 9,
       "skill_category": "變化",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "複製屬性的同時，也複製對手的能力變化。" },
+        "10": { "description": "使用後，自身速度大幅提升。" }
+      }
     },
     {
       "name": "力量戲法",
@@ -1124,7 +1480,11 @@
       "type": "光",
       "mp_cost": 12,
       "skill_category": "變化",
-      "baseLevel": 1
+      "baseLevel": 1,
+      "level_milestones": {
+        "5": { "description": "交換後，額外提升攻擊力20點。" },
+        "10": { "description": "效果持續5回合，5回合後換回。" }
+      }
     }
   ],
   "暗": [],
