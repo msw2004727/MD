@@ -1,0 +1,63 @@
+[
+  {
+    "id": "title_001",
+    "name": "新手",
+    "description": "踏入怪獸異世界的第一步。",
+    "condition": {
+      "type": "default",
+      "value": 0
+    },
+    "buffs": {}
+  },
+  {
+    "id": "title_002",
+    "name": "百戰將",
+    "description": "身經百戰，累積了10場勝利的證明。",
+    "condition": {
+      "type": "wins",
+      "value": 10
+    },
+    "buffs": {
+      "attack": 5,
+      "defense": 5
+    }
+  },
+  {
+    "id": "title_003",
+    "name": "收藏家",
+    "description": "擁有10隻以上怪獸的證明。",
+    "condition": {
+      "type": "monsters_owned",
+      "value": 10
+    },
+    "buffs": {
+      "cultivation_item_find_chance": 0.05
+    }
+  },
+  {
+    "id": "title_004",
+    "name": "戰新星",
+    "description": "獲得50場勝利，在戰場上冉冉升起的新星。",
+    "condition": {
+      "type": "wins",
+      "value": 50
+    },
+    "buffs": {
+      "attack": 12,
+      "speed": 8
+    }
+  },
+  {
+    "id": "title_005",
+    "name": "元素使",
+    "description": "成功合成出一隻擁有三種或以上屬性的怪獸。",
+    "condition": {
+      "type": "monster_elements_count",
+      "value": 3
+    },
+    "buffs": {
+      "mp": 20,
+      "elemental_damage_boost": 0.05
+    }
+  }
+]
