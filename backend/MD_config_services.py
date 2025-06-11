@@ -32,6 +32,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "Rarities": ("rarities", "dna_rarities"),
             "Skills": ("skills", "skill_database"),
             "Personalities": ("personalities", "types"),
+            "CultivationStories": ("cultivation_stories", "story_library"),
             "Titles": ("titles", "player_titles"),
             "MonsterAchievementsList": ("monster_achievements_list", "achievements"),
             "ElementNicknames": ("element_nicknames", "nicknames"),
