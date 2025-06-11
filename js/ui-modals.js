@@ -480,13 +480,9 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
 }
 
 function updateLeaderboardTable(tableType, data) {
-    console.log("updateLeaderboardTable called with data:", data); // Debugging log
     const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
     const table = document.getElementById(tableId);
-    if (!table) {
-        console.error("Leaderboard table element not found:", tableId); // Debugging error
-        return;
-    }
+    if (!table) return;
 
     let headersConfig;
     if (tableType === 'monster') {
@@ -628,7 +624,19 @@ function updateLeaderboardTable(tableType, data) {
             lossesCell.style.textAlign = 'center';
 
             const titlesCell = row.insertCell();
-            titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
+            if (item.titles && item.titles.length > 0) {
+                const equippedId = item.equipped_title_id;
+                let titleToShow = item.titles[0]; // 預設顯示第一個
+                if (equippedId) {
+                    const foundTitle = item.titles.find(t => t.id === equippedId);
+                    if (foundTitle) {
+                        titleToShow = foundTitle;
+                    }
+                }
+                titlesCell.textContent = titleToShow.name || '未知稱號';
+            } else {
+                titlesCell.textContent = '無';
+            }
         }
     });
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
