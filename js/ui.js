@@ -232,7 +232,7 @@ function hideAllModals() {
     gameState.activeModalId = null;
 }
 
-function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null, awardDetails = null) {
+function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null) {
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
         return;
@@ -259,52 +259,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
 
     DOMElements.feedbackModalTitle.textContent = title;
-
-    if (awardDetails) { // 新增：處理授予榮譽的顯示
-        const bannerUrl = awardDetails.bannerUrl || 'https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true'; // 預設橫幅
-        const awardType = awardDetails.type === 'title' ? '稱號' : '成就';
-        const awardName = awardDetails.name || '未知的榮譽';
-        const buffs = awardDetails.buffs || {};
-
-        const bannerContainer = document.createElement('div');
-        bannerContainer.className = 'feedback-banner';
-        bannerContainer.style.textAlign = 'center';
-        bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="榮譽橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        modalBody.prepend(bannerContainer);
-
-        let messageHtml = `<p class="text-center text-base text-[var(--text-secondary)] mb-2">恭喜您獲得新的${awardType}！</p>`;
-        messageHtml += `<h4 class="text-2xl font-bold text-center mb-3" style="color: gold; text-shadow: 0 0 8px #000;">${awardName}</h4>`;
-        
-        if (Object.keys(buffs).length > 0) {
-            const statColorMap = {
-                hp: 'var(--success-color)',
-                mp: 'var(--accent-color)',
-                attack: 'var(--danger-color)',
-                defense: 'var(--rarity-rare-text)', // Blue
-                speed: 'var(--warning-color)',
-                crit: 'var(--rarity-elite-text)', // Orange
-                default: 'var(--text-primary)'
-            };
-
-            const getBuffDisplayName = (key) => {
-                 const names = { hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率' };
-                 return names[key] || key;
-            };
-
-            messageHtml += `<div class="details-section mt-4" style="background-color: var(--bg-primary);">`;
-            messageHtml += `<h5 class="details-section-title">稱號效果</h5><ul style="list-style: none; padding: 0; margin: 0;">`;
-            for (const [stat, value] of Object.entries(buffs)) {
-                const color = statColorMap[stat] || statColorMap.default;
-                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="color: ${color}; font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: ${color}; font-weight: bold;">+${value}</span></li>`;
-            }
-            messageHtml += `</ul></div>`;
-        }
-        
-        DOMElements.feedbackModalMessage.innerHTML = messageHtml;
-    }
+    
     // --- 為特定的讀取彈窗加上橫幅和提示輪播 ---
-    else if ((title === '結算中...' || title === '怪獸合成中...') && isLoading) {
+    if ((title === '結算中...' || title === '怪獸合成中...') && isLoading) {
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
@@ -337,7 +294,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
 
 
-    else if (monsterDetails) {
+    if (monsterDetails) {
         // --- 合成成功的新版彈窗 ---
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
