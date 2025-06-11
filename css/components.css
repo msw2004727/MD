@@ -1807,3 +1807,9 @@ body.light-theme .leaderboard-table tr:hover td {
 .snapshot-mp-bar .snapshot-bar-fill {
     background-color: var(--accent-color);
 }
+
+/* NEW: For Cultivation Stat Growth Log */
+.stat-growth-name {
+    color: var(--rarity-legendary-text); /* Use the existing gold color for Legendary rarity */
+    font-weight: bold;
+}
