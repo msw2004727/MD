@@ -372,6 +372,40 @@ function handleLeaderboardClicks() {
     }
 }
 
+// 新增：處理玩家資訊彈窗中怪獸連結的點擊事件
+function handlePlayerInfoMonsterClicks() {
+    if (DOMElements.playerInfoModalBody) {
+        DOMElements.playerInfoModalBody.addEventListener('click', (event) => {
+            const link = event.target.closest('.player-info-monster-link');
+            if (!link) return;
+
+            event.preventDefault();
+            const monsterId = link.dataset.monsterId;
+            const ownerUid = link.dataset.ownerUid;
+
+            if (!monsterId || !ownerUid) return;
+
+            let monsterData = null;
+            // 檢查是看自己的資訊還是別人的
+            if (ownerUid === gameState.playerId) {
+                // 從自己的玩家資料中尋找
+                monsterData = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+            } else if (gameState.viewedPlayerData && gameState.viewedPlayerData.uid === ownerUid) {
+                // 從暫存的被查看玩家資料中尋找
+                monsterData = gameState.viewedPlayerData.farmedMonsters.find(m => m.id === monsterId);
+            }
+
+            if (monsterData) {
+                updateMonsterInfoModal(monsterData, gameState.gameConfigs);
+                showModal('monster-info-modal');
+            } else {
+                console.error(`無法在玩家 ${ownerUid} 的資料中找到怪獸 ${monsterId}。`);
+                showFeedbackModal('錯誤', '無法載入該怪獸的詳細資訊。');
+            }
+        });
+    }
+}
+
 
 // --- 其他事件處理函數 ---
 function handleThemeSwitch() {
@@ -1071,7 +1105,8 @@ function initializeEventListeners() {
     handleTopNavButtons();
     handleTabSwitching();
     handleLeaderboardSorting();
-    handleLeaderboardClicks(); // 新增的排行榜點擊處理
+    handleLeaderboardClicks();
+    handlePlayerInfoMonsterClicks(); // 新增：註冊玩家資訊彈窗中的點擊事件
     handleMonsterNicknameEvents();
     handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
