@@ -264,17 +264,23 @@ def complete_cultivation_service(
                 if quality_pool:
                     items_obtained.append(random.choice(quality_pool))
         
-        # 5. 生成AI故事
-        try:
-            adventure_story = generate_cultivation_story(
-                monster_name=monster_to_update.get('nickname', '一隻怪獸'),
-                duration_percentage=duration_percentage,
-                skill_updates_log=skill_updates_log,
-                items_obtained=items_obtained
-            )
-        except Exception as ai_e:
-            monster_cultivation_services_logger.error(f"生成AI修煉故事失敗: {ai_e}", exc_info=True)
-            adventure_story = "在修煉過程中，似乎發生了一些無法言喻的經歷，但最終安全歸來。"
+        # 5. 生成AI故事 (有開關控制)
+        # 預設為關閉 (False)，如果設定檔中明確設為 True 才會啟用
+        if cultivation_cfg.get("enable_ai_story_generation", False):
+            try:
+                adventure_story = generate_cultivation_story(
+                    monster_name=monster_to_update.get('nickname', '一隻怪獸'),
+                    duration_percentage=duration_percentage,
+                    skill_updates_log=skill_updates_log,
+                    items_obtained=items_obtained
+                )
+            except Exception as ai_e:
+                monster_cultivation_services_logger.error(f"生成AI修煉故事失敗: {ai_e}", exc_info=True)
+                adventure_story = "在修煉過程中，似乎發生了一些無法言喻的經歷，但最終安全歸來。"
+        else:
+            monster_cultivation_services_logger.info("AI修煉故事生成功能已依設定關閉，使用預設文字。")
+            adventure_story = "怪獸結束了一次紮實的修煉，雖然沒有發生什麼奇特的冒險，但感覺自己又變強了一些。"
+
 
     # 6. 重新計算總評價 (使用更新後的基礎數值)
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
