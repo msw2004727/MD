@@ -1015,7 +1015,7 @@ function renderMonsterFarm() {
         item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            updateMonsterInfoModal(monster, gameState.gameConfigs);
+            updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
             showModal('monster-info-modal');
         });
 
