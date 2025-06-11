@@ -199,9 +199,21 @@ def populate_game_configs():
     }
     db_client.collection('MD_GameConfigs').document('Rarities').set({'dna_rarities': dna_rarities_data})
 
-    # 稱號資料 (Titles)
-    titles_data = ["新手", "見習士", "收藏家", "戰新星", "元素使", "傳奇者", "神締者", "吸星者", "技宗師", "勇者魂", "智多星", "守護者"]
-    db_client.collection('MD_GameConfigs').document('Titles').set({'player_titles': titles_data})
+    # --- 載入並寫入稱號資料 (從 titles.json) ---
+    try:
+        titles_path = os.path.join(data_dir, 'titles.json')
+        with open(titles_path, 'r', encoding='utf-8') as f:
+            titles_data_from_json = json.load(f)
+        script_logger.info(f"成功從 {titles_path} 載入 {len(titles_data_from_json)} 個稱號資料。")
+        # 注意：這裡的欄位名稱 'player_titles' 是為了與 config_services 中的 doc_map 保持一致
+        db_client.collection('MD_GameConfigs').document('Titles').set({'player_titles': titles_data_from_json})
+        script_logger.info("成功將 titles.json 的內容寫入 Firestore 的 Titles 文件。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到稱號設定檔 {titles_path}。請確認檔案已建立。")
+        return
+    except Exception as e:
+        script_logger.error(f"處理 Titles 資料失敗: {e}")
+        return
 
     # 怪物成就列表 (MonsterAchievementsList)
     monster_achievements_data = [
