@@ -613,16 +613,17 @@ function handleConfirmationActions() {
 }
 
 function handleCultivationModals() {
-    // 獲取養成計畫彈窗的按鈕容器
-    const cultivationActionButtonsContainer = document.querySelector('.cultivation-action-buttons');
+    // 獲取養成計畫彈窗中，包含所有卡片按鈕的容器
+    const cultivationLocationsContainer = document.querySelector('.cultivation-locations-container');
 
-    if (cultivationActionButtonsContainer) {
-        cultivationActionButtonsContainer.addEventListener('click', async (event) => {
-            const clickedButton = event.target.closest('button');
+    if (cultivationLocationsContainer) {
+        cultivationLocationsContainer.addEventListener('click', async (event) => {
+            // 確認點擊的是卡片按鈕本身或其子元素
+            const clickedButton = event.target.closest('button.cultivation-location-card');
             if (!clickedButton) return;
 
             const location = clickedButton.dataset.location; // 獲取按鈕的 data-location 屬性
-            if (!location) return; // 如果沒有 location 數據，則不是預期的按鈕
+            if (!location) return;
 
             if (!gameState.cultivationMonsterId) {
                 showFeedbackModal('錯誤', '沒有選定要修煉的怪獸。');
@@ -642,7 +643,7 @@ function handleCultivationModals() {
                 monsterInFarm.farmStatus.isTraining = true;
                 monsterInFarm.farmStatus.trainingStartTime = Date.now();
                 monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
-                // 可以將選擇的訓練地點也儲存到怪獸狀態中，如果後端需要
+                // 將選擇的訓練地點也儲存到怪獸狀態中
                 monsterInFarm.farmStatus.trainingLocation = location;
 
                 try {
