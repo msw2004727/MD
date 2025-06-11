@@ -29,7 +29,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
         let previewHtml = monsters.slice(0, previewLimit).map(m => {
             const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-            return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+            return `<li><a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">${m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
         }).join('');
 
         let moreMonstersHtml = '';
@@ -37,7 +37,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
                 monsters.slice(previewLimit).map(m => {
                     const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-                    return `<li><span class="monster-name text-rarity-${rarityKey}">${m.nickname}</span> <span class="monster-score">評價: ${m.score || 0}</span></li>`
+                    return `<li><a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">${m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
                 }).join('')
             }</div>`;
         }
@@ -108,6 +108,8 @@ async function viewPlayerInfo(playerId) {
         if (playerData) {
             // 將玩家的 UID 加入到資料中，以便彈窗顯示
             playerData.uid = playerId;
+            // 新增：暫存正在查看的玩家資料
+            updateGameState({ viewedPlayerData: playerData });
             updatePlayerInfoModal(playerData, gameState.gameConfigs);
             hideModal('feedback-modal'); // 隱藏載入提示
             showModal('player-info-modal'); // 顯示玩家資訊彈窗
@@ -455,6 +457,7 @@ function updateLeaderboardTable(tableType, data) {
 
     data.forEach((item, index) => {
         const row = tbody.insertRow();
+        row.dataset.monsterId = item.id; // 新增：在tr上添加 data-monster-id
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -465,11 +468,18 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
-            const nicknameSpan = document.createElement('span');
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
-            nicknameSpan.className = `text-rarity-${rarityKey}`;
-            nicknameSpan.textContent = item.nickname;
-            nicknameCell.appendChild(nicknameSpan);
+            
+            // 新增：將暱稱改為可點擊的連結
+            const link = document.createElement('a');
+            link.href = '#';
+            link.className = 'leaderboard-monster-link'; // Class for the event handler
+            link.classList.add(`text-rarity-${rarityKey}`);
+            link.style.textDecoration = 'none';
+            link.style.color = 'inherit'; // Let the rarity class take precedence
+            link.textContent = item.nickname;
+            nicknameCell.appendChild(link);
+
 
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
