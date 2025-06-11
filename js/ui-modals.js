@@ -15,6 +15,33 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     const ownedTitles = stats.titles || [];
     const equippedTitleId = stats.equipped_title_id || (ownedTitles.length > 0 ? ownedTitles[0].id : null);
 
+    // 新增：稱號效果的中文對照表
+    const statNameMap = {
+        hp: 'HP',
+        mp: 'MP',
+        attack: '攻擊',
+        defense: '防禦',
+        speed: '速度',
+        crit: '爆擊率',
+        cultivation_item_find_chance: '修煉物品發現率',
+        elemental_damage_boost: '元素傷害',
+        score_gain_boost: '積分獲取加成',
+        evasion: '閃避率',
+        fire_resistance: '火抗性',
+        water_resistance: '水抗性',
+        wood_resistance: '木抗性',
+        gold_resistance: '金抗性',
+        earth_resistance: '土抗性',
+        light_resistance: '光抗性',
+        dark_resistance: '暗抗性',
+        poison_damage_boost: '毒素傷害',
+        cultivation_exp_gain: '修煉經驗獲取',
+        cultivation_time_reduction: '修煉時間縮短',
+        dna_return_rate_on_disassemble: '分解DNA返還率',
+        leech_skill_effect: '生命吸取效果',
+        mp_regen_per_turn: 'MP每回合恢復'
+    };
+
     if (ownedTitles.length > 0) {
         titlesHtml = ownedTitles.map(title => {
             const isEquipped = title.id === equippedTitleId;
@@ -22,12 +49,29 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
                 : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
 
+            // 新增：生成稱號效果的HTML
+            let buffsHtml = '';
+            if (title.buffs && Object.keys(title.buffs).length > 0) {
+                const buffParts = Object.entries(title.buffs).map(([key, value]) => {
+                    const name = statNameMap[key] || key;
+                    // 處理百分比顯示
+                    if (value > 0 && value < 1) {
+                        return `${name}+${(value * 100).toFixed(0)}%`;
+                    }
+                    return `${name}+${value}`;
+                });
+                 // 將效果文字包在p標籤內，並加上紅色樣式
+                buffsHtml = `<p class="title-buffs" style="color: var(--danger-color); font-size: 0.9em; margin-top: 4px; margin-bottom: 6px; font-weight: 500;">${buffParts.join('、')}</p>`;
+            }
+
+
             return `
                 <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span style="font-weight: bold; font-size: 1.1em; color: ${isEquipped ? 'gold' : 'var(--text-primary)'};">${title.name}</span>
                         ${buttonHtml}
                     </div>
+                    ${buffsHtml}
                     <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${title.description || ''}</p>
                 </div>
             `;
