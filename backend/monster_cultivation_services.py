@@ -169,6 +169,7 @@ def complete_cultivation_service(
     game_configs: GameConfigs
 ) -> Optional[Dict[str, Any]]:
     """完成怪獸修煉，計算經驗、潛在新技能、數值成長和物品拾獲。"""
+    monster_cultivation_services_logger.info(f"--- [Cultivation Service] Received request for monster_id: {monster_id}")
     player_data = get_player_data_service(player_id, None, game_configs) 
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
@@ -176,10 +177,14 @@ def complete_cultivation_service(
 
     monster_to_update: Optional[Monster] = None
     monster_idx = -1
+    
+    monster_cultivation_services_logger.info(f"--- [Cultivation Service] Searching for monster in farm of {len(player_data.get('farmedMonsters', []))} monsters.")
     for idx, m in enumerate(player_data["farmedMonsters"]):
+        monster_cultivation_services_logger.info(f"--- [Cultivation Service] Checking monster at index {idx} with ID: {m.get('id')}")
         if m.get("id") == monster_id:
             monster_to_update = m
             monster_idx = idx
+            monster_cultivation_services_logger.info(f"--- [Cultivation Service] Match found! Monster data: {monster_to_update}")
             break
 
     if not monster_to_update or monster_idx == -1:
@@ -308,8 +313,10 @@ def complete_cultivation_service(
                 if quality_pool: items_obtained.append(random.choice(quality_pool))
     
     # 5. 生成修煉故事 (從故事庫)
+    monster_name_for_story = monster_to_update.get('nickname', '一隻怪獸')
+    monster_cultivation_services_logger.info(f"--- [Cultivation Service] Generating story for monster_name: '{monster_name_for_story}'")
     adventure_story = _generate_story_from_library(
-        monster_name=monster_to_update.get('nickname', '一隻怪獸'),
+        monster_name=monster_name_for_story,
         game_configs=game_configs,
         duration_percentage=duration_percentage,
         skill_updates_log=skill_updates_log,
