@@ -32,7 +32,7 @@ from .leaderboard_search_services import (
 
 # 從設定和 AI 服務模組引入函式
 from .MD_config_services import load_all_game_configs_from_firestore
-from .MD_models import PlayerGameData, Monster, BattleResult
+from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__)
@@ -156,12 +156,15 @@ def equip_title_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
 
+    # 驗證玩家是否擁有該稱號
     owned_titles = player_data.get("playerStats", {}).get("titles", [])
     if not any(title.get("id") == title_id_to_equip for title in owned_titles):
         return jsonify({"error": "未授權：您尚未擁有此稱號，無法裝備。"}), 403
 
+    # 更新已裝備的稱號ID
     player_data["playerStats"]["equipped_title_id"] = title_id_to_equip
     
+    # 儲存更新後的玩家資料
     if save_player_data_service(user_id, player_data):
         routes_logger.info(f"玩家 {user_id} 成功裝備稱號 ID: {title_id_to_equip}")
         return jsonify({
