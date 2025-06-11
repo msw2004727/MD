@@ -138,6 +138,12 @@ def _get_effective_skill_stats(skill: Skill) -> Skill:
         if isinstance(base_duration, int):
             effective_skill["duration"] = base_duration + math.floor((level - 1) / 3)
 
+        # 新增：爆擊率加成 - 每 2 級提升 1%
+        base_crit = skill.get("crit", 0)
+        if base_crit > 0:
+            effective_skill["crit"] = base_crit + math.floor((level - 1) / 2)
+
+
     return effective_skill
 
 
@@ -231,7 +237,9 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         action_details["damage_dealt"] = 0
         return action_details
 
-    is_crit = random.randint(1, 100) <= attacker_current_stats["crit"]
+    # 修改：暴擊率應使用攻擊方總爆率 + 技能有效爆率
+    total_crit_chance = attacker_current_stats["crit"] + effective_skill.get("crit", 0)
+    is_crit = random.randint(1, 100) <= total_crit_chance
     action_details["is_crit"] = is_crit
     action_details["is_miss"] = False
 
@@ -488,7 +496,7 @@ def simulate_battle_full(
         all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{opponent_monster['nickname']} 獲勝！")
     elif opponent_monster["current_hp"] <= 0:
         winner_id = player_monster["id"]
-        loser_id = opponent_monster["id"]
+        loser_id = player_monster["id"]
         all_raw_log_messages.append(f"--- 戰鬥結束 ---\n{player_monster['nickname']} 獲勝！")
     else:
         winner_id = "平手"
