@@ -166,6 +166,20 @@ def populate_game_configs():
         script_logger.error(f"處理 Personalities 資料失敗: {e}")
         return
 
+    # --- 載入修煉故事資料 ---
+    try:
+        stories_path = os.path.join(data_dir, 'cultivation_stories.json')
+        with open(stories_path, 'r', encoding='utf-8') as f:
+            stories_data = json.load(f)
+        script_logger.info(f"成功從 {stories_path} 載入 {len(stories_data)} 個地點的修煉故事資料。")
+        db_client.collection('MD_GameConfigs').document('CultivationStories').set({'story_library': stories_data})
+        script_logger.info("成功寫入 CultivationStories 資料。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到修煉故事設定檔 {stories_path}。")
+    except Exception as e:
+        script_logger.error(f"處理 CultivationStories 資料失敗: {e}")
+
+
     # --- 寫入其他設定 ---
     
     # DNA 稀有度資料 (Rarities)
