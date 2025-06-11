@@ -1031,9 +1031,27 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     newBanner.insertAdjacentElement('afterend', hintsContainer);
 
-    const storySection = DOMElements.trainingStoryResult.parentNode;
+    // --- 修改開始 ---
+    // 改為通過更穩定的方式尋找故事區塊
+    const growthResultEl = DOMElements.trainingGrowthResult;
+    let storySection = null;
+    if (growthResultEl && growthResultEl.parentNode) {
+        // 假設“成長紀錄”區塊的父元素是 .training-result-section
+        const growthSectionWrapper = growthResultEl.parentNode;
+        // “冒險故事”區塊是“成長紀錄”區塊的前一個兄弟元素
+        if (growthSectionWrapper.previousElementSibling) {
+            storySection = growthSectionWrapper.previousElementSibling;
+        }
+    }
+    // 如果找不到，作為後備，嘗試舊方法 (僅在第一次有效)
+    if (!storySection) {
+        storySection = DOMElements.trainingStoryResult.parentNode;
+    }
+    // --- 修改結束 ---
+
     if (storySection) {
         const storyContent = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
+        // 直接覆蓋整個故事區塊的內部HTML，確保結構每次都重新生成
         storySection.innerHTML = `
             <h5>📜 冒險故事</h5>
             <div id="adventure-story-container" style="display: none; padding: 5px; border-left: 3px solid var(--border-color); margin-top: 5px;">
