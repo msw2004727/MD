@@ -414,21 +414,21 @@ def simulate_battle_api_route():
                         break
                 player_data["farmedMonsters"] = farmed_monsters
                 
-                if battle_result.get("winner_id") == player_monster_data_req.get('id') and \
-                   battle_result.get("loser_id") == opponent_monster_data_req.get('id') and \
-                   not opponent_monster_data_req.get('isNPC'):
-                    routes_logger.info(f"怪獸 {player_monster_data_req.get('nickname')} 勝利，嘗試吸收 {opponent_monster_data_req.get('nickname')}")
-                    absorption_result = absorb_defeated_monster_service(
-                        player_id=user_id,
-                        winning_monster_id=player_monster_data_req['id'],
-                        defeated_monster_snapshot=opponent_monster_data_req,
-                        game_configs=game_configs,
-                        player_data=player_data
-                    )
-                    if absorption_result and absorption_result.get("success"):
-                        battle_result["absorption_details"] = absorption_result
-                    elif absorption_result:
-                        battle_result["absorption_details"] = {"error": absorption_result.get("error")}
+                # if battle_result.get("winner_id") == player_monster_data_req.get('id') and \
+                #    battle_result.get("loser_id") == opponent_monster_data_req.get('id') and \
+                #    not opponent_monster_data_req.get('isNPC'):
+                #     routes_logger.info(f"怪獸 {player_monster_data_req.get('nickname')} 勝利，嘗試吸收 {opponent_monster_data_req.get('nickname')}")
+                #     absorption_result = absorb_defeated_monster_service(
+                #         player_id=user_id,
+                #         winning_monster_id=player_monster_data_req['id'],
+                #         defeated_monster_snapshot=opponent_monster_data_req,
+                #         game_configs=game_configs,
+                #         player_data=player_data
+                #     )
+                #     if absorption_result and absorption_result.get("success"):
+                #         battle_result["absorption_details"] = absorption_result
+                #     elif absorption_result:
+                #         battle_result["absorption_details"] = {"error": absorption_result.get("error")}
                 
                 if not save_player_data_service(user_id, player_data):
                     routes_logger.warning(f"警告：戰鬥結果/吸收後，儲存攻擊方玩家 {user_id} 資料失敗。")
