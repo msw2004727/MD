@@ -86,6 +86,7 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
         "current_exp": 0,
         "exp_to_next_level": _calculate_exp_to_next_level(skill_level, cultivation_cfg.get("skill_exp_base_multiplier", 100)), # type: ignore
         "effect": skill_template.get("effect"), # 簡要效果標識
+        # 以下為更詳細的效果參數，用於實現輔助性、恢復性、同歸於盡性等
         "stat": skill_template.get("stat"),     # 影響的數值
         "amount": skill_template.get("amount"),   # 影響的量
         "duration": skill_template.get("duration"), # 持續回合
@@ -213,7 +214,19 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
                 monster_combination_services_logger.error("連預設的'無'屬性技能都找不到，怪獸將沒有技能！")
 
         player_stats = player_data.get("playerStats", {})
-        player_title = player_stats.get("titles", ["新手"])[0]
+        
+        # --- 修正暱稱產生邏輯 ---
+        player_title = "新手" # 預設值
+        equipped_id = player_stats.get("equipped_title_id")
+        owned_titles = player_stats.get("titles", [])
+        if equipped_id:
+            equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
+            if equipped_title_obj:
+                player_title = equipped_title_obj.get("name", "新手")
+        elif owned_titles: # 如果沒有裝備ID，但有稱號列表，則使用第一個
+             player_title = owned_titles[0].get("name", "新手")
+        # --- 修正結束 ---
+        
         monster_achievement = random.choice(game_configs.get("monster_achievements_list", ["新秀"]))
         element_nickname = game_configs.get("element_nicknames", {}).get(primary_element, primary_element)
         
