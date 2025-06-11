@@ -73,6 +73,11 @@
     z-index: 2015; /* MODIFIED: z-index increased */
 }
 
+/* 新增：提升提醒彈窗的權重，確保它能蓋過修煉成果彈窗 */
+#reminder-modal {
+    z-index: 2025;
+}
+
 
 .modal-content {
     background-color: var(--bg-panel);
