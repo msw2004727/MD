@@ -104,6 +104,43 @@ def draw_free_dna_route():
         routes_logger.error(f"執行免費 DNA 抽取時在路由層發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "伺服器內部錯誤，無法完成DNA抽取。"}), 500
 
+@md_bp.route('/player/equip-title', methods=['POST'])
+def equip_title_route():
+    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    title_id_to_equip = data.get('title_id')
+    if not title_id_to_equip:
+        return jsonify({"error": "請求中缺少 'title_id'。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    # 驗證玩家是否擁有該稱號
+    owned_titles = player_data.get("playerStats", {}).get("titles", [])
+    if not any(title.get("id") == title_id_to_equip for title in owned_titles):
+        return jsonify({"error": "未授權：您尚未擁有此稱號，無法裝備。"}), 403
+
+    # 更新已裝備的稱號ID
+    player_data["playerStats"]["equipped_title_id"] = title_id_to_equip
+    
+    # 儲存更新後的玩家資料
+    if save_player_data_service(user_id, player_data):
+        routes_logger.info(f"玩家 {user_id} 成功裝備稱號 ID: {title_id_to_equip}")
+        return jsonify({
+            "success": True, 
+            "message": "稱號已成功裝備。",
+            "equipped_title_id": title_id_to_equip
+        }), 200
+    else:
+        routes_logger.error(f"玩家 {user_id} 裝備稱號 {title_id_to_equip} 後儲存失敗。")
+        return jsonify({"error": "儲存失敗，請稍後再試。"}), 500
+
 @md_bp.route('/player/<path:requested_player_id>', methods=['GET'])
 def get_player_info_route(requested_player_id: str):
     game_configs = _get_game_configs_data_from_app_context()
