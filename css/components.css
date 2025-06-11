@@ -30,6 +30,12 @@
 .top-left-button { top: 10px; left: 10px; }
 .top-right-button { top: 10px; right: 10px; }
 
+.top-center-button {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 #theme-switcher {
     color: var(--text-primary-dark);
 }
