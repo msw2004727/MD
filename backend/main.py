@@ -1,23 +1,26 @@
 # MD/backend/main.py
 # Flask 應用程式主啟動點
 
+# --- 新增：路徑修正 ---
+import os
+import sys
+# 將專案根目錄（backend資料夾的上一層）添加到 Python 的模組搜索路徑
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# --- 路徑修正結束 ---
+
 from flask import Flask, jsonify, request
-from flask_cors import CORS # 確保 Flask-CORS 已導入
+from flask_cors import CORS 
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os
-import logging
 import json
+import logging
 
-# 導入你的藍圖 (使用相對導入，修正)
-from .MD_routes import md_bp
-# 導入 Firebase 配置設定函式 (使用相對導入，修正)
-from . import MD_firebase_config
-# 導入遊戲設定服務 (使用相對導入，修正)
-from .MD_config_services import load_all_game_configs_from_firestore
+# 將原本的相對導入改成從 backend 開始的絕對導入
+from backend.MD_routes import md_bp
+from backend import MD_firebase_config
+from backend.MD_config_services import load_all_game_configs_from_firestore
 
 # 設定日誌
-# 將日誌級別從 INFO 改為 DEBUG，以便看到詳細的偵錯訊息
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 app_logger = logging.getLogger(__name__)
 
@@ -25,24 +28,19 @@ app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # --- CORS 配置 ---
-# 將 CORS 配置移至此處，確保在註冊藍圖前就設定好
-# 定義一個允許來源的列表
 allowed_origins = [
-    "https://msw2004727.github.io",  # 您部署在 GitHub Pages 的前端網址
-    "http://127.0.0.1:5500",       # 本地開發常用 Live Server 端口
-    "http://localhost:5500",      # 本地開發常用 Live Server 端口
-    "http://127.0.0.1:5501",       # 備用端口
-    "http://localhost:5501"       # 備用端口
+    "https://msw2004727.github.io",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:5501",
+    "http://localhost:5501"
 ]
-
-# 將 CORS 實例直接應用於整個 Flask 應用程式 'app'
-# 這樣可以確保所有路由，包括預檢請求 (OPTIONS)，都能正確處理 CORS 頭。
 CORS(app,
      origins=allowed_origins,
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-     expose_headers=["Content-Type", "Authorization"] # 新增：明確暴露標頭
+     expose_headers=["Content-Type", "Authorization"]
 )
 app_logger.info(f"CORS configured to allow origins: {allowed_origins}")
 
@@ -70,19 +68,14 @@ if not firebase_admin._apps:
         except Exception as e:
             app_logger.error(f"從環境變數解析 Firebase 憑證失敗: {e}", exc_info=True)
             cred = None
-    elif os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
+    elif os.path.exists(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH)): # 修正路徑檢查
         app_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
-        key_file_exists = os.path.exists(SERVICE_ACCOUNT_KEY_PATH)
-        app_logger.info(f"本地金鑰檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 是否存在: {key_file_exists}")
-        if key_file_exists:
-            try:
-                cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-                app_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
-            except Exception as e:
-                app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
-                cred = None
-        else:
-            app_logger.warning(f"本地金鑰檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 不存在。")
+        try:
+            cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH))
+            app_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
+        except Exception as e:
+            app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
+            cred = None
     else:
         app_logger.warning("未找到環境變數或本地服務帳戶金鑰檔案。Firebase 將無法初始化。")
 
