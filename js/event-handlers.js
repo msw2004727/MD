@@ -321,11 +321,15 @@ function toggleJiggleMode(activate) {
             container.classList.add('inventory-jiggle-active');
             const occupiedItems = container.querySelectorAll('.dna-item.occupied, .dna-slot.occupied');
             occupiedItems.forEach(item => {
-                if (item.querySelector('.delete-dna-btn')) return; // 防止重複添加
+                if (item.querySelector('.delete-dna-btn')) return;
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'delete-dna-btn';
                 deleteBtn.innerHTML = '&times;';
-                deleteBtn.dataset.dnaId = item.dataset.dnaId;
+                // 將索引和來源資訊儲存在按鈕上，以便後續刪除
+                deleteBtn.dataset.sourceType = item.dataset.dnaSource;
+                if (item.dataset.inventoryIndex) deleteBtn.dataset.index = item.dataset.inventoryIndex;
+                if (item.dataset.slotIndex) deleteBtn.dataset.index = item.dataset.slotIndex;
+                if (item.dataset.tempItemIndex) deleteBtn.dataset.index = item.dataset.tempItemIndex;
                 item.appendChild(deleteBtn);
             });
         } else {
@@ -336,30 +340,7 @@ function toggleJiggleMode(activate) {
     });
 }
 
-// 輔助函式：從遊戲狀態中尋找並移除DNA
-function findAndRemoveDnaById(dnaIdToDelete) {
-    // 搜尋主庫存
-    let index = gameState.playerData.playerOwnedDNA.findIndex(dna => dna && dna.id === dnaIdToDelete);
-    if (index > -1) {
-        gameState.playerData.playerOwnedDNA[index] = null;
-        return { success: true };
-    }
-    // 搜尋組合槽
-    index = gameState.dnaCombinationSlots.findIndex(dna => dna && dna.id === dnaIdToDelete);
-    if (index > -1) {
-        gameState.dnaCombinationSlots[index] = null;
-        return { success: true };
-    }
-    // 搜尋暫存背包
-    index = gameState.temporaryBackpack.findIndex(item => item && item.data && item.data.id === dnaIdToDelete);
-    if (index > -1) {
-        gameState.temporaryBackpack[index] = null;
-        return { success: true };
-    }
-    return { success: false };
-}
-
-// 統一的事件處理函式
+// 統一的事件處理函式，現在包含修正後的刪除邏輯
 function setupAllJiggleModeHandlers() {
     const containers = [
         DOMElements.inventoryItemsContainer,
@@ -368,7 +349,7 @@ function setupAllJiggleModeHandlers() {
     ];
 
     const pressHandler = (event) => {
-        if (isJiggleModeActive) return; // 如果已在抖動模式，則不觸發
+        if (isJiggleModeActive) return;
         const targetItem = event.target.closest('.dna-item.occupied, .dna-slot.occupied');
         if (!targetItem) return;
 
@@ -391,31 +372,49 @@ function setupAllJiggleModeHandlers() {
         container.addEventListener('touchmove', cancelPressHandler);
 
         // --- 2. 刪除按鈕點擊監聽 (事件委派) ---
-        container.addEventListener('click', (event) => {
+        container.addEventListener('click', async (event) => {
             const deleteButton = event.target.closest('.delete-dna-btn');
             if (!deleteButton) return;
             
             event.preventDefault();
             event.stopPropagation();
 
-            const dnaIdToDelete = deleteButton.dataset.dnaId;
-            const allItems = [
-                ...gameState.playerData.playerOwnedDNA, 
-                ...gameState.dnaCombinationSlots,
-                ...gameState.temporaryBackpack.map(i => i ? i.data : null)
-            ].filter(Boolean); // 過濾掉 null
-            const itemToDelete = allItems.find(item => item.id === dnaIdToDelete);
+            const sourceType = deleteButton.dataset.sourceType;
+            const index = parseInt(deleteButton.dataset.index, 10);
+            let itemToDelete = null;
+            let itemName = '該DNA';
 
+            // 根據來源和索引找到要刪除的物品
+            if (sourceType === 'inventory' && gameState.playerData.playerOwnedDNA[index]) {
+                itemToDelete = gameState.playerData.playerOwnedDNA[index];
+            } else if (sourceType === 'combination' && gameState.dnaCombinationSlots[index]) {
+                itemToDelete = gameState.dnaCombinationSlots[index];
+            } else if (sourceType === 'temporaryBackpack' && gameState.temporaryBackpack[index]) {
+                itemToDelete = gameState.temporaryBackpack[index].data;
+            }
+            
             if (itemToDelete) {
-                showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${itemToDelete.name}" 嗎？`, async () => {
-                    const removalResult = findAndRemoveDnaById(dnaIdToDelete);
-                    if (removalResult.success) {
+                itemName = itemToDelete.name;
+                showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${itemName}" 嗎？`, async () => {
+                    let removalSuccess = false;
+                    if (sourceType === 'inventory') {
+                        gameState.playerData.playerOwnedDNA[index] = null;
+                        removalSuccess = true;
+                    } else if (sourceType === 'combination') {
+                        gameState.dnaCombinationSlots[index] = null;
+                        removalSuccess = true;
+                    } else if (sourceType === 'temporaryBackpack') {
+                        gameState.temporaryBackpack[index] = null;
+                        removalSuccess = true;
+                    }
+
+                    if (removalSuccess) {
                         await savePlayerData(gameState.playerId, gameState.playerData);
                         renderPlayerDNAInventory();
                         renderDNACombinationSlots();
                         renderTemporaryBackpack();
                         toggleJiggleMode(false);
-                        showFeedbackModal('刪除成功', `DNA碎片「${itemToDelete.name}」已被成功刪除。`);
+                        showFeedbackModal('刪除成功', `DNA碎片「${itemName}」已被成功刪除。`);
                     }
                 });
             }
