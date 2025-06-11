@@ -1173,25 +1173,33 @@ function updateTrainingResultsModal(results, monsterName) {
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid';
-        items.forEach((item) => {
+        items.forEach((item, index) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
+            itemDiv.classList.add('dna-draw-result-item');
             applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
 
-            itemDiv.addEventListener('click', function handleItemClick() {
-                addDnaToTemporaryBackpack(item);
-                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                if (itemIndex > -1) {
-                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
-                }
-                itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
-                }
-            }, { once: true });
+            itemDiv.innerHTML = `
+                <span class="dna-name">${item.name}</span>
+                <span class="dna-type">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${item.rarity.toLowerCase()}">${item.rarity}</span>
+                <button class="add-trained-dna-to-backpack-btn button primary text-xs mt-2" data-item-index="${index}">拾取</button>
+            `;
+            
+            const pickupButton = itemDiv.querySelector('.add-trained-dna-to-backpack-btn');
+            if (pickupButton) {
+                pickupButton.addEventListener('click', function handlePickupClick() {
+                    addDnaToTemporaryBackpack(item);
+
+                    const itemIndexInState = gameState.lastCultivationResult.items_obtained.findIndex(i => i.id === item.id);
+                    if (itemIndexInState > -1) {
+                        gameState.lastCultivationResult.items_obtained.splice(itemIndexInState, 1);
+                    }
+                    
+                    pickupButton.disabled = true;
+                    pickupButton.textContent = '已拾取';
+                    itemDiv.style.opacity = '0.6';
+                }, { once: true });
+            }
 
             itemsGrid.appendChild(itemDiv);
         });
