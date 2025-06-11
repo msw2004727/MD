@@ -1827,3 +1827,37 @@ body.light-theme .leaderboard-table tr:hover td {
     display: flex;
     gap: 0.5rem;
 }
+
+/* --- 新增：怪獸快照狀態條樣式 --- */
+.snapshot-bars-container {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 120px;
+    pointer-events: auto; /* 確保容器本身可互動 (如果未來需要) */
+}
+
+.snapshot-bar {
+    height: 8px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 1px; /* 給邊框和填充條之間留出微小空隙 */
+}
+
+.snapshot-bar-fill {
+    height: 100%;
+    width: 0%; /* 預設為0，由JS控制 */
+    border-radius: 2px;
+    transition: width 0.4s ease-in-out;
+}
+
+.snapshot-hp-bar .snapshot-bar-fill {
+    background-color: var(--success-color);
+}
+
+.snapshot-mp-bar .snapshot-bar-fill {
+    background-color: var(--accent-color);
+}
