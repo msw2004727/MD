@@ -1,5 +1,42 @@
 /* css/game-components.css */
 
+/* ==========================================================================
+   通用面板 (Panel) 組件
+   - 從 layout.css 移動至此並標準化
+   ========================================================================== */
+.panel {
+    background-color: var(--bg-slot);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+    min-width: 0; /* Prevents flex items from overflowing their container */
+}
+
+/* ==========================================================================
+   新增: 通用卡片 (Card) 基礎組件
+   - 用於好友列表、修煉地點等
+   ========================================================================== */
+.card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    text-align: center;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: var(--accent-color);
+}
+
+
+/* ==========================================================================
+   面板標題 (Panel Title)
+   ========================================================================== */
 .panel-title-container {
     display: flex;
     justify-content: space-between;
@@ -21,6 +58,9 @@
     color: var(--text-secondary);
 }
 
+/* ==========================================================================
+   DNA / 物品槽 (Item Slot)
+   ========================================================================== */
 .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -154,25 +194,13 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .tab-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 4px;
     margin-bottom: 15px;
     background-color: var(--bg-primary);
     border-radius: 6px;
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-}
-@media (min-width: 768px) {
-    .tab-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-    }
-    .tab-button {
-        flex-grow: 0;
-        padding: 10px 15px;
-        font-size: 1rem;
-    }
 }
 .tab-button {
     padding: 8px 10px;
@@ -198,7 +226,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
-/* --- 修改開始 --- */
 .tab-content {
     display: none;
     min-width: 0;
@@ -207,14 +234,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content.active {
     display: block;
 }
-
-#farm-table-wrapper {
-    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
-    padding-bottom: 5px;
-    /* 移除了 max-width: 100% 以避免潛在衝突 */
-}
-/* --- 修改結束 --- */
-
 
 #monster-leaderboard-element-tabs {
     display: flex;
@@ -299,14 +318,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .leaderboard-table th:nth-child(2) {
     width: 1%;
 }
-.farm-monster-item .farm-monster-status.active {
-    color: var(--warning-color);
-    font-weight: bold;
-}
-.farm-monster-item .farm-monster-status.battling {
-    color: var(--danger-color);
-    font-weight: bold;
-}
+
 .auth-title {
     font-size: 1rem;
     font-weight: 700;
@@ -449,7 +461,7 @@ body.light-theme .leaderboard-table tr:hover td {
     display: block;
 }
 #snapshot-evaluation {
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: bold;
     color: var(--success-color);
 }
@@ -472,23 +484,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: translateX(-50%);
     z-index: 4;
 }
-.farm-col-info .monster-name-display {
-    font-weight: bold;
-    font-size: 1rem;
-}
-.farm-col-info .monster-details-display {
-    font-size: 1rem;
-    color: var(--text-secondary);
-}
-.farm-col-score .score-label {
-    display: block;
-    font-size: 1rem;
-    color: var(--text-secondary);
-}
-.farm-col-score .score-value {
-    font-weight: bold;
-    color: var(--success-color);
-}
+
 .details-grid-rearranged {
     display: grid;
     grid-template-columns: 1fr;
@@ -651,3 +647,31 @@ body.light-theme .leaderboard-table tr:hover td {
 .dna-attribute-box.text-element-wind { background-color: var(--element-wind-bg); }
 .dna-attribute-box.text-element-mix { background-color: var(--element-mix-bg); }
 .dna-attribute-box.text-element-無 { background-color: var(--element-無-bg); }
+
+.training-monster-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem; /* Match farm list font size */
+}
+.training-monster-table th, .training-monster-table td {
+    padding: 8px;
+    text-align: center; /* Center align all cells by default */
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+.training-monster-table th {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+.training-monster-table td {
+    color: var(--text-primary);
+}
+.training-monster-table tr:last-child td {
+    border-bottom: none;
+}
+.training-monster-table tr:hover td {
+    background-color: var(--bg-slot);
+}
+.training-monster-table td:nth-child(2) { /* Monster info column */
+    text-align: left;
+}
