@@ -194,27 +194,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     display: block;
 }
 
-#farm-table-wrapper {
-    overflow-x: auto; 
-    padding-bottom: 5px;
-}
-
-#monster-farm-content .farm-header-grid,
-#monster-farm-content .farm-monster-item {
-    font-size: 0.75rem;
-}
-
-#monster-farm-content .farm-col-status {
-    white-space: normal; /* 允許狀態欄內的文字換行 */
-    line-height: 1.4; /* 調整行高讓兩行文字更美觀 */
-}
-
-#monster-farm-content .farm-col-actions .button {
-    padding: 4px 6px; /* 稍微調整按鈕內邊距以適應新字體大小 */
-    font-size: 0.75rem; /* 確保按鈕文字大小也被覆蓋 */
-}
-
-
 #monster-leaderboard-element-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -298,14 +277,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .leaderboard-table th:nth-child(2) {
     width: 1%;
 }
-.farm-monster-item .farm-monster-status.active {
-    color: var(--warning-color);
-    font-weight: bold;
-}
-.farm-monster-item .farm-monster-status.battling {
-    color: var(--danger-color);
-    font-weight: bold;
-}
+
 .auth-title {
     font-size: 1rem;
     font-weight: 700;
@@ -471,20 +443,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: translateX(-50%);
     z-index: 4;
 }
-.farm-col-info .monster-name-display {
-    font-size: 1rem;
-}
-.farm-col-info .monster-details-display {
-    color: var(--text-secondary);
-}
-.farm-col-score .score-label {
-    display: block;
-    color: var(--text-secondary);
-}
-.farm-col-score .score-value {
-    font-weight: bold;
-    color: var(--success-color);
-}
+
 .details-grid-rearranged {
     display: grid;
     grid-template-columns: 1fr;
