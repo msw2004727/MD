@@ -137,51 +137,78 @@
 }
 
 /* ======================================= */
-/* ====== Monster Farm Layout Grid ======= */
+/* ====== NEW Monster Farm Layout ======= */
 /* ======================================= */
 
-.farm-header-grid {
+.farm-grid-container {
+    display: grid;
+    grid-template-columns: 35px 45px 55px minmax(120px, 1fr) 120px 60px 45px;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+}
+
+.farm-header-cell {
     font-weight: 600;
-    font-size: 1rem;
-    color: var(--text-secondary);
+    color: var(--accent-color);
     padding-bottom: 0.5rem;
     text-align: center;
     border-bottom: 2px solid var(--accent-color);
+    white-space: nowrap;
 }
 
-.farm-header-grid, .farm-monster-item {
-    display: grid;
-    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px auto 55px 95px 140px;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    align-items: center;
+.farm-data-cell {
+    padding: 0.5rem 0;
     border-bottom: 1px solid var(--border-color);
-}
-
-/* Center align all header and column content by default */
-.farm-header-grid > div,
-.farm-monster-item > .farm-col {
-    text-align: center;
-    display: flex; /* Use flex to center content vertically and horizontally */
-    justify-content: center;
+    display: flex;
     align-items: center;
-    white-space: nowrap; 
+    justify-content: center;
+    text-align: center;
+    min-height: 42px; /* 確保行高一致 */
 }
 
-
-/* Specifically align monster info column to the left */
-.farm-header-grid > div:nth-child(2),
-.farm-monster-item .farm-col-info {
+/* Specific alignments for certain columns */
+.farm-grid-container > div:nth-child(7n + 4) { /* 4th column (Name) */
+    justify-content: flex-start;
     text-align: left;
-    justify-self: start;
-    justify-content: flex-start; /* Align flex items to the start */
-    display: block; /* Revert to block for normal text flow */
 }
 
-.farm-monster-item:last-child { 
-    border-bottom: none; 
+/* Remove bottom border from the last row */
+.farm-grid-container > .farm-data-cell:nth-last-child(-n + 7) {
+    border-bottom: none;
 }
+
+.farm-data-cell .farm-monster-name-link {
+    font-weight: bold;
+    font-size: 1rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.farm-data-cell .farm-monster-name-link:hover {
+    text-decoration: underline;
+    color: var(--accent-hover);
+}
+
+.farm-data-cell .score-value {
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.farm-action-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    border: none;
+}
+
+.farm-action-icon-btn.danger-hover:hover {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+}
+
 
 /* Auth screen layout */
 #auth-screen {
