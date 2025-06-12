@@ -15,33 +15,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     const ownedTitles = stats.titles || [];
     const equippedTitleId = stats.equipped_title_id || (ownedTitles.length > 0 ? ownedTitles[0].id : null);
 
-    // 新增：稱號效果的中文對照表
-    const statNameMap = {
-        hp: 'HP',
-        mp: 'MP',
-        attack: '攻擊',
-        defense: '防禦',
-        speed: '速度',
-        crit: '爆擊率',
-        cultivation_item_find_chance: '修煉物品發現率',
-        elemental_damage_boost: '元素傷害',
-        score_gain_boost: '積分獲取加成',
-        evasion: '閃避率',
-        fire_resistance: '火抗性',
-        water_resistance: '水抗性',
-        wood_resistance: '木抗性',
-        gold_resistance: '金抗性',
-        earth_resistance: '土抗性',
-        light_resistance: '光抗性',
-        dark_resistance: '暗抗性',
-        poison_damage_boost: '毒素傷害',
-        cultivation_exp_gain: '修煉經驗獲取',
-        cultivation_time_reduction: '修煉時間縮短',
-        dna_return_rate_on_disassemble: '分解DNA返還率',
-        leech_skill_effect: '生命吸取效果',
-        mp_regen_per_turn: 'MP每回合恢復'
-    };
-
     if (ownedTitles.length > 0) {
         titlesHtml = ownedTitles.map(title => {
             const isEquipped = title.id === equippedTitleId;
@@ -49,29 +22,12 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
                 : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
 
-            // 新增：生成稱號效果的HTML
-            let buffsHtml = '';
-            if (title.buffs && Object.keys(title.buffs).length > 0) {
-                const buffParts = Object.entries(title.buffs).map(([key, value]) => {
-                    const name = statNameMap[key] || key;
-                    // 處理百分比顯示
-                    if (value > 0 && value < 1) {
-                        return `${name}+${(value * 100).toFixed(0)}%`;
-                    }
-                    return `${name}+${value}`;
-                });
-                 // 將效果文字包在p標籤內，並加上紅色樣式
-                buffsHtml = `<p class="title-buffs" style="color: var(--danger-color); font-size: 0.9em; margin-top: 4px; margin-bottom: 6px; font-weight: 500;">${buffParts.join('、')}</p>`;
-            }
-
-
             return `
                 <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                         <span style="font-weight: bold; font-size: 1.1em; color: ${isEquipped ? 'gold' : 'var(--text-primary)'};">${title.name}</span>
                         ${buttonHtml}
                     </div>
-                    ${buffsHtml}
                     <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${title.description || ''}</p>
                 </div>
             `;
@@ -108,7 +64,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - 5}隻)...</button>`;
+            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
         }
     }
 
@@ -185,7 +141,7 @@ async function viewPlayerInfo(playerId) {
 }
 
 
-function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
+function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
         console.error("Monster info modal elements not found in DOMElements.");
         return;
@@ -197,33 +153,29 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
         return;
     }
 
+    // 將怪獸 ID 附加到 header 元素上，以便事件處理器讀取
+    DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
+
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    const isOwner = !monster.owner_id || monster.owner_id === gameState.playerId;
-    const ownerActionsHtml = isOwner ? `
-        <button id="edit-monster-nickname-btn" class="button secondary" title="編輯屬性名" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✏️</button>
-    ` : '';
-
-    const editFormHtml = isOwner ? `
-        <div id="monster-nickname-edit-container" style="display: none; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 5px;">
-            <input type="text" id="monster-nickname-input" value="${monster.custom_element_nickname || ''}" placeholder="新屬性名(最多5字)" maxlength="5" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary); border-radius: 4px; padding: 6px 10px; font-size: 1rem; width: 150px;">
-            <button id="confirm-nickname-change-btn" class="button success" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✔️</button>
-            <button id="cancel-nickname-change-btn" class="button danger" style="padding: 4px 8px; font-size: 0.8em; line-height: 1;">✖️</button>
-        </div>
-    ` : '';
-    
-    DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
+    const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+    const defaultElementNickname = gameConfigs.element_nicknames ? (gameConfigs.element_nicknames[primaryElement] || '') : '';
+    const editableNickname = monster.custom_element_nickname || defaultElementNickname;
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
-        <div id="monster-nickname-display-container" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar}; margin: 0;">
+        <div id="monster-nickname-display-container" class="monster-nickname-display-container">
+            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
                 ${monster.nickname}
             </h4>
-            ${ownerActionsHtml}
+            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
         </div>
-        ${editFormHtml}
+        <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
+            <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
+            <button id="confirm-nickname-change-btn" class="button success" title="確認">✔️</button>
+            <button id="cancel-nickname-change-btn" class="button danger" title="取消">❌</button>
+        </div>
     `;
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
@@ -270,6 +222,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
+            // 新增：產生里程碑效果的 HTML
             let milestonesHtml = '';
             let skillTemplate = null;
             if (gameState.gameConfigs && gameState.gameConfigs.skills) {
@@ -283,7 +236,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
             }
 
             if (skillTemplate && skillTemplate.level_milestones) {
-                milestonesHtml += `<div class="mt-2 text-xs" style="border-top: 1px dashed var(--border-color); padding-top: 5px;">`;
+                milestonesHtml += `<div class="mt-2" style="font-size: 0.9em; border-top: 1px dashed var(--border-color); padding-top: 5px;">`;
                 for (const levelStr in skillTemplate.level_milestones) {
                     const milestoneLevel = parseInt(levelStr, 10);
                     const milestone = skillTemplate.level_milestones[levelStr];
@@ -301,17 +254,12 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 }
                 milestonesHtml += `</div>`;
             }
-            
-            const cssClassKey = getElementCssClassKey(skill.type);
-            const elementBadge = `<span style="font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; background-color: var(--element-${cssClassKey}-bg); color: var(--element-${cssClassKey}-text); margin-left: 8px;">${skill.type}</span>`;
+            // ===================================
 
             return `
             <div class="skill-entry">
-                <div style="display: flex; align-items: center; margin-bottom: 4px;">
-                    <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${level})</a>
-                    ${elementBadge}
-                </div>
-                <p class="skill-details text-xs">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
+                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${level})</a>
+                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
                 ${milestonesHtml}
@@ -347,25 +295,11 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
 
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            const dnaType = dna.type || '無';
-            const elementCssKey = getElementCssClassKey(dnaType);
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item occupied" data-dna-ref-id="${dna.id}">
+            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
                         <span class="dna-name-text">${dna.name}</span>
-                    </div>
-                    <div class="dna-attribute-box text-element-${elementCssKey}">
-                        ${dnaType.charAt(0)}
-                    </div>
-                </div>
-            `;
+                    </div>`;
         } else {
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item empty"><span class="dna-name-text">無</span></div>
-                    <div class="dna-attribute-box empty">無</div>
-                </div>
-            `;
+            return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
         }
     }).join('');
 
@@ -382,41 +316,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
     const getGainHtml = (statName) => {
         const gain = gains[statName] || 0;
         if (gain > 0) {
-            return ` <span style="color: var(--success-color); font-weight: bold; font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
-        }
-        return '';
-    };
-
-    let titleBuffs = {};
-    // --- 修改：調整稱號加成獲取邏輯 ---
-    if (monster.owner_title_buffs) {
-        // 優先使用從後端（排行榜）附加的擁有者加成
-        titleBuffs = monster.owner_title_buffs;
-    } else {
-        // 否則，根據擁有者資料決定從哪個資料源讀取
-        let statsSource = null;
-        if (isOwner) {
-            statsSource = gameState.playerData.playerStats; // 自己
-        } else if (ownerData) {
-            statsSource = ownerData.playerStats; // 從他人資訊頁傳入的擁有者資料
-        }
-        
-        if (statsSource) {
-            const equippedId = statsSource.equipped_title_id;
-            if (equippedId && statsSource.titles) {
-                const equippedTitle = statsSource.titles.find(t => t.id === equippedId);
-                if (equippedTitle && equippedTitle.buffs) {
-                    titleBuffs = equippedTitle.buffs;
-                }
-            }
-        }
-    }
-    // --- 修改結束 ---
-    
-    const getTitleBuffHtml = (statName) => {
-        const buffValue = titleBuffs[statName] || 0;
-        if (buffValue > 0) {
-            return ` <span style="color: var(--danger-color); font-weight: bold; font-size: 0.9em; margin-left: 4px;">+${buffValue}</span>`;
+            return ` <span style="color: var(--success-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
         }
         return '';
     };
@@ -427,12 +327,12 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
@@ -580,9 +480,13 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
 }
 
 function updateLeaderboardTable(tableType, data) {
+    console.log("updateLeaderboardTable called with data:", data); // Debugging log
     const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
     const table = document.getElementById(tableId);
-    if (!table) return;
+    if (!table) {
+        console.error("Leaderboard table element not found:", tableId); // Debugging error
+        return;
+    }
 
     let headersConfig;
     if (tableType === 'monster') {
@@ -708,23 +612,7 @@ function updateLeaderboardTable(tableType, data) {
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
 
-            // 修改點: 將玩家暱稱從純文字改為可點擊的連結
-            const nicknameCell = row.insertCell();
-            if (item.uid) { // 確保 uid 存在
-                const link = document.createElement('a');
-                link.href = '#';
-                link.textContent = item.nickname;
-                link.style.textDecoration = 'none';
-                link.style.color = 'var(--accent-color)';
-                link.style.fontWeight = '500';
-                link.onclick = (e) => {
-                    e.preventDefault();
-                    viewPlayerInfo(item.uid);
-                };
-                nicknameCell.appendChild(link);
-            } else {
-                nicknameCell.textContent = item.nickname; // 如果沒有 uid，則退回純文字
-            }
+            row.insertCell().textContent = item.nickname;
 
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
@@ -740,19 +628,7 @@ function updateLeaderboardTable(tableType, data) {
             lossesCell.style.textAlign = 'center';
 
             const titlesCell = row.insertCell();
-            if (item.titles && item.titles.length > 0) {
-                const equippedId = item.equipped_title_id;
-                let titleToShow = item.titles[0]; // 預設顯示第一個
-                if (equippedId) {
-                    const foundTitle = item.titles.find(t => t.id === equippedId);
-                    if (foundTitle) {
-                        titleToShow = foundTitle;
-                    }
-                }
-                titlesCell.textContent = titleToShow.name || '未知稱號';
-            } else {
-                titlesCell.textContent = '無';
-            }
+            titlesCell.textContent = item.titles && item.titles.length > 0 ? item.titles.join(', ') : '無';
         }
     });
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
@@ -843,7 +719,7 @@ function showBattleLogModal(battleResult) {
     };
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
-        if (!text) return '';
+        if (!text) return '(內容為空)';
         let styledText = text;
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
@@ -1003,12 +879,9 @@ function showBattleLogModal(battleResult) {
         battleDescriptionContentDiv.appendChild(statusBlockDiv);
 
         turn.actions.forEach(action => {
-            const styledActionText = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
-            if (styledActionText.trim() !== '') {
-                const p = document.createElement('p');
-                p.innerHTML = styledActionText;
-                battleDescriptionContentDiv.appendChild(p);
-            }
+            const p = document.createElement('p');
+            p.innerHTML = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
+            battleDescriptionContentDiv.appendChild(p);
         });
     });
 
@@ -1150,27 +1023,9 @@ function updateTrainingResultsModal(results, monsterName) {
     }
     newBanner.insertAdjacentElement('afterend', hintsContainer);
 
-    // --- 修改開始 ---
-    // 改為通過更穩定的方式尋找故事區塊
-    const growthResultEl = DOMElements.trainingGrowthResult;
-    let storySection = null;
-    if (growthResultEl && growthResultEl.parentNode) {
-        // 假設“成長紀錄”區塊的父元素是 .training-result-section
-        const growthSectionWrapper = growthResultEl.parentNode;
-        // “冒險故事”區塊是“成長紀錄”區塊的前一個兄弟元素
-        if (growthSectionWrapper.previousElementSibling) {
-            storySection = growthSectionWrapper.previousElementSibling;
-        }
-    }
-    // 如果找不到，作為後備，嘗試舊方法 (僅在第一次有效)
-    if (!storySection) {
-        storySection = DOMElements.trainingStoryResult.parentNode;
-    }
-    // --- 修改結束 ---
-
+    const storySection = DOMElements.trainingStoryResult.parentNode;
     if (storySection) {
         const storyContent = (results.adventure_story || "沒有特別的故事發生。").replace(/\n/g, '<br>');
-        // 直接覆蓋整個故事區塊的內部HTML，確保結構每次都重新生成
         storySection.innerHTML = `
             <h5>📜 冒險故事</h5>
             <div id="adventure-story-container" style="display: none; padding: 5px; border-left: 3px solid var(--border-color); margin-top: 5px;">
@@ -1235,33 +1090,25 @@ function updateTrainingResultsModal(results, monsterName) {
     if (items.length > 0) {
         const itemsGrid = document.createElement('div');
         itemsGrid.className = 'inventory-grid';
-        items.forEach((item, index) => {
+        items.forEach((item) => {
             const itemDiv = document.createElement('div');
-            itemDiv.classList.add('dna-draw-result-item');
+            itemDiv.className = 'dna-item';
             applyDnaItemStyle(itemDiv, item);
+            itemDiv.style.cursor = 'pointer';
 
-            itemDiv.innerHTML = `
-                <span class="dna-name">${item.name}</span>
-                <span class="dna-type">${item.type}屬性</span>
-                <span class="dna-rarity text-rarity-${item.rarity.toLowerCase()}">${item.rarity}</span>
-                <button class="add-trained-dna-to-backpack-btn button primary text-xs mt-2" data-item-index="${index}">拾取</button>
-            `;
-            
-            const pickupButton = itemDiv.querySelector('.add-trained-dna-to-backpack-btn');
-            if (pickupButton) {
-                pickupButton.addEventListener('click', function handlePickupClick() {
-                    addDnaToTemporaryBackpack(item);
-
-                    const itemIndexInState = gameState.lastCultivationResult.items_obtained.findIndex(i => i.id === item.id);
-                    if (itemIndexInState > -1) {
-                        gameState.lastCultivationResult.items_obtained.splice(itemIndexInState, 1);
-                    }
-                    
-                    pickupButton.disabled = true;
-                    pickupButton.textContent = '已拾取';
-                    itemDiv.style.opacity = '0.6';
-                }, { once: true });
-            }
+            itemDiv.addEventListener('click', function handleItemClick() {
+                addDnaToTemporaryBackpack(item);
+                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
+                if (itemIndex > -1) {
+                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
+                }
+                itemDiv.style.opacity = '0.5';
+                itemDiv.style.pointerEvents = 'none';
+                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
+                if(originalTextSpan) {
+                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
+                }
+            }, { once: true });
 
             itemsGrid.appendChild(itemDiv);
         });

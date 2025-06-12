@@ -13,9 +13,7 @@
 
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/modals.css">
-    <link rel="stylesheet" href="css/game-components.css">
+    <link rel="stylesheet" href="css/components.css">
     
 </head>
 <body>
@@ -71,13 +69,12 @@
         </div>
     </div>
 
-    <div id="game-container" style="display: none;">
+    <div id="game-container" style="display: none; width:100%; display:flex; flex-direction:column; align-items:center;">
         <div class="main-container">
             <button id="main-logout-btn" class="corner-button top-left-button" title="登出">🚪</button>
             <button id="theme-switcher" class="corner-button top-right-button" title="切換主題">
                 <span id="theme-icon">🌙</span>
             </button>
-            <button id="mailbox-button" class="corner-button top-center-button" title="信箱">✉️</button>
 
             <div class="monster-snapshot-panel panel">
                 <div id="monster-snapshot-area" class="monster-snapshot-area">
@@ -94,29 +91,15 @@
                     </div>
 
                     <div id="snapshot-main-content" class="snapshot-main-content">
-                    </div>
-
-                    <div id="snapshot-nickname-container" class="snapshot-nickname-container">
-                        <span id="snapshot-nickname">-</span>
-                    </div>
-
-                    <div id="snapshot-bars-container" class="snapshot-bars-container">
-                        <div class="snapshot-bar snapshot-hp-bar">
-                            <div id="snapshot-hp-fill" class="snapshot-bar-fill"></div>
                         </div>
-                        <div class="snapshot-bar snapshot-mp-bar">
-                            <div id="snapshot-mp-fill" class="snapshot-bar-fill"></div>
-                        </div>
-                    </div>
-
                     <div id="snapshot-win-loss" class="snapshot-win-loss">
                         <span>勝: 0</span>
                         <span>敗: 0</span>
                     </div>
-
                     <div class="snapshot-info-overlay">
                         <div class="snapshot-info-left">
                             <span id="snapshot-achievement-title">初出茅廬</span>
+                            <span id="snapshot-nickname">-</span>
                         </div>
                         <div class="snapshot-info-right">
                             <span id="snapshot-evaluation">總評價: 0</span>
@@ -252,7 +235,7 @@
     </div>
 
     <div id="monster-info-modal" class="modal">
-        <div class="modal-content large"> 
+        <div class="modal-content large">
             <span class="modal-close" data-modal-id="monster-info-modal">&times;</span>
             <div id="monster-info-modal-header-content" class="monster-info-header"></div>
             <div class="tab-buttons" id="monster-info-tabs">
@@ -339,6 +322,9 @@
                     <h5>💎 拾獲物品</h5>
                     <div id="training-items-result" class="mb-2"></div>
                 </div>
+            </div>
+             <div class="modal-footer" style="justify-content: flex-end;">
+                <button id="final-close-training-results-btn" class="secondary button" data-modal-id="training-results-modal">關閉</button>
             </div>
         </div>
     </div>

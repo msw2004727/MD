@@ -38,7 +38,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 2010;
+    z-index: 1000; /* 預設模態框的層級 */
     left: 0;
     top: 0;
     width: 100%;
@@ -50,28 +50,27 @@
     padding: 1rem;
 }
 
+/* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 2020;
+    z-index: 1010; 
 }
 
 #player-info-modal {
-    z-index: 2020;
+    z-index: 1010;
 }
 
 #monster-info-modal {
-    z-index: 2030;
+    z-index: 1020; /* 提高層級，確保能蓋過 player-info-modal */
 }
 
 #feedback-modal {
-    z-index: 2040;
+    z-index: 1030; /* 確保回饋/提示彈窗在最上層 */
 }
 
+
+/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
-    z-index: 2015;
-}
-
-#reminder-modal {
-    z-index: 2025;
+    z-index: 1000; 
 }
 
 
@@ -131,175 +130,61 @@
     }
 }
 
-/* ===== 修改開始：重構怪獸農場佈局 (responsive) v4 - 仿排行榜樣式 ===== */
+/* ======================================= */
+/* ====== Monster Farm Layout Grid ======= */
+/* ======================================= */
 
-/* 預設 (手機窄版) 樣式 */
 #farm-table-wrapper {
-    overflow-x: hidden;
-}
-
-.farm-header-grid {
-    display: none; 
+    overflow-x: auto;
+    padding-bottom: 5px;
 }
 
 #farmed-monsters-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    padding-bottom: 5px;
 }
 
-.farm-monster-item {
-    display: grid;
-    grid-template-columns: 60px 1fr;
-    grid-template-rows: auto auto;
-    grid-template-areas:
-        "battle info"
-        "battle actions";
-    gap: 0.5rem 1rem;
-    padding: 0.75rem;
-    background-color: var(--bg-primary);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-.farm-monster-item .farm-col {
-    text-align: left;
-    white-space: normal;
-}
-
-.farm-monster-item .farm-col-battle {
-    grid-area: battle;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.farm-monster-item .farm-col-info {
-    grid-area: info;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.farm-monster-item .farm-col-actions {
-    grid-area: actions;
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.monster-details-display {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0 0.75rem;
-    margin-top: 4px;
-    font-size: 0.9em;
+.farm-header-grid {
+    font-weight: 600;
+    font-size: 1rem;
     color: var(--text-secondary);
+    padding-bottom: 0.5rem;
+    text-align: center;
+    border-bottom: 2px solid var(--accent-color);
 }
 
-.monster-details-display .farm-col-score::before {
-    content: '評價: ';
-    font-weight: normal;
-}
-.monster-details-display .farm-col-status::before {
-    content: '狀態: ';
-    font-weight: normal;
-}
-
-.farm-col-score, .farm-col-status {
-    display: contents; 
-}
-.farm-col-score .score-value, .farm-col-status .status-text {
-    font-weight: bold;
-    color: var(--text-primary);
-}
-.farm-col-status .status-text {
-    margin-left: 4px;
+.farm-header-grid, .farm-monster-item {
+    display: grid;
+    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 45px auto 55px 95px 125px;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    min-width: 540px; 
 }
 
-
-/* 寬螢幕樣式 (使用 Media Query) - 最終修正版 */
-@media (min-width: 640px) {
-    #farm-table-wrapper {
-        overflow-x: auto;
-    }
-
-    /* 表頭網格 */
-    .farm-header-grid {
-        display: grid;
-        grid-template-columns: 50px minmax(120px, 1.5fr) 70px 110px 1fr; /* 調整欄寬比例 */
-        gap: 0.75rem;
-        padding: 0.5rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-        border-bottom: 2px solid var(--accent-color);
-        min-width: 550px; /* 確保內容不擠壓 */
-    }
-    .farm-header-grid > div {
-        text-align: center;
-    }
-    .farm-header-grid > div:nth-child(2) {
-        text-align: left;
-    }
-
-    #farmed-monsters-list {
-        display: block;
-        gap: 0;
-        min-width: 550px;
-    }
-
-    /* 每個怪獸項目的網格 */
-    .farm-monster-item {
-        display: grid;
-        grid-template-columns: 50px minmax(120px, 1.5fr) 70px 110px 1fr; /* 與表頭保持一致 */
-        grid-template-areas: none;
-        padding: 0.5rem;
-        border-bottom: 1px solid var(--border-color);
-        border-radius: 0;
-        background-color: transparent;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        align-items: center;
-    }
-    
-    /* 清理手機版樣式並套用桌面版樣式 */
-    .farm-monster-item .farm-col {
-        display: flex;
-        align-items: center;
-        white-space: nowrap;
-    }
-    .farm-monster-item .farm-col-battle,
-    .farm-monster-item .farm-col-score,
-    .farm-monster-item .farm-col-status,
-    .farm-monster-item .farm-col-actions {
-        justify-content: center; /* 置中對齊 */
-    }
-    .farm-monster-item .farm-col-info {
-        justify-content: flex-start; /* 靠左對齊 */
-        display: block; 
-    }
-    .farm-monster-item .farm-col-actions {
-        gap: 0.5rem;
-    }
-    
-    .monster-details-display {
-        display: block;
-        margin-top: 0;
-        font-size: 1em;
-    }
-    .farm-col-score, .farm-col-status {
-        display: flex;
-    }
-    .monster-details-display::before,
-    .farm-col-score::before,
-    .farm-col-status::before {
-        content: none;
-    }
+/* Center align all header and column content by default */
+.farm-header-grid > div,
+.farm-monster-item > .farm-col {
+    text-align: center;
+    display: flex; /* Use flex to center content vertically and horizontally */
+    justify-content: center;
+    align-items: center;
 }
-/* ===== 修改結束 ===== */
+
+
+/* Specifically align monster info column to the left */
+.farm-header-grid > div:nth-child(2),
+.farm-monster-item .farm-col-info {
+    text-align: left;
+    justify-self: start;
+    justify-content: flex-start; /* Align flex items to the start */
+    display: block; /* Revert to block for normal text flow */
+}
+
+.farm-monster-item:last-child { 
+    border-bottom: none; 
+}
 
 /* Auth screen layout */
 #auth-screen {
@@ -308,14 +193,10 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 100%;
+    min-height: 100vh;
     background-color: var(--bg-primary);
     padding: 20px;
     box-sizing: border-box;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 2000;
 }
 .auth-container {
     background-color: var(--bg-panel);
@@ -337,4 +218,6 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
+}
+
 }
