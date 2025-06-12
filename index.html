@@ -119,7 +119,7 @@
                             <span id="snapshot-achievement-title">初出茅廬</span>
                         </div>
                         <div class="snapshot-info-right">
-                            <span id="snapshot-evaluation">總評價: 0</span>
+                            <span id="snapshot-evaluation">評價: 0</span>
                         </div>
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 組合</button>
                     <button class="tab-button" data-tab-target="monster-farm-content">🐲 怪獸</button>
                     <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="training-ground-content">🏋️ 訓練</button>
+                    <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練</button>
                     <button class="tab-button coming-soon-tab" data-tab-target="exchange-content">⚖️ 交易</button>
                     <button class="tab-button coming-soon-tab" data-tab-target="medical-content">⚕️ 醫療</button>
                     <button class="tab-button coming-soon-tab" data-tab-target="guild-content">🛡️ 隊伍</button>
@@ -194,8 +194,18 @@
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練功能尚未開放，敬請期待！</p>
+                    <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
+                        <h2 class="panel-title dna-panel-title">🏋️ 選擇怪獸進行訓練</h2>
+                    </div>
+                    <div id="training-farm-table-wrapper" style="overflow-x: auto; padding-bottom: 5px;">
+                        <div id="training-farm-headers" class="farm-header-grid mt-2">
+                        </div>
+                        <div id="training-farmed-monsters-list">
+                            <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有可訓練的怪獸。</p>
+                        </div>
+                    </div>
                 </div>
+
                 <div id="exchange-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易功能尚未開放，敬請期待！</p>
                 </div>
