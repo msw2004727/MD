@@ -32,7 +32,6 @@
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
-    min-width: 0; /* Prevents flex items from overflowing their container */
 }
 
 /* Modal base styles */
@@ -140,6 +139,15 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
+#farm-table-wrapper {
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+#farmed-monsters-list {
+    padding-bottom: 5px;
+}
+
 .farm-header-grid {
     font-weight: 600;
     font-size: 1rem;
@@ -152,11 +160,12 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px minmax(100px, 1fr) 60px 85px auto;
-    gap: 0.5rem;
+    grid-template-columns: 45px min-content 55px 95px 1fr;
+    gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    min-width: 540px; 
 }
 
 /* Center align all header and column content by default */
@@ -166,7 +175,7 @@
     display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
     align-items: center;
-    white-space: nowrap; 
+    white-space: nowrap; /* Ensure text in all farm columns does not wrap */
 }
 
 
@@ -182,36 +191,6 @@
 .farm-monster-item:last-child { 
     border-bottom: none; 
 }
-
-@media (max-width: 768px) {
-    .farm-header-grid, .farm-monster-item {
-        grid-template-columns: 38px minmax(80px, 1fr) 50px auto;
-        grid-template-areas: 
-            "battle info score status"
-            "battle info actions actions";
-        gap: 4px 8px;
-        padding: 8px 4px;
-    }
-
-    .farm-col-battle { grid-area: battle; }
-    .farm-col-info { grid-area: info; }
-    .farm-col-score { grid-area: score; }
-    .farm-col-status { grid-area: status; }
-    .farm-col-actions { 
-        grid-area: actions; 
-        justify-content: flex-end;
-        gap: 0.5rem;
-        padding-top: 4px;
-    }
-
-    .farm-header-grid {
-        grid-template-areas: "battle info score status";
-    }
-    .farm-header-grid > div:last-child {
-        display: none;
-    }
-}
-
 
 /* Auth screen layout */
 #auth-screen {
