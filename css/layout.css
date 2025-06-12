@@ -140,6 +140,17 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
+/* 這是新的、更穩定的解決方案 */
+#farm-table-wrapper {
+    overflow-x: auto; /* 讓這個容器產生水平捲動條 */
+    -webkit-overflow-scrolling: touch; /* 為了在手機上有更好的滑動體驗 */
+}
+
+#farm-headers,
+#farmed-monsters-list {
+    min-width: 540px; /* 強制內容的最小寬度，這個寬度大於一般手機寬度 */
+}
+
 .farm-header-grid {
     font-weight: 600;
     font-size: 1rem;
@@ -157,7 +168,6 @@
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 520px; /* 新增: 強制列表的最小寬度，觸發水平滾動 */
 }
 
 /* Center align all header and column content by default */
@@ -183,6 +193,7 @@
 .farm-monster-item:last-child { 
     border-bottom: none; 
 }
+
 
 /* Auth screen layout */
 #auth-screen {
