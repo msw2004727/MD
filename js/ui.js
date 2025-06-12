@@ -235,6 +235,24 @@ function hideAllModals() {
     gameState.activeModalId = null;
 }
 
+/**
+ * 從怪獸農場點擊怪獸名稱時，顯示其詳細資訊彈窗
+ * @param {string} monsterId - 被點擊的怪獸的ID
+ */
+function showMonsterInfoFromFarm(monsterId) {
+    if (!monsterId) return;
+    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+    if (monster) {
+        // updateMonsterInfoModal is in ui-modals.js but should be globally accessible
+        // showModal is in this file (ui.js) and is globally accessible
+        updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
+        showModal('monster-info-modal');
+    } else {
+        console.error(`Monster with ID ${monsterId} not found in farm.`);
+        showFeedbackModal('錯誤', '找不到該怪獸的資料。');
+    }
+}
+
 function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null, awardDetails = null) {
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
@@ -1010,7 +1028,7 @@ function renderMonsterFarm() {
         const cellMonster = document.createElement('div');
         cellMonster.className = 'monster-info-cell';
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        const monsterNameLink = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="updateMonsterSnapshot(gameState.playerData.farmedMonsters.find(m => m.id === '${monster.id}'))">${monster.nickname}</a>`;
+        const monsterNameLink = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">${monster.nickname}</a>`;
         cellMonster.innerHTML = monsterNameLink;
 
         // 評價
