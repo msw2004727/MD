@@ -151,8 +151,8 @@
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 5-COLUMN GRID: Deploy | Monster Info | Status | Cultivate | Release */
-    grid-template-columns: 45px 1fr 85px 80px 80px;
+    /* 6-COLUMN GRID: Deploy | Monster Info | Score | Status | Cultivate | Release */
+    grid-template-columns: 45px 1fr 65px 95px 65px 65px;
     gap: 0.5rem;
     padding: 0.5rem;
     align-items: center;
@@ -185,16 +185,18 @@
 
 @media (max-width: 768px) {
     .farm-header-grid, .farm-monster-item {
-        /* Mobile: 5 columns, no wrap, info column is flexible */
-        grid-template-columns: 38px 1fr auto auto auto;
+        /* Mobile: 6 columns, no wrap, info column is flexible */
+        grid-template-columns: 38px 1fr 55px 85px 55px 55px;
         grid-template-areas: none; /* Remove template areas to prevent wrapping */
-        gap: 4px 8px;
+        gap: 4px 6px;
         padding: 8px 4px;
+        font-size: 0.9rem; /* Slightly reduce base font size on mobile for this table */
     }
 
     /* Reset grid-area properties for mobile as they are no longer needed */
     .farm-col-battle,
     .farm-col-info,
+    .farm-col-score,
     .farm-col-status,
     .farm-col-cultivate,
     .farm-col-release { 
@@ -242,18 +244,7 @@
 }
 
 
-/* === NEW RULES FOR FARM UI REFINEMENT === */
-
-/* Rule to make action buttons "boxless" */
-.farm-monster-item .farm-col-cultivate button,
-.farm-monster-item .farm-col-release button {
-    background: none;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    /* Increase font size ("大一號") */
-    font-size: 1.1rem; 
-}
+/* === NEW RULE FOR FARM UI REFINEMENT === */
 
 /* Rule to make status text smaller ("小一號") */
 .farm-monster-item .status-text {
