@@ -921,6 +921,7 @@ function renderMonsterFarm() {
     farmHeaders.innerHTML = `
         <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
+        <div class="sortable" data-sort-key="score">評價 ${key === 'score' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div>修煉</div>
         <div>放生</div>
@@ -1009,6 +1010,9 @@ function renderMonsterFarm() {
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
+            </div>
+            <div class="farm-col farm-col-score">
+                <span class="score-value" style="color: var(--success-color); font-weight: bold;">${monster.score || 0}</span>
             </div>
             <div class="farm-col farm-col-status">
                 <span class="status-text" style="${statusStyle}">${statusText}</span>
