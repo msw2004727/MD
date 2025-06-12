@@ -270,7 +270,6 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
-            // 新增：產生里程碑效果的 HTML
             let milestonesHtml = '';
             let skillTemplate = null;
             if (gameState.gameConfigs && gameState.gameConfigs.skills) {
@@ -302,12 +301,18 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 }
                 milestonesHtml += `</div>`;
             }
-            // ===================================
+            
+            // 修改：新增屬性標籤
+            const cssClassKey = getElementCssClassKey(skill.type);
+            const elementBadge = `<span style="font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; background-color: var(--element-${cssClassKey}-bg); color: var(--element-${cssClassKey}-text); margin-left: 8px;">${skill.type}</span>`;
 
             return `
             <div class="skill-entry">
-                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${level})</a>
-                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
+                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                    <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${level})</a>
+                    ${elementBadge}
+                </div>
+                <p class="skill-details text-xs">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
                 ${milestonesHtml}
