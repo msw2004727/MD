@@ -136,51 +136,6 @@
     }
 }
 
-/* ======================================= */
-/* ====== Monster Farm Layout Grid ======= */
-/* ======================================= */
-
-.farm-header-grid {
-    font-weight: 600;
-    color: var(--text-secondary);
-    padding-bottom: 0.5rem;
-    text-align: center;
-    border-bottom: 2px solid var(--accent-color);
-}
-
-.farm-header-grid, .farm-monster-item {
-    display: grid;
-    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px 1fr 55px auto auto;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* Center align all header and column content by default */
-.farm-header-grid > div,
-.farm-monster-item > .farm-col {
-    text-align: center;
-    display: flex; /* Use flex to center content vertically and horizontally */
-    justify-content: center;
-    align-items: center;
-    white-space: nowrap; 
-}
-
-
-/* Specifically align monster info column to the left */
-.farm-monster-item .farm-col-info {
-    text-align: left;
-    justify-self: start;
-    justify-content: flex-start; /* Align flex items to the start */
-    display: block; /* Revert to block for normal text flow */
-}
-
-.farm-monster-item:last-child { 
-    border-bottom: none; 
-}
-
 /* Auth screen layout */
 #auth-screen {
     display: flex;
@@ -217,9 +172,4 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
-}
-
-#farm-table-wrapper, #training-farm-table-wrapper {
-    overflow-x: auto;
-    padding-bottom: 5px;
 }
