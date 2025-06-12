@@ -32,6 +32,7 @@
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
+    min-width: 0; /* Prevents flex items from overflowing their container */
 }
 
 /* Modal base styles */
@@ -142,7 +143,13 @@
 #farm-table-wrapper {
     overflow-x: auto;
     padding-bottom: 5px;
+    max-width: 100%;
 }
+
+#farm-headers, #farmed-monsters-list {
+    min-width: 650px; /* ADDED: Force the direct children of the scroll wrapper to have a minimum width */
+}
+
 
 #farmed-monsters-list {
     padding-bottom: 5px;
@@ -160,12 +167,12 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px min-content 55px 95px 1fr;
+    grid-template-columns: 45px auto 55px 95px 140px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 540px; 
+    /* REMOVED: min-width was here before, moved it to the parent containers */
 }
 
 /* Center align all header and column content by default */
@@ -175,7 +182,7 @@
     display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
     align-items: center;
-    white-space: nowrap; /* Ensure text in all farm columns does not wrap */
+    white-space: nowrap; 
 }
 
 
