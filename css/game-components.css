@@ -678,67 +678,52 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格 (滾動問題最終修正)
+   怪獸農場 CSS (原生Table版本)
    ========================================================================== */
-
-/* 1. 讓新增的包裹容器可以滾動 */
 .table-scroll-wrapper {
     overflow-x: auto;
+    width: 100%;
 }
 
-/* 2. 設定表格本身的佈局 */
-.farm-grid-table {
-    display: grid;
-    /* On wide screens, 1fr allows the name to fill space.
-       On narrow screens, the min-width below takes precedence. */
-    grid-template-columns: auto auto 1fr auto auto auto;
-    /* KEY FIX: Force the table to be at least this wide.
-       This makes the parent .table-scroll-wrapper show a scrollbar. */
-    min-width: 600px;
-    border-top: 1px solid var(--border-color);
+.farm-table {
+    width: 100%;
+    min-width: 600px; /* 強制最小寬度以觸發滾動 */
+    border-collapse: collapse;
+    table-layout: auto;
 }
 
-.farm-grid-header,
-.farm-grid-row {
-    display: contents;
+.farm-table th,
+.farm-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
 }
 
-.farm-grid-header > div {
-    padding: 10px 8px;
+.farm-table th {
     font-weight: 600;
     color: var(--accent-color);
-    text-align: center;
     background-color: var(--bg-primary);
-    border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap; /* 嚴格禁止換行 */
+    border-bottom-width: 2px;
+    border-bottom-color: var(--accent-color);
 }
 
-.farm-grid-row > div {
-    padding: 12px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap; /* 嚴格禁止換行 */
-}
-
-.farm-grid-row:last-child > div {
-    border-bottom: none;
-}
-
-.farm-grid-row:hover > div {
+.farm-table tbody tr:hover td {
     background-color: var(--bg-primary);
 }
 
-/* Align the monster name column to the left */
-.farm-grid-header > div:nth-child(3),
-.farm-grid-row > div:nth-child(3) {
-    justify-content: flex-start;
+.farm-table tbody tr.selected td {
+    background-color: color-mix(in srgb, var(--accent-color) 15%, transparent);
+}
+
+.farm-table th:nth-child(3),
+.farm-table td:nth-child(3) {
     text-align: left;
 }
 
-.farm-actions-cell {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
+.farm-table td .button {
+    margin: 0 2px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
 }
