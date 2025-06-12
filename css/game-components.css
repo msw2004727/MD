@@ -678,13 +678,16 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格 (手機版優化)
+   怪獸農場 CSS Grid 表格
    ========================================================================== */
+#monster-farm-content {
+    overflow-x: auto;
+}
+
 .farm-grid-table {
     display: grid;
     /* 序號 | 出戰 | 怪獸 | 評價 | 狀態 | 其他 */
-    grid-template-columns: auto auto 1fr auto auto auto;
-    width: 100%;
+    grid-template-columns: auto auto auto auto auto auto;
     border-top: 1px solid var(--border-color);
 }
 
@@ -700,7 +703,7 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: center;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap; /* 確保表頭文字不換行 */
+    white-space: nowrap;
 }
 
 .farm-grid-row > div {
@@ -709,7 +712,7 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 0; /* 允許列收縮得更小 */
+    min-width: 50px;
     white-space: nowrap;
 }
 
@@ -721,33 +724,14 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
 }
 
-/* 針對怪獸名稱欄位，允許換行 */
 .farm-grid-header > div:nth-child(3),
 .farm-grid-row > div:nth-child(3) {
     justify-content: flex-start;
     text-align: left;
-    white-space: normal; /* 允許怪獸名稱換行 */
-    word-break: break-all; /* 對於過長的無空格單字強制換行 */
 }
 
-/* 針對操作按鈕欄位，允許按鈕換行 */
 .farm-actions-cell {
     display: flex;
     gap: 4px;
     justify-content: center;
-    flex-wrap: wrap; /* 允許按鈕在空間不足時換行 */
-}
-
-/* 針對手機介面進行微調 */
-@media (max-width: 600px) {
-    .farm-grid-header > div,
-    .farm-grid-row > div {
-        padding: 8px 4px; /* 減少內距 */
-        font-size: 0.9rem; /* 稍微縮小字體 */
-    }
-
-    .farm-actions-cell .button {
-        padding: 6px 4px;
-        font-size: 0.8rem;
-    }
 }
