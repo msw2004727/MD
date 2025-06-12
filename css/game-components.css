@@ -152,28 +152,19 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     opacity: 0;
     transform: translateY(100%);
 }
+
 .tab-buttons {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 4px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(4, 1fr); /* 一行四格 */
+    gap: 5px; /* 格子間距 */
+    max-width: 600px; /* 設定最大寬度，避免在超大螢幕上拉太開 */
+    margin: 0 auto 15px auto; /* 上下外距15px，左右auto使其水平置中 */
     background-color: var(--bg-primary);
-    border-radius: 6px;
-    padding: 4px;
+    border-radius: 8px;
+    padding: 5px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
-@media (min-width: 768px) {
-    .tab-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-    }
-    .tab-button {
-        flex-grow: 0;
-        padding: 10px 15px;
-        font-size: 1rem;
-    }
-}
+
 .tab-button {
     padding: 8px 10px;
     cursor: pointer;
@@ -187,6 +178,12 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     text-align: center;
     border-radius: 4px;
 }
+
+.tab-placeholder {
+    /* 這個元素是用來佔位的，讓排版維持4x2 */
+    pointer-events: none; /* 讓它不能被點擊 */
+}
+
 .tab-button.active {
     color: var(--accent-color);
     background-color: var(--bg-panel);
