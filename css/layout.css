@@ -13,7 +13,7 @@
     gap: 1rem;
     border: 1px solid var(--border-color);
     position: relative;
-    transition: background-color 0.3s, border-color 0.3s;
+    transition: background-color 0.3s, border-color 0.3s, max-width 0.3s;
     margin: 1rem auto;
 }
 
@@ -23,6 +23,14 @@
         gap: 1.5rem;
     }
 }
+
+/* 新增：為超寬螢幕（如1440px以上）設定更大的容器寬度 */
+@media (min-width: 1440px) {
+    .main-container {
+        max-width: 1200px; /* 將最大寬度擴展到1200px，在寬螢幕上更舒適 */
+    }
+}
+
 
 /* Modal base styles */
 .modal {
