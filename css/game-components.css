@@ -678,14 +678,15 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格 (採用滾動容器)
+   怪獸農場 CSS Grid 表格 (滾動問題最終修正)
    ========================================================================== */
 
-/* 讓新增的包裹容器可以滾動 */
+/* 1. 讓新增的包裹容器可以滾動 */
 .table-scroll-wrapper {
     overflow-x: auto;
 }
 
+/* 2. 設定表格本身的佈局 */
 .farm-grid-table {
     display: grid;
     /* On wide screens, 1fr allows the name to fill space.
@@ -709,7 +710,7 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: center;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap;
+    white-space: nowrap; /* 嚴格禁止換行 */
 }
 
 .farm-grid-row > div {
@@ -729,6 +730,7 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
 }
 
+/* Align the monster name column to the left */
 .farm-grid-header > div:nth-child(3),
 .farm-grid-row > div:nth-child(3) {
     justify-content: flex-start;
