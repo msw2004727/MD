@@ -103,7 +103,6 @@ function initializeDOMElements() {
         monsterPartRightArm: document.getElementById('monster-part-right-arm'),
         monsterPartLeftLeg: document.getElementById('monster-part-left-leg'),
         monsterPartRightLeg: document.getElementById('monster-part-right-leg'),
-        monsterInfoButton: document.getElementById('monster-info-button'),
         playerInfoButton: document.getElementById('player-info-button'),
         showMonsterLeaderboardBtn: document.getElementById('show-monster-leaderboard-btn'),
         showPlayerLeaderboardBtn: document.getElementById('show-player-leaderboard-btn'),
@@ -584,7 +583,7 @@ function clearMonsterBodyPartsDisplay() {
 function updateMonsterSnapshot(monster) {
     if (!DOMElements.monsterSnapshotArea || !DOMElements.snapshotAchievementTitle ||
         !DOMElements.snapshotNickname || !DOMElements.snapshotWinLoss ||
-        !DOMElements.snapshotEvaluation || !DOMElements.monsterInfoButton ||
+        !DOMElements.snapshotEvaluation || 
         !DOMElements.monsterSnapshotBaseBg || !DOMElements.monsterSnapshotBodySilhouette ||
         !DOMElements.monsterPartsContainer) {
         console.error("一個或多個怪獸快照相關的 DOM 元素未找到。");
@@ -635,7 +634,6 @@ function updateMonsterSnapshot(monster) {
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
-        DOMElements.monsterInfoButton.disabled = false;
         gameState.selectedMonsterId = monster.id;
 
         if (monster.constituent_dna_ids && monster.constituent_dna_ids.length > 0 && gameState.gameConfigs?.dna_fragments) {
@@ -686,7 +684,6 @@ function updateMonsterSnapshot(monster) {
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
         DOMElements.monsterSnapshotArea.style.borderColor = 'var(--border-color)';
         DOMElements.monsterSnapshotArea.style.boxShadow = 'none';
-        DOMElements.monsterInfoButton.disabled = true;
         gameState.selectedMonsterId = null;
         clearMonsterBodyPartsDisplay();
         DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
