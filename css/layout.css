@@ -140,16 +140,6 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
-#farm-table-wrapper {
-    overflow-x: auto;
-    padding-bottom: 5px;
-    max-width: 100%;
-}
-
-#farmed-monsters-list {
-    padding-bottom: 5px;
-}
-
 .farm-header-grid {
     font-weight: 600;
     font-size: 1rem;
@@ -167,7 +157,6 @@
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 650px; /* ADDED: Force a minimum width to trigger overflow */
 }
 
 /* Center align all header and column content by default */
