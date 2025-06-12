@@ -162,12 +162,11 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px minmax(120px, 1fr) 55px 95px 140px;
+    grid-template-columns: 45px auto 55px 95px 140px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 500px; /* NEW: This is the key fix */
 }
 
 /* Center align all header and column content by default */
@@ -177,7 +176,7 @@
     display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
     align-items: center;
-    white-space: nowrap; /* Ensure text in all farm columns does not wrap */
+    white-space: nowrap; /* ADDED BACK: This forces content to overflow */
 }
 
 
@@ -189,6 +188,9 @@
     justify-content: flex-start; /* Align flex items to the start */
     display: block; /* Revert to block for normal text flow */
 }
+
+/* REMOVED .farm-col-actions rule as it's no longer needed */
+
 
 .farm-monster-item:last-child { 
     border-bottom: none; 
