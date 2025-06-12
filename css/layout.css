@@ -32,6 +32,7 @@
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
+    min-width: 0; /* <-- 新增這一行來解決 flex 子項目的壓縮問題 */
 }
 
 /* Modal base styles */
@@ -218,6 +219,4 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
-}
-
 }
