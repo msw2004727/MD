@@ -228,7 +228,8 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 .tab-content {
     display: none;
-    min-width: 0; 
+    min-width: 0;
+    overflow-x: auto; /* 新增：確保內容超出時，只在容器內產生水平滾動條 */
 }
 .tab-content.active {
     display: block;
