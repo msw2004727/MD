@@ -176,7 +176,7 @@
     display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
     align-items: center;
-    white-space: nowrap; /* Ensure text in all farm columns does not wrap */
+    /* REMOVED: white-space: nowrap; -- This was causing the overflow issue */
 }
 
 
@@ -187,7 +187,15 @@
     justify-self: start;
     justify-content: flex-start; /* Align flex items to the start */
     display: block; /* Revert to block for normal text flow */
+    min-width: 0; /* ADDED: Allows the column to shrink and text to wrap/truncate properly */
 }
+
+/* ADDED: Make the actions column flexible for button wrapping */
+.farm-col-actions {
+    flex-wrap: wrap; /* Allow buttons to wrap to the next line */
+    gap: 0.25rem; /* Add a small gap between wrapped buttons */
+}
+
 
 .farm-monster-item:last-child { 
     border-bottom: none; 
