@@ -135,125 +135,126 @@
     }
 }
 
-/* ===== 修改開始：重構怪獸農場佈局 (responsive) ===== */
+/* ===== 修改開始：重構怪獸農場佈局 (responsive) v2 ===== */
 
 /* 預設 (手機窄版) 樣式 */
 #farm-table-wrapper {
-    overflow-x: hidden; /* 在窄版上不需要水平滾動 */
+    overflow-x: hidden;
 }
 
 .farm-header-grid {
-    display: none; /* 在窄版上隱藏表頭 */
+    display: none;
 }
 
 #farmed-monsters-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem; /* 每個怪獸卡片之間的間距 */
+    gap: 0.75rem;
 }
 
 .farm-monster-item {
     display: grid;
-    grid-template-columns: 60px 1fr; /* 左側頭像/按鈕，右側資訊 */
+    grid-template-columns: 60px 1fr;
+    grid-template-rows: auto auto;
     grid-template-areas:
         "battle info"
         "battle actions";
     gap: 0.5rem 1rem;
     padding: 0.75rem;
-    background-color: var(--bg-primary); /* 給每個卡片一個背景色 */
+    background-color: var(--bg-primary);
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    min-width: 0; /* 移除最小寬度限制 */
 }
 
 .farm-monster-item .farm-col {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* 預設靠左對齊 */
     text-align: left;
-    justify-content: center;
-    white-space: normal; /* 允許換行 */
+    white-space: normal;
 }
 
 .farm-monster-item .farm-col-battle {
     grid-area: battle;
-    align-items: center; /* 垂直置中出戰按鈕 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .farm-monster-item .farm-col-info {
     grid-area: info;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .farm-monster-item .farm-col-actions {
     grid-area: actions;
-    flex-direction: row; /* 動作按鈕水平排列 */
+    display: flex;
+    flex-direction: row;
     gap: 0.5rem;
-    align-items: center; /* 垂直置中 */
+    align-items: center;
 }
 
-/* 使用 ::before 偽元素在窄版上添加標籤，並隱藏不需要的欄位 */
-.farm-col-score,
-.farm-col-status {
-    display: inline; /* 讓它們可以跟在資訊後面 */
-    margin-left: 0.5rem;
+/* 組合評價與狀態，並用偽元素添加標籤 */
+.monster-details-display {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.75rem; /* 水平間距 */
+    margin-top: 4px;
     font-size: 0.9em;
+    color: var(--text-secondary);
 }
 
-.farm-col-score::before {
+.monster-details-display .farm-col-score::before {
     content: '評價: ';
     font-weight: normal;
-    color: var(--text-secondary);
 }
-.farm-col-status::before {
+.monster-details-display .farm-col-status::before {
     content: '狀態: ';
     font-weight: normal;
-    color: var(--text-secondary);
-    margin-left: 8px; /* 與評價之間增加一些間距 */
 }
 
-.farm-col-info {
-    display: flex;
-    flex-direction: column; /* 讓怪獸名稱和詳細資訊垂直排列 */
+/* 在手機上隱藏空的評分和狀態欄位 */
+.farm-col-score, .farm-col-status {
+    display: contents; /* 讓子元素直接繼承父容器的排版 */
+}
+.farm-col-score .score-value, .farm-col-status .status-text {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+.farm-col-status .status-text {
+    margin-left: 4px; /* 與標籤的微小間距 */
 }
 
-.monster-details-display {
-    display: flex; /* 讓評價和狀態可以水平排列 */
-    align-items: center;
-    flex-wrap: wrap; /* 如果空間不足則換行 */
-    margin-top: 4px;
-}
 
 /* 寬螢幕樣式 (使用 Media Query) */
 @media (min-width: 640px) {
     #farm-table-wrapper {
-        overflow-x: auto; /* 恢復滾動條以防萬一 */
+        overflow-x: auto;
     }
 
     .farm-header-grid {
         display: grid;
-        grid-template-columns: 45px minmax(120px, 1fr) 60px 95px 1fr;
+        grid-template-columns: 45px minmax(120px, 1fr) 60px 110px 1fr;
         gap: 0.75rem;
         padding: 0.5rem;
         font-weight: 600;
-        font-size: 1rem;
         color: var(--text-secondary);
         text-align: center;
         border-bottom: 2px solid var(--accent-color);
     }
-
     .farm-header-grid > div:nth-child(2) {
         text-align: left;
     }
 
     #farmed-monsters-list {
-        display: block; /* 恢復預設顯示 */
+        display: block;
         gap: 0;
     }
 
     .farm-monster-item {
         display: grid;
-        grid-template-columns: 45px minmax(120px, 1fr) 60px 95px 1fr;
-        grid-template-areas: none; /* 清除區域設定 */
+        grid-template-columns: 45px minmax(120px, 1fr) 60px 110px 1fr;
+        grid-template-areas: none;
         padding: 0.5rem;
         border-bottom: 1px solid var(--border-color);
         border-radius: 0;
@@ -261,32 +262,34 @@
         border-left: none;
         border-right: none;
         border-top: none;
+        align-items: center; /* 垂直置中所有欄位 */
     }
 
     .farm-monster-item .farm-col {
-        flex-direction: row; /* 恢復水平排列 */
-        align-items: center;
-        justify-content: center; /* 恢復置中 */
-        white-space: nowrap; /* 恢復不換行 */
+        text-align: center;
+        white-space: nowrap;
     }
-
+    
     .farm-monster-item .farm-col-info {
-        justify-content: flex-start; /* 左對齊 */
-        display: block; /* 恢復 block 以便內部元素正常排列 */
+        text-align: left;
     }
-
+    
     /* 移除偽元素 */
+    .monster-details-display::before,
     .farm-col-score::before,
     .farm-col-status::before {
         content: none;
     }
     
-    .farm-col-score,
-    .farm-col-status {
-        margin-left: 0;
-    }
     .monster-details-display {
+        display: block; /* 恢復預設 */
         margin-top: 0;
+    }
+
+    .farm-col-score, .farm-col-status {
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 }
 /* ===== 修改結束 ===== */
