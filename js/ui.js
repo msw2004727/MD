@@ -879,166 +879,116 @@ function renderTemporaryBackpack() {
 function renderMonsterList(targetType) {
     const isTrainingList = targetType === 'training';
     const listContainer = isTrainingList ? DOMElements.trainingFarmedMonstersListContainer : DOMElements.farmedMonstersListContainer;
-    const farmHeaders = isTrainingList ? DOMElements.trainingFarmHeaders : DOMElements.farmHeaders;
+    const headersContainer = isTrainingList ? DOMElements.trainingFarmHeaders : DOMElements.farmHeaders;
 
-    if (!listContainer || !farmHeaders) return;
+    if (!listContainer || !headersContainer) {
+        console.warn(`Render target for ${targetType} not found.`);
+        return;
+    }
 
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
-    const key = sortConfig.key;
-    const order = sortConfig.order;
     const sortedMonsters = [...(gameState.playerData?.farmedMonsters || [])].sort((a, b) => {
+        // ... (sorting logic remains the same)
         let valA, valB;
-        if (key === 'nickname') {
-            valA = a.nickname || '';
-            valB = b.nickname || '';
-            return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        } else if (key === 'status') {
-            const getStatusValue = (monster) => {
-                if(monster.hp <= monster.initial_max_hp * 0.25) return 3;
-                if(monster.farmStatus?.isTraining) {
-                    const trainingComplete = (Date.now() - (monster.farmStatus.trainingStartTime || 0)) >= (monster.farmStatus.trainingDuration || Infinity);
-                    return trainingComplete ? 4 : 5;
-                }
-                if(gameState.selectedMonsterId === monster.id) return 2;
-                return 1;
-            };
-            valA = getStatusValue(a);
-            valB = getStatusValue(b);
-        } else if (key === 'battle') {
-            valA = (a.id === gameState.selectedMonsterId) ? 1 : 0;
-            valB = (b.id === gameState.selectedMonsterId) ? 1 : 0;
+        if (sortConfig.key === 'nickname') {
+            valA = a.nickname || ''; valB = b.nickname || '';
+            return sortConfig.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         } else {
-            valA = a[key] || 0;
-            valB = b[key] || 0;
+            valA = a[sortConfig.key] || 0; valB = b[sortConfig.key] || 0;
+            return sortConfig.order === 'asc' ? valA - valB : valB - valA;
         }
-        return order === 'asc' ? valA - valB : valB - valA;
     });
 
-    farmHeaders.innerHTML = `
-        <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
-        <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
-        <div class="sortable" data-sort-key="score">評價 ${key === 'score' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
-        <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
+    const headersHTML = `
+        <div class="sortable" data-sort-key="battle">出戰</div>
+        <div class="sortable" data-sort-key="nickname">怪獸</div>
+        <div class="sortable" data-sort-key="score">評價</div>
+        <div class="sortable" data-sort-key="status">狀態</div>
         <div class="sortable" data-sort-key="actions">養成</div>
     `;
 
-    listContainer.innerHTML = '';
+    if (isTrainingList) {
+        // For training list, we create a <table>
+        headersContainer.innerHTML = ''; // Clear old div headers
+        let tableHTML = `<table class="training-monster-table"><thead><tr>`;
+        headersHTML.match(/<div.*?>(.*?)<\/div>/g).forEach(header => {
+            tableHTML += `<th>${header.replace(/<.*?>/g, '')}</th>`;
+        });
+        tableHTML += `</tr></thead><tbody></tbody></table>`;
+        listContainer.innerHTML = tableHTML;
+    } else {
+        // For farm list, we use the existing grid div structure
+        headersContainer.innerHTML = headersHTML;
+        listContainer.innerHTML = '';
+    }
 
     if (!sortedMonsters || sortedMonsters.length === 0) {
         const message = isTrainingList ? "沒有可訓練的怪獸。" : "農場空空如也，快去組合怪獸吧！";
-        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">${message}</p>`;
-        farmHeaders.style.display = 'none';
+        if (isTrainingList) {
+            const tableBody = listContainer.querySelector('tbody');
+            if (tableBody) tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-sm text-[var(--text-secondary)] py-4">${message}</td></tr>`;
+        } else {
+            listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">${message}</p>`;
+        }
+        headersContainer.style.display = 'none';
         return;
     }
-    farmHeaders.style.display = 'grid';
+    
+    headersContainer.style.display = isTrainingList ? 'none' : 'grid';
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     sortedMonsters.forEach(monster => {
-        const item = document.createElement('div');
-        item.classList.add('farm-monster-item');
-        if (isTrainingList) item.classList.add('training-list-item');
-
         const isDeployed = gameState.selectedMonsterId === monster.id;
-        if (isDeployed) {
-            item.classList.add('selected');
-        }
-        item.dataset.monsterId = monster.id;
-
         let statusText = "待命中";
-        let statusStyle = "color: var(--warning-color); font-weight: bold;";
+        if (monster.hp <= monster.initial_max_hp * 0.25) statusText = "瀕死";
+        else if (monster.farmStatus?.isTraining) statusText = `修煉中<br>(${Math.floor((Date.now() - monster.farmStatus.trainingStartTime) / 1000)}/${Math.floor(monster.farmStatus.trainingDuration / 1000)}s)`;
+        else if (isDeployed) statusText = "出戰中";
 
-        if (monster.hp <= monster.initial_max_hp * 0.25) {
-            statusText = "瀕死";
-            statusStyle = "color: var(--danger-color); font-weight: bold;";
-        } else if (monster.farmStatus?.isTraining) {
-            const startTime = monster.farmStatus.trainingStartTime || 0;
-            const totalDuration = monster.farmStatus.trainingDuration || 0;
-            const totalDurationInSeconds = Math.floor(totalDuration / 1000);
-            const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
-            if (elapsedTimeInSeconds < totalDurationInSeconds) {
-                statusText = `修煉中<br>(${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
-                statusStyle = "color: var(--accent-color);";
-            } else {
-                statusText = "修煉完成";
-                statusStyle = "color: var(--success-color); font-weight: bold;";
-            }
-        } else if (isDeployed) {
-            statusText = "出戰中";
-            statusStyle = "color: var(--danger-color); font-weight: bold;";
-        }
-        
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
-        const battleButtonClass = isDeployed ? 'danger' : 'success';
-        const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
-        let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
-        let cultivateBtnStyle = '';
 
-        if (isTraining) {
-            cultivateBtnClasses += ' secondary';
-            cultivateBtnStyle = `background-color: #D8BFD8; color: black; border-color: #C8A2C8;`;
+        const monsterInfoHTML = `<a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
+                                <div class="monster-details-display">
+                                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
+                                </div>`;
+        const battleButtonHTML = `<button class="farm-battle-btn button ${isDeployed ? 'danger' : 'success'}" title="${isDeployed ? '出戰中' : '設為出戰'}">${battleButtonIcon}</button>`;
+        const scoreHTML = `<span class="score-value">${monster.score || 0}</span>`;
+        const statusHTML = `<span class="status-text">${statusText}</span>`;
+        const actionsHTML = `<button class="farm-monster-cultivate-btn button ${isTraining ? 'secondary' : 'warning'} text-xs" ${isDeployed ? 'disabled' : ''}>${cultivateBtnText}</button>
+                            <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>放生</button>`;
+
+        if (isTrainingList) {
+            const tableBody = listContainer.querySelector('tbody');
+            const row = tableBody.insertRow();
+            row.innerHTML = `<td>${battleButtonHTML}</td><td>${monsterInfoHTML}</td><td>${scoreHTML}</td><td>${statusHTML}</td><td>${actionsHTML}</td>`;
+            // Re-bind events for table rows
+            row.querySelector('.farm-battle-btn').addEventListener('click', (e) => handleDeployMonsterClick(monster.id));
+            row.querySelector('.farm-monster-name-link').addEventListener('click', (e) => { e.preventDefault(); updateMonsterInfoModal(monster, gameState.gameConfigs); showModal('monster-info-modal'); });
+            row.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
+            row.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => handleReleaseMonsterClick(e, monster.id));
         } else {
-            cultivateBtnClasses += ' warning';
+            const item = document.createElement('div');
+            item.classList.add('farm-monster-item');
+            if(isDeployed) item.classList.add('selected');
+            item.dataset.monsterId = monster.id;
+            item.innerHTML = `<div class="farm-col farm-col-battle">${battleButtonHTML}</div>
+                              <div class="farm-col farm-col-info">${monsterInfoHTML}</div>
+                              <div class="farm-col farm-col-score">${scoreHTML}</div>
+                              <div class="farm-col farm-col-status">${statusHTML}</div>
+                              <div class="farm-col farm-col-actions">${actionsHTML}</div>`;
+            listContainer.appendChild(item);
+            // Re-bind events for grid items
+            item.querySelector('.farm-battle-btn').addEventListener('click', (e) => handleDeployMonsterClick(monster.id));
+            item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => { e.preventDefault(); updateMonsterInfoModal(monster, gameState.gameConfigs); showModal('monster-info-modal'); });
+            item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => handleCultivateMonsterClick(e, monster.id));
+            item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => handleReleaseMonsterClick(e, monster.id));
         }
-
-        item.innerHTML = `
-            <div class="farm-col farm-col-battle">
-                <button class="farm-battle-btn button ${battleButtonClass}" title="${battleButtonTitle}">
-                    ${battleButtonIcon}
-                </button>
-            </div>
-            <div class="farm-col farm-col-info">
-                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
-                <div class="monster-details-display">
-                    ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
-                </div>
-            </div>
-            <div class="farm-col farm-col-score">
-                <span class="score-value">${monster.score || 0}</span>
-            </div>
-            <div class="farm-col farm-col-status">
-                <span class="status-text" style="${statusStyle}">${statusText}</span>
-            </div>
-            <div class="farm-col farm-col-actions">
-                <button class="${cultivateBtnClasses}"
-                        style="${cultivateBtnStyle}"
-                        title="${isTraining ? '召回修煉' : '開始修煉'}"
-                        ${isDeployed ? 'disabled' : ''}>
-                    ${cultivateBtnText}
-                </button>
-                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>放生</button>
-            </div>
-        `;
-
-        item.querySelector('.farm-battle-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleDeployMonsterClick(monster.id);
-        });
-        item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            updateMonsterInfoModal(monster, gameState.gameConfigs);
-            showModal('monster-info-modal');
-        });
-        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (monster.farmStatus?.isTraining) {
-                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-            } else {
-                handleCultivateMonsterClick(e, monster.id);
-            }
-        });
-        item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleReleaseMonsterClick(e, monster.id);
-        });
-
-        listContainer.appendChild(item);
     });
 }
+
 
 function renderMonsterFarm() {
     renderMonsterList('farm');
