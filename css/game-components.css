@@ -678,16 +678,13 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格 (手機版優化)
+   怪獸農場 CSS Grid 表格
    ========================================================================== */
-#monster-farm-content {
-    overflow-x: auto;
-}
-
 .farm-grid-table {
-    display: inline-grid;
-    min-width: 100%;
-    grid-template-columns: auto auto auto auto auto auto;
+    display: grid;
+    /* 序號 | 出戰 | 怪獸 | 評價 | 狀態 | 其他 */
+    grid-template-columns: auto auto 1fr auto auto auto;
+    min-width: 550px; /* 設定最小寬度以觸發滾動 */
     border-top: 1px solid var(--border-color);
 }
 
@@ -712,7 +709,6 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 50px;
     white-space: nowrap;
 }
 
