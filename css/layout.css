@@ -140,109 +140,48 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
-/* --- 新增：手機版樣式 (Mobile-First) --- */
 .farm-header-grid {
-    display: none; /* 在手機版隱藏表頭 */
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    padding-bottom: 0.5rem;
+    text-align: center;
+    border-bottom: 2px solid var(--accent-color);
 }
 
-.farm-monster-item {
+.farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 手機版排版：左邊是出戰按鈕，右邊是資訊區塊 */
-    grid-template-columns: 60px 1fr; 
-    grid-template-rows: auto auto;
-    grid-template-areas:
-        "deploy info"
-        "actions actions";
-    gap: 0.5rem 0.75rem;
-    padding: 0.75rem;
+    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 45px auto 55px 95px 140px;
+    gap: 0.75rem;
+    padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
 }
 
+/* Center align all header and column content by default */
+.farm-header-grid > div,
 .farm-monster-item > .farm-col {
-    display: flex;
-    align-items: center;
-}
-
-.farm-col-battle { 
-    grid-area: deploy;
+    text-align: center;
+    display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
+    align-items: center;
+    white-space: nowrap; 
 }
-.farm-col-info { 
-    grid-area: info; 
-    flex-direction: column;
-    align-items: flex-start;
+
+
+/* Specifically align monster info column to the left */
+.farm-header-grid > div:nth-child(2),
+.farm-monster-item .farm-col-info {
     text-align: left;
-}
-/* 在手機版將評價和狀態並排顯示 */
-.farm-col-score, .farm-col-status {
-    display: inline-flex; /* 改為 inline-flex */
-    padding: 2px 6px;
-    border-radius: 4px;
-    background-color: var(--bg-primary);
-}
-.farm-col-actions { 
-    grid-area: actions; 
-    justify-content: flex-start;
-    gap: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px dashed var(--border-color);
-}
-/* 將評價和狀態包裝起來以便排版 */
-.farm-col-info .details-display-group {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 4px;
-    flex-wrap: wrap;
+    justify-self: start;
+    justify-content: flex-start; /* Align flex items to the start */
+    display: block; /* Revert to block for normal text flow */
 }
 
-
-/* --- 新增：平板與桌面版樣式 (恢復您原本的設計) --- */
-@media (min-width: 768px) {
-    .farm-header-grid {
-        display: grid; /* 在大螢幕上顯示表頭 */
-        grid-template-columns: 45px auto 55px 95px 140px;
-        gap: 0.75rem;
-        padding: 0.5rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        text-align: center;
-        border-bottom: 2px solid var(--accent-color);
-    }
-    
-    .farm-monster-item {
-        grid-template-columns: 45px auto 55px 95px 140px; /* 恢復 5 欄布局 */
-        grid-template-areas: none; /* 清除區域設定 */
-        padding: 0.5rem;
-        gap: 0.75rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    /* 恢復各欄位的置中對齊 */
-    .farm-monster-item > .farm-col {
-        justify-content: center;
-    }
-    
-    /* 恢復資訊欄靠左 */
-    .farm-col-info {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    /* 移除資訊欄內的群組 */
-    .farm-col-info .details-display-group {
-        display: none;
-    }
-
-    /* 恢復養成按鈕的原始排版 */
-    .farm-col-actions {
-        border-top: none;
-        padding-top: 0;
-        justify-content: center;
-    }
+.farm-monster-item:last-child { 
+    border-bottom: none; 
 }
-/* ======================================= */
 
 /* Auth screen layout */
 #auth-screen {
