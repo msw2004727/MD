@@ -405,7 +405,7 @@ body.light-theme .leaderboard-table tr:hover td {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    width: 150px; /* Fixed width */
+    width: 100px; /* Fixed width */
     pointer-events: auto;
 }
 .snapshot-info-overlay {
