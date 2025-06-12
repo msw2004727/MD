@@ -922,7 +922,8 @@ function renderMonsterFarm() {
         <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
-        <div class="sortable" data-sort-key="actions">養成</div>
+        <div>修煉</div>
+        <div>放生</div>
     `;
 
     listContainer.innerHTML = '';
@@ -985,7 +986,7 @@ function renderMonsterFarm() {
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
 
         const isTraining = monster.farmStatus?.isTraining;
-        const cultivateBtnText = isTraining ? '🔙' : '修煉'; // 修改：召回按鈕改為圖示
+        const cultivateBtnText = isTraining ? '召回' : '修煉';
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
         let cultivateBtnStyle = '';
 
@@ -1012,14 +1013,16 @@ function renderMonsterFarm() {
             <div class="farm-col farm-col-status">
                 <span class="status-text" style="${statusStyle}">${statusText}</span>
             </div>
-            <div class="farm-col farm-col-actions">
-                <button class="${cultivateBtnClasses}"
+            <div class="farm-col farm-col-cultivate">
+                 <button class="${cultivateBtnClasses}"
                         style="${cultivateBtnStyle}"
                         title="${isTraining ? '召回修煉' : '開始修煉'}"
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
                 </button>
-                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>🐾</button>
+            </div>
+            <div class="farm-col farm-col-release">
+                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>放生</button>
             </div>
         `;
 
