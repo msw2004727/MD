@@ -457,10 +457,17 @@ body.light-theme .modal-close:focus {
 
 .cultivation-locations-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
+
+@media (min-width: 768px) {
+    .cultivation-locations-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
 
 .cultivation-location-card {
     background-color: var(--bg-primary);
@@ -499,16 +506,14 @@ body.light-theme .modal-close:focus {
 
 .cultivation-action-buttons {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
     margin-top: 1rem;
 }
 
-/* Responsive for cultivation modal */
-@media (max-width: 768px) {
-    .cultivation-locations-container,
+@media (min-width: 768px) {
     .cultivation-action-buttons {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
