@@ -229,7 +229,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content {
     display: none;
     min-width: 0;
-    overflow-x: auto; /* 新增：確保內容超出時，只在容器內產生水平滾動條 */
+    overflow-x: auto;
 }
 .tab-content.active {
     display: block;
@@ -682,8 +682,6 @@ body.light-theme .leaderboard-table tr:hover td {
    ========================================================================== */
 .farm-grid-table {
     display: grid;
-    /* Define 5 columns: No., Monster, Eval, Status, Others */
-    /* 'auto' fits content, '1fr' takes up remaining space */
     grid-template-columns: auto 1fr auto auto auto;
     width: 100%;
     border-top: 1px solid var(--border-color);
@@ -691,7 +689,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .farm-grid-header,
 .farm-grid-row {
-    display: contents; /* Allows children to participate in the parent's grid layout */
+    display: contents;
 }
 
 .farm-grid-header > div {
@@ -703,13 +701,15 @@ body.light-theme .leaderboard-table tr:hover td {
     border-bottom: 2px solid var(--accent-color);
 }
 
+/* 修正：將 white-space: nowrap; 加到儲存格 */
 .farm-grid-row > div {
     padding: 12px 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 50px; /* Ensure even small cells have some width */
+    min-width: 50px;
+    white-space: nowrap; /* 確保內容不換行 */
 }
 
 .farm-grid-row:last-child > div {
@@ -720,9 +720,15 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
 }
 
-/* Align specific columns */
 .farm-grid-header > div:nth-child(2),
 .farm-grid-row > div:nth-child(2) {
-    justify-content: flex-start; /* Align monster name to the left */
+    justify-content: flex-start;
     text-align: left;
+}
+
+/* 新增：為按鈕容器增加間距 */
+.farm-actions-cell {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
 }
