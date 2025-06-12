@@ -125,6 +125,8 @@ function initializeDOMElements() {
         exchangeContent: document.getElementById('exchange-content'),
         homesteadContent: document.getElementById('homestead-content'),
         guildContent: document.getElementById('guild-content'),
+        medicalContent: document.getElementById('medical-content'),
+        breedingContent: document.getElementById('breeding-content'),
         monsterInfoModal: document.getElementById('monster-info-modal'),
         monsterInfoModalHeader: document.getElementById('monster-info-modal-header-content'),
         monsterInfoTabs: document.getElementById('monster-info-tabs'),
@@ -616,7 +618,7 @@ function updateMonsterSnapshot(monster) {
 
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
-        DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
+        DOMElements.snapshotEvaluation.textContent = `評價: ${monster.score || 0}`;
 
         // 新增：更新HP和MP狀態條
         if (DOMElements.snapshotBarsContainer && DOMElements.snapshotHpFill && DOMElements.snapshotMpFill) {
@@ -674,7 +676,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotNickname.className = '';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
-        DOMElements.snapshotEvaluation.textContent = `總評價: -`;
+        DOMElements.snapshotEvaluation.textContent = `評價: -`;
 
         // 新增：隱藏HP和MP狀態條
         if (DOMElements.snapshotBarsContainer) {
