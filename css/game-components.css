@@ -589,7 +589,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .dna-attribute-box {
     border: 2px solid;
-    border-color: currentColor; /* Border color matches text color set by text-element-* class */
+    border-color: currentColor; /* Border color will match the text color set by text-element-* class */
     border-radius: 6px;
     height: 32px;
     display: flex;
@@ -598,11 +598,26 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 1rem;
     font-weight: bold;
     line-height: 1;
-    background-color: var(--bg-slot);
-    text-shadow: 0 0 4px var(--bg-primary); /* Add a subtle shadow to make text more readable */
+    color: var(--text-primary); /* Default text color */
+    background-color: var(--bg-primary); /* Default background */
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 
 .dna-attribute-box.empty {
     border-color: var(--border-color);
     color: var(--text-secondary);
+    background-color: var(--bg-slot);
 }
+
+/* Element-specific background colors */
+.dna-attribute-box.text-element-fire { background-color: var(--element-fire-bg); }
+.dna-attribute-box.text-element-water { background-color: var(--element-water-bg); }
+.dna-attribute-box.text-element-wood { background-color: var(--element-wood-bg); }
+.dna-attribute-box.text-element-gold { background-color: var(--element-gold-bg); }
+.dna-attribute-box.text-element-earth { background-color: var(--element-earth-bg); }
+.dna-attribute-box.text-element-light { background-color: var(--element-light-bg); }
+.dna-attribute-box.text-element-dark { background-color: var(--element-dark-bg); }
+.dna-attribute-box.text-element-poison { background-color: var(--element-poison-bg); }
+.dna-attribute-box.text-element-wind { background-color: var(--element-wind-bg); }
+.dna-attribute-box.text-element-mix { background-color: var(--element-mix-bg); }
+.dna-attribute-box.text-element-無 { background-color: var(--element-無-bg); }
