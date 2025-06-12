@@ -879,14 +879,25 @@ function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersListContainer;
     const farmHeaders = DOMElements.farmHeaders;
 
+    // 產生新的表頭
+    if (farmHeaders) {
+        farmHeaders.innerHTML = `
+            <div>序號</div>
+            <div>出戰</div>
+            <div>名稱</div>
+            <div>評價</div>
+            <div>狀態</div>
+            <div>功能</div>
+        `;
+        farmHeaders.style.display = 'grid'; // 確保表頭可見並使用 grid 佈局
+    }
+
+    // 暫時清空列表內容，等待後續開發
     if (listContainer) {
         listContainer.innerHTML = '';
     }
-    if (farmHeaders) {
-        farmHeaders.innerHTML = '';
-        farmHeaders.style.display = 'none';
-    }
 
+    // 停止可能存在的舊計時器
     if (gameState.farmTimerInterval) {
         clearInterval(gameState.farmTimerInterval);
         gameState.farmTimerInterval = null;
