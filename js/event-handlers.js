@@ -701,9 +701,14 @@ function handleTopNavButtons() {
 function handleTabSwitching() {
     if (DOMElements.dnaFarmTabs) {
         DOMElements.dnaFarmTabs.addEventListener('click', (event) => {
-            if (event.target.classList.contains('tab-button')) {
-                const targetTabId = event.target.dataset.tabTarget;
-                switchTabContent(targetTabId, event.target);
+            const button = event.target.closest('.tab-button');
+            if (button) {
+                if (button.classList.contains('coming-soon-tab')) {
+                    showFeedbackModal('提示', '功能尚未開放，敬請期待！');
+                    return;
+                }
+                const targetTabId = button.dataset.tabTarget;
+                switchTabContent(targetTabId, button);
             }
         });
     }
