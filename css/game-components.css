@@ -648,6 +648,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .dna-attribute-box.text-element-mix { background-color: var(--element-mix-bg); }
 .dna-attribute-box.text-element-無 { background-color: var(--element-無-bg); }
 
+/* This is the OLD table style for training monsters. It will be replaced. */
 .training-monster-table {
     width: 100%;
     border-collapse: collapse;
@@ -673,5 +674,55 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-slot);
 }
 .training-monster-table td:nth-child(2) { /* Monster info column */
+    text-align: left;
+}
+
+/* ==========================================================================
+   新增: 怪獸農場 CSS Grid 表格
+   ========================================================================== */
+.farm-grid-table {
+    display: grid;
+    /* Define 5 columns: No., Monster, Eval, Status, Others */
+    /* 'auto' fits content, '1fr' takes up remaining space */
+    grid-template-columns: auto 1fr auto auto auto;
+    width: 100%;
+    border-top: 1px solid var(--border-color);
+}
+
+.farm-grid-header,
+.farm-grid-row {
+    display: contents; /* Allows children to participate in the parent's grid layout */
+}
+
+.farm-grid-header > div {
+    padding: 10px 8px;
+    font-weight: 600;
+    color: var(--accent-color);
+    text-align: center;
+    background-color: var(--bg-primary);
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.farm-grid-row > div {
+    padding: 12px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border-color);
+    min-width: 50px; /* Ensure even small cells have some width */
+}
+
+.farm-grid-row:last-child > div {
+    border-bottom: none;
+}
+
+.farm-grid-row:hover > div {
+    background-color: var(--bg-primary);
+}
+
+/* Align specific columns */
+.farm-grid-header > div:nth-child(2),
+.farm-grid-row > div:nth-child(2) {
+    justify-content: flex-start; /* Align monster name to the left */
     text-align: left;
 }
