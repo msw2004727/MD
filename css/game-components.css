@@ -89,8 +89,8 @@ body.light-theme .inventory-delete-slot.drag-over {
     color: var(--button-danger-text-light) !important;
 }
 
-/* 只對可互動的格子套用懸停效果 */
-.dna-item:hover,
+/* 只對可互動的、有內容的格子套用懸停效果 */
+.dna-item.occupied:hover,
 .dna-slot.occupied:hover,
 .temp-backpack-slot.occupied:hover {
     border-color: var(--accent-color);
