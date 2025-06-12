@@ -382,6 +382,35 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-right-arm { grid-area: rArm; }
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
+
+#snapshot-nickname-container {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+#snapshot-nickname {
+    font-size: 1rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px black;
+}
+#snapshot-bars-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 150px; /* Fixed width */
+    pointer-events: auto;
+}
+
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
@@ -404,11 +433,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     color: var(--accent-color);
     display: block;
-}
-#snapshot-nickname {
-    font-size: 0.9rem;
-    display: block;
-    margin-top: 1px;
 }
 #snapshot-evaluation {
     font-size: 1rem;
@@ -537,14 +561,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .friend-actions {
     display: flex;
     gap: 0.5rem;
-}
-.snapshot-bars-container {
-    margin-top: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-width: 120px;
-    pointer-events: auto;
 }
 .snapshot-bar {
     height: 8px;
