@@ -157,7 +157,6 @@
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 520px;
 }
 
 /* Center align all header and column content by default */
