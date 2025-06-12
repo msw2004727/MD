@@ -218,3 +218,13 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 }
+
+#farm-table-wrapper {
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+#training-farm-table-wrapper {
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
