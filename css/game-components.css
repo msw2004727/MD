@@ -678,7 +678,7 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格
+   怪獸農場 CSS Grid 表格 (手機版優化)
    ========================================================================== */
 .farm-grid-table {
     display: grid;
@@ -709,7 +709,7 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 50px;
+    min-width: 0; /* 允許列收縮得更小 */
     white-space: nowrap;
 }
 
@@ -721,14 +721,33 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
 }
 
+/* 針對怪獸名稱欄位，允許換行 */
 .farm-grid-header > div:nth-child(3),
 .farm-grid-row > div:nth-child(3) {
     justify-content: flex-start;
     text-align: left;
+    white-space: normal; /* 允許怪獸名稱換行 */
+    word-break: break-all; /* 對於過長的無空格單字強制換行 */
 }
 
+/* 針對操作按鈕欄位，允許按鈕換行 */
 .farm-actions-cell {
     display: flex;
     gap: 4px;
     justify-content: center;
+    flex-wrap: wrap; /* 允許按鈕在空間不足時換行 */
+}
+
+/* 針對手機介面進行微調 */
+@media (max-width: 600px) {
+    .farm-grid-header > div,
+    .farm-grid-row > div {
+        padding: 8px 4px; /* 減少內距 */
+        font-size: 0.9rem; /* 稍微縮小字體 */
+    }
+
+    .farm-actions-cell .button {
+        padding: 6px 4px;
+        font-size: 0.8rem;
+    }
 }
