@@ -1,5 +1,42 @@
 /* css/game-components.css */
 
+/* ==========================================================================
+   通用面板 (Panel) 組件
+   - 從 layout.css 移動至此並標準化
+   ========================================================================== */
+.panel {
+    background-color: var(--bg-slot);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+    min-width: 0; /* Prevents flex items from overflowing their container */
+}
+
+/* ==========================================================================
+   新增: 通用卡片 (Card) 基礎組件
+   - 用於好友列表、修煉地點等
+   ========================================================================== */
+.card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    text-align: center;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: var(--accent-color);
+}
+
+
+/* ==========================================================================
+   面板標題 (Panel Title)
+   ========================================================================== */
 .panel-title-container {
     display: flex;
     justify-content: space-between;
@@ -21,6 +58,9 @@
     color: var(--text-secondary);
 }
 
+/* ==========================================================================
+   DNA / 物品槽 (Item Slot)
+   ========================================================================== */
 .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
     border: 1px solid var(--border-color);
     border-radius: 8px;
