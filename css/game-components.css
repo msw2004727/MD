@@ -200,17 +200,13 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 
 .tab-content {
     display: none;
-    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
+    min-width: 0; 
 }
 .tab-content.active {
     display: block;
 }
 
-#farm-table-wrapper {
-    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
-    padding-bottom: 5px;
-}
-
+/* 已將 #farm-table-wrapper 的重複規則移除，統一由 layout.css 管理 */
 
 #monster-leaderboard-element-tabs {
     display: flex;
