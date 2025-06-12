@@ -946,38 +946,34 @@ function renderMonsterFarm() {
     const container = DOMElements.monsterFarmContent;
     if (!container) return;
 
-    const tableBodyContainer = container.querySelector('.farm-grid-body');
-    if (!tableBodyContainer) {
-        console.error("renderMonsterFarm Error: '.farm-grid-body' container not found.");
-        // 如果連身體容器都沒有，可能是初次渲染或出錯，確保整個結構存在
-        container.innerHTML = `
-            <div class="farm-grid-table">
-                <div class="farm-grid-header">
-                    <div>序號</div>
-                    <div>怪獸</div>
-                    <div>評價</div>
-                    <div>狀態</div>
-                    <div>其他</div>
-                </div>
-                <div class="farm-grid-body"></div>
-            </div>`;
-        // 重新獲取一次
-        tableBodyContainer = container.querySelector('.farm-grid-body');
-        if(!tableBodyContainer) return; // 如果還是找不到就放棄
+    const tableContainer = container.querySelector('.farm-grid-table');
+    if (!tableContainer) {
+        console.error("renderMonsterFarm Error: '.farm-grid-table' container not found.");
+        return;
     }
+    
+    // 清除舊的怪獸列，但保留表頭
+    tableContainer.querySelectorAll('.farm-grid-row').forEach(row => row.remove());
+    const emptyMsg = tableContainer.querySelector('.farm-empty-message');
+    if(emptyMsg) emptyMsg.remove();
 
-    tableBodyContainer.innerHTML = '';
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
     if (monsters.length === 0) {
-        tableBodyContainer.innerHTML = `<div class="farm-empty-message" style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-secondary);">您的農場空空如也，快去組合新的怪獸吧！</div>`;
+        const emptyMessageDiv = document.createElement('div');
+        emptyMessageDiv.className = 'farm-empty-message';
+        emptyMessageDiv.style.gridColumn = '1 / -1';
+        emptyMessageDiv.style.textAlign = 'center';
+        emptyMessageDiv.style.padding = '20px';
+        emptyMessageDiv.style.color = 'var(--text-secondary)';
+        emptyMessageDiv.textContent = '您的農場空空如也，快去組合新的怪獸吧！';
+        tableContainer.appendChild(emptyMessageDiv);
         return;
     }
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
-    // 根據 gameState 中的排序設定來排序怪獸
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
         let valA = a[sortConfig.key] || 0;
@@ -992,26 +988,25 @@ function renderMonsterFarm() {
     monsters.forEach((monster, index) => {
         const row = document.createElement('div');
         row.className = 'farm-grid-row';
-        if (gameState.selectedMonsterId === monster.id) {
-            row.classList.add('selected');
-        }
-        
-        row.style.display = 'contents'; // 讓 row 的子元素直接成為 grid 的項目
+        row.style.display = 'contents'; // 確保子元素成為 grid 的一部分
 
         // 序號
         const cellIndex = document.createElement('div');
         cellIndex.textContent = index + 1;
-        
+        row.appendChild(cellIndex);
+
         // 怪獸
         const cellMonster = document.createElement('div');
         cellMonster.className = 'monster-info-cell';
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const monsterNameLink = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="updateMonsterSnapshot(gameState.playerData.farmedMonsters.find(m => m.id === '${monster.id}'))">${monster.nickname}</a>`;
         cellMonster.innerHTML = monsterNameLink;
-        
+        row.appendChild(cellMonster);
+
         // 評價
         const cellScore = document.createElement('div');
         cellScore.textContent = monster.score || 0;
+        row.appendChild(cellScore);
 
         // 狀態
         const cellStatus = document.createElement('div');
@@ -1022,6 +1017,7 @@ function renderMonsterFarm() {
             statusText = '戰鬥中';
         }
         cellStatus.textContent = statusText;
+        row.appendChild(cellStatus);
         
         // 其他 (按鈕)
         const cellActions = document.createElement('div');
@@ -1039,14 +1035,9 @@ function renderMonsterFarm() {
         actionButtonsHTML += `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
         actionButtonsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
         cellActions.innerHTML = actionButtonsHTML;
-
-        row.appendChild(cellIndex);
-        row.appendChild(cellMonster);
-        row.appendChild(cellScore);
-        row.appendChild(cellStatus);
         row.appendChild(cellActions);
 
-        tableBodyContainer.appendChild(row);
+        tableContainer.appendChild(row);
     });
 }
 
