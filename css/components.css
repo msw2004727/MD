@@ -703,7 +703,8 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .leaderboard-table td:nth-child(2),
 .leaderboard-table th:nth-child(2) {
-    /* adaptive width by default */
+    width: 1%; /* 讓此欄位盡可能地窄，但又能容納不換行的內容 */
+    /* Styles removed to allow adaptive width and prevent wrapping */
 }
 
 .titles-medals-section { margin-top: 15px; }
@@ -1321,10 +1322,7 @@ body.light-theme .leaderboard-table tr:hover td {
     white-space: nowrap;
 }
 
-.leaderboard-table td:nth-child(2), /* Nickname Column */
-.leaderboard-table th:nth-child(2) {
-    /* Styles removed to allow adaptive width and prevent wrapping */
-}
+/* NEW: Removed the empty rule that was here */
 
 .leaderboard-table td:nth-child(8), /* Action Column */
 .leaderboard-table th:nth-child(8) {
