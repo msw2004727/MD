@@ -88,15 +88,16 @@ body.light-theme .inventory-delete-slot.drag-over {
     border-color: var(--danger-hover-light) !important;
     color: var(--button-danger-text-light) !important;
 }
-
-/* 只對可互動的、有內容的格子套用懸停效果 */
-.dna-item.occupied:hover,
-.dna-slot.occupied:hover,
-.temp-backpack-slot.occupied:hover {
+.dna-item:hover,
+.dna-slot:hover:not(.occupied),
+.temp-backpack-slot:hover:not(.occupied):not(.empty) {
     border-color: var(--accent-color);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
-
+.temp-backpack-slot.empty:hover {
+     background-color: var(--accent-hover);
+     border-color: var(--accent-color);
+}
 .dna-slot.occupied, .temp-backpack-slot.occupied {
     border-style: solid;
 }
@@ -197,24 +198,8 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color);
     color: var(--text-primary);
 }
-
-/* --- 修改開始 --- */
-.tab-content {
-    display: none;
-    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
-}
-.tab-content.active {
-    display: block;
-}
-
-#farm-table-wrapper {
-    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
-    padding-bottom: 5px;
-    /* 移除了 max-width: 100% 以避免潛在衝突 */
-}
-/* --- 修改結束 --- */
-
-
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 #monster-leaderboard-element-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -397,33 +382,6 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-right-arm { grid-area: rArm; }
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
-#snapshot-nickname-container {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 4;
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 2px 8px;
-    border-radius: 4px;
-}
-#snapshot-nickname {
-    font-size: 1rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px black;
-}
-#snapshot-bars-container {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 4;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    width: 100px; /* Fixed width */
-    pointer-events: auto;
-}
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
@@ -446,6 +404,11 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     color: var(--accent-color);
     display: block;
+}
+#snapshot-nickname {
+    font-size: 0.9rem;
+    display: block;
+    margin-top: 1px;
 }
 #snapshot-evaluation {
     font-size: 1rem;
@@ -574,6 +537,14 @@ body.light-theme .leaderboard-table tr:hover td {
 .friend-actions {
     display: flex;
     gap: 0.5rem;
+}
+.snapshot-bars-container {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 120px;
+    pointer-events: auto;
 }
 .snapshot-bar {
     height: 8px;

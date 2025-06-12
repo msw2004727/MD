@@ -917,7 +917,7 @@ function renderMonsterFarm() {
     });
     // --- 排序邏輯結束 ---
 
-    // --- 修改：移除 farmHeaders 的動態 style.display 設定 ---
+    // 動態產生可點擊的表頭
     farmHeaders.innerHTML = `
         <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
@@ -930,10 +930,10 @@ function renderMonsterFarm() {
 
     if (!sortedMonsters || sortedMonsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
-        farmHeaders.style.display = 'none'; // 維持在沒有怪獸時隱藏表頭的邏輯
+        farmHeaders.style.display = 'none';
         return;
     }
-    farmHeaders.style.display = ''; // 當有怪獸時，清除 inline style，讓 CSS class 接管 display 屬性
+    farmHeaders.style.display = 'grid';
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
