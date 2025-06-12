@@ -647,3 +647,31 @@ body.light-theme .leaderboard-table tr:hover td {
 .dna-attribute-box.text-element-wind { background-color: var(--element-wind-bg); }
 .dna-attribute-box.text-element-mix { background-color: var(--element-mix-bg); }
 .dna-attribute-box.text-element-無 { background-color: var(--element-無-bg); }
+
+.training-monster-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem; /* Match farm list font size */
+}
+.training-monster-table th, .training-monster-table td {
+    padding: 8px;
+    text-align: center; /* Center align all cells by default */
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+.training-monster-table th {
+    color: var(--accent-color);
+    font-weight: 500;
+}
+.training-monster-table td {
+    color: var(--text-primary);
+}
+.training-monster-table tr:last-child td {
+    border-bottom: none;
+}
+.training-monster-table tr:hover td {
+    background-color: var(--bg-slot);
+}
+.training-monster-table td:nth-child(2) { /* Monster info column */
+    text-align: left;
+}
