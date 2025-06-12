@@ -142,6 +142,7 @@
 #farm-table-wrapper {
     overflow-x: auto;
     padding-bottom: 5px;
+    max-width: 100%;
 }
 
 #farmed-monsters-list {
