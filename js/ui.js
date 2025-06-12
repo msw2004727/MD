@@ -951,12 +951,11 @@ function renderMonsterFarm() {
         console.error("renderMonsterFarm Error: '.farm-grid-table' container not found.");
         return;
     }
-    
+
     // 清除舊的怪獸列，但保留表頭
     tableContainer.querySelectorAll('.farm-grid-row').forEach(row => row.remove());
     const emptyMsg = tableContainer.querySelector('.farm-empty-message');
-    if(emptyMsg) emptyMsg.remove();
-
+    if (emptyMsg) emptyMsg.remove();
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
@@ -972,7 +971,13 @@ function renderMonsterFarm() {
         return;
     }
 
-    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+    const rarityMap = {
+        '普通': 'common',
+        '稀有': 'rare',
+        '菁英': 'elite',
+        '傳奇': 'legendary',
+        '神話': 'mythical'
+    };
 
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
@@ -988,25 +993,29 @@ function renderMonsterFarm() {
     monsters.forEach((monster, index) => {
         const row = document.createElement('div');
         row.className = 'farm-grid-row';
-        row.style.display = 'contents'; // 確保子元素成為 grid 的一部分
+        if (gameState.selectedMonsterId === monster.id) {
+            row.classList.add('selected'); // 為選中的怪獸添加高亮樣式
+        }
 
         // 序號
         const cellIndex = document.createElement('div');
         cellIndex.textContent = index + 1;
-        row.appendChild(cellIndex);
-
+        
+        // 出戰按鈕
+        const cellDeploy = document.createElement('div');
+        const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
+        cellDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
+        
         // 怪獸
         const cellMonster = document.createElement('div');
         cellMonster.className = 'monster-info-cell';
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const monsterNameLink = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="updateMonsterSnapshot(gameState.playerData.farmedMonsters.find(m => m.id === '${monster.id}'))">${monster.nickname}</a>`;
         cellMonster.innerHTML = monsterNameLink;
-        row.appendChild(cellMonster);
 
         // 評價
         const cellScore = document.createElement('div');
         cellScore.textContent = monster.score || 0;
-        row.appendChild(cellScore);
 
         // 狀態
         const cellStatus = document.createElement('div');
@@ -1017,24 +1026,27 @@ function renderMonsterFarm() {
             statusText = '戰鬥中';
         }
         cellStatus.textContent = statusText;
-        row.appendChild(cellStatus);
-        
+
         // 其他 (按鈕)
         const cellActions = document.createElement('div');
         cellActions.className = 'farm-actions-cell';
-        let actionButtonsHTML = '';
+        let otherButtonsHTML = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
-            actionButtonsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">招回</button>`;
+            otherButtonsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">招回</button>`;
         } else {
-            actionButtonsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
+            otherButtonsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
         }
-        
-        const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        actionButtonsHTML += `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
-        actionButtonsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
-        cellActions.innerHTML = actionButtonsHTML;
+        otherButtonsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
+        cellActions.innerHTML = otherButtonsHTML;
+
+        // 按照新的順序將儲存格加入列中
+        row.appendChild(cellIndex);
+        row.appendChild(cellDeploy);
+        row.appendChild(cellMonster);
+        row.appendChild(cellScore);
+        row.appendChild(cellStatus);
         row.appendChild(cellActions);
 
         tableContainer.appendChild(row);
