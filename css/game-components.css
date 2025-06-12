@@ -186,21 +186,33 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
-/* --- 修改開始 --- */
 .tab-content {
     display: none;
-    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
+    min-width: 0; 
 }
 .tab-content.active {
     display: block;
 }
 
 #farm-table-wrapper {
-    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
+    overflow-x: auto; 
     padding-bottom: 5px;
-    /* 移除了 max-width: 100% 以避免潛在衝突 */
 }
-/* --- 修改結束 --- */
+
+#monster-farm-content .farm-header-grid,
+#monster-farm-content .farm-monster-item {
+    font-size: 0.75rem;
+}
+
+#monster-farm-content .farm-col-status {
+    white-space: normal; /* 允許狀態欄內的文字換行 */
+    line-height: 1.4; /* 調整行高讓兩行文字更美觀 */
+}
+
+#monster-farm-content .farm-col-actions .button {
+    padding: 4px 6px; /* 稍微調整按鈕內邊距以適應新字體大小 */
+    font-size: 0.75rem; /* 確保按鈕文字大小也被覆蓋 */
+}
 
 
 #monster-leaderboard-element-tabs {
@@ -436,7 +448,7 @@ body.light-theme .leaderboard-table tr:hover td {
     display: block;
 }
 #snapshot-evaluation {
-    font-size: 1rem;
+    font-size: 0.875rem;
     font-weight: bold;
     color: var(--success-color);
 }
@@ -461,15 +473,12 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 .farm-col-info .monster-name-display {
     font-weight: bold;
-    font-size: 1rem;
 }
 .farm-col-info .monster-details-display {
-    font-size: 1rem;
     color: var(--text-secondary);
 }
 .farm-col-score .score-label {
     display: block;
-    font-size: 1rem;
     color: var(--text-secondary);
 }
 .farm-col-score .score-value {
