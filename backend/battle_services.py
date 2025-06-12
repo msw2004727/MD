@@ -5,7 +5,7 @@ import random
 import logging
 import math
 import copy
-import time
+from datetime import datetime, timezone, timedelta # 新增
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
 
 # 從 MD_models 導入相關的 TypedDict 定義
@@ -372,13 +372,41 @@ def simulate_battle_full(
     opponent_monster_data: Monster,
     game_configs: GameConfigs,
     player_nickname: str,
-    opponent_nickname: Optional[str] = None
+    opponent_nickname: Optional[str] = None,
+    player_title_buffs: Optional[Dict[str, int]] = None,
+    opponent_title_buffs: Optional[Dict[str, int]] = None
 ) -> BattleResult:
     """
     一次性模擬整個怪獸戰鬥，並返回所有回合的詳細日誌和最終結果。
+    新增：接收並應用稱號加成。
     """
     player_monster = copy.deepcopy(player_monster_data)
     opponent_monster = copy.deepcopy(opponent_monster_data)
+    
+    # --- 新增：應用稱號加成 ---
+    if player_title_buffs:
+        for stat, value in player_title_buffs.items():
+            if stat in player_monster:
+                # 確保鍵存在且為數字
+                player_monster[stat] = player_monster.get(stat, 0) + value
+                # 如果是HP或MP，也要加到最大值上
+                if stat == 'hp':
+                    player_monster['initial_max_hp'] = player_monster.get('initial_max_hp', 0) + value
+                if stat == 'mp':
+                    player_monster['initial_max_mp'] = player_monster.get('initial_max_mp', 0) + value
+        battle_logger.info(f"已為玩家怪獸 {player_monster.get('nickname')} 應用稱號加成: {player_title_buffs}")
+
+    if opponent_title_buffs and not opponent_monster.get('isNPC'):
+        for stat, value in opponent_title_buffs.items():
+            if stat in opponent_monster:
+                opponent_monster[stat] = opponent_monster.get(stat, 0) + value
+                if stat == 'hp':
+                    opponent_monster['initial_max_hp'] = opponent_monster.get('initial_max_hp', 0) + value
+                if stat == 'mp':
+                    opponent_monster['initial_max_mp'] = opponent_monster.get('initial_max_mp', 0) + value
+        battle_logger.info(f"已為對手怪獸 {opponent_monster.get('nickname')} 應用稱號加成: {opponent_title_buffs}")
+    # --- 新增結束 ---
+
 
     # 初始化戰鬥統計數據
     player_battle_stats = {"total_damage_dealt": 0, "crit_hits": 0, "successful_evasions": 0, "highest_single_hit": 0, "skills_used": 0, "total_healing": 0, "damage_tanked": 0, "status_applied": 0}
@@ -386,10 +414,10 @@ def simulate_battle_full(
 
 
     # 初始化當前 HP/MP
-    player_monster["current_hp"] = player_monster.get("hp", 0)
-    player_monster["current_mp"] = player_monster.get("mp", 0)
-    opponent_monster["current_hp"] = opponent_monster.get("hp", 0)
-    opponent_monster["current_mp"] = opponent_monster.get("mp", 0)
+    player_monster["current_hp"] = player_monster.get("initial_max_hp", player_monster.get("hp", 0))
+    player_monster["current_mp"] = player_monster.get("initial_max_mp", player_monster.get("mp", 0))
+    opponent_monster["current_hp"] = opponent_monster.get("initial_max_hp", opponent_monster.get("hp", 0))
+    opponent_monster["current_mp"] = opponent_monster.get("initial_max_mp", opponent_monster.get("mp", 0))
     
     # 初始化臨時數值修正和健康狀態列表
     player_monster.setdefault("temp_attack_modifier", 0)
@@ -563,6 +591,11 @@ def simulate_battle_full(
     # 產生戰鬥活動日誌
     player_activity_log: Optional[MonsterActivityLogEntry] = None
     opponent_activity_log: Optional[MonsterActivityLogEntry] = None
+    
+    # 建立時區物件 (UTC+8)
+    cst = timezone(timedelta(hours=8))
+    # 取得當前時間並格式化
+    current_time_str = datetime.now(cst).strftime("%Y-%m-%d %H:%M:%S")
 
     challenger_name = player_nickname
     challenger_monster_name = player_monster.get('nickname', '一個挑戰者')
@@ -579,17 +612,17 @@ def simulate_battle_full(
 
 
     if winner_id == player_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您獲勝了！"}
+        player_activity_log = {"time": current_time_str, "message": f"挑戰 {defender_display}，您獲勝了！"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
     elif winner_id == opponent_monster['id']:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
+        player_activity_log = {"time": current_time_str, "message": f"挑戰 {defender_display}，您不幸戰敗。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，防禦成功！"}
     else:
-        player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {defender_display} 戰成平手。"}
+        player_activity_log = {"time": current_time_str, "message": f"與 {defender_display} 戰成平手。"}
         if not opponent_monster.get('isNPC'):
-            opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，雙方戰成平手。"}
+            opponent_activity_log = {"time": current_time_str, "message": f"{challenger_display} 挑戰您的「{defender_monster_name}」，雙方戰成平手。"}
 
 
     final_battle_result: BattleResult = {

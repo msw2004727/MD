@@ -89,8 +89,8 @@ body.light-theme .inventory-delete-slot.drag-over {
     color: var(--button-danger-text-light) !important;
 }
 
-/* 只對可互動的格子套用懸停效果 */
-.dna-item:hover,
+/* 只對可互動的、有內容的格子套用懸停效果 */
+.dna-item.occupied:hover,
 .dna-slot.occupied:hover,
 .temp-backpack-slot.occupied:hover {
     border-color: var(--accent-color);
@@ -197,8 +197,24 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color);
     color: var(--text-primary);
 }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+
+/* --- 修改開始 --- */
+.tab-content {
+    display: none;
+    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
+}
+.tab-content.active {
+    display: block;
+}
+
+#farm-table-wrapper {
+    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
+    padding-bottom: 5px;
+    /* 移除了 max-width: 100% 以避免潛在衝突 */
+}
+/* --- 修改結束 --- */
+
+
 #monster-leaderboard-element-tabs {
     display: flex;
     flex-wrap: wrap;

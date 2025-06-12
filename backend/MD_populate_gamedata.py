@@ -23,13 +23,10 @@ from backend.MD_firebase_config import set_firestore_client
 
 
 # 設定日誌記錄器
+# --- 修改：使用 basicConfig 進行一次性設定，避免重複 ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 script_logger = logging.getLogger(__name__)
-script_logger.setLevel(logging.INFO) 
-if not script_logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    script_logger.addHandler(handler)
+# --- 修改結束 ---
 
 
 # 輔助用列表 (與 MD_models.py 中的 Literal 一致)

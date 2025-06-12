@@ -184,6 +184,10 @@ function initializeDOMElements() {
         officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
         announcementPlayerName: document.getElementById('announcement-player-name'),
         refreshMonsterLeaderboardBtn: document.getElementById('refresh-monster-leaderboard-btn'),
+        // 新增：快照狀態條相關元素
+        snapshotBarsContainer: document.getElementById('snapshot-bars-container'),
+        snapshotHpFill: document.getElementById('snapshot-hp-fill'),
+        snapshotMpFill: document.getElementById('snapshot-mp-fill'),
     };
     console.log("DOMElements initialized in ui.js");
 }
@@ -615,6 +619,15 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: ${monster.score || 0}`;
 
+        // 新增：更新HP和MP狀態條
+        if (DOMElements.snapshotBarsContainer && DOMElements.snapshotHpFill && DOMElements.snapshotMpFill) {
+            toggleElementDisplay(DOMElements.snapshotBarsContainer, true);
+            const hpPercent = monster.initial_max_hp > 0 ? (monster.hp / monster.initial_max_hp) * 100 : 0;
+            const mpPercent = monster.initial_max_mp > 0 ? (monster.mp / monster.initial_max_mp) * 100 : 0;
+            DOMElements.snapshotHpFill.style.width = `${hpPercent}%`;
+            DOMElements.snapshotMpFill.style.width = `${mpPercent}%`;
+        }
+
         if (DOMElements.snapshotMainContent) {
             DOMElements.snapshotMainContent.innerHTML = '';
         }
@@ -664,6 +677,12 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotNickname.className = '';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `總評價: -`;
+
+        // 新增：隱藏HP和MP狀態條
+        if (DOMElements.snapshotBarsContainer) {
+            toggleElementDisplay(DOMElements.snapshotBarsContainer, false);
+        }
+
         if(DOMElements.snapshotMainContent) DOMElements.snapshotMainContent.innerHTML = '';
         DOMElements.monsterSnapshotArea.style.borderColor = 'var(--border-color)';
         DOMElements.monsterSnapshotArea.style.boxShadow = 'none';

@@ -271,6 +271,19 @@ body.light-theme {
 .leaderboard-table .text-element-mix, .tab-button.text-element-mix { color: var(--element-mix-text); }
 .leaderboard-table .text-element-無, .tab-button.text-element-無 { color: var(--element-無-text); }
 
+/* Generic Element Color Helpers */
+.text-element-fire { color: var(--element-fire-text) !important; }
+.text-element-water { color: var(--element-water-text) !important; }
+.text-element-wood { color: var(--element-wood-text) !important; }
+.text-element-gold { color: var(--element-gold-text) !important; }
+.text-element-earth { color: var(--element-earth-text) !important; }
+.text-element-light { color: var(--element-light-text) !important; }
+.text-element-dark { color: var(--element-dark-text) !important; }
+.text-element-poison { color: var(--element-poison-text) !important; }
+.text-element-wind { color: var(--element-wind-text) !important; }
+.text-element-mix { color: var(--element-mix-text) !important; }
+.text-element-無 { color: var(--element-無-text) !important; }
+
 
 /* Helper classes for rarity text colors */
 .text-rarity-common { color: var(--rarity-common-text); }
@@ -310,8 +323,6 @@ body {
 
 /* --- Font Size Unification Override --- */
 /* Overrides Tailwind's text size utilities to enforce a single base size as requested. */
-.text-xs,
-.text-sm,
 .text-base,
 .text-lg,
 .text-xl,
