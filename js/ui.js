@@ -888,9 +888,9 @@ function renderMonsterFarm() {
         let valA, valB;
 
         if (key === 'nickname') {
-            valA = a.nickname || '';
-            valB = b.nickname || '';
-            return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            const nameA = a.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[a.elements?.[0]] || a.elements?.[0]) || a.nickname;
+            const nameB = b.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[b.elements?.[0]] || b.elements?.[0]) || b.nickname;
+            return order === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
         } else if (key === 'status') {
              // 狀態排序較複雜，此處簡化為訓練中 > 完成 > 瀕死 > 出戰中 > 待命
             const getStatusValue = (monster) => {
@@ -921,7 +921,6 @@ function renderMonsterFarm() {
     farmHeaders.innerHTML = `
         <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
-        <div class="sortable" data-sort-key="score">評價 ${key === 'score' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="status">狀態 ${key === 'status' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="actions">養成</div>
     `;
@@ -979,13 +978,14 @@ function renderMonsterFarm() {
         }
 
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+        const displayName = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[monster.elements?.[0]] || monster.elements?.[0]) || monster.nickname;
 
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
 
         const isTraining = monster.farmStatus?.isTraining;
-        const cultivateBtnText = isTraining ? '召回' : '修煉';
+        const cultivateBtnText = isTraining ? '🔙' : '修煉'; // 修改：召回按鈕改為圖示
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
         let cultivateBtnStyle = '';
 
@@ -1004,13 +1004,10 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
+                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${displayName}</a>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
-            </div>
-            <div class="farm-col farm-col-score">
-                <span class="score-value">${monster.score || 0}</span>
             </div>
             <div class="farm-col farm-col-status">
                 <span class="status-text" style="${statusStyle}">${statusText}</span>
@@ -1022,7 +1019,7 @@ function renderMonsterFarm() {
                         ${isDeployed ? 'disabled' : ''}>
                     ${cultivateBtnText}
                 </button>
-                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>放生</button>
+                <button class="farm-monster-release-btn button danger text-xs" ${isTraining || isDeployed ? 'disabled' : ''}>🐾</button>
             </div>
         `;
 
