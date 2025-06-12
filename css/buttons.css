@@ -305,3 +305,24 @@ button.warning-outline:hover, .button.warning-outline:hover {
 .delete-dna-btn:hover {
     transform: scale(1.15);
 }
+
+/* === NEW RULES FOR FARM UI REFINEMENT === */
+
+/* Rule to make CULTIVATE/RECALL button larger and circular */
+.farm-monster-item .farm-monster-cultivate-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 1.1rem; 
+    line-height: 1; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Rule for "修煉" button text color */
+.farm-monster-item .farm-monster-cultivate-btn.warning {
+    color: var(--warning-color) !important;
+    border-color: var(--warning-color);
+}
