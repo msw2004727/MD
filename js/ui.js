@@ -114,6 +114,8 @@ function initializeDOMElements() {
         temporaryBackpackContainer: document.getElementById('temporary-backpack-items'),
         farmedMonstersListContainer: document.getElementById('farmed-monsters-list'),
         farmHeaders: document.getElementById('farm-headers'),
+        trainingFarmedMonstersListContainer: document.getElementById('training-farmed-monsters-list'),
+        trainingFarmHeaders: document.getElementById('training-farm-headers'),
         dnaFarmTabs: document.getElementById('dna-farm-tabs'),
         dnaInventoryContent: document.getElementById('dna-inventory-content'),
         monsterFarmContent: document.getElementById('monster-farm-content'),
@@ -874,49 +876,44 @@ function renderTemporaryBackpack() {
     });
 }
 
-function renderMonsterFarm() {
-    const listContainer = DOMElements.farmedMonstersListContainer;
-    const farmHeaders = DOMElements.farmHeaders;
+function renderMonsterList(targetType) {
+    const isTrainingList = targetType === 'training';
+    const listContainer = isTrainingList ? DOMElements.trainingFarmedMonstersListContainer : DOMElements.farmedMonstersListContainer;
+    const farmHeaders = isTrainingList ? DOMElements.trainingFarmHeaders : DOMElements.farmHeaders;
+
     if (!listContainer || !farmHeaders) return;
-    
-    // --- 排序邏輯開始 ---
+
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     const key = sortConfig.key;
     const order = sortConfig.order;
     const sortedMonsters = [...(gameState.playerData?.farmedMonsters || [])].sort((a, b) => {
         let valA, valB;
-
         if (key === 'nickname') {
             valA = a.nickname || '';
             valB = b.nickname || '';
             return order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         } else if (key === 'status') {
-             // 狀態排序較複雜，此處簡化為訓練中 > 完成 > 瀕死 > 出戰中 > 待命
             const getStatusValue = (monster) => {
-                if(monster.hp <= monster.initial_max_hp * 0.25) return 3; // 瀕死
+                if(monster.hp <= monster.initial_max_hp * 0.25) return 3;
                 if(monster.farmStatus?.isTraining) {
                     const trainingComplete = (Date.now() - (monster.farmStatus.trainingStartTime || 0)) >= (monster.farmStatus.trainingDuration || Infinity);
-                    return trainingComplete ? 4 : 5; // 訓練完成 > 訓練中
+                    return trainingComplete ? 4 : 5;
                 }
-                if(gameState.selectedMonsterId === monster.id) return 2; // 出戰中
-                return 1; // 待命中
+                if(gameState.selectedMonsterId === monster.id) return 2;
+                return 1;
             };
             valA = getStatusValue(a);
             valB = getStatusValue(b);
         } else if (key === 'battle') {
             valA = (a.id === gameState.selectedMonsterId) ? 1 : 0;
             valB = (b.id === gameState.selectedMonsterId) ? 1 : 0;
-        }
-        else { // 默認為數字排序 (如 score)
+        } else {
             valA = a[key] || 0;
             valB = b[key] || 0;
         }
-
         return order === 'asc' ? valA - valB : valB - valA;
     });
-    // --- 排序邏輯結束 ---
 
-    // 動態產生可點擊的表頭
     farmHeaders.innerHTML = `
         <div class="sortable" data-sort-key="battle">出戰 ${key === 'battle' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
         <div class="sortable" data-sort-key="nickname">怪獸 ${key === 'nickname' ? (order === 'asc' ? '▲' : '▼') : ''}</div>
@@ -928,7 +925,8 @@ function renderMonsterFarm() {
     listContainer.innerHTML = '';
 
     if (!sortedMonsters || sortedMonsters.length === 0) {
-        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>`;
+        const message = isTrainingList ? "沒有可訓練的怪獸。" : "農場空空如也，快去組合怪獸吧！";
+        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">${message}</p>`;
         farmHeaders.style.display = 'none';
         return;
     }
@@ -936,53 +934,44 @@ function renderMonsterFarm() {
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
-    sortedMonsters.forEach(monster => { // 使用排序後的陣列
+    sortedMonsters.forEach(monster => {
         const item = document.createElement('div');
         item.classList.add('farm-monster-item');
+        if (isTrainingList) item.classList.add('training-list-item');
 
         const isDeployed = gameState.selectedMonsterId === monster.id;
         if (isDeployed) {
             item.classList.add('selected');
         }
-
         item.dataset.monsterId = monster.id;
 
         let statusText = "待命中";
         let statusStyle = "color: var(--warning-color); font-weight: bold;";
 
-        // 新增：優先檢查瀕死狀態
         if (monster.hp <= monster.initial_max_hp * 0.25) {
             statusText = "瀕死";
             statusStyle = "color: var(--danger-color); font-weight: bold;";
-        }
-
-        if (monster.farmStatus) {
-            if (isDeployed) {
-                statusText = "出戰中";
-                statusStyle = "color: var(--danger-color); font-weight: bold;";
-            } else if (monster.farmStatus.isTraining) {
-                const startTime = monster.farmStatus.trainingStartTime || 0;
-                const totalDuration = monster.farmStatus.trainingDuration || 0;
-                const totalDurationInSeconds = Math.floor(totalDuration / 1000);
-
-                const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
-
-                if (elapsedTimeInSeconds < totalDurationInSeconds) {
-                    statusText = `修煉中<br>(${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
-                    statusStyle = "color: var(--accent-color);";
-                } else {
-                    statusText = "修煉完成";
-                    statusStyle = "color: var(--success-color); font-weight: bold;";
-                }
+        } else if (monster.farmStatus?.isTraining) {
+            const startTime = monster.farmStatus.trainingStartTime || 0;
+            const totalDuration = monster.farmStatus.trainingDuration || 0;
+            const totalDurationInSeconds = Math.floor(totalDuration / 1000);
+            const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
+            if (elapsedTimeInSeconds < totalDurationInSeconds) {
+                statusText = `修煉中<br>(${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
+                statusStyle = "color: var(--accent-color);";
+            } else {
+                statusText = "修煉完成";
+                statusStyle = "color: var(--success-color); font-weight: bold;";
             }
+        } else if (isDeployed) {
+            statusText = "出戰中";
+            statusStyle = "color: var(--danger-color); font-weight: bold;";
         }
-
+        
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-
         const battleButtonIcon = isDeployed ? '⚔️' : '🛡️';
         const battleButtonClass = isDeployed ? 'danger' : 'success';
         const battleButtonTitle = isDeployed ? '出戰中' : '設為出戰';
-
         const isTraining = monster.farmStatus?.isTraining;
         const cultivateBtnText = isTraining ? '召回' : '修煉';
         let cultivateBtnClasses = 'farm-monster-cultivate-btn button text-xs';
@@ -994,7 +983,6 @@ function renderMonsterFarm() {
         } else {
             cultivateBtnClasses += ' warning';
         }
-
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
@@ -1029,26 +1017,20 @@ function renderMonsterFarm() {
             e.stopPropagation();
             handleDeployMonsterClick(monster.id);
         });
-
         item.querySelector('.farm-monster-name-link').addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             updateMonsterInfoModal(monster, gameState.gameConfigs);
             showModal('monster-info-modal');
         });
-
-        const cultivateBtn = item.querySelector('.farm-monster-cultivate-btn');
-        if (cultivateBtn) {
-             cultivateBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (monster.farmStatus?.isTraining) {
-                    handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
-                } else {
-                    handleCultivateMonsterClick(e, monster.id);
-                }
-            });
-        }
-
+        item.querySelector('.farm-monster-cultivate-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (monster.farmStatus?.isTraining) {
+                handleEndCultivationClick(e, monster.id, monster.farmStatus.trainingStartTime, monster.farmStatus.trainingDuration);
+            } else {
+                handleCultivateMonsterClick(e, monster.id);
+            }
+        });
         item.querySelector('.farm-monster-release-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             handleReleaseMonsterClick(e, monster.id);
@@ -1056,11 +1038,17 @@ function renderMonsterFarm() {
 
         listContainer.appendChild(item);
     });
+}
+
+function renderMonsterFarm() {
+    renderMonsterList('farm');
+    renderMonsterList('training');
 
     if (!gameState.farmTimerInterval) {
         gameState.farmTimerInterval = setInterval(renderMonsterFarm, 1000);
     }
 }
+
 
 async function renderFriendsList() {
     const container = DOMElements.friendsListDisplayArea;
