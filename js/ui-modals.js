@@ -108,7 +108,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - 5}隻)...</button>`;
+            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
         }
     }
 
@@ -347,25 +347,11 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
 
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            const dnaType = dna.type || '無';
-            const elementCssKey = getElementCssClassKey(dnaType);
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item occupied" data-dna-ref-id="${dna.id}">
+            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
                         <span class="dna-name-text">${dna.name}</span>
-                    </div>
-                    <div class="dna-attribute-box text-element-${elementCssKey}">
-                        ${dnaType.charAt(0)}
-                    </div>
-                </div>
-            `;
+                    </div>`;
         } else {
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item empty"><span class="dna-name-text">無</span></div>
-                    <div class="dna-attribute-box empty">無</div>
-                </div>
-            `;
+            return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
         }
     }).join('');
 
