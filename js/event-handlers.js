@@ -652,24 +652,6 @@ function handleAuthForms() {
 }
 
 function handleTopNavButtons() {
-    if (DOMElements.monsterInfoButton) {
-        DOMElements.monsterInfoButton.addEventListener('click', () => {
-            if (gameState.selectedMonsterId) {
-                const monster = getSelectedMonster();
-                if (monster) {
-                    // --- 修改開始：傳入第三個參數 gameState.playerData ---
-                    updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
-                    // --- 修改結束 ---
-                    showModal('monster-info-modal');
-                } else {
-                    showFeedbackModal('錯誤', '找不到選定的怪獸資料。');
-                }
-            } else {
-                showFeedbackModal('提示', '請先在農場選擇一隻怪獸，或合成一隻新的怪獸。');
-            }
-        });
-    }
-
     if (DOMElements.playerInfoButton) {
         DOMElements.playerInfoButton.addEventListener('click', () => {
             if (gameState.playerData && gameState.currentUser) {
