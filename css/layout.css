@@ -138,8 +138,6 @@
 #farm-table-wrapper {
     overflow-x: auto;
     padding-bottom: 5px;
-    /* 新增：為確保內容不會撐破父容器，在小螢幕上設定最小寬度 */
-    min-width: 0; /* 允許它縮小 */
 }
 
 #farmed-monsters-list {
@@ -147,25 +145,23 @@
 }
 
 .farm-header-grid {
+    /* Base styles */
     font-weight: 600;
     font-size: 1rem;
     color: var(--text-secondary);
-    padding-bottom: 0.5rem;
     text-align: center;
     border-bottom: 2px solid var(--accent-color);
-    /* 新增：明確設置最小寬度以觸發滾動，並使用 minmax 確保靈活性 */
-    min-width: 600px; /* 根據當前列寬度總和估算 */
-}
-
-.farm-header-grid, .farm-monster-item {
+    
+    /* New 6-column grid layout */
     display: grid;
-    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    /* 修改：讓第一列和最後一列保持固定，中間列使用 minmax 確保內容自適應，但不會無限擴張 */
-    grid-template-columns: 60px minmax(100px, 1.5fr) 55px 95px 125px;
+    grid-template-columns: 40px 60px auto 60px 100px 130px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+}
+
+.farm-monster-item {
+    display: none; /* Hide old rows until content is ready */
 }
 
 /* Center align all header and column content by default */
@@ -179,15 +175,12 @@
 
 
 /* Specifically align monster info column to the left */
-.farm-header-grid > div:nth-child(2),
+.farm-header-grid > div:nth-child(3), /* Name column is now the 3rd child */
 .farm-monster-item .farm-col-info {
     text-align: left;
     justify-self: start;
     justify-content: flex-start; /* Align flex items to the start */
     display: block; /* Revert to block for normal text flow */
-    /* 新增：允許文字換行，防止撐開 */
-    white-space: normal;
-    word-break: break-word;
 }
 
 .farm-monster-item:last-child { 
