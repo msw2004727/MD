@@ -652,6 +652,24 @@ function handleAuthForms() {
 }
 
 function handleTopNavButtons() {
+    if (DOMElements.monsterInfoButton) {
+        DOMElements.monsterInfoButton.addEventListener('click', () => {
+            if (gameState.selectedMonsterId) {
+                const monster = getSelectedMonster();
+                if (monster) {
+                    // --- 修改開始：傳入第三個參數 gameState.playerData ---
+                    updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
+                    // --- 修改結束 ---
+                    showModal('monster-info-modal');
+                } else {
+                    showFeedbackModal('錯誤', '找不到選定的怪獸資料。');
+                }
+            } else {
+                showFeedbackModal('提示', '請先在農場選擇一隻怪獸，或合成一隻新的怪獸。');
+            }
+        });
+    }
+
     if (DOMElements.playerInfoButton) {
         DOMElements.playerInfoButton.addEventListener('click', () => {
             if (gameState.playerData && gameState.currentUser) {
@@ -701,14 +719,9 @@ function handleTopNavButtons() {
 function handleTabSwitching() {
     if (DOMElements.dnaFarmTabs) {
         DOMElements.dnaFarmTabs.addEventListener('click', (event) => {
-            const button = event.target.closest('.tab-button');
-            if (button) {
-                if (button.classList.contains('coming-soon-tab')) {
-                    showFeedbackModal('提示', '功能尚未開放，敬請期待！');
-                    return;
-                }
-                const targetTabId = button.dataset.tabTarget;
-                switchTabContent(targetTabId, button);
+            if (event.target.classList.contains('tab-button')) {
+                const targetTabId = event.target.dataset.tabTarget;
+                switchTabContent(targetTabId, event.target);
             }
         });
     }

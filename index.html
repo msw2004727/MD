@@ -119,11 +119,12 @@
                             <span id="snapshot-achievement-title">初出茅廬</span>
                         </div>
                         <div class="snapshot-info-right">
-                            <span id="snapshot-evaluation">評價: 0</span>
+                            <span id="snapshot-evaluation">總評價: 0</span>
                         </div>
                     </div>
                 </div>
                 <div class="top-buttons-container">
+                    <button id="monster-info-button" class="top-nav-button button" disabled>當前怪獸</button> 
                     <button id="player-info-button" class="top-nav-button button">玩家資訊</button>
                     <button id="show-monster-leaderboard-btn" class="top-nav-button button">怪獸排行</button>
                     <button id="show-player-leaderboard-btn" class="top-nav-button button">玩家排行</button>
@@ -133,15 +134,13 @@
 
             <div class="panel">
                 <div class="tab-buttons" id="dna-farm-tabs">
-                    <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 組合</button>
-                    <button class="tab-button" data-tab-target="monster-farm-content">🐲 怪獸</button>
-                    <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友</button>
-                    <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="exchange-content">⚖️ 交易</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="medical-content">⚕️ 醫療</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="guild-content">🛡️ 隊伍</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="homestead-content">🏡 家園</button>
-                    <button class="tab-button coming-soon-tab" data-tab-target="breeding-content">🌱 培育</button>
+                    <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
+                    <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪獸農場</button>
+                    <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友列表</button>
+                    <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> 
+                    <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
+                    <button class="tab-button" data-tab-target="homestead-content">🛠️ 家園建設</button>
+                    <button class="tab-button" data-tab-target="guild-content">🛡️ 工會系統</button>
                 </div>
 
                 <div id="dna-inventory-content" class="tab-content active">
@@ -164,6 +163,17 @@
                 </div>
 
                 <div id="monster-farm-content" class="tab-content">
+                    <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
+                         <h2 class="panel-title dna-panel-title">🏡 怪獸農場</h2>
+                         <span class="panel-title-hint dna-panel-hint">※最多收納10隻怪獸</span>
+                    </div>
+                    <div id="farm-table-wrapper" style="overflow-x: auto; padding-bottom: 5px;">
+                        <div id="farm-headers" class="farm-header-grid mt-2">
+                        </div>
+                        <div id="farmed-monsters-list">
+                            <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="friends-list-content" class="tab-content">
@@ -183,24 +193,20 @@
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練場功能銳意開發中，敬請期待！</p>
                 </div>
 
                 <div id="exchange-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易功能尚未開放，敬請期待！</p>
-                </div>
-                <div id="medical-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚕️ 醫療功能尚未開放，敬請期待！</p>
-                </div>
-                <div id="guild-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🛡️ 隊伍功能尚未開放，敬請期待！</p>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易所功能尚未開放，敬請期待！</p>
                 </div>
                 <div id="homestead-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏡 家園功能尚未開放，敬請期待！</p>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🛠️ 家園建設功能尚未開放，敬請期待！</p>
                 </div>
-                <div id="breeding-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🌱 培育功能尚未開放，敬請期待！</p>
+                <div id="guild-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🛡️ 工會系統功能尚未開放，敬請期待！</p>
                 </div>
-            </div>
+
+                </div>
         </div>
     </div>
 
@@ -294,17 +300,17 @@
                 <p class="text-center font-bold my-2" style="color: var(--rarity-legendary-text);">點擊卡片前往修練</p>
                 
                 <div class="cultivation-locations-container">
-                    <button class="cultivation-location-card card" id="location-gaia" data-location="gaia">
+                    <button class="cultivation-location-card" id="location-gaia" data-location="gaia">
                         <img src="https://github.com/msw2004727/MD/blob/main/images/ZL001.png?raw=true" alt="蓋亞的搖籃">
                         <h5>蓋亞的搖籃 (自然系)</h5>
                         <p>充滿生命氣息的原始叢林，適合木、水、土、毒屬性的怪獸。</p>
                     </button>
-                    <button class="cultivation-location-card card" id="location-sky" data-location="sky">
+                    <button class="cultivation-location-card" id="location-sky" data-location="sky">
                          <img src="https://github.com/msw2004727/MD/blob/main/images/ZL003.png?raw=true" alt="天空的怒火">
                         <h5>天空的怒火 (能量系)</h5>
                         <p>時而烈日曝曬、時而狂風呼嘯的高地，適合火、風、光屬性的怪獸。</p>
                     </button>
-                    <button class="cultivation-location-card card" id="location-crystal" data-location="crystal">
+                    <button class="cultivation-location-card" id="location-crystal" data-location="crystal">
                          <img src="https://github.com/msw2004727/MD/blob/main/images/ZL002.png?raw=true" alt="人智的結晶">
                         <h5>人智的結晶 (法則系)</h5>
                         <p>被遺棄的古代鍊金都市，充滿了人造與形而上的法則元素，適合金、暗、混屬性。</p>

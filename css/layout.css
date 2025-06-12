@@ -24,11 +24,22 @@
     }
 }
 
+/* Panel base style */
+.panel {
+    background-color: var(--bg-slot);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+    min-width: 0; /* Prevents flex items from overflowing their container */
+}
+
 /* Modal base styles */
 .modal {
     display: none;
     position: fixed;
-    z-index: 2010;
+    z-index: 2010; /* MODIFIED: z-index increased from 1000 to 2010 */
     left: 0;
     top: 0;
     width: 100%;
@@ -42,25 +53,28 @@
 
 /* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 2020;
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #player-info-modal {
-    z-index: 2020;
+    z-index: 2020; /* MODIFIED: z-index increased */
 }
 
 #monster-info-modal {
-    z-index: 2030;
+    z-index: 2030; /* MODIFIED: z-index increased */
 }
 
 #feedback-modal {
-    z-index: 2040;
+    z-index: 2040; /* MODIFIED: z-index increased */
 }
 
+
+/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
-    z-index: 2015;
+    z-index: 2015; /* MODIFIED: z-index increased */
 }
 
+/* 新增：提升提醒彈窗的權重，確保它能蓋過修煉成果彈窗 */
 #reminder-modal {
     z-index: 2025;
 }
@@ -102,11 +116,10 @@
 }
 
 /* Action buttons grid */
-/* Mobile-first: default to single column */
 .action-buttons-grid.dual-buttons {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
     align-items: stretch;
 }
 .action-buttons-grid.dual-buttons > button {
@@ -116,14 +129,59 @@
     align-items: center;
     justify-content: center;
 }
-/* Desktop: switch to two columns */
-@media (min-width: 481px) {
+@media (max-width: 480px) {
     .action-buttons-grid.dual-buttons {
-        grid-template-columns: 1fr auto;
-        gap: 0.75rem;
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
     }
 }
 
+/* ======================================= */
+/* ====== Monster Farm Layout Grid ======= */
+/* ======================================= */
+
+.farm-header-grid {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    padding-bottom: 0.5rem;
+    text-align: center;
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.farm-header-grid, .farm-monster-item {
+    display: grid;
+    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 45px auto 55px 95px 140px;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Center align all header and column content by default */
+.farm-header-grid > div,
+.farm-monster-item > .farm-col {
+    text-align: center;
+    display: flex; /* Use flex to center content vertically and horizontally */
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap; 
+}
+
+
+/* Specifically align monster info column to the left */
+.farm-header-grid > div:nth-child(2),
+.farm-monster-item .farm-col-info {
+    text-align: left;
+    justify-self: start;
+    justify-content: flex-start; /* Align flex items to the start */
+    display: block; /* Revert to block for normal text flow */
+}
+
+.farm-monster-item:last-child { 
+    border-bottom: none; 
+}
 
 /* Auth screen layout */
 #auth-screen {
