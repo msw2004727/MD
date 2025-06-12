@@ -156,7 +156,7 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 60px max-content 55px 95px 125px;
+    grid-template-columns: 60px auto 55px 95px 125px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
