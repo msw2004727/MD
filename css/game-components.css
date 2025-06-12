@@ -88,16 +88,15 @@ body.light-theme .inventory-delete-slot.drag-over {
     border-color: var(--danger-hover-light) !important;
     color: var(--button-danger-text-light) !important;
 }
+
+/* 只對可互動的格子套用懸停效果 */
 .dna-item:hover,
-.dna-slot:hover:not(.occupied),
-.temp-backpack-slot:hover:not(.occupied):not(.empty) {
+.dna-slot.occupied:hover,
+.temp-backpack-slot.occupied:hover {
     border-color: var(--accent-color);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
 }
-.temp-backpack-slot.empty:hover {
-     background-color: var(--accent-hover);
-     border-color: var(--accent-color);
-}
+
 .dna-slot.occupied, .temp-backpack-slot.occupied {
     border-style: solid;
 }
@@ -382,7 +381,6 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-right-arm { grid-area: rArm; }
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
-
 #snapshot-nickname-container {
     position: absolute;
     top: 10px;
@@ -410,7 +408,6 @@ body.light-theme .leaderboard-table tr:hover td {
     width: 150px; /* Fixed width */
     pointer-events: auto;
 }
-
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
