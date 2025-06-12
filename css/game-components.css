@@ -153,15 +153,26 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     transform: translateY(100%);
 }
 .tab-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 4px;
     margin-bottom: 15px;
     background-color: var(--bg-primary);
     border-radius: 6px;
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+@media (min-width: 768px) {
+    .tab-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    .tab-button {
+        flex-grow: 0;
+        padding: 10px 15px;
+        font-size: 1rem;
+    }
 }
 .tab-button {
     padding: 8px 10px;
@@ -175,12 +186,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     white-space: nowrap;
     text-align: center;
     border-radius: 4px;
-    flex-grow: 1;
-}
-@media (min-width: 768px) {
-    .tab-button {
-        flex-grow: 0;
-    }
 }
 .tab-button.active {
     color: var(--accent-color);
@@ -193,21 +198,23 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
+/* --- 修改開始 --- */
 .tab-content {
     display: none;
-    min-width: 0;
+    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
 }
 .tab-content.active {
     display: block;
 }
 
 #farm-table-wrapper {
-    overflow-x: auto;
+    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
     padding-bottom: 5px;
+    /* 移除了 max-width: 100% 以避免潛在衝突 */
 }
-#farm-headers, #farmed-monsters-list {
-    min-width: 520px;
-}
+/* --- 修改結束 --- */
+
+
 #monster-leaderboard-element-tabs {
     display: flex;
     flex-wrap: wrap;
