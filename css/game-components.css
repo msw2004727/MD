@@ -12,6 +12,7 @@
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
     min-width: 0; /* Prevents flex items from overflowing their container */
+    overflow: hidden; /* 關鍵修正：防止此面板被其寬大的子內容(表格)撐開變形 */
 }
 
 /* ==========================================================================
@@ -229,10 +230,10 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content {
     display: none;
     min-width: 0;
+    /* overflow-x: auto;  此規則移至下方的 .table-scroll-wrapper 以更精準控制 */
 }
 .tab-content.active {
     display: block;
-    overflow: hidden; /* 新增: 強制此容器不被其內容撐開 */
 }
 
 #monster-leaderboard-element-tabs {
@@ -678,18 +679,19 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS (原生Table版本)
+   怪獸農場 (原生Table版本，滾動最終修正)
    ========================================================================== */
+
+/* 1. 滾動容器 */
 .table-scroll-wrapper {
     overflow-x: auto;
-    width: 100%;
 }
 
+/* 2. 表格本身 */
 .farm-table {
     width: 100%;
     min-width: 600px;
     border-collapse: collapse;
-    table-layout: auto;
 }
 
 .farm-table th,
@@ -707,6 +709,8 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
     border-bottom-width: 2px;
     border-bottom-color: var(--accent-color);
+    position: sticky; /* 讓表頭在滾動時可以考慮固定，但目前先不啟用 */
+    top: 0;
 }
 
 .farm-table tbody tr:hover td {
@@ -717,11 +721,14 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: color-mix(in srgb, var(--accent-color) 15%, transparent);
 }
 
+/* 特定欄位對齊 */
 .farm-table th:nth-child(3),
 .farm-table td:nth-child(3) {
     text-align: left;
+    min-width: 150px; /* 給怪獸名稱一個最小寬度 */
 }
 
+/* 按鈕樣式 */
 .farm-table td .button {
     margin: 0 2px;
     padding: 6px 10px;
