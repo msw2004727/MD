@@ -38,7 +38,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 2010; /* MODIFIED: z-index increased from 1000 to 2010 */
+    z-index: 2010;
     left: 0;
     top: 0;
     width: 100%;
@@ -50,30 +50,26 @@
     padding: 1rem;
 }
 
-/* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 2020; /* MODIFIED: z-index increased */
+    z-index: 2020;
 }
 
 #player-info-modal {
-    z-index: 2020; /* MODIFIED: z-index increased */
+    z-index: 2020;
 }
 
 #monster-info-modal {
-    z-index: 2030; /* MODIFIED: z-index increased */
+    z-index: 2030;
 }
 
 #feedback-modal {
-    z-index: 2040; /* MODIFIED: z-index increased */
+    z-index: 2040;
 }
 
-
-/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
-    z-index: 2015; /* MODIFIED: z-index increased */
+    z-index: 2015;
 }
 
-/* 新增：提升提醒彈窗的權重，確保它能蓋過修煉成果彈窗 */
 #reminder-modal {
     z-index: 2025;
 }
@@ -135,7 +131,7 @@
     }
 }
 
-/* ===== 修改開始：重構怪獸農場佈局 (responsive) v3 ===== */
+/* ===== 修改開始：重構怪獸農場佈局 (responsive) v4 - 仿排行榜樣式 ===== */
 
 /* 預設 (手機窄版) 樣式 */
 #farm-table-wrapper {
@@ -224,27 +220,26 @@
 }
 
 
-/* 寬螢幕樣式 (使用 Media Query) */
+/* 寬螢幕樣式 (使用 Media Query) - 最終修正版 */
 @media (min-width: 640px) {
     #farm-table-wrapper {
         overflow-x: auto;
     }
 
+    /* 表頭網格 */
     .farm-header-grid {
         display: grid;
-        grid-template-columns: 50px 1fr 70px 110px minmax(140px, auto); /* 調整欄寬 */
+        grid-template-columns: 50px minmax(120px, 1.5fr) 70px 110px 1fr; /* 調整欄寬比例 */
         gap: 0.75rem;
         padding: 0.5rem;
         font-weight: 600;
         color: var(--text-secondary);
         border-bottom: 2px solid var(--accent-color);
-        min-width: 540px; /* 確保寬版內容不擠壓 */
+        min-width: 550px; /* 確保內容不擠壓 */
     }
-
     .farm-header-grid > div {
         text-align: center;
     }
-
     .farm-header-grid > div:nth-child(2) {
         text-align: left;
     }
@@ -252,12 +247,13 @@
     #farmed-monsters-list {
         display: block;
         gap: 0;
-        min-width: 540px; /* 確保寬版內容不擠壓 */
+        min-width: 550px;
     }
 
+    /* 每個怪獸項目的網格 */
     .farm-monster-item {
         display: grid;
-        grid-template-columns: 50px 1fr 70px 110px minmax(140px, auto); /* 調整欄寬 */
+        grid-template-columns: 50px minmax(120px, 1.5fr) 70px 110px 1fr; /* 與表頭保持一致 */
         grid-template-areas: none;
         padding: 0.5rem;
         border-bottom: 1px solid var(--border-color);
@@ -268,8 +264,8 @@
         border-top: none;
         align-items: center;
     }
-
-    /* 為每個欄位設定對齊 */
+    
+    /* 清理手機版樣式並套用桌面版樣式 */
     .farm-monster-item .farm-col {
         display: flex;
         align-items: center;
@@ -277,32 +273,30 @@
     }
     .farm-monster-item .farm-col-battle,
     .farm-monster-item .farm-col-score,
-    .farm-monster-item .farm-col-status {
+    .farm-monster-item .farm-col-status,
+    .farm-monster-item .farm-col-actions {
         justify-content: center; /* 置中對齊 */
     }
     .farm-monster-item .farm-col-info {
         justify-content: flex-start; /* 靠左對齊 */
-        display: block; /* 讓內部元素可以垂直排列 */
+        display: block; 
     }
     .farm-monster-item .farm-col-actions {
-        justify-content: center; /* 置中對齊 */
         gap: 0.5rem;
-    }
-    
-    /* 移除偽元素 */
-    .monster-details-display::before,
-    .farm-col-score::before,
-    .farm-col-status::before {
-        content: none;
     }
     
     .monster-details-display {
         display: block;
         margin-top: 0;
+        font-size: 1em;
     }
-
     .farm-col-score, .farm-col-status {
         display: flex;
+    }
+    .monster-details-display::before,
+    .farm-col-score::before,
+    .farm-col-status::before {
+        content: none;
     }
 }
 /* ===== 修改結束 ===== */
