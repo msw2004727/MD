@@ -472,7 +472,7 @@ body.light-theme .leaderboard-table tr:hover td {
     z-index: 4;
 }
 .farm-col-info .monster-name-display {
-    font-weight: bold;
+    font-size: 1rem;
 }
 .farm-col-info .monster-details-display {
     color: var(--text-secondary);
