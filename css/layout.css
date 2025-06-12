@@ -167,6 +167,7 @@
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
+    min-width: 650px; /* ADDED: Force a minimum width to trigger overflow */
 }
 
 /* Center align all header and column content by default */
@@ -176,7 +177,7 @@
     display: flex; /* Use flex to center content vertically and horizontally */
     justify-content: center;
     align-items: center;
-    white-space: nowrap; /* ADDED BACK: This forces content to overflow */
+    white-space: nowrap; 
 }
 
 
@@ -188,9 +189,6 @@
     justify-content: flex-start; /* Align flex items to the start */
     display: block; /* Revert to block for normal text flow */
 }
-
-/* REMOVED .farm-col-actions rule as it's no longer needed */
-
 
 .farm-monster-item:last-child { 
     border-bottom: none; 
