@@ -28,7 +28,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 2010; /* MODIFIED: z-index increased from 1000 to 2010 */
+    z-index: 2010;
     left: 0;
     top: 0;
     width: 100%;
@@ -42,28 +42,25 @@
 
 /* 確保彈窗的層級更高 */
 #confirmation-modal {
-    z-index: 2020; /* MODIFIED: z-index increased */
+    z-index: 2020;
 }
 
 #player-info-modal {
-    z-index: 2020; /* MODIFIED: z-index increased */
+    z-index: 2020;
 }
 
 #monster-info-modal {
-    z-index: 2030; /* MODIFIED: z-index increased */
+    z-index: 2030;
 }
 
 #feedback-modal {
-    z-index: 2040; /* MODIFIED: z-index increased */
+    z-index: 2040;
 }
 
-
-/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
 #training-results-modal {
-    z-index: 2015; /* MODIFIED: z-index increased */
+    z-index: 2015;
 }
 
-/* 新增：提升提醒彈窗的權重，確保它能蓋過修煉成果彈窗 */
 #reminder-modal {
     z-index: 2025;
 }
@@ -105,10 +102,11 @@
 }
 
 /* Action buttons grid */
+/* Mobile-first: default to single column */
 .action-buttons-grid.dual-buttons {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
     align-items: stretch;
 }
 .action-buttons-grid.dual-buttons > button {
@@ -118,12 +116,14 @@
     align-items: center;
     justify-content: center;
 }
-@media (max-width: 480px) {
+/* Desktop: switch to two columns */
+@media (min-width: 481px) {
     .action-buttons-grid.dual-buttons {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
     }
 }
+
 
 /* Auth screen layout */
 #auth-screen {
