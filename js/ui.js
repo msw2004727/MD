@@ -996,6 +996,10 @@ function renderMonsterFarm() {
             cultivateBtnClasses += ' warning';
         }
 
+        // --- 變更點 ---
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const defaultElementNickname = gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement;
+        const displayName = monster.custom_element_nickname || defaultElementNickname;
 
         item.innerHTML = `
             <div class="farm-col farm-col-battle">
@@ -1004,7 +1008,7 @@ function renderMonsterFarm() {
                 </button>
             </div>
             <div class="farm-col farm-col-info">
-                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${monster.nickname}</a>
+                <a href="#" class="farm-monster-name-link monster-name-display text-rarity-${rarityKey}">${displayName}</a>
                 <div class="monster-details-display">
                     ${(monster.elements || []).map(el => `<span class="text-xs text-element-${getElementCssClassKey(el)}">${el}</span>`).join(' ')}
                 </div>
