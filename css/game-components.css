@@ -678,13 +678,20 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格
+   怪獸農場 CSS Grid 表格 (採用滾動容器)
    ========================================================================== */
+
+/* 讓新增的包裹容器可以滾動 */
+.table-scroll-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
 .farm-grid-table {
     display: grid;
-    /* 序號 | 出戰 | 怪獸 | 評價 | 狀態 | 其他 */
-    grid-template-columns: auto auto 1fr auto auto auto;
-    min-width: 550px; /* 設定最小寬度以觸發滾動 */
+    /* 讓欄位寬度由內容決定，不再使用1fr */
+    grid-template-columns: auto auto auto auto auto auto;
+    /* 移除width:100% 或 min-width，讓表格可以自由伸展 */
     border-top: 1px solid var(--border-color);
 }
 
@@ -709,6 +716,7 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
+    min-width: 50px;
     white-space: nowrap;
 }
 
