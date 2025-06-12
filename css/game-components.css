@@ -406,7 +406,7 @@ body.light-theme .leaderboard-table tr:hover td {
     display: block;
 }
 #snapshot-nickname {
-    font-size: 0.9rem;
+    font-size: 1rem;
     display: block;
     margin-top: 1px;
 }

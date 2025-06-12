@@ -215,7 +215,7 @@ body.light-theme .modal-close:focus {
 .log-entry {
     padding: 7px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 0.75rem;
+    font-size: 1rem;
     color: var(--text-secondary);
 }
 .log-entry:last-child { border-bottom: none; }
