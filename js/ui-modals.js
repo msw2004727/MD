@@ -283,7 +283,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
             }
 
             if (skillTemplate && skillTemplate.level_milestones) {
-                milestonesHtml += `<div class="mt-2 text-xs" style="border-top: 1px dashed var(--border-color); padding-top: 5px;">`;
+                milestonesHtml += `<div class="mt-2" style="font-size: 0.9em; border-top: 1px dashed var(--border-color); padding-top: 5px;">`;
                 for (const levelStr in skillTemplate.level_milestones) {
                     const milestoneLevel = parseInt(levelStr, 10);
                     const milestone = skillTemplate.level_milestones[levelStr];
@@ -302,6 +302,7 @@ function updateMonsterInfoModal(monster, gameConfigs, ownerData = null) {
                 milestonesHtml += `</div>`;
             }
             
+            // 修改：新增屬性標籤
             const cssClassKey = getElementCssClassKey(skill.type);
             const elementBadge = `<span style="font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; background-color: var(--element-${cssClassKey}-bg); color: var(--element-${cssClassKey}-text); margin-left: 8px;">${skill.type}</span>`;
 
