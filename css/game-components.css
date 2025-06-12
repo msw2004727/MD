@@ -154,24 +154,14 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .tab-buttons {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
     gap: 4px;
     margin-bottom: 15px;
     background-color: var(--bg-primary);
     border-radius: 6px;
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-.tab-buttons::-webkit-scrollbar {
-    display: none;
-}
-@media (min-width: 768px) {
-    .tab-buttons {
-        flex-wrap: wrap;
-        overflow-x: hidden;
-    }
 }
 .tab-button {
     padding: 8px 10px;
@@ -185,7 +175,12 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     white-space: nowrap;
     text-align: center;
     border-radius: 4px;
-    flex-shrink: 0;
+    flex-grow: 1;
+}
+@media (min-width: 768px) {
+    .tab-button {
+        flex-grow: 0;
+    }
 }
 .tab-button.active {
     color: var(--accent-color);
@@ -198,23 +193,21 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
-/* --- 修改開始 --- */
 .tab-content {
     display: none;
-    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
+    min-width: 0;
 }
 .tab-content.active {
     display: block;
 }
 
 #farm-table-wrapper {
-    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
+    overflow-x: auto;
     padding-bottom: 5px;
-    /* 移除了 max-width: 100% 以避免潛在衝突 */
 }
-/* --- 修改結束 --- */
-
-
+#farm-headers, #farmed-monsters-list {
+    min-width: 520px;
+}
 #monster-leaderboard-element-tabs {
     display: flex;
     flex-wrap: wrap;
