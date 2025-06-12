@@ -968,7 +968,7 @@ function renderMonsterFarm() {
                 const elapsedTimeInSeconds = Math.floor((Date.now() - startTime) / 1000);
 
                 if (elapsedTimeInSeconds < totalDurationInSeconds) {
-                    statusText = `修煉中 (${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
+                    statusText = `修煉中<br>(${elapsedTimeInSeconds}/${totalDurationInSeconds}s)`;
                     statusStyle = "color: var(--accent-color);";
                 } else {
                     statusText = "修煉完成";
