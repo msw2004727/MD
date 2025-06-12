@@ -684,14 +684,16 @@ body.light-theme .leaderboard-table tr:hover td {
 /* 讓新增的包裹容器可以滾動 */
 .table-scroll-wrapper {
     overflow-x: auto;
-    width: 100%;
 }
 
 .farm-grid-table {
     display: grid;
-    /* 讓欄位寬度由內容決定，不再使用1fr */
-    grid-template-columns: auto auto auto auto auto auto;
-    /* 移除width:100% 或 min-width，讓表格可以自由伸展 */
+    /* On wide screens, 1fr allows the name to fill space.
+       On narrow screens, the min-width below takes precedence. */
+    grid-template-columns: auto auto 1fr auto auto auto;
+    /* KEY FIX: Force the table to be at least this wide.
+       This makes the parent .table-scroll-wrapper show a scrollbar. */
+    min-width: 600px;
     border-top: 1px solid var(--border-color);
 }
 
@@ -716,8 +718,7 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 50px;
-    white-space: nowrap;
+    white-space: nowrap; /* 嚴格禁止換行 */
 }
 
 .farm-grid-row:last-child > div {
