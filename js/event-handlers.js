@@ -471,6 +471,119 @@ async function fetchAndDisplayMonsterLeaderboard() {
     }
 }
 
+// --- 怪獸農場表頭排序事件處理 ---
+function handleFarmHeaderSorting() {
+    if (DOMElements.farmHeaders) {
+        DOMElements.farmHeaders.addEventListener('click', (event) => {
+            const target = event.target.closest('.sortable');
+            if (!target) return;
+
+            const sortKey = target.dataset.sortKey;
+            if (!sortKey || ['actions'].includes(sortKey)) return;
+
+            const currentSortKey = gameState.farmSortConfig.key;
+            const currentSortOrder = gameState.farmSortConfig.order;
+
+            let newSortOrder = 'desc';
+            if (currentSortKey === sortKey && currentSortOrder === 'desc') {
+                newSortOrder = 'asc';
+            }
+            
+            gameState.farmSortConfig = {
+                key: sortKey,
+                order: newSortOrder
+            };
+
+            renderMonsterFarm();
+        });
+    }
+}
+
+// --- 新增：處理排行榜中的點擊事件 ---
+function handleLeaderboardClicks() {
+    if (DOMElements.monsterLeaderboardTable) {
+        DOMElements.monsterLeaderboardTable.addEventListener('click', (event) => {
+            const link = event.target.closest('.leaderboard-monster-link');
+            if (link) {
+                event.preventDefault();
+                const row = link.closest('tr');
+                const monsterId = row.dataset.monsterId;
+                if (!monsterId) return;
+
+                const monsterData = gameState.monsterLeaderboard.find(m => m.id === monsterId);
+                if (monsterData) {
+                    updateMonsterInfoModal(monsterData, gameState.gameConfigs);
+                    showModal('monster-info-modal');
+                } else {
+                    console.warn(`在排行榜中找不到 ID 為 ${monsterId} 的怪獸資料。`);
+                }
+            }
+        });
+    }
+}
+
+// --- 修改：整合處理玩家資訊彈窗內的所有點擊事件 ---
+function handlePlayerInfoModalEvents() {
+    if (!DOMElements.playerInfoModalBody) return;
+
+    DOMElements.playerInfoModalBody.addEventListener('click', async (event) => {
+        // 1. 處理點擊怪獸連結
+        const monsterLink = event.target.closest('.player-info-monster-link');
+        if (monsterLink) {
+            event.preventDefault();
+            const monsterId = monsterLink.dataset.monsterId;
+            const ownerUid = monsterLink.dataset.ownerUid;
+
+            if (!monsterId || !ownerUid) return;
+
+            let monsterData = null;
+            let ownerData = null;
+            if (ownerUid === gameState.playerId) {
+                monsterData = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                ownerData = gameState.playerData;
+            } else if (gameState.viewedPlayerData && gameState.viewedPlayerData.uid === ownerUid) {
+                monsterData = gameState.viewedPlayerData.farmedMonsters.find(m => m.id === monsterId);
+                ownerData = gameState.viewedPlayerData;
+            }
+
+            if (monsterData) {
+                updateMonsterInfoModal(monsterData, gameState.gameConfigs, ownerData);
+                showModal('monster-info-modal');
+            } else {
+                console.error(`無法在玩家 ${ownerUid} 的資料中找到怪獸 ${monsterId}。`);
+                showFeedbackModal('錯誤', '無法載入該怪獸的詳細資訊。');
+            }
+            return;
+        }
+
+        // 2. 處理點擊「裝備」稱號按鈕
+        const equipButton = event.target.closest('.equip-title-btn');
+        if (equipButton) {
+            event.preventDefault();
+            const titleId = equipButton.dataset.titleId;
+            if (!titleId) return;
+
+            equipButton.disabled = true;
+            equipButton.textContent = '處理中...';
+
+            try {
+                const result = await equipTitle(titleId);
+                if (result && result.success) {
+                    await refreshPlayerData();
+                    updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
+                } else {
+                    throw new Error(result.error || '裝備稱號時發生未知錯誤。');
+                }
+            } catch (error) {
+                showFeedbackModal('裝備失敗', `錯誤：${error.message}`);
+                updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
+            }
+            return;
+        }
+    });
+}
+
+
 // --- 其他事件處理函數 ---
 function handleThemeSwitch() {
     if (DOMElements.themeSwitcherBtn) {
@@ -1181,6 +1294,7 @@ function initializeEventListeners() {
     handleLeaderboardClicks();
     handlePlayerInfoModalEvents(); // 修改：調用新的整合函式
     handleMonsterNicknameEvents();
+    handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
 
 

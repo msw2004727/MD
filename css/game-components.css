@@ -198,15 +198,22 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
+/* --- 修改開始 --- */
 .tab-content {
     display: none;
-    min-width: 0; 
+    min-width: 0; /* 新增此行來修正伸縮容器中的寬度問題 */
 }
 .tab-content.active {
     display: block;
 }
 
-/* 已將 #farm-table-wrapper 的重複規則移除，統一由 layout.css 管理 */
+#farm-table-wrapper {
+    overflow-x: auto; /* 維持 overflow-x 來產生水平捲軸 */
+    padding-bottom: 5px;
+    /* 移除了 max-width: 100% 以避免潛在衝突 */
+}
+/* --- 修改結束 --- */
+
 
 #monster-leaderboard-element-tabs {
     display: flex;
