@@ -151,8 +151,8 @@
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 6-COLUMN GRID: Deploy | Monster Info | Score | Status | Cultivate | Release */
-    grid-template-columns: 45px 1fr 65px 95px 65px 65px;
+    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
+    grid-template-columns: 45px minmax(100px, 1fr) 60px 85px auto;
     gap: 0.5rem;
     padding: 0.5rem;
     align-items: center;
@@ -185,22 +185,30 @@
 
 @media (max-width: 768px) {
     .farm-header-grid, .farm-monster-item {
-        /* Mobile: 6 columns, no wrap, info column is flexible */
-        grid-template-columns: 38px 1fr 55px 85px 55px 55px;
-        grid-template-areas: none; /* Remove template areas to prevent wrapping */
-        gap: 4px 6px;
+        grid-template-columns: 38px minmax(80px, 1fr) 50px auto;
+        grid-template-areas: 
+            "battle info score status"
+            "battle info actions actions";
+        gap: 4px 8px;
         padding: 8px 4px;
-        font-size: 0.9rem; /* Slightly reduce base font size on mobile for this table */
     }
 
-    /* Reset grid-area properties for mobile as they are no longer needed */
-    .farm-col-battle,
-    .farm-col-info,
-    .farm-col-score,
-    .farm-col-status,
-    .farm-col-cultivate,
-    .farm-col-release { 
-        grid-area: auto;
+    .farm-col-battle { grid-area: battle; }
+    .farm-col-info { grid-area: info; }
+    .farm-col-score { grid-area: score; }
+    .farm-col-status { grid-area: status; }
+    .farm-col-actions { 
+        grid-area: actions; 
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 4px;
+    }
+
+    .farm-header-grid {
+        grid-template-areas: "battle info score status";
+    }
+    .farm-header-grid > div:last-child {
+        display: none;
     }
 }
 
@@ -241,12 +249,4 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
-}
-
-
-/* === NEW RULE FOR FARM UI REFINEMENT === */
-
-/* Rule to make status text smaller ("小一號") */
-.farm-monster-item .status-text {
-    font-size: 0.9rem;
 }
