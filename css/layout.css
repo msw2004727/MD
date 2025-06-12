@@ -152,8 +152,8 @@
 .farm-header-grid, .farm-monster-item {
     display: grid;
     /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px auto 55px 95px 140px;
-    gap: 0.75rem;
+    grid-template-columns: 45px minmax(100px, 1fr) 60px 85px auto;
+    gap: 0.5rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
@@ -182,6 +182,36 @@
 .farm-monster-item:last-child { 
     border-bottom: none; 
 }
+
+@media (max-width: 768px) {
+    .farm-header-grid, .farm-monster-item {
+        grid-template-columns: 38px minmax(80px, 1fr) 50px auto;
+        grid-template-areas: 
+            "battle info score status"
+            "battle info actions actions";
+        gap: 4px 8px;
+        padding: 8px 4px;
+    }
+
+    .farm-col-battle { grid-area: battle; }
+    .farm-col-info { grid-area: info; }
+    .farm-col-score { grid-area: score; }
+    .farm-col-status { grid-area: status; }
+    .farm-col-actions { 
+        grid-area: actions; 
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 4px;
+    }
+
+    .farm-header-grid {
+        grid-template-areas: "battle info score status";
+    }
+    .farm-header-grid > div:last-child {
+        display: none;
+    }
+}
+
 
 /* Auth screen layout */
 #auth-screen {
