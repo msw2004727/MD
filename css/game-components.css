@@ -678,13 +678,16 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格
+   怪獸農場 CSS Grid 表格 (手機版優化)
    ========================================================================== */
+#monster-farm-content {
+    overflow-x: auto;
+}
+
 .farm-grid-table {
-    display: grid;
-    /* 序號 | 出戰 | 怪獸 (min 12rem, flex) | 評價 (4rem) | 狀態 (5rem) | 其他 (9rem) */
-    grid-template-columns: auto auto minmax(12rem, 1fr) 4rem 5rem 9rem;
-    width: 100%;
+    display: inline-grid;
+    min-width: 100%;
+    grid-template-columns: auto auto auto auto auto auto;
     border-top: 1px solid var(--border-color);
 }
 
@@ -700,7 +703,7 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: center;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap; /* 確保表頭文字不換行 */
+    white-space: nowrap;
 }
 
 .farm-grid-row > div {
@@ -709,12 +712,9 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 0; /* 修正: 確保 Grid item 不會因為內容而溢出 */
+    min-width: 50px;
     white-space: nowrap;
-    overflow: hidden; /* 新增: 隱藏溢出的內容 */
-    text-overflow: ellipsis; /* 新增: 用省略號顯示被隱藏的內容 */
 }
-
 
 .farm-grid-row:last-child > div {
     border-bottom: none;
