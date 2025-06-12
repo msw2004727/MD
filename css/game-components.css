@@ -682,8 +682,8 @@ body.light-theme .leaderboard-table tr:hover td {
    ========================================================================== */
 .farm-grid-table {
     display: grid;
-    /* 序號 | 出戰 | 怪獸 | 評價 | 狀態 | 其他 */
-    grid-template-columns: auto auto 1fr auto auto auto;
+    /* 序號 | 出戰 | 怪獸 (min 12rem, flex) | 評價 (4rem) | 狀態 (5rem) | 其他 (9rem) */
+    grid-template-columns: auto auto minmax(12rem, 1fr) 4rem 5rem 9rem;
     width: 100%;
     border-top: 1px solid var(--border-color);
 }
@@ -709,9 +709,12 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 50px;
+    min-width: 0; /* 修正: 確保 Grid item 不會因為內容而溢出 */
     white-space: nowrap;
+    overflow: hidden; /* 新增: 隱藏溢出的內容 */
+    text-overflow: ellipsis; /* 新增: 用省略號顯示被隱藏的內容 */
 }
+
 
 .farm-grid-row:last-child > div {
     border-bottom: none;
