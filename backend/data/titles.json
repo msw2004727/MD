@@ -1,0 +1,382 @@
+[
+  {
+    "id": "title_001",
+    "name": "新手",
+    "description": "踏入怪獸異世界的第一步。",
+    "condition": {
+      "type": "default",
+      "value": 0
+    },
+    "buffs": {}
+  },
+  {
+    "id": "title_002",
+    "name": "百戰將",
+    "description": "身經百戰，累積了10場勝利的證明。",
+    "condition": {
+      "type": "wins",
+      "value": 10
+    },
+    "buffs": {
+      "attack": 5,
+      "defense": 5
+    }
+  },
+  {
+    "id": "title_003",
+    "name": "收藏家",
+    "description": "擁有10隻以上怪獸的證明。",
+    "condition": {
+      "type": "monsters_owned",
+      "value": 10
+    },
+    "buffs": {
+      "cultivation_item_find_chance": 0.05
+    }
+  },
+  {
+    "id": "title_004",
+    "name": "戰新星",
+    "description": "獲得50場勝利，在戰場上冉冉升起的新星。",
+    "condition": {
+      "type": "wins",
+      "value": 50
+    },
+    "buffs": {
+      "attack": 12,
+      "speed": 8
+    }
+  },
+  {
+    "id": "title_005",
+    "name": "元素使",
+    "description": "成功合成出一隻擁有三種或以上屬性的怪獸。",
+    "condition": {
+      "type": "monster_elements_count",
+      "value": 3
+    },
+    "buffs": {
+      "mp": 20,
+      "elemental_damage_boost": 0.05
+    }
+  },
+  {
+    "id": "title_006",
+    "name": "常勝軍",
+    "description": "連續取得10場對戰勝利的強者證明。",
+    "condition": {
+      "type": "win_streak",
+      "value": 10
+    },
+    "buffs": {
+      "crit": 5,
+      "speed": 5
+    }
+  },
+  {
+    "id": "title_007",
+    "name": "以弱勝強",
+    "description": "擊敗總評價比自己高出50%的對手。",
+    "condition": {
+      "type": "win_vs_stronger",
+      "value": 1.5
+    },
+    "buffs": {
+      "score_gain_boost": 0.1
+    }
+  },
+  {
+    "id": "title_008",
+    "name": "絕境鬥士",
+    "description": "在HP低於10%的情況下反敗為勝。",
+    "condition": {
+      "type": "win_low_hp",
+      "value": 0.1
+    },
+    "buffs": {
+      "defense": 15
+    }
+  },
+  {
+    "id": "title_009",
+    "name": "炎之領主",
+    "description": "擁有5隻以上主屬性為「火」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "火",
+      "value": 5
+    },
+    "buffs": {
+      "fire_resistance": 10
+    }
+  },
+  {
+    "id": "title_010",
+    "name": "深海巨擘",
+    "description": "擁有5隻以上主屬性為「水」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "水",
+      "value": 5
+    },
+    "buffs": {
+      "water_resistance": 10
+    }
+  },
+  {
+    "id": "title_011",
+    "name": "森之守護",
+    "description": "擁有5隻以上主屬性為「木」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "木",
+      "value": 5
+    },
+    "buffs": {
+      "wood_resistance": 10
+    }
+  },
+  {
+    "id": "title_012",
+    "name": "鍊金術師",
+    "description": "擁有5隻以上主屬性為「金」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "金",
+      "value": 5
+    },
+    "buffs": {
+      "gold_resistance": 10
+    }
+  },
+  {
+    "id": "title_013",
+    "name": "大地之子",
+    "description": "擁有5隻以上主屬性為「土」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "土",
+      "value": 5
+    },
+    "buffs": {
+      "earth_resistance": 10
+    }
+  },
+  {
+    "id": "title_014",
+    "name": "聖光使者",
+    "description": "擁有3隻以上主屬性為「光」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "光",
+      "value": 3
+    },
+    "buffs": {
+      "light_resistance": 15
+    }
+  },
+  {
+    "id": "title_015",
+    "name": "暗影主宰",
+    "description": "擁有3隻以上主屬性為「暗」的怪獸。",
+    "condition": {
+      "type": "own_elemental_monsters",
+      "element": "暗",
+      "value": 3
+    },
+    "buffs": {
+      "dark_resistance": 15
+    }
+  },
+  {
+    "id": "title_016",
+    "name": "疫病之源",
+    "description": "累計讓對手陷入「中毒」狀態50次。",
+    "condition": {
+      "type": "apply_status",
+      "status": "poisoned",
+      "value": 50
+    },
+    "buffs": {
+      "poison_damage_boost": 0.1
+    }
+  },
+  {
+    "id": "title_017",
+    "name": "傳奇誕生",
+    "description": "首次成功合成出「傳奇」稀有度的怪獸。",
+    "condition": {
+      "type": "create_rarity_monster",
+      "rarity": "傳奇"
+    },
+    "buffs": {
+      "hp": 15,
+      "mp": 15,
+      "attack": 8,
+      "defense": 8
+    }
+  },
+  {
+    "id": "title_018",
+    "name": "神話締造者",
+    "description": "首次成功合成出「神話」稀有度的怪獸。",
+    "condition": {
+      "type": "create_rarity_monster",
+      "rarity": "神話"
+    },
+    "buffs": {
+      "hp": 30,
+      "mp": 30,
+      "attack": 15,
+      "defense": 15
+    }
+  },
+  {
+    "id": "title_019",
+    "name": "基因學家",
+    "description": "發現10種不同的怪獸合成配方。",
+    "condition": {
+      "type": "discover_recipes",
+      "value": 10
+    },
+    "buffs": {
+      "cultivation_exp_gain": 0.1
+    }
+  },
+  {
+    "id": "title_020",
+    "name": "技能大師",
+    "description": "將任意一個技能提升至10級滿級。",
+    "condition": {
+      "type": "max_skill_level",
+      "value": 10
+    },
+    "buffs": {
+      "mp": 30
+    }
+  },
+  {
+    "id": "title_021",
+    "name": "苦修者",
+    "description": "累計完成50次怪獸修煉。",
+    "condition": {
+      "type": "complete_cultivations",
+      "value": 50
+    },
+    "buffs": {
+      "defense": 10,
+      "hp": 30
+    }
+  },
+  {
+    "id": "title_022",
+    "name": "無瑕勝者",
+    "description": "在5場戰鬥中，以未受任何傷害的狀態獲勝。",
+    "condition": {
+      "type": "flawless_victory",
+      "value": 5
+    },
+    "buffs": {
+      "evasion": 5
+    }
+  },
+  {
+    "id": "title_023",
+    "name": "極速傳說",
+    "description": "擁有一隻速度值達到200的怪獸。",
+    "condition": {
+      "type": "monster_stat_reach",
+      "stat": "speed",
+      "value": 200
+    },
+    "buffs": {
+      "speed": 15
+    }
+  },
+  {
+    "id": "title_024",
+    "name": "不動如山",
+    "description": "擁有一隻防禦值達到200的怪獸。",
+    "condition": {
+      "type": "monster_stat_reach",
+      "stat": "defense",
+      "value": 200
+    },
+    "buffs": {
+      "defense": 15
+    }
+  },
+  {
+    "id": "title_025",
+    "name": "一拳超人",
+    "description": "擁有一隻攻擊值達到200的怪獸。",
+    "condition": {
+      "type": "monster_stat_reach",
+      "stat": "attack",
+      "value": 200
+    },
+    "buffs": {
+      "attack": 15
+    }
+  },
+  {
+    "id": "title_026",
+    "name": "人氣王",
+    "description": "擁有20位以上的好友。",
+    "condition": {
+      "type": "friends_count",
+      "value": 20
+    },
+    "buffs": {
+      "cultivation_time_reduction": 0.05
+    }
+  },
+  {
+    "id": "title_027",
+    "name": "拆卸專家",
+    "description": "累計分解20隻怪獸。",
+    "condition": {
+      "type": "disassemble_monsters",
+      "value": 20
+    },
+    "buffs": {
+      "dna_return_rate_on_disassemble": 0.1
+    }
+  },
+  {
+    "id": "title_028",
+    "name": "美食家",
+    "description": "累計使用吸取生命值的技能100次。",
+    "condition": {
+      "type": "use_leech_skills",
+      "value": 100
+    },
+    "buffs": {
+      "leech_skill_effect": 0.1
+    }
+  },
+  {
+    "id": "title_029",
+    "name": "和平主義者",
+    "description": "在5場戰鬥中，不使用任何直接傷害技能並獲勝。",
+    "condition": {
+      "type": "win_without_damage_skills",
+      "value": 5
+    },
+    "buffs": {
+      "mp_regen_per_turn": 5
+    }
+  },
+  {
+    "id": "title_030",
+    "name": "排行榜新星",
+    "description": "首次進入玩家英雄榜前100名。",
+    "condition": {
+      "type": "reach_player_rank",
+      "value": 100
+    },
+    "buffs": {
+      "score_gain_boost": 0.05
+    }
+  }
+]
