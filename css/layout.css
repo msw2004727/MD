@@ -170,7 +170,6 @@
 
 
 /* Specifically align monster info column to the left */
-.farm-header-grid > div:nth-child(2),
 .farm-monster-item .farm-col-info {
     text-align: left;
     justify-self: start;
