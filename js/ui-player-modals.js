@@ -298,8 +298,7 @@ async function renderFriendsList() {
     container.innerHTML = `
         <div class="friends-list-grid">
             ${friends.map(friend => {
-                const title = friend.title || '稱號未定';
-                const displayName = `${title} ${friend.nickname}`;
+                const displayName = friend.nickname;
                 
                 const lastSeen = friendStatuses[friend.uid];
                 const nowInSeconds = Date.now() / 1000;
