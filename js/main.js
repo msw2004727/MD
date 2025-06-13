@@ -188,10 +188,12 @@ async function onAuthStateChangedHandler(user) {
  * 會檢查所有必要的函式是否已定義，如果尚未定義，會延遲後重試。
  */
 function attemptToInitializeApp() {
-    // 檢查核心函式是否已載入
+    // 修改：檢查新的初始化函式是否已載入
     if (typeof initializeDOMElements === 'function' && 
-        typeof initializeEventListeners === 'function' &&
-        typeof RosterAuthListener === 'function') {
+        typeof RosterAuthListener === 'function' &&
+        typeof initializeUIEventHandlers === 'function' &&
+        typeof initializeGameInteractionEventHandlers === 'function' &&
+        typeof initializeDragDropEventHandlers === 'function') {
         
         console.log("所有核心函式已準備就緒，開始初始化應用程式。");
 
@@ -208,8 +210,10 @@ function attemptToInitializeApp() {
         // 4. 設置 Firebase Auth 狀態監聽器
         RosterAuthListener(onAuthStateChangedHandler);
 
-        // 5. 初始化事件監聽器
-        initializeEventListeners();
+        // 5. 修改：初始化所有拆分後的事件監聽器
+        initializeUIEventHandlers();
+        initializeGameInteractionEventHandlers();
+        initializeDragDropEventHandlers();
 
         // 6. 預設顯示第一個頁籤 (DNA管理)
         if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
