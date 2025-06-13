@@ -13,13 +13,12 @@
     min-width: 0;
 }
 
-/* 新增：讓包含頁籤的面板可以伸展並成為 flex 容器 */
-/* 這會選中主容器中第二個 panel，也就是包含所有頁籤的那個 */
+/* 讓包含頁籤的面板可以伸展並成為 flex 容器 */
 .main-container > .panel:last-of-type {
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* 佔滿剩餘空間 */
-    min-height: 0; /* 關鍵：防止 flex item 在空間不足時溢出 */
+    flex-grow: 1;
+    min-height: 0;
 }
 
 /* ==========================================================================
@@ -695,7 +694,9 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .farm-table {
     table-layout: fixed;
-    width: 100%; /* 修改：從 600px 改為 100% */
+    /* 修改：設定一個最小寬度，而不是固定寬度或100% */
+    min-width: 600px;
+    width: 100%; /* 同時設定 width: 100% 確保它會嘗試填滿容器 */
     border-collapse: collapse;
 }
 
@@ -705,7 +706,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-bottom: 1px solid var(--border-color);
     text-align: center;
     vertical-align: middle;
-    white-space: nowrap;
+    white-space: nowrap; /* 修改：確保文字不換行，這是觸發滾動的關鍵 */
     overflow: hidden;
     text-overflow: ellipsis;
 }
