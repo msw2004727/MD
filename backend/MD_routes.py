@@ -548,33 +548,22 @@ def disassemble_monster_route(monster_id: str):
     )
 
     if disassembly_result and disassembly_result.get("success"):
-        returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
-        current_owned_dna = player_data.get("playerOwnedDNA", [])
-        import datetime
-        for dna_template in returned_dna_templates:
-            instance_id = f"dna_{user_id}_{int(datetime.datetime.now().timestamp() * 1000)}_{len(current_owned_dna)}"
-            owned_dna_item = {**dna_template, "id": instance_id, "baseId": dna_template["id"]}
-            
-            free_slot_index = -1
-            for i, dna_item in enumerate(current_owned_dna):
-                if dna_item is None:
-                    free_slot_index = i
-                    break
-            
-            if free_slot_index != -1:
-                current_owned_dna[free_slot_index] = owned_dna_item
-            else:
-                current_owned_dna.append(owned_dna_item)
-
-        player_data["playerOwnedDNA"] = current_owned_dna
+        # 移除將DNA加回物品欄的邏輯
+        # returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
+        # current_owned_dna = player_data.get("playerOwnedDNA", [])
+        # import datetime
+        # for dna_template in returned_dna_templates:
+        #     ... (此處原有邏輯被移除) ...
+        # player_data["playerOwnedDNA"] = current_owned_dna
+        
+        # 直接使用服務層已更新的怪獸列表
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
-
 
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "message": disassembly_result.get("message"),
-                "returned_dna_templates_info": [{"name": dna.get("name"), "rarity": dna.get("rarity")} for dna in returned_dna_templates],
+                "returned_dna_templates_info": [], # DNA不再退回，返回空列表
                 "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
