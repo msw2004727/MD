@@ -117,6 +117,8 @@ function initializeDOMElements() {
         dnaFarmTabs: document.getElementById('dna-farm-tabs'),
         dnaInventoryContent: document.getElementById('dna-inventory-content'),
         monsterFarmContent: document.getElementById('monster-farm-content'),
+        farmHeaders: document.getElementById('farm-headers'), // 新增：農場表頭
+        farmedMonstersList: document.getElementById('farmed-monsters-list'), // 新增：農場列表
         friendsListContent: document.getElementById('friends-list-content'),
         friendsTabSearchInput: document.getElementById('friends-tab-search-input'),
         friendsSearchResultsArea: document.getElementById('friends-search-results-area'),
@@ -963,42 +965,55 @@ function getElementCssClassKey(chineseElement) {
 
 
 function renderMonsterFarm() {
-    const container = DOMElements.monsterFarmContent;
-    if (!container) return;
+    // 【修改】目標改為 grid 容器，而非 table
+    const headersContainer = DOMElements.farmHeaders;
+    const listContainer = DOMElements.farmedMonstersList;
 
-    const table = container.querySelector('.farm-table');
-    if (!table) {
-        console.error("renderMonsterFarm Error: '.farm-table' not found.");
+    if (!listContainer || !headersContainer) {
+        console.error("renderMonsterFarm Error: Farm containers not found.");
         return;
     }
 
-    let tbody = table.querySelector('tbody');
-    if (!tbody) {
-        tbody = document.createElement('tbody');
-        table.appendChild(tbody);
-    }
-    tbody.innerHTML = ''; // 清除舊的怪獸列
+    // 清除舊內容
+    headersContainer.innerHTML = '';
+    listContainer.innerHTML = '';
 
+    // 【新增】渲染表頭
+    const headers = [
+        { text: '#', key: 'index', sortable: false },
+        { text: '出戰', key: 'deploy', sortable: false },
+        { text: '怪獸', key: 'nickname', sortable: true },
+        { text: '評價', key: 'score', sortable: true },
+        { text: '狀態', key: 'farmStatus', sortable: true },
+        { text: '操作', key: 'actions', sortable: false }
+    ];
+
+    headers.forEach(header => {
+        const headerDiv = document.createElement('div');
+        headerDiv.textContent = header.text;
+        if (header.sortable) {
+            headerDiv.classList.add('sortable');
+            headerDiv.dataset.sortKey = header.key;
+            // 新增排序指示箭頭
+            if (gameState.farmSortConfig && gameState.farmSortConfig.key === header.key) {
+                const arrow = document.createElement('span');
+                arrow.className = 'sort-arrow';
+                arrow.textContent = gameState.farmSortConfig.order === 'desc' ? ' ▼' : ' ▲';
+                headerDiv.appendChild(arrow);
+            }
+        }
+        headersContainer.appendChild(headerDiv);
+    });
+    
+    // 獲取怪獸資料
     const monsters = gameState.playerData?.farmedMonsters || [];
 
     if (monsters.length === 0) {
-        const row = tbody.insertRow();
-        const cell = row.insertCell();
-        cell.colSpan = 6; // 表頭有6欄
-        cell.textContent = '您的農場空空如也，快去組合新的怪獸吧！';
-        cell.style.textAlign = 'center';
-        cell.style.padding = '20px';
-        cell.style.color = 'var(--text-secondary)';
+        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">您的農場空空如也，快去組合新的怪獸吧！</p>`;
         return;
     }
-
-    const rarityMap = {
-        '普通': 'common',
-        '稀有': 'rare',
-        '菁英': 'elite',
-        '傳奇': 'legendary',
-        '神話': 'mythical'
-    };
+    
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
@@ -1012,47 +1027,68 @@ function renderMonsterFarm() {
     });
 
     monsters.forEach((monster, index) => {
-        const row = tbody.insertRow(); // 建立 <tr>
+        const monsterItem = document.createElement('div');
+        monsterItem.className = 'farm-monster-item';
         if (gameState.selectedMonsterId === monster.id) {
-            row.classList.add('selected');
+            monsterItem.classList.add('selected');
         }
 
-        // 建立 <td> 並填入內容
-        const cellIndex = row.insertCell();
-        cellIndex.textContent = index + 1;
-
-        const cellDeploy = row.insertCell();
+        // 1. 索引
+        const colIndex = document.createElement('div');
+        colIndex.className = 'farm-col farm-col-index';
+        colIndex.textContent = index + 1;
+        
+        // 2. 出戰按鈕
+        const colDeploy = document.createElement('div');
+        colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        cellDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
         
-        const cellMonster = row.insertCell();
+        // 3. 怪獸資訊
+        const colInfo = document.createElement('div');
+        colInfo.className = 'farm-col farm-col-info';
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        cellMonster.innerHTML = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">${monster.nickname}</a>`;
+        colInfo.innerHTML = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">${monster.nickname}</a>`;
         
-        const cellScore = row.insertCell();
-        cellScore.textContent = monster.score || 0;
+        // 4. 評價
+        const colScore = document.createElement('div');
+        colScore.className = 'farm-col farm-col-score';
+        colScore.textContent = monster.score || 0;
 
-        const cellStatus = row.insertCell();
+        // 5. 狀態
+        const colStatus = document.createElement('div');
+        colStatus.className = 'farm-col farm-col-status';
         let statusText = '閒置中';
         if (monster.farmStatus?.isTraining) {
             statusText = '修煉中';
         } else if (monster.farmStatus?.isBattling) {
             statusText = '戰鬥中';
         }
-        cellStatus.textContent = statusText;
-
-        const cellActions = row.insertCell();
-        cellActions.className = 'farm-actions-cell';
-        let otherButtonsHTML = '';
+        colStatus.textContent = statusText;
+        
+        // 6. 操作按鈕
+        const colActions = document.createElement('div');
+        colActions.className = 'farm-col farm-col-actions';
+        let actionsHTML = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
-            otherButtonsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">招回</button>`;
+            actionsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>`;
         } else {
-            otherButtonsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
+            actionsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
         }
-        otherButtonsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
-        cellActions.innerHTML = otherButtonsHTML;
+        actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
+        colActions.innerHTML = actionsHTML;
+        
+        // 組合所有欄位
+        monsterItem.appendChild(colIndex);
+        monsterItem.appendChild(colDeploy);
+        monsterItem.appendChild(colInfo);
+        monsterItem.appendChild(colScore);
+        monsterItem.appendChild(colStatus);
+        monsterItem.appendChild(colActions);
+        
+        listContainer.appendChild(monsterItem);
     });
 }
 
