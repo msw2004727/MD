@@ -25,7 +25,8 @@
 }
 #feedback-modal-close-x,
 #confirmation-modal-close-x.modal-close,
-#official-announcement-close-x {
+#official-announcement-close-x,
+#close-training-results-btn {
     background-color: var(--danger-color);
     color: var(--button-danger-text);
     width: 28px;
@@ -41,13 +42,15 @@
 }
 #feedback-modal-close-x:hover,
 #confirmation-modal-close-x.modal-close:hover,
-#official-announcement-close-x:hover {
+#official-announcement-close-x:hover,
+#close-training-results-btn:hover {
     background-color: var(--danger-hover-dark);
     color: var(--button-danger-text);
 }
 body.light-theme #feedback-modal-close-x:hover,
 body.light-theme #confirmation-modal-close-x.modal-close:hover,
-body.light-theme #official-announcement-close-x:hover {
+body.light-theme #official-announcement-close-x:hover,
+body.light-theme #close-training-results-btn:hover {
     background-color: var(--danger-hover-light);
 }
 
