@@ -19,26 +19,26 @@ function initializeDragDropEventHandlers() {
 
     containers.forEach(zone => {
         if (zone) {
-            // Drag events (主要用於桌面滑鼠)
+            // 拖曳事件
             zone.addEventListener('dragstart', handleDragStart);
             zone.addEventListener('dragend', handleDragEnd);
             zone.addEventListener('dragover', handleDragOver);
             zone.addEventListener('dragleave', handleDragLeave);
             zone.addEventListener('drop', handleDrop);
 
-            // 滑鼠事件 (用於長按)
+            // 長按與刪除事件 (滑鼠)
             zone.addEventListener('mousedown', handleItemInteractionStart);
             zone.addEventListener('mouseup', handleItemInteractionEnd);
             zone.addEventListener('mouseleave', handleItemInteractionEnd);
-            zone.addEventListener('mousemove', handleItemInteractionEnd); // 滑鼠移動會取消長按計時
+            zone.addEventListener('mousemove', handleItemInteractionEnd);
             
-            // 觸控事件 (用於長按與阻止滾動)
+            // 長按與刪除事件 (觸控)
             zone.addEventListener('touchstart', handleItemInteractionStart, { passive: false });
             zone.addEventListener('touchend', handleItemInteractionEnd);
             zone.addEventListener('touchcancel', handleItemInteractionEnd);
-            zone.addEventListener('touchmove', handleTouchMove, { passive: false }); // 使用新的專用觸控移動處理器
+            zone.addEventListener('touchmove', handleTouchMove, { passive: false });
 
-            // 點擊事件 (用於單擊移動和刪除按鈕)
+            // 點擊事件 (用於刪除按鈕和單擊移動)
             zone.addEventListener('click', handleItemClick);
         }
     });
@@ -97,7 +97,7 @@ function exitJiggleMode() {
     });
 }
 
-// --- 長按偵測 ---
+// --- 長按與觸控處理 ---
 function handleItemInteractionStart(event) {
     if (event.type === 'mousedown' && event.buttons !== 1) return;
     
@@ -111,23 +111,17 @@ function handleItemInteractionStart(event) {
     }, LONG_PRESS_DURATION);
 }
 
-// 修改：將 mouseup/touchend/mouseleave/touchcancel 的邏輯統一
 function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
 }
 
-// 新增：專門處理 touchmove 的函數
 function handleTouchMove(event) {
-    // 只要手指移動，就取消長按計時器
     clearTimeout(longPressTimer);
     
-    // 如果觸控的目標是可拖曳的物品，就阻止瀏覽器的預設滾動行為
-    // 這是讓拖曳在手機上生效的關鍵
     if (event.target.closest('.dna-item[draggable="true"], .dna-slot[draggable="true"]')) {
        event.preventDefault();
     }
 }
-
 
 // --- 點擊事件處理 ---
 async function handleItemClick(event) {
@@ -192,10 +186,11 @@ function handleDragStart(event) {
         event.preventDefault();
         return;
     }
-
-    if (isJiggleModeActive) {
-        exitJiggleMode();
-    }
+    
+    // *** 核心修改：移除此處的 exitJiggleMode() 呼叫 ***
+    // if (isJiggleModeActive) {
+    //     exitJiggleMode();
+    // }
     
     draggedElement = target;
     draggedSourceType = target.dataset.dnaSource;
