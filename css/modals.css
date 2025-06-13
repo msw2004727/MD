@@ -1,0 +1,817 @@
+/* css/modals.css */
+
+.modal-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--button-danger-text);
+    background-color: var(--danger-color);
+    border: 1px solid var(--danger-hover-dark);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: background-color 0.2s, color 0.2s;
+    line-height: 1;
+}
+.modal-close:hover, .modal-close:focus {
+    color: var(--button-danger-text);
+    background-color: var(--danger-hover-dark);
+    text-decoration: none;
+}
+body.light-theme .modal-close:hover,
+body.light-theme .modal-close:focus {
+    background-color: var(--danger-hover-light);
+}
+
+.modal-header {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--accent-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    text-align: center;
+}
+.modal-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.modal-footer {
+    margin-top: 20px;
+    display:flex;
+    justify-content: center;
+    gap: 15px;
+}
+.modal-footer button {
+    padding: 12px 25px;
+    font-size: 1rem;
+}
+
+.loading-spinner {
+    border:4px solid var(--border-color);
+    border-top:4px solid var(--accent-color);
+    border-radius:50%;
+    width:30px;
+    height:30px;
+    animation:spin 1s linear infinite;
+    margin:20px auto;
+}
+
+.details-section {
+    background-color: var(--bg-primary);
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.details-section-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border-color);
+}
+.details-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    padding: 5px 0;
+}
+.details-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-right: 10px;
+    white-space: nowrap;
+}
+.details-value {
+    color: var(--text-primary);
+    font-weight: bold;
+    text-align: right;
+    font-size: 1rem;
+}
+.details-value.boosted { color: var(--success-color); font-weight: bold; }
+.details-value.debuffed { color: var(--danger-color); }
+
+.creation-time-centered {
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: 10px;
+}
+
+.skill-entry {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+.skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
+.skill-name {
+    font-weight: bold;
+    color: var(--accent-hover);
+    font-size: 1rem;
+}
+.skill-details {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-left: 10px;
+}
+
+.monster-info-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+.monster-info-name-styled {
+    font-size: 1rem;
+    font-weight: bold;
+    display: inline-block;
+}
+
+#monster-nickname-display-container,
+#monster-nickname-edit-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#monster-nickname-edit-container {
+    margin-top: 5px;
+}
+
+#monster-nickname-input {
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 1rem;
+    width: 150px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#monster-nickname-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+.titles-medals-section { margin-top: 15px; }
+.titles-list, .achievements-list, .owned-monsters-list {
+    list-style: none;
+    padding-left: 0;
+}
+.titles-list li, .achievements-list li, .owned-monsters-list li {
+    background-color: var(--bg-primary);
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+.owned-monsters-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.owned-monsters-list .monster-name { font-weight: bold; }
+.owned-monsters-list .monster-score { color: var(--success-color); }
+.medal-emoji { font-size: 1rem; }
+
+#release-monster-image-placeholder {
+    width: 100px;
+    height: 75px;
+    background-color: var(--bg-slot);
+    border: 1px dashed var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 10px auto;
+}
+#release-monster-image-placeholder img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.log-entry {
+    padding: 7px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+.log-entry:last-child { border-bottom: none; }
+.log-entry .log-time {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-right: 8px;
+}
+.log-entry .log-message {}
+
+.feedback-skill-entry { margin-bottom: 6px; }
+.feedback-skill-name {
+    font-weight: bold;
+    color: var(--accent-hover);
+    font-size: 1rem;
+}
+.feedback-skill-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-left: 10px;
+}
+
+#cultivation-setup-modal .modal-body,
+#training-results-modal .modal-body { text-align: left; }
+.cultivation-hint {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+.training-result-section {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border-color);
+}
+.training-result-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.training-result-section h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 8px;
+}
+.training-result-section p, .training-result-section div {
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+#newbie-guide-search-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+#newbie-guide-search-results p {
+    padding: 5px;
+    border-bottom: 1px solid var(--border-color-dark);
+}
+ #newbie-guide-search-results p:last-child {
+    border-bottom: none;
+}
+#battle-log-modal .modal-content { max-width: 700px; }
+#battle-log-area {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+#battle-log-area p { margin-bottom: 5px; }
+#battle-log-area .turn-divider {
+    border-top: 1px dashed var(--accent-color);
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-top: 5px;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+#battle-log-area .battle-start,
+#battle-log-area .battle-end {
+    font-weight: bold;
+    color: var(--success-color);
+    text-align: center;
+    padding: 5px 0;
+    border-top: 1px solid var(--success-color);
+    border-bottom: 1px solid var(--success-color);
+    margin: 10px 0;
+}
+ #battle-log-area .battle-end.winner { color: var(--success-color); }
+ #battle-log-area .battle-end.loser { color: var(--danger-color); border-color: var(--danger-color); }
+ #battle-log-area .battle-end.draw { color: var(--warning-color); border-color: var(--warning-color); }
+#battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
+#battle-log-area .heal-action { color: var(--success-color); }
+#battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
+
+#dna-draw-modal .modal-content { max-width: 600px; }
+#dna-draw-results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.dna-draw-result-item {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 8px;
+    text-align: center;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 80px;
+}
+.dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
+.dna-draw-result-item .dna-type { font-size: 1rem; color: var(--text-secondary); margin-bottom: 4px;}
+.dna-draw-result-item .dna-rarity { font-size: 1rem; }
+
+.modal-content.large-feedback-modal {
+    max-width: 750px;
+    padding: 20px 25px;
+}
+@media (max-width: 768px) {
+    .modal-content.large-feedback-modal {
+        max-width: 95%;
+    }
+}
+
+#monster-banner-container {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#monster-banner-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.feedback-monster-basic-stats {
+    background-color: var(--bg-primary);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 15px;
+}
+
+.feedback-monster-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 15px;
+    text-align: left;
+}
+@media (min-width: 480px) {
+    .feedback-monster-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.feedback-monster-stats-grid div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+}
+.feedback-monster-stats-grid strong {
+    color: var(--text-secondary);
+    margin-right: 8px;
+}
+.feedback-monster-stats-grid span {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.feedback-monster-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+@media (min-width: 600px) {
+    .feedback-monster-info-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (min-width: 700px) {
+    .feedback-monster-ai-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .feedback-monster-ai-grid .col-span-full {
+        grid-column: span 2;
+    }
+}
+
+.feedback-monster-info-section {
+    background-color: var(--bg-primary);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    max-height: 250px;
+    overflow-y: auto;
+}
+.feedback-monster-info-section:last-child {
+    max-height: 350px;
+}
+
+.feedback-monster-info-title {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border-color);
+}
+.feedback-monster-info-section p {
+    margin-bottom: 5px;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.feedback-monster-info-section strong {
+    color: var(--text-secondary);
+    margin-right: 5px;
+}
+
+.cultivation-locations-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .cultivation-locations-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+
+.cultivation-location-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.cultivation-location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: var(--accent-color);
+}
+
+.cultivation-location-card img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.cultivation-location-card h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.cultivation-location-card p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.cultivation-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+    .cultivation-action-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Battle Report Redesign */
+.battle-report-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.report-section {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+}
+
+.report-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.monster-vs-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
+@media (max-width: 600px) {
+    .monster-vs-grid {
+        grid-template-columns: 1fr;
+    }
+    .vs-divider {
+        margin: 0.5rem auto;
+        order: 1;
+    }
+    .monster-vs-grid .player-side {
+        order: 0;
+    }
+    .monster-vs-grid .opponent-side {
+        order: 2;
+    }
+}
+
+.vs-divider {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+.monster-stats-card {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.monster-stats-card .monster-name {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.monster-stats-card .monster-personality {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.monster-stats-card .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 0.5rem;
+    font-size: 1rem;
+    color: var(--text-primary);
+    width: 100%;
+}
+.monster-stats-card .stats-grid span {
+    text-align: left;
+}
+
+.monster-vs-grid .player-side .monster-stats-card {
+    text-align: left;
+    align-items: flex-start;
+}
+.monster-vs-grid .opponent-side .monster-stats-card {
+    text-align: right;
+    align-items: flex-end;
+}
+
+.battle-number {
+    font-weight: bold;
+}
+.battle-number.text-primary { color: var(--text-primary); }
+.battle-number.text-secondary { color: var(--text-secondary); }
+.battle-number.text-accent { color: var(--accent-color); }
+.battle-number.text-success { color: var(--success-color); }
+.battle-number.text-warning { color: var(--warning-color); }
+.battle-number.text-danger { color: var(--danger-color); }
+
+.battle-damage-value {
+    color: var(--danger-color);
+    font-weight: bold;
+}
+
+.battle-heal-value {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.monster-intro-text, .battle-summary-text, .loot-info-text, .growth-info-text {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.battle-description-content p {
+    margin-bottom: 0.5rem;
+}
+
+.turn-divider-line {
+    text-align: center;
+    color: var(--text-secondary);
+    margin: 1rem 0;
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.summary-banner {
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.summary-banner img {
+    max-width: 80%;
+    border-radius: 4px;
+}
+
+.confirmation-banner {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.confirmation-banner img {
+    max-width: 100%;
+    border-radius: 6px;
+}
+
+.battle-confirm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: center;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin: 1rem 0;
+}
+
+.monster-confirm-details {
+    padding: 0.5rem;
+}
+
+.monster-confirm-details .monster-role {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.monster-confirm-details .monster-name {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.monster-confirm-details .monster-score {
+    font-size: 1rem;
+    color: var(--success-color);
+}
+
+.modal-header-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-header-container .modal-header {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.battle-result-banner {
+    text-align: center;
+    padding: 1rem 0;
+    margin: 0.5rem 0;
+}
+
+.battle-result-banner h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.battle-result-win {
+    color: var(--danger-color);
+}
+
+.battle-result-loss {
+    color: var(--success-color);
+}
+
+.battle-result-draw {
+    color: var(--text-primary);
+}
+
+.battle-highlights-section ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+}
+
+.highlight-item {
+    padding: 8px 5px;
+    font-size: 1rem;
+    border-bottom: 1px dashed var(--border-color);
+    color: var(--text-secondary);
+}
+.highlight-item:last-child {
+    border-bottom: none;
+}
+
+.turn-status-block {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.status-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.status-bar-label {
+    width: 25px;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+.status-bar-background {
+    flex-grow: 1;
+    height: 14px;
+    background-color: var(--bg-slot);
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    padding: 1px;
+}
+
+.status-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s ease-out;
+}
+
+.status-bar-value {
+    width: 80px;
+    text-align: right;
+    font-weight: bold;
+    color: var(--text-primary);
+}
