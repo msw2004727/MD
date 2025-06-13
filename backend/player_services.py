@@ -150,79 +150,86 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if game_data_doc.exists:
             player_game_data_dict = game_data_doc.to_dict()
-            if player_game_data_dict:
-                player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
-                
-                # --- 新增：資料遷移邏輯 ---
-                needs_migration_save = False
-                update_payload = {}
-                
-                player_stats = player_game_data_dict.get("playerStats", {})
 
-                # 遷移1：處理舊版稱號（字串列表）到新版（物件列表）
-                current_titles = player_stats.get("titles", [])
-                if current_titles and isinstance(current_titles[0], str):
+            # --- 新增的保護機制：如果文檔存在但為空(None)，將其視為空字典 ---
+            if player_game_data_dict is None:
+                player_game_data_dict = {}
+                player_services_logger.warning(f"玩家 {player_id} 的遊戲資料文檔存在但為空，將其視為空物件處理。")
+            # --- 移除有問題的 if player_game_data_dict: 判斷 ---
+
+            player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
+            
+            # --- 資料遷移邏輯 ---
+            needs_migration_save = False
+            update_payload = {}
+            
+            player_stats = player_game_data_dict.get("playerStats", {})
+
+            # 遷移1：處理舊版稱號（字串列表）到新版（物件列表）
+            current_titles = player_stats.get("titles", [])
+            if current_titles and isinstance(current_titles[0], str):
+                all_titles_config = game_configs.get("titles", [])
+                new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
+                player_stats["titles"] = new_titles_list
+                # 使用 dot notation 來更新巢狀欄位
+                update_payload["playerStats.titles"] = new_titles_list
+                needs_migration_save = True
+                player_services_logger.info(f"玩家 {player_id} 的稱號資料已從字串遷移至物件格式。")
+
+            # 遷移2：為沒有 equipped_title_id 的舊玩家設置預設值
+            if "equipped_title_id" not in player_stats:
+                current_titles_obj = player_stats.get("titles", [])
+                default_equip_id = None
+                if current_titles_obj and isinstance(current_titles_obj[0], dict) and "id" in current_titles_obj[0]:
+                    default_equip_id = current_titles_obj[0]["id"]
+                else:
                     all_titles_config = game_configs.get("titles", [])
-                    new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
-                    player_stats["titles"] = new_titles_list
-                    # 使用 dot notation 來更新巢狀欄位
-                    update_payload["playerStats.titles"] = new_titles_list
+                    default_title_obj = next((t for t in all_titles_config if t.get("id") == "title_001"), None)
+                    if default_title_obj:
+                        player_stats["titles"] = [default_title_obj]
+                        default_equip_id = default_title_obj["id"]
+                        update_payload["playerStats.titles"] = [default_title_obj]
+                
+                if default_equip_id:
+                    player_stats["equipped_title_id"] = default_equip_id
+                    update_payload["playerStats.equipped_title_id"] = default_equip_id
                     needs_migration_save = True
-                    player_services_logger.info(f"玩家 {player_id} 的稱號資料已從字串遷移至物件格式。")
+                    player_services_logger.info(f"為舊玩家 {player_id} 補上預設裝備稱號 ID: {default_equip_id}")
 
-                # 遷移2：為沒有 equipped_title_id 的舊玩家設置預設值
-                if "equipped_title_id" not in player_stats:
-                    current_titles_obj = player_stats.get("titles", [])
-                    default_equip_id = None
-                    if current_titles_obj and isinstance(current_titles_obj[0], dict) and "id" in current_titles_obj[0]:
-                        default_equip_id = current_titles_obj[0]["id"]
-                    else:
-                        all_titles_config = game_configs.get("titles", [])
-                        default_title_obj = next((t for t in all_titles_config if t.get("id") == "title_001"), None)
-                        if default_title_obj:
-                            player_stats["titles"] = [default_title_obj]
-                            default_equip_id = default_title_obj["id"]
-                            update_payload["playerStats.titles"] = [default_title_obj]
-                    
-                    if default_equip_id:
-                        player_stats["equipped_title_id"] = default_equip_id
-                        update_payload["playerStats.equipped_title_id"] = default_equip_id
-                        needs_migration_save = True
-                        player_services_logger.info(f"為舊玩家 {player_id} 補上預設裝備稱號 ID: {default_equip_id}")
+            if needs_migration_save:
+                try:
+                    game_data_ref.update(update_payload)
+                    player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
+                    # 更新記憶體中的 player_game_data_dict 以反映變更
+                    player_game_data_dict["playerStats"] = player_stats
+                except Exception as e:
+                    player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
+            # --- 資料遷移邏輯結束 ---
+            
+            loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
+            max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
+            
+            if len(loaded_dna) < max_inventory_slots:
+                loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
+            elif len(loaded_dna) > max_inventory_slots:
+                loaded_dna = loaded_dna[:max_inventory_slots]
 
-                if needs_migration_save:
-                    try:
-                        game_data_ref.update(update_payload)
-                        player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
-                        # 更新記憶體中的 player_game_data_dict 以反映變更
-                        player_game_data_dict["playerStats"] = player_stats
-                    except Exception as e:
-                        player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
-                # --- 資料遷移邏輯結束 ---
-                
-                loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
-                max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
-                
-                if len(loaded_dna) < max_inventory_slots:
-                    loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
-                elif len(loaded_dna) > max_inventory_slots:
-                    loaded_dna = loaded_dna[:max_inventory_slots]
-
-                player_game_data: PlayerGameData = {
-                    "playerOwnedDNA": loaded_dna,
-                    "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                    "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
-                    "nickname": authoritative_nickname,
-                    "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
-                    "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
-                    "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
-                    "friends": player_game_data_dict.get("friends", [])
-                }
-                if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
-                    player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
-                return player_game_data
+            player_game_data: PlayerGameData = {
+                "playerOwnedDNA": loaded_dna,
+                "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
+                "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
+                "nickname": authoritative_nickname,
+                "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
+                "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
+                "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
+                "friends": player_game_data_dict.get("friends", [])
+            }
+            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
+                player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
+            return player_game_data
         
-        player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，或資料為空。將初始化新玩家資料，並執行首次儲存。")
+        # 只有當遊戲資料文檔【完全不存在】時，才執行初始化
+        player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
         if save_player_data_service(player_id, new_player_data):
