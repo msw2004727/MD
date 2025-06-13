@@ -308,8 +308,8 @@ body {
     100% { opacity: 0; transform: translateY(-100%); }
 }
 
-/* --- Font Size Unification Override --- */
-/* Overrides Tailwind's text size utilities to enforce a single base size as requested. */
+/* --- 【已修改】Font Size Unification Override --- */
+/* Overrides Tailwind's text size utilities. REMOVED !important */
 .text-xs,
 .text-sm,
 .text-base,
@@ -319,5 +319,5 @@ body {
 .text-3xl,
 .text-4xl,
 .text-5xl {
-    font-size: 1rem !important;
+    font-size: 1rem;
 }
