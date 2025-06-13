@@ -189,9 +189,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
-    // 【新增】獲取稱號加成的邏輯
     let titleBuffs = {};
-    const monsterOwnerId = monster.owner_id || gameState.playerId; // 假設若無owner_id則為當前玩家
+    const monsterOwnerId = monster.owner_id || gameState.playerId;
     if (monsterOwnerId === gameState.playerId && gameState.playerData.playerStats) {
         const stats = gameState.playerData.playerStats;
         const equippedId = stats.equipped_title_id;
@@ -245,7 +244,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
-            // 新增：產生里程碑效果的 HTML
             let milestonesHtml = '';
             let skillTemplate = null;
             if (gameState.gameConfigs && gameState.gameConfigs.skills) {
@@ -277,7 +275,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 }
                 milestonesHtml += `</div>`;
             }
-            // ===================================
 
             return `
             <div class="skill-entry">
@@ -316,13 +313,30 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         });
     }
 
+    // 【修改】這裡的邏輯將被替換為新的顯示方式
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
-            return `<div class="dna-item occupied" data-dna-ref-id="${dna.id}">
+            const elementCssKey = getElementCssClassKey(dna.type || '無');
+            const elementChar = (dna.type || '無').charAt(0);
+            return `
+                <div class="dna-composition-item-wrapper">
+                    <div class="dna-item occupied" data-dna-ref-id="${dna.id}">
                         <span class="dna-name-text">${dna.name}</span>
-                    </div>`;
+                    </div>
+                    <div class="dna-attribute-box text-element-${elementCssKey}">
+                        ${elementChar}
+                    </div>
+                </div>`;
         } else {
-            return `<div class="dna-item empty"><span class="dna-name-text">無</span></div>`;
+            return `
+                <div class="dna-composition-item-wrapper">
+                    <div class="dna-item empty">
+                        <span class="dna-name-text">無</span>
+                    </div>
+                    <div class="dna-attribute-box empty">
+                        -
+                    </div>
+                </div>`;
         }
     }).join('');
 
@@ -344,7 +358,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
-    // 【新增】顯示稱號加成的輔助函式
     const getTitleBuffHtml = (statName) => {
         const buff = titleBuffs[statName] || 0;
         if (buff > 0) {
@@ -682,11 +695,10 @@ function updateLeaderboardSortHeader(table, sortKey, order) {
     });
 }
 
-// 新增：更新排行榜頁籤的函式
 function updateMonsterLeaderboardElementTabs(elements) {
     const container = DOMElements.monsterLeaderboardElementTabs;
     if (!container) return;
-    container.innerHTML = ''; // 清空現有頁籤
+    container.innerHTML = ''; 
 
     elements.forEach(element => {
         const tab = document.createElement('button');
@@ -695,7 +707,7 @@ function updateMonsterLeaderboardElementTabs(elements) {
 
         if (element === 'all') {
             tab.textContent = '全部';
-            tab.classList.add('active'); // 預設選中 "全部"
+            tab.classList.add('active'); 
         } else {
             tab.textContent = element;
             const cssClassKey = getElementCssClassKey(element);
@@ -705,18 +717,16 @@ function updateMonsterLeaderboardElementTabs(elements) {
     });
 }
 
-// 調整 showBattleLogModal 函數以顯示新的單頁戰報
 function showBattleLogModal(battleResult) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
     }
 
-    DOMElements.battleLogArea.innerHTML = ''; // 清空舊內容
+    DOMElements.battleLogArea.innerHTML = ''; 
 
     const battleReportContent = battleResult.ai_battle_report_content;
 
-    // 修改：即使 battleReportContent 為空，也繼續執行，以便顯示部分內容或錯誤
     if (!battleReportContent) {
         DOMElements.battleLogArea.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">戰報資料結構錯誤，無法顯示。</p>';
         showModal('battle-log-modal');
@@ -731,10 +741,8 @@ function showBattleLogModal(battleResult) {
         return;
     }
 
-    // 修改：formatBasicText 函數以處理粗體，不再處理數字
     function formatBasicText(text) {
         if (!text) return '';
-        // 將 **text** 替換為 <strong>text</strong>
         return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
     
@@ -775,7 +783,6 @@ function showBattleLogModal(battleResult) {
             }
         });
 
-        // 處理 <damage> 和 <heal> 標籤
         styledText = styledText.replace(/<damage>(.*?)<\/damage>/g, '<span class="battle-damage-value">-$1</span>');
         styledText = styledText.replace(/<heal>(.*?)<\/heal>/g, '<span class="battle-heal-value">+$1</span>');
 
@@ -795,9 +802,8 @@ function showBattleLogModal(battleResult) {
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    // 戰鬥對陣 (顯示基礎數值、歷史勝率、個性)
     const renderMonsterStats = (monster, isPlayer) => {
-        if (!monster) return '<div>對手資料錯誤</div>'; // 防呆
+        if (!monster) return '<div>對手資料錯誤</div>';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
@@ -834,13 +840,11 @@ function showBattleLogModal(battleResult) {
         </div>
     `;
 
-    // ===== NEW: Battle Log Parsing Logic Start =====
     const battleDescriptionContentDiv = document.createElement('div');
     battleDescriptionContentDiv.classList.add('battle-description-content');
 
     const createStatusBar = (label, value, max, color) => {
         const percentage = max > 0 ? (value / max) * 100 : 0;
-        // 使用內聯樣式設定顏色，避免修改CSS檔案
         return `
             <div class="status-bar-container">
                 <span class="status-bar-label">${label}</span>
@@ -922,7 +926,6 @@ function showBattleLogModal(battleResult) {
     descriptionSection.innerHTML = `<h4 class="report-section-title">精彩交戰</h4>`;
     descriptionSection.appendChild(battleDescriptionContentDiv);
     reportContainer.appendChild(descriptionSection);
-    // ===== NEW: Battle Log Parsing Logic End =====
     
     let resultBannerHtml = '';
     if (battleResult.winner_id === playerMonsterData.id) {
@@ -1021,7 +1024,6 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
-    // 移除舊的橫幅和提示，並加入新的
     let existingBanner = modalBody.querySelector('.training-banner');
     if (existingBanner) existingBanner.remove();
     let existingHints = modalBody.querySelector('.training-hints-container');
@@ -1034,7 +1036,6 @@ function updateTrainingResultsModal(results, monsterName) {
     newBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">`;
     modalBody.prepend(newBanner);
     
-    // 新增靜態遊戲提示區塊
     const hintsContainer = document.createElement('div');
     hintsContainer.className = 'training-hints-container';
     hintsContainer.style.marginBottom = '1rem';
@@ -1046,7 +1047,6 @@ function updateTrainingResultsModal(results, monsterName) {
     hintsContainer.style.fontStyle = 'italic';
     hintsContainer.style.color = 'var(--text-secondary)';
     
-    // 顯示隨機靜態提示
     if (TRAINING_GAME_HINTS.length > 0) {
         const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
         hintsContainer.innerHTML = `<p id="training-hints-carousel">💡 ${TRAINING_GAME_HINTS[randomIndex]}</p>`;
@@ -1091,9 +1091,7 @@ function updateTrainingResultsModal(results, monsterName) {
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
         skillAndNewSkillLogs.forEach(log => {
-            // 使用正則表達式尋找單引號內的技能名稱
             const updatedLog = log.replace(/'(.+?)'/g, (match, skillName) => {
-                // 將匹配到的技能名稱轉換為帶有連結的 HTML
                 return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
             });
             skillGrowthHtml += `<li>${updatedLog}</li>`;
