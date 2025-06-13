@@ -230,6 +230,12 @@ button.warning-outline:hover, .button.warning-outline:hover {
      background-color: color-mix(in srgb, var(--accent-color) 50%, var(--bg-primary)) !important;
 }
 
+@media (min-width: 768px) {
+    .top-nav-button {
+        font-size: 1rem;
+    }
+}
+
 .auth-button {
     width: 100%;
     padding: 12px;
