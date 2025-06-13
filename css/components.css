@@ -705,3 +705,14 @@ body.light-theme .leaderboard-table tr:hover td {
 .jiggle-mode .delete-item-btn {
     display: flex; /* 在抖動模式下顯示 */
 }
+
+.dna-name-text {
+    display: block;
+}
+
+.monster-part .dna-name-text {
+    font-size: 0.875rem;
+    font-weight: normal;
+    padding: 0 2px;
+    line-height: 1.2;
+}
