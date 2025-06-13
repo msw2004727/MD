@@ -273,8 +273,6 @@
             <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
             <div id="feedback-modal-body-content" class="modal-body" style="position: relative;">
                  <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
-                 <img id="feedback-modal-breathing-icon" src="https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true" alt="Loading..." style="display: none;">
-                 <div id="feedback-modal-message"></div>
                  <div id="feedback-monster-details" style="display:none;" class="mt-3"></div>
             </div>
         </div>
@@ -399,6 +397,11 @@
             </div>
         </div>
     </div>
+    
+    <div id="global-loading-overlay" style="display: none;">
+        <img id="global-loading-spinner" src="https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true" alt="Loading...">
+    </div>
+
 
     <script src="js/firebase-config.js" defer></script>
     <script src="js/config.js" defer></script> 
