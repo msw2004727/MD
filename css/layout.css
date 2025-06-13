@@ -154,13 +154,13 @@
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 【修改】從5欄增加到6欄，並重新分配寬度 */
-    grid-template-columns: 40px 80px auto 70px 80px 140px;
+    /* 【修改】調整欄位寬度以符合新需求 */
+    grid-template-columns: 40px 80px minmax(200px, 1fr) 70px 145px 140px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 600px; /* 增加最小寬度以容納所有欄位 */
+    min-width: 720px; /* 增加最小寬度以容納所有欄位 */
 }
 
 /* Center align all header and column content by default */
