@@ -553,3 +553,58 @@ body.light-theme .leaderboard-table tr:hover td {
         grid-template-columns: repeat(3, 1fr); /* 3 columns for wide screens */
     }
 }
+/* DNA Draw Results Modal Styles */
+#dna-draw-results-grid {
+    display: flex;
+    flex-wrap: wrap; /* 允許卡片在空間不足時換行 */
+    gap: 1rem; /* 設定卡片之間的間隔 */
+    justify-content: center; /* 水平置中所有卡片 */
+    padding-top: 1rem;
+}
+
+.dna-draw-result-item {
+    display: flex;
+    flex-direction: column; /* 讓卡片內的元素垂直堆疊 */
+    align-items: center;   /* 水平置中卡片內的元素 */
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    min-width: 130px;    /* 每張卡的最小寬度 */
+    flex-basis: 130px;   /* flex佈局的基礎寬度 */
+    flex-grow: 1;        /* 允許卡片伸展以填滿空間 */
+    max-width: 160px;    /* 防止卡片變得過寬 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.dna-draw-result-item .dna-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem; /* 與下方元素的間距 */
+}
+
+.dna-draw-result-item .dna-type {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem; /* 與下方元素的間距 */
+}
+
+.dna-draw-result-item .dna-rarity {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1rem; /* 與按鈕的間距 */
+}
+
+/* The applyDnaItemStyle function sets the color for rarity, so this is just a base */
+.text-rarity-common { color: var(--rarity-common-text); }
+.text-rarity-rare { color: var(--rarity-rare-text); }
+.text-rarity-elite { color: var(--rarity-elite-text); }
+.text-rarity-legendary { color: var(--rarity-legendary-text); }
+.text-rarity-mythical { color: var(--rarity-mythical-text); }
+
+.dna-draw-result-item .add-drawn-dna-to-backpack-btn {
+    width: 100%;
+    margin-top: auto; /* 將按鈕推至卡片底部 */
+}
