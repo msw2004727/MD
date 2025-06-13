@@ -70,6 +70,10 @@ async function initializeGame() {
         });
         console.log("Game configs, player data, and asset paths loaded and saved to gameState.");
 
+        if (typeof populateImageAssetSources === 'function') {
+            populateImageAssetSources();
+        }
+
         if (DOMElements.maxCultivationTimeText && configs.value_settings) {
             DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
         }
