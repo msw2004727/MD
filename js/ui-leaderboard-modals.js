@@ -185,7 +185,12 @@ function updateLeaderboardTable(tableType, data) {
             }
             titlesCell.textContent = equippedTitleName;
 
-            row.insertCell().textContent = item.nickname;
+            const nicknameCell = row.insertCell();
+            if (item.uid) {
+                nicknameCell.innerHTML = `<a href="#" onclick="viewPlayerInfo('${item.uid}'); return false;" style="text-decoration: none; color: var(--accent-color); font-weight: 500;">${item.nickname}</a>`;
+            } else {
+                nicknameCell.textContent = item.nickname;
+            }
 
             const scoreCell = row.insertCell();
             scoreCell.textContent = item.score;
