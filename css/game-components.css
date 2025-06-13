@@ -109,17 +109,7 @@
     cursor: pointer;
     font-weight: bold;
 }
-.inventory-delete-slot .delete-slot-main-text {
-    font-size: 1rem;
-    display: block;
-}
-.inventory-delete-slot .delete-slot-sub-text {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-top: 2px;
-}
-.inventory-delete-slot.drag-over {
+.inventory-delete-slot .drag-over {
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
     border-color: var(--danger-hover-dark) !important;
     color: var(--button-danger-text-dark) !important;
@@ -711,7 +701,10 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: center;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap; /* 表頭不換行 */
+    /* 移除 white-space: nowrap; */
+    /* 設置最小寬度以確保內容換行 */
+    min-width: 50px; 
+    word-wrap: break-word; /* 允許長單詞換行 */
 }
 
 .farm-grid-row > div {
@@ -720,7 +713,8 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    white-space: nowrap; /* 內容不換行 */
+    /* 移除 white-space: nowrap; */
+    word-wrap: break-word; /* 允許長單詞換行 */
 }
 
 
@@ -737,6 +731,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .farm-grid-row > div:nth-child(3) {
     justify-content: flex-start;
     text-align: left;
+    min-width: 120px; /* 給怪獸名稱欄位一個更大的最小寬度 */
 }
 
 .farm-actions-cell {
