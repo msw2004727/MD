@@ -9,12 +9,12 @@ let draggedDnaObject = null; // 被拖曳的 DNA 實例數據
 let draggedSourceType = null; // 'inventory', 'combination', 'temporaryBackpack'
 let draggedSourceIndex = null; // 來源的索引 (庫存索引, 組合槽索引, 臨時背包索引)
 
-// --- 新增：抖動模式相關的全域變數 ---
+// --- 抖動模式相關的全域變數 ---
 let isJiggleModeActive = false;
 let longPressTimer = null;
 const LONG_PRESS_DURATION = 500; // 長按500毫秒觸發
 
-// --- 新增：進入抖動模式的函式 ---
+// --- 進入抖動模式的函式 ---
 function enterJiggleMode() {
     if (isJiggleModeActive) return;
     isJiggleModeActive = true;
@@ -43,7 +43,7 @@ function enterJiggleMode() {
     });
 }
 
-// --- 新增：退出抖動模式的函式 ---
+// --- 退出抖動模式的函式 ---
 function exitJiggleMode() {
     if (!isJiggleModeActive) return;
     isJiggleModeActive = false;
@@ -57,7 +57,7 @@ function exitJiggleMode() {
     });
 }
 
-// --- 新增：處理長按開始的函式 ---
+// --- 處理長按開始的函式 ---
 function handleItemInteractionStart(event) {
     // 如果正在拖曳，則不觸發長按
     if (event.type === 'mousedown' && event.buttons !== 1) return;
@@ -79,7 +79,7 @@ function handleItemInteractionStart(event) {
     }, LONG_PRESS_DURATION);
 }
 
-// --- 新增：處理長按結束或中斷的函式 ---
+// --- 處理長按結束或中斷的函式 ---
 function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
     // 短按後恢復物品的拖曳能力
@@ -184,7 +184,8 @@ function handleDragStart(event) {
     } else if (draggedSourceType === 'combination') {
         draggedSourceIndex = parseInt(target.dataset.slotIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
-        draggedDnaObject = gameState.dnaCombinationSlots[draggedSourceIndex];
+        // 修改：從新的 gameState.playerData 中獲取拖曳的物件
+        draggedDnaObject = gameState.playerData.dnaCombinationSlots[draggedSourceIndex];
     } else if (draggedSourceType === 'temporaryBackpack') {
         draggedSourceIndex = parseInt(target.dataset.tempItemIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
@@ -253,7 +254,8 @@ async function handleDrop(event) {
             if (sourceTypeToDelete === 'inventory') {
                 gameState.playerData.playerOwnedDNA[sourceIndexToDelete] = null;
             } else if (sourceTypeToDelete === 'combination') {
-                gameState.dnaCombinationSlots[sourceIndexToDelete] = null;
+                // 修改：從新的 gameState.playerData 中刪除
+                gameState.playerData.dnaCombinationSlots[sourceIndexToDelete] = null;
             } else if (sourceTypeToDelete === 'temporaryBackpack') {
                 gameState.temporaryBackpack[sourceIndexToDelete] = null;
             }
@@ -275,16 +277,19 @@ async function handleDrop(event) {
         
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
         if (isNaN(targetSlotIndex)) { handleDragEnd(event); return; }
-        const itemOriginallyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex]; 
+        // 修改：從新的 gameState.playerData 中獲取目標槽物品
+        const itemOriginallyInTargetSlot = gameState.playerData.dnaCombinationSlots[targetSlotIndex]; 
         
         if (draggedSourceType === 'inventory') {
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemOriginallyInTargetSlot;
         } else if (draggedSourceType === 'combination') {
             if (draggedSourceIndex !== targetSlotIndex) {
-                gameState.dnaCombinationSlots[draggedSourceIndex] = itemOriginallyInTargetSlot;
+                // 修改：在新的 gameState.playerData 中交換
+                gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = itemOriginallyInTargetSlot;
             }
         }
-        gameState.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
+        // 修改：在新的 gameState.playerData 中放置
+        gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
         
         renderDNACombinationSlots();
         renderPlayerDNAInventory(); 
@@ -300,7 +305,8 @@ async function handleDrop(event) {
         if (draggedSourceType === 'inventory') {
             gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'combination') {
-            gameState.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
+            // 修改：從新的 gameState.playerData 中移除，並放到庫存
+            gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
         } else if (draggedSourceType === 'temporaryBackpack') {
             if(itemAtTargetInventorySlot) { 
                 showFeedbackModal('操作失敗', '目標庫存格非空格，請先將物品移至空格。');
@@ -339,7 +345,8 @@ async function handleDrop(event) {
 
             if (freeSlotIndex !== -1) {
                 if (draggedSourceType === 'inventory') gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
-                else if (draggedSourceType === 'combination') gameState.dnaCombinationSlots[draggedSourceIndex] = null;
+                // 修改：從新的 gameState.playerData 中移除
+                else if (draggedSourceType === 'combination') gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = null;
                 
                 gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
             } else {
@@ -630,7 +637,8 @@ function handleTabSwitching() {
 }
 
 async function handleCombineDna() {
-    const dnaObjectsForCombination = gameState.dnaCombinationSlots
+    // 修改：從新的 gameState.playerData 中獲取組合槽資料
+    const dnaObjectsForCombination = gameState.playerData.dnaCombinationSlots
         .filter(slot => slot && slot.id);
 
     if (dnaObjectsForCombination.length < 2) {
@@ -670,7 +678,8 @@ async function handleCombineDna() {
         console.error("合成DNA錯誤:", error);
     } finally {
         if (DOMElements.combineButton) {
-            const combinationSlotsFilled = gameState.dnaCombinationSlots.filter(s => s !== null).length >= 2;
+            // 修改：從新的 gameState.playerData 中判斷按鈕狀態
+            const combinationSlotsFilled = gameState.playerData.dnaCombinationSlots.filter(s => s !== null).length >= 2;
             DOMElements.combineButton.disabled = !combinationSlotsFilled;
         }
     }
@@ -1017,11 +1026,13 @@ async function handleClickInventory(event) {
     const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
     if (!dnaObject) return;
     
-    const targetSlotIndex = gameState.dnaCombinationSlots.findIndex(slot => slot === null);
+    // 修改：從新的 gameState.playerData 中尋找空位
+    const targetSlotIndex = gameState.playerData.dnaCombinationSlots.findIndex(slot => slot === null);
 
     if (targetSlotIndex !== -1) {
         gameState.playerData.playerOwnedDNA[inventoryIndex] = null;
-        gameState.dnaCombinationSlots[targetSlotIndex] = dnaObject;
+        // 修改：放置到新的 gameState.playerData 中
+        gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaObject;
         renderPlayerDNAInventory();
         renderDNACombinationSlots();
         await savePlayerData(gameState.playerId, gameState.playerData);
@@ -1035,7 +1046,8 @@ async function handleClickCombinationSlot(event) {
     if (!slotElement) return;
 
     const slotIndex = parseInt(slotElement.dataset.slotIndex, 10);
-    const dnaObject = gameState.dnaCombinationSlots[slotIndex];
+    // 修改：從新的 gameState.playerData 中獲取物件
+    const dnaObject = gameState.playerData.dnaCombinationSlots[slotIndex];
     if (!dnaObject) return;
 
     let targetInventoryIndex = -1;
@@ -1047,7 +1059,8 @@ async function handleClickCombinationSlot(event) {
     }
 
     if (targetInventoryIndex !== -1) {
-        gameState.dnaCombinationSlots[slotIndex] = null;
+        // 修改：從新的 gameState.playerData 中移除
+        gameState.playerData.dnaCombinationSlots[slotIndex] = null;
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
         renderPlayerDNAInventory();
         renderDNACombinationSlots();
@@ -1190,19 +1203,18 @@ function initializeEventListeners() {
             zone.addEventListener('dragleave', handleDragLeave);
             zone.addEventListener('drop', handleDrop);
             
-            // --- 新增：為所有容器綁定長按與點擊刪除的事件 ---
             zone.addEventListener('mousedown', handleItemInteractionStart);
             zone.addEventListener('mouseup', handleItemInteractionEnd);
-            zone.addEventListener('mouseleave', handleItemInteractionEnd); // 滑鼠移出也要取消
-            zone.addEventListener('mousemove', handleItemInteractionEnd); // 稍微移動就取消，避免與拖曳衝突
+            zone.addEventListener('mouseleave', handleItemInteractionEnd);
+            zone.addEventListener('mousemove', handleItemInteractionEnd);
             zone.addEventListener('touchstart', handleItemInteractionStart, { passive: true });
             zone.addEventListener('touchend', handleItemInteractionEnd);
             zone.addEventListener('touchcancel', handleItemInteractionEnd);
-            zone.addEventListener('touchmove', handleItemInteractionEnd); // 稍微移動就取消
+            zone.addEventListener('touchmove', handleItemInteractionEnd);
             
             zone.addEventListener('click', async (event) => {
                 if (event.target.classList.contains('delete-item-btn')) {
-                    event.stopPropagation(); // 阻止事件冒泡，避免觸發退出抖動模式
+                    event.stopPropagation();
                     
                     const itemElement = event.target.closest('.occupied');
                     if (!itemElement) return;
@@ -1215,7 +1227,7 @@ function initializeEventListeners() {
                         dnaObject = gameState.playerData.playerOwnedDNA[sourceIndex];
                     } else if (sourceType === 'combination') {
                         sourceIndex = parseInt(itemElement.dataset.slotIndex, 10);
-                        dnaObject = gameState.dnaCombinationSlots[sourceIndex];
+                        dnaObject = gameState.playerData.dnaCombinationSlots[sourceIndex];
                     } else if (sourceType === 'temporaryBackpack') {
                         sourceIndex = parseInt(itemElement.dataset.tempItemIndex, 10);
                         dnaObject = gameState.temporaryBackpack[sourceIndex]?.data;
@@ -1224,12 +1236,12 @@ function initializeEventListeners() {
                     if (!dnaObject) return;
 
                     showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaObject.name || '該DNA'}" 嗎？`, async () => {
-                        exitJiggleMode(); // 先退出模式
+                        exitJiggleMode();
                         if (sourceType === 'inventory') {
                             gameState.playerData.playerOwnedDNA[sourceIndex] = null;
                             renderPlayerDNAInventory();
                         } else if (sourceType === 'combination') {
-                            gameState.dnaCombinationSlots[sourceIndex] = null;
+                            gameState.playerData.dnaCombinationSlots[sourceIndex] = null;
                             renderDNACombinationSlots();
                         } else if (sourceType === 'temporaryBackpack') {
                             gameState.temporaryBackpack[sourceIndex] = null;
@@ -1248,15 +1260,13 @@ function initializeEventListeners() {
         deleteSlot.addEventListener('drop', handleDrop);
     }
     
-    // --- 修改：移除單點擊移動功能，避免與長按衝突 ---
-    // if (DOMElements.inventoryItemsContainer) {
-    //     DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
-    // }
-    // if (DOMElements.dnaCombinationSlotsContainer) {
-    //     DOMElements.dnaCombinationSlotsContainer.addEventListener('click', handleClickCombinationSlot);
-    // }
+    if (DOMElements.inventoryItemsContainer) {
+        DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
+    }
+    if (DOMElements.dnaCombinationSlotsContainer) {
+        DOMElements.dnaCombinationSlotsContainer.addEventListener('click', handleClickCombinationSlot);
+    }
 
-    // --- 新增：點擊空白處退出抖動模式 ---
     document.body.addEventListener('click', (event) => {
         if (isJiggleModeActive && !event.target.closest('.jiggle-mode, .modal')) {
             exitJiggleMode();
