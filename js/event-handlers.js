@@ -329,7 +329,7 @@ function handleFarmHeaderSorting() {
             if (!target) return;
 
             const sortKey = target.dataset.sortKey;
-            if (!sortKey || ['actions'].includes(sortKey)) return;
+            if (!sortKey || ['actions', 'deploy', 'index'].includes(sortKey)) return;
 
             const currentSortKey = gameState.farmSortConfig.key;
             const currentSortOrder = gameState.farmSortConfig.order;
@@ -348,6 +348,7 @@ function handleFarmHeaderSorting() {
         });
     }
 }
+
 
 // --- 新增：處理排行榜中的點擊事件 ---
 function handleLeaderboardClicks() {
@@ -417,12 +418,14 @@ function handlePlayerInfoModalEvents() {
                 const result = await equipTitle(titleId);
                 if (result && result.success) {
                     await refreshPlayerData();
+                    // 刷新後，用最新的 gameState.playerData 重新渲染彈窗
                     updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
                 } else {
                     throw new Error(result.error || '裝備稱號時發生未知錯誤。');
                 }
             } catch (error) {
                 showFeedbackModal('裝備失敗', `錯誤：${error.message}`);
+                 // 無論成功失敗，都用最新的伺服器資料刷新一次，確保狀態正確
                 updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
             }
             return;
