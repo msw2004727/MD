@@ -1011,20 +1011,15 @@ function renderMonsterFarm() {
         cellMonster.className = 'monster-info-cell';
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
-        // --- 修改開始 ---
-        // 移除內聯 onclick，改用 addEventListener
         const monsterNameLink = document.createElement('a');
         monsterNameLink.href = '#';
         monsterNameLink.className = `monster-name-link text-rarity-${rarityKey}`;
         monsterNameLink.textContent = monster.nickname;
         monsterNameLink.addEventListener('click', (event) => {
             event.preventDefault();
-            // 直接傳遞 monster 物件，而不是在 gameState 中查找
-            // 這樣可以避免在 gameState 更新時發生找不到 id 的問題
             updateMonsterSnapshot(monster);
         });
         cellMonster.appendChild(monsterNameLink);
-        // --- 修改結束 ---
 
         // 評價
         const cellScore = document.createElement('div');
