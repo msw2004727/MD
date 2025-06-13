@@ -29,6 +29,7 @@ const gameState = {
         dnaCombinationSlots: [null, null, null, null, null], 
     },
     gameConfigs: null, // 從後端獲取的遊戲核心設定
+    assetPaths: null, // 新增：用於存放從 assets.json 讀取的圖片路徑
     
     // UI 相關狀態
     isLoading: false, 
