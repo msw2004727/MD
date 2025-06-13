@@ -76,15 +76,38 @@ body.light-theme #official-announcement-close-x:hover {
     padding: 12px 25px;
     font-size: 1rem;
 }
+
+/* 【已修改】隱藏舊的轉圈動畫 */
 .loading-spinner {
-    border:4px solid var(--border-color);
-    border-top:4px solid var(--accent-color);
-    border-radius:50%;
-    width:30px;
-    height:30px;
-    animation:spin 1s linear infinite;
-    margin:20px auto;
+    display: none !important;
 }
+
+/* 【新增】新的呼吸動畫樣式 */
+#feedback-modal-breathing-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* transform 會在動畫中設定，這裡不需要 */
+    width: 80px;
+    height: 80px;
+    transform-origin: center center;
+    animation: energy-breath 4s infinite ease-in-out;
+    z-index: 10;
+    display: none; /* 由 JS 控制顯示 */
+}
+
+/* 【新增】從 txt 檔複製過來的動畫關鍵影格 */
+@keyframes energy-breath {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(0.85);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+}
+
 
 /* Monster Info Modal Layout & Styles */
 .details-grid-rearranged {
@@ -155,17 +178,16 @@ body.light-theme #official-announcement-close-x:hover {
 }
 .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
 
-.skill-name-container { /* 【新增】用於包裹技能名稱和徽章 */
+.skill-name-container {
     display: flex;
     align-items: center;
-    gap: 0.5rem; /* 8px */
+    gap: 0.5rem;
     margin-bottom: 4px;
 }
 .skill-name-link {
     font-weight: bold;
     font-size: 1rem;
 }
-/* 【新增】屬性徽章樣式 */
 .skill-attribute-badge {
     font-size: 0.75rem;
     font-weight: bold;
@@ -216,4 +238,15 @@ body.light-theme #official-announcement-close-x:hover {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+/* Other Modal Styles */
+#newbie-guide-search-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
