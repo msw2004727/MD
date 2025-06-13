@@ -600,62 +600,40 @@ function updateTrainingResultsModal(results, monsterName) {
     DOMElements.trainingResultsModalTitle.innerHTML = `<span style="font-weight: normal;">${monsterName} 的修煉成果</span>`;
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
-    // 樣式定義，用於分隔線
-    const dividerStyle = `
-        border: none;
-        height: 1px;
-        background-color: var(--border-color);
-        margin: 1.5rem 0;
-    `;
-    
-    // 1. 橫幅和提示
-    const bannerHtml = `
-        <div class="training-banner" style="text-align: center; margin-bottom: 1rem;">
-            <img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;">
-        </div>
-    `;
+    // 樣式定義
+    const dividerStyle = `border: none; height: 1px; background-color: var(--border-color); margin: 1rem 0;`;
 
+    // 1. 橫幅和提示
+    const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
     let hintHtml = '';
     if (TRAINING_GAME_HINTS.length > 0) {
         const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-        hintHtml = `
-            <div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);">
-                <p>${TRAINING_GAME_HINTS[randomIndex]}</p>
-            </div>
-        `;
+        hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p>${TRAINING_GAME_HINTS[randomIndex]}</p></div>`;
     }
 
     // 2. 冒險故事
     let storyHtml = '';
     const storyContent = (results.adventure_story || "").replace(/\n/g, '<br>');
     if (storyContent) {
-        storyHtml = `
-            <div class="training-section">
-                <h5 class="details-section-title" style="border: none; padding-bottom: 0;">冒險故事</h5>
-                <div id="adventure-story-container" style="display: none; padding: 10px 5px; border-left: 3px solid var(--border-color); margin-top: 10px; font-size: 0.9rem;">
-                    <p>${storyContent}</p>
-                </div>
-                <a href="#" id="toggle-story-btn" style="display: block; text-align: center; margin-top: 8px; color: var(--accent-color); cursor: pointer; text-decoration: underline;">點此查看此趟的冒險故事 ▼</a>
-            </div>
-        `;
+        storyHtml = `<div class="training-section"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">冒險故事</h5><div id="adventure-story-container" style="display: none; padding: 10px 5px; border-left: 3px solid var(--border-color); margin-top: 10px; font-size: 0.9rem;"><p>${storyContent}</p></div><a href="#" id="toggle-story-btn" style="display: block; text-align: center; margin-top: 8px; color: var(--accent-color); cursor: pointer; text-decoration: underline;">點此查看此趟的冒險故事 ▼</a></div>`;
     }
-    
-    // 3. 能力成長與數值變化
+
+    // 3. 能力成長
     const skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
         skillAndNewSkillLogs.forEach(log => {
             let cleanLog = log.substring(log.indexOf(' ') + 1);
-            const updatedLog = cleanLog.replace(/'(.+?)'/g, (match, skillName) => {
-                return `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`;
-            });
+            const updatedLog = cleanLog.replace(/'(.+?)'/g, (match, skillName) => `'<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="text-decoration: none; color: inherit;">${skillName}</a>'`);
             skillGrowthHtml += `<li>${updatedLog}</li>`;
         });
     } else {
         skillGrowthHtml += "<li>技能無變化。</li>";
     }
     skillGrowthHtml += "</ul>";
-    
+    const abilityGrowthSectionHtml = `<div class="training-section"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">能力成長</h5><div class="training-result-subsection mt-2" style="font-size: 0.9rem;">${skillGrowthHtml}</div></div>`;
+
+    // 4. 數值變化
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
     if (statGrowthLogs.length > 0) {
@@ -668,64 +646,44 @@ function updateTrainingResultsModal(results, monsterName) {
         statGrowthHtml += "<li>基礎數值無變化。</li>";
     }
     statGrowthHtml += "</ul>";
+    const valueChangeSectionHtml = `<div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;"><h5 class="details-section-title" style="border: none; padding-bottom: 0; color: var(--accent-color);">數值變化</h5><div class="training-result-subsection mt-2" style="font-size: 0.9rem;">${statGrowthHtml}</div></div>`;
 
-    const abilityGrowthSectionHtml = `
-        <div class="training-section">
-            <h5 class="details-section-title" style="border: none; padding-bottom: 0;">能力成長</h5>
-            <div class="training-result-subsection mt-2" style="font-size: 0.9rem;">
-                ${skillGrowthHtml}
-            </div>
-        </div>`;
-
-    const valueChangeSectionHtml = `
-         <div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-             <h5 class="details-section-title" style="border: none; padding-bottom: 0; color: var(--accent-color);">數值變化</h5>
-             <div class="training-result-subsection mt-2" style="font-size: 0.9rem;">
-                 ${statGrowthHtml}
-             </div>
-         </div>`;
-
-    const growthAndStatsHtml = storyHtml + abilityGrowthSectionHtml + valueChangeSectionHtml + `<hr style="${dividerStyle}">`;
-
-    // 4. 拾獲物品
+    // 5. 拾獲物品
     let itemsSectionHtml = '';
     const items = results.items_obtained || [];
     if (items.length > 0) {
-        const itemsGridHtml = `
-            <div class="inventory-grid mt-2">
-                ${items.map((item, index) => {
-                    const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
-                    return `
-                        <div class="dna-item-wrapper">
-                            <div class="dna-item occupied">
-                                <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
-                                <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
-                                <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
-                                <button class="button primary pickup-btn" data-item-index="${index}" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
-                            </div>
-                        </div>`;
-                }).join('')}
-            </div>`;
-        
-        itemsSectionHtml = `
-            <div class="training-section">
-                <h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5>
-                ${itemsGridHtml}
-            </div>
-        `;
+        itemsSectionHtml = `<div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5><div class="inventory-grid mt-2" id="training-items-grid"></div></div>`;
     } else {
-        itemsSectionHtml = `
-            <div class="training-section">
-                <h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5>
-                <p>沒有拾獲任何物品。</p>
-            </div>
-        `;
+        itemsSectionHtml = `<div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5><p>沒有拾獲任何物品。</p></div>`;
     }
 
-    // 5. 組合並渲染到 modal-body
-    modalBody.innerHTML = bannerHtml + hintHtml + growthAndStatsHtml + itemsSectionHtml;
+    // 組合並渲染到 modal-body
+    modalBody.innerHTML = bannerHtml + hintHtml + storyHtml + abilityGrowthSectionHtml + valueChangeSectionHtml + itemsSectionHtml;
 
-    // 6. 重新綁定事件監聽器
+    // 動態填充拾獲物品並上色
+    const itemsGridContainer = modalBody.querySelector('#training-items-grid');
+    if (itemsGridContainer && typeof applyDnaItemStyle === 'function') {
+        items.forEach((item, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dna-item-wrapper';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item occupied';
+            
+            applyDnaItemStyle(itemDiv, item); // Apply coloring
+
+            const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
+            itemDiv.innerHTML = `
+                <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
+                <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
+                <button class="button primary pickup-btn" data-item-index="${index}" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
+            `;
+            wrapper.appendChild(itemDiv);
+            itemsGridContainer.appendChild(wrapper);
+        });
+    }
+
+    // 重新綁定事件監聽器
     const toggleBtn = modalBody.querySelector('#toggle-story-btn');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', (e) => {
