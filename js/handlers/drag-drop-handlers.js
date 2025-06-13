@@ -51,55 +51,33 @@ function initializeDragDropEventHandlers() {
 
     // 點擊空白處退出抖動模式
     document.body.addEventListener('click', (event) => {
-        if (isJiggleModeActive && !event.target.closest('.jiggle-mode, .modal')) {
+        if (isJiggleModeActive && !event.target.closest('.jiggle-mode, .modal, .occupied')) {
             exitJiggleMode();
         }
     });
 }
 
 // --- 抖動模式管理 ---
+// ** 核心修改：簡化 enter/exit 函數，只管理狀態並觸發重繪 **
 function enterJiggleMode() {
-    // 修正：即使已經在抖動模式，也重新執行以應用到新渲染的元素上
-    isJiggleModeActive = true; 
-    
-    const containers = [
-        DOMElements.dnaCombinationSlotsContainer,
-        DOMElements.inventoryItemsContainer,
-        DOMElements.temporaryBackpackContainer
-    ];
-
-    containers.forEach(container => {
-        if (!container) return;
-        container.querySelectorAll('.occupied').forEach(item => {
-            if (item.id === 'inventory-delete-slot') return;
-            
-            // 如果沒有，才添加 class 和按鈕，避免重複
-            if (!item.classList.contains('jiggle-mode')) {
-                item.classList.add('jiggle-mode');
-            }
-            if (!item.querySelector('.delete-item-btn')) {
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-item-btn';
-                deleteBtn.innerHTML = '&times;';
-                deleteBtn.setAttribute('aria-label', '刪除物品');
-                item.appendChild(deleteBtn);
-            }
-        });
-    });
+    if (isJiggleModeActive) return;
+    isJiggleModeActive = true;
+    renderAllInventories(); // 透過重繪來應用 jiggle-mode
 }
 
 function exitJiggleMode() {
     if (!isJiggleModeActive) return;
     isJiggleModeActive = false;
-    
-    document.querySelectorAll('.jiggle-mode').forEach(item => {
-        item.classList.remove('jiggle-mode');
-    });
-
-    document.querySelectorAll('.delete-item-btn').forEach(btn => {
-        btn.remove();
-    });
+    renderAllInventories(); // 透過重繪來移除 jiggle-mode
 }
+
+// 新增一個輔助函數來統一重繪
+function renderAllInventories() {
+    renderDNACombinationSlots();
+    renderPlayerDNAInventory();
+    renderTemporaryBackpack();
+}
+
 
 // --- 長按與觸控處理 ---
 function handleItemInteractionStart(event) {
@@ -153,25 +131,17 @@ async function handleItemClick(event) {
         if (!dnaObject) return;
 
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaObject.name || '該DNA'}" 嗎？`, async () => {
-            // ** 核心修改：移除 exitJiggleMode() **
             if (sourceType === 'inventory') {
                 gameState.playerData.playerOwnedDNA[sourceIndex] = null;
-                renderPlayerDNAInventory();
             } else if (sourceType === 'combination') {
                 gameState.playerData.dnaCombinationSlots[sourceIndex] = null;
-                renderDNACombinationSlots();
             } else if (sourceType === 'temporaryBackpack') {
                 gameState.temporaryBackpack[sourceIndex] = null;
-                renderTemporaryBackpack();
             }
-
+            // ** 核心修改：不再需要手動處理抖動，只需重繪即可 **
+            renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
-            
-            // ** 新增：刪除並重新渲染後，如果仍在抖動模式，則對剩餘物品重新觸發一次抖動 **
-            if(isJiggleModeActive) {
-                setTimeout(() => enterJiggleMode(), 0);
-            }
         });
         return; 
     }
@@ -239,9 +209,6 @@ function handleDragEnd(event) {
     draggedSourceType = null;
     draggedSourceIndex = null;
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-    
-    // ** 核心修改：移除此處的 exitJiggleMode() **
-    // 拖曳結束後，抖動模式繼續
 }
 
 function handleDragOver(event) {
@@ -274,7 +241,7 @@ async function handleDrop(event) {
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
-        // ... (刪除邏輯不變，已在 handleItemClick 中處理)
+        // ... (This logic is now primarily handled by the click handler)
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
@@ -296,8 +263,7 @@ async function handleDrop(event) {
         }
         gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
         
-        renderDNACombinationSlots();
-        renderPlayerDNAInventory(); 
+        renderAllInventories();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('dna-item') && dropTargetElement.closest('#inventory-items')) {
@@ -323,9 +289,7 @@ async function handleDrop(event) {
         
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
 
-        renderPlayerDNAInventory();
-        renderDNACombinationSlots();
-        renderTemporaryBackpack();
+        renderAllInventories();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
      else if (dropTargetElement.closest('#temporary-backpack-items')) {
@@ -348,18 +312,11 @@ async function handleDrop(event) {
                 
                 gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
                 
-                renderPlayerDNAInventory();
-                renderDNACombinationSlots();
-                renderTemporaryBackpack();
+                renderAllInventories();
                 await savePlayerData(gameState.playerId, gameState.playerData);
             } else {
                 showFeedbackModal('背包已滿', '暫存背包已滿，無法放入更多物品。');
             }
         }
-    }
-
-    // 新增：拖曳放下後，如果仍在抖動模式，則對所有物品重新觸發一次抖動
-    if(isJiggleModeActive) {
-        setTimeout(() => enterJiggleMode(), 0);
     }
 }
