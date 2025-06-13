@@ -52,12 +52,14 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
 
     tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
-        content.style.display = 'none';
+        // 移除：不再使用JS直接控制style.display
+        // content.style.display = 'none';
     });
     const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
     if (targetContent) {
         targetContent.classList.add('active');
-        targetContent.style.display = 'block';
+        // 移除：不再使用JS直接控制style.display
+        // targetContent.style.display = 'block';
 
         // 當切換到特定頁籤時，觸發對應的渲染函式
         if (targetTabId === 'friends-list-content') {
