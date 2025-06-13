@@ -11,7 +11,6 @@
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
     min-width: 0;
-    /* 修改：移除 overflow: hidden，以允許子元素滾動 */
 }
 
 /* 新增：讓包含頁籤的面板可以伸展並成為 flex 容器 */
@@ -209,7 +208,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     border-radius: 6px;
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-    flex-shrink: 0; /* 新增：不讓按鈕區被壓縮 */
+    flex-shrink: 0;
 }
 .tab-button {
     padding: 8px 10px;
@@ -238,11 +237,11 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content {
     display: none;
     min-width: 0;
-    overflow-y: auto; /* 修改：讓內容超長時可以滾動 */
-    flex-grow: 1; /* 修改：讓內容區塊填滿剩餘空間 */
+    overflow-y: auto;
+    flex-grow: 1;
 }
 .tab-content.active {
-    display: block; /* 修改：維持 block，滾動由父層控制 */
+    display: block;
 }
 
 #monster-leaderboard-element-tabs {
@@ -695,10 +694,8 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .farm-table {
-    /* 使用 fixed 佈局，欄寬由 th/td 的 width 決定，而不是內容 */
     table-layout: fixed;
-    /* 設定一個總寬度，確保在手機上會超出容器寬度以觸發滾動 */
-    width: 600px;
+    width: 100%; /* 修改：從 600px 改為 100% */
     border-collapse: collapse;
 }
 
@@ -709,7 +706,6 @@ body.light-theme .leaderboard-table tr:hover td {
     text-align: center;
     vertical-align: middle;
     white-space: nowrap;
-    /* 當內容真的過長時 (例如按鈕文字)，用刪節號處理 */
     overflow: hidden;
     text-overflow: ellipsis;
 }
