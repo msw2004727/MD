@@ -1019,8 +1019,9 @@ function renderMonsterFarm() {
 
     monsters.forEach((monster, index) => {
         const monsterItem = document.createElement('div');
+        const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
         monsterItem.className = 'farm-monster-item';
-        if (gameState.selectedMonsterId === monster.id) {
+        if (isDeployed) {
             monsterItem.classList.add('selected');
         }
 
@@ -1030,7 +1031,6 @@ function renderMonsterFarm() {
         
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
-        const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
         colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
         
         const colInfo = document.createElement('div');
@@ -1044,7 +1044,6 @@ function renderMonsterFarm() {
         const monsterAchievement = monster.title || '';
         const fullNickname = monster.nickname || '';
         
-        // 從完整暱稱中，移除屬性名和成就，剩下的就是玩家稱號
         const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
 
         colInfo.innerHTML = `
@@ -1071,7 +1070,7 @@ function renderMonsterFarm() {
                 <div style="color: var(--accent-color);">修煉中</div>
                 <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (gameState.playerData.selectedMonsterId === monster.id) {
+        } else if (isDeployed) {
             colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
@@ -1082,14 +1081,19 @@ function renderMonsterFarm() {
         const colActions = document.createElement('div');
         colActions.className = 'farm-col farm-col-actions';
         let actionsHTML = '';
-        if (monster.farmStatus?.isTraining) {
+
+        if (isDeployed) {
+            actionsHTML += `<button class="button primary text-xs" disabled>修煉</button>`;
+            actionsHTML += `<button class="button danger text-xs" disabled style="margin-left: 5px;">放生</button>`;
+        } else if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
             actionsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>`;
+            actionsHTML += `<button class="button danger text-xs" disabled style="margin-left: 5px;">放生</button>`;
         } else {
             actionsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
+            actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')" style="margin-left: 5px;">放生</button>`;
         }
-        actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')" style="margin-left: 5px;">放生</button>`;
         colActions.innerHTML = actionsHTML;
         
         monsterItem.appendChild(colIndex);
