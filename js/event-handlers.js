@@ -502,22 +502,6 @@ function handleAuthForms() {
 }
 
 function handleTopNavButtons() {
-    if (DOMElements.monsterInfoButton) {
-        DOMElements.monsterInfoButton.addEventListener('click', () => {
-            if (gameState.selectedMonsterId) {
-                const monster = getSelectedMonster();
-                if (monster) {
-                    updateMonsterInfoModal(monster, gameState.gameConfigs);
-                    showModal('monster-info-modal');
-                } else {
-                    showFeedbackModal('錯誤', '找不到選定的怪獸資料。');
-                }
-            } else {
-                showFeedbackModal('提示', '請先在農場選擇一隻怪獸，或合成一隻新的怪獸。');
-            }
-        });
-    }
-
     if (DOMElements.playerInfoButton) {
         DOMElements.playerInfoButton.addEventListener('click', () => {
             if (gameState.playerData && gameState.currentUser) {
@@ -601,7 +585,6 @@ async function handleCombineDna() {
         return;
     }
 
-    // 新增：在異步操作前禁用按鈕
     DOMElements.combineButton.disabled = true;
 
     try {
@@ -625,8 +608,6 @@ async function handleCombineDna() {
         showFeedbackModal('合成失敗', errorMessage);
         console.error("合成DNA錯誤:", error);
     } finally {
-        // 新增：無論成功或失敗，都重新啟用按鈕
-        // 注意：成功時，resetDNACombinationSlots會因為槽位為空而再次禁用它，這是預期行為。
         if (DOMElements.combineButton) {
             const combinationSlotsFilled = gameState.dnaCombinationSlots.filter(s => s !== null).length >= 2;
             DOMElements.combineButton.disabled = !combinationSlotsFilled;
@@ -640,16 +621,14 @@ function handleConfirmationActions() {
 }
 
 function handleCultivationModals() {
-    // 獲取養成計畫彈窗中，包含所有卡片按鈕的容器
     const cultivationLocationsContainer = document.querySelector('.cultivation-locations-container');
 
     if (cultivationLocationsContainer) {
         cultivationLocationsContainer.addEventListener('click', async (event) => {
-            // 確認點擊的是卡片按鈕本身或其子元素
             const clickedButton = event.target.closest('button.cultivation-location-card');
             if (!clickedButton) return;
 
-            const location = clickedButton.dataset.location; // 獲取按鈕的 data-location 屬性
+            const location = clickedButton.dataset.location; 
             if (!location) return;
 
             if (!gameState.cultivationMonsterId) {
@@ -660,7 +639,6 @@ function handleCultivationModals() {
 
             const monsterInFarm = gameState.playerData.farmedMonsters.find(m => m.id === gameState.cultivationMonsterId);
             if (monsterInFarm) {
-                // 檢查怪獸是否已在訓練中或戰鬥中
                 if (monsterInFarm.farmStatus?.isTraining || monsterInFarm.farmStatus?.isBattling) {
                     showFeedbackModal('提示', `怪獸 ${monsterInFarm.nickname} 目前正在忙碌中，無法開始新的修煉。`);
                     return;
@@ -670,7 +648,6 @@ function handleCultivationModals() {
                 monsterInFarm.farmStatus.isTraining = true;
                 monsterInFarm.farmStatus.trainingStartTime = Date.now();
                 monsterInFarm.farmStatus.trainingDuration = CULTIVATION_DURATION_SECONDS * 1000;
-                // 將選擇的訓練地點也儲存到怪獸狀態中
                 monsterInFarm.farmStatus.trainingLocation = location;
 
                 try {
@@ -678,7 +655,7 @@ function handleCultivationModals() {
                     console.log(`怪獸 ${monsterInFarm.nickname} 的修煉狀態已儲存，地點: ${location}。`);
 
                     hideModal('cultivation-setup-modal');
-                    renderMonsterFarm(); // 重新渲染農場列表以更新狀態
+                    renderMonsterFarm(); 
                     showFeedbackModal(
                         '修煉開始！',
                         `怪獸 ${monsterInFarm.nickname} 已開始為期 ${CULTIVATION_DURATION_SECONDS} 秒的修煉，地點：${location}。`,
@@ -689,7 +666,6 @@ function handleCultivationModals() {
                 } catch (error) {
                     console.error("儲存修煉狀態失敗:", error);
                     showFeedbackModal('錯誤', '開始修煉失敗，無法儲存狀態，請稍後再試。');
-                    // 如果儲存失敗，恢復前端的狀態
                     monsterInFarm.farmStatus.isTraining = false;
                     monsterInFarm.farmStatus.trainingStartTime = null;
                     monsterInFarm.farmStatus.trainingDuration = null;
@@ -724,7 +700,7 @@ function handleCultivationModals() {
     if (DOMElements.reminderConfirmCloseBtn) DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
         hideModal('reminder-modal');
         hideModal('training-results-modal');
-        gameState.lastCultivationResult.items_obtained = []; // 清空待領取列表
+        gameState.lastCultivationResult.items_obtained = []; 
     });
     if (DOMElements.reminderCancelBtn) DOMElements.reminderCancelBtn.addEventListener('click', () => {
         hideModal('reminder-modal');
@@ -779,10 +755,9 @@ function handleLeaderboardSorting() {
     const tables = [DOMElements.monsterLeaderboardTable, DOMElements.playerLeaderboardTable];
     tables.forEach(table => {
         if (table) {
-            // 將事件監聽器綁定到 table 元素，使用事件代理
             table.addEventListener('click', (event) => {
                 const th = event.target.closest('th');
-                if (!th || !th.dataset.sortKey) return; // 確保點擊的是 th 且有 sortKey
+                if (!th || !th.dataset.sortKey) return; 
 
                 const sortKey = th.dataset.sortKey;
                 const tableType = table.id.includes('monster') ? 'monster' : 'player';
@@ -810,7 +785,6 @@ function handleLeaderboardSorting() {
     });
 } 
 
-// 修改：處理挑戰按鈕點擊，並在收到結果後，檢查是否有新稱號
 async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
     if(event) event.stopPropagation();
 
@@ -896,7 +870,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     
                     hideModal('feedback-modal');
 
-                    // 檢查是否有新獲得的稱號
                     if (battleResult.newly_awarded_titles && battleResult.newly_awarded_titles.length > 0) {
                         const newTitle = battleResult.newly_awarded_titles[0];
                         const awardDetails = {
@@ -912,7 +885,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                         }];
                         showFeedbackModal('榮譽加身！', '', false, null, actionButtons, awardDetails);
                     } else {
-                        // 如果沒有新稱號，直接顯示戰報
                         showBattleLogModal(battleResult);
                     }
 
@@ -976,7 +948,6 @@ function handleAnnouncementModalClose() {
 }
 
 
-// --- 新增：處理點擊事件以移動DNA ---
 async function handleClickInventory(event) {
     const itemElement = event.target.closest('.dna-item.occupied');
     if (!itemElement || !itemElement.closest('#inventory-items')) return;
@@ -985,11 +956,9 @@ async function handleClickInventory(event) {
     const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
     if (!dnaObject) return;
     
-    // 尋找組合槽中的第一個空格
     const targetSlotIndex = gameState.dnaCombinationSlots.findIndex(slot => slot === null);
 
     if (targetSlotIndex !== -1) {
-        // 有空格，執行移動
         gameState.playerData.playerOwnedDNA[inventoryIndex] = null;
         gameState.dnaCombinationSlots[targetSlotIndex] = dnaObject;
         renderPlayerDNAInventory();
@@ -1008,7 +977,6 @@ async function handleClickCombinationSlot(event) {
     const dnaObject = gameState.dnaCombinationSlots[slotIndex];
     if (!dnaObject) return;
 
-    // 尋找庫存中的第一個空格，避開刪除區
     let targetInventoryIndex = -1;
     for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
         if (i !== 11 && gameState.playerData.playerOwnedDNA[i] === null) {
@@ -1018,7 +986,6 @@ async function handleClickCombinationSlot(event) {
     }
 
     if (targetInventoryIndex !== -1) {
-        // 有空格，執行移動
         gameState.dnaCombinationSlots[slotIndex] = null;
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
         renderPlayerDNAInventory();
@@ -1028,37 +995,30 @@ async function handleClickCombinationSlot(event) {
         showFeedbackModal('提示', 'DNA碎片庫存區已滿！');
     }
 }
-// --- 新增結束 ---
 
-// --- 新增：處理怪獸改名事件 ---
 function handleMonsterNicknameEvents() {
-    // 使用事件代理，因為彈窗內容是動態生成的
     if (DOMElements.monsterInfoModalHeader) {
         DOMElements.monsterInfoModalHeader.addEventListener('click', async (event) => {
-            // 從彈窗標題的 data attribute 獲取正確的怪獸ID
             const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
             if (!monsterId) return;
 
             const displayContainer = document.getElementById('monster-nickname-display-container');
             const editContainer = document.getElementById('monster-nickname-edit-container');
 
-            // --- 處理點擊「編輯」按鈕 ---
             if (event.target.id === 'edit-monster-nickname-btn') {
                 if(displayContainer) displayContainer.style.display = 'none';
                 if(editContainer) {
-                    editContainer.style.display = 'flex'; // 使用 flex 以匹配 inline style
+                    editContainer.style.display = 'flex'; 
                     const input = editContainer.querySelector('#monster-nickname-input');
-                    if(input) input.focus(); // 自動聚焦到輸入框
+                    if(input) input.focus(); 
                 }
             }
 
-            // --- 處理點擊「取消」按鈕 ---
             if (event.target.id === 'cancel-nickname-change-btn') {
                 if(displayContainer) displayContainer.style.display = 'flex';
                 if(editContainer) editContainer.style.display = 'none';
             }
 
-            // --- 處理點擊「確認」按鈕 ---
             if (event.target.id === 'confirm-nickname-change-btn') {
                 const input = document.getElementById('monster-nickname-input');
                 const newCustomName = input ? input.value.trim() : '';
@@ -1068,7 +1028,6 @@ function handleMonsterNicknameEvents() {
                     await updateMonsterCustomNickname(monsterId, newCustomName);
                     await refreshPlayerData(); 
                     
-                    // 刷新後，使用 monsterId 重新找到怪獸並渲染當前彈窗
                     const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                     if(updatedMonster) {
                         updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
@@ -1079,7 +1038,6 @@ function handleMonsterNicknameEvents() {
                 } catch (error) {
                     hideModal('feedback-modal');
                     showFeedbackModal('更新失敗', `發生錯誤：${error.message}`);
-                    // 失敗時也恢復為顯示模式
                     if(displayContainer) displayContainer.style.display = 'flex';
                     if(editContainer) editContainer.style.display = 'none';
                 }
@@ -1147,7 +1105,7 @@ function initializeEventListeners() {
     handleTabSwitching();
     handleLeaderboardSorting();
     handleLeaderboardClicks();
-    handlePlayerInfoModalEvents(); // 修改：調用新的整合函式
+    handlePlayerInfoModalEvents();
     handleMonsterNicknameEvents();
     handleFarmHeaderSorting(); 
     document.body.addEventListener('click', handleSkillLinkClick);
@@ -1173,13 +1131,11 @@ function initializeEventListeners() {
         }
     });
 
-    // 為刪除區單獨添加 drop 事件
     const deleteSlot = document.getElementById('inventory-delete-slot');
     if (deleteSlot) {
         deleteSlot.addEventListener('drop', handleDrop);
     }
     
-    // 新增：為庫存區和組合區添加點擊事件監聽
     if (DOMElements.inventoryItemsContainer) {
         DOMElements.inventoryItemsContainer.addEventListener('click', handleClickInventory);
     }
@@ -1197,10 +1153,12 @@ function initializeEventListeners() {
     handleDnaDrawModal();
     handleAnnouncementModalClose();
 
-    // 為新的刷新按鈕添加事件監聽
     if (DOMElements.refreshMonsterLeaderboardBtn) {
         DOMElements.refreshMonsterLeaderboardBtn.addEventListener('click', fetchAndDisplayMonsterLeaderboard);
     }
+
+    // 【新增】啟動全域計時器，每秒更新一次修煉時間
+    setInterval(updateAllTimers, 1000);
 
     console.log("All event listeners initialized with enhanced drag-drop logic for temporary backpack.");
 
