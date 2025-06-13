@@ -89,7 +89,6 @@ function initializeDOMElements() {
     DOMElements = {
         authScreen: document.getElementById('auth-screen'),
         gameContainer: document.getElementById('game-container'),
-        globalLoadingOverlay: document.getElementById('global-loading-overlay'), // 新增：全局載入動畫
         showLoginFormBtn: document.getElementById('show-login-form-btn'),
         showRegisterFormBtn: document.getElementById('show-register-form-btn'),
         mainLogoutBtn: document.getElementById('main-logout-btn'),
@@ -155,6 +154,7 @@ function initializeDOMElements() {
         feedbackModalCloseX: document.getElementById('feedback-modal-close-x'),
         feedbackModalTitle: document.getElementById('feedback-modal-title'),
         feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
+        feedbackModalBreathingIcon: document.getElementById('feedback-modal-breathing-icon'),
         feedbackModalMessage: document.getElementById('feedback-modal-message'),
         feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
         confirmationModal: document.getElementById('confirmation-modal'),
@@ -216,18 +216,6 @@ function toggleElementDisplay(element, show, displayType = 'block') {
     }
 }
 
-function showGlobalSpinner() {
-    if (DOMElements.globalLoadingOverlay) {
-        DOMElements.globalLoadingOverlay.style.display = 'flex';
-    }
-}
-
-function hideGlobalSpinner() {
-    if (DOMElements.globalLoadingOverlay) {
-        DOMElements.globalLoadingOverlay.style.display = 'none';
-    }
-}
-
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -243,12 +231,9 @@ function hideModal(modalId) {
         if (gameState.activeModalId === modalId) {
             gameState.activeModalId = null;
         }
-        if (modalId === 'feedback-modal') {
-            if (gameState.feedbackHintInterval) {
-                clearInterval(gameState.feedbackHintInterval);
-                gameState.feedbackHintInterval = null;
-            }
-            hideGlobalSpinner();
+        if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
+            clearInterval(gameState.feedbackHintInterval);
+            gameState.feedbackHintInterval = null;
         }
     }
 }
@@ -263,7 +248,6 @@ function hideAllModals() {
         modal.style.display = 'none';
     });
     gameState.activeModalId = null;
-    hideGlobalSpinner();
 }
 
 function showMonsterInfoFromFarm(monsterId) {
@@ -283,14 +267,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         console.error("Feedback modal elements not found in DOMElements.");
         return;
     }
-    
-    if (isLoading) {
-        showGlobalSpinner();
-    } else {
-        hideGlobalSpinner();
-    }
 
     DOMElements.feedbackModalMessage.innerHTML = '';
+    toggleElementDisplay(DOMElements.feedbackModalBreathingIcon, isLoading, 'block');
 
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
