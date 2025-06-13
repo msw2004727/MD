@@ -81,6 +81,30 @@ body.light-theme #official-announcement-close-x:hover {
     display: none !important;
 }
 
+#feedback-modal-breathing-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    transform-origin: center center;
+    animation: energy-breath 4s infinite ease-in-out;
+    z-index: 10;
+    display: none;
+}
+
+@keyframes energy-breath {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(0.85);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 1;
+    }
+}
+
+
 /* Monster Info Modal Layout & Styles */
 .details-grid-rearranged {
     display: grid;
