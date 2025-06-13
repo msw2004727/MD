@@ -235,6 +235,24 @@ function hideAllModals() {
     gameState.activeModalId = null;
 }
 
+/**
+ * 從怪獸農場點擊怪獸名稱時，顯示其詳細資訊彈窗
+ * @param {string} monsterId - 被點擊的怪獸的ID
+ */
+function showMonsterInfoFromFarm(monsterId) {
+    if (!monsterId) return;
+    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+    if (monster) {
+        // updateMonsterInfoModal is in ui-modals.js but should be globally accessible
+        // showModal is in this file (ui.js) and is globally accessible
+        updateMonsterInfoModal(monster, gameState.gameConfigs, gameState.playerData);
+        showModal('monster-info-modal');
+    } else {
+        console.error(`Monster with ID ${monsterId} not found in farm.`);
+        showFeedbackModal('錯誤', '找不到該怪獸的資料。');
+    }
+}
+
 function showFeedbackModal(title, message, isLoading = false, monsterDetails = null, actionButtons = null, awardDetails = null) {
     if (!DOMElements.feedbackModal || !DOMElements.feedbackModalTitle || !DOMElements.feedbackModalMessage) {
         console.error("Feedback modal elements not found in DOMElements.");
@@ -946,28 +964,29 @@ function renderMonsterFarm() {
     const container = DOMElements.monsterFarmContent;
     if (!container) return;
 
-    const tableContainer = container.querySelector('.farm-grid-table');
-    if (!tableContainer) {
-        console.error("renderMonsterFarm Error: '.farm-grid-table' container not found.");
+    const table = container.querySelector('.farm-table');
+    if (!table) {
+        console.error("renderMonsterFarm Error: '.farm-table' not found.");
         return;
     }
 
-    // 移除舊的怪獸列，但保留表頭
-    tableContainer.querySelectorAll('.farm-grid-row').forEach(row => row.remove());
-    const emptyMsg = tableContainer.querySelector('.farm-empty-message');
-    if (emptyMsg) emptyMsg.remove();
+    let tbody = table.querySelector('tbody');
+    if (!tbody) {
+        tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+    }
+    tbody.innerHTML = ''; // 清除舊的怪獸列
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
     if (monsters.length === 0) {
-        const emptyMessageDiv = document.createElement('div');
-        emptyMessageDiv.className = 'farm-empty-message';
-        emptyMessageDiv.style.gridColumn = '1 / -1';
-        emptyMessageDiv.style.textAlign = 'center';
-        emptyMessageDiv.style.padding = '20px';
-        emptyMessageDiv.style.color = 'var(--text-secondary)';
-        emptyMessageDiv.textContent = '您的農場空空如也，快去組合新的怪獸吧！';
-        tableContainer.appendChild(emptyMessageDiv);
+        const row = tbody.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 6; // 表頭有6欄
+        cell.textContent = '您的農場空空如也，快去組合新的怪獸吧！';
+        cell.style.textAlign = 'center';
+        cell.style.padding = '20px';
+        cell.style.color = 'var(--text-secondary)';
         return;
     }
 
@@ -991,48 +1010,27 @@ function renderMonsterFarm() {
     });
 
     monsters.forEach((monster, index) => {
-        const row = document.createElement('div');
-        row.className = 'farm-grid-row';
+        const row = tbody.insertRow(); // 建立 <tr>
         if (gameState.selectedMonsterId === monster.id) {
             row.classList.add('selected');
         }
 
-        // 序號
-        const cellIndex = document.createElement('div');
+        // 建立 <td> 並填入內容
+        const cellIndex = row.insertCell();
         cellIndex.textContent = index + 1;
-        
-        // 出戰按鈕
-        const cellDeploy = document.createElement('div');
+
+        const cellDeploy = row.insertCell();
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
         cellDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '出戰中' : '出戰'}</button>`;
         
-        // 怪獸
-        const cellMonster = document.createElement('div');
-        cellMonster.className = 'monster-info-cell';
+        const cellMonster = row.insertCell();
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+        cellMonster.innerHTML = `<a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">${monster.nickname}</a>`;
         
-        // --- 修改開始 ---
-        // 移除內聯 onclick，改用 addEventListener
-        const monsterNameLink = document.createElement('a');
-        monsterNameLink.href = '#';
-        monsterNameLink.className = `monster-name-link text-rarity-${rarityKey}`;
-        monsterNameLink.textContent = monster.nickname;
-        monsterNameLink.addEventListener('click', (event) => {
-            event.preventDefault();
-            // 直接傳遞 monster 物件，而不是在 gameState 中查找
-            // 這樣可以避免在 gameState 更新時發生找不到 id 的問題
-            updateMonsterInfoModal(monster, gameState.gameConfigs); // 將怪獸資料傳遞給 modal 函數
-            showModal('monster-info-modal'); // 顯示彈窗
-        });
-        cellMonster.appendChild(monsterNameLink);
-        // --- 修改結束 ---
-
-        // 評價
-        const cellScore = document.createElement('div');
+        const cellScore = row.insertCell();
         cellScore.textContent = monster.score || 0;
 
-        // 狀態
-        const cellStatus = document.createElement('div');
+        const cellStatus = row.insertCell();
         let statusText = '閒置中';
         if (monster.farmStatus?.isTraining) {
             statusText = '修煉中';
@@ -1041,8 +1039,7 @@ function renderMonsterFarm() {
         }
         cellStatus.textContent = statusText;
 
-        // 其他 (按鈕)
-        const cellActions = document.createElement('div');
+        const cellActions = row.insertCell();
         cellActions.className = 'farm-actions-cell';
         let otherButtonsHTML = '';
         if (monster.farmStatus?.isTraining) {
@@ -1054,16 +1051,6 @@ function renderMonsterFarm() {
         }
         otherButtonsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
         cellActions.innerHTML = otherButtonsHTML;
-
-        // 按照新的順序將儲存格加入列中
-        row.appendChild(cellIndex);
-        row.appendChild(cellDeploy);
-        row.appendChild(cellMonster);
-        row.appendChild(cellScore);
-        row.appendChild(cellStatus);
-        row.appendChild(cellActions);
-
-        tableContainer.appendChild(row);
     });
 }
 

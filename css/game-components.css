@@ -2,7 +2,6 @@
 
 /* ==========================================================================
    通用面板 (Panel) 組件
-   - 從 layout.css 移動至此並標準化
    ========================================================================== */
 .panel {
     background-color: var(--bg-slot);
@@ -11,12 +10,12 @@
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
-    min-width: 0; /* Prevents flex items from overflowing their container */
+    min-width: 0;
+    overflow: hidden; /* 強制面板不能被內容撐開 */
 }
 
 /* ==========================================================================
-   新增: 通用卡片 (Card) 基礎組件
-   - 用於好友列表、修煉地點等
+   通用卡片 (Card) 基礎組件
    ========================================================================== */
 .card {
     background-color: var(--bg-primary);
@@ -109,7 +108,17 @@
     cursor: pointer;
     font-weight: bold;
 }
-.inventory-delete-slot .drag-over {
+.inventory-delete-slot .delete-slot-main-text {
+    font-size: 1rem;
+    display: block;
+}
+.inventory-delete-slot .delete-slot-sub-text {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+.inventory-delete-slot.drag-over {
     background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
     border-color: var(--danger-hover-dark) !important;
     color: var(--button-danger-text-dark) !important;
@@ -219,7 +228,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content {
     display: none;
     min-width: 0;
-    overflow-x: auto;
 }
 .tab-content.active {
     display: block;
@@ -668,74 +676,66 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格 (採用滾動容器方案)
+   怪獸農場 (原生Table版本，固定欄寬)
    ========================================================================== */
-
-/* 新增: 可滾動的容器 */
-.scrollable-table {
+.table-scroll-wrapper {
     overflow-x: auto;
-    width: 100%;
 }
 
-.farm-grid-table {
-    display: grid;
-    /* 讓欄位寬度由內容決定 */
-    grid-template-columns: auto;
-    grid-auto-flow: column;
-    grid-auto-columns: auto;
-    /* 核心: 表格寬度由內容撐開，但最小不小於容器寬度 */
-    width: max-content;
-    min-width: 100%;
-    border-top: 1px solid var(--border-color);
+.farm-table {
+    /* 使用 fixed 佈局，欄寬由 th/td 的 width 決定，而不是內容 */
+    table-layout: fixed;
+    /* 設定一個總寬度，確保在手機上會超出容器寬度以觸發滾動 */
+    width: 600px;
+    border-collapse: collapse;
 }
 
-.farm-grid-header,
-.farm-grid-row {
-    display: contents;
+.farm-table th,
+.farm-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    /* 當內容真的過長時 (例如按鈕文字)，用刪節號處理 */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.farm-grid-header > div {
-    padding: 10px 12px; /* 增加左右間距 */
+/* 為每一欄設定精準的寬度 */
+.farm-table th:nth-child(1), .farm-table td:nth-child(1) { width: 40px; }  /* 序號 */
+.farm-table th:nth-child(2), .farm-table td:nth-child(2) { width: 80px; }  /* 出戰 */
+.farm-table th:nth-child(3), .farm-table td:nth-child(3) { width: 190px; } /* 怪獸 */
+.farm-table th:nth-child(4), .farm-table td:nth-child(4) { width: 70px; }  /* 評價 */
+.farm-table th:nth-child(5), .farm-table td:nth-child(5) { width: 80px; }  /* 狀態 */
+.farm-table th:nth-child(6), .farm-table td:nth-child(6) { width: 140px; } /* 其他 */
+
+/* 表頭樣式 */
+.farm-table th {
     font-weight: 600;
     color: var(--accent-color);
-    text-align: center;
     background-color: var(--bg-primary);
-    border-bottom: 2px solid var(--accent-color);
-    /* 移除 white-space: nowrap; */
-    /* 設置最小寬度以確保內容換行 */
-    min-width: 50px; 
-    word-wrap: break-word; /* 允許長單詞換行 */
+    border-bottom-width: 2px;
+    border-bottom-color: var(--accent-color);
 }
 
-.farm-grid-row > div {
-    padding: 12px 12px; /* 增加左右間距 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid var(--border-color);
-    /* 移除 white-space: nowrap; */
-    word-wrap: break-word; /* 允許長單詞換行 */
-}
-
-
-.farm-grid-row:last-child > div {
-    border-bottom: none;
-}
-
-.farm-grid-row:hover > div {
+.farm-table tbody tr:hover td {
     background-color: var(--bg-primary);
 }
 
-/* 怪獸名稱欄位靠左對齊 */
-.farm-grid-header > div:nth-child(3),
-.farm-grid-row > div:nth-child(3) {
-    justify-content: flex-start;
+.farm-table tbody tr.selected td {
+    background-color: color-mix(in srgb, var(--accent-color) 15%, transparent);
+}
+
+/* 特定欄位的文字對齊 */
+.farm-table th:nth-child(3),
+.farm-table td:nth-child(3) {
     text-align: left;
-    min-width: 120px; /* 給怪獸名稱欄位一個更大的最小寬度 */
 }
 
-.farm-actions-cell {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
+/* 表格內按鈕的樣式微調 */
+.farm-table td .button {
+    margin: 0 2px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
 }
