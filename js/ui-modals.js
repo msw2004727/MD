@@ -127,19 +127,16 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 async function viewPlayerInfo(playerId) {
     if (!playerId) return;
 
-    // 顯示載入中提示
     showFeedbackModal('載入中...', `正在獲取玩家資訊...`, true);
 
     try {
         const playerData = await getPlayerData(playerId);
         if (playerData) {
-            // 將玩家的 UID 加入到資料中，以便彈窗顯示
             playerData.uid = playerId;
-            // 新增：暫存正在查看的玩家資料
             updateGameState({ viewedPlayerData: playerData });
             updatePlayerInfoModal(playerData, gameState.gameConfigs);
-            hideModal('feedback-modal'); // 隱藏載入提示
-            showModal('player-info-modal'); // 顯示玩家資訊彈窗
+            hideModal('feedback-modal');
+            showModal('player-info-modal');
         } else {
             throw new Error('找不到該玩家的資料。');
         }
@@ -162,7 +159,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return;
     }
 
-    // 將怪獸 ID 附加到 header 元素上，以便事件處理器讀取
     DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -232,18 +228,31 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             `;
             
             const level = skill.level || 1;
-            let powerDisplay = skill.power;
+            let powerDisplay = skill.power > 0 ? skill.power : '---';
             if (level > 1 && skill.power > 0) {
                 const effectivePower = Math.floor(skill.power * (1 + (level - 1) * 0.08));
                 powerDisplay = `${skill.power} <span class="text-[var(--success-color)]" style="font-size:0.9em;">▸ ${effectivePower}</span>`;
             }
 
-            let mpCostDisplay = skill.mp_cost || 0;
+            let mpCostDisplay = skill.mp_cost > 0 ? skill.mp_cost : '0';
             if (level > 1 && skill.mp_cost > 0) {
                 const effectiveMpCost = Math.max(1, skill.mp_cost - Math.floor((level - 1) / 2));
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
+            // 【新增】屬性徽章的 HTML
+            const skillTypeChar = (skill.type || '無').charAt(0);
+            const elementBgVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-bg)`;
+            const elementTextVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-text)`;
+            const attributeBadgeHtml = `<span class="skill-attribute-badge text-element-${getElementCssClassKey(skill.type || '無')}" style="background-color: ${elementBgVar}; color: ${elementTextVar};">${skillTypeChar}</span>`;
+            
+            // 【修改】技能名稱和徽章的容器
+            const skillNameAndBadgeHtml = `
+                <div class="skill-name-container">
+                    <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${level})</a>
+                    ${attributeBadgeHtml}
+                </div>`;
+            
             let milestonesHtml = '';
             let skillTemplate = null;
             if (gameState.gameConfigs && gameState.gameConfigs.skills) {
@@ -275,11 +284,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 }
                 milestonesHtml += `</div>`;
             }
-
+            
+            // 【修改】整合所有技能資訊的顯示
             return `
             <div class="skill-entry">
-                <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; font-weight: bold; color: inherit;">${skill.name} (Lv.${level})</a>
-                <p class="skill-details">威力: ${powerDisplay}, 消耗MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
+                ${skillNameAndBadgeHtml}
+                <p class="skill-details text-xs">威力: ${powerDisplay}, MP: ${mpCostDisplay}, 類別: ${skill.skill_category || '未知'}</p>
                 <p class="skill-details text-xs">${description}</p>
                 ${skill.current_exp !== undefined ? expBarHtml : ''}
                 ${milestonesHtml}
@@ -312,8 +322,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             }
         });
     }
-
-    // 【修改】這裡的邏輯將被替換為新的顯示方式
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
             const elementCssKey = getElementCssClassKey(dna.type || '無');
@@ -525,11 +533,11 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
 }
 
 function updateLeaderboardTable(tableType, data) {
-    console.log("updateLeaderboardTable called with data:", data); // Debugging log
+    console.log("updateLeaderboardTable called with data:", data);
     const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
     const table = document.getElementById(tableId);
     if (!table) {
-        console.error("Leaderboard table element not found:", tableId); // Debugging error
+        console.error("Leaderboard table element not found:", tableId);
         return;
     }
 
