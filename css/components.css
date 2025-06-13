@@ -361,14 +361,14 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-bottom: 2px;
 }
 #snapshot-nickname {
-    font-size: 1rem; /* 【已修改】調整為一般大小 */
+    font-size: 1rem;
     display: block;
     margin-top: 1px;
-    font-weight: normal; /* 【已修改】取消粗體 */
+    font-weight: normal;
 }
 #snapshot-evaluation {
     font-size: 0.875rem;
-    font-weight: normal; /* 【已修改】取消粗體 */
+    font-weight: normal;
     color: var(--success-color);
 }
 #snapshot-win-loss {
@@ -485,7 +485,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 #snapshot-bars-container {
     position: absolute;
-    bottom: 10px; /* 【已修改】調整至底部 */
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
@@ -494,4 +494,62 @@ body.light-theme .leaderboard-table tr:hover td {
     gap: 4px;
     width: 100px;
     pointer-events: auto;
+}
+
+/* Cultivation Location Selection */
+.cultivation-locations-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to vertical layout for narrow screens */
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.cultivation-location-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cultivation-location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: var(--accent-color);
+}
+
+.cultivation-location-card img {
+    width: 100%;
+    max-width: 200px; /* Limit image size */
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.cultivation-location-card h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.cultivation-location-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex-grow: 1; /* Allow text to take up space */
+}
+
+/* Responsive layout for wider screens */
+@media (min-width: 768px) {
+    .cultivation-locations-container {
+        grid-template-columns: repeat(3, 1fr); /* 3 columns for wide screens */
+    }
 }
