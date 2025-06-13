@@ -73,7 +73,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - previewLimit}隻)...</button>`;
+            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - 5}隻)...</button>`;
         }
     }
 
@@ -1136,10 +1136,10 @@ function updateTrainingResultsModal(results, monsterName) {
             // 根據文件重新設計卡片內部結構
             const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
             itemDiv.innerHTML = `
-                <span class="dna-name" style="font-weight: bold;">${item.name}</span>
-                <span class="dna-type" style="font-size: 0.8em; color: var(--text-secondary);">${item.type}屬性</span>
-                <span class="dna-rarity text-rarity-${rarityKey}" style="font-size: 0.8em; font-weight: bold;">${item.rarity}</span>
-                <button class="button primary text-xs" style="padding: 4px 8px; margin-top: 5px;">拾取</button>
+                <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
+                <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
+                <button class="button primary" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
             `;
             
             // 為按鈕綁定事件
