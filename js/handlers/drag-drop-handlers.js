@@ -187,11 +187,6 @@ function handleDragStart(event) {
         return;
     }
     
-    // *** 核心修改：移除此處的 exitJiggleMode() 呼叫 ***
-    // if (isJiggleModeActive) {
-    //     exitJiggleMode();
-    // }
-    
     draggedElement = target;
     draggedSourceType = target.dataset.dnaSource;
 
@@ -233,6 +228,11 @@ function handleDragEnd(event) {
     draggedSourceType = null;
     draggedSourceIndex = null;
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    // 新增：當拖曳操作完全結束後，退出抖動模式
+    if (isJiggleModeActive) {
+        exitJiggleMode();
+    }
 }
 
 function handleDragOver(event) {
