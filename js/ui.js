@@ -1019,16 +1019,20 @@ function renderMonsterFarm() {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        
         const elementNickname = monster.custom_element_nickname || 
                                 (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
-        const achievement = monster.title || '';
+        const monsterAchievement = monster.title || '';
         const fullNickname = monster.nickname || '';
-        const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
+        
+        // 從完整暱稱中，移除屬性名和成就，剩下的就是玩家稱號
+        const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
 
         colInfo.innerHTML = `
-            <a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">
-                <div class="monster-name-line1" style="font-size: 0.8em; color: var(--text-secondary);">${playerTitle}${achievement}</div>
-                <div class="monster-name-line2" style="font-weight: bold;">${elementNickname}</div>
+            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; display: block; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9em;">
+                <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
+                <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
+                <span class="text-rarity-${rarityKey}">${elementNickname}</span>
             </a>`;
         
         const colScore = document.createElement('div');
@@ -1082,3 +1086,5 @@ function renderMonsterFarm() {
 
 
 console.log("UI core module loaded.");
+
+}
