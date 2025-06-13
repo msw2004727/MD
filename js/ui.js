@@ -952,7 +952,7 @@ function renderMonsterFarm() {
         return;
     }
 
-    // 清除舊的怪獸列，但保留表頭
+    // 移除舊的怪獸列，但保留表頭
     tableContainer.querySelectorAll('.farm-grid-row').forEach(row => row.remove());
     const emptyMsg = tableContainer.querySelector('.farm-empty-message');
     if (emptyMsg) emptyMsg.remove();
@@ -1021,7 +1021,8 @@ function renderMonsterFarm() {
             event.preventDefault();
             // 直接傳遞 monster 物件，而不是在 gameState 中查找
             // 這樣可以避免在 gameState 更新時發生找不到 id 的問題
-            updateMonsterSnapshot(monster);
+            updateMonsterInfoModal(monster, gameState.gameConfigs); // 將怪獸資料傳遞給 modal 函數
+            showModal('monster-info-modal'); // 顯示彈窗
         });
         cellMonster.appendChild(monsterNameLink);
         // --- 修改結束 ---
