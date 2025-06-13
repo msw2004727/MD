@@ -51,7 +51,11 @@ function renderDNACombinationSlots() {
     const container = DOMElements.dnaCombinationSlotsContainer;
     if (!container) return;
     container.innerHTML = '';
-    gameState.dnaCombinationSlots.forEach((dna, index) => {
+
+    // 修改：從新的 gameState.playerData.dnaCombinationSlots 讀取資料
+    const combinationSlots = gameState.playerData?.dnaCombinationSlots || [null, null, null, null, null];
+
+    combinationSlots.forEach((dna, index) => {
         const slot = document.createElement('div');
         slot.classList.add('dna-slot');
         slot.dataset.slotIndex = index;
@@ -80,7 +84,11 @@ function renderDNACombinationSlots() {
         }
         container.appendChild(slot);
     });
-    if(DOMElements.combineButton) DOMElements.combineButton.disabled = gameState.dnaCombinationSlots.filter(s => s !== null).length < 2;
+    
+    // 修改：同樣使用新的路徑來判斷按鈕是否禁用
+    if(DOMElements.combineButton) {
+        DOMElements.combineButton.disabled = combinationSlots.filter(s => s !== null).length < 2;
+    }
 }
 
 function renderPlayerDNAInventory() {
