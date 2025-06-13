@@ -678,13 +678,24 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* ==========================================================================
-   怪獸農場 CSS Grid 表格
+   怪獸農場 CSS Grid 表格 (採用滾動容器方案)
    ========================================================================== */
+
+/* 新增: 可滾動的容器 */
+.scrollable-table {
+    overflow-x: auto;
+    width: 100%;
+}
+
 .farm-grid-table {
     display: grid;
-    /* 序號 | 出戰 | 怪獸 (min 12rem, flex) | 評價 (4rem) | 狀態 (5rem) | 其他 (9rem) */
-    grid-template-columns: auto auto minmax(12rem, 1fr) 4rem 5rem 9rem;
-    width: 100%;
+    /* 讓欄位寬度由內容決定 */
+    grid-template-columns: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: auto;
+    /* 核心: 表格寬度由內容撐開，但最小不小於容器寬度 */
+    width: max-content;
+    min-width: 100%;
     border-top: 1px solid var(--border-color);
 }
 
@@ -694,25 +705,22 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .farm-grid-header > div {
-    padding: 10px 8px;
+    padding: 10px 12px; /* 增加左右間距 */
     font-weight: 600;
     color: var(--accent-color);
     text-align: center;
     background-color: var(--bg-primary);
     border-bottom: 2px solid var(--accent-color);
-    white-space: nowrap; /* 確保表頭文字不換行 */
+    white-space: nowrap; /* 表頭不換行 */
 }
 
 .farm-grid-row > div {
-    padding: 12px 8px;
+    padding: 12px 12px; /* 增加左右間距 */
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* white-space: nowrap;  <-- REMOVED THIS LINE */
+    white-space: nowrap; /* 內容不換行 */
 }
 
 
@@ -724,6 +732,7 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--bg-primary);
 }
 
+/* 怪獸名稱欄位靠左對齊 */
 .farm-grid-header > div:nth-child(3),
 .farm-grid-row > div:nth-child(3) {
     justify-content: flex-start;
