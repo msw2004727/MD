@@ -7,7 +7,7 @@ let draggedSourceType = null;
 let draggedSourceIndex = null;
 let isJiggleModeActive = false;
 let longPressTimer = null;
-const LONG_PRESS_DURATION = 500;
+const LONG_PRESS_DURATION = 350; // **核心修改：從 500 毫秒縮短為 350 毫秒**
 
 // --- 初始化函式 ---
 function initializeDragDropEventHandlers() {
@@ -58,20 +58,17 @@ function initializeDragDropEventHandlers() {
 }
 
 // --- 抖動模式管理 ---
-// ** 核心修改：簡化 enter/exit 函數，只管理狀態並觸發重繪 **
 function enterJiggleMode() {
-    if (isJiggleModeActive) return;
-    isJiggleModeActive = true;
-    renderAllInventories(); // 透過重繪來應用 jiggle-mode
+    isJiggleModeActive = true; 
+    renderAllInventories();
 }
 
 function exitJiggleMode() {
     if (!isJiggleModeActive) return;
     isJiggleModeActive = false;
-    renderAllInventories(); // 透過重繪來移除 jiggle-mode
+    renderAllInventories();
 }
 
-// 新增一個輔助函數來統一重繪
 function renderAllInventories() {
     renderDNACombinationSlots();
     renderPlayerDNAInventory();
@@ -138,7 +135,6 @@ async function handleItemClick(event) {
             } else if (sourceType === 'temporaryBackpack') {
                 gameState.temporaryBackpack[sourceIndex] = null;
             }
-            // ** 核心修改：不再需要手動處理抖動，只需重繪即可 **
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
@@ -241,7 +237,22 @@ async function handleDrop(event) {
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
-        // ... (This logic is now primarily handled by the click handler)
+        const sourceTypeToDelete = draggedSourceType;
+        const sourceIndexToDelete = draggedSourceIndex;
+        const dnaNameToDelete = dnaDataToMove.name || '該DNA';
+
+        showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaNameToDelete}" 嗎？此操作無法復原。`, async () => {
+            if (sourceTypeToDelete === 'inventory') {
+                gameState.playerData.playerOwnedDNA[sourceIndexToDelete] = null;
+            } else if (sourceTypeToDelete === 'combination') {
+                gameState.playerData.dnaCombinationSlots[sourceIndexToDelete] = null;
+            } else if (sourceTypeToDelete === 'temporaryBackpack') {
+                gameState.temporaryBackpack[sourceIndexToDelete] = null;
+            }
+            renderAllInventories();
+            await savePlayerData(gameState.playerId, gameState.playerData);
+            showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
+        });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
