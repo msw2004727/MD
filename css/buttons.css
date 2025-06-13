@@ -30,12 +30,6 @@
 .top-left-button { top: 10px; left: 10px; }
 .top-right-button { top: 10px; right: 10px; }
 
-.top-center-button {
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
 #theme-switcher {
     color: var(--text-primary-dark);
 }
@@ -216,7 +210,7 @@ button.warning-outline:hover, .button.warning-outline:hover {
     width: auto;
     padding: 0.5rem 0.5rem;
     min-width: 0;
-    font-size: 0.75rem;
+    font-size: 1rem;
     height: 38px;
     display: flex;
     align-items: center;
@@ -278,30 +272,4 @@ button.warning-outline:hover, .button.warning-outline:hover {
     font-size: 1rem;
     line-height: 1;
     min-width: auto;
-}
-
-.delete-dna-btn {
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    width: 22px;
-    height: 22px;
-    background-color: var(--danger-color);
-    color: white;
-    border-radius: 50%;
-    border: 2px solid var(--bg-panel);
-    font-size: 14px;
-    font-weight: bold;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-    transition: transform 0.2s ease-out;
-    padding-bottom: 2px; /* For better 'x' alignment */
-}
-.delete-dna-btn:hover {
-    transform: scale(1.15);
 }
