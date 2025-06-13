@@ -247,10 +247,21 @@ body.light-theme #official-announcement-close-x:hover {
     font-size: 0.75rem !important; /* xs */
 }
 
-/* Activity Log Font Size */
+/* Activity Log Styles */
 #monster-activity-logs .log-entry {
-    font-size: 0.75rem; /* xs */
+    font-size: 0.8rem; /* xs -> sm for better readability */
+    line-height: 1.5;
+    padding-bottom: 0.75rem; /* 12px */
+    margin-bottom: 0.75rem; /* 12px */
+    border-bottom: 1px solid var(--border-color);
 }
+
+#monster-activity-logs .log-entry:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 
 /* Training Results Modal Section Styling */
 .training-result-section {
