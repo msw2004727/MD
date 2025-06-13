@@ -31,13 +31,13 @@ function initializeDragDropEventHandlers() {
             zone.addEventListener('mouseup', handleItemInteractionEnd);
             zone.addEventListener('mouseleave', handleItemInteractionEnd);
             zone.addEventListener('mousemove', handleItemInteractionEnd);
-            
+
             // 長按與刪除事件 (觸控)
             zone.addEventListener('touchstart', handleItemInteractionStart, { passive: true });
             zone.addEventListener('touchend', handleItemInteractionEnd);
             zone.addEventListener('touchcancel', handleItemInteractionEnd);
             zone.addEventListener('touchmove', handleItemInteractionEnd);
-            
+
             // 點擊事件 (用於刪除按鈕和單擊移動)
             zone.addEventListener('click', handleItemClick);
         }
@@ -61,7 +61,7 @@ function initializeDragDropEventHandlers() {
 function enterJiggleMode() {
     if (isJiggleModeActive) return;
     isJiggleModeActive = true;
-    
+
     const containers = [
         DOMElements.dnaCombinationSlotsContainer,
         DOMElements.inventoryItemsContainer,
@@ -72,9 +72,8 @@ function enterJiggleMode() {
         if (!container) return;
         container.querySelectorAll('.occupied').forEach(item => {
             if (item.id === 'inventory-delete-slot') return;
-            
+
             item.classList.add('jiggle-mode');
-            item.draggable = false; // 新增：在抖動模式下明確禁止拖曳
 
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-item-btn';
@@ -88,10 +87,9 @@ function enterJiggleMode() {
 function exitJiggleMode() {
     if (!isJiggleModeActive) return;
     isJiggleModeActive = false;
-    
+
     document.querySelectorAll('.jiggle-mode').forEach(item => {
         item.classList.remove('jiggle-mode');
-        item.draggable = true; // 新增：退出時恢復物品的拖曳能力
     });
 
     document.querySelectorAll('.delete-item-btn').forEach(btn => {
@@ -102,12 +100,12 @@ function exitJiggleMode() {
 // --- 長按偵測 ---
 function handleItemInteractionStart(event) {
     if (event.type === 'mousedown' && event.buttons !== 1) return;
-    
+
     const targetItem = event.target.closest('.dna-slot.occupied, .dna-item.occupied, .temp-backpack-slot.occupied');
     if (!targetItem || targetItem.id === 'inventory-delete-slot') return;
 
     clearTimeout(longPressTimer);
-    
+
     longPressTimer = setTimeout(() => {
         enterJiggleMode();
     }, LONG_PRESS_DURATION);
@@ -122,22 +120,22 @@ async function handleItemClick(event) {
     // 處理刪除按鈕點擊
     if (event.target.classList.contains('delete-item-btn')) {
         event.stopPropagation();
-        
+
         const itemElement = event.target.closest('.occupied');
         if (!itemElement) return;
 
         const sourceType = itemElement.dataset.dnaSource;
         let sourceIndex, dnaObject;
-        
+
         if (sourceType === 'inventory') {
             sourceIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
-            dnaObject = gameState.playerData.playerOwnedDNA[sourceIndex];
+            dnaObject = gameState.playerData.playerOwnedDNA.find((item, index) => index === sourceIndex && item !== null);
         } else if (sourceType === 'combination') {
             sourceIndex = parseInt(itemElement.dataset.slotIndex, 10);
-            dnaObject = gameState.playerData.dnaCombinationSlots[sourceIndex];
+            dnaObject = gameState.playerData.dnaCombinationSlots.find((item, index) => index === sourceIndex && item !== null);
         } else if (sourceType === 'temporaryBackpack') {
             sourceIndex = parseInt(itemElement.dataset.tempItemIndex, 10);
-            dnaObject = gameState.temporaryBackpack[sourceIndex]?.data;
+            dnaObject = gameState.temporaryBackpack.find((item, index) => index === sourceIndex && item !== null)?.data;
         }
 
         if (!dnaObject) return;
@@ -145,13 +143,13 @@ async function handleItemClick(event) {
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaObject.name || '該DNA'}" 嗎？`, async () => {
             exitJiggleMode();
             if (sourceType === 'inventory') {
-                gameState.playerData.playerOwnedDNA[sourceIndex] = null;
+                gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map((item, index) => index === sourceIndex ? null : item);
                 renderPlayerDNAInventory();
             } else if (sourceType === 'combination') {
-                gameState.playerData.dnaCombinationSlots[sourceIndex] = null;
+                gameState.playerData.dnaCombinationSlots = gameState.playerData.dnaCombinationSlots.map((item, index) => index === sourceIndex ? null : item);
                 renderDNACombinationSlots();
             } else if (sourceType === 'temporaryBackpack') {
-                gameState.temporaryBackpack[sourceIndex] = null;
+                gameState.temporaryBackpack = gameState.temporaryBackpack.map((item, index) => index === sourceIndex ? null : item);
                 renderTemporaryBackpack();
             }
             await savePlayerData(gameState.playerId, gameState.playerData);
@@ -175,15 +173,8 @@ async function handleItemClick(event) {
 
 // --- 拖放事件處理 ---
 function handleDragStart(event) {
-    // 新增：如果已處於抖動模式，則完全阻止拖曳的開始
-    if (isJiggleModeActive) {
-        event.preventDefault();
-        return;
-    }
-    
-    // 如果拖曳開始了，就代表不是長按，必須清除計時器
-    handleItemInteractionEnd(); 
-    
+    handleItemInteractionEnd();
+
     const target = event.target.closest('.dna-item.occupied, .dna-slot.occupied, .temp-backpack-slot.occupied');
     if (!target) {
         event.preventDefault();
@@ -195,16 +186,15 @@ function handleDragStart(event) {
     if (draggedSourceType === 'inventory') {
         draggedSourceIndex = parseInt(target.dataset.inventoryIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
-        draggedDnaObject = gameState.playerData.playerOwnedDNA[draggedSourceIndex];
+        draggedDnaObject = gameState.playerData.playerOwnedDNA.find((item, index) => index === draggedSourceIndex && item !== null);
     } else if (draggedSourceType === 'combination') {
         draggedSourceIndex = parseInt(target.dataset.slotIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
-        draggedDnaObject = gameState.playerData.dnaCombinationSlots[draggedSourceIndex];
+        draggedDnaObject = gameState.playerData.dnaCombinationSlots.find((item, index) => index === draggedSourceIndex && item !== null);
     } else if (draggedSourceType === 'temporaryBackpack') {
         draggedSourceIndex = parseInt(target.dataset.tempItemIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
-        const tempItem = gameState.temporaryBackpack[draggedSourceIndex];
-        draggedDnaObject = tempItem ? tempItem.data : null;
+        draggedDnaObject = gameState.temporaryBackpack.find((item, index) => index === draggedSourceIndex && item !== null)?.data;
     }
 
     if (!draggedDnaObject) {
@@ -258,7 +248,7 @@ async function handleDrop(event) {
         return;
     }
     dropTargetElement.classList.remove('drag-over');
-    
+
     const dnaDataToMove = JSON.parse(JSON.stringify(draggedDnaObject));
 
     if (dropTargetElement.id === 'inventory-delete-slot') {
@@ -267,68 +257,67 @@ async function handleDrop(event) {
         const dnaNameToDelete = dnaDataToMove.name || '該DNA';
 
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaNameToDelete}" 嗎？此操作無法復原。`, async () => {
+            exitJiggleMode();
             if (sourceTypeToDelete === 'inventory') {
-                gameState.playerData.playerOwnedDNA[sourceIndexToDelete] = null;
+                gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map((item, index) => index === sourceIndexToDelete ? null : item);
+                renderPlayerDNAInventory();
             } else if (sourceTypeToDelete === 'combination') {
-                gameState.playerData.dnaCombinationSlots[sourceIndexToDelete] = null;
+                gameState.playerData.dnaCombinationSlots = gameState.playerData.dnaCombinationSlots.map((item, index) => index === sourceIndexToDelete ? null : item);
+                renderDNACombinationSlots();
             } else if (sourceTypeToDelete === 'temporaryBackpack') {
-                gameState.temporaryBackpack[sourceIndexToDelete] = null;
+                gameState.temporaryBackpack = gameState.temporaryBackpack.map((item, index) => index === sourceIndexToDelete ? null : item);
+                renderTemporaryBackpack();
             }
-            
-            renderPlayerDNAInventory();
-            renderDNACombinationSlots();
-            renderTemporaryBackpack();
-            
-            await savePlayerData(gameState.playerId, gameState.playerData); 
+            await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
             showFeedbackModal('無效操作', '請先將臨時背包中的物品拖曳至下方的「DNA碎片」庫存區，才能進行組合。');
-            handleDragEnd(event); 
+            handleDragEnd(event);
             return;
         }
-        
+
         const targetSlotIndex = parseInt(dropTargetElement.dataset.slotIndex, 10);
         if (isNaN(targetSlotIndex)) { handleDragEnd(event); return; }
-        
-        const itemOriginallyInTargetSlot = gameState.playerData.dnaCombinationSlots[targetSlotIndex]; 
-        
+
+        const itemOriginallyInTargetSlot = gameState.playerData.dnaCombinationSlots.find((item, index) => index === targetSlotIndex);
+
         if (draggedSourceType === 'inventory') {
-            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemOriginallyInTargetSlot;
+            gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map((item, index) => index === draggedSourceIndex ? itemOriginallyInTargetSlot : item);
         } else if (draggedSourceType === 'combination') {
             if (draggedSourceIndex !== targetSlotIndex) {
-                gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = itemOriginallyInTargetSlot;
+                gameState.playerData.dnaCombinationSlots = gameState.playerData.dnaCombinationSlots.map((item, index) => index === draggedSourceIndex ? itemOriginallyInTargetSlot : item);
             }
         }
-        gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaDataToMove;
-        
+        gameState.playerData.dnaCombinationSlots = gameState.playerData.dnaCombinationSlots.map((item, index) => index === targetSlotIndex ? dnaDataToMove : item);
+
         renderDNACombinationSlots();
-        renderPlayerDNAInventory(); 
+        renderPlayerDNAInventory();
         await savePlayerData(gameState.playerId, gameState.playerData);
     }
     else if (dropTargetElement.classList.contains('dna-item') && dropTargetElement.closest('#inventory-items')) {
         const targetInventoryIndex = parseInt(dropTargetElement.dataset.inventoryIndex, 10);
         if (isNaN(targetInventoryIndex)) { handleDragEnd(event); return; }
-        
-        const itemAtTargetInventorySlot = gameState.playerData.playerOwnedDNA[targetInventoryIndex];
-        
+
+        const itemAtTargetInventorySlot = gameState.playerData.playerOwnedDNA.find((item, index) => index === targetInventoryIndex);
+
         if (draggedSourceType === 'inventory') {
-            gameState.playerData.playerOwnedDNA[draggedSourceIndex] = itemAtTargetInventorySlot; 
+            gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map((item, index) => index === draggedSourceIndex ? itemAtTargetInventorySlot : item);
         } else if (draggedSourceType === 'combination') {
-            gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = itemAtTargetInventorySlot; 
+            gameState.playerData.dnaCombinationSlots = gameState.playerData.dnaCombinationSlots.map((item, index) => index === draggedSourceIndex ? itemAtTargetInventorySlot : item);
         } else if (draggedSourceType === 'temporaryBackpack') {
-            if(itemAtTargetInventorySlot) { 
+            if(itemAtTargetInventorySlot) {
                 showFeedbackModal('操作失敗', '目標庫存格非空格，請先將物品移至空格。');
                 handleDragEnd(event);
                 return;
             }
-            gameState.temporaryBackpack[draggedSourceIndex] = null;
-             dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-             dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
+            gameState.temporaryBackpack = gameState.temporaryBackpack.map((item, index) => index === draggedSourceIndex ? null : item);
+            dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+            dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
         }
-        
-        gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
+
+        gameState.playerData.playerOwnedDNA = gameState.playerData.playerOwnedDNA.map((item, index) => index === targetInventoryIndex ? dnaDataToMove : item);
 
         renderPlayerDNAInventory();
         renderDNACombinationSlots();
