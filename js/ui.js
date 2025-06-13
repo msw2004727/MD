@@ -154,6 +154,8 @@ function initializeDOMElements() {
         feedbackModalCloseX: document.getElementById('feedback-modal-close-x'),
         feedbackModalTitle: document.getElementById('feedback-modal-title'),
         feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
+        // 【新增】對新呼吸動畫圖示的引用
+        feedbackModalBreathingIcon: document.getElementById('feedback-modal-breathing-icon'),
         feedbackModalMessage: document.getElementById('feedback-modal-message'),
         feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
         confirmationModal: document.getElementById('confirmation-modal'),
@@ -268,7 +270,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
 
     DOMElements.feedbackModalMessage.innerHTML = '';
-    toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading);
+    // 【已修改】從控制舊 spinner 改為控制新的呼吸動畫圖示
+    toggleElementDisplay(DOMElements.feedbackModalBreathingIcon, isLoading, 'block');
+
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
@@ -562,7 +566,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     const colors = {
         '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
         '金': 'FFD700/000000', '土': 'D2B48C/000000', '光': 'F8F8FF/000000',
-        '暗': 'A9A99/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
+        '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
         '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
     const colorPair = colors[primaryElement] || colors['無'];
@@ -607,40 +611,85 @@ function updateMonsterSnapshot(monster) {
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
+    clearMonsterBodyPartsDisplay();
+
     if (monster && monster.id) {
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
+
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const elementNickname = monster.custom_element_nickname || 
+                                (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+        const achievement = monster.title || '新秀';
         
-        // 更新底部資訊
-        DOMElements.snapshotNickname.textContent = monster.nickname || '-';
+        DOMElements.snapshotNickname.textContent = elementNickname;
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
+        DOMElements.snapshotAchievementTitle.textContent = achievement;
+
+        const dnaSlots = new Array(5).fill(null);
+        if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
+            monster.constituent_dna_ids.forEach((id, i) => {
+                if (i < 5) {
+                    dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
+                }
+            });
+        }
         
+        const partsMap = {
+            Head: DOMElements.monsterPartHead,
+            LeftArm: DOMElements.monsterPartLeftArm,
+            RightArm: DOMElements.monsterPartRightArm,
+            LeftLeg: DOMElements.monsterPartLeftLeg,
+            RightLeg: DOMElements.monsterPartRightLeg,
+        };
+
+        Object.keys(gameState.dnaSlotToBodyPartMapping).forEach(slotIndex => {
+            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex];
+            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
+            const partElement = partsMap[capitalizedPartKey];
+            const dnaData = dnaSlots[slotIndex];
+
+            if (partElement) {
+                partElement.innerHTML = '';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'dna-name-text';
+                partElement.appendChild(nameSpan);
+                
+                applyDnaItemStyle(partElement, dnaData);
+                
+                if (dnaData) {
+                    partElement.classList.remove('empty-part');
+                } else {
+                    partElement.classList.add('empty-part');
+                }
+            }
+        });
+        if (DOMElements.monsterPartsContainer) {
+            DOMElements.monsterPartsContainer.classList.remove('empty-snapshot');
+        }
+
         DOMElements.snapshotEvaluation.textContent = `評價: ${monster.score || 0}`;
         DOMElements.snapshotEvaluation.style.color = 'var(--success-color)';
 
-        // 更新右上角戰績
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
 
-        // 更新HP和MP狀態條
         toggleElementDisplay(DOMElements.snapshotBarsContainer, true, 'flex');
         const hpPercent = monster.initial_max_hp > 0 ? (monster.hp / monster.initial_max_hp) * 100 : 0;
         const mpPercent = monster.initial_max_mp > 0 ? (monster.mp / monster.initial_max_mp) * 100 : 0;
         DOMElements.snapshotHpFill.style.width = `${hpPercent}%`;
         DOMElements.snapshotMpFill.style.width = `${mpPercent}%`;
         
-        // 更新其他UI
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
     } else {
-        // 清空所有資訊
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
         DOMElements.snapshotNickname.textContent = '尚無怪獸';
         DOMElements.snapshotNickname.className = '';
+        DOMElements.snapshotAchievementTitle.textContent = '稱號';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `評價: -`;
         toggleElementDisplay(DOMElements.snapshotBarsContainer, false);
@@ -956,18 +1005,15 @@ function renderMonsterFarm() {
             monsterItem.classList.add('selected');
         }
 
-        // Column 1: Index
         const colIndex = document.createElement('div');
         colIndex.className = 'farm-col farm-col-index';
         colIndex.textContent = index + 1;
         
-        // Column 2: Deploy Button
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 35px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
         
-        // Column 3: Monster Info
         const colInfo = document.createElement('div');
         colInfo.className = 'farm-col farm-col-info';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -980,17 +1026,16 @@ function renderMonsterFarm() {
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
         colInfo.innerHTML = `
-            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
-                <span style="color: gold; margin-right: 4px;">${playerTitle}</span><span style="color: var(--text-primary); margin-right: 4px;">${achievement}</span><span class="text-rarity-${rarityKey}">${elementNickname}</span>
+            <a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">
+                <div class="monster-name-line1" style="font-size: 0.8em; color: var(--text-secondary);">${playerTitle}${achievement}</div>
+                <div class="monster-name-line2" style="font-weight: bold;">${elementNickname}</div>
             </a>`;
         
-        // Column 4: Score
         const colScore = document.createElement('div');
         colScore.className = 'farm-col farm-col-score';
         colScore.textContent = monster.score || 0;
         colScore.style.color = 'var(--success-color)';
 
-        // Column 5: Status
         const colStatus = document.createElement('div');
         colStatus.className = 'farm-col farm-col-status';
         colStatus.style.flexDirection = 'column';
@@ -1001,17 +1046,16 @@ function renderMonsterFarm() {
             const duration = monster.farmStatus.trainingDuration || 3600000;
             colStatus.innerHTML = `
                 <div style="color: var(--accent-color);">修煉中</div>
-                <div class="training-timer" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
+                <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (monster.hp < monster.initial_max_hp * 0.25) {
-            colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
         } else if (gameState.playerData.selectedMonsterId === monster.id) {
             colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
+        } else if (monster.hp < monster.initial_max_hp * 0.25) {
+            colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
         } else {
             colStatus.textContent = '閒置中';
         }
         
-        // Column 6: Actions
         const colActions = document.createElement('div');
         colActions.className = 'farm-col farm-col-actions';
         let actionsHTML = '';
