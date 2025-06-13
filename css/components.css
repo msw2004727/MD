@@ -32,7 +32,7 @@
     padding: 8px;
     text-align: center;
     font-size: 0.8rem;
-    transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s, transform 0.2s; /* 新增 transform */
     position: relative;
     min-height: 60px;
     display: flex;
@@ -105,16 +105,15 @@ body.light-theme .inventory-delete-slot.drag-over {
     }
 }
 
-.dna-item:hover,
-.dna-slot:hover:not(.occupied),
-.temp-backpack-slot:hover:not(.occupied):not(.empty) {
+/* 核心修改：將所有懸停效果的規則統一，並且只對有 .occupied class 的元素生效 */
+.dna-item.occupied:hover,
+.dna-slot.occupied:hover,
+.temp-backpack-slot.occupied:hover {
     border-color: var(--accent-color);
     box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
+    transform: translateY(-2px);
 }
-.temp-backpack-slot.empty:hover {
-     background-color: var(--accent-hover);
-     border-color: var(--accent-color);
-}
+
 .dna-slot.occupied, .temp-backpack-slot.occupied {
     border-style: solid;
 }
