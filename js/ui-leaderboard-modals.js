@@ -51,11 +51,11 @@ function updateLeaderboardTable(tableType, data) {
     } else { // player
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
+            { text: '稱號', key: 'titles' },
             { text: '玩家暱稱', key: 'nickname' },
             { text: '總積分', key: 'score', align: 'center' },
             { text: '勝場', key: 'wins', align: 'center' },
-            { text: '敗場', key: 'losses', align: 'center' },
-            { text: '稱號', key: 'titles' }
+            { text: '敗場', key: 'losses', align: 'center' }
         ];
     }
     setupLeaderboardTableHeaders(tableId, headersConfig);
@@ -157,8 +157,33 @@ function updateLeaderboardTable(tableType, data) {
 
         } else { // Player Leaderboard
             const rankCell = row.insertCell();
-            rankCell.textContent = index + 1;
+            let rankDisplay = `${index + 1}`;
+            if (index === 0) {
+                rankDisplay = `🥇 ${rankDisplay}`;
+            } else if (index === 1) {
+                rankDisplay = `🥈 ${rankDisplay}`;
+            } else if (index === 2) {
+                rankDisplay = `🥉 ${rankDisplay}`;
+            }
+            rankCell.textContent = rankDisplay;
             rankCell.style.textAlign = 'center';
+            
+            const titlesCell = row.insertCell();
+            let equippedTitleName = '新手'; // 預設稱號
+            if (item.titles && item.titles.length > 0) {
+                const equippedId = item.equipped_title_id;
+                let equippedTitle = null;
+                if (equippedId) {
+                    equippedTitle = item.titles.find(t => t.id === equippedId);
+                }
+                if (!equippedTitle) {
+                    equippedTitle = item.titles[0];
+                }
+                if (equippedTitle && equippedTitle.name) {
+                    equippedTitleName = equippedTitle.name;
+                }
+            }
+            titlesCell.textContent = equippedTitleName;
 
             row.insertCell().textContent = item.nickname;
 
@@ -174,24 +199,6 @@ function updateLeaderboardTable(tableType, data) {
             const lossesCell = row.insertCell();
             lossesCell.textContent = item.losses;
             lossesCell.style.textAlign = 'center';
-            
-            const titlesCell = row.insertCell();
-            let equippedTitleName = '新手'; // 預設稱號
-            if (item.titles && item.titles.length > 0) {
-                const equippedId = item.equipped_title_id;
-                let equippedTitle = null;
-                if (equippedId) {
-                    equippedTitle = item.titles.find(t => t.id === equippedId);
-                }
-                // 如果沒有裝備ID，或找不到對應的稱號，預設使用列表中的第一個
-                if (!equippedTitle) {
-                    equippedTitle = item.titles[0];
-                }
-                if (equippedTitle && equippedTitle.name) {
-                    equippedTitleName = equippedTitle.name;
-                }
-            }
-            titlesCell.textContent = equippedTitleName;
         }
     });
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
