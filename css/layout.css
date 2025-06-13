@@ -3,7 +3,7 @@
 /* Main container for the game interface */
 .main-container {
     width: 100%;
-    max-width: 768px;
+    /* max-width: 768px; <--- 已移除此行 */
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
@@ -21,6 +21,7 @@
     .main-container {
         padding: 1.5rem;
         gap: 1.5rem;
+        max-width: 768px; /* <--- 已新增此行 */
     }
 }
 
