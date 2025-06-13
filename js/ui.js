@@ -991,6 +991,8 @@ function renderMonsterFarm() {
         return;
     }
     
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
         let valA = a[sortConfig.key] || 0;
@@ -1009,20 +1011,19 @@ function renderMonsterFarm() {
             monsterItem.classList.add('selected');
         }
 
-        // Column 1: Index
         const colIndex = document.createElement('div');
         colIndex.className = 'farm-col farm-col-index';
         colIndex.textContent = index + 1;
         
-        // Column 2: Deploy Button
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
+        // 【修改】按鈕文字修改
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
         
-        // Column 3: Monster Info
         const colInfo = document.createElement('div');
         colInfo.className = 'farm-col farm-col-info';
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const elementNickname = monster.custom_element_nickname || 
                                 (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
@@ -1030,23 +1031,22 @@ function renderMonsterFarm() {
         const fullNickname = monster.nickname || '';
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
+        // 【修改】怪獸名稱顏色和結構
         colInfo.innerHTML = `
-            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="color: var(--text-primary); text-decoration: none; font-weight: normal;">
-                <div class="monster-name-line1" style="font-size: 0.8em; color: var(--text-secondary);">${playerTitle}${achievement}</div>
-                <div class="monster-name-line2">${elementNickname}</div>
+            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
+                <span class="text-rarity-${rarityKey}">${playerTitle}</span><span style="color: var(--text-primary);">${achievement}</span><span style="color: gold;">${elementNickname}</span>
             </a>`;
         
-        // Column 4: Score
         const colScore = document.createElement('div');
         colScore.className = 'farm-col farm-col-score';
         colScore.textContent = monster.score || 0;
         colScore.style.color = 'var(--success-color)';
 
-        // Column 5: Status
         const colStatus = document.createElement('div');
         colStatus.className = 'farm-col farm-col-status';
         colStatus.style.flexDirection = 'column';
         
+        // 【修改】狀態顯示優先級邏輯
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
@@ -1062,7 +1062,6 @@ function renderMonsterFarm() {
             colStatus.textContent = '閒置中';
         }
         
-        // Column 6: Actions
         const colActions = document.createElement('div');
         colActions.className = 'farm-col farm-col-actions';
         let actionsHTML = '';
