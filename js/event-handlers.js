@@ -38,12 +38,7 @@ async function handleAddFriend(friendUid, friendNickname) {
         // 儲存更新後的玩家資料到後端
         await savePlayerData(gameState.playerId, gameState.playerData);
         
-        // 刷新好友列表顯示
-        if (typeof renderFriendsList === 'function') {
-            renderFriendsList();
-        }
-
-        // 自動切換到好友分頁
+        // 自動切換到好友分頁，這會觸發 renderFriendsList
         const friendsTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="friends-list-content"]');
         if (friendsTabButton) {
             switchTabContent('friends-list-content', friendsTabButton);
