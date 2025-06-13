@@ -154,13 +154,13 @@
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 5-COLUMN GRID: Deploy | Monster Info | Score | Status | Actions */
-    grid-template-columns: 45px auto 55px 95px 125px;
+    /* 【修改】從5欄增加到6欄，並重新分配寬度 */
+    grid-template-columns: 40px 80px auto 70px 80px 140px;
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
     border-bottom: 1px solid var(--border-color);
-    min-width: 540px; 
+    min-width: 600px; /* 增加最小寬度以容納所有欄位 */
 }
 
 /* Center align all header and column content by default */
@@ -174,7 +174,8 @@
 
 
 /* Specifically align monster info column to the left */
-.farm-header-grid > div:nth-child(2),
+/* 【修改】現在對應到第3個子元素 */
+.farm-header-grid > div:nth-child(3),
 .farm-monster-item .farm-col-info {
     text-align: left;
     justify-self: start;
@@ -218,6 +219,4 @@
     .details-grid {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
-}
-
 }
