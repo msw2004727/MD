@@ -39,7 +39,15 @@ async function handleAddFriend(friendUid, friendNickname) {
         await savePlayerData(gameState.playerId, gameState.playerData);
         
         // 刷新好友列表顯示
-        renderFriendsList();
+        if (typeof renderFriendsList === 'function') {
+            renderFriendsList();
+        }
+
+        // 自動切換到好友分頁
+        const friendsTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="friends-list-content"]');
+        if (friendsTabButton) {
+            switchTabContent('friends-list-content', friendsTabButton);
+        }
         
         // 隱藏載入中並顯示成功訊息
         hideModal('feedback-modal');
