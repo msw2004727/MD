@@ -259,17 +259,17 @@ body.light-theme {
 }
 
 /* Helper classes for element text colors (Increased Specificity) */
-.leaderboard-table .text-element-fire, .tab-button.text-element-fire { color: var(--element-fire-text); }
-.leaderboard-table .text-element-water, .tab-button.text-element-water { color: var(--element-water-text); }
-.leaderboard-table .text-element-wood, .tab-button.text-element-wood { color: var(--element-wood-text); }
-.leaderboard-table .text-element-gold, .tab-button.text-element-gold { color: var(--element-gold-text); }
-.leaderboard-table .text-element-earth, .tab-button.text-element-earth { color: var(--element-earth-text); }
-.leaderboard-table .text-element-light, .tab-button.text-element-light { color: var(--element-light-text); }
-.leaderboard-table .text-element-dark, .tab-button.text-element-dark { color: var(--element-dark-text); }
-.leaderboard-table .text-element-poison, .tab-button.text-element-poison { color: var(--element-poison-text); }
-.leaderboard-table .text-element-wind, .tab-button.text-element-wind { color: var(--element-wind-text); }
-.leaderboard-table .text-element-mix, .tab-button.text-element-mix { color: var(--element-mix-text); }
-.leaderboard-table .text-element-無, .tab-button.text-element-無 { color: var(--element-無-text); }
+.leaderboard-table .text-element-fire, .tab-button.text-element-fire, .skill-attribute-badge.text-element-fire { color: var(--element-fire-text); }
+.leaderboard-table .text-element-water, .tab-button.text-element-water, .skill-attribute-badge.text-element-water { color: var(--element-water-text); }
+.leaderboard-table .text-element-wood, .tab-button.text-element-wood, .skill-attribute-badge.text-element-wood { color: var(--element-wood-text); }
+.leaderboard-table .text-element-gold, .tab-button.text-element-gold, .skill-attribute-badge.text-element-gold { color: var(--element-gold-text); }
+.leaderboard-table .text-element-earth, .tab-button.text-element-earth, .skill-attribute-badge.text-element-earth { color: var(--element-earth-text); }
+.leaderboard-table .text-element-light, .tab-button.text-element-light, .skill-attribute-badge.text-element-light { color: var(--element-light-text); }
+.leaderboard-table .text-element-dark, .tab-button.text-element-dark, .skill-attribute-badge.text-element-dark { color: var(--element-dark-text); }
+.leaderboard-table .text-element-poison, .tab-button.text-element-poison, .skill-attribute-badge.text-element-poison { color: var(--element-poison-text); }
+.leaderboard-table .text-element-wind, .tab-button.text-element-wind, .skill-attribute-badge.text-element-wind { color: var(--element-wind-text); }
+.leaderboard-table .text-element-mix, .tab-button.text-element-mix, .skill-attribute-badge.text-element-mix { color: var(--element-mix-text); }
+.leaderboard-table .text-element-無, .tab-button.text-element-無, .skill-attribute-badge.text-element-無 { color: var(--element-無-text); }
 
 
 /* Helper classes for rarity text colors */
@@ -308,16 +308,5 @@ body {
     100% { opacity: 0; transform: translateY(-100%); }
 }
 
-/* --- 【已修改】Font Size Unification Override --- */
-/* Overrides Tailwind's text size utilities. REMOVED !important */
-.text-xs,
-.text-sm,
-.text-base,
-.text-lg,
-.text-xl,
-.text-2xl,
-.text-3xl,
-.text-4xl,
-.text-5xl {
-    font-size: 1rem;
-}
+/* --- 【已修改】移除全局字體大小覆蓋 --- */
+/* The block that overrode .text-xs, .text-sm, etc. has been removed. */
