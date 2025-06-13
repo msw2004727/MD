@@ -200,7 +200,6 @@ function initializeDOMElements() {
         officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
         announcementPlayerName: document.getElementById('announcement-player-name'),
         refreshMonsterLeaderboardBtn: document.getElementById('refresh-monster-leaderboard-btn'),
-        // 【新增】快照狀態條相關元素
         snapshotBarsContainer: document.getElementById('snapshot-bars-container'),
         snapshotHpFill: document.getElementById('snapshot-hp-fill'),
         snapshotMpFill: document.getElementById('snapshot-mp-fill'),
@@ -966,7 +965,7 @@ function renderMonsterFarm() {
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 35px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
         
         // Column 3: Monster Info
         const colInfo = document.createElement('div');
@@ -981,9 +980,8 @@ function renderMonsterFarm() {
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
         colInfo.innerHTML = `
-            <a href="#" class="monster-name-link text-rarity-${rarityKey}" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;">
-                <div class="monster-name-line1" style="font-size: 0.8em; color: var(--text-secondary);">${playerTitle}${achievement}</div>
-                <div class="monster-name-line2" style="font-weight: bold;">${elementNickname}</div>
+            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
+                <span style="color: gold; margin-right: 4px;">${playerTitle}</span><span style="color: var(--text-primary); margin-right: 4px;">${achievement}</span><span class="text-rarity-${rarityKey}">${elementNickname}</span>
             </a>`;
         
         // Column 4: Score
@@ -1003,12 +1001,12 @@ function renderMonsterFarm() {
             const duration = monster.farmStatus.trainingDuration || 3600000;
             colStatus.innerHTML = `
                 <div style="color: var(--accent-color);">修煉中</div>
-                <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
+                <div class="training-timer" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (gameState.playerData.selectedMonsterId === monster.id) {
-            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
+        } else if (gameState.playerData.selectedMonsterId === monster.id) {
+            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else {
             colStatus.textContent = '閒置中';
         }
