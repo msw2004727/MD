@@ -1,5 +1,5 @@
 // js/ui-player-modals.js
-
+//這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 function updatePlayerInfoModal(playerData, gameConfigs) {
     const body = DOMElements.playerInfoModalBody;
     if (!body || !playerData || !playerData.playerStats) {
