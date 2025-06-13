@@ -741,3 +741,24 @@ function sortAndRenderLeaderboard(tableType, dataToRender = null) {
 
 
 console.log("Game logic module loaded with updated drag-drop logic and other enhancements.");
+
+async function fetchAndDisplayMonsterLeaderboard() {
+    try {
+        showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
+        const leaderboardData = await getMonsterLeaderboard(20); // Fetch top 20
+        
+        updateGameState({ monsterLeaderboard: leaderboardData || [] });
+        
+        filterAndRenderMonsterLeaderboard(); 
+        
+        if (DOMElements.monsterLeaderboardElementTabs && DOMElements.monsterLeaderboardElementTabs.innerHTML.trim() === '') {
+            const allElements = ['all', '火', '水', '木', '金', '土', '光', '暗', '毒', '風', '混', '無'];
+            updateMonsterLeaderboardElementTabs(allElements);
+        }
+
+        hideModal('feedback-modal');
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
+    }
+}
