@@ -240,13 +240,11 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 mpCostDisplay = `${skill.mp_cost} <span class="text-[var(--danger-color)]" style="font-size:0.9em;">▸ ${effectiveMpCost}</span>`;
             }
 
-            // 【新增】屬性徽章的 HTML
             const skillTypeChar = (skill.type || '無').charAt(0);
             const elementBgVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-bg)`;
             const elementTextVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-text)`;
             const attributeBadgeHtml = `<span class="skill-attribute-badge text-element-${getElementCssClassKey(skill.type || '無')}" style="background-color: ${elementBgVar}; color: ${elementTextVar};">${skillTypeChar}</span>`;
             
-            // 【修改】技能名稱和徽章的容器
             const skillNameAndBadgeHtml = `
                 <div class="skill-name-container">
                     <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${level})</a>
@@ -285,7 +283,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 milestonesHtml += `</div>`;
             }
             
-            // 【修改】整合所有技能資訊的顯示
             return `
             <div class="skill-entry">
                 ${skillNameAndBadgeHtml}
@@ -322,6 +319,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             }
         });
     }
+    
+    // 【已修改】這裡的邏輯被更新，以符合新的雙層顯示方式
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
             const elementCssKey = getElementCssClassKey(dna.type || '無');
