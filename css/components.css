@@ -672,13 +672,13 @@ body.light-theme .leaderboard-table tr:hover td {
 
 /* Jiggle Mode Animation and Delete Button */
 @keyframes jiggle {
-    0% { transform: rotate(-1deg); }
-    50% { transform: rotate(1deg); }
-    100% { transform: rotate(-1deg); }
+    0% { transform: rotate(-2.5deg); }
+    50% { transform: rotate(2.5deg); }
+    100% { transform: rotate(-2.5deg); }
 }
 
 .jiggle-mode {
-    animation: jiggle 0.2s infinite linear;
+    animation: jiggle 0.15s infinite linear;
 }
 
 .delete-item-btn {
