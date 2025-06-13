@@ -11,7 +11,16 @@
     border: 1px solid var(--border-color);
     transition: background-color 0.3s, border-color 0.3s;
     min-width: 0;
-    overflow: hidden; /* 強制面板不能被內容撐開 */
+    /* 修改：移除 overflow: hidden，以允許子元素滾動 */
+}
+
+/* 新增：讓包含頁籤的面板可以伸展並成為 flex 容器 */
+/* 這會選中主容器中第二個 panel，也就是包含所有頁籤的那個 */
+.main-container > .panel:last-of-type {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* 佔滿剩餘空間 */
+    min-height: 0; /* 關鍵：防止 flex item 在空間不足時溢出 */
 }
 
 /* ==========================================================================
@@ -200,6 +209,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     border-radius: 6px;
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    flex-shrink: 0; /* 新增：不讓按鈕區被壓縮 */
 }
 .tab-button {
     padding: 8px 10px;
@@ -228,9 +238,11 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 .tab-content {
     display: none;
     min-width: 0;
+    overflow-y: auto; /* 修改：讓內容超長時可以滾動 */
+    flex-grow: 1; /* 修改：讓內容區塊填滿剩餘空間 */
 }
 .tab-content.active {
-    display: block;
+    display: block; /* 修改：維持 block，滾動由父層控制 */
 }
 
 #monster-leaderboard-element-tabs {
