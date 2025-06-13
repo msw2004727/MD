@@ -219,7 +219,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     border-collapse: collapse;
     font-size: 1rem;
 }
-//排行榜
 .leaderboard-table th, .leaderboard-table td {
     padding: 8px;
     text-align: left;
