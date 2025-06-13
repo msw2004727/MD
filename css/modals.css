@@ -91,6 +91,7 @@ body.light-theme #official-announcement-close-x:hover {
     animation: energy-breath 4s infinite ease-in-out;
     z-index: 10;
     display: none;
+    transform: translate(-50%, -50%);
 }
 
 @keyframes energy-breath {
@@ -255,4 +256,48 @@ body.light-theme #official-announcement-close-x:hover {
 /* Activity Log Font Size */
 #monster-activity-logs .log-entry {
     font-size: 0.75rem; /* xs */
+}
+
+/* Training Results Modal Section Styling */
+.training-result-section {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.training-result-section:last-child {
+    margin-bottom: 0;
+}
+
+.training-result-section h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin: -1rem -1rem 1rem -1rem; /* Pull header to the top edge */
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-slot);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.training-result-section ul {
+    list-style-position: inside;
+    padding-left: 0.5rem;
+}
+
+.training-result-section li {
+    margin-bottom: 0.25rem;
+}
+
+#training-growth-result h5 { /* Style for the sub-header "數值提升" */
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 1rem 0 0.5rem 0;
+    padding: 0;
+    border: none;
+    background-color: transparent;
 }
