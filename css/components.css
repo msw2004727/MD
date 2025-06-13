@@ -307,7 +307,7 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 #monster-parts-container {
     z-index: 3;
-    width: 60%; 
+    width: 60%;
     height: 75%;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -325,7 +325,7 @@ body.light-theme .leaderboard-table tr:hover td {
     width: 100%;
     height: 100%;
     border: 1px solid var(--border-color);
-    border-radius: 6px; 
+    border-radius: 6px;
     box-sizing: border-box;
     visibility: visible;
 }
