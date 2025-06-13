@@ -1,0 +1,33 @@
+{
+  "images": {
+    "snapshot": {
+      "comment": "主畫面頂部的怪獸快照區域",
+      "background": "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true",
+      "bodySilhouette": "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"
+    },
+    "placeholders": {
+      "comment": "動態生成的圖片",
+      "monsterPartDefault": "https://placehold.co/120x90/4a5568/a0aec0?text=預覽&font=noto-sans-tc"
+    },
+    "modals": {
+      "comment": "各類彈出視窗中使用的橫幅 (Banner)",
+      "announcement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
+      "synthesisSuccess": "https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true",
+      "loading": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+      "trainingStart": "https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true",
+      "trainingResults": "https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true",
+      "endTrainingEarly": "https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true",
+      "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true"
+    },
+    "cultivation": {
+      "comment": "修煉地點選擇卡片",
+      "locationGaia": "https://github.com/msw2004727/MD/blob/main/images/ZL001.png?raw=true",
+      "locationSky": "https://github.com/msw2004727/MD/blob/main/images/ZL003.png?raw=true",
+      "locationCrystal": "https://github.com/msw2004727/MD/blob/main/images/ZL002.png?raw=true"
+    },
+    "logos": {
+      "comment": "Logo 或其他圖標",
+      "loadingIcon": "https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true"
+    }
+  }
+}
