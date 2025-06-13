@@ -86,7 +86,7 @@ body.light-theme #official-announcement-close-x:hover {
     margin:20px auto;
 }
 
-/* Monster Info Modal Layout */
+/* Monster Info Modal Layout & Styles */
 .details-grid-rearranged {
     display: grid;
     grid-template-columns: 1fr;
@@ -154,16 +154,30 @@ body.light-theme #official-announcement-close-x:hover {
     border-bottom: 1px solid var(--border-color);
 }
 .skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
-.skill-name {
+
+.skill-name-container { /* 【新增】用於包裹技能名稱和徽章 */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* 8px */
+    margin-bottom: 4px;
+}
+.skill-name-link {
     font-weight: bold;
-    color: var(--accent-hover);
     font-size: 1rem;
 }
-.skill-details {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-left: 10px;
+/* 【新增】屬性徽章樣式 */
+.skill-attribute-badge {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.2;
+    display: inline-block;
 }
+.skill-details {
+    color: var(--text-secondary);
+}
+
 .monster-info-header {
     text-align: center;
     margin-bottom: 15px;
@@ -202,15 +216,4 @@ body.light-theme #official-announcement-close-x:hover {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
-}
-
-/* Other Modal Styles */
-#newbie-guide-search-input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
 }
