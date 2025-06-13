@@ -189,6 +189,20 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
+    // 【新增】獲取稱號加成的邏輯
+    let titleBuffs = {};
+    const monsterOwnerId = monster.owner_id || gameState.playerId; // 假設若無owner_id則為當前玩家
+    if (monsterOwnerId === gameState.playerId && gameState.playerData.playerStats) {
+        const stats = gameState.playerData.playerStats;
+        const equippedId = stats.equipped_title_id;
+        if (equippedId && stats.titles) {
+            const equippedTitle = stats.titles.find(t => t.id === equippedId);
+            if (equippedTitle && equippedTitle.buffs) {
+                titleBuffs = equippedTitle.buffs;
+            }
+        }
+    }
+
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
         resistancesHtml = '<ul class="list-disc list-inside text-sm">';
@@ -330,18 +344,27 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
+    // 【新增】顯示稱號加成的輔助函式
+    const getTitleBuffHtml = (statName) => {
+        const buff = titleBuffs[statName] || 0;
+        if (buff > 0) {
+            return ` <span style="color: var(--danger-color); font-size: 0.9em; margin-left: 4px;">+${buff}</span>`;
+        }
+        return '';
+    };
+
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
             <div class="details-column-left" style="display: flex; flex-direction: column;">
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
