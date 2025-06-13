@@ -13,7 +13,6 @@
     min-width: 0;
 }
 
-/* 讓包含頁籤的面板可以伸展並成為 flex 容器 */
 .main-container > .panel:last-of-type {
     display: flex;
     flex-direction: column;
@@ -244,10 +243,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     flex-grow: 1;
     min-height: 0;
     overflow: hidden;
-
-    /* 修改：使用 outline 進行強力偵錯，這個屬性不會被 overflow 裁切 */
-    outline: 3px solid red !important;
-    padding: 0.5rem;
 }
 
 #monster-leaderboard-element-tabs {
@@ -630,7 +625,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .dna-attribute-box {
     border: 2px solid;
-    border-color: currentColor; /* Border color will match the text color set by text-element-* class */
+    border-color: currentColor;
     border-radius: 6px;
     height: 32px;
     display: flex;
@@ -639,8 +634,8 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 1rem;
     font-weight: bold;
     line-height: 1;
-    color: var(--text-primary); /* Default text color */
-    background-color: var(--bg-primary); /* Default background */
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
     text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 
@@ -667,11 +662,11 @@ body.light-theme .leaderboard-table tr:hover td {
 .training-monster-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.75rem; /* Match farm list font size */
+    font-size: 0.75rem;
 }
 .training-monster-table th, .training-monster-table td {
     padding: 8px;
-    text-align: center; /* Center align all cells by default */
+    text-align: center;
     border-bottom: 1px solid var(--border-color);
     white-space: nowrap;
 }
@@ -688,7 +683,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .training-monster-table tr:hover td {
     background-color: var(--bg-slot);
 }
-.training-monster-table td:nth-child(2) { /* Monster info column */
+.training-monster-table td:nth-child(2) {
     text-align: left;
 }
 
@@ -718,12 +713,12 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* 為每一欄設定精準的寬度 */
-.farm-table th:nth-child(1), .farm-table td:nth-child(1) { width: 40px; }  /* 序號 */
-.farm-table th:nth-child(2), .farm-table td:nth-child(2) { width: 80px; }  /* 出戰 */
-.farm-table th:nth-child(3), .farm-table td:nth-child(3) { width: 190px; } /* 怪獸 */
-.farm-table th:nth-child(4), .farm-table td:nth-child(4) { width: 70px; }  /* 評價 */
-.farm-table th:nth-child(5), .farm-table td:nth-child(5) { width: 80px; }  /* 狀態 */
-.farm-table th:nth-child(6), .farm-table td:nth-child(6) { width: 140px; } /* 其他 */
+.farm-table th:nth-child(1), .farm-table td:nth-child(1) { width: 40px; }
+.farm-table th:nth-child(2), .farm-table td:nth-child(2) { width: 80px; }
+.farm-table th:nth-child(3), .farm-table td:nth-child(3) { width: 190px; }
+.farm-table th:nth-child(4), .farm-table td:nth-child(4) { width: 70px; }
+.farm-table th:nth-child(5), .farm-table td:nth-child(5) { width: 80px; }
+.farm-table th:nth-child(6), .farm-table td:nth-child(6) { width: 140px; }
 
 /* 表頭樣式 */
 .farm-table th {
