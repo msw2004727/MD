@@ -322,7 +322,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             messageHtml += `<h5 class="details-section-title">稱號效果</h5><ul style="list-style: none; padding: 0; margin: 0;">`;
             for (const [stat, value] of Object.entries(buffs)) {
                 const color = statColorMap[stat] || statColorMap.default;
-                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="color: <span class="math-inline">\{color\}; font\-weight\: 500;"\></span>{getBuffDisplayName(stat)}</span><span style="color: <span class="math-inline">\{color\}; font\-weight\: bold;"\>\+</span>{value}</span></li>`;
+                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="color: ${color}; font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: ${color}; font-weight: bold;">+${value}</span></li>`;
             }
             messageHtml += `</ul></div>`;
         }
@@ -377,8 +377,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
 
         DOMElements.feedbackModalMessage.innerHTML = `
-            <h4 class="text-xl font-bold text-center text-[var(--accent-color)] mb-2"><span class="math-inline">\{monsterDetails\.nickname \|\| '未知怪獸'\}</h4\>
-<p class\="text\-center text\-base text\-\[var\(\-\-text\-secondary\)\]"\></span>{successMessage}</p>
+            <h4 class="text-xl font-bold text-center text-[var(--accent-color)] mb-2">${monsterDetails.nickname || '未知怪獸'}</h4>
+            <p class="text-center text-base text-[var(--text-secondary)]">${successMessage}</p>
             ${discoveryMessage}
         `;
 
@@ -475,12 +475,12 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
                 <div class="battle-confirm-grid">
                     <div class="monster-confirm-details player">
                         <p class="monster-role">您的怪獸</p>
-                        <p class="monster-name text-rarity-<span class="math-inline">\{playerRarityKey\}"\></span>{playerMonster.nickname}</p>
-                        <p class="monster-score">(評價: <span class="math-inline">\{playerMonster\.score\}\)</p\>
-</div\>
-<div class\="monster\-confirm\-details opponent"\>
-<p class\="monster\-role"\>對手的怪獸</p\>
-<p class\="monster\-name text\-rarity\-</span>{opponentRarityKey}">${opponentMonster.nickname}</p>
+                        <p class="monster-name text-rarity-${playerRarityKey}">${playerMonster.nickname}</p>
+                        <p class="monster-score">(評價: ${playerMonster.score})</p>
+                    </div>
+                    <div class="monster-confirm-details opponent">
+                        <p class="monster-role">對手的怪獸</p>
+                        <p class="monster-name text-rarity-${opponentRarityKey}">${opponentMonster.nickname}</p>
                         <p class="monster-score">(評價: ${opponentMonster.score})</p>
                     </div>
                 </div>
@@ -499,7 +499,7 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
     } else if (monsterToRelease) {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monsterToRelease.rarity ? (rarityMap[monsterToRelease.rarity] || 'common') : 'common';
-        const coloredNickname = `<span class="text-rarity-<span class="math-inline">\{rarityKey\} font\-bold"\></span>{monsterToRelease.nickname}</span>`;
+        const coloredNickname = `<span class="text-rarity-${rarityKey} font-bold">${monsterToRelease.nickname}</span>`;
         const finalMessage = message.replace(`"${monsterToRelease.nickname}"`, coloredNickname);
         bodyHtml += `<p>${finalMessage}</p>`;
 
@@ -566,7 +566,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
         '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
     const colorPair = colors[primaryElement] || colors['無'];
-    return `https://placehold.co/120x90/<span class="math-inline">\{colorPair\}?text\=</span>{encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
+    return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
 function getMonsterPartImagePath(dnaTemplateId) {
@@ -916,11 +916,176 @@ async function renderFriendsList() {
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
-                        <span class="online-status <span class="math-inline">\{isOnline ? 'online' \: 'offline'\}"\></span\>
-<a href\="\#" class\="friend\-name\-link" onclick\="viewPlayerInfo\('</span>{friend.uid}'); return false;">
+                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
+                        <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
                             ${displayName}
                         </a>
                     </div>
                     <div class="friend-actions">
                         <button class="button secondary text-xs" title="送禮" disabled>🎁</button>
-                        <button class="button secondary text-xs" title="聊天"
+                        <button class="button secondary text-xs" title="聊天" disabled>💬</button>
+                    </div>
+                </div>
+            `}).join('')}
+        </div>
+    `;
+}
+
+function updateAnnouncementPlayerName(playerName) {
+    if (DOMElements.announcementPlayerName) {
+        DOMElements.announcementPlayerName.textContent = playerName || "玩家";
+    }
+}
+
+
+function getElementCssClassKey(chineseElement) {
+    const elementTypeMap = {
+        '火': 'fire', '水': 'water', '木': 'wood', '金': 'gold', '土': 'earth',
+        '光': 'light', '暗': 'dark', '毒': 'poison', '風': 'wind', '混': 'mix', '無': '無'
+    };
+    return elementTypeMap[chineseElement] || '無'; 
+}
+
+
+function renderMonsterFarm() {
+    const headersContainer = DOMElements.farmHeaders;
+    const listContainer = DOMElements.farmedMonstersList;
+
+    if (!listContainer || !headersContainer) {
+        console.error("renderMonsterFarm Error: Farm containers not found.");
+        return;
+    }
+
+    headersContainer.innerHTML = '';
+    listContainer.innerHTML = '';
+
+    const headers = [
+        { text: '#', key: 'index', sortable: false },
+        { text: '出戰', key: 'deploy', sortable: false },
+        { text: '怪獸', key: 'nickname', sortable: true },
+        { text: '評價', key: 'score', sortable: true },
+        { text: '狀態', key: 'farmStatus', sortable: true },
+        { text: '操作', key: 'actions', sortable: false }
+    ];
+
+    headers.forEach(header => {
+        const headerDiv = document.createElement('div');
+        headerDiv.textContent = header.text;
+        if (header.sortable) {
+            headerDiv.classList.add('sortable');
+            headerDiv.dataset.sortKey = header.key;
+            if (gameState.farmSortConfig && gameState.farmSortConfig.key === header.key) {
+                const arrow = document.createElement('span');
+                arrow.className = 'sort-arrow';
+                arrow.textContent = gameState.farmSortConfig.order === 'desc' ? ' ▼' : ' ▲';
+                headerDiv.appendChild(arrow);
+            }
+        }
+        headersContainer.appendChild(headerDiv);
+    });
+    
+    const monsters = gameState.playerData?.farmedMonsters || [];
+
+    if (monsters.length === 0) {
+        listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">您的農場空空如也，快去組合新的怪獸吧！</p>`;
+        return;
+    }
+    
+    const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
+    monsters.sort((a, b) => {
+        let valA = a[sortConfig.key] || 0;
+        let valB = b[sortConfig.key] || 0;
+        if (typeof valA === 'string') {
+            return sortConfig.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            return sortConfig.order === 'asc' ? valA - valB : valB - valA;
+        }
+    });
+
+    monsters.forEach((monster, index) => {
+        const monsterItem = document.createElement('div');
+        monsterItem.className = 'farm-monster-item';
+        if (gameState.selectedMonsterId === monster.id) {
+            monsterItem.classList.add('selected');
+        }
+
+        // Column 1: Index
+        const colIndex = document.createElement('div');
+        colIndex.className = 'farm-col farm-col-index';
+        colIndex.textContent = index + 1;
+        
+        // Column 2: Deploy Button
+        const colDeploy = document.createElement('div');
+        colDeploy.className = 'farm-col farm-col-deploy';
+        const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
+        
+        // Column 3: Monster Info
+        const colInfo = document.createElement('div');
+        colInfo.className = 'farm-col farm-col-info';
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const elementNickname = monster.custom_element_nickname || 
+                                (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+        const achievement = monster.title || '';
+        const fullNickname = monster.nickname || '';
+        const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
+
+        colInfo.innerHTML = `
+            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="color: var(--text-primary); text-decoration: none; font-weight: normal;">
+                <div class="monster-name-line1" style="font-size: 0.8em; color: var(--text-secondary);">${playerTitle}${achievement}</div>
+                <div class="monster-name-line2">${elementNickname}</div>
+            </a>`;
+        
+        // Column 4: Score
+        const colScore = document.createElement('div');
+        colScore.className = 'farm-col farm-col-score';
+        colScore.textContent = monster.score || 0;
+        colScore.style.color = 'var(--success-color)';
+
+        // Column 5: Status
+        const colStatus = document.createElement('div');
+        colStatus.className = 'farm-col farm-col-status';
+        colStatus.style.flexDirection = 'column';
+        
+        if (monster.farmStatus?.isTraining) {
+            const startTime = monster.farmStatus.trainingStartTime || Date.now();
+            const duration = monster.farmStatus.trainingDuration || 3600000;
+            colStatus.innerHTML = `
+                <div style="color: var(--accent-color);">修煉中</div>
+                <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
+            `;
+        } else if (monster.hp < monster.initial_max_hp * 0.25) {
+            colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
+        } else if (gameState.playerData.selectedMonsterId === monster.id) {
+            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
+        } else {
+            colStatus.textContent = '閒置中';
+        }
+        
+        // Column 6: Actions
+        const colActions = document.createElement('div');
+        colActions.className = 'farm-col farm-col-actions';
+        let actionsHTML = '';
+        if (monster.farmStatus?.isTraining) {
+            const startTime = monster.farmStatus.trainingStartTime || Date.now();
+            const duration = monster.farmStatus.trainingDuration || 3600000;
+            actionsHTML += `<button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>`;
+        } else {
+            actionsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
+        }
+        actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
+        colActions.innerHTML = actionsHTML;
+        
+        monsterItem.appendChild(colIndex);
+        monsterItem.appendChild(colDeploy);
+        monsterItem.appendChild(colInfo);
+        monsterItem.appendChild(colScore);
+        monsterItem.appendChild(colStatus);
+        monsterItem.appendChild(colActions);
+        
+        listContainer.appendChild(monsterItem);
+    });
+}
+
+
+console.log("UI core module loaded.");
