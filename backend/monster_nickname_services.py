@@ -90,11 +90,24 @@ def update_monster_custom_element_nickname_service(
         monster_to_update["custom_element_nickname"] = processed_nickname
         element_nickname_part_for_full_name = processed_nickname
 
-    player_current_title = player_data.get("playerStats", {}).get("titles", DEFAULT_GAME_CONFIGS_FOR_NICKNAME["titles"])[0] # type: ignore
+    # 【修改】更安全的獲取玩家稱號邏輯
+    player_stats = player_data.get("playerStats", {})
+    player_current_title_name = "新手"  # 預設值
+    
+    equipped_id = player_stats.get("equipped_title_id")
+    owned_titles = player_stats.get("titles", [])
+
+    if equipped_id:
+        equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
+        if equipped_title_obj:
+            player_current_title_name = equipped_title_obj.get("name", "新手")
+    elif owned_titles and isinstance(owned_titles[0], dict):
+        player_current_title_name = owned_titles[0].get("name", "新手")
+
     monster_achievement = monster_to_update.get("title", "新秀") # type: ignore
 
     monster_to_update["nickname"] = _generate_monster_full_nickname(
-        player_current_title, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
+        player_current_title_name, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
     )
 
     player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
