@@ -13,7 +13,22 @@ function updateAllTimers() {
         const totalDuration = Math.floor(duration / 1000);
         const displayTime = Math.min(elapsedTime, totalDuration);
 
-        timerEl.textContent = `(${displayTime} / ${totalDuration}s)`;
+        // 找到對應的狀態文字元素 (即計時器前面的那個元素)
+        const statusTextEl = timerEl.previousElementSibling;
+
+        if (displayTime >= totalDuration) {
+            // 修煉時間已滿
+            if (statusTextEl) {
+                statusTextEl.textContent = '已完成';
+                statusTextEl.style.color = 'var(--success-color)';
+                statusTextEl.style.fontWeight = 'bold';
+            }
+            // 隱藏計時器文字
+            timerEl.style.display = 'none';
+        } else {
+            // 修煉仍在進行，更新計時器
+            timerEl.textContent = `(${displayTime} / ${totalDuration}s)`;
+        }
     });
 }
 
