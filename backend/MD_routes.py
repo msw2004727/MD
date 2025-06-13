@@ -69,7 +69,7 @@ def _get_authenticated_user_id():
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
 
-# --- 新增：稱號授予檢查輔助函式 ---
+# --- 稱號授予檢查輔助函式 ---
 def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfigs) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
     player_stats = player_data.get("playerStats", {})
     if not player_stats:
