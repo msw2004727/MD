@@ -46,9 +46,10 @@ async function initializeGame() {
             return;
         }
 
-        const [configs, playerData] = await Promise.all([
+        const [configs, playerData, assetPaths] = await Promise.all([
             getGameConfigs(),
-            getPlayerData(gameState.currentUser.uid)
+            getPlayerData(gameState.currentUser.uid),
+            fetch('./assets.json').then(res => res.json())
         ]);
 
         if (!configs || Object.keys(configs).length === 0) {
@@ -57,13 +58,17 @@ async function initializeGame() {
         if (!playerData) {
             throw new Error("無法獲取玩家遊戲資料。");
         }
+        if (!assetPaths) {
+            throw new Error("無法獲取遊戲圖片資源設定。");
+        }
         
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
+            assetPaths: assetPaths,
             playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
         });
-        console.log("Game configs and player data loaded and saved to gameState.");
+        console.log("Game configs, player data, and asset paths loaded and saved to gameState.");
 
         if (DOMElements.maxCultivationTimeText && configs.value_settings) {
             DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
