@@ -205,8 +205,8 @@ body.light-theme #official-announcement-close-x:hover {
     margin-bottom: 15px;
 }
 .monster-info-name-styled {
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: normal;
     display: inline-block;
 }
 .ai-generated-text {
@@ -249,4 +249,14 @@ body.light-theme #official-announcement-close-x:hover {
     border: 1px solid var(--border-color);
     background-color: var(--bg-primary);
     color: var(--text-primary);
+}
+
+/* Skill Milestone Font Size */
+.skill-entry div[style*="border-top"] div {
+    font-size: 0.75rem !important; /* xs */
+}
+
+/* Activity Log Font Size */
+#monster-activity-logs .log-entry {
+    font-size: 0.75rem; /* xs */
 }
