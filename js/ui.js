@@ -621,28 +621,29 @@ function updateMonsterSnapshot(monster) {
 
         DOMElements.snapshotAchievementTitle.style.display = 'none';
 
+        //【修改】這裡的邏輯被更新以符合新的HTML結構
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const elementNickname = monster.custom_element_nickname || 
                                 (gameState.gameConfigs.element_nicknames ? 
                                 (gameState.gameConfigs.element_nicknames[primaryElement] || primaryElement) : primaryElement);
 
-        DOMElements.snapshotNickname.textContent = elementNickname;
+        // 更新底部的名稱和評價
+        DOMElements.snapshotNickname.textContent = monster.nickname || '-';
         DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
+        DOMElements.snapshotEvaluation.textContent = `評價: ${monster.score || 0}`;
+        DOMElements.snapshotEvaluation.style.color = 'var(--success-color)';
 
+        // 更新右上角的戰績
         const resume = monster.resume || { wins: 0, losses: 0 };
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: ${resume.wins}</span><span>敗: ${resume.losses}</span>`;
-        DOMElements.snapshotEvaluation.textContent = `評價: ${monster.score || 0}`;
 
+        // 更新HP和MP狀態條
         if (DOMElements.snapshotBarsContainer && DOMElements.snapshotHpFill && DOMElements.snapshotMpFill) {
-            toggleElementDisplay(DOMElements.snapshotBarsContainer, true);
+            toggleElementDisplay(DOMElements.snapshotBarsContainer, true, 'flex'); // 使用flex
             const hpPercent = monster.initial_max_hp > 0 ? (monster.hp / monster.initial_max_hp) * 100 : 0;
             const mpPercent = monster.initial_max_mp > 0 ? (monster.mp / monster.initial_max_mp) * 100 : 0;
             DOMElements.snapshotHpFill.style.width = `${hpPercent}%`;
             DOMElements.snapshotMpFill.style.width = `${mpPercent}%`;
-        }
-
-        if (DOMElements.snapshotMainContent) {
-            DOMElements.snapshotMainContent.innerHTML = '';
         }
 
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
@@ -991,8 +992,6 @@ function renderMonsterFarm() {
         return;
     }
     
-    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
         let valA = a[sortConfig.key] || 0;
@@ -1018,11 +1017,11 @@ function renderMonsterFarm() {
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        // 【修改】按鈕文字修改
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
         
         const colInfo = document.createElement('div');
         colInfo.className = 'farm-col farm-col-info';
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const elementNickname = monster.custom_element_nickname || 
@@ -1031,7 +1030,6 @@ function renderMonsterFarm() {
         const fullNickname = monster.nickname || '';
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
-        // 【修改】怪獸名稱顏色和結構
         colInfo.innerHTML = `
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
                 <span class="text-rarity-${rarityKey}">${playerTitle}</span><span style="color: var(--text-primary);">${achievement}</span><span style="color: gold;">${elementNickname}</span>
@@ -1046,7 +1044,6 @@ function renderMonsterFarm() {
         colStatus.className = 'farm-col farm-col-status';
         colStatus.style.flexDirection = 'column';
         
-        // 【修改】狀態顯示優先級邏輯
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
@@ -1054,10 +1051,10 @@ function renderMonsterFarm() {
                 <div style="color: var(--accent-color);">修煉中</div>
                 <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (monster.hp < monster.initial_max_hp * 0.25) {
-            colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
         } else if (gameState.playerData.selectedMonsterId === monster.id) {
             colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
+        } else if (monster.hp < monster.initial_max_hp * 0.25) {
+            colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
         } else {
             colStatus.textContent = '閒置中';
         }
