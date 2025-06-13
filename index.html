@@ -175,8 +175,9 @@
                     <div id="friends-search-results-area" class="mb-4">
                         </div>
                     
-                    <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
+                    <div class="panel-title-container" style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-start; border-bottom: none; margin-bottom: 5px;">
                          <h2 class="panel-title dna-panel-title">🧑‍🤝‍🧑 好友列表</h2>
+                         <button id="refresh-friends-list-btn" class="button secondary text-xs" title="刷新列表" style="padding: 4px 8px; line-height: 1; font-size: 1rem; min-width: auto;" onclick="if(typeof renderFriendsList === 'function') renderFriendsList()">🔄</button>
                     </div>
                     <div id="friends-list-display-area" class="mt-2">
                         <p class="text-center text-sm text-[var(--text-secondary)] py-4">好友列表空空如也，快去搜尋並新增好友吧！</p>
