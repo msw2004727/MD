@@ -1010,15 +1010,19 @@ function renderMonsterFarm() {
             monsterItem.classList.add('selected');
         }
 
+        // Column 1: Index
         const colIndex = document.createElement('div');
         colIndex.className = 'farm-col farm-col-index';
         colIndex.textContent = index + 1;
         
+        // Column 2: Deploy Button
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '出戰'}</button>`;
+        // 【修改】按鈕文字修改
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
         
+        // Column 3: Monster Info
         const colInfo = document.createElement('div');
         colInfo.className = 'farm-col farm-col-info';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -1030,20 +1034,24 @@ function renderMonsterFarm() {
         const fullNickname = monster.nickname || '';
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
+        // 【修改】怪獸名稱顏色和結構
         colInfo.innerHTML = `
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
-                <span class="text-rarity-${rarityKey}">${playerTitle}</span><span style="color: var(--text-primary);">${achievement}</span><span style="color: gold;">${elementNickname}</span>
+                <span style="color: gold;">${playerTitle}</span><span style="color: var(--text-primary);">${achievement}</span><span class="text-rarity-${rarityKey}">${elementNickname}</span>
             </a>`;
         
+        // Column 4: Score
         const colScore = document.createElement('div');
         colScore.className = 'farm-col farm-col-score';
         colScore.textContent = monster.score || 0;
         colScore.style.color = 'var(--success-color)';
 
+        // Column 5: Status
         const colStatus = document.createElement('div');
         colStatus.className = 'farm-col farm-col-status';
-        colStatus.style.flexDirection = 'column';
+        colStatus.style.flexDirection = 'column'; // 讓內容可以垂直排列
         
+        // 【修改】狀態顯示優先級邏輯
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
@@ -1051,14 +1059,15 @@ function renderMonsterFarm() {
                 <div style="color: var(--accent-color);">修煉中</div>
                 <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (gameState.playerData.selectedMonsterId === monster.id) {
-            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
+        } else if (gameState.playerData.selectedMonsterId === monster.id) {
+            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else {
             colStatus.textContent = '閒置中';
         }
         
+        // Column 6: Actions
         const colActions = document.createElement('div');
         colActions.className = 'farm-col farm-col-actions';
         let actionsHTML = '';
