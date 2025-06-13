@@ -495,6 +495,12 @@ body.light-theme .leaderboard-table tr:hover td {
     pointer-events: auto;
 }
 
+@media (max-width: 767px) {
+    #snapshot-bars-container {
+        width: 50px;
+    }
+}
+
 /* Cultivation Location Selection */
 .cultivation-locations-container {
     display: grid;
