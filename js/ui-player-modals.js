@@ -22,37 +22,19 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
             let buffsHtml = '';
             if (title.buffs && Object.keys(title.buffs).length > 0) {
-                // 建立一個更完整的翻譯對照表
                 const statDisplayName = {
-                    hp: 'HP',
-                    mp: 'MP',
-                    attack: '攻擊',
-                    defense: '防禦',
-                    speed: '速度',
-                    crit: '爆擊率',
-                    evasion: '閃避率',
-                    cultivation_item_find_chance: '修煉物品發現機率',
-                    cultivation_exp_gain: '修煉經驗提升',
-                    cultivation_time_reduction: '修煉時間縮短',
-                    score_gain_boost: '積分獲取提升',
-                    elemental_damage_boost: '元素傷害提升',
-                    poison_damage_boost: '毒系傷害提升',
-                    leech_skill_effect: '吸血效果提升',
-                    mp_regen_per_turn: 'MP每回合恢復',
-                    dna_return_rate_on_disassemble: '分解DNA返還率',
-                    fire_resistance: '火系抗性',
-                    water_resistance: '水系抗性',
-                    wood_resistance: '木系抗性',
-                    gold_resistance: '金系抗性',
-                    earth_resistance: '土系抗性',
-                    light_resistance: '光系抗性',
-                    dark_resistance: '暗系抗性'
+                    hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
+                    cultivation_item_find_chance: '修煉物品發現機率', cultivation_exp_gain: '修煉經驗提升',
+                    cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
+                    elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
+                    leech_skill_effect: '吸血效果提升', mp_regen_per_turn: 'MP每回合恢復',
+                    dna_return_rate_on_disassemble: '分解DNA返還率', fire_resistance: '火系抗性',
+                    water_resistance: '水系抗性', wood_resistance: '木系抗性', gold_resistance: '金系抗性',
+                    earth_resistance: '土系抗性', light_resistance: '光系抗性', dark_resistance: '暗系抗性'
                 };
-
                 buffsHtml = '<div class="title-buffs" style="font-size: 0.85em; color: var(--success-color); margin-top: 5px;">效果：';
-                // 新增邏輯：如果值是小於1的小數，則轉為百分比顯示
                 buffsHtml += Object.entries(title.buffs).map(([stat, value]) => {
-                    const name = statDisplayName[stat] || stat; // 如果找不到翻譯，則顯示原key
+                    const name = statDisplayName[stat] || stat;
                     const displayValue = (value > 0 && value < 1) ? `+${value * 100}%` : `+${value}`;
                     return `${name} ${displayValue}`;
                 }).join('，');
@@ -72,40 +54,11 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         }).join('');
     }
 
-
     let achievementsHtml = '<p>尚無成就</p>';
     if (stats.achievements && stats.achievements.length > 0) {
         achievementsHtml = `<ul class="list-disc list-inside ml-1 text-sm">${stats.achievements.map(ach => `<li>${ach}</li>`).join('')}</ul>`;
     }
-
-    let ownedMonstersHtml = '<p>尚無怪獸</p>';
-    if (playerData.farmedMonsters && playerData.farmedMonsters.length > 0) {
-        const monsters = playerData.farmedMonsters;
-        const previewLimit = 5;
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-
-        let previewHtml = monsters.slice(0, previewLimit).map(m => {
-            const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-            return `<li><a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">${m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
-        }).join('');
-
-        let moreMonstersHtml = '';
-        if (monsters.length > previewLimit) {
-            moreMonstersHtml = `<div id="more-monsters-list" style="display:none;">${
-                monsters.slice(previewLimit).map(m => {
-                    const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
-                    return `<li><a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">${m.nickname}</a> <span class="monster-score">評價: ${m.score || 0}</span></li>`;
-                }).join('')
-            }</div>`;
-        }
-
-        ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
-
-        if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${playerData.farmedMonsters.length - 5}隻)...</button>`;
-        }
-    }
-
+    
     const medalsHtml = stats.medals > 0 ? `${'🥇'.repeat(Math.min(stats.medals, 5))} (${stats.medals})` : '無';
 
     body.innerHTML = `
@@ -136,22 +89,107 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             </div>
         </div>
         <div id="player-monsters-section" class="details-section mt-3">
-            <h5 class="details-section-title">持有怪獸 (共 ${playerData.farmedMonsters.length || 0} 隻)</h5>
-            ${ownedMonstersHtml}
+             <h5 class="details-section-title">持有怪獸 (共 ${playerData.farmedMonsters.length || 0} 隻)</h5>
+             <div id="player-monsters-table-container"></div>
         </div>
         <p class="creation-time-centered mt-3">上次存檔時間: ${new Date(playerData.lastSave * 1000).toLocaleString()}</p>
     `;
+    
+    // 全新的怪獸列表渲染邏輯
+    const monsters = playerData.farmedMonsters || [];
+    const container = body.querySelector('#player-monsters-table-container');
+    
+    if (monsters.length > 0) {
+        let sortConfig = { key: 'score', order: 'desc' }; // 預設排序
 
-    const toggleBtn = body.querySelector('#toggle-monster-list-btn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            const moreList = body.querySelector('#more-monsters-list');
-            const isHidden = moreList.style.display === 'none';
-            moreList.style.display = isHidden ? 'block' : 'none';
-            toggleBtn.textContent = isHidden ? '收合列表' : `顯示更多 (${playerData.farmedMonsters.length - 5}隻)...`;
+        const renderPlayerMonstersTable = () => {
+            // -- 排序邏輯 --
+            monsters.sort((a, b) => {
+                let valA, valB;
+                if (sortConfig.key === 'win_rate') {
+                    const resumeA = a.resume || { wins: 0, losses: 0 };
+                    const totalA = resumeA.wins + resumeA.losses;
+                    valA = totalA > 0 ? resumeA.wins / totalA : 0;
+                    
+                    const resumeB = b.resume || { wins: 0, losses: 0 };
+                    const totalB = resumeB.wins + resumeB.losses;
+                    valB = totalB > 0 ? resumeB.wins / totalB : 0;
+                } else {
+                    valA = a[sortConfig.key] || 0;
+                    valB = b[sortConfig.key] || 0;
+                }
+
+                if (typeof valA === 'string') {
+                    return sortConfig.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                }
+                return sortConfig.order === 'asc' ? valA - valB : valB - valA;
+            });
+
+            // -- 渲染邏輯 --
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const monsterRowsHtml = monsters.map(m => {
+                 const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
+                 const resume = m.resume || { wins: 0, losses: 0 };
+                 const totalGames = resume.wins + resume.losses;
+                 const winRate = totalGames > 0 ? ((resume.wins / totalGames) * 100).toFixed(1) + '%' : 'N/A';
+
+                 return `
+                    <div class="player-monster-row">
+                        <div class="monster-name-cell">
+                            <a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">
+                                ${m.nickname}
+                            </a>
+                        </div>
+                        <div class="monster-score-cell">${m.score || 0}</div>
+                        <div class="monster-winrate-cell">${winRate}</div>
+                    </div>
+                 `;
+            }).join('');
+            
+            container.innerHTML = `
+                <div class="player-monsters-table">
+                    <div class="player-monsters-header">
+                        <div class="sortable-header" data-sort-key="nickname">怪獸</div>
+                        <div class="sortable-header" data-sort-key="score">評價</div>
+                        <div class="sortable-header" data-sort-key="win_rate">勝率</div>
+                    </div>
+                    <div class="player-monsters-body">
+                        ${monsterRowsHtml}
+                    </div>
+                </div>
+            `;
+            
+            // 更新表頭排序指示箭頭
+            container.querySelectorAll('.sortable-header').forEach(header => {
+                header.classList.remove('asc', 'desc');
+                if (header.dataset.sortKey === sortConfig.key) {
+                    header.classList.add(sortConfig.order);
+                }
+            });
+        };
+        
+        // 初始渲染
+        renderPlayerMonstersTable();
+
+        // 綁定點擊事件
+        container.addEventListener('click', (e) => {
+            const header = e.target.closest('.sortable-header');
+            if (!header) return;
+
+            const newKey = header.dataset.sortKey;
+            if (sortConfig.key === newKey) {
+                sortConfig.order = sortConfig.order === 'desc' ? 'asc' : 'desc';
+            } else {
+                sortConfig.key = newKey;
+                sortConfig.order = 'desc'; // 切換欄位時預設降序
+            }
+            renderPlayerMonstersTable();
         });
+    } else {
+        container.innerHTML = '<p>尚無怪獸</p>';
     }
 }
+
 
 async function viewPlayerInfo(playerId) {
     if (!playerId) return;
