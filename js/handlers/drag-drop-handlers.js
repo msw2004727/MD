@@ -19,26 +19,26 @@ function initializeDragDropEventHandlers() {
 
     containers.forEach(zone => {
         if (zone) {
-            // 拖曳事件
+            // Drag events (主要用於桌面滑鼠)
             zone.addEventListener('dragstart', handleDragStart);
             zone.addEventListener('dragend', handleDragEnd);
             zone.addEventListener('dragover', handleDragOver);
             zone.addEventListener('dragleave', handleDragLeave);
             zone.addEventListener('drop', handleDrop);
 
-            // 長按與刪除事件 (滑鼠)
+            // 滑鼠事件 (用於長按)
             zone.addEventListener('mousedown', handleItemInteractionStart);
             zone.addEventListener('mouseup', handleItemInteractionEnd);
             zone.addEventListener('mouseleave', handleItemInteractionEnd);
-            zone.addEventListener('mousemove', handleItemInteractionEnd);
+            zone.addEventListener('mousemove', handleItemInteractionEnd); // 滑鼠移動會取消長按計時
             
-            // 長按與刪除事件 (觸控)
-            zone.addEventListener('touchstart', handleItemInteractionStart, { passive: true });
+            // 觸控事件 (用於長按與阻止滾動)
+            zone.addEventListener('touchstart', handleItemInteractionStart, { passive: false });
             zone.addEventListener('touchend', handleItemInteractionEnd);
             zone.addEventListener('touchcancel', handleItemInteractionEnd);
-            zone.addEventListener('touchmove', handleItemInteractionEnd);
-            
-            // 點擊事件 (用於刪除按鈕和單擊移動)
+            zone.addEventListener('touchmove', handleTouchMove, { passive: false }); // 使用新的專用觸控移動處理器
+
+            // 點擊事件 (用於單擊移動和刪除按鈕)
             zone.addEventListener('click', handleItemClick);
         }
     });
@@ -74,7 +74,6 @@ function enterJiggleMode() {
             if (item.id === 'inventory-delete-slot') return;
             
             item.classList.add('jiggle-mode');
-            // 移除 item.draggable = false; 允許在抖動時拖曳
 
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-item-btn';
@@ -91,7 +90,6 @@ function exitJiggleMode() {
     
     document.querySelectorAll('.jiggle-mode').forEach(item => {
         item.classList.remove('jiggle-mode');
-        // 移除 item.draggable = true; 因為我們不再改變它
     });
 
     document.querySelectorAll('.delete-item-btn').forEach(btn => {
@@ -113,13 +111,26 @@ function handleItemInteractionStart(event) {
     }, LONG_PRESS_DURATION);
 }
 
+// 修改：將 mouseup/touchend/mouseleave/touchcancel 的邏輯統一
 function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
 }
 
-// --- 點擊事件處理 (合併刪除與單擊移動) ---
+// 新增：專門處理 touchmove 的函數
+function handleTouchMove(event) {
+    // 只要手指移動，就取消長按計時器
+    clearTimeout(longPressTimer);
+    
+    // 如果觸控的目標是可拖曳的物品，就阻止瀏覽器的預設滾動行為
+    // 這是讓拖曳在手機上生效的關鍵
+    if (event.target.closest('.dna-item[draggable="true"], .dna-slot[draggable="true"]')) {
+       event.preventDefault();
+    }
+}
+
+
+// --- 點擊事件處理 ---
 async function handleItemClick(event) {
-    // 處理刪除按鈕點擊
     if (event.target.classList.contains('delete-item-btn')) {
         event.stopPropagation();
         
@@ -157,10 +168,9 @@ async function handleItemClick(event) {
             await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
         });
-        return; // 處理完刪除後結束
+        return; 
     }
 
-    // 處理單擊移動 (如果不在抖動模式)
     if (!isJiggleModeActive) {
         const itemElement = event.target.closest('.dna-item.occupied, .dna-slot.occupied');
         if (!itemElement) return;
@@ -175,16 +185,14 @@ async function handleItemClick(event) {
 
 // --- 拖放事件處理 ---
 function handleDragStart(event) {
-    // 如果開始拖曳，就清除長按計時器
     handleItemInteractionEnd();
-    
+
     const target = event.target.closest('.dna-item.occupied, .dna-slot.occupied, .temp-backpack-slot.occupied');
     if (!target) {
         event.preventDefault();
         return;
     }
 
-    // 如果是從抖動模式開始拖曳，先退出抖動模式
     if (isJiggleModeActive) {
         exitJiggleMode();
     }
