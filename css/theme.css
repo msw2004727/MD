@@ -308,5 +308,17 @@ body {
     100% { opacity: 0; transform: translateY(-100%); }
 }
 
+/* Breathing Icon Animation */
+@keyframes energy-breath {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.4;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
 /* --- 【已修改】移除全局字體大小覆蓋 --- */
 /* The block that overrode .text-xs, .text-sm, etc. has been removed. */
