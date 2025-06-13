@@ -320,32 +320,49 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         });
     }
     
-    // 【已修改】這裡的邏輯被更新，以符合新的雙層顯示方式
+    // 【修改】這裡的邏輯被更新，以符合新的單一區塊、垂直排列方式
     const dnaItemsHtml = dnaSlots.map(dna => {
         if (dna) {
+            const rarityKey = (dna.rarity || 'common').toLowerCase().replace('普通','common').replace('稀有','rare').replace('菁英','elite').replace('傳奇','legendary').replace('神話','mythical');
             const elementCssKey = getElementCssClassKey(dna.type || '無');
             const elementChar = (dna.type || '無').charAt(0);
+            
+            // 手動組合樣式以符合新設計
+            const boxStyle = `
+                background-color: var(--element-${elementCssKey}-bg);
+                border: 1px solid var(--element-${elementCssKey}-text);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+                text-align: center;
+            `;
+
+            const nameStyle = `
+                color: var(--rarity-${rarityKey}-text);
+                font-weight: bold;
+                flex-grow: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+
+            const charStyle = `
+                color: var(--element-${elementCssKey}-text);
+                font-weight: bold;
+                line-height: 1;
+            `;
+
             return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item occupied" data-dna-ref-id="${dna.id}">
-                        <span class="dna-name-text">${dna.name}</span>
-                    </div>
-                    <div class="dna-attribute-box text-element-${elementCssKey}">
-                        ${elementChar}
-                    </div>
+                <div class="dna-item occupied" data-dna-ref-id="${dna.id}" style="${boxStyle}">
+                    <span class="dna-name-text" style="${nameStyle}">${dna.name}</span>
+                    <span class="dna-attribute-char" style="${charStyle}">${elementChar}</span>
                 </div>`;
         } else {
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item empty">
-                        <span class="dna-name-text">無</span>
-                    </div>
-                    <div class="dna-attribute-box empty">
-                        -
-                    </div>
-                </div>`;
+            // 空白格子的樣式維持不變
+            return `<div class="dna-item empty"><span>無</span></div>`;
         }
     }).join('');
+
 
     constituentDnaHtml = `
         <div class="details-section">
@@ -417,13 +434,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
 
-    detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
-        const dnaId = el.dataset.dnaRefId;
-        const dnaTemplate = gameState.gameConfigs?.dna_fragments.find(d => d.id === dnaId);
-        if (dnaTemplate) {
-            applyDnaItemStyle(el, dnaTemplate);
-        }
-    });
+    // 【修改】由於我們手動處理了樣式，不再需要對這些特定項目呼叫 applyDnaItemStyle
+    // detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
+    //     const dnaId = el.dataset.dnaRefId;
+    //     const dnaTemplate = gameState.gameConfigs?.dna_fragments.find(d => d.id === dnaId);
+    //     if (dnaTemplate) {
+    //         applyDnaItemStyle(el, dnaTemplate);
+    //     }
+    // });
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
