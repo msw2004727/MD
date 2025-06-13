@@ -617,48 +617,44 @@ body.light-theme .leaderboard-table tr:hover td {
     animation: jiggle 0.15s infinite;
 }
 
-/* DNA Composition in Modal Styles */
+/* === DNA Composition in Modal Styles (MODIFIED) === */
 .dna-composition-item-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem; /* 4px */
-    align-items: stretch;
+    position: relative; /* Make it a positioning context */
+    display: block; /* Remove flexbox behavior */
+    min-height: 50px;
 }
 
-.dna-attribute-box {
-    border: 2px solid;
-    border-color: currentColor;
-    border-radius: 6px;
-    height: 32px;
+/* Main DNA box for the name */
+.dna-composition-item-wrapper .dna-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    font-weight: bold;
-    line-height: 1;
-    color: var(--text-primary);
-    background-color: var(--bg-primary);
-    text-shadow: 0 0 4px rgba(0,0,0,0.5);
+    width: 100%;
+    height: 100%;
+    min-height: 50px; /* Ensure it has height */
+    padding: 8px;
+    padding-right: 30px; /* Add padding to avoid text overlapping with the attribute box */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
+    text-align: center;
 }
 
-.dna-attribute-box.empty {
-    border-color: var(--border-color);
-    color: var(--text-secondary);
-    background-color: var(--bg-slot);
+/* The attribute box (the single character) */
+.dna-composition-item-wrapper .dna-attribute-box {
+    position: absolute; /* Position it relative to the wrapper */
+    bottom: 4px;
+    right: 4px;
+    width: 24px;   /* Make it a small square */
+    height: 24px;
+    font-size: 0.9rem; /* Adjust font size */
+    line-height: 24px; /* Center text vertically */
+    border-radius: 4px; /* Slightly rounded corners */
+    border-width: 1px; /* Thinner border */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+/* ======================================================= */
 
-/* Element-specific background colors */
-.dna-attribute-box.text-element-fire { background-color: var(--element-fire-bg); }
-.dna-attribute-box.text-element-water { background-color: var(--element-water-bg); }
-.dna-attribute-box.text-element-wood { background-color: var(--element-wood-bg); }
-.dna-attribute-box.text-element-gold { background-color: var(--element-gold-bg); }
-.dna-attribute-box.text-element-earth { background-color: var(--element-earth-bg); }
-.dna-attribute-box.text-element-light { background-color: var(--element-light-bg); }
-.dna-attribute-box.text-element-dark { background-color: var(--element-dark-bg); }
-.dna-attribute-box.text-element-poison { background-color: var(--element-poison-bg); }
-.dna-attribute-box.text-element-wind { background-color: var(--element-wind-bg); }
-.dna-attribute-box.text-element-mix { background-color: var(--element-mix-bg); }
-.dna-attribute-box.text-element-無 { background-color: var(--element-無-bg); }
 
 /* This is the OLD table style for training monsters. It will be replaced. */
 .training-monster-table {
