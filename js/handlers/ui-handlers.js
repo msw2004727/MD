@@ -5,15 +5,12 @@ function initializeUIEventHandlers() {
     handleAuthForms();
     handleTopNavButtons();
     handleTabSwitching();
-    handleModalCloseButtons();
+    handleModalCloseButtons(); // This function will be modified
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
     
-    // 移除不正確的直接呼叫，改為使用事件委派監聽
-    // handleSkillLinkClick(); // <- 移除此行
-
-    // 新增：使用事件委派來處理動態生成的技能連結點擊
+    // 使用事件委派來處理動態生成的技能連結點擊
     document.body.addEventListener('click', function(event) {
         if (event.target && event.target.matches('.skill-name-link')) {
             handleSkillLinkClick(event);
@@ -160,9 +157,11 @@ function handleTabSwitching() {
 }
 
 function handleModalCloseButtons() {
-    document.querySelectorAll('.modal-close').forEach(button => {
-        button.addEventListener('click', () => {
-            const modalId = button.dataset.modalId || button.closest('.modal')?.id;
+    // 使用事件委派來處理所有 modal 的關閉按鈕
+    document.body.addEventListener('click', (event) => {
+        const closeButton = event.target.closest('.modal-close');
+        if (closeButton) {
+            const modalId = closeButton.dataset.modalId || closeButton.closest('.modal')?.id;
             if (modalId) {
                 if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
                     showModal('reminder-modal');
@@ -170,10 +169,10 @@ function handleModalCloseButtons() {
                     hideModal(modalId);
                 }
             }
-        });
+        }
     });
     
-    // 將提醒視窗的按鈕事件也歸類到此
+    // 提醒視窗的按鈕事件保持不變，因為它們是靜態的
     if (DOMElements.reminderConfirmCloseBtn) DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
         hideModal('reminder-modal');
         hideModal('training-results-modal');
