@@ -8,6 +8,7 @@ function initializeGameInteractionEventHandlers() {
     // 綁定其他互動事件
     handleDnaDrawModal();
     handleFriendAndPlayerInteractions();
+    handleCultivationStart(); // 新增呼叫
     
     // 注意：原先在此處的其他函數（如 farm, leaderboard, nickname 等）已被移至更專門的 monster-handlers.js 中，此處不再需要呼叫。
 }
@@ -160,4 +161,72 @@ function handleFriendAndPlayerInteractions() {
             }
         });
     }
+}
+
+// --- 修煉互動 ---
+function handleCultivationStart() {
+    const container = DOMElements.cultivationSetupModal;
+    if (!container) return;
+
+    // 為避免重複綁定，先移除舊的監聽器 (如果存在)
+    // 這一步是防禦性程式設計，但目前結構下，只會被初始化一次
+    const newContainer = container.cloneNode(true);
+    container.parentNode.replaceChild(newContainer, container);
+    DOMElements.cultivationSetupModal = newContainer;
+
+
+    newContainer.addEventListener('click', async (event) => {
+        const button = event.target.closest('.cultivation-location-card');
+        if (!button) return;
+
+        const monsterId = gameState.cultivationMonsterId;
+        const location = button.dataset.location;
+
+        if (!monsterId || !location) {
+            showFeedbackModal('錯誤', '無法開始修煉，缺少必要的資訊。');
+            return;
+        }
+
+        const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+        if (!monster) {
+            showFeedbackModal('錯誤', `找不到ID為 ${monsterId} 的怪獸。`);
+            return;
+        }
+        
+        const maxDuration = (gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600) * 1000;
+
+        // 更新 monster state
+        if (!monster.farmStatus) {
+            monster.farmStatus = {};
+        }
+        monster.farmStatus.isTraining = true;
+        monster.farmStatus.trainingStartTime = Date.now();
+        monster.farmStatus.trainingDuration = maxDuration;
+        monster.farmStatus.trainingLocation = location;
+
+        hideModal('cultivation-setup-modal');
+        showFeedbackModal('修煉開始！', `怪獸 ${monster.nickname} 已出發修煉。`, false);
+        
+        // 重新渲染農場列表以更新狀態
+        if(typeof renderMonsterFarm === 'function') {
+            renderMonsterFarm();
+        }
+
+        // 儲存更新後的玩家資料
+        try {
+            await savePlayerData(gameState.playerId, gameState.playerData);
+            console.log(`Cultivation started for monster ${monsterId} and data saved.`);
+        } catch (error) {
+            console.error('Failed to save player data after starting cultivation:', error);
+            // 還原狀態
+            monster.farmStatus.isTraining = false;
+            monster.farmStatus.trainingStartTime = null;
+            monster.farmStatus.trainingDuration = null;
+            monster.farmStatus.trainingLocation = null;
+            if(typeof renderMonsterFarm === 'function') {
+                renderMonsterFarm();
+            }
+            showFeedbackModal('錯誤', '開始修煉後存檔失敗，請再試一次。');
+        }
+    });
 }
