@@ -13,6 +13,7 @@
     min-width: 0;
 }
 
+/* 讓包含頁籤的面板可以伸展並成為 flex 容器 */
 .main-container > .panel:last-of-type {
     display: flex;
     flex-direction: column;
@@ -233,16 +234,17 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
+/* 最終版的頁籤內容區塊樣式 */
 .tab-content {
     display: none;
     min-width: 0;
 }
 .tab-content.active {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
-    overflow: hidden;
+    display: flex; /* 使用 flex 佈局 */
+    flex-direction: column; /* 垂直排列 */
+    flex-grow: 1; /* 填滿剩餘空間 */
+    min-height: 0; /* 允許收縮 */
+    overflow: hidden; /* 隱藏所有超出此容器的內容 */
 }
 
 #monster-leaderboard-element-tabs {
