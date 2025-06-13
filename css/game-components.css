@@ -233,14 +233,21 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
+/* ==== 修改：將頁籤內容區塊本身作為新的容器 ==== */
 .tab-content {
     display: none;
     min-width: 0;
-    overflow-y: auto;
-    flex-grow: 1;
 }
 .tab-content.active {
-    display: block;
+    display: flex; /* 修改：使用 flex 佈局 */
+    flex-direction: column; /* 讓內部元素垂直排列 */
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto; /* 修改：讓整個內容區塊可以垂直滾動 */
+    
+    /* 新增：您要求的可見邊框，以便確認容器範圍 */
+    border: 1px dashed red;
+    padding: 0.5rem;
 }
 
 #monster-leaderboard-element-tabs {
@@ -694,9 +701,8 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .farm-table {
     table-layout: fixed;
-    /* 修改：設定一個最小寬度，而不是固定寬度或100% */
     min-width: 600px;
-    width: 100%; /* 同時設定 width: 100% 確保它會嘗試填滿容器 */
+    width: 100%;
     border-collapse: collapse;
 }
 
@@ -706,7 +712,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-bottom: 1px solid var(--border-color);
     text-align: center;
     vertical-align: middle;
-    white-space: nowrap; /* 修改：確保文字不換行，這是觸發滾動的關鍵 */
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
