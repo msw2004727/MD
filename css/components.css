@@ -361,14 +361,14 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-bottom: 2px;
 }
 #snapshot-nickname {
-    font-size: 1.2rem;
+    font-size: 1rem; /* 【已修改】調整為一般大小 */
     display: block;
     margin-top: 1px;
-    font-weight: bold;
+    font-weight: normal; /* 【已修改】取消粗體 */
 }
 #snapshot-evaluation {
     font-size: 0.875rem;
-    font-weight: bold;
+    font-weight: normal; /* 【已修改】取消粗體 */
     color: var(--success-color);
 }
 #snapshot-win-loss {
@@ -483,10 +483,9 @@ body.light-theme .leaderboard-table tr:hover td {
     gap: 0.5rem;
 }
 
-/* 【新增】血條容器的定位樣式 */
 #snapshot-bars-container {
     position: absolute;
-    bottom: 35px; /* 調整位置，避免與下方的評價文字重疊 */
+    bottom: 10px; /* 【已修改】調整至底部 */
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
