@@ -77,32 +77,26 @@ body.light-theme #official-announcement-close-x:hover {
     font-size: 1rem;
 }
 
+/* Restoring original spinner styles */
 .loading-spinner {
-    display: none !important;
-}
-
-#feedback-modal-breathing-icon {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 80px;
-    height: 80px;
-    transform-origin: center center;
-    animation: energy-breath 4s infinite ease-in-out;
+    width: 50px;
+    height: 50px;
+    margin-top: -25px; /* half of height */
+    margin-left: -25px; /* half of width */
+    border: 5px solid var(--border-color);
+    border-top: 5px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
     z-index: 10;
-    display: none;
-    transform: translate(-50%, -50%);
+    display: none; /* Initially hidden, controlled by JS */
 }
 
-@keyframes energy-breath {
-    0%, 100% {
-        transform: translate(-50%, -50%) scale(0.85);
-        opacity: 0.4;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.2);
-        opacity: 1;
-    }
+/* Hiding the breathing icon */
+#feedback-modal-breathing-icon {
+    display: none !important;
 }
 
 
