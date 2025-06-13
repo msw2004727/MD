@@ -339,6 +339,7 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-right-arm { grid-area: rArm; }
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
+
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
@@ -353,15 +354,17 @@ body.light-theme .leaderboard-table tr:hover td {
 .snapshot-info-left { text-align: left; }
 .snapshot-info-right { text-align: right; }
 #snapshot-achievement-title {
-    font-size: 1rem;
-    font-weight: bold;
-    color: var(--accent-color);
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: var(--text-secondary);
     display: block;
+    margin-bottom: 2px;
 }
 #snapshot-nickname {
     font-size: 1.2rem;
     display: block;
     margin-top: 1px;
+    font-weight: bold;
 }
 #snapshot-evaluation {
     font-size: 0.875rem;
@@ -409,39 +412,73 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     color: var(--success-color);
 }
-
 #cultivation-monster-name.text-rarity-common { color: var(--rarity-common-text) !important; }
 #cultivation-monster-name.text-rarity-rare { color: var(--rarity-rare-text) !important; }
 #cultivation-monster-name.text-rarity-elite { color: var(--rarity-elite-text) !important; }
 #cultivation-monster-name.text-rarity-legendary { color: var(--rarity-legendary-text) !important; }
 #cultivation-monster-name.text-rarity-mythical { color: var(--rarity-mythical-text) !important; }
 
-#monster-nickname-display-container,
-#monster-nickname-edit-container {
+.snapshot-bar {
+    height: 8px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+.snapshot-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.4s ease-in-out;
+}
+.snapshot-hp-bar .snapshot-bar-fill {
+    background-color: var(--success-color);
+}
+.snapshot-mp-bar .snapshot-bar-fill {
+    background-color: var(--accent-color);
+}
+
+.friend-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+.friend-item-card:last-child {
+    margin-bottom: 0;
+}
+.friend-info {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    gap: 0.75rem;
 }
-#monster-nickname-edit-container {
-    margin-top: 5px;
+.online-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
-.monster-info-modal-header .monster-info-name-styled {
-    margin: 0;
+.online-status.online {
+    background-color: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
 }
-#monster-nickname-input {
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
+.online-status.offline {
+    background-color: var(--text-secondary);
+}
+.friend-name-link {
+    text-decoration: none;
     color: var(--text-primary);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-size: 1rem;
-    width: 150px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: color 0.2s;
 }
-#monster-nickname-input:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
+.friend-name-link:hover {
+    color: var(--accent-color);
+}
+.friend-actions {
+    display: flex;
+    gap: 0.5rem;
 }
