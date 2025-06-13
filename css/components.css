@@ -10,7 +10,7 @@
     padding-bottom: 5px;
 }
 .panel-title {
-    font-size: 1rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--accent-color);
     margin-bottom: 0;
@@ -18,7 +18,7 @@
     padding-bottom: 0;
 }
 .panel-title-hint {
-    font-size: 1rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
 }
 @media (min-width: 768px) {
@@ -60,7 +60,6 @@
     z-index: 1;
 }
 
-
 .dna-slot, .temp-backpack-slot { cursor: pointer; }
 .inventory-slot-empty, .temp-backpack-slot.empty {
     color: var(--text-secondary);
@@ -98,7 +97,6 @@ body.light-theme .inventory-delete-slot.drag-over {
     color: var(--button-danger-text-light) !important;
 }
 
-
 @media (min-width: 768px) {
     .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
         padding: 10px;
@@ -125,126 +123,6 @@ body.light-theme .inventory-delete-slot.drag-over {
     background-color: var(--accent-hover);
 }
 
-.modal-close {
-    color: var(--text-secondary);
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s, color 0.2s;
-    z-index: 1050;
-}
-.modal-close:hover, .modal-close:focus {
-    color: var(--text-primary);
-    background-color: var(--border-color);
-    text-decoration: none;
-}
-#feedback-modal-close-x {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1.2rem;
-    line-height: 28px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    border: 1px solid var(--danger-hover-dark);
-    z-index: 1050;
-}
-#feedback-modal-close-x:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-body.light-theme #feedback-modal-close-x:hover {
-    background-color: var(--danger-hover-light);
-}
-
-
-#confirmation-modal-close-x.modal-close {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1.2rem;
-    line-height: 26px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    border: 1px solid var(--danger-hover-dark);
-    z-index: 1050;
-}
-#confirmation-modal-close-x.modal-close:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-body.light-theme #confirmation-modal-close-x.modal-close:hover {
-    background-color: var(--danger-hover-light);
-}
-#official-announcement-close-x {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
-    width: 28px;
-    height: 28px;
-    font-size: 1.2rem;
-    line-height: 28px;
-    text-align: center;
-    border-radius: 50%;
-    padding: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    z-index: 1050;
-}
-#official-announcement-close-x:hover {
-    background-color: var(--danger-hover-dark);
-    color: var(--button-danger-text);
-}
-body.light-theme #official-announcement-close-x:hover {
-    background-color: var(--danger-hover-light);
-}
-.modal-header {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: var(--accent-color);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    text-align: center;
-}
-.modal-body {
-    font-size: 1rem;
-    line-height: 1.6;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-.modal-footer {
-    margin-top: 20px;
-    display:flex;
-    justify-content: center;
-    gap: 15px;
-}
-.modal-footer button {
-    padding: 12px 25px;
-    font-size: 1rem;
-}
-.loading-spinner {
-    border:4px solid var(--border-color);
-    border-top:4px solid var(--accent-color);
-    border-radius:50%;
-    width:30px;
-    height:30px;
-    animation:spin 1s linear infinite;
-    margin:20px auto;
-}
 .dna-panel-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -259,94 +137,6 @@ body.light-theme .dna-panel-title { color: #0550ae; }
     color: var(--text-secondary);
 }
 body.light-theme .dna-panel-hint { color: #424a53; }
-.details-section {
-    background-color: var(--bg-primary);
-    padding: 12px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    transition: background-color 0.3s, border-color 0.3s;
-}
-.details-section-title {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--accent-color);
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px dashed var(--border-color);
-}
-.details-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-    padding: 5px 0;
-}
-.details-label {
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-right: 10px;
-    white-space: nowrap;
-}
-.details-value {
-    color: var(--text-primary);
-    font-weight: bold;
-    text-align: right;
-    font-size: 0.95rem;
-}
-.details-value.boosted { color: var(--success-color); font-weight: bold; }
-.details-value.debuffed { color: var(--danger-color); }
-.creation-time-centered {
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 10px;
-}
-.element-composition-item { font-size: 0.8rem; }
-.skill-entry {
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
-.skill-entry:last-child { border-bottom: none; margin-bottom: 0; }
-.skill-name {
-    font-weight: bold;
-    color: var(--accent-hover);
-    font-size: 1rem;
-}
-.skill-details {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-left: 10px;
-}
-.monster-info-header {
-    text-align: center;
-    margin-bottom: 15px;
-}
-.monster-info-name-styled {
-    font-size: 1.4rem;
-    font-weight: bold;
-    display: inline-block;
-}
-.monster-description-area {
-    font-size: 0.9rem;
-    margin-top: 10px;
-    padding: 10px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    line-height: 1.6;
-}
-.personality-text {
-    font-style: italic;
-    line-height: 1.6;
-    font-size: 0.9rem;
-}
-.ai-generated-text {
-    margin-top: 5px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
 
 .scrolling-hints-container {
     height: 22px;
@@ -362,15 +152,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     -ms-user-select: none;
     user-select: none;
 }
-
-@keyframes scrollHint {
-    0% { opacity: 0; transform: translateY(100%); }
-    12.5% { opacity: 1; transform: translateY(0%); }
-    37.5% { opacity: 1; transform: translateY(0%); }
-    50% { opacity: 0; transform: translateY(-100%); }
-    100% { opacity: 0; transform: translateY(-100%); }
-}
-
 .scrolling-hint-text {
     position: absolute;
     width: 100%;
@@ -382,10 +163,9 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     opacity: 0;
-    transform: translateY(100%); /* Initial state */
+    transform: translateY(100%);
 }
 
-/* 修正後的 Tab Buttons 樣式 */
 .tab-buttons {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
@@ -396,7 +176,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     padding: 4px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
-
 @media (min-width: 768px) {
     .tab-buttons {
         display: flex;
@@ -409,7 +188,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
         font-size: 0.9rem;
     }
 }
-
 .tab-button {
     padding: 8px 10px;
     cursor: pointer;
@@ -423,7 +201,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     text-align: center;
     border-radius: 4px;
 }
-
 .tab-button.active {
     color: var(--accent-color);
     background-color: var(--bg-panel);
@@ -436,49 +213,6 @@ body.light-theme .dna-panel-hint { color: #424a53; }
 }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
-
-/* Leaderboard element tabs */
-#monster-leaderboard-element-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    margin-bottom: 15px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-    padding: 4px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-}
-.leaderboard-element-tab {
-    padding: 8px 10px;
-    cursor: pointer;
-    background-color: transparent;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    font-weight: bold;
-    border-bottom: 3px solid transparent;
-    transition: color 0.2s, background-color 0.2s;
-    white-space: nowrap;
-    text-align: center;
-    border-radius: 4px;
-    flex-grow: 0;
-    flex-shrink: 0;
-    min-width: 1em;
-}
-.leaderboard-element-tab.active {
-    color: var(--accent-color);
-    background-color: var(--bg-panel);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-body.light-theme .leaderboard-element-tab.active {
-    color: var(--accent-color-light);
-    background-color: var(--bg-panel-light);
-}
-.leaderboard-element-tab:not(.active):hover {
-    background-color: var(--border-color);
-    color: var(--text-primary);
-}
 
 .leaderboard-table {
     width: 100%;
@@ -519,126 +253,6 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--accent-hover);
 }
 
-.leaderboard-table td:nth-child(2),
-.leaderboard-table th:nth-child(2) {
-    width: 1%;
-}
-
-.titles-medals-section { margin-top: 15px; }
-.titles-list, .achievements-list, .owned-monsters-list {
-    list-style: none;
-    padding-left: 0;
-}
-.titles-list li, .achievements-list li, .owned-monsters-list li {
-    background-color: var(--bg-primary);
-    padding: 6px 10px;
-    border-radius: 4px;
-    margin-bottom: 6px;
-    font-size: 0.9rem;
-    border: 1px solid var(--border-color);
-    transition: background-color 0.3s, border-color 0.3s;
-}
-.owned-monsters-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.owned-monsters-list .monster-name { font-weight: bold; }
-.owned-monsters-list .monster-score { color: var(--success-color); }
-.medal-emoji { font-size: 1.2rem; }
-.farm-monster-item .farm-monster-status.active {
-    color: var(--warning-color);
-    font-weight: bold;
-}
-.farm-monster-item .farm-monster-status.battling {
-    color: var(--danger-color);
-    font-weight: bold;
-}
-#release-monster-image-placeholder {
-    width: 100px;
-    height: 75px;
-    background-color: var(--bg-slot);
-    border: 1px dashed var(--border-color);
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin: 10px auto;
-}
-#release-monster-image-placeholder img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-.log-entry {
-    padding: 7px;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-}
-.log-entry:last-child { border-bottom: none; }
-.log-entry .log-time {
-    font-weight: bold;
-    color: var(--text-primary);
-    margin-right: 8px;
-}
-.log-entry .log-message {}
-.feedback-skill-entry { margin-bottom: 6px; }
-.feedback-skill-name {
-    font-weight: bold;
-    color: var(--accent-hover);
-    font-size: 1rem;
-}
-.feedback-skill-description {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-left: 10px;
-}
-#cultivation-setup-modal .modal-body,
-#training-results-modal .modal-body { text-align: left; }
-.cultivation-hint {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 5px;
-}
-.training-result-section {
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px dashed var(--border-color);
-}
-.training-result-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-.training-result-section h5 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 8px;
-}
-.training-result-section p, .training-result-section div {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-}
-
-#newbie-guide-search-input {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-}
-#newbie-guide-search-results p {
-    padding: 5px;
-    border-bottom: 1px solid var(--border-color-dark);
-}
- #newbie-guide-search-results p:last-child {
-    border-bottom: none;
-}
 .auth-title {
     font-size: 1.8rem;
     font-weight: 700;
@@ -656,190 +270,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 1rem;
 }
 
-#battle-log-modal .modal-content { max-width: 700px; }
-#battle-log-area {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 15px;
-    max-height: 60vh;
-    overflow-y: auto;
-    font-family: 'Courier New', Courier, monospace; /* Changed to monospace for logs */
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: var(--text-primary);
-}
-#battle-log-area p { margin-bottom: 5px; }
-#battle-log-area .turn-divider {
-    border-top: 1px dashed var(--accent-color);
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding-top: 5px;
-    font-weight: bold;
-    color: var(--accent-color);
-}
-#battle-log-area .battle-start,
-#battle-log-area .battle-end {
-    font-weight: bold;
-    color: var(--success-color);
-    text-align: center;
-    padding: 5px 0;
-    border-top: 1px solid var(--success-color);
-    border-bottom: 1px solid var(--success-color);
-    margin: 10px 0;
-}
- #battle-log-area .battle-end.winner { color: var(--success-color); }
- #battle-log-area .battle-end.loser { color: var(--danger-color); border-color: var(--danger-color); }
- #battle-log-area .battle-end.draw { color: var(--warning-color); border-color: var(--warning-color); }
-#battle-log-area .crit-hit { color: var(--danger-color); font-weight: bold; }
-#battle-log-area .heal-action { color: var(--success-color); }
-#battle-log-area .defeated { color: var(--danger-color); font-weight: bold; text-transform: uppercase; }
-
-#dna-draw-modal .modal-content { max-width: 600px; }
-#dna-draw-results-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-}
-
-.dna-draw-result-item {
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    padding: 8px;
-    text-align: center;
-    font-size: 0.8rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 80px;
-}
-.dna-draw-result-item .dna-name { font-weight: bold; margin-bottom: 4px; }
-.dna-draw-result-item .dna-type { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;}
-.dna-draw-result-item .dna-rarity { font-size: 0.8rem; }
-
-.modal-content.large-feedback-modal {
-    max-width: 750px;
-    padding: 20px 25px;
-}
-@media (max-width: 768px) {
-    .modal-content.large-feedback-modal {
-        max-width: 95%;
-    }
-}
-
-#monster-banner-container {
-    width: 100%;
-    height: 150px;
-    overflow: hidden;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    background-color: var(--bg-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-#monster-banner-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
-.feedback-monster-basic-stats {
-    background-color: var(--bg-primary);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 15px;
-}
-
-.feedback-monster-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px 15px;
-    text-align: left;
-}
-@media (min-width: 480px) {
-    .feedback-monster-stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-.feedback-monster-stats-grid div {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-}
-.feedback-monster-stats-grid strong {
-    color: var(--text-secondary);
-    margin-right: 8px;
-}
-.feedback-monster-stats-grid span {
-    color: var(--text-primary);
-    font-weight: bold;
-}
-
-.feedback-monster-info-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    margin-top: 15px;
-}
-@media (min-width: 600px) {
-    .feedback-monster-info-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-@media (min-width: 700px) {
-    .feedback-monster-ai-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-    .feedback-monster-ai-grid .col-span-full {
-        grid-column: span 2;
-    }
-}
-
-.feedback-monster-info-section {
-    background-color: var(--bg-primary);
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-    max-height: 250px;
-    overflow-y: auto;
-}
-.feedback-monster-info-section:last-child {
-    max-height: 350px;
-}
-
-.feedback-monster-info-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--accent-color);
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px dashed var(--border-color);
-}
-.feedback-monster-info-section p {
-    margin-bottom: 5px;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-.feedback-monster-info-section strong {
-    color: var(--text-secondary);
-    margin-right: 5px;
-}
-.dna-name-text {
-    display: block;
-}
-
-.dna-item .dna-rarity-badge {
-    z-index: 1;
-}
-
-/* ===== Styles moved from index.html ===== */
+/* Monster Snapshot Styles */
 .monster-snapshot-area {
     position: relative;
     display: flex;
@@ -849,12 +280,11 @@ body.light-theme .leaderboard-table tr:hover td {
     padding: 8px;
     min-height: 230px;
 }
- @media (min-width: 768px) {
+@media (min-width: 768px) {
     .monster-snapshot-area {
         min-height: 270px;
     }
 }
-
 #monster-snapshot-base-bg,
 #monster-snapshot-body-silhouette,
 #monster-parts-container {
@@ -864,20 +294,17 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: translate(-50%, -50%);
     object-fit: contain;
 }
-
 #monster-snapshot-base-bg {
     z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
 #monster-snapshot-body-silhouette {
     z-index: 2;
     max-width: 75%;
     max-height: 75%;
 }
-
 #monster-parts-container {
     z-index: 3;
     width: 60%; 
@@ -891,7 +318,6 @@ body.light-theme .leaderboard-table tr:hover td {
         "lLeg rLeg";
     gap: 5px;
 }
-
 .monster-part {
     background-size: contain;
     background-repeat: no-repeat;
@@ -903,21 +329,16 @@ body.light-theme .leaderboard-table tr:hover td {
     box-sizing: border-box;
     visibility: visible;
 }
-
-
 .monster-part.empty-part {
-    /* visibility: hidden; */ /* <-- THIS WAS THE PROBLEM, REMOVED */
     border-style: dashed;
     border-width: 2px;
-    background-color: color-mix(in srgb, var(--bg-primary) 30%, transparent); /* 可選的淺色背景 */
+    background-color: color-mix(in srgb, var(--bg-primary) 30%, transparent);
 }
-
 #monster-part-head { grid-area: head; }
 #monster-part-left-arm { grid-area: lArm; }
 #monster-part-right-arm { grid-area: rArm; }
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
-
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
@@ -929,34 +350,24 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: flex-end;
     pointer-events: none;
 }
-
-.snapshot-info-left {
-    text-align: left;
-}
-.snapshot-info-right {
-    text-align: right;
-}
-
+.snapshot-info-left { text-align: left; }
+.snapshot-info-right { text-align: right; }
 #snapshot-achievement-title {
     font-size: 1rem;
     font-weight: bold;
     color: var(--accent-color);
     display: block;
 }
-
 #snapshot-nickname {
     font-size: 1.2rem;
-    /* color: var(--text-secondary); */ /* 移除此行，讓稀有度顏色生效 */
     display: block;
     margin-top: 1px;
 }
-
 #snapshot-evaluation {
     font-size: 0.875rem;
     font-weight: bold;
     color: var(--success-color);
 }
-
 #snapshot-win-loss {
     position: absolute;
     top: 8px;
@@ -968,26 +379,27 @@ body.light-theme .leaderboard-table tr:hover td {
     padding: 3px 6px;
     border-radius: 4px;
 }
- #snapshot-win-loss span { display: block; }
-
+#snapshot-win-loss span { display: block; }
 #snapshot-main-content {
     position: absolute;
     top: 8px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
+    text-align: center;
+}
+#snapshot-main-content #snapshot-nickname {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
 
 .farm-col-info .monster-name-display {
     font-weight: bold;
-    /* color: var(--text-primary); */ /* 移除此行，讓稀有度顏色生效 */
     font-size: 1rem;
 }
 .farm-col-info .monster-details-display {
     font-size: 0.8rem;
     color: var(--text-secondary);
 }
-
 .farm-col-score .score-label {
     display: block;
     font-size: 0.8rem;
@@ -998,402 +410,12 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--success-color);
 }
 
-/* New styles for rearranged monster info modal */
-.details-grid-rearranged {
-    display: grid;
-    grid-template-columns: 1fr; /* Default to single column on mobile */
-    gap: 1rem;
-}
-
-@media (min-width: 768px) { /* Apply two-column layout on PC */
-    .details-grid-rearranged {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.details-column-right {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.details-column-right .details-section {
-    margin-bottom: 0; /* Remove bottom margin as gap is handled by grid */
-}
-
-/* 新增：強制覆蓋養成彈窗中怪獸名稱的顏色 */
 #cultivation-monster-name.text-rarity-common { color: var(--rarity-common-text) !important; }
 #cultivation-monster-name.text-rarity-rare { color: var(--rarity-rare-text) !important; }
 #cultivation-monster-name.text-rarity-elite { color: var(--rarity-elite-text) !important; }
 #cultivation-monster-name.text-rarity-legendary { color: var(--rarity-legendary-text) !important; }
 #cultivation-monster-name.text-rarity-mythical { color: var(--rarity-mythical-text) !important; }
 
-/* Styles for New Cultivation Modal */
-.cultivation-locations-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-@media (min-width: 768px) {
-    .cultivation-locations-container {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-
-.cultivation-location-card {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.cultivation-location-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
-    border-color: var(--accent-color);
-}
-
-.cultivation-location-card img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 6px;
-    margin-bottom: 0.75rem;
-}
-
-.cultivation-location-card h5 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 0.5rem;
-}
-
-.cultivation-location-card p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.4;
-}
-
-.cultivation-action-buttons {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-@media (min-width: 768px) {
-    .cultivation-action-buttons {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* --- Leaderboard Optimizations --- */
-#monster-leaderboard-table-container,
-#player-leaderboard-table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-.leaderboard-table {
-    min-width: 720px;
-}
-
-.leaderboard-table th, .leaderboard-table td {
-    white-space: nowrap;
-}
-
-.leaderboard-table td:nth-child(2), /* Nickname Column */
-.leaderboard-table th:nth-child(2) {
-    width: auto;
-    white-space: normal;
-}
-
-.leaderboard-table td:nth-child(8), /* Action Column */
-.leaderboard-table th:nth-child(8) {
-    text-align: center;
-}
-
-/* --- Battle Report Redesign --- */
-.battle-report-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.report-section {
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-}
-
-.report-section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    margin-bottom: 0.25rem;
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* NEW: monster-vs-grid for battle setup */
-.monster-vs-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr; /* Monster Card | VS | Monster Card */
-    align-items: center;
-    gap: 0.5rem;
-    text-align: center;
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    margin: 0.5rem 0;
-}
-
-/* Responsive adjustment for .monster-vs-grid */
-@media (max-width: 600px) {
-    .monster-vs-grid {
-        grid-template-columns: 1fr; /* Stack vertically on small screens */
-    }
-    .vs-divider {
-        margin: 0.5rem auto; /* Center VS divider when stacked */
-        order: 1; /* Place VS divider between the two monster cards */
-    }
-    .monster-vs-grid .player-side {
-        order: 0; /* Player monster first */
-    }
-    .monster-vs-grid .opponent-side {
-        order: 2; /* Opponent monster last */
-    }
-}
-
-
-.vs-divider {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--accent-color);
-}
-
-.monster-stats-card {
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.75rem;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.monster-stats-card .monster-name {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-.monster-stats-card .monster-personality {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-}
-
-.monster-stats-card .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.25rem 0.5rem;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-    width: 100%;
-}
-.monster-stats-card .stats-grid span {
-    text-align: left;
-}
-
-/* Specific alignment for player and opponent sides */
-.monster-vs-grid .player-side .monster-stats-card {
-    text-align: left; /* Align text within card to left */
-    align-items: flex-start; /* Align flex items to start */
-}
-.monster-vs-grid .opponent-side .monster-stats-card {
-    text-align: right; /* Align text within card to right */
-    align-items: flex-end; /* Align flex items to end */
-}
-
-/* Style for battle numbers */
-.battle-number {
-    font-weight: bold;
-    /* Colors applied dynamically via JS with Tailwind classes */
-}
-/* Specific colors for numerical values within battle log */
-/* These map to the Tailwind classes added in JS for numbers */
-.battle-number.text-primary { color: var(--text-primary); }
-.battle-number.text-secondary { color: var(--text-secondary); }
-.battle-number.text-accent { color: var(--accent-color); }
-.battle-number.text-success { color: var(--success-color); }
-.battle-number.text-warning { color: var(--warning-color); }
-.battle-number.text-danger { color: var(--danger-color); }
-
-
-.battle-damage-value {
-    color: var(--danger-color);
-    font-weight: bold;
-}
-
-.battle-heal-value {
-    color: var(--success-color);
-    font-weight: bold;
-}
-
-
-.monster-intro-text, .battle-summary-text, .loot-info-text, .growth-info-text {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.battle-description-content p {
-    margin-bottom: 0.5rem;
-}
-
-.turn-divider-line {
-    text-align: center;
-    color: var(--text-secondary);
-    margin: 1rem 0;
-    font-size: 0.8rem;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
-
-.summary-banner {
-    text-align: center;
-    margin-bottom: 0.75rem;
-}
-
-.summary-banner img {
-    max-width: 80%;
-    border-radius: 4px;
-}
-
-/* --- Confirmation Modal for Battle --- */
-.confirmation-banner {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.confirmation-banner img {
-    max-width: 100%;
-    border-radius: 6px;
-}
-
-.battle-confirm-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    text-align: center;
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    margin: 1rem 0;
-}
-
-.monster-confirm-details {
-    padding: 0.5rem;
-}
-
-.monster-confirm-details .monster-role {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-.monster-confirm-details .monster-name {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-}
-
-.monster-confirm-details .monster-score {
-    font-size: 0.9rem;
-    color: var(--success-color);
-}
-
-/* --- Leaderboard Header & Refresh Button --- */
-.modal-header-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.modal-header-container .modal-header {
-    margin: 0;
-    padding: 0;
-    border: none;
-}
-
-#refresh-monster-leaderboard-btn {
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
-    line-height: 32px;
-    margin-left: 1rem;
-    border-radius: 50%;
-}
-
-/* --- NEW: Battle Report Enhancements --- */
-.battle-result-banner {
-    text-align: center;
-    padding: 1rem 0;
-    margin: 0.5rem 0;
-}
-
-.battle-result-banner h1 {
-    font-size: 4rem;
-    font-weight: 900;
-    line-height: 1;
-    margin: 0;
-    text-transform: uppercase;
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-}
-
-.battle-result-win {
-    color: var(--danger-color);
-}
-
-.battle-result-loss {
-    color: var(--success-color);
-}
-
-.battle-result-draw {
-    color: var(--text-primary);
-}
-
-.battle-highlights-section ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0.5rem 0 0 0;
-}
-
-.highlight-item {
-    padding: 8px 5px;
-    font-size: 0.8rem;
-    border-bottom: 1px dashed var(--border-color);
-    color: var(--text-secondary);
-}
-.highlight-item:last-child {
-    border-bottom: none;
-}
-
-/* NEW: Monster Nickname Editing Styles */
 #monster-nickname-display-container,
 #monster-nickname-edit-container {
     display: flex;
@@ -1402,15 +424,12 @@ body.light-theme .leaderboard-table tr:hover td {
     gap: 0.5rem;
     flex-wrap: wrap;
 }
-
 #monster-nickname-edit-container {
     margin-top: 5px;
 }
-
 .monster-info-modal-header .monster-info-name-styled {
     margin: 0;
 }
-
 #monster-nickname-input {
     border: 1px solid var(--border-color);
     background-color: var(--bg-primary);
@@ -1421,119 +440,8 @@ body.light-theme .leaderboard-table tr:hover td {
     width: 150px;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-
 #monster-nickname-input:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 30%, transparent);
-}
-
-/* NEW: Battle Report Status Bar Styles */
-.turn-status-block {
-    margin: 0.75rem 0;
-    padding: 0.75rem;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-}
-
-.status-bar-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-}
-
-.status-bar-label {
-    width: 25px;
-    font-weight: bold;
-    color: var(--text-secondary);
-}
-
-.status-bar-background {
-    flex-grow: 1;
-    height: 14px;
-    background-color: var(--bg-slot);
-    border-radius: 7px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    padding: 1px;
-}
-
-.status-bar-fill {
-    height: 100%;
-    border-radius: 5px;
-    transition: width 0.4s ease-out;
-}
-
-.status-bar-value {
-    width: 80px;
-    text-align: right;
-    font-weight: bold;
-    color: var(--text-primary);
-}
-
-/* NEW: Friends List Styles */
-.friend-item-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    margin-bottom: 0.5rem; /* 好友之間的距離 */
-}
-
-.friend-item-card:last-child {
-    margin-bottom: 0;
-}
-
-.friend-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.online-status {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.online-status.online {
-    background-color: var(--success-color);
-    box-shadow: 0 0 5px var(--success-color);
-}
-
-.online-status.offline {
-    background-color: var(--text-secondary);
-}
-
-.friend-name-link {
-    text-decoration: none;
-    color: var(--text-primary);
-    transition: color 0.2s;
-}
-.friend-name-link:hover {
-    color: var(--accent-color);
-}
-
-.friend-name-link .friend-title {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    margin-right: 0.5rem;
-}
-
-.friend-name-link .friend-name {
-    font-size: 1.1em;
-    font-weight: 500;
-}
-
-.friend-actions {
-    display: flex;
-    gap: 0.5rem;
 }
