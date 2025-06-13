@@ -1,5 +1,5 @@
 // js/ui-monster-modals.js
-//(這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等)
+//這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
         console.error("Monster info modal elements not found in DOMElements.");
