@@ -1,9 +1,9 @@
 /* css/layout.css */
 
 /* Main container for the game interface */
- {
+.main-container {
     width: 100%;
-    max-width: 100% !important;
+    max-width: 768px;
     background-color: var(--bg-panel);
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
@@ -14,19 +14,19 @@
     border: 1px solid var(--border-color);
     position: relative;
     transition: background-color 0.3s, border-color 0.3s, max-width 0.3s;
-    margin: 0;
+    margin: 1rem auto;
 }
 
 @media (min-width: 768px) {
-     {
-        padding: 0.5rem; 
+    .main-container {
+        padding: 1.5rem;
         gap: 1.5rem;
     }
 }
 
 /* 新增：為超寬螢幕（如1440px以上）設定更大的容器寬度 */
 @media (min-width: 1440px) {
-     {
+    .main-container {
         max-width: 1200px; /* 將最大寬度擴展到1200px，在寬螢幕上更舒適 */
     }
 }
@@ -45,7 +45,7 @@
     background-color: rgba(0,0,0,0.75);
     align-items: center;
     justify-content: center;
-    padding: 0.5rem; 
+    padding: 1rem;
 }
 
 /* 確保彈窗的層級更高 */
@@ -79,7 +79,7 @@
     color: var(--text-primary);
     margin: auto;
     padding: 1.25rem;
-    border-radius: 0;
+    border-radius: 8px;
     width: 95%;
     max-width: 500px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.5);
