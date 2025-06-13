@@ -1,12 +1,5 @@
 // js/main.js
 
-// --- Global Variables and Initial Setup ---
-// gameState, DOMElements, api-client functions, auth functions, ui functions, game-logic functions, event-handler functions
-
-/**
- * 清除遊戲緩存 (sessionStorage 和特定的 localStorage 項目)。
- * 會在頁面刷新或關閉視窗前調用。
- */
 function clearGameCacheOnExitOrRefresh() {
     console.log("Clearing game cache (sessionStorage and specific localStorage items)...");
     sessionStorage.clear();
@@ -15,9 +8,6 @@ function clearGameCacheOnExitOrRefresh() {
     console.log("localStorage item 'announcementShown_v1' removed.");
 }
 
-/**
- * 初始化 Firebase 應用。
- */
 function initializeFirebaseApp() {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
         try {
@@ -29,7 +19,7 @@ function initializeFirebaseApp() {
             }
         } catch (error) {
             console.error("Firebase initialization error:", error);
-            if (typeof showFeedbackModal === 'function') { // 確保 showFeedbackModal 已定義
+            if (typeof showFeedbackModal === 'function') {
                 showFeedbackModal('嚴重錯誤', '無法初始化遊戲核心服務，請稍後再試或聯繫管理員。');
             }
         }
@@ -39,11 +29,6 @@ function initializeFirebaseApp() {
     }
 }
 
-
-/**
- * 遊戲初始化函數 (已重構)
- * 當 DOMContentLoaded 和 Firebase Auth 狀態確認後調用
- */
 async function initializeGame() {
     console.log("Initializing game...");
     if (typeof showFeedbackModal === 'function') {
@@ -61,13 +46,11 @@ async function initializeGame() {
             return;
         }
 
-        // 步驟 1: 平行獲取所有必要的遠端資料
         const [configs, playerData] = await Promise.all([
             getGameConfigs(),
             getPlayerData(gameState.currentUser.uid)
         ]);
 
-        // 步驟 2: 驗證獲取的資料
         if (!configs || Object.keys(configs).length === 0) {
             throw new Error("無法獲取遊戲核心設定。");
         }
@@ -75,7 +58,6 @@ async function initializeGame() {
             throw new Error("無法獲取玩家遊戲資料。");
         }
         
-        // 步驟 3: 一次性更新所有遊戲狀態
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
@@ -83,39 +65,22 @@ async function initializeGame() {
         });
         console.log("Game configs and player data loaded and saved to gameState.");
 
-        // 步驟 4: 在確認所有狀態都準備好後，才開始渲染整個UI
-        // 設定依賴遊戲設定的UI元素
         if (DOMElements.maxCultivationTimeText && configs.value_settings) {
             DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
         }
-        const gameHints = [
-            `💡 ${configs.naming_constraints?.max_monster_full_nickname_len || 15}字是怪獸暱稱的極限！`,
-            "💡 稀有度越高的DNA，基礎能力越強！",
-            "💡 嘗試不同的DNA組合，發掘隱藏的強力怪獸！",
-            "💡 完成修煉有機會領悟新技能！",
-            "💡 記得查看新手指南，了解更多遊戲訣竅！"
-        ];
-        if (configs.newbie_guide && configs.newbie_guide.length > 0) {
-            gameHints.push(`💡 ${configs.newbie_guide[0].title} - ${configs.newbie_guide[0].content.substring(0, 20)}...`);
-        }
-        if (typeof updateScrollingHints === 'function') updateScrollingHints(gameHints);
         
-        // 渲染遊戲主畫面
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
         if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
         if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
 
         const defaultMonster = getDefaultSelectedMonster();
-        // 延遲更新怪獸快照，確保 DOMElements 完全可用
         setTimeout(() => {
             if (typeof updateMonsterSnapshot === 'function') {
                 updateMonsterSnapshot(defaultMonster || null);
             }
-        }, 100); // 延遲 100 毫秒
+        }, 100);
 
-
-        // 切換主畫面顯示
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
 
@@ -138,26 +103,18 @@ async function initializeGame() {
     }
 }
 
-
-/**
- * 當 Firebase Auth 狀態改變時的回調函數
- */
 async function onAuthStateChangedHandler(user) {
     if (Object.keys(DOMElements).length === 0) {
-        console.warn("onAuthStateChangedHandler called before DOMElements initialized. Retrying in 100ms.");
         setTimeout(() => onAuthStateChangedHandler(user), 100);
         return;
     }
 
     if (user) {
         console.log("User is signed in:", user.uid);
-        // 先只更新核心用戶資訊
         updateGameState({ currentUser: user, playerId: user.uid, playerNickname: user.displayName || (user.email ? user.email.split('@')[0] : "玩家") });
         
-        // 呼叫重構後的遊戲初始化函數
         await initializeGame();
         
-        // 檢查並顯示公告
         if (localStorage.getItem('announcementShown_v1') !== 'true') {
             if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
             if (typeof showModal === 'function') showModal('official-announcement-modal');
@@ -169,8 +126,6 @@ async function onAuthStateChangedHandler(user) {
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, true, 'flex');
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, false);
         
-        // 清理UI
-        // 延遲更新怪獸快照，確保 DOMElements 完全可用
         setTimeout(() => {
             if (typeof updateMonsterSnapshot === 'function') updateMonsterSnapshot(null);
             if (typeof resetDNACombinationSlots === 'function') resetDNACombinationSlots();
@@ -181,65 +136,43 @@ async function onAuthStateChangedHandler(user) {
     }
 }
 
-// --- Application Entry Point ---
-
-/**
- * 嘗試執行遊戲初始化。
- * 會檢查所有必要的函式是否已定義，如果尚未定義，會延遲後重試。
- */
 function attemptToInitializeApp() {
-    // 修改：檢查新的初始化函式是否已載入
-    if (typeof initializeDOMElements === 'function' && 
-        typeof RosterAuthListener === 'function' &&
-        typeof initializeUIEventHandlers === 'function' &&
-        typeof initializeGameInteractionEventHandlers === 'function' &&
-        typeof initializeDragDropEventHandlers === 'function') {
-        
+    const requiredFunctions = [
+        'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
+        'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
+        'initializeMonsterEventHandlers' // 新增的檢查
+    ];
+    
+    const allFunctionsDefined = requiredFunctions.every(fnName => typeof window[fnName] === 'function');
+
+    if (allFunctionsDefined) {
         console.log("所有核心函式已準備就緒，開始初始化應用程式。");
-
-        // 1. 優先初始化 DOM 元素引用
         initializeDOMElements(); 
-        
-        // 2. 清理緩存
         clearGameCacheOnExitOrRefresh();
-        console.log("DOM fully loaded and parsed. DOMElements initialized.");
-
-        // 3. 初始化 Firebase App
         initializeFirebaseApp();
-
-        // 4. 設置 Firebase Auth 狀態監聽器
         RosterAuthListener(onAuthStateChangedHandler);
 
-        // 5. 修改：初始化所有拆分後的事件監聽器
+        // 初始化所有拆分後的事件監聽器
         initializeUIEventHandlers();
         initializeGameInteractionEventHandlers();
         initializeDragDropEventHandlers();
+        initializeMonsterEventHandlers(); // 新增的呼叫
 
-        // 6. 預設顯示第一個頁籤 (DNA管理)
+        // 全域計時器
+        setInterval(updateAllTimers, 1000);
+
         if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
             if (typeof switchTabContent === 'function') {
                 switchTabContent('dna-inventory-content', DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]'));
             }
-        } else {
-            console.warn("DNA Farm Tabs or initial tab button not found. Skipping default tab switch.");
         }
-
     } else {
-        // 如果函式尚未定義，則稍後重試
         console.warn("一個或多個核心初始化函式尚未定義，將在 100ms 後重試...");
         setTimeout(attemptToInitializeApp, 100);
     }
 }
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    // 啟動初始化程序
-    attemptToInitializeApp();
-});
-
-
-window.addEventListener('beforeunload', function (e) {
-    clearGameCacheOnExitOrRefresh();
-});
+document.addEventListener('DOMContentLoaded', attemptToInitializeApp);
+window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
 console.log("Main.js script loaded.");
