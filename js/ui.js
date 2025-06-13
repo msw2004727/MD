@@ -269,6 +269,41 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
     DOMElements.feedbackModalTitle.textContent = title;
 
+    // Helper function to add banners and hints
+    const addBannerAndHints = (bannerUrl, altText) => {
+        const bannerContainer = document.createElement('div');
+        bannerContainer.className = 'feedback-banner';
+        bannerContainer.style.textAlign = 'center';
+        bannerContainer.style.marginBottom = '15px';
+        bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="${altText}" style="max-width: 100%; border-radius: 6px;">`;
+        modalBody.prepend(bannerContainer);
+
+        const hintsContainer = document.createElement('div');
+        hintsContainer.className = 'loading-hints-container';
+        hintsContainer.style.marginTop = '1rem';
+        hintsContainer.style.padding = '0.5rem';
+        hintsContainer.style.backgroundColor = 'var(--bg-primary)';
+        hintsContainer.style.border = '1px solid var(--border-color)';
+        hintsContainer.style.borderRadius = '6px';
+        hintsContainer.style.textAlign = 'center';
+        hintsContainer.style.fontStyle = 'italic';
+        hintsContainer.style.color = 'var(--text-secondary)';
+        hintsContainer.innerHTML = `<p id="loading-hints-carousel">正在讀取提示...</p>`;
+        DOMElements.feedbackModalMessage.insertAdjacentElement('afterend', hintsContainer);
+        
+        const hintElement = document.getElementById('loading-hints-carousel');
+        if (hintElement && TRAINING_GAME_HINTS.length > 0) {
+            const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
+            gameState.feedbackHintInterval = setInterval(() => {
+                const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
+                hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
+            }, 5000); 
+        }
+    };
+    
+    const loadingBannerUrl = "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true";
+
     if (awardDetails) { 
         const bannerUrl = awardDetails.bannerUrl || 'https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true';
         const awardType = awardDetails.type === 'title' ? '稱號' : '成就';
@@ -312,39 +347,47 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
-    else if (isLoading) {
-        const bannerContainer = document.createElement('div');
-        bannerContainer.className = 'feedback-banner';
-        bannerContainer.style.textAlign = 'center';
-        bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true" alt="載入中橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        modalBody.prepend(bannerContainer);
-
-        const hintsContainer = document.createElement('div');
-        hintsContainer.className = 'loading-hints-container';
-        hintsContainer.style.marginTop = '1rem';
-        hintsContainer.style.padding = '0.5rem';
-        hintsContainer.style.backgroundColor = 'var(--bg-primary)';
-        hintsContainer.style.border = '1px solid var(--border-color)';
-        hintsContainer.style.borderRadius = '6px';
-        hintsContainer.style.textAlign = 'center';
-        hintsContainer.style.fontStyle = 'italic';
-        hintsContainer.style.color = 'var(--text-secondary)';
-        hintsContainer.innerHTML = `<p id="loading-hints-carousel">正在讀取提示...</p>`;
-        DOMElements.feedbackModalMessage.insertAdjacentElement('afterend', hintsContainer);
-        
-        const hintElement = document.getElementById('loading-hints-carousel');
-        if (hintElement && TRAINING_GAME_HINTS.length > 0) {
-            const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
-            gameState.feedbackHintInterval = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-                hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
-            }, 5000); 
-        }
+    // --- Start of New Independent Loading Modals ---
+    else if (isLoading && title.startsWith('遊戲載入中')) {
+        addBannerAndHints(loadingBannerUrl, '遊戲載入中');
     }
-
-
+    else if (isLoading && title.startsWith('登入中')) {
+        addBannerAndHints(loadingBannerUrl, '登入中');
+    }
+    else if (isLoading && title.startsWith('註冊中')) {
+        addBannerAndHints(loadingBannerUrl, '註冊中');
+    }
+    else if (isLoading && title.startsWith('登出中')) {
+        addBannerAndHints(loadingBannerUrl, '登出中');
+    }
+    else if (isLoading && title.startsWith('載入中')) { // For leaderboards, player info
+        addBannerAndHints(loadingBannerUrl, '載入中');
+    }
+    else if (isLoading && title.startsWith('處理中')) { // For releasing monster
+        addBannerAndHints(loadingBannerUrl, '處理中');
+    }
+    else if (isLoading && title.startsWith('更新中')) { // For renaming
+        addBannerAndHints(loadingBannerUrl, '更新中');
+    }
+    else if (isLoading && title.startsWith('怪獸合成中')) {
+        addBannerAndHints(loadingBannerUrl, '怪獸合成中');
+    }
+    else if (isLoading && title.startsWith('結算中')) {
+        addBannerAndHints(loadingBannerUrl, '結算中');
+    }
+    else if (isLoading && title.startsWith('DNA抽取中')) {
+        addBannerAndHints(loadingBannerUrl, 'DNA抽取中');
+    }
+    else if (isLoading && title.startsWith('準備戰鬥')) {
+        addBannerAndHints(loadingBannerUrl, '準備戰鬥');
+    }
+    else if (isLoading && title.startsWith('戰鬥中')) {
+        addBannerAndHints(loadingBannerUrl, '戰鬥中');
+    }
+    else if (isLoading && (title.startsWith('學習中') || title.startsWith('替換技能中'))) {
+        addBannerAndHints(loadingBannerUrl, '技能學習中');
+    }
+    // --- End of New Independent Loading Modals ---
     else if (monsterDetails) {
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
