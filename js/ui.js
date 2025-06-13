@@ -388,7 +388,25 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         addBannerAndHints(loadingBannerUrl, '技能學習中');
     }
     // --- End of New Independent Loading Modals ---
-    else if (monsterDetails) {
+    else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
+        const monster = monsterDetails.monster;
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const elementNickname = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+        
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+        
+        const bannerContainer = document.createElement('div');
+        bannerContainer.className = 'feedback-banner';
+        bannerContainer.style.textAlign = 'center';
+        bannerContainer.style.marginBottom = '15px';
+        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        modalBody.prepend(bannerContainer);
+
+        DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-rarity-${rarityKey}">${elementNickname}</strong> 已出發開始修煉。</p>`;
+        DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
+    }
+    else if (monsterDetails) { // Fallback for original synthesis success
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
@@ -417,24 +435,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         `;
 
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
-
-    } else if (title === '修煉開始！') {
-        let monsterName = '未知怪獸';
-        const parts = message.split(' 已開始為期');
-        if (parts.length > 0 && parts[0].startsWith('怪獸 ')) {
-            monsterName = parts[0].substring(3);
-        }
-
-        const bannerContainer = document.createElement('div');
-        bannerContainer.className = 'feedback-banner';
-        bannerContainer.style.textAlign = 'center';
-        bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
-        modalBody.prepend(bannerContainer);
-
-        DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-[var(--accent-color)]">${monsterName}</strong> 已開始修煉。</p>`;
-        DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
-
     } else {
         DOMElements.feedbackModalMessage.innerHTML = message;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
@@ -601,7 +601,6 @@ function updateAnnouncementPlayerName(playerName) {
 // All rendering functions (updateMonsterSnapshot, renderPlayerDNAInventory, etc.) are moved to their respective new files.
 
 console.log("UI core module loaded.");
-
 
 function populateImageAssetSources() {
     if (!gameState.assetPaths || !gameState.assetPaths.images) {
