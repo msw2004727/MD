@@ -177,54 +177,6 @@ async function handleItemClick(event) {
     }
 }
 
-async function handleClickInventory(event) {
-    const itemElement = event.target.closest('.dna-item.occupied');
-    if (!itemElement) return;
-
-    const inventoryIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
-    const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
-    if (!dnaObject) return;
-    
-    const targetSlotIndex = gameState.playerData.dnaCombinationSlots.findIndex(slot => slot === null);
-
-    if (targetSlotIndex !== -1) {
-        gameState.playerData.playerOwnedDNA[inventoryIndex] = null;
-        gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaObject;
-        renderPlayerDNAInventory();
-        renderDNACombinationSlots();
-        await savePlayerData(gameState.playerId, gameState.playerData);
-    } else {
-        showFeedbackModal('提示', 'DNA組合欄位已滿！');
-    }
-}
-
-async function handleClickCombinationSlot(event) {
-    const slotElement = event.target.closest('.dna-slot.occupied');
-    if (!slotElement) return;
-
-    const slotIndex = parseInt(slotElement.dataset.slotIndex, 10);
-    const dnaObject = gameState.playerData.dnaCombinationSlots[slotIndex];
-    if (!dnaObject) return;
-
-    let targetInventoryIndex = -1;
-    for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
-        if (i !== 11 && gameState.playerData.playerOwnedDNA[i] === null) {
-            targetInventoryIndex = i;
-            break;
-        }
-    }
-
-    if (targetInventoryIndex !== -1) {
-        gameState.playerData.dnaCombinationSlots[slotIndex] = null;
-        gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
-        renderPlayerDNAInventory();
-        renderDNACombinationSlots();
-        await savePlayerData(gameState.playerId, gameState.playerData);
-    } else {
-        showFeedbackModal('提示', 'DNA碎片庫存區已滿！');
-    }
-}
-
 // --- 拖放事件處理 ---
 function handleDragStart(event) {
     if (isJiggleModeActive) {
