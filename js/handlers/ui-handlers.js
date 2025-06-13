@@ -9,7 +9,16 @@ function initializeUIEventHandlers() {
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
-    handleSkillLinkClick();
+    
+    // 移除不正確的直接呼叫，改為使用事件委派監聽
+    // handleSkillLinkClick(); // <- 移除此行
+
+    // 新增：使用事件委派來處理動態生成的技能連結點擊
+    document.body.addEventListener('click', function(event) {
+        if (event.target && event.target.matches('.skill-name-link')) {
+            handleSkillLinkClick(event);
+        }
+    });
 }
 
 // --- 個別事件處理函式 ---
@@ -205,6 +214,9 @@ function handleNewbieGuideSearch() {
 }
 
 async function handleSkillLinkClick(event) {
+    // 這個函數現在可以正確接收到 event 物件
+    if (!event || !event.target) return;
+
     const target = event.target.closest('.skill-name-link');
     if (!target) return;
 
