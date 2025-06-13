@@ -1019,8 +1019,7 @@ function renderMonsterFarm() {
         const colDeploy = document.createElement('div');
         colDeploy.className = 'farm-col farm-col-deploy';
         const isDeployed = gameState.playerData.selectedMonsterId === monster.id;
-        // 【修改】按鈕文字修改
-        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 70px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
+        colDeploy.innerHTML = `<button class="button ${isDeployed ? 'success' : 'secondary'} text-xs" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''} style="min-width: 35px;" title="${isDeployed ? '出戰中' : '設為出戰'}">${isDeployed ? '⚔️' : '🛡️'}</button>`;
         
         // Column 3: Monster Info
         const colInfo = document.createElement('div');
@@ -1034,10 +1033,9 @@ function renderMonsterFarm() {
         const fullNickname = monster.nickname || '';
         const playerTitle = fullNickname.replace(achievement, '').replace(elementNickname, '');
 
-        // 【修改】怪獸名稱顏色和結構
         colInfo.innerHTML = `
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; font-weight: normal;">
-                <span style="color: gold;">${playerTitle}</span><span style="color: var(--text-primary);">${achievement}</span><span class="text-rarity-${rarityKey}">${elementNickname}</span>
+                <span style="color: gold; margin-right: 4px;">${playerTitle}</span><span style="color: var(--text-primary); margin-right: 4px;">${achievement}</span><span class="text-rarity-${rarityKey}">${elementNickname}</span>
             </a>`;
         
         // Column 4: Score
@@ -1049,15 +1047,15 @@ function renderMonsterFarm() {
         // Column 5: Status
         const colStatus = document.createElement('div');
         colStatus.className = 'farm-col farm-col-status';
-        colStatus.style.flexDirection = 'column'; // 讓內容可以垂直排列
+        colStatus.style.flexDirection = 'column';
+        colStatus.style.lineHeight = '1.2';
         
-        // 【修改】狀態顯示優先級邏輯
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
             colStatus.innerHTML = `
                 <div style="color: var(--accent-color);">修煉中</div>
-                <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
+                <div class="training-timer" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
@@ -1078,7 +1076,7 @@ function renderMonsterFarm() {
         } else {
             actionsHTML += `<button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>`;
         }
-        actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>`;
+        actionsHTML += `<button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')" style="margin-left: 5px;">放生</button>`;
         colActions.innerHTML = actionsHTML;
         
         monsterItem.appendChild(colIndex);
