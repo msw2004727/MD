@@ -220,3 +220,29 @@
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 }
+
+/* Global Loading Spinner Styles */
+#global-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 17, 23, 0.6); /* --bg-primary-dark with opacity */
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+body.light-theme #global-loading-overlay {
+    background-color: rgba(255, 255, 255, 0.6); /* --bg-primary-light with opacity */
+}
+
+#global-loading-spinner {
+    width: 100px;
+    height: 100px;
+    animation: energy-breath 4s infinite ease-in-out;
+}
