@@ -601,3 +601,28 @@ function updateAnnouncementPlayerName(playerName) {
 // All rendering functions (updateMonsterSnapshot, renderPlayerDNAInventory, etc.) are moved to their respective new files.
 
 console.log("UI core module loaded.");
+
+
+function populateImageAssetSources() {
+    if (!gameState.assetPaths || !gameState.assetPaths.images) {
+        console.error("Asset paths not loaded. Cannot populate image sources.");
+        return;
+    }
+
+    document.querySelectorAll('[data-asset-key]').forEach(element => {
+        const keyPath = element.dataset.assetKey.split('.'); // e.g., "modals.announcement"
+        let path = gameState.assetPaths.images;
+        
+        for (const key of keyPath) {
+            path = path[key];
+            if (!path) break;
+        }
+
+        if (typeof path === 'string') {
+            element.src = path;
+        } else {
+            console.warn(`Asset key not found or is not a string: ${element.dataset.assetKey}`);
+        }
+    });
+    console.log("Image asset sources have been populated dynamically.");
+}
