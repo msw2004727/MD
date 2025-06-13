@@ -669,3 +669,40 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--success-color);
     font-weight: bold;
 }
+
+/* Jiggle Mode Animation and Delete Button */
+@keyframes jiggle {
+    0% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
+    100% { transform: rotate(-1deg); }
+}
+
+.jiggle-mode {
+    animation: jiggle 0.2s infinite linear;
+}
+
+.delete-item-btn {
+    display: none; /* 預設隱藏 */
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background-color: var(--danger-color);
+    color: white;
+    border: 2px solid var(--bg-panel);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+}
+
+.jiggle-mode .delete-item-btn {
+    display: flex; /* 在抖動模式下顯示 */
+}
