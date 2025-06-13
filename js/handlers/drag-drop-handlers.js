@@ -115,13 +115,17 @@ function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
 }
 
+// 修改：只在抖動模式下才阻止滾動，以觸發拖曳
 function handleTouchMove(event) {
+    // 手指一移動，就取消長按計時
     clearTimeout(longPressTimer);
     
-    if (event.target.closest('.dna-item[draggable="true"], .dna-slot[draggable="true"]')) {
+    // 只有當處於抖動模式時，才阻止頁面滾動，以便能拖曳物品
+    if (isJiggleModeActive) {
        event.preventDefault();
     }
 }
+
 
 // --- 點擊事件處理 ---
 async function handleItemClick(event) {
@@ -228,11 +232,6 @@ function handleDragEnd(event) {
     draggedSourceType = null;
     draggedSourceIndex = null;
     document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-
-    // 新增：當拖曳操作完全結束後，退出抖動模式
-    if (isJiggleModeActive) {
-        exitJiggleMode();
-    }
 }
 
 function handleDragOver(event) {
