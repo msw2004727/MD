@@ -22,9 +22,40 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
             let buffsHtml = '';
             if (title.buffs && Object.keys(title.buffs).length > 0) {
-                const statDisplayName = { hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率' };
+                // 建立一個更完整的翻譯對照表
+                const statDisplayName = {
+                    hp: 'HP',
+                    mp: 'MP',
+                    attack: '攻擊',
+                    defense: '防禦',
+                    speed: '速度',
+                    crit: '爆擊率',
+                    evasion: '閃避率',
+                    cultivation_item_find_chance: '修煉物品發現機率',
+                    cultivation_exp_gain: '修煉經驗提升',
+                    cultivation_time_reduction: '修煉時間縮短',
+                    score_gain_boost: '積分獲取提升',
+                    elemental_damage_boost: '元素傷害提升',
+                    poison_damage_boost: '毒系傷害提升',
+                    leech_skill_effect: '吸血效果提升',
+                    mp_regen_per_turn: 'MP每回合恢復',
+                    dna_return_rate_on_disassemble: '分解DNA返還率',
+                    fire_resistance: '火系抗性',
+                    water_resistance: '水系抗性',
+                    wood_resistance: '木系抗性',
+                    gold_resistance: '金系抗性',
+                    earth_resistance: '土系抗性',
+                    light_resistance: '光系抗性',
+                    dark_resistance: '暗系抗性'
+                };
+
                 buffsHtml = '<div class="title-buffs" style="font-size: 0.85em; color: var(--success-color); margin-top: 5px;">效果：';
-                buffsHtml += Object.entries(title.buffs).map(([stat, value]) => `${statDisplayName[stat] || stat} +${value}`).join('，');
+                // 新增邏輯：如果值是小於1的小數，則轉為百分比顯示
+                buffsHtml += Object.entries(title.buffs).map(([stat, value]) => {
+                    const name = statDisplayName[stat] || stat; // 如果找不到翻譯，則顯示原key
+                    const displayValue = (value > 0 && value < 1) ? `+${value * 100}%` : `+${value}`;
+                    return `${name} ${displayValue}`;
+                }).join('，');
                 buffsHtml += '</div>';
             }
 
@@ -71,7 +102,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         ownedMonstersHtml = `<ul class="owned-monsters-list mt-1">${previewHtml}${moreMonstersHtml}</ul>`;
 
         if (monsters.length > previewLimit) {
-            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${monsters.length - 5}隻)...</button>`;
+            ownedMonstersHtml += `<button id="toggle-monster-list-btn" class="button secondary text-xs w-full mt-2">顯示更多 (${playerData.farmedMonsters.length - 5}隻)...</button>`;
         }
     }
 
