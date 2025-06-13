@@ -22,6 +22,14 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
                 : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
 
+            let buffsHtml = '';
+            if (title.buffs && Object.keys(title.buffs).length > 0) {
+                const statDisplayName = { hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率' };
+                buffsHtml = '<div class="title-buffs" style="font-size: 0.85em; color: var(--success-color); margin-top: 5px;">效果：';
+                buffsHtml += Object.entries(title.buffs).map(([stat, value]) => `${statDisplayName[stat] || stat} +${value}`).join('，');
+                buffsHtml += '</div>';
+            }
+
             return `
                 <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -29,6 +37,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                         ${buttonHtml}
                     </div>
                     <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${title.description || ''}</p>
+                    ${buffsHtml}
                 </div>
             `;
         }).join('');
