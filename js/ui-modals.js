@@ -1129,23 +1129,31 @@ function updateTrainingResultsModal(results, monsterName) {
         itemsGrid.className = 'inventory-grid';
         items.forEach((item) => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'dna-item';
+            // 使用類似 dna-draw-result-item 的類別，以便共用或自訂樣式
+            itemDiv.classList.add('dna-item'); 
             applyDnaItemStyle(itemDiv, item);
-            itemDiv.style.cursor = 'pointer';
-
-            itemDiv.addEventListener('click', function handleItemClick() {
-                addDnaToTemporaryBackpack(item);
-                const itemIndex = gameState.lastCultivationResult.items_obtained.indexOf(item);
-                if (itemIndex > -1) {
-                    gameState.lastCultivationResult.items_obtained.splice(itemIndex, 1);
-                }
-                itemDiv.style.opacity = '0.5';
-                itemDiv.style.pointerEvents = 'none';
-                const originalTextSpan = itemDiv.querySelector('.dna-name-text');
-                if(originalTextSpan) {
-                    originalTextSpan.textContent = `${originalTextSpan.textContent} (已拾取)`;
-                }
-            }, { once: true });
+            
+            // 根據文件重新設計卡片內部結構
+            const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
+            itemDiv.innerHTML = `
+                <span class="dna-name" style="font-weight: bold;">${item.name}</span>
+                <span class="dna-type" style="font-size: 0.8em; color: var(--text-secondary);">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}" style="font-size: 0.8em; font-weight: bold;">${item.rarity}</span>
+                <button class="button primary text-xs" style="padding: 4px 8px; margin-top: 5px;">拾取</button>
+            `;
+            
+            // 為按鈕綁定事件
+            const pickupBtn = itemDiv.querySelector('button');
+            if(pickupBtn) {
+                pickupBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 防止觸發到卡片的其他點擊事件
+                    addDnaToTemporaryBackpack(item);
+                    
+                    // 更新按鈕狀態
+                    pickupBtn.disabled = true;
+                    pickupBtn.textContent = "已拾取";
+                }, { once: true });
+            }
 
             itemsGrid.appendChild(itemDiv);
         });
