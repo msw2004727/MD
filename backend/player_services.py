@@ -51,24 +51,21 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
     
     all_titles_data = game_configs.get("titles", [])
-    # 尋找ID為 'title_001' 的預設稱號
     default_title_object = next((t for t in all_titles_data if t.get("id") == "title_001"), None)
 
-    # 如果找不到，使用一個備用的預設值
     if not default_title_object:
         default_title_object = {
             "id": "title_001", "name": "新手", "description": "踏入怪獸異世界的第一步。",
             "condition": {"type": "default", "value": 0}, "buffs": {}
         }
 
-    # 設置玩家的初始稱號資料
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
-        "titles": [default_title_object], # 玩家擁有的稱號列表（包含完整物件）
+        "titles": [default_title_object], 
         "achievements": ["首次登入異世界"],
         "medals": 0,
         "nickname": nickname,
-        "equipped_title_id": default_title_object["id"] # 預設裝備第一個稱號
+        "equipped_title_id": default_title_object["id"] 
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
@@ -97,9 +94,10 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "playerStats": player_stats,
         "nickname": nickname,
         "lastSave": int(time.time()),
-        "lastSeen": int(time.time()), # 新增：初始化 lastSeen
+        "lastSeen": int(time.time()),
         "selectedMonsterId": None,
-        "friends": [] # 為新玩家加入空的好友列表
+        "friends": [],
+        "dnaCombinationSlots": [None] * 5,  # 新增：初始化空的組合槽
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -133,7 +131,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 update_fields["nickname"] = authoritative_nickname
                 player_services_logger.info(f"已更新玩家 {player_id} 在 Firestore users 集合中的暱稱為: {authoritative_nickname}")
             try:
-                user_profile_ref.update(update_fields) # 一次性更新
+                user_profile_ref.update(update_fields)
             except Exception as e:
                 player_services_logger.error(f"更新玩家 {player_id} 的 profile 失敗: {e}", exc_info=True)
         else:
@@ -151,32 +149,26 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         if game_data_doc.exists:
             player_game_data_dict = game_data_doc.to_dict()
 
-            # --- 新增的保護機制：如果文檔存在但為空(None)，將其視為空字典 ---
             if player_game_data_dict is None:
                 player_game_data_dict = {}
                 player_services_logger.warning(f"玩家 {player_id} 的遊戲資料文檔存在但為空，將其視為空物件處理。")
-            # --- 移除有問題的 if player_game_data_dict: 判斷 ---
-
+            
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
-            # --- 資料遷移邏輯 ---
             needs_migration_save = False
             update_payload = {}
             
             player_stats = player_game_data_dict.get("playerStats", {})
 
-            # 遷移1：處理舊版稱號（字串列表）到新版（物件列表）
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
                 all_titles_config = game_configs.get("titles", [])
                 new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
                 player_stats["titles"] = new_titles_list
-                # 使用 dot notation 來更新巢狀欄位
                 update_payload["playerStats.titles"] = new_titles_list
                 needs_migration_save = True
                 player_services_logger.info(f"玩家 {player_id} 的稱號資料已從字串遷移至物件格式。")
 
-            # 遷移2：為沒有 equipped_title_id 的舊玩家設置預設值
             if "equipped_title_id" not in player_stats:
                 current_titles_obj = player_stats.get("titles", [])
                 default_equip_id = None
@@ -200,11 +192,9 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 try:
                     game_data_ref.update(update_payload)
                     player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
-                    # 更新記憶體中的 player_game_data_dict 以反映變更
                     player_game_data_dict["playerStats"] = player_stats
                 except Exception as e:
                     player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
-            # --- 資料遷移邏輯結束 ---
             
             loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
             max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
@@ -222,13 +212,14 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
-                "friends": player_game_data_dict.get("friends", [])
+                "friends": player_game_data_dict.get("friends", []),
+                # 新增：讀取組合槽，如果不存在則提供預設值
+                "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                 player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
             return player_game_data
         
-        # 只有當遊戲資料文檔【完全不存在】時，才執行初始化
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
@@ -254,7 +245,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     current_time_unix = int(time.time())
 
     try:
-        # 準備要儲存到 gameData 子集合的資料
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
@@ -263,26 +253,25 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "lastSave": current_time_unix,
             "lastSeen": current_time_unix,
             "selectedMonsterId": game_data.get("selectedMonsterId"),
-            "friends": game_data.get("friends", [])
+            "friends": game_data.get("friends", []),
+            # 新增：儲存組合槽狀態
+            "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
            data_to_save["playerStats"].get("nickname") != data_to_save["nickname"]:
             data_to_save["playerStats"]["nickname"] = data_to_save["nickname"]
 
-        # 寫入主要的遊戲資料
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_ref.set(data_to_save) 
         
-        # 同步更新頂層 users 文件的 lastSeen，以便高效查詢
         try:
             user_profile_ref = db.collection('users').document(player_id)
             user_profile_ref.update({"lastSeen": firestore.SERVER_TIMESTAMP})
             player_services_logger.info(f"已同步更新玩家 {player_id} 的頂層 lastSeen 時間戳。")
         except Exception as e:
             player_services_logger.error(f"同步更新玩家 {player_id} 的頂層 lastSeen 時間戳失敗: {e}", exc_info=True)
-            # 此為非關鍵錯誤，不影響主要存檔結果，僅記錄日誌
-
+            
         player_services_logger.info(f"玩家 {player_id} 的遊戲資料已成功儲存到 Firestore。")
         return True
     except Exception as e:
@@ -292,9 +281,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
 def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     """
     執行免費的 DNA 抽取。
-    規則：
-    1. 隨機抽取 3 個 DNA。
-    2. 卡池中只包含“普通”和“稀有”等級的 DNA。
     """
     player_services_logger.info("正在執行免費 DNA 抽取...")
     try:
@@ -344,20 +330,15 @@ def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[in
     if not friend_ids:
         return statuses
 
-    # Firestore 的 `in` 查詢一次最多支援 30 個元素
-    # 如果好友列表可能超過 30，需要分批處理
     friend_id_chunks = [friend_ids[i:i + 30] for i in range(0, len(friend_ids), 30)]
 
     for chunk in friend_id_chunks:
         try:
-            # 查詢 users 集合，效率更高
-            # 修正：使用更穩定的 FieldPath.document_id() 進行查詢
             docs = db.collection('users').where(FieldPath.document_id(), 'in', chunk).stream()
             for doc in docs:
                 user_data = doc.to_dict()
                 if user_data and 'lastSeen' in user_data:
                     last_seen_timestamp = user_data['lastSeen']
-                    # Firestore 的 SERVER_TIMESTAMP 會在讀取時轉換為 datetime 物件
                     if hasattr(last_seen_timestamp, 'timestamp'):
                         statuses[doc.id] = int(last_seen_timestamp.timestamp())
                     elif isinstance(last_seen_timestamp, (int, float)):
