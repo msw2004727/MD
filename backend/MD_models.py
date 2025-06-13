@@ -268,6 +268,7 @@ class PlayerGameData(TypedDict):
     nickname: NotRequired[str]
     selectedMonsterId: NotRequired[Optional[str]]
     lastSeen: NotRequired[int] # 新增：最後上線時間戳
+    dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]] # 新增：儲存組合槽的狀態
 
 
 # --- 新增的組合配方模型 (MonsterRecipes) ---
