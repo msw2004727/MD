@@ -4,6 +4,10 @@
 function applyDnaItemStyle(element, dnaData) {
     if (!element) return;
 
+    // 先清除可能存在的舊刪除按鈕，避免重複
+    const existingBtn = element.querySelector('.delete-item-btn');
+    if (existingBtn) existingBtn.remove();
+
     if (!dnaData) {
         element.style.backgroundColor = '';
         element.style.color = '';
@@ -14,6 +18,7 @@ function applyDnaItemStyle(element, dnaData) {
         }
         element.classList.add('empty');
         element.classList.remove('occupied');
+        element.classList.remove('jiggle-mode'); // 確保空格不抖動
         return;
     }
 
@@ -44,6 +49,18 @@ function applyDnaItemStyle(element, dnaData) {
     } else {
         element.innerHTML = `<span class="dna-name-text">${dnaData.name || '未知DNA'}</span>`;
     }
+
+    // ** 核心修改：將抖動模式的判斷與樣式應用集中到此處 **
+    if (isJiggleModeActive) {
+        element.classList.add('jiggle-mode');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-item-btn';
+        deleteBtn.innerHTML = '&times;';
+        deleteBtn.setAttribute('aria-label', '刪除物品');
+        element.appendChild(deleteBtn);
+    } else {
+        element.classList.remove('jiggle-mode');
+    }
 }
 
 
@@ -52,7 +69,6 @@ function renderDNACombinationSlots() {
     if (!container) return;
     container.innerHTML = '';
 
-    // 修改：從新的 gameState.playerData.dnaCombinationSlots 讀取資料
     const combinationSlots = gameState.playerData?.dnaCombinationSlots || [null, null, null, null, null];
 
     combinationSlots.forEach((dna, index) => {
@@ -68,24 +84,21 @@ function renderDNACombinationSlots() {
         slot.appendChild(typeSpan);
 
         if (dna && dna.id) {
-            slot.classList.add('occupied');
-            applyDnaItemStyle(slot, dna);
             slot.draggable = true;
             slot.dataset.dnaId = dna.id;
             slot.dataset.dnaBaseId = dna.baseId;
             slot.dataset.dnaSource = 'combination';
-            slot.dataset.slotIndex = index;
             typeSpan.textContent = `${dna.type || '無'}屬性`; 
+            applyDnaItemStyle(slot, dna); // applyDnaItemStyle 會處理抖動
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.classList.add('empty');
-            applyDnaItemStyle(slot, null);
+            applyDnaItemStyle(slot, null); // applyDnaItemStyle 會處理抖動
             typeSpan.textContent = ''; 
         }
         container.appendChild(slot);
     });
     
-    // 修改：同樣使用新的路徑來判斷按鈕是否禁用
     if(DOMElements.combineButton) {
         DOMElements.combineButton.disabled = combinationSlots.filter(s => s !== null).length < 2;
     }
@@ -125,14 +138,14 @@ function renderPlayerDNAInventory() {
                 item.dataset.dnaId = dna.id;
                 item.dataset.dnaBaseId = dna.baseId;
                 item.dataset.dnaSource = 'inventory';
-                applyDnaItemStyle(item, dna);
                 typeSpan.textContent = `${dna.type || '無'}屬性`; 
+                applyDnaItemStyle(item, dna); // applyDnaItemStyle 會處理抖動
             } else {
-                item.draggable = true;
+                item.draggable = false; // 空格不可拖曳
                 item.dataset.dnaSource = 'inventory';
-                applyDnaItemStyle(item, null);
                 nameSpan.textContent = '空位';
                 typeSpan.textContent = ''; 
+                applyDnaItemStyle(item, null); // applyDnaItemStyle 會處理抖動
             }
         }
         container.appendChild(item);
@@ -159,7 +172,6 @@ function renderTemporaryBackpack() {
         slot.dataset.tempItemIndex = index;
 
         if (item) {
-            slot.classList.add('occupied');
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('dna-name-text');
             slot.appendChild(nameSpan);
@@ -168,7 +180,6 @@ function renderTemporaryBackpack() {
             typeSpan.classList.add('dna-type-text');
             slot.appendChild(typeSpan);
             
-            applyDnaItemStyle(slot, item.data);
             typeSpan.textContent = `${item.data.type || '無'}屬性`;
 
             slot.draggable = true;
@@ -176,11 +187,11 @@ function renderTemporaryBackpack() {
             slot.dataset.dnaBaseId = item.data.baseId;
             slot.dataset.dnaSource = 'temporaryBackpack';
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
+            applyDnaItemStyle(slot, item.data); // applyDnaItemStyle 會處理抖動
         } else {
-            slot.classList.add('empty');
             slot.innerHTML = `<span class="dna-name-text">空位</span>`;
-            applyDnaItemStyle(slot, null);
             slot.draggable = false;
+            applyDnaItemStyle(slot, null); // applyDnaItemStyle 會處理抖動
         }
         container.appendChild(slot);
     });
