@@ -115,12 +115,9 @@ function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
 }
 
-// 修改：只在抖動模式下才阻止滾動，以觸發拖曳
 function handleTouchMove(event) {
-    // 手指一移動，就取消長按計時
     clearTimeout(longPressTimer);
     
-    // 只有當處於抖動模式時，才阻止頁面滾動，以便能拖曳物品
     if (isJiggleModeActive) {
        event.preventDefault();
     }
@@ -152,7 +149,7 @@ async function handleItemClick(event) {
         if (!dnaObject) return;
 
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaObject.name || '該DNA'}" 嗎？`, async () => {
-            exitJiggleMode();
+            // 保持抖動模式
             if (sourceType === 'inventory') {
                 gameState.playerData.playerOwnedDNA[sourceIndex] = null;
                 renderPlayerDNAInventory();
@@ -162,6 +159,17 @@ async function handleItemClick(event) {
             } else if (sourceType === 'temporaryBackpack') {
                 gameState.temporaryBackpack[sourceIndex] = null;
                 renderTemporaryBackpack();
+            }
+            if(isJiggleModeActive) {
+                setTimeout(() => {
+                    document.querySelectorAll('.occupied:not(.jiggle-mode)').forEach(item => item.classList.add('jiggle-mode'));
+                    document.querySelectorAll('.occupied:not(:has(.delete-item-btn))').forEach(item => {
+                         const deleteBtn = document.createElement('button');
+                         deleteBtn.className = 'delete-item-btn';
+                         deleteBtn.innerHTML = '&times;';
+                         item.appendChild(deleteBtn);
+                    });
+                }, 50);
             }
             await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
@@ -269,7 +277,6 @@ async function handleDrop(event) {
         const dnaNameToDelete = dnaDataToMove.name || '該DNA';
 
         showConfirmationModal('確認刪除', `您確定要永久刪除 DNA "${dnaNameToDelete}" 嗎？此操作無法復原。`, async () => {
-            exitJiggleMode();
             if (sourceTypeToDelete === 'inventory') {
                 gameState.playerData.playerOwnedDNA[sourceIndexToDelete] = null;
                 renderPlayerDNAInventory();
@@ -279,6 +286,17 @@ async function handleDrop(event) {
             } else if (sourceTypeToDelete === 'temporaryBackpack') {
                 gameState.temporaryBackpack[sourceIndexToDelete] = null;
                 renderTemporaryBackpack();
+            }
+            if(isJiggleModeActive) {
+                setTimeout(() => {
+                    document.querySelectorAll('.occupied:not(.jiggle-mode)').forEach(item => item.classList.add('jiggle-mode'));
+                    document.querySelectorAll('.occupied:not(:has(.delete-item-btn))').forEach(item => {
+                         const deleteBtn = document.createElement('button');
+                         deleteBtn.className = 'delete-item-btn';
+                         deleteBtn.innerHTML = '&times;';
+                         item.appendChild(deleteBtn);
+                    });
+                }, 50);
             }
             await savePlayerData(gameState.playerId, gameState.playerData);
             showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
@@ -335,5 +353,39 @@ async function handleDrop(event) {
         renderDNACombinationSlots();
         renderTemporaryBackpack();
         await savePlayerData(gameState.playerId, gameState.playerData);
+    }
+    // 新增：處理拖曳到暫存背包的邏輯
+    else if (dropTargetElement.closest('#temporary-backpack-items')) {
+        // 從組合區或碎片區來的物品，要放入暫存背包
+        if (draggedSourceType === 'inventory' || draggedSourceType === 'combination') {
+            const MAX_TEMP_SLOTS = gameState.gameConfigs?.value_settings?.max_temp_backpack_slots || 9;
+            let freeSlotIndex = -1;
+            for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
+                if (!gameState.temporaryBackpack[i]) {
+                    freeSlotIndex = i;
+                    break;
+                }
+            }
+
+            if (freeSlotIndex !== -1) {
+                // 從來源處移除
+                if (draggedSourceType === 'inventory') {
+                    gameState.playerData.playerOwnedDNA[draggedSourceIndex] = null;
+                } else { // 'combination'
+                    gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = null;
+                }
+                
+                // 新增到暫存背包 (注意：這裡我們直接移動實例，而不是模板)
+                gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
+                
+                // 重新渲染所有相關UI並儲存
+                renderPlayerDNAInventory();
+                renderDNACombinationSlots();
+                renderTemporaryBackpack();
+                await savePlayerData(gameState.playerId, gameState.playerData);
+            } else {
+                showFeedbackModal('背包已滿', '暫存背包已滿，無法放入更多物品。');
+            }
+        }
     }
 }
