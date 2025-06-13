@@ -74,7 +74,8 @@ function enterJiggleMode() {
             if (item.id === 'inventory-delete-slot') return;
             
             item.classList.add('jiggle-mode');
-            
+            item.draggable = false; // 新增：在抖動模式下明確禁止拖曳
+
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-item-btn';
             deleteBtn.innerHTML = '&times;';
@@ -90,6 +91,7 @@ function exitJiggleMode() {
     
     document.querySelectorAll('.jiggle-mode').forEach(item => {
         item.classList.remove('jiggle-mode');
+        item.draggable = true; // 新增：退出時恢復物品的拖曳能力
     });
 
     document.querySelectorAll('.delete-item-btn').forEach(btn => {
@@ -108,17 +110,11 @@ function handleItemInteractionStart(event) {
     
     longPressTimer = setTimeout(() => {
         enterJiggleMode();
-        if (draggedElement) {
-            draggedElement.draggable = false;
-        }
     }, LONG_PRESS_DURATION);
 }
 
 function handleItemInteractionEnd() {
     clearTimeout(longPressTimer);
-    if (draggedElement) {
-        draggedElement.draggable = true;
-    }
 }
 
 // --- 點擊事件處理 (合併刪除與單擊移動) ---
@@ -179,9 +175,13 @@ async function handleItemClick(event) {
 
 // --- 拖放事件處理 ---
 function handleDragStart(event) {
+    // 新增：如果已處於抖動模式，則完全阻止拖曳的開始
     if (isJiggleModeActive) {
-        exitJiggleMode();
+        event.preventDefault();
+        return;
     }
+    
+    // 如果拖曳開始了，就代表不是長按，必須清除計時器
     handleItemInteractionEnd(); 
     
     const target = event.target.closest('.dna-item.occupied, .dna-slot.occupied, .temp-backpack-slot.occupied');
@@ -222,7 +222,9 @@ function handleDragStart(event) {
 }
 
 function handleDragEnd(event) {
-    if (draggedElement) draggedElement.classList.remove('dragging');
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+    }
     draggedElement = null;
     draggedDnaObject = null;
     draggedSourceType = null;
