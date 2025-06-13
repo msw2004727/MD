@@ -711,7 +711,6 @@ function updateTrainingResultsModal(results, monsterName) {
             <div class="training-section">
                 <h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5>
                 ${itemsGridHtml}
-                <button id="add-all-to-temp-backpack-btn" class="button primary w-full mt-3">全部拾取</button>
             </div>
         `;
     } else {
@@ -752,24 +751,6 @@ function updateTrainingResultsModal(results, monsterName) {
             }
         });
     });
-
-    // 全部拾取按鈕
-    const addAllBtn = modalBody.querySelector('#add-all-to-temp-backpack-btn');
-    if (addAllBtn) {
-        if (items.length === 0) {
-            addAllBtn.style.display = 'none';
-        }
-        addAllBtn.addEventListener('click', () => {
-            items.forEach((item, index) => {
-                const btn = modalBody.querySelector(`.pickup-btn[data-item-index="${index}"]`);
-                if (btn && !btn.disabled) {
-                    addDnaToTemporaryBackpack(item);
-                    btn.disabled = true;
-                    btn.textContent = "已拾取";
-                }
-            });
-        });
-    }
     
     // 顯示 Modal
     showModal('training-results-modal');
