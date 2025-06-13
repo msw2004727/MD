@@ -339,6 +339,12 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-left-leg { grid-area: lLeg; }
 #monster-part-right-leg { grid-area: rLeg; }
 
+#monster-part-right-arm,
+#monster-part-right-leg {
+    text-align: right;
+    padding-right: 4px;
+}
+
 .snapshot-info-overlay {
     position: absolute;
     bottom: 8px;
