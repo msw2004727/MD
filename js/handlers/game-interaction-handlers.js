@@ -205,7 +205,8 @@ function handleCultivationStart() {
         monster.farmStatus.trainingLocation = location;
 
         hideModal('cultivation-setup-modal');
-        showFeedbackModal('修煉開始！', `怪獸 ${monster.nickname} 已出發修煉。`, false);
+        // 修改點：呼叫 showFeedbackModal 時，不再傳遞 message 字串，而是傳遞一個包含怪獸物件的特殊物件
+        showFeedbackModal('修煉開始！', '', false, { type: 'cultivation_start', monster: monster });
         
         // 重新渲染農場列表以更新狀態
         if(typeof renderMonsterFarm === 'function') {
