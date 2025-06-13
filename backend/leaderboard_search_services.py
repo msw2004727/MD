@@ -67,19 +67,7 @@ def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[
                                 monster_copy = copy.deepcopy(monster_dict)
                                 monster_copy["owner_nickname"] = player_nickname # type: ignore
                                 monster_copy["owner_id"] = user_doc.id # type: ignore
-                                
-                                # --- 新增：查找並附加擁有者的稱號加成 ---
-                                player_stats = player_game_data.get("playerStats", {})
-                                equipped_id = player_stats.get("equipped_title_id")
-                                owned_titles = player_stats.get("titles", [])
-                                monster_copy["owner_title_buffs"] = {} # 預設為空字典
-
-                                if equipped_id and owned_titles and isinstance(owned_titles, list):
-                                    equipped_title_obj = next((t for t in owned_titles if isinstance(t, dict) and t.get("id") == equipped_id), None)
-                                    if equipped_title_obj and equipped_title_obj.get("buffs"):
-                                        monster_copy["owner_title_buffs"] = equipped_title_obj["buffs"]
-                                # --- 新增結束 ---
-
+                                # 確保 farmStatus 存在，即使是空字典，以便前端統一處理
                                 if "farmStatus" not in monster_copy:
                                     monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False}
                                 all_selected_monsters.append(monster_copy) # type: ignore
@@ -123,10 +111,6 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
                     stats: PlayerStats = player_game_data["playerStats"] # type: ignore
                     if "nickname" not in stats or not stats["nickname"]:
                         stats["nickname"] = player_game_data.get("nickname", user_doc.id) # type: ignore
-                    
-                    # 新增：將玩家的 UID 加入到回傳的 stats 物件中
-                    stats["uid"] = user_doc.id # type: ignore
-
                     all_player_stats.append(stats)
 
         all_player_stats.sort(key=lambda ps: ps.get("score", 0), reverse=True)

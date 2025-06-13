@@ -130,29 +130,13 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空或數量不足。")
         return None
 
+    # 直接使用從請求中傳來的 DNA 物件資料
     combined_dnas_data: List[DNAFragment] = dna_objects_from_request
-    
-    # --- 新增：更穩健的 ID 提取與日誌記錄 ---
-    monster_combination_services_logger.info(f"收到來自玩家 {player_id} 的組合請求，包含 {len(combined_dnas_data)} 個 DNA 物件。")
-    
-    constituent_dna_template_ids: List[str] = []
-    for i, dna in enumerate(combined_dnas_data):
-        if not dna or not isinstance(dna, dict):
-            monster_combination_services_logger.warning(f"組合請求中的第 {i+1} 個 DNA 物件為空或格式不符，已跳過。")
-            continue
-        
-        # 優先使用 baseId，如果沒有則回退到 id
-        template_id = dna.get("baseId") or dna.get("id")
-        if template_id and isinstance(template_id, str):
-            constituent_dna_template_ids.append(template_id)
-        else:
-            monster_combination_services_logger.warning(f"第 {i+1} 個 DNA 物件 '{dna.get('name', '未知名稱')}' 缺少有效的 'baseId' 或 'id'，已跳過。")
-            
-    monster_combination_services_logger.info(f"成功提取 {len(constituent_dna_template_ids)} 個有效的 DNA 模板 ID 用於組合。")
-    # --- 新增結束 ---
+    # 提取 DNA 模板 ID (baseId) 用於生成配方鍵值
+    constituent_dna_template_ids: List[str] = [dna.get("baseId") or dna.get("id", "") for dna in combined_dnas_data if dna]
 
-    if len(constituent_dna_template_ids) < 2:
-        monster_combination_services_logger.error(f"有效的 DNA 數量不足 (需要至少 2 個，實際為 {len(constituent_dna_template_ids)})。")
+    if len(combined_dnas_data) < 2:
+        monster_combination_services_logger.error("組合 DNA 數量不足 (至少需要 2 個)。")
         return None
     
     combination_key = _generate_combination_key(constituent_dna_template_ids)

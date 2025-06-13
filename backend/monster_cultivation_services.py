@@ -275,12 +275,6 @@ def complete_cultivation_service(
             cultivation_gains = monster_to_update.get("cultivation_gains", {})
             if not isinstance(cultivation_gains, dict): cultivation_gains = {}
 
-            # 新增: 能力值中文對照表
-            stat_name_map = {
-                "hp": "HP", "mp": "MP", "attack": "攻擊",
-                "defense": "防禦", "speed": "速度", "crit": "爆擊率"
-            }
-
             for _ in range(growth_chances):
                 chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
                 gain_amount = random.randint(1, 2)
@@ -290,11 +284,7 @@ def complete_cultivation_service(
                 else:
                     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
                 cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                
-                # 修改: 使用中文名稱生成日誌
-                display_stat_name = stat_name_map.get(chosen_stat, chosen_stat.upper())
-                skill_updates_log.append(f"💪 基礎能力 '{display_stat_name}' 潛力提升了 {gain_amount} 點！")
-
+                skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
             monster_to_update["cultivation_gains"] = cultivation_gains
             
         if not any(log.startswith("💪") for log in skill_updates_log):
