@@ -14,8 +14,15 @@ function moveDnaToCombinationSlot(draggedDnaObject, sourceSlotIndexIfFromCombina
         renderDNACombinationSlots(); // 保持UI一致
         return;
     }
+    
+    // 修改：從新的 gameState.playerData 中讀取組合槽
+    const combinationSlots = gameState.playerData?.dnaCombinationSlots;
+    if (!combinationSlots) {
+        console.error("moveDnaToCombinationSlot: 玩家資料中的組合槽未定義。");
+        return;
+    }
 
-    if (targetSlotIndex < 0 || targetSlotIndex >= gameState.dnaCombinationSlots.length) {
+    if (targetSlotIndex < 0 || targetSlotIndex >= combinationSlots.length) {
         console.warn(`moveDnaToCombinationSlot: 無效的目標槽位索引 ${targetSlotIndex}。`);
         renderDNACombinationSlots();
         return;
@@ -26,11 +33,11 @@ function moveDnaToCombinationSlot(draggedDnaObject, sourceSlotIndexIfFromCombina
         return;
     }
 
-    const itemCurrentlyInTargetSlot = gameState.dnaCombinationSlots[targetSlotIndex];
-    gameState.dnaCombinationSlots[targetSlotIndex] = draggedDnaObject;
+    const itemCurrentlyInTargetSlot = combinationSlots[targetSlotIndex];
+    combinationSlots[targetSlotIndex] = draggedDnaObject;
 
     if (sourceSlotIndexIfFromCombination !== null) {
-        gameState.dnaCombinationSlots[sourceSlotIndexIfFromCombination] = itemCurrentlyInTargetSlot;
+        combinationSlots[sourceSlotIndexIfFromCombination] = itemCurrentlyInTargetSlot;
     }
     
     renderDNACombinationSlots();
@@ -68,7 +75,10 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
              currentOwnedDna[sourceInfo.originalInventoryIndex] = null;
         }
     } else if (sourceInfo.type === 'combination') {
-        gameState.dnaCombinationSlots[sourceInfo.id] = null;
+        // 修改：從新的 gameState.playerData 中清空組合槽
+        if (gameState.playerData?.dnaCombinationSlots) {
+            gameState.playerData.dnaCombinationSlots[sourceInfo.id] = null;
+        }
     } else if (sourceInfo.type === 'temporaryBackpack') {
         if (sourceInfo.id !== null && sourceInfo.id !== undefined) {
             gameState.temporaryBackpack[sourceInfo.id] = null;
@@ -302,7 +312,6 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
 
     const maxSkills = gameState.gameConfigs.value_settings?.max_monster_skills || 3;
     
-    // ===== 新增：產生「目前技能」的HTML =====
     let currentSkillsHtml = '<div style="margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color);">';
     currentSkillsHtml += `<h5 style="font-weight: bold; color: var(--text-secondary); margin-bottom: 0.5rem;">${monster.nickname} 的目前技能：</h5>`;
     if (currentSkills.length > 0) {
@@ -315,15 +324,12 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
         currentSkillsHtml += '<p style="font-size: 0.9em; color: var(--text-secondary);">無</p>';
     }
     currentSkillsHtml += '</div>';
-    // =====================================
 
     let message = `${monster.nickname} 領悟了新技能：${newSkillLink} (威力: ${newSkillTemplate.power}, MP: ${newSkillTemplate.mp_cost || 0})！<br>`;
     message += `<p class="text-sm text-[var(--text-secondary)] mt-2" style="font-size: 0.9em !important;">技能簡述：${skillDescription}</p>`;
     
-    // 新增：為查看技能詳情預留的注入點
     message += `<div id="skill-details-injection-point" class="mt-2"></div>`;
     
-    // 新增：無論如何都顯示目前技能
     message += currentSkillsHtml;
 
     const onLearn = async (slotToReplace = null) => {
@@ -494,7 +500,6 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
             updateMonsterSnapshot(getSelectedMonster() || null);
             await savePlayerData(gameState.playerId, gameState.playerData);
             
-            // 已移除「物品已移動」的提示彈窗
         } else {
             showFeedbackModal('庫存已滿', '您的 DNA 庫存已滿，無法再從臨時背包移動物品。請清理後再試。');
         }
@@ -516,14 +521,13 @@ async function handleDrawDNAClick() {
     showFeedbackModal('DNA抽取中...', '正在搜尋稀有的DNA序列...', true);
 
     try {
-        // Call the new API function
         const result = await drawFreeDNA();
         
         if (result && result.success && result.drawn_dna) {
             const drawnItems = result.drawn_dna;
-            gameState.lastDnaDrawResult = drawnItems; // 保存抽卡結果
+            gameState.lastDnaDrawResult = drawnItems; 
             hideModal('feedback-modal');
-            showDnaDrawModal(drawnItems); // 顯示抽卡結果彈窗
+            showDnaDrawModal(drawnItems);
         } else {
             throw new Error(result.error || '從伺服器返回的抽卡數據無效。');
         }
@@ -606,8 +610,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
     try {
         showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
         
-        // 暫時將玩家怪獸設為戰鬥中狀態，以便UI更新
-        // 注意：這是一個前端的臨時狀態，真實狀態由後端確認
         playerMonster.farmStatus = { ...playerMonster.farmStatus, isBattling: true };
         renderMonsterFarm();
         updateMonsterSnapshot(playerMonster);
@@ -653,8 +655,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
                     const battleResult = await simulateBattle(playerMonster, opponentMonster);
 
-                    await refreshPlayerData(); // 戰後刷新數據，確保狀態同步
-                    updateMonsterSnapshot(getSelectedMonster()); // 更新快照為當前選中怪獸
+                    await refreshPlayerData(); 
+                    updateMonsterSnapshot(getSelectedMonster()); 
 
                     showBattleLogModal(battleResult.log,
                         battleResult.winner_id === playerMonster.id ? playerMonster.nickname : (battleResult.winner_id === opponentMonster.id ? opponentMonster.nickname : null),
@@ -666,7 +668,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
                     console.error("模擬戰鬥錯誤:", battleError);
-                    await refreshPlayerData(); // 即使戰鬥出錯，也刷新數據以同步狀態
+                    await refreshPlayerData(); 
                 }
             },
             { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
