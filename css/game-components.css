@@ -19,6 +19,7 @@
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
+    padding: 0.5rem; /* 修改：調整內邊距，為新的內部容器留出空間 */
 }
 
 /* ==========================================================================
@@ -202,7 +203,7 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 4px;
-    margin-bottom: 15px;
+    margin-bottom: 1rem; /* 修改：增加與下方內容的間距 */
     background-color: var(--bg-primary);
     border-radius: 6px;
     padding: 4px;
@@ -233,21 +234,17 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     color: var(--text-primary);
 }
 
-/* ==== 修改：將頁籤內容區塊本身作為新的容器 ==== */
+/* ==== 重寫頁籤內容區塊的佈局 ==== */
 .tab-content {
-    display: none;
+    display: none; /* 預設隱藏 */
     min-width: 0;
 }
 .tab-content.active {
-    display: flex; /* 修改：使用 flex 佈局 */
+    display: flex; /* 修改：啟動 flex 佈局 */
     flex-direction: column; /* 讓內部元素垂直排列 */
-    flex-grow: 1;
-    min-height: 0;
-    overflow-y: auto; /* 修改：讓整個內容區塊可以垂直滾動 */
-    
-    /* 新增：您要求的可見邊框，以便確認容器範圍 */
-    border: 1px dashed red;
-    padding: 0.5rem;
+    flex-grow: 1; /* 填滿父容器剩餘的所有空間 */
+    min-height: 0; /* 關鍵：允許容器在需要時收縮 */
+    overflow: hidden; /* 新增：將這個容器作為最外層的「籠子」，超出部分直接裁切 */
 }
 
 #monster-leaderboard-element-tabs {
