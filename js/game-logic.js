@@ -762,3 +762,64 @@ async function fetchAndDisplayMonsterLeaderboard() {
         showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
     }
 }
+
+async function handleClickInventory(event) {
+    const itemElement = event.target.closest('.dna-item.occupied');
+    if (!itemElement) return;
+
+    const inventoryIndex = parseInt(itemElement.dataset.inventoryIndex, 10);
+    const dnaObject = gameState.playerData.playerOwnedDNA[inventoryIndex];
+    if (!dnaObject) return;
+    
+    // Find the first empty slot in the combination area
+    const targetSlotIndex = gameState.playerData.dnaCombinationSlots.findIndex(slot => slot === null);
+
+    if (targetSlotIndex !== -1) {
+        // Move the DNA object
+        gameState.playerData.playerOwnedDNA[inventoryIndex] = null;
+        gameState.playerData.dnaCombinationSlots[targetSlotIndex] = dnaObject;
+        
+        // Re-render UI
+        renderPlayerDNAInventory();
+        renderDNACombinationSlots();
+        
+        // Save the new state
+        await savePlayerData(gameState.playerId, gameState.playerData);
+    } else {
+        showFeedbackModal('提示', 'DNA組合欄位已滿！');
+    }
+}
+
+async function handleClickCombinationSlot(event) {
+    const slotElement = event.target.closest('.dna-slot.occupied');
+    if (!slotElement) return;
+
+    const slotIndex = parseInt(slotElement.dataset.slotIndex, 10);
+    const dnaObject = gameState.playerData.dnaCombinationSlots[slotIndex];
+    if (!dnaObject) return;
+
+    // Find the first empty slot in the main inventory, skipping the delete slot
+    let targetInventoryIndex = -1;
+    for (let i = 0; i < gameState.MAX_INVENTORY_SLOTS; i++) {
+        // Index 11 is the delete slot
+        if (i !== 11 && !gameState.playerData.playerOwnedDNA[i]) {
+            targetInventoryIndex = i;
+            break;
+        }
+    }
+
+    if (targetInventoryIndex !== -1) {
+        // Move the DNA object
+        gameState.playerData.dnaCombinationSlots[slotIndex] = null;
+        gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaObject;
+        
+        // Re-render UI
+        renderPlayerDNAInventory();
+        renderDNACombinationSlots();
+        
+        // Save the new state
+        await savePlayerData(gameState.playerId, gameState.playerData);
+    } else {
+        showFeedbackModal('提示', 'DNA碎片庫存區已滿！');
+    }
+}
