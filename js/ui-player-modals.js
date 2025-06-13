@@ -203,3 +203,53 @@ function updateFriendsSearchResults(players) {
         `;
     }).join('');
 }
+
+async function renderFriendsList() {
+    const container = DOMElements.friendsListDisplayArea;
+    if (!container) return;
+
+    const friends = gameState.playerData?.friends || [];
+
+    if (friends.length === 0) {
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4">好友列表空空如也，快去搜尋並新增好友吧！</p>`;
+        return;
+    }
+
+    const friendIds = friends.map(f => f.uid);
+    let friendStatuses = {};
+    try {
+        const response = await getFriendsStatuses(friendIds);
+        if (response.success) {
+            friendStatuses = response.statuses;
+        }
+    } catch (error) {
+        console.error("無法獲取好友狀態:", error);
+    }
+    
+    container.innerHTML = `
+        <div class="friends-list-grid">
+            ${friends.map(friend => {
+                const title = friend.title || '稱號未定';
+                const displayName = `${title} ${friend.nickname}`;
+                
+                const lastSeen = friendStatuses[friend.uid];
+                const nowInSeconds = Date.now() / 1000;
+                const isOnline = lastSeen && (nowInSeconds - lastSeen < 300); 
+
+                return `
+                <div class="friend-item-card">
+                    <div class="friend-info">
+                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
+                        <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
+                            ${displayName}
+                        </a>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="button secondary text-xs" title="送禮" disabled>🎁</button>
+                        <button class="button secondary text-xs" title="聊天" disabled>💬</button>
+                    </div>
+                </div>
+            `}).join('')}
+        </div>
+    `;
+}
