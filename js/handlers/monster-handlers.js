@@ -5,6 +5,34 @@ function initializeMonsterEventHandlers() {
     handleLeaderboardInteractions();
 }
 
+// 新增：補上缺少的表頭排序處理函數
+function handleFarmHeaderSorting() {
+    if (DOMElements.farmHeaders) {
+        DOMElements.farmHeaders.addEventListener('click', (event) => {
+            const target = event.target.closest('.sortable');
+            if (!target) return;
+
+            const sortKey = target.dataset.sortKey;
+            if (!sortKey || ['actions', 'deploy', 'index'].includes(sortKey)) return;
+
+            const currentSortKey = gameState.farmSortConfig.key;
+            const currentSortOrder = gameState.farmSortConfig.order;
+
+            let newSortOrder = 'desc';
+            if (currentSortKey === sortKey && currentSortOrder === 'desc') {
+                newSortOrder = 'asc';
+            }
+            
+            gameState.farmSortConfig = {
+                key: sortKey,
+                order: newSortOrder
+            };
+
+            renderMonsterFarm();
+        });
+    }
+}
+
 function handleFarmActions() {
     // 使用事件委派來處理農場列表中的所有點擊事件
     if (DOMElements.farmedMonstersList) {
