@@ -154,7 +154,6 @@ function initializeDOMElements() {
         feedbackModalCloseX: document.getElementById('feedback-modal-close-x'),
         feedbackModalTitle: document.getElementById('feedback-modal-title'),
         feedbackModalSpinner: document.getElementById('feedback-modal-spinner'),
-        feedbackModalBreathingIcon: document.getElementById('feedback-modal-breathing-icon'),
         feedbackModalMessage: document.getElementById('feedback-modal-message'),
         feedbackMonsterDetails: document.getElementById('feedback-monster-details'),
         confirmationModal: document.getElementById('confirmation-modal'),
@@ -269,7 +268,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
 
     DOMElements.feedbackModalMessage.innerHTML = '';
-    toggleElementDisplay(DOMElements.feedbackModalBreathingIcon, isLoading, 'block');
+    toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading, 'block');
 
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
