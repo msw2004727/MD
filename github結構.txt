@@ -1,48 +1,60 @@
 MD/
 ├── backend/
-│   ├── MD_ai_services.py
-│   ├── MD_config_services.py
-│   ├── MD_firebase_config.py
-│   ├── MD_models.py
-│   ├── MD_populate_gamedata.py
-│   ├── MD_routes.py
-│   ├── api_key.txt
-│   ├── battle_services.py
+│   ├── MD_ai_services.py (負責與 AI 模型互動，生成怪獸描述、故事和戰報)
+│   ├── MD_config_services.py (負責從 Firestore 載入遊戲核心設定)
+│   ├── MD_firebase_config.py (提供一個全域變數供主程式注入 Firestore 客戶端)
+│   ├── MD_models.py (定義遊戲中所有資料結構的型別，如怪獸、技能、玩家資料等)
+│   ├── MD_populate_gamedata.py (用於將本地的遊戲設定資料一次性匯入 Firestore 的腳本)
+│   ├── MD_routes.py (定義所有遊戲 API 的路由與主要邏輯)
+│   ├── api_key.txt (存放 API 金鑰等敏感資訊)
+│   ├── battle_services.py (處理核心戰鬥邏輯，包括傷害計算、技能效果等)
 │   ├── data/
-│   │   ├── dna_fragments.json
-│   │   ├── personalities.csv
-│   │   └── skills.json
-│   ├── leaderboard_search_services.py
-│   ├── main.py
-│   ├── monster_absorption_services.py
-│   ├── monster_combination_services.py
-│   ├── monster_cultivation_services.py
-│   ├── monster_disassembly_services.py
-│   ├── monster_healing_services.py
-│   ├── monster_nickname_services.py
-│   ├── player_services.py
-│   ├── requirements.txt
-│   ├── serviceAccountKey.json
-│   └── utils_services.py
+│   │   ├── cultivation_stories.json (存放修煉系統中隨機生成的冒險故事文本)
+│   │   ├── dna_fragments.json (定義所有 DNA 碎片的基礎數值與屬性)
+│   │   ├── newbie_guide.json (存放新手指南的內容)
+│   │   ├── personalities.csv (定義怪獸的個性及其對技能使用的偏好)
+│   │   ├── skills.json (定義所有技能的詳細資料與升級效果)
+│   │   └── titles.json (定義玩家可以獲得的稱號及其效果)
+│   ├── leaderboard_search_services.py (處理排行榜數據的獲取與玩家搜尋功能)
+│   ├── main.py (Flask 應用程式的主啟動檔案，負責初始化與運行後端服務)
+│   ├── monster_absorption_services.py (處理怪獸戰鬥勝利後吸收對手能力的邏輯)
+│   ├── monster_combination_services.py (處理 DNA 組合以生成新怪獸的核心邏輯)
+│   ├── monster_cultivation_services.py (處理怪獸修煉、技能成長與升級的服務)
+│   ├── monster_disassembly_services.py (處理分解怪獸以回收 DNA 的服務)
+│   ├── monster_healing_services.py (處理怪獸的治療與使用道具充能的服務)
+│   ├── monster_nickname_services.py (處理怪獸自定義暱稱的更新與管理)
+│   ├── player_services.py (處理玩家資料的初始化、獲取、保存與其他玩家相關功能)
+│   ├── requirements.txt (定義後端服務運行所需的 Python 套件)
+│   ├── serviceAccountKey.json (Firebase 服務帳戶的金鑰，用於後端驗證)
+│   └── utils_services.py (存放通用的輔助函式)
 ├── css/
-│   ├── components.css
-│   ├── layout.css
-│   └── theme.css
+│   ├── buttons.css (定義遊戲中所有按鈕的樣式)
+│   ├── components.css (定義遊戲各個 UI 組件的樣式，如 DNA 槽、面板標題等)
+│   ├── game-components.css (一個舊的組件樣式檔，部分樣式可能與 components.css 重疊)
+│   ├── layout.css (定義遊戲主畫面的整體佈局，如面板、格線系統等)
+│   ├── modals.css (定義所有彈出視窗的樣式)
+│   └── theme.css (定義淺色與深色主題的顏色變數與全域樣式)
 ├── images/
-│   ├── BN001.png
-│   ├── a001.png
-│   ├── amb01.png
-│   └── mb01.png
+│   ├── BN001.png (遊戲內使用的橫幅圖片資源)
+│   ├── a001.png (怪獸快照的背景圖片)
+│   ├── amb01.png (遊戲內使用的圖片資源)
+│   └── mb01.png (怪獸快照的身體輪廓圖片)
 ├── js/
-│   ├── api-client.js
-│   ├── auth.js
-│   ├── config.js
-│   ├── event-handlers.js
-│   ├── firebase-config.js
-│   ├── game-logic.js
-│   ├── game-state.js
-│   ├── loadApiKey.js
-│   ├── main.js
-│   └── ui.js
-├── github結構.txt
-└── index.html
+│   ├── api-client.js (負責與後端 API 溝通的所有 fetch 請求)
+│   ├── auth.js (處理 Firebase 的使用者註冊、登入、登出等身份驗證功能)
+│   ├── config.js (存放前端設定，如後端 API 的基本 URL)
+│   ├── event-handlers.js (集中管理遊戲中所有的事件監聽器，如點擊、拖曳等)
+│   ├── firebase-config.js (存放前端連接 Firebase 所需的設定物件)
+│   ├── game-logic.js (存放核心的遊戲前端邏輯，如 DNA 移動、戰鬥發起等)
+│   ├── game-state.js (定義並管理前端的全局狀態物件 `gameState`)
+│   ├── loadApiKey.js (用於載入 API 金鑰的模組)
+│   ├── main.js (前端應用程式的主入口點，負責初始化與啟動遊戲)
+│   ├── ui-farm.js (負責渲染「怪獸農場」頁籤的 UI)
+│   ├── ui-inventory.js (負責渲染「DNA管理」頁籤的 UI)
+│   ├── ui-leaderboard-modals.js (負責渲染排行榜彈窗的 UI)
+│   ├── ui-monster-modals.js (負責渲染怪獸詳細資訊等相關彈窗的 UI)
+│   ├── ui-player-modals.js (負責渲染玩家資訊等相關彈窗的 UI)
+│   ├── ui-snapshot.js (負責渲染主畫面「怪獸快照」的 UI)
+│   └── ui.js (拆分後的核心 UI 檔案，負責通用 UI 功能如彈窗、主題等)
+├── github結構.txt (您提供的 GitHub 結構文字檔)
+└── index.html (遊戲的主 HTML 檔案，承載所有畫面與腳本)
