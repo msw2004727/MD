@@ -111,6 +111,7 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
                     stats: PlayerStats = player_game_data["playerStats"] # type: ignore
                     if "nickname" not in stats or not stats["nickname"]:
                         stats["nickname"] = player_game_data.get("nickname", user_doc.id) # type: ignore
+                    stats["uid"] = user_doc.id # 新增：將 UID 加入到 stats 物件中
                     all_player_stats.append(stats)
 
         all_player_stats.sort(key=lambda ps: ps.get("score", 0), reverse=True)
