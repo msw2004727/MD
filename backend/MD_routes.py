@@ -424,6 +424,11 @@ def simulate_battle_api_route():
                     opponent_farm = opponent_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(opponent_farm):
                         if monster_in_farm.get("id") == opponent_monster_data_req['id']:
+                            # **這就是我們需要修改的地方**
+                            # 更新對手怪獸的HP和MP
+                            monster_in_farm["hp"] = battle_result["opponent_monster_final_hp"]
+                            monster_in_farm["mp"] = battle_result["opponent_monster_final_mp"]
+
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
                                 monster_in_farm["resume"] = {"wins": 0, "losses": 0}
 
