@@ -8,7 +8,7 @@ import logging
 import random
 import copy # 用於深拷貝怪獸數據
 import time # 導入 time 模組
-from typing import List, Dict, Any, Tuple # 引入 Tuple
+from typing import List, Dict, Any, Tuple, Optional # 引入 Optional
 
 from flask_cors import cross_origin # 修正：導入 cross_origin
 
@@ -459,7 +459,7 @@ def generate_ai_descriptions_route():
         return jsonify(ai_details), 200
     except Exception as e:
         routes_logger.error(f"生成AI描述時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "生成AI描述失敗。", "details": str(e)}), 500
+        return jsonify({"error": "生成AI描述失败。", "details": str(e)}), 500
 
 
 @md_bp.route('/monster/<monster_id>/update-nickname', methods=['POST'])
