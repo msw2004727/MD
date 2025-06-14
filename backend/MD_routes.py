@@ -27,7 +27,7 @@ from .battle_services import simulate_battle_full # 導入新的完整戰鬥服�
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
-    get_all_player_selected_monsters_service
+    get_monster_leaderboard_service # **核心修改點：導入新的排行榜服務**
 )
 
 # 從設定和 AI 服務模組引入函式
@@ -548,22 +548,13 @@ def disassemble_monster_route(monster_id: str):
     )
 
     if disassembly_result and disassembly_result.get("success"):
-        # 移除將DNA加回物品欄的邏輯
-        # returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
-        # current_owned_dna = player_data.get("playerOwnedDNA", [])
-        # import datetime
-        # for dna_template in returned_dna_templates:
-        #     ... (此處原有邏輯被移除) ...
-        # player_data["playerOwnedDNA"] = current_owned_dna
-        
-        # 直接使用服務層已更新的怪獸列表
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
 
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "message": disassembly_result.get("message"),
-                "returned_dna_templates_info": [], # DNA不再退回，返回空列表
+                "returned_dna_templates_info": [], 
                 "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
@@ -668,17 +659,11 @@ def replace_monster_skill_route(monster_id: str):
 
 @md_bp.route('/leaderboard/monsters', methods=['GET'])
 def get_monster_leaderboard_route():
-    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
-    if error_response:
-        # 未授權請求，返回空列表，因為沒有玩家所屬怪獸可顯示
-        routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
-        return jsonify([]), 200
-
-
     top_n_str = request.args.get('top_n', '10')
     try:
         top_n = int(top_n_str)
-        if top_n <=0 or top_n > 50: top_n = 10
+        if top_n <= 0 or top_n > 50:
+            top_n = 10
     except ValueError:
         top_n = 10
 
@@ -686,17 +671,10 @@ def get_monster_leaderboard_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
 
-    # 獲取所有玩家的「出戰」怪獸
-    # 這個服務現在會遍歷所有玩家的 selectedMonsterId
-    all_player_selected_monsters = get_all_player_selected_monsters_service(game_configs)
+    # **核心修改點：呼叫新的、高效的排行榜服務**
+    leaderboard = get_monster_leaderboard_service(game_configs, top_n)
 
-    # 根據分數重新排序
-    all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
-    
-    # 返回 Top N 的怪獸
-    final_leaderboard = all_player_selected_monsters[:top_n]
-
-    return jsonify(final_leaderboard), 200
+    return jsonify(leaderboard), 200
 
 @md_bp.route('/leaderboard/players', methods=['GET'])
 def get_player_leaderboard_route():
