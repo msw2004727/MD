@@ -541,15 +541,18 @@ async function handleDrawDNAClick() {
     }
 }
 
-// **核心修改點：新增處理出戰怪獸的函數**
-/**
- * 處理玩家點擊農場中怪獸的“設為出戰”按鈕。
- * @param {string} monsterId 要設為出戰的怪獸 ID。
- */
+
 async function handleDeployMonsterClick(monsterId) {
     if (!monsterId || !gameState.playerData) {
         console.error("handleDeployMonsterClick: 無效的怪獸ID或玩家資料不存在。");
         return;
+    }
+
+    // **核心修改點：加入狀態檢查**
+    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+    if (monster && monster.farmStatus?.isTraining) {
+        showFeedbackModal('提示', '該怪獸正在修煉中，需要先召回才可以指派出戰。');
+        return; // 中斷函數執行
     }
 
     // 更新 gameState 中的選中怪獸 ID
@@ -561,13 +564,11 @@ async function handleDeployMonsterClick(monsterId) {
         console.log(`玩家 ${gameState.playerId} 已將怪獸 ${monsterId} 設為出戰並儲存。`);
 
         // 重新渲染UI以反映變更
-        // 1. 更新農場列表，按鈕狀態會改變
         if (typeof renderMonsterFarm === 'function') {
             renderMonsterFarm();
         }
-        // 2. 更新頂部的怪獸快照
         if (typeof updateMonsterSnapshot === 'function') {
-            const selectedMonster = getSelectedMonster(); // getSelectedMonster now finds the new one
+            const selectedMonster = getSelectedMonster();
             updateMonsterSnapshot(selectedMonster);
         }
 
