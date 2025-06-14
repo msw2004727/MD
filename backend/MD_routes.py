@@ -424,8 +424,6 @@ def simulate_battle_api_route():
                     opponent_farm = opponent_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(opponent_farm):
                         if monster_in_farm.get("id") == opponent_monster_data_req['id']:
-                            # **這就是我們需要修改的地方**
-                            # 更新對手怪獸的HP和MP
                             monster_in_farm["hp"] = battle_result["opponent_monster_final_hp"]
                             monster_in_farm["mp"] = battle_result["opponent_monster_final_mp"]
 
@@ -673,35 +671,30 @@ def replace_monster_skill_route(monster_id: str):
 
 @md_bp.route('/leaderboard/monsters', methods=['GET'])
 def get_monster_leaderboard_route():
-    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
+    user_id, _, error_response = _get_authenticated_user_id()
     if error_response:
-        # 未授權請求，返回空列表，因為沒有玩家所屬怪獸可顯示
         routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
         return jsonify([]), 200
 
-
-    top_n_str = request.args.get('top_n', '10')
+    top_n_str = request.args.get('top_n', '20') # 預設獲取更多資料供前端排序
     try:
         top_n = int(top_n_str)
-        if top_n <=0 or top_n > 50: top_n = 10
+        if top_n <= 0 or top_n > 100: top_n = 20
     except ValueError:
-        top_n = 10
+        top_n = 20
 
-    game_configs = _get_game_configs_data_from_app_context()
-    if not game_configs:
-        return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
-
-    # 獲取所有玩家的「出戰」怪獸
-    # 這個服務現在會遍歷所有玩家的 selectedMonsterId
-    all_player_selected_monsters = get_all_player_selected_monsters_service(game_configs)
-
-    # 根據分數重新排序
-    all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
+    # 不再需要 game_configs
+    # game_configs = _get_game_configs_data_from_app_context()
     
-    # 返回 Top N 的怪獸
-    final_leaderboard = all_player_selected_monsters[:top_n]
+    # 直接呼叫新的高效能服務
+    leaderboard_data = get_all_player_selected_monsters_service(top_n)
 
-    return jsonify(final_leaderboard), 200
+    # 移除舊的、多餘的排序和切片邏輯
+    # all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
+    # final_leaderboard = all_player_selected_monsters[:top_n]
+
+    return jsonify(leaderboard_data), 200
+
 
 @md_bp.route('/leaderboard/players', methods=['GET'])
 def get_player_leaderboard_route():
