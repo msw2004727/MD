@@ -33,10 +33,10 @@ function moveDnaToCombinationSlot(draggedDnaObject, sourceSlotIndexIfFromCombina
         return;
     }
 
-    const itemCurrentlyInTargetSlot = combinationSlots[targetSlotIndex];
-    combinationSlots[targetSlotIndex] = draggedDnaObject;
+    const itemCurrentlyInTargetSlot = combinationSlots && combinationSlots.length > targetSlotIndex ? combinationSlots?.[targetSlotIndex] : null;
+    if (combinationSlots) combinationSlots[targetSlotIndex] = draggedDnaObject;
 
-    if (sourceSlotIndexIfFromCombination !== null) {
+    if (sourceSlotIndexIfFromCombination !== null && combinationSlots) {
         combinationSlots[sourceSlotIndexIfFromCombination] = itemCurrentlyInTargetSlot;
     }
     
@@ -68,7 +68,7 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
         return;
     }
 
-    let currentOwnedDna = [...gameState.playerData.playerOwnedDNA];
+    let currentOwnedDna = [...(gameState.playerData.playerOwnedDNA || [])];
 
     if (sourceInfo.type === 'inventory') {
         if (sourceInfo.originalInventoryIndex !== null && sourceInfo.originalInventoryIndex !== undefined) {
@@ -657,8 +657,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
                     
-                    // **核心修改點：將兩個怪獸物件包裝成一個物件再傳遞**
-                    const battleResult = await simulateBattle({
+                    const { battle_result: battleResult } = await simulateBattle({
                         player_monster_data: playerMonster,
                         opponent_monster_data: opponentMonster
                     });
@@ -666,10 +665,8 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     await refreshPlayerData(); 
                     updateMonsterSnapshot(getSelectedMonster()); 
 
-                    showBattleLogModal(battleResult.log,
-                        battleResult.winner_id === playerMonster.id ? playerMonster.nickname : (battleResult.winner_id === opponentMonster.id ? opponentMonster.nickname : null),
-                        battleResult.loser_id === playerMonster.id ? playerMonster.nickname : (battleResult.loser_id === opponentMonster.id ? opponentMonster.nickname : null)
-                    );
+                    // **核心修改點：直接傳遞整個 battleResult 物件**
+                    showBattleLogModal(battleResult);
 
                     hideModal('feedback-modal');
 
