@@ -48,7 +48,7 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
 def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nickname: str):
     """
     更新或創建單個怪獸在 MonsterLeaderboard 集合中的條目。
-    這是一個獨立的、高效的寫入操作。
+    這個版本會寫入完整的怪獸資料以供彈窗使用。
     """
     if not monster or not monster.get("id"):
         return
@@ -56,22 +56,20 @@ def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nicknam
     try:
         leaderboard_ref = db.collection('MonsterLeaderboard').document(monster["id"])
         
-        # 創建一個只包含排行榜所需資訊的簡化版物件
-        leaderboard_data = {
-            "monster_id": monster["id"],
-            "nickname": monster.get("nickname", "未知怪獸"),
-            "score": monster.get("score", 0),
-            "elements": monster.get("elements", []),
-            "rarity": monster.get("rarity", "普通"),
-            "resume": monster.get("resume", {"wins": 0, "losses": 0}),
-            "farmStatus": monster.get("farmStatus", {}),
-            "owner_id": owner_id,
-            "owner_nickname": owner_nickname,
-            "last_updated": firestore.SERVER_TIMESTAMP
-        }
+        # 創建一個包含所有前端所需資訊的完整物件
+        # 我們直接複製整個 monster 物件，然後再添加/覆蓋 owner 資訊
+        leaderboard_data = monster.copy()
         
-        leaderboard_ref.set(leaderboard_data, merge=True)
-        player_services_logger.info(f"成功更新怪獸 '{monster['nickname']}' (ID: {monster['id']}) 的排行榜條目。")
+        # 添加或覆蓋 owner 資訊
+        leaderboard_data["owner_id"] = owner_id
+        leaderboard_data["owner_nickname"] = owner_nickname
+        leaderboard_data["last_updated"] = firestore.SERVER_TIMESTAMP
+        
+        # 確保 monster_id 欄位存在，以利於可能的未來查詢
+        leaderboard_data["monster_id"] = monster["id"]
+
+        leaderboard_ref.set(leaderboard_data) # 使用 set 而不是 merge=True 來確保資料的完整覆蓋
+        player_services_logger.info(f"成功將怪獸 '{monster['nickname']}' (ID: {monster['id']}) 的完整資料更新至排行榜。")
 
     except Exception as e:
         player_services_logger.error(f"更新怪獸 {monster.get('id')} 的排行榜條目失敗: {e}", exc_info=True)
