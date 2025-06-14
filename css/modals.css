@@ -389,7 +389,7 @@ p.monster-score {
 
 .monster-vs-grid {
     position: relative;
-    min-height: 280px; 
+    min-height: 160px; /* 調整高度以適應橫式卡片 */
     margin-top: 1rem;
 }
 
@@ -407,7 +407,7 @@ p.monster-score {
 .monster-vs-grid .player-side,
 .monster-vs-grid .opponent-side {
     position: absolute;
-    width: 48%; 
+    width: 55%; /* 讓卡片可以更寬 */
     box-sizing: border-box;
 }
 
@@ -421,7 +421,6 @@ p.monster-score {
     right: 0;
 }
 
-/* **核心修改點：將原有的 .monster-stats-card 樣式獨立出來，並新增橫式專用樣式** */
 .monster-stats-card {
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -429,13 +428,53 @@ p.monster-score {
     background-color: var(--bg-primary);
 }
 
+/* **核心修改點：新增橫式卡片樣式** */
+.monster-stats-card--horizontal {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.monster-stats-card--horizontal .monster-identity {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.monster-stats-card--horizontal .monster-name {
+    font-size: 1.1rem;
+    word-break: break-word;
+}
+
+.monster-stats-card--horizontal .monster-personality {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.monster-stats-card--horizontal .stats-grid {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.25rem 1rem;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.monster-stats-card--horizontal .stats-grid span {
+    white-space: nowrap;
+}
+/* **核心修改結束** */
+
 .monster-stats-card .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.25rem 0.75rem;
     font-size: 0.85rem;
 }
-/* **核心修改點結束** */
 
 .monster-stats-card .monster-name {
     font-size: 1.1rem;
