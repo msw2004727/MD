@@ -375,7 +375,7 @@ p.monster-score {
     margin-top: 0.25rem;
 }
 
-/* --- 新增：戰鬥記錄(Battle Log)專用樣式 --- */
+/* --- Battle Log Styles --- */
 .battle-report-container .report-section {
     margin-bottom: 1.5rem;
 }
@@ -474,10 +474,18 @@ p.monster-score {
     color: var(--success-color);
     font-weight: bold;
 }
+
+/* **核心修改點：為勝敗結果欄位添加樣式** */
 .battle-result-banner {
     text-align: center;
-    padding: 1rem 0;
+    padding: 2rem 0;
+    margin: 1rem 0;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.25);
 }
+
 .battle-result-win { font-size: 4rem; color: var(--rarity-legendary-text); text-shadow: 0 0 15px var(--rarity-legendary-text); }
 .battle-result-loss { font-size: 4rem; color: var(--text-secondary); }
 .battle-result-draw { font-size: 4rem; color: var(--accent-color); }
