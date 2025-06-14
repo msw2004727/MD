@@ -327,6 +327,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-radius: 6px; 
     box-sizing: border-box;
     visibility: visible;
+    position: relative; /* 新增 */
 }
 .monster-part.empty-part {
     border-style: dashed;
@@ -343,6 +344,25 @@ body.light-theme .leaderboard-table tr:hover td {
 #monster-part-right-leg {
     text-align: right;
     padding-right: 4px;
+}
+
+/* 新增 */
+.monster-part-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; /* 讓圖片填滿父容器 */
+    height: 100%; /* 讓圖片填滿父容器 */
+    object-fit: contain; /* 保持圖片比例 */
+    z-index: 1; /* 確保圖片在邊框內部 */
+    opacity: 0; /* 預設隱藏 */
+    transition: opacity 0.3s ease-in-out; /* 平滑過渡效果 */
+}
+
+/* 新增 */
+.monster-part-image.active {
+    opacity: 1;
 }
 
 .snapshot-info-overlay {
