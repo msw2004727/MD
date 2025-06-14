@@ -387,11 +387,9 @@ p.monster-score {
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
-
-/* **核心修改點：重寫對戰陣容的佈局** */
 .monster-vs-grid {
     position: relative;
-    min-height: 280px; /* 給予足夠高度容納兩個錯開的卡片 */
+    min-height: 280px; 
     margin-top: 1rem;
 }
 
@@ -409,7 +407,7 @@ p.monster-score {
 .monster-vs-grid .player-side,
 .monster-vs-grid .opponent-side {
     position: absolute;
-    width: 48%; /* 每張卡片佔用近一半寬度，留出中間空隙 */
+    width: 48%; 
     box-sizing: border-box;
 }
 
@@ -422,8 +420,6 @@ p.monster-score {
     bottom: 0;
     right: 0;
 }
-/* **核心修改結束** */
-
 .monster-stats-card {
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -518,7 +514,10 @@ p.monster-score {
     list-style-type: '✨';
     padding-left: 1.5rem;
 }
+
+/* **核心修改點：為戰鬥亮點列表項設定字體大小** */
 .battle-highlights-section li {
     padding-left: 0.5rem;
     margin-bottom: 0.5rem;
+    font-size: 0.875rem;
 }
