@@ -548,29 +548,36 @@ async function handleDeployMonsterClick(monsterId) {
         return;
     }
 
-    // **核心修改點：加入狀態檢查**
     const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-    if (monster && monster.farmStatus?.isTraining) {
-        showFeedbackModal('提示', '該怪獸正在修煉中，需要先召回才可以指派出戰。');
-        return; // 中斷函數執行
+    if (!monster) {
+         console.error(`handleDeployMonsterClick: 在農場中找不到ID為 ${monsterId} 的怪獸。`);
+         return;
     }
 
-    // 更新 gameState 中的選中怪獸 ID
+    if (monster.farmStatus?.isTraining) {
+        showFeedbackModal('提示', '該怪獸正在修煉中，需要先召回才可以指派出戰。');
+        return;
+    }
+
+    // **核心修改點 1: 直接更新頂層和玩家資料中的 selectedMonsterId**
+    gameState.selectedMonsterId = monsterId;
     gameState.playerData.selectedMonsterId = monsterId;
     
+    // **核心修改點 2: 直接重新渲染UI，無需再單獨查找怪獸**
+    // 1. 更新頂部的怪獸快照
+    if (typeof updateMonsterSnapshot === 'function') {
+        // 直接傳入我們已經找到的 monster 物件
+        updateMonsterSnapshot(monster);
+    }
+    // 2. 更新農場列表，按鈕狀態會改變
+    if (typeof renderMonsterFarm === 'function') {
+        renderMonsterFarm();
+    }
+
     try {
-        // 儲存更新後的玩家資料到後端
+        // 異步儲存更新後的玩家資料到後端
         await savePlayerData(gameState.playerId, gameState.playerData);
         console.log(`玩家 ${gameState.playerId} 已將怪獸 ${monsterId} 設為出戰並儲存。`);
-
-        // 重新渲染UI以反映變更
-        if (typeof renderMonsterFarm === 'function') {
-            renderMonsterFarm();
-        }
-        if (typeof updateMonsterSnapshot === 'function') {
-            const selectedMonster = getSelectedMonster();
-            updateMonsterSnapshot(selectedMonster);
-        }
 
     } catch (error) {
         console.error("設置出戰怪獸並儲存時發生錯誤:", error);
