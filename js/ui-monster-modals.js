@@ -582,9 +582,14 @@ function showDnaDrawModal(drawnItems) {
             itemDiv.classList.add('dna-draw-result-item');
             applyDnaItemStyle(itemDiv, dna);
 
+            // **核心修改點**
+            const elementType = dna.type || '無';
+            const elementCssKey = getElementCssClassKey(elementType);
+            const typeSpanClass = `dna-type text-element-${elementCssKey}`;
+
             itemDiv.innerHTML = `
                 <span class="dna-name">${dna.name}</span>
-                <span class="dna-type">${dna.type}屬性</span>
+                <span class="${typeSpanClass}">${elementType}屬性</span>
                 <span class="dna-rarity text-rarity-${dna.rarity.toLowerCase()}">${dna.rarity}</span>
                 <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
             `;
@@ -603,24 +608,19 @@ function updateTrainingResultsModal(results, monsterName) {
     const rarityKey = monster?.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
 
-    // **核心修改點：產生新的標題名稱**
-    let titleName = monsterName; // 如果找不到怪獸，則退回使用完整名稱
+    let titleName = monsterName;
     if (monster) {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        // 優先使用自訂的屬性名，如果沒有，則從遊戲設定中找預設的，再沒有就用元素本身的名字
         titleName = monster.custom_element_nickname || 
                     (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
     }
     
-    // **核心修改點：使用新的 titleName 來設定彈窗標題**
     DOMElements.trainingResultsModalTitle.innerHTML = `<span style="color: ${rarityColorVar};">${titleName}</span> <span style="font-weight: normal;">的修煉成果</span>`;
     
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
-    // 樣式定義
     const dividerStyle = `border: none; height: 1px; background-color: var(--border-color); margin: 1rem 0;`;
 
-    // 1. 橫幅和提示
     const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
     let hintHtml = '';
     if (TRAINING_GAME_HINTS.length > 0) {
@@ -628,14 +628,12 @@ function updateTrainingResultsModal(results, monsterName) {
         hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p>${TRAINING_GAME_HINTS[randomIndex]}</p></div>`;
     }
 
-    // 2. 冒險故事
     let storyHtml = '';
     const storyContent = (results.adventure_story || "").replace(/\n/g, '<br>');
     if (storyContent) {
         storyHtml = `<div class="training-section"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">冒險故事</h5><div id="adventure-story-container" style="display: none; padding: 10px 5px; border-left: 3px solid var(--border-color); margin-top: 10px; font-size: 0.9rem;"><p>${storyContent}</p></div><a href="#" id="toggle-story-btn" style="display: block; text-align: center; margin-top: 8px; color: var(--accent-color); cursor: pointer; text-decoration: underline;">點此查看此趟的冒險故事 ▼</a></div>`;
     }
 
-    // 3. 能力成長
     const skillAndNewSkillLogs = results.skill_updates_log.filter(log => log.startsWith("🎉") || log.startsWith("🌟"));
     let skillGrowthHtml = '<ul>';
     if (skillAndNewSkillLogs.length > 0) {
@@ -650,7 +648,6 @@ function updateTrainingResultsModal(results, monsterName) {
     skillGrowthHtml += "</ul>";
     const abilityGrowthSectionHtml = `<div class="training-section"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">能力成長</h5><div class="training-result-subsection mt-2" style="font-size: 0.9rem;">${skillGrowthHtml}</div></div>`;
 
-    // 4. 數值變化
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
     if (statGrowthLogs.length > 0) {
@@ -665,7 +662,6 @@ function updateTrainingResultsModal(results, monsterName) {
     statGrowthHtml += "</ul>";
     const valueChangeSectionHtml = `<div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;"><h5 class="details-section-title" style="border: none; padding-bottom: 0; color: var(--accent-color);">數值變化</h5><div class="training-result-subsection mt-2" style="font-size: 0.9rem;">${statGrowthHtml}</div></div>`;
 
-    // 5. 拾獲物品
     let itemsSectionHtml = '';
     const items = results.items_obtained || [];
     if (items.length > 0) {
@@ -674,10 +670,8 @@ function updateTrainingResultsModal(results, monsterName) {
         itemsSectionHtml = `<div class="training-section" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;"><h5 class="details-section-title" style="border: none; padding-bottom: 0;">拾獲物品</h5><p>沒有拾獲任何物品。</p></div>`;
     }
 
-    // 組合並渲染到 modal-body
     modalBody.innerHTML = bannerHtml + hintHtml + storyHtml + abilityGrowthSectionHtml + valueChangeSectionHtml + itemsSectionHtml;
 
-    // 動態填充拾獲物品並上色
     const itemsGridContainer = modalBody.querySelector('#training-items-grid');
     if (itemsGridContainer && typeof applyDnaItemStyle === 'function') {
         items.forEach((item, index) => {
@@ -686,12 +680,17 @@ function updateTrainingResultsModal(results, monsterName) {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'dna-item occupied';
             
-            applyDnaItemStyle(itemDiv, item); // Apply coloring
+            applyDnaItemStyle(itemDiv, item);
 
+            // **核心修改點**
+            const elementType = item.type || '無';
+            const elementCssKey = getElementCssClassKey(elementType);
             const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
+            const typeSpanClass = `dna-type text-element-${elementCssKey}`;
+
             itemDiv.innerHTML = `
                 <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
-                <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
+                <span class="${typeSpanClass}">${elementType}屬性</span>
                 <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
                 <button class="button primary pickup-btn" data-item-index="${index}" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
             `;
@@ -700,7 +699,6 @@ function updateTrainingResultsModal(results, monsterName) {
         });
     }
 
-    // 重新綁定事件監聽器
     const toggleBtn = modalBody.querySelector('#toggle-story-btn');
     if (toggleBtn) {
         toggleBtn.addEventListener('click', (e) => {
@@ -718,7 +716,7 @@ function updateTrainingResultsModal(results, monsterName) {
             const itemIndex = parseInt(e.target.dataset.itemIndex, 10);
             if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
                 const item = gameState.lastCultivationResult.items_obtained[itemIndex];
-                if (item) { // 檢查物品是否尚未被拾取
+                if (item) {
                     addDnaToTemporaryBackpack(item);
                     gameState.lastCultivationResult.items_obtained[itemIndex] = null;
                     btn.disabled = true;
