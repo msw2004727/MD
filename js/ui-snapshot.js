@@ -76,6 +76,13 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
+    // **核心修改點：管理詳情按鈕**
+    // 每次更新時，先移除可能已存在的舊按鈕，避免重複
+    const existingBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-details-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+    }
+
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     clearMonsterBodyPartsDisplay();
@@ -110,20 +117,16 @@ function updateMonsterSnapshot(monster) {
             RightLeg: DOMElements.monsterPartRightLeg,
         };
 
-        // 遍歷 DNA 槽位與身體部位的映射關係
         Object.keys(gameState.dnaSlotToBodyPartMapping).forEach(slotIndex => {
-            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex]; // 例如 'head'
-            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1); // 例如 'Head'
-            const partElement = partsMap[capitalizedPartKey]; // 獲取對應的 DOM 元素
-            const dnaData = dnaSlots[slotIndex]; // 獲取該槽位的 DNA 數據
+            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex]; 
+            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
+            const partElement = partsMap[capitalizedPartKey];
+            const dnaData = dnaSlots[slotIndex];
 
             if (partElement) {
-                // 找到 img 元素
                 const imgElement = partElement.querySelector('.monster-part-image');
                 
-                // 清空文字內容
                 partElement.innerHTML = '';
-                // 再次添加 img 元素，確保其在 DOM 中存在
                 if (imgElement) {
                     partElement.appendChild(imgElement);
                 } else {
@@ -132,17 +135,17 @@ function updateMonsterSnapshot(monster) {
                     newImgElement.alt = `${capitalizedPartKey} 部位圖片`;
                     partElement.appendChild(newImgElement);
                 }
-                const currentImgElement = partElement.querySelector('.monster-part-image'); // 確保拿到最新的引用
+                const currentImgElement = partElement.querySelector('.monster-part-image');
 
                 if (typeof applyDnaItemStyle === 'function') {
-                    applyDnaItemStyle(partElement, dnaData); // 應用 DNA 槽的樣式 (顏色、邊框等)
+                    applyDnaItemStyle(partElement, dnaData);
                 }
                 
                 if (dnaData && currentImgElement) {
-                    const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity); // 獲取圖片路徑
+                    const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
                     if (imgPath) {
-                        currentImgElement.src = imgPath; // 設定圖片來源
-                        currentImgElement.classList.add('active'); // 顯示圖片
+                        currentImgElement.src = imgPath;
+                        currentImgElement.classList.add('active');
                     } else {
                         currentImgElement.src = '';
                         currentImgElement.classList.remove('active');
@@ -150,8 +153,8 @@ function updateMonsterSnapshot(monster) {
                     partElement.classList.remove('empty-part');
                 } else {
                     if (currentImgElement) {
-                        currentImgElement.src = ''; // 清空圖片來源
-                        currentImgElement.classList.remove('active'); // 隱藏圖片
+                        currentImgElement.src = '';
+                        currentImgElement.classList.remove('active');
                     }
                     partElement.classList.add('empty-part');
                 }
@@ -177,6 +180,31 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
+
+        // **核心修改點：動態創建、設定樣式並附加按鈕**
+        const detailsBtn = document.createElement('button');
+        detailsBtn.id = 'snapshot-details-btn';
+        detailsBtn.title = '查看怪獸詳細資訊';
+        detailsBtn.innerHTML = '📜';
+        
+        detailsBtn.classList.add('corner-button'); // 沿用基礎樣式
+        detailsBtn.style.position = 'absolute';
+        detailsBtn.style.bottom = '8px'; // 放置在左下角
+        detailsBtn.style.left = '8px';
+        detailsBtn.style.width = '32px';
+        detailsBtn.style.height = '32px';
+        detailsBtn.style.fontSize = '0.9rem';
+        detailsBtn.style.zIndex = '5'; // 確保在其他元素之上
+
+        // 為按鈕添加點擊事件
+        detailsBtn.onclick = () => {
+            if (monster && typeof updateMonsterInfoModal === 'function') {
+                updateMonsterInfoModal(monster, gameState.gameConfigs);
+                showModal('monster-info-modal');
+            }
+        };
+
+        DOMElements.monsterSnapshotArea.appendChild(detailsBtn);
 
     } else {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
