@@ -603,8 +603,18 @@ function updateTrainingResultsModal(results, monsterName) {
     const rarityKey = monster?.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
 
-    // 修改點：彈窗標題
-    DOMElements.trainingResultsModalTitle.innerHTML = `<span style="color: ${rarityColorVar};">${monsterName}</span> <span style="font-weight: normal;">的修煉成果</span>`;
+    // **核心修改點：產生新的標題名稱**
+    let titleName = monsterName; // 如果找不到怪獸，則退回使用完整名稱
+    if (monster) {
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        // 優先使用自訂的屬性名，如果沒有，則從遊戲設定中找預設的，再沒有就用元素本身的名字
+        titleName = monster.custom_element_nickname || 
+                    (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+    }
+    
+    // **核心修改點：使用新的 titleName 來設定彈窗標題**
+    DOMElements.trainingResultsModalTitle.innerHTML = `<span style="color: ${rarityColorVar};">${titleName}</span> <span style="font-weight: normal;">的修煉成果</span>`;
+    
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
     // 樣式定義
