@@ -76,12 +76,38 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // **核心修改點：管理詳情按鈕**
+    // **核心修改點：管理按鈕**
     // 每次更新時，先移除可能已存在的舊按鈕，避免重複
-    const existingBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-details-btn');
-    if (existingBtn) {
-        existingBtn.remove();
+    const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
+    if (existingMonsterBtn) {
+        existingMonsterBtn.remove();
     }
+    const existingPlayerBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-player-details-btn');
+    if (existingPlayerBtn) {
+        existingPlayerBtn.remove();
+    }
+
+    // **核心修改點：創建玩家資訊按鈕 (無論是否有怪獸都顯示)**
+    const playerBtn = document.createElement('button');
+    playerBtn.id = 'snapshot-player-details-btn';
+    playerBtn.title = '查看玩家資訊';
+    playerBtn.innerHTML = '📑';
+    playerBtn.classList.add('corner-button');
+    playerBtn.style.position = 'absolute';
+    playerBtn.style.bottom = '8px';
+    playerBtn.style.left = '8px'; // 定位在左下角
+    playerBtn.style.width = '32px';
+    playerBtn.style.height = '32px';
+    playerBtn.style.fontSize = '0.9rem';
+    playerBtn.style.zIndex = '5';
+    playerBtn.onclick = () => {
+        if (gameState.playerData && typeof updatePlayerInfoModal === 'function') {
+            updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
+            showModal('player-info-modal');
+        }
+    };
+    DOMElements.monsterSnapshotArea.appendChild(playerBtn);
+
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
@@ -181,30 +207,29 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
-        // **核心修改點：動態創建、設定樣式並附加按鈕**
-        const detailsBtn = document.createElement('button');
-        detailsBtn.id = 'snapshot-details-btn';
-        detailsBtn.title = '查看怪獸詳細資訊';
-        detailsBtn.innerHTML = '📜';
+        // **核心修改點：僅在有怪獸時，創建怪獸資訊按鈕**
+        const monsterBtn = document.createElement('button');
+        monsterBtn.id = 'snapshot-monster-details-btn';
+        monsterBtn.title = '查看怪獸詳細資訊';
+        monsterBtn.innerHTML = '📜';
         
-        detailsBtn.classList.add('corner-button'); // 沿用基礎樣式
-        detailsBtn.style.position = 'absolute';
-        detailsBtn.style.bottom = '8px'; // 放置在左下角
-        detailsBtn.style.left = '8px';
-        detailsBtn.style.width = '32px';
-        detailsBtn.style.height = '32px';
-        detailsBtn.style.fontSize = '0.9rem';
-        detailsBtn.style.zIndex = '5'; // 確保在其他元素之上
+        monsterBtn.classList.add('corner-button');
+        monsterBtn.style.position = 'absolute';
+        monsterBtn.style.bottom = '8px';
+        monsterBtn.style.left = '44px'; // 放在玩家資訊按鈕右邊 (8 + 32 + 4)
+        monsterBtn.style.width = '32px';
+        monsterBtn.style.height = '32px';
+        monsterBtn.style.fontSize = '0.9rem';
+        monsterBtn.style.zIndex = '5';
 
-        // 為按鈕添加點擊事件
-        detailsBtn.onclick = () => {
+        monsterBtn.onclick = () => {
             if (monster && typeof updateMonsterInfoModal === 'function') {
                 updateMonsterInfoModal(monster, gameState.gameConfigs);
                 showModal('monster-info-modal');
             }
         };
 
-        DOMElements.monsterSnapshotArea.appendChild(detailsBtn);
+        DOMElements.monsterSnapshotArea.appendChild(monsterBtn);
 
     } else {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
