@@ -27,12 +27,13 @@ from .battle_services import simulate_battle_full # 導入新的完整戰鬥服�
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
-    get_monster_leaderboard_service # **核心修改點：導入新的排行榜服務**
+    get_monster_leaderboard_service 
 )
 
 # 從設定和 AI 服務模組引入函式
 from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
+from . import MD_firebase_config # 引入以使用 db
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__)
@@ -156,15 +157,12 @@ def equip_title_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
 
-    # 驗證玩家是否擁有該稱號
     owned_titles = player_data.get("playerStats", {}).get("titles", [])
     if not any(title.get("id") == title_id_to_equip for title in owned_titles):
         return jsonify({"error": "未授權：您尚未擁有此稱號，無法裝備。"}), 403
 
-    # 更新已裝備的稱號ID
     player_data["playerStats"]["equipped_title_id"] = title_id_to_equip
     
-    # 儲存更新後的玩家資料
     if save_player_data_service(user_id, player_data):
         routes_logger.info(f"玩家 {user_id} 成功裝備稱號 ID: {title_id_to_equip}")
         return jsonify({
@@ -344,7 +342,7 @@ def simulate_battle_api_route():
         opponent_nickname=opponent_owner_nickname_req
     )
 
-    newly_awarded_titles = [] # 初始化
+    newly_awarded_titles = []
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'):
             player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
@@ -353,9 +351,7 @@ def simulate_battle_api_route():
                 if player_stats and isinstance(player_stats, dict):
                     if battle_result.get("winner_id") == player_monster_data_req['id']:
                         player_stats["wins"] = player_stats.get("wins", 0) + 1
-                        # --- 稱號授予檢查點 ---
                         player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
-                        # --- 稱號授予檢查點結束 ---
                     elif battle_result.get("loser_id") == player_monster_data_req['id']:
                         player_stats["losses"] = player_stats.get("losses", 0) + 1
                     
@@ -422,15 +418,20 @@ def simulate_battle_api_route():
                     opponent_data["playerStats"] = opponent_stats
 
                     opponent_farm = opponent_data.get("farmedMonsters", [])
+                    defeated_monster_id_in_farm = opponent_monster_data_req.get('id')
+                    final_resume_for_opponent = None
+
                     for m_idx, monster_in_farm in enumerate(opponent_farm):
-                        if monster_in_farm.get("id") == opponent_monster_data_req['id']:
+                        if monster_in_farm.get("id") == defeated_monster_id_in_farm:
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
                                 monster_in_farm["resume"] = {"wins": 0, "losses": 0}
 
-                            if battle_result.get("winner_id") == opponent_monster_data_req['id']:
+                            if battle_result.get("winner_id") == defeated_monster_id_in_farm:
                                 monster_in_farm["resume"]["wins"] = monster_in_farm["resume"].get("wins", 0) + 1
-                            elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
+                            elif battle_result.get("loser_id") == defeated_monster_id_in_farm:
                                 monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
+                            
+                            final_resume_for_opponent = monster_in_farm["resume"]
 
                             if battle_result.get("opponent_activity_log"):
                                 if "activityLog" not in monster_in_farm:
@@ -441,10 +442,19 @@ def simulate_battle_api_route():
 
                     if not save_player_data_service(opponent_owner_id_req, opponent_data):
                         routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
+                    else:
+                        # **核心修改點：在儲存對手資料後，額外更新排行榜**
+                        try:
+                            if defeated_monster_id_in_farm and final_resume_for_opponent:
+                                db = MD_firebase_config.db
+                                leaderboard_doc_ref = db.collection('MD_LeaderboardMonsters').document(defeated_monster_id_in_farm)
+                                leaderboard_doc_ref.update({"resume": final_resume_for_opponent})
+                                routes_logger.info(f"已將被挑戰怪獸 {defeated_monster_id_in_farm} 的最新戰績同步到排行榜。")
+                        except Exception as e:
+                            routes_logger.error(f"同步被挑戰怪獸 {defeated_monster_id_in_farm} 的戰績到排行榜時失敗: {e}", exc_info=True)
             else:
                 routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
 
-    # 將新獲得的稱號資訊加入到回傳結果中
     if newly_awarded_titles:
         battle_result["newly_awarded_titles"] = newly_awarded_titles
     
@@ -671,7 +681,6 @@ def get_monster_leaderboard_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
 
-    # **核心修改點：呼叫新的、高效的排行榜服務**
     leaderboard = get_monster_leaderboard_service(game_configs, top_n)
 
     return jsonify(leaderboard), 200
