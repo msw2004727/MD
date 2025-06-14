@@ -582,7 +582,6 @@ function showDnaDrawModal(drawnItems) {
             itemDiv.classList.add('dna-draw-result-item');
             applyDnaItemStyle(itemDiv, dna);
 
-            // **核心修改點**
             const elementType = dna.type || '無';
             const elementCssKey = getElementCssClassKey(elementType);
             const typeSpanClass = `dna-type text-element-${elementCssKey}`;
@@ -602,7 +601,6 @@ function showDnaDrawModal(drawnItems) {
 function updateTrainingResultsModal(results, monsterName) {
     if (!DOMElements.trainingResultsModal) return;
 
-    // 获取怪獸對象以獲取稀有度和暱稱
     const monster = gameState.playerData.farmedMonsters.find(m => m.nickname === monsterName);
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     const rarityKey = monster?.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
@@ -682,7 +680,6 @@ function updateTrainingResultsModal(results, monsterName) {
             
             applyDnaItemStyle(itemDiv, item);
 
-            // **核心修改點**
             const elementType = item.type || '無';
             const elementCssKey = getElementCssClassKey(elementType);
             const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
