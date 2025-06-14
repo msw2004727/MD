@@ -406,11 +406,9 @@ def simulate_battle_api_route():
             else:
                 routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
         
-        # **核心修改：分離對手資料的儲存和排行榜更新**
         if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
             opponent_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
             if opponent_data:
-                # 1. 更新對手的農場資料和個人總戰績
                 opponent_stats = opponent_data.get("playerStats")
                 if opponent_stats and isinstance(opponent_stats, dict):
                     if battle_result.get("winner_id") == opponent_monster_data_req['id']:
@@ -421,7 +419,6 @@ def simulate_battle_api_route():
 
                 opponent_farm = opponent_data.get("farmedMonsters", [])
                 defeated_monster_id_in_farm = opponent_monster_data_req.get('id')
-                final_resume_for_opponent = None
 
                 for monster_in_farm in opponent_farm:
                     if monster_in_farm.get("id") == defeated_monster_id_in_farm:
@@ -433,28 +430,19 @@ def simulate_battle_api_route():
                         elif battle_result.get("loser_id") == defeated_monster_id_in_farm:
                             monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
                         
-                        final_resume_for_opponent = monster_in_farm["resume"]
-
                         if battle_result.get("opponent_activity_log"):
                             if "activityLog" not in monster_in_farm:
                                 monster_in_farm["activityLog"] = []
                             monster_in_farm["activityLog"].insert(0, battle_result["opponent_activity_log"])
                         break
                 opponent_data["farmedMonsters"] = opponent_farm
-
-                # 2. 儲存對手的完整玩家資料
-                if not save_player_data_service(opponent_owner_id_req, opponent_data):
+                
+                # **核心修改點**
+                # 呼叫修改後的儲存服務，並傳入被挑戰怪獸的ID，以確保其在排行榜上的資料被同步
+                if not save_player_data_service(opponent_owner_id_req, opponent_data, monster_id_to_sync_leaderboard=defeated_monster_id_in_farm):
                     routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
                 else:
-                    # 3. 儲存成功後，額外強制更新排行榜上的這隻怪獸
-                    try:
-                        if defeated_monster_id_in_farm and final_resume_for_opponent:
-                            db = MD_firebase_config.db
-                            leaderboard_doc_ref = db.collection('MD_LeaderboardMonsters').document(defeated_monster_id_in_farm)
-                            leaderboard_doc_ref.update({"resume": final_resume_for_opponent})
-                            routes_logger.info(f"已將被挑戰怪獸 {defeated_monster_id_in_farm} 的最新戰績同步到排行榜。")
-                    except Exception as e:
-                        routes_logger.error(f"同步被挑戰怪獸 {defeated_monster_id_in_farm} 的戰績到排行榜時失敗: {e}", exc_info=True)
+                    routes_logger.info(f"已儲存被挑戰方玩家 {opponent_owner_id_req} 資料，並同步其怪獸 {defeated_monster_id_in_farm} 至排行榜。")
             else:
                 routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
 
