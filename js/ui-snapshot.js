@@ -76,7 +76,7 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // **核心修改點：管理按鈕**
+    // **核心修改點：管理所有快照按鈕**
     // 每次更新時，先移除可能已存在的舊按鈕，避免重複
     const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
     if (existingMonsterBtn) {
@@ -86,8 +86,12 @@ function updateMonsterSnapshot(monster) {
     if (existingPlayerBtn) {
         existingPlayerBtn.remove();
     }
+    const existingGuideBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-guide-btn');
+    if (existingGuideBtn) {
+        existingGuideBtn.remove();
+    }
 
-    // **核心修改點：創建玩家資訊按鈕 (無論是否有怪獸都顯示)**
+    // **核心修改點：創建玩家資訊按鈕 (📑)**
     const playerBtn = document.createElement('button');
     playerBtn.id = 'snapshot-player-details-btn';
     playerBtn.title = '查看玩家資訊';
@@ -95,7 +99,7 @@ function updateMonsterSnapshot(monster) {
     playerBtn.classList.add('corner-button');
     playerBtn.style.position = 'absolute';
     playerBtn.style.bottom = '8px';
-    playerBtn.style.left = '8px'; // 定位在左下角
+    playerBtn.style.left = '8px';
     playerBtn.style.width = '32px';
     playerBtn.style.height = '32px';
     playerBtn.style.fontSize = '0.9rem';
@@ -107,6 +111,30 @@ function updateMonsterSnapshot(monster) {
         }
     };
     DOMElements.monsterSnapshotArea.appendChild(playerBtn);
+
+    // **核心修改點：創建新手上路按鈕 (🔰)**
+    const guideBtn = document.createElement('button');
+    guideBtn.id = 'snapshot-guide-btn';
+    guideBtn.title = '新手上路';
+    guideBtn.innerHTML = '🔰';
+    guideBtn.classList.add('corner-button');
+    guideBtn.style.position = 'absolute';
+    guideBtn.style.bottom = '44px'; // 8px (間距) + 32px (下方按鈕高度) + 4px (間距)
+    guideBtn.style.left = '8px';
+    guideBtn.style.width = '32px';
+    guideBtn.style.height = '32px';
+    guideBtn.style.fontSize = '0.9rem';
+    guideBtn.style.zIndex = '5';
+    guideBtn.onclick = () => {
+        if (gameState.gameConfigs && gameState.gameConfigs.newbie_guide) {
+            updateNewbieGuideModal(gameState.gameConfigs.newbie_guide);
+            if(DOMElements.newbieGuideSearchInput) DOMElements.newbieGuideSearchInput.value = '';
+            showModal('newbie-guide-modal');
+        } else {
+            showFeedbackModal('錯誤', '新手指南尚未載入。');
+        }
+    };
+    DOMElements.monsterSnapshotArea.appendChild(guideBtn);
 
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -207,7 +235,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
-        // **核心修改點：僅在有怪獸時，創建怪獸資訊按鈕**
+        // **核心修改點：僅在有怪獸時，創建怪獸資訊按鈕 (📜)**
         const monsterBtn = document.createElement('button');
         monsterBtn.id = 'snapshot-monster-details-btn';
         monsterBtn.title = '查看怪獸詳細資訊';
