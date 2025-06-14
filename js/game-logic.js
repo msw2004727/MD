@@ -190,9 +190,14 @@ async function handleEndCultivationClick(event, monsterId, trainingStartTime, tr
     const totalDurationSeconds = trainingDuration / 1000;
 
     if (elapsedTimeSeconds < totalDurationSeconds) {
+        // **核心修改點：獲取屬性名用於顯示**
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const displayName = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+
         showConfirmationModal(
             '提前結束修煉',
-            `怪獸 ${monster.nickname} 的修煉時間尚未結束 (${totalDurationSeconds - elapsedTimeSeconds}秒剩餘)。提前結束將無法獲得完整獎勵。確定要結束嗎？`,
+            // **核心修改點：使用新的 displayName 變數**
+            `怪獸 ${displayName} 的修煉時間尚未結束 (${totalDurationSeconds - elapsedTimeSeconds}秒剩餘)。提前結束將無法獲得完整獎勵。確定要結束嗎？`,
             async () => {
                 await handleCompleteCultivation(monsterId, elapsedTimeSeconds);
             },
