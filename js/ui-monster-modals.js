@@ -597,7 +597,14 @@ function showDnaDrawModal(drawnItems) {
 function updateTrainingResultsModal(results, monsterName) {
     if (!DOMElements.trainingResultsModal) return;
 
-    DOMElements.trainingResultsModalTitle.innerHTML = `<span style="font-weight: normal;">${monsterName} 的修煉成果</span>`;
+    // 获取怪獸對象以獲取稀有度和暱稱
+    const monster = gameState.playerData.farmedMonsters.find(m => m.nickname === monsterName);
+    const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+    const rarityKey = monster?.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
+
+    // 修改點：彈窗標題
+    DOMElements.trainingResultsModalTitle.innerHTML = `<span style="color: ${rarityColorVar};">${monsterName}</span> <span style="font-weight: normal;">的修煉成果</span>`;
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
     // 樣式定義
