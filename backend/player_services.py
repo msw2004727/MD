@@ -293,8 +293,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
         return None
 
-def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
-    """儲存玩家遊戲資料到 Firestore，並同步更新排行榜。"""
+def save_player_data_service(player_id: str, game_data: PlayerGameData, monster_id_to_sync_leaderboard: Optional[str] = None) -> bool:
+    """儲存玩家遊戲資料到 Firestore，並可選擇性地同步指定的怪獸到排行榜。"""
     db = MD_firebase_config.db
     if not db:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
@@ -303,16 +303,26 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     current_time_unix = int(time.time())
 
     try:
-        selected_monster_id = game_data.get("selectedMonsterId")
+        # **核心修改點**
+        # 決定要更新到排行榜的怪獸ID
+        monster_id_to_update = monster_id_to_sync_leaderboard if monster_id_to_sync_leaderboard is not None else game_data.get("selectedMonsterId")
+        
         monster_to_update_on_leaderboard = None
-        if selected_monster_id:
+        if monster_id_to_update:
+            # 從 game_data 中找到對應的怪獸物件
             for monster in game_data.get("farmedMonsters", []):
-                if monster.get("id") == selected_monster_id:
+                if monster.get("id") == monster_id_to_update:
                     monster_to_update_on_leaderboard = monster
                     monster_to_update_on_leaderboard['owner_nickname'] = game_data.get('nickname')
                     break
         
-        _update_leaderboard_monster(player_id, monster_to_update_on_leaderboard)
+        # 如果找到了要更新的怪獸（無論是指定的還是出戰中的），就更新排行榜
+        if monster_to_update_on_leaderboard:
+            _update_leaderboard_monster(player_id, monster_to_update_on_leaderboard)
+        # 如果沒找到，且是出於同步出戰怪獸的目的，可以考慮清除舊的排行榜條目
+        elif monster_id_to_sync_leaderboard is None:
+             _update_leaderboard_monster(player_id, None)
+
 
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
