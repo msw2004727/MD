@@ -328,7 +328,7 @@ body.light-theme #cultivation-modal-close-x:hover {
     background-color: transparent;
 }
 
-/* **核心修改點：新增確認出戰彈窗的格線佈局** */
+/* Battle Confirmation Modal Layout */
 .battle-confirm-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -365,7 +365,7 @@ p.monster-role {
 
 p.monster-name {
     font-size: 1.1rem;
-    font-weight: bold;
+    /* font-weight: bold; */ /* **核心修改點：移除粗體** */
     word-break: break-all;
 }
 
