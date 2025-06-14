@@ -748,3 +748,34 @@ body.light-theme .leaderboard-table tr:hover td {
     padding: 0 2px;
     line-height: 1.2;
 }
+
+/* --- Styling for Training Results Items --- */
+
+/* Override the .inventory-grid layout specifically for the training results modal */
+#training-items-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem; /* Match the gap from the draw modal */
+}
+
+/* Style the wrapper for each item to control its size in the flex container */
+#training-items-grid .dna-item-wrapper {
+    min-width: 130px;
+    flex-basis: 130px;
+    flex-grow: 1;
+    max-width: 160px;
+    display: flex; /* Ensure the inner item can fill it */
+}
+
+/* Adjust the actual item card to fill the wrapper and have consistent padding */
+#training-items-grid .dna-item {
+    width: 100%;
+    padding: 1rem; /* Increase padding to match the draw modal item */
+    justify-content: space-between;
+}
+
+/* Adjust button inside the card */
+#training-items-grid .pickup-btn {
+    margin-top: auto;
+}
