@@ -708,7 +708,7 @@ function updateTrainingResultsModal(results, monsterName) {
             const storyContainer = modalBody.querySelector('#adventure-story-container');
             const isHidden = storyContainer.style.display === 'none';
             storyContainer.style.display = isHidden ? 'block' : 'none';
-            toggleBtn.innerHTML = isHidden ? '收合冒ential冒險故事 ▲' : '點此查看此趟的冒險故事 ▼';
+            toggleBtn.innerHTML = isHidden ? '收合此趟的冒險故事 ▲' : '點此查看此趟的冒險故事 ▼';
         });
     }
 
@@ -720,7 +720,7 @@ function updateTrainingResultsModal(results, monsterName) {
                 const item = gameState.lastCultivationResult.items_obtained[itemIndex];
                 if (item) { // 檢查物品是否尚未被拾取
                     addDnaToTemporaryBackpack(item);
-                    gameState.lastCultivationResult.items_obtained[itemIndex] = null; // **核心修改點1：將拾取的物品在狀態中設為null**
+                    gameState.lastCultivationResult.items_obtained[itemIndex] = null;
                     btn.disabled = true;
                     btn.textContent = "已拾取";
                 }
@@ -728,14 +728,11 @@ function updateTrainingResultsModal(results, monsterName) {
         });
     });
     
-    // **核心修改點2：為關閉按鈕添加專屬的、覆蓋性的點擊事件**
     const closeBtn = DOMElements.trainingResultsModal.querySelector('#close-training-results-btn');
     if (closeBtn) {
-        // 先移除舊的監聽器（如果有的話），再綁定新的。直接用 .onclick 更簡單。
         closeBtn.onclick = (event) => {
-            event.stopPropagation(); // 阻止通用關閉處理器執行
+            event.stopPropagation();
             
-            // **新的檢查邏輯**
             const itemsStillLeft = gameState.lastCultivationResult?.items_obtained?.some(item => item !== null);
 
             if (itemsStillLeft) {
