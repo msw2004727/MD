@@ -706,14 +706,35 @@ function updateTrainingResultsModal(results, monsterName) {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const itemIndex = parseInt(e.target.dataset.itemIndex, 10);
-            const item = items[itemIndex];
-            if (item) {
-                addDnaToTemporaryBackpack(item);
-                btn.disabled = true;
-                btn.textContent = "已拾取";
+            if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
+                const item = gameState.lastCultivationResult.items_obtained[itemIndex];
+                if (item) { // 檢查物品是否尚未被拾取
+                    addDnaToTemporaryBackpack(item);
+                    gameState.lastCultivationResult.items_obtained[itemIndex] = null; // **核心修改點1：將拾取的物品在狀態中設為null**
+                    btn.disabled = true;
+                    btn.textContent = "已拾取";
+                }
             }
         });
     });
+    
+    // **核心修改點2：為關閉按鈕添加專屬的、覆蓋性的點擊事件**
+    const closeBtn = DOMElements.trainingResultsModal.querySelector('#close-training-results-btn');
+    if (closeBtn) {
+        // 先移除舊的監聽器（如果有的話），再綁定新的。直接用 .onclick 更簡單。
+        closeBtn.onclick = (event) => {
+            event.stopPropagation(); // 阻止通用關閉處理器執行
+            
+            // **新的檢查邏輯**
+            const itemsStillLeft = gameState.lastCultivationResult?.items_obtained?.some(item => item !== null);
+
+            if (itemsStillLeft) {
+                showModal('reminder-modal');
+            } else {
+                hideModal('training-results-modal');
+            }
+        };
+    }
     
     showModal('training-results-modal');
 }
