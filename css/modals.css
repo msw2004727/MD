@@ -405,7 +405,8 @@ p.monster-score {
     background-color: var(--bg-primary);
 }
 .monster-stats-card .monster-name {
-    font-weight: bold;
+    /* **核心修改點：移除此處的粗體** */
+    /* font-weight: bold; */ 
     font-size: 1.1rem;
 }
 .monster-stats-card .monster-personality {
@@ -475,7 +476,6 @@ p.monster-score {
     font-weight: bold;
 }
 
-/* **核心修改點：為勝敗結果欄位添加樣式** */
 .battle-result-banner {
     text-align: center;
     padding: 2rem 0;
