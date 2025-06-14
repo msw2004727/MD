@@ -551,22 +551,13 @@ def disassemble_monster_route(monster_id: str):
     )
 
     if disassembly_result and disassembly_result.get("success"):
-        # 移除將DNA加回物品欄的邏輯
-        # returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
-        # current_owned_dna = player_data.get("playerOwnedDNA", [])
-        # import datetime
-        # for dna_template in returned_dna_templates:
-        #     ... (此處原有邏輯被移除) ...
-        # player_data["playerOwnedDNA"] = current_owned_dna
-        
-        # 直接使用服務層已更新的怪獸列表
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
 
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "message": disassembly_result.get("message"),
-                "returned_dna_templates_info": [], # DNA不再退回，返回空列表
+                "returned_dna_templates_info": [], 
                 "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
@@ -676,23 +667,15 @@ def get_monster_leaderboard_route():
         routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
         return jsonify([]), 200
 
-    top_n_str = request.args.get('top_n', '20') # 預設獲取更多資料供前端排序
+    top_n_str = request.args.get('top_n', '20')
     try:
         top_n = int(top_n_str)
         if top_n <= 0 or top_n > 100: top_n = 20
     except ValueError:
         top_n = 20
 
-    # 不再需要 game_configs
-    # game_configs = _get_game_configs_data_from_app_context()
-    
-    # 直接呼叫新的高效能服務
     leaderboard_data = get_all_player_selected_monsters_service(top_n)
-
-    # 移除舊的、多餘的排序和切片邏輯
-    # all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
-    # final_leaderboard = all_player_selected_monsters[:top_n]
-
+    
     return jsonify(leaderboard_data), 200
 
 
@@ -722,3 +705,28 @@ def get_friends_statuses_route():
 
     statuses = get_friends_statuses_service(friend_ids)
     return jsonify({"success": True, "statuses": statuses}), 200
+
+# **新增**：獲取單一怪獸最新資料的API路由
+@md_bp.route('/player/<owner_id>/monster/<monster_id>/latest', methods=['GET'])
+def get_latest_monster_data_route(owner_id: str, monster_id: str):
+    # 這個路由不需要驗證使用者是誰，因為它是公開查詢
+    game_configs = _get_game_configs_data_from_app_context()
+    if not game_configs:
+        return jsonify({"error": "遊戲設定載入失敗。"}), 500
+
+    # 獲取指定擁有者的玩家資料
+    # 注意：這裡的第二個參數 nickname_from_auth 傳入 None，因為我們只是查詢，不是為他初始化
+    player_data = get_player_data_service(owner_id, None, game_configs)
+    
+    if not player_data or "farmedMonsters" not in player_data:
+        return jsonify({"error": "找不到該玩家或其怪獸資料。"}), 404
+
+    # 在該玩家的農場中尋找指定的怪獸
+    latest_monster_data = next((m for m in player_data["farmedMonsters"] if m.get("id") == monster_id), None)
+
+    if latest_monster_data:
+        routes_logger.info(f"成功為挑戰獲取怪獸 {monster_id} 的最新資料。")
+        return jsonify(latest_monster_data), 200
+    else:
+        routes_logger.warning(f"玩家 {owner_id} 的農場中找不到怪獸 {monster_id}。")
+        return jsonify({"error": "在該玩家的農場中找不到指定的怪獸。"}), 404
