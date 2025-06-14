@@ -327,3 +327,50 @@ body.light-theme #cultivation-modal-close-x:hover {
     border: none;
     background-color: transparent;
 }
+
+/* **核心修改點：新增確認出戰彈窗的格線佈局** */
+.battle-confirm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: start;
+    text-align: center;
+}
+
+.monster-confirm-details {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.monster-confirm-details.player {
+    border-left: 3px solid var(--accent-color);
+}
+
+.monster-confirm-details.opponent {
+    border-right: 3px solid var(--danger-color);
+}
+
+p.monster-role {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+p.monster-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+p.monster-score {
+    font-size: 0.85rem;
+    color: var(--success-color);
+    margin-top: 0.25rem;
+}
