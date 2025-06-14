@@ -12,12 +12,33 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
-function getMonsterPartImagePath(dnaTemplateId) {
-    if (!dnaTemplateId || !gameState.gameConfigs || !gameState.gameConfigs.dna_fragments) {
+function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
+    // 確保 monsterPartAssets 已載入
+    if (typeof monsterPartAssets === 'undefined') {
+        console.warn('monsterPartAssets 未載入，無法獲取部位圖片路徑。');
         return null;
     }
-    const dnaTemplate = gameState.gameConfigs.dna_fragments.find(d => d.id === dnaTemplateId);
-    return dnaTemplate || null;
+
+    const partData = monsterPartAssets[partName];
+    if (!partData) {
+        console.warn(`未找到部位 '${partName}' 的圖片配置。`);
+        return monsterPartAssets.globalDefault; // 使用全局預設圖
+    }
+
+    // 優先匹配精確的屬性+稀有度
+    if (partData[dnaType] && partData[dnaType][dnaRarity]) {
+        return partData[dnaType][dnaRarity];
+    }
+    // 次之匹配屬性預設 (如果有的話)
+    if (partData[dnaType] && partData[dnaType].default) {
+        return partData[dnaType].default;
+    }
+    // 再次之匹配部位預設
+    if (partData.default) {
+        return partData.default;
+    }
+
+    return monsterPartAssets.globalDefault; // 最終使用全局預設圖
 }
 
 
@@ -32,11 +53,15 @@ function clearMonsterBodyPartsDisplay() {
     for (const partName in partsMap) {
         const partElement = partsMap[partName];
         if (partElement) {
-            // applyDnaItemStyle is in ui-inventory.js, ensure it's loaded first
             if (typeof applyDnaItemStyle === 'function') {
                 applyDnaItemStyle(partElement, null);
             }
-            partElement.innerHTML = ''; 
+            // 清空圖片的 src 並移除 active class
+            const imgElement = partElement.querySelector('.monster-part-image');
+            if (imgElement) {
+                imgElement.src = '';
+                imgElement.classList.remove('active');
+            }
             partElement.classList.add('empty-part');
         }
     }
@@ -85,26 +110,49 @@ function updateMonsterSnapshot(monster) {
             RightLeg: DOMElements.monsterPartRightLeg,
         };
 
+        // 遍歷 DNA 槽位與身體部位的映射關係
         Object.keys(gameState.dnaSlotToBodyPartMapping).forEach(slotIndex => {
-            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex];
-            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
-            const partElement = partsMap[capitalizedPartKey];
-            const dnaData = dnaSlots[slotIndex];
+            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex]; // 例如 'head'
+            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1); // 例如 'Head'
+            const partElement = partsMap[capitalizedPartKey]; // 獲取對應的 DOM 元素
+            const dnaData = dnaSlots[slotIndex]; // 獲取該槽位的 DNA 數據
 
             if (partElement) {
-                partElement.innerHTML = '';
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'dna-name-text';
-                partElement.appendChild(nameSpan);
+                // 找到 img 元素
+                const imgElement = partElement.querySelector('.monster-part-image');
                 
-                // applyDnaItemStyle is in ui-inventory.js, ensure it's loaded first
+                // 清空文字內容
+                partElement.innerHTML = '';
+                // 再次添加 img 元素，確保其在 DOM 中存在
+                if (imgElement) {
+                    partElement.appendChild(imgElement);
+                } else {
+                    const newImgElement = document.createElement('img');
+                    newImgElement.className = 'monster-part-image';
+                    newImgElement.alt = `${capitalizedPartKey} 部位圖片`;
+                    partElement.appendChild(newImgElement);
+                }
+                const currentImgElement = partElement.querySelector('.monster-part-image'); // 確保拿到最新的引用
+
                 if (typeof applyDnaItemStyle === 'function') {
-                    applyDnaItemStyle(partElement, dnaData);
+                    applyDnaItemStyle(partElement, dnaData); // 應用 DNA 槽的樣式 (顏色、邊框等)
                 }
                 
-                if (dnaData) {
+                if (dnaData && currentImgElement) {
+                    const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity); // 獲取圖片路徑
+                    if (imgPath) {
+                        currentImgElement.src = imgPath; // 設定圖片來源
+                        currentImgElement.classList.add('active'); // 顯示圖片
+                    } else {
+                        currentImgElement.src = '';
+                        currentImgElement.classList.remove('active');
+                    }
                     partElement.classList.remove('empty-part');
                 } else {
+                    if (currentImgElement) {
+                        currentImgElement.src = ''; // 清空圖片來源
+                        currentImgElement.classList.remove('active'); // 隱藏圖片
+                    }
                     partElement.classList.add('empty-part');
                 }
             }
