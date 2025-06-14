@@ -37,51 +37,74 @@ DEFAULT_GAME_CONFIGS_FOR_LEADERBOARD: GameConfigs = {
 
 
 # --- 排行榜與玩家搜尋服務 ---
-# 移除此服務中獲取 NPC 怪獸的邏輯，使其僅處理玩家怪獸
+# 核心修改點：重寫整個函數以提高穩定性並增加日誌
 def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[Monster]:
     """
     獲取所有玩家設定為「出戰」的怪獸，用於排行榜。
+    此版本增加了更詳細的日誌記錄，以幫助診斷資料更新問題。
     """
     if not MD_firebase_config.db:
-        leaderboard_search_services_logger.error("Firestore 資料庫未初始化 (get_all_player_selected_monsters_service 內部)。")
+        leaderboard_search_services_logger.error("Firestore 資料庫未初始化，無法獲取排行榜資料。")
         return []
-    
-    db = MD_firebase_config.db
 
+    db = MD_firebase_config.db
     all_selected_monsters: List[Monster] = []
+    leaderboard_search_services_logger.info("開始獲取怪獸排行榜資料...")
+
     try:
         users_ref = db.collection('users')
-        for user_doc in users_ref.stream(): 
+        user_docs = users_ref.stream() # Get an iterator for all user documents
+
+        for user_doc in user_docs:
+            user_id = user_doc.id
+            leaderboard_search_services_logger.debug(f"正在處理玩家: {user_id}")
+
             game_data_doc_ref = user_doc.reference.collection('gameData').document('main')
             game_data_doc = game_data_doc_ref.get()
-            if game_data_doc.exists:
-                player_game_data = game_data_doc.to_dict()
-                if player_game_data:
-                    selected_monster_id = player_game_data.get("selectedMonsterId")
-                    farmed_monsters = player_game_data.get("farmedMonsters", [])
-                    player_nickname = player_game_data.get("nickname", user_doc.id)
 
-                    if selected_monster_id:
-                        for monster_dict in farmed_monsters:
-                            if monster_dict.get("id") == selected_monster_id:
-                                monster_copy = copy.deepcopy(monster_dict)
-                                monster_copy["owner_nickname"] = player_nickname # type: ignore
-                                monster_copy["owner_id"] = user_doc.id # type: ignore
-                                # 確保 farmStatus 存在，即使是空字典，以便前端統一處理
-                                if "farmStatus" not in monster_copy:
-                                    monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False}
-                                all_selected_monsters.append(monster_copy) # type: ignore
-                                break # 找到選定的怪獸後即可跳出
-        
-        leaderboard_search_services_logger.info(f"成功獲取 {len(all_selected_monsters)} 隻玩家出戰怪獸。")
+            if not game_data_doc.exists:
+                leaderboard_search_services_logger.debug(f"玩家 {user_id} 沒有 gameData 文件，跳過。")
+                continue
+
+            player_game_data = game_data_doc.to_dict()
+            if not player_game_data:
+                leaderboard_search_services_logger.warning(f"玩家 {user_id} 的 gameData 文件為空，跳過。")
+                continue
+
+            selected_monster_id = player_game_data.get("selectedMonsterId")
+            if not selected_monster_id:
+                leaderboard_search_services_logger.debug(f"玩家 {user_id} 未設定出戰怪獸，跳過。")
+                continue
+
+            farmed_monsters = player_game_data.get("farmedMonsters", [])
+            player_nickname = player_game_data.get("nickname", user_id)
+            
+            found_monster = False
+            for monster_dict in farmed_monsters:
+                if monster_dict.get("id") == selected_monster_id:
+                    leaderboard_search_services_logger.info(f"找到玩家 {user_id} 的出戰怪獸: {monster_dict.get('nickname')}, 勝敗: {monster_dict.get('resume')}")
+                    
+                    monster_copy = copy.deepcopy(monster_dict)
+                    monster_copy["owner_nickname"] = player_nickname # type: ignore
+                    monster_copy["owner_id"] = user_doc.id # type: ignore
+                    
+                    if "farmStatus" not in monster_copy:
+                        monster_copy["farmStatus"] = {}
+                    
+                    all_selected_monsters.append(monster_copy) # type: ignore
+                    found_monster = True
+                    break
+            
+            if not found_monster:
+                leaderboard_search_services_logger.warning(f"玩家 {user_id} 設定的出戰怪獸ID '{selected_monster_id}' 在其農場中未找到。")
+
+        leaderboard_search_services_logger.info(f"排行榜資料獲取完畢，共找到 {len(all_selected_monsters)} 隻出戰怪獸。")
         return all_selected_monsters
+        
     except Exception as e:
-        leaderboard_search_services_logger.error(f"獲取所有玩家出戰怪獸時發生錯誤: {e}", exc_info=True)
+        leaderboard_search_services_logger.error(f"獲取所有玩家出戰怪獸時發生嚴重錯誤: {e}", exc_info=True)
         return []
 
-# 這個函數不再用於獲取排行榜中的玩家怪獸，僅用於獲取 NPC 怪獸
-# 但根據需求，我們要移除 NPC 怪獸，所以這裡將其置空或只返回預設 NPC 模板（如果仍然有 NPC 數據存在於 configs 中作為參考）
-# 為了滿足 "排行榜上不會出現NPC怪獸" 的需求，這裡直接返回空列表
 def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[Monster]:
     """
     獲取怪獸排行榜 (不再返回 NPC 怪獸，因為需求是所有怪獸都歸玩家所有)。
@@ -92,17 +115,16 @@ def get_monster_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) 
 
 def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -> List[PlayerStats]:
     """獲取玩家排行榜。"""
-    # 在函數內部動態獲取 db 實例，確保它已經被 main.py 設置
     if not MD_firebase_config.db:
         leaderboard_search_services_logger.error("Firestore 資料庫未初始化 (get_player_leaderboard_service 內部)。")
         return []
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+    db = MD_firebase_config.db
 
     all_player_stats: List[PlayerStats] = []
     try:
         users_ref = db.collection('users')
-        for user_doc in users_ref.stream(): # 注意：效能問題
+        for user_doc in users_ref.stream(): 
             game_data_doc_ref = user_doc.reference.collection('gameData').document('main')
             game_data_doc = game_data_doc_ref.get()
             if game_data_doc.exists:
@@ -111,7 +133,7 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
                     stats: PlayerStats = player_game_data["playerStats"] # type: ignore
                     if "nickname" not in stats or not stats["nickname"]:
                         stats["nickname"] = player_game_data.get("nickname", user_doc.id) # type: ignore
-                    stats["uid"] = user_doc.id # 新增：將 UID 加入到 stats 物件中
+                    stats["uid"] = user_doc.id 
                     all_player_stats.append(stats)
 
         all_player_stats.sort(key=lambda ps: ps.get("score", 0), reverse=True)
@@ -120,7 +142,6 @@ def get_player_leaderboard_service(game_configs: GameConfigs, top_n: int = 10) -
         leaderboard_search_services_logger.error(f"獲取玩家排行榜時發生錯誤: {e}", exc_info=True)
         return []
 
-# 確保 firestore 在這裡被導入，因為 search_players_service 會用到 firestore.FieldFilter
 import firebase_admin
 from firebase_admin import firestore
 
@@ -130,14 +151,13 @@ def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[st
         leaderboard_search_services_logger.error("Firestore 資料庫未初始化 (search_players_service 內部)。")
         return []
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+    db = MD_firebase_config.db
 
     if not nickname_query:
         return []
 
     results: List[Dict[str, str]] = []
     try:
-        # 修正：使用正確的 firestore.FieldFilter
         query_ref = db.collection('users').where(
             filter=firestore.FieldFilter('nickname', '>=', nickname_query)
         ).where(
@@ -152,7 +172,6 @@ def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[st
         return results
     except Exception as e:
         leaderboard_search_services_logger.error(f"搜尋玩家時發生錯誤 (query: '{nickname_query}'): {e}", exc_info=True)
-        # 檢查是否為索引錯誤
         error_str = str(e).lower()
         if "index" in error_str and ("ensure" in error_str or "required" in error_str or "missing" in error_str):
             leaderboard_search_services_logger.error(
