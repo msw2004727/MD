@@ -66,24 +66,64 @@ function handleFarmActions() {
 
 
 function handleLeaderboardInteractions() {
-    // 處理怪獸排行榜中的點擊
-    if (DOMElements.monsterLeaderboardTable) {
-        DOMElements.monsterLeaderboardTable.addEventListener('click', (event) => {
-            const link = event.target.closest('a.leaderboard-monster-link');
-            if (link) {
+    // **核心修改：將多個事件監聽器合併為一個，並使用更精確的邏輯判斷**
+    const setupCombinedListener = (tableElement, tableType) => {
+        if (!tableElement) return;
+
+        tableElement.addEventListener('click', (event) => {
+            const monsterLink = event.target.closest('a.leaderboard-monster-link');
+            const challengeButton = event.target.closest('button');
+            const sortableHeader = event.target.closest('th[data-sort-key]');
+
+            // 1. 處理點擊怪獸名稱
+            if (monsterLink) {
                 event.preventDefault();
-                const monsterId = link.closest('tr')?.dataset.monsterId;
+                const monsterId = monsterLink.closest('tr')?.dataset.monsterId;
                 if (!monsterId) return;
                 const monsterData = gameState.monsterLeaderboard.find(m => m.id === monsterId);
                 if (monsterData) {
                     updateMonsterInfoModal(monsterData, gameState.gameConfigs);
                     showModal('monster-info-modal');
                 }
-            } else {
-                 handleChallengeMonsterClick(event);
+                return; // 結束處理
+            }
+
+            // 2. 處理點擊「挑戰」按鈕
+            if (challengeButton && challengeButton.textContent.includes('挑戰')) {
+                 const monsterId = challengeButton.closest('tr')?.dataset.monsterId;
+                 const monsterData = gameState.monsterLeaderboard.find(m => m.id === monsterId);
+                 if(monsterData){
+                    handleChallengeMonsterClick(event, monsterData.id, monsterData.owner_id, null, monsterData.owner_nickname);
+                 }
+                 return; // 結束處理
+            }
+
+            // 3. 處理點擊表頭排序
+            if (sortableHeader) {
+                const sortKey = sortableHeader.dataset.sortKey;
+                let currentSortConfig = gameState.leaderboardSortConfig?.[tableType] || {};
+                let newSortOrder = 'desc';
+                if (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') {
+                    newSortOrder = 'asc';
+                } else if (currentSortConfig.key === sortKey && currentSortConfig.order === 'asc') {
+                    newSortOrder = 'desc';
+                }
+                
+                gameState.leaderboardSortConfig[tableType] = { key: sortKey, order: newSortOrder };
+                
+                if (tableType === 'monster') {
+                    filterAndRenderMonsterLeaderboard();
+                } else {
+                    sortAndRenderLeaderboard(tableType);
+                }
+                return; // 結束處理
             }
         });
-    }
+    };
+
+    setupCombinedListener(DOMElements.monsterLeaderboardTable, 'monster');
+    setupCombinedListener(DOMElements.playerLeaderboardTable, 'player');
+
 
     // 處理元素篩選頁籤
     if (DOMElements.monsterLeaderboardElementTabs) {
@@ -97,32 +137,6 @@ function handleLeaderboardInteractions() {
             }
         });
     }
-    
-    // 處理排行榜排序
-    const tables = [DOMElements.monsterLeaderboardTable, DOMElements.playerLeaderboardTable];
-    tables.forEach(table => {
-        if (table) {
-            table.addEventListener('click', (event) => {
-                const th = event.target.closest('th');
-                if (!th || !th.dataset.sortKey) return;
-
-                const sortKey = th.dataset.sortKey;
-                const tableType = table.id.includes('monster') ? 'monster' : 'player';
-                let currentSortConfig = gameState.leaderboardSortConfig?.[tableType] || {};
-                let newSortOrder = 'desc';
-                if (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') newSortOrder = 'asc';
-                else if (currentSortConfig.key === sortKey && currentSortConfig.order === 'asc') newSortOrder = 'desc';
-                
-                gameState.leaderboardSortConfig[tableType] = { key: sortKey, order: newSortOrder };
-                
-                if (tableType === 'monster') {
-                    filterAndRenderMonsterLeaderboard();
-                } else {
-                    sortAndRenderLeaderboard(tableType);
-                }
-            });
-        }
-    });
 
     // 處理排行榜刷新按鈕
     if (DOMElements.refreshMonsterLeaderboardBtn) {
