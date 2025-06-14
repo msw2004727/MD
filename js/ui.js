@@ -360,7 +360,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     else if (isLoading && title.startsWith('登出中')) {
         addBannerAndHints(loadingBannerUrl, '登出中');
     }
-    else if (isLoading && (title.startsWith('載入中'))) { // For leaderboards, player info
+    else if (isLoading && title.startsWith('載入中')) { // For leaderboards, player info
         addBannerAndHints(loadingBannerUrl, '載入中');
     }
     else if (isLoading && title.startsWith('處理中')) { // For releasing monster

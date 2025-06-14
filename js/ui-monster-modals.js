@@ -671,25 +671,22 @@ function updateTrainingResultsModal(results, monsterName) {
     const itemsGridContainer = modalBody.querySelector('#training-items-grid');
     if (itemsGridContainer && typeof applyDnaItemStyle === 'function') {
         items.forEach((item, index) => {
-            // 只有當 item 確實存在時才渲染（因為我們可能將已拾取的設為 null）
-            if (item) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'dna-item-wrapper';
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'dna-item occupied';
-                
-                applyDnaItemStyle(itemDiv, item); // Apply coloring
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dna-item-wrapper';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item occupied';
+            
+            applyDnaItemStyle(itemDiv, item); // Apply coloring
 
-                const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
-                itemDiv.innerHTML = `
-                    <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
-                    <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
-                    <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
-                    <button class="button primary pickup-btn" data-item-index="${index}" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
-                `;
-                wrapper.appendChild(itemDiv);
-                itemsGridContainer.appendChild(wrapper);
-            }
+            const rarityKey = item.rarity ? item.rarity.toLowerCase() : 'common';
+            itemDiv.innerHTML = `
+                <span class="dna-name" style="font-weight: bold; margin-bottom: 4px;">${item.name}</span>
+                <span class="dna-type text-rarity-${rarityKey}">${item.type}屬性</span>
+                <span class="dna-rarity text-rarity-${rarityKey}" style="font-weight: bold;">${item.rarity}</span>
+                <button class="button primary pickup-btn" data-item-index="${index}" style="padding: 5px 10px; margin-top: 8px;">拾取</button>
+            `;
+            wrapper.appendChild(itemDiv);
+            itemsGridContainer.appendChild(wrapper);
         });
     }
 
@@ -709,15 +706,11 @@ function updateTrainingResultsModal(results, monsterName) {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const itemIndex = parseInt(e.target.dataset.itemIndex, 10);
-            // 這裡不再從 `items` 陣列中直接取，而是用 `gameState.lastCultivationResult.items_obtained`
-            const item = gameState.lastCultivationResult.items_obtained[itemIndex];
+            const item = items[itemIndex];
             if (item) {
-                // 修改點：傳遞 itemIndex 給 addDnaToTemporaryBackpack
-                addDnaToTemporaryBackpack(item, itemIndex); 
+                addDnaToTemporaryBackpack(item);
                 btn.disabled = true;
                 btn.textContent = "已拾取";
-                // 立即隱藏該物品的 DOM 元素，這樣下次重新打開時，已拾取的物品不會再顯示
-                e.target.closest('.dna-item-wrapper')?.remove();
             }
         });
     });

@@ -409,18 +409,12 @@ function promptLearnNewSkill(monsterId, newSkillTemplate, currentSkills) {
  */
 function addAllCultivationItemsToTempBackpack() {
     if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
-        // 遍歷所有物品，並將其添加到臨時背包
-        for (let i = 0; i < gameState.lastCultivationResult.items_obtained.length; i++) {
-            const item = gameState.lastCultivationResult.items_obtained[i];
-            if (item) { // 確保物品存在且未被拾取
-                addDnaToTemporaryBackpack(item); // 這個函數會將物品添加到 temporaryBackpack
-                gameState.lastCultivationResult.items_obtained[i] = null; // 將拾取後的物品設為 null
-            }
-        }
+        gameState.lastCultivationResult.items_obtained.forEach(itemTemplate => {
+            addDnaToTemporaryBackpack(itemTemplate);
+        });
         renderTemporaryBackpack();
-        // 檢查是否所有物品都已變為null
-        const allItemsPickedUp = gameState.lastCultivationResult.items_obtained.every(item => item === null);
-        if (allItemsPickedUp && DOMElements.addAllToTempBackpackBtn) {
+        gameState.lastCultivationResult.items_obtained = [];
+        if (DOMElements.addAllToTempBackpackBtn) {
             DOMElements.addAllToTempBackpackBtn.disabled = true;
             DOMElements.addAllToTempBackpackBtn.textContent = "已全數加入背包";
         }
@@ -430,9 +424,8 @@ function addAllCultivationItemsToTempBackpack() {
 /**
  * 將指定的 DNA 模板加入臨時背包。
  * @param {object} dnaTemplate DNA 模板對象。
- * @param {number | null} [originalIndexInCultivationResults=null] 如果物品來自修煉結果，則為其在 items_obtained 陣列中的原始索引
  */
-function addDnaToTemporaryBackpack(dnaTemplate, originalIndexInCultivationResults = null) {
+function addDnaToTemporaryBackpack(dnaTemplate) {
     if (!dnaTemplate || !dnaTemplate.id) {
         console.warn("addDnaToTemporaryBackpack: 無效的 dnaTemplate 或缺少 id。", dnaTemplate);
         return;
@@ -454,12 +447,6 @@ function addDnaToTemporaryBackpack(dnaTemplate, originalIndexInCultivationResult
         };
         renderTemporaryBackpack();
         console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包槽位 ${freeSlotIndex}。`);
-        
-        // 修改點：如果物品來自修煉結果，將其在原陣列中設為 null
-        if (originalIndexInCultivationResults !== null && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
-            gameState.lastCultivationResult.items_obtained[originalIndexInCultivationResults] = null;
-        }
-
     } else {
         showFeedbackModal('背包已滿', '臨時背包已滿，無法再拾取物品。請清理後再試。');
         console.warn("Temporary backpack is full. Cannot add new item.");
