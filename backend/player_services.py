@@ -6,20 +6,22 @@ import logging
 from typing import List, Dict, Optional, Any
 import firebase_admin
 from firebase_admin import firestore
+# 新增導入 FieldPath
 from google.cloud.firestore_v1.field_path import FieldPath
-import random
+import random # 引入 random 模組
 
-from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster
-from . import MD_firebase_config
+# 從 MD_models 導入相關的 TypedDict 定義
+from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
 
 player_services_logger = logging.getLogger(__name__)
 
+# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "dna_fragments": [], 
-    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
     "skills": {}, 
     "personalities": [],
-    "titles": [{"id": "title_001", "name": "新手", "description": "", "condition": {}, "buffs": {}}],
+    "titles": [{"id": "title_001", "name": "新手", "description": "", "condition": {}, "buffs": {}}], # type: ignore
     "monster_achievements_list": ["新秀"],
     "element_nicknames": {"火": "炎獸"},
     "naming_constraints": {
@@ -42,68 +44,6 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "cultivation_config": {},
     "elemental_advantage_chart": {},
 }
-
-def _update_leaderboard_monster(player_id: str, monster_data: Optional[Monster]):
-    """
-    在專用的 MD_LeaderboardMonsters 集合中，建立、更新或刪除怪獸的條目。
-    如果提供了 monster_data，則執行更新或插入（upsert）。
-    如果 monster_data 為 None，表示該玩家沒有出戰怪獸，則刪除其舊有條目。
-    """
-    db = MD_firebase_config.db
-    if not db:
-        player_services_logger.error("排行榜更新失敗：Firestore 未初始化。")
-        return
-    
-    leaderboard_ref = db.collection('MD_LeaderboardMonsters')
-    
-    # 為了處理玩家更換出戰怪獸或取消出戰的情況，先刪除該玩家所有舊的排行榜條目。
-    # 一個玩家只應該有一隻怪獸在排行榜上。
-    docs_to_delete = leaderboard_ref.where('owner_id', '==', player_id).stream()
-    for doc in docs_to_delete:
-        player_services_logger.info(f"正在從排行榜刪除玩家 {player_id} 的舊有出戰怪獸: {doc.id}")
-        doc.reference.delete()
-
-    # 如果有新的怪獸被設為出戰，則為其建立新的排行榜條目。
-    if monster_data:
-        monster_id = monster_data.get('id')
-        if not monster_id:
-            player_services_logger.error(f"排行榜更新失敗：怪獸缺少ID。")
-            return
-
-        # **核心修改點：寫入更完整的怪獸資料到排行榜**
-        leaderboard_data = {
-            'id': monster_id,
-            'nickname': monster_data.get('nickname'),
-            'elements': monster_data.get('elements'),
-            'elementComposition': monster_data.get('elementComposition'),
-            'rarity': monster_data.get('rarity'),
-            'score': monster_data.get('score', 0),
-            'resume': monster_data.get('resume', {'wins': 0, 'losses': 0}),
-            'owner_id': player_id,
-            'owner_nickname': monster_data.get('owner_nickname'),
-            'farmStatus': monster_data.get('farmStatus', {}),
-            'hp': monster_data.get('hp'),
-            'mp': monster_data.get('mp'),
-            'initial_max_hp': monster_data.get('initial_max_hp'),
-            'initial_max_mp': monster_data.get('initial_max_mp'),
-            'attack': monster_data.get('attack'),
-            'defense': monster_data.get('defense'),
-            'speed': monster_data.get('speed'),
-            'crit': monster_data.get('crit'),
-            'skills': monster_data.get('skills', []),
-            'title': monster_data.get('title'),
-            'custom_element_nickname': monster_data.get('custom_element_nickname'),
-            'description': monster_data.get('description'),
-            'personality': monster_data.get('personality'),
-            'creationTime': monster_data.get('creationTime'),
-            'resistances': monster_data.get('resistances', {}),
-            'constituent_dna_ids': monster_data.get('constituent_dna_ids', []),
-            'cultivation_gains': monster_data.get('cultivation_gains', {}),
-            'aiIntroduction': monster_data.get('aiIntroduction', ''),
-            'aiEvaluation': monster_data.get('aiEvaluation', '')
-        }
-        player_services_logger.info(f"正在更新排行榜上的怪獸 {monster_id}，分數: {leaderboard_data['score']}, 勝敗: {leaderboard_data['resume']}")
-        leaderboard_ref.document(monster_id).set(leaderboard_data, merge=True)
 
 
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
@@ -157,7 +97,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "lastSeen": int(time.time()),
         "selectedMonsterId": None,
         "friends": [],
-        "dnaCombinationSlots": [None] * 5,
+        "dnaCombinationSlots": [None] * 5,  # 新增：初始化空的組合槽
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -267,16 +207,17 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             player_game_data: PlayerGameData = {
                 "playerOwnedDNA": loaded_dna,
                 "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                "playerStats": player_game_data_dict.get("playerStats", {}), 
+                "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
                 "nickname": authoritative_nickname,
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
                 "friends": player_game_data_dict.get("friends", []),
+                # 新增：讀取組合槽，如果不存在則提供預設值
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
             }
-            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: 
-                player_game_data["playerStats"]["nickname"] = authoritative_nickname 
+            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
+                player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
             return player_game_data
         
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
@@ -293,37 +234,17 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
         return None
 
-def save_player_data_service(player_id: str, game_data: PlayerGameData, monster_id_to_sync_leaderboard: Optional[str] = None) -> bool:
-    """儲存玩家遊戲資料到 Firestore，並可選擇性地同步指定的怪獸到排行榜。"""
-    db = MD_firebase_config.db
-    if not db:
+def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
+    """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
+    from .MD_firebase_config import db as firestore_db_instance
+    if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
         return False
     
+    db = firestore_db_instance
     current_time_unix = int(time.time())
 
     try:
-        # **核心修改點**
-        # 決定要更新到排行榜的怪獸ID
-        monster_id_to_update = monster_id_to_sync_leaderboard if monster_id_to_sync_leaderboard is not None else game_data.get("selectedMonsterId")
-        
-        monster_to_update_on_leaderboard = None
-        if monster_id_to_update:
-            # 從 game_data 中找到對應的怪獸物件
-            for monster in game_data.get("farmedMonsters", []):
-                if monster.get("id") == monster_id_to_update:
-                    monster_to_update_on_leaderboard = monster
-                    monster_to_update_on_leaderboard['owner_nickname'] = game_data.get('nickname')
-                    break
-        
-        # 如果找到了要更新的怪獸（無論是指定的還是出戰中的），就更新排行榜
-        if monster_to_update_on_leaderboard:
-            _update_leaderboard_monster(player_id, monster_to_update_on_leaderboard)
-        # 如果沒找到，且是出於同步出戰怪獸的目的，可以考慮清除舊的排行榜條目
-        elif monster_id_to_sync_leaderboard is None:
-             _update_leaderboard_monster(player_id, None)
-
-
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
@@ -333,6 +254,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData, monster_
             "lastSeen": current_time_unix,
             "selectedMonsterId": game_data.get("selectedMonsterId"),
             "friends": game_data.get("friends", []),
+            # 新增：儲存組合槽狀態
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
         }
 
@@ -357,7 +279,9 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData, monster_
         return False
         
 def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
-    """執行免費的 DNA 抽取。"""
+    """
+    執行免費的 DNA 抽取。
+    """
     player_services_logger.info("正在執行免費 DNA 抽取...")
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
@@ -392,7 +316,9 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
         return None
 
 def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[int]]:
-    """一次性獲取多個好友的 `lastSeen` 時間戳。"""
+    """
+    一次性獲取多個好友的 `lastSeen` 時間戳。
+    """
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (get_friends_statuses_service 內部)。")
