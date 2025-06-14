@@ -338,7 +338,7 @@ function showBattleLogModal(battleResult) {
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         // **核心修改點：如果傳入的文字是空的或只有空白，直接回傳一個空字串**
-        if (!text || text.trim() === '') return ''; 
+        if (!text || text.trim() === '') return '';
 
         let styledText = text;
         const applyMonNameColor = (monData) => {
