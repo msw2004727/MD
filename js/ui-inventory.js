@@ -88,12 +88,18 @@ function renderDNACombinationSlots() {
             slot.dataset.dnaId = dna.id;
             slot.dataset.dnaBaseId = dna.baseId;
             slot.dataset.dnaSource = 'combination';
-            typeSpan.textContent = `${dna.type || '無'}屬性`; 
-            applyDnaItemStyle(slot, dna); // applyDnaItemStyle 會處理抖動
+            
+            // **核心修改點**
+            const elementType = dna.type || '無';
+            const elementCssKey = getElementCssClassKey(elementType);
+            typeSpan.textContent = `${elementType}屬性`;
+            typeSpan.className = `dna-type-text text-element-${elementCssKey}`; // 重新設定 class
+            
+            applyDnaItemStyle(slot, dna);
         } else {
             nameSpan.textContent = `組合槽 ${index + 1}`;
             slot.classList.add('empty');
-            applyDnaItemStyle(slot, null); // applyDnaItemStyle 會處理抖動
+            applyDnaItemStyle(slot, null);
             typeSpan.textContent = ''; 
         }
         container.appendChild(slot);
@@ -138,14 +144,20 @@ function renderPlayerDNAInventory() {
                 item.dataset.dnaId = dna.id;
                 item.dataset.dnaBaseId = dna.baseId;
                 item.dataset.dnaSource = 'inventory';
-                typeSpan.textContent = `${dna.type || '無'}屬性`; 
-                applyDnaItemStyle(item, dna); // applyDnaItemStyle 會處理抖動
+                
+                // **核心修改點**
+                const elementType = dna.type || '無';
+                const elementCssKey = getElementCssClassKey(elementType);
+                typeSpan.textContent = `${elementType}屬性`;
+                typeSpan.className = `dna-type-text text-element-${elementCssKey}`; // 重新設定 class
+
+                applyDnaItemStyle(item, dna);
             } else {
                 item.draggable = false; // 空格不可拖曳
                 item.dataset.dnaSource = 'inventory';
                 nameSpan.textContent = '空位';
                 typeSpan.textContent = ''; 
-                applyDnaItemStyle(item, null); // applyDnaItemStyle 會處理抖動
+                applyDnaItemStyle(item, null);
             }
         }
         container.appendChild(item);
@@ -180,18 +192,22 @@ function renderTemporaryBackpack() {
             typeSpan.classList.add('dna-type-text');
             slot.appendChild(typeSpan);
             
-            typeSpan.textContent = `${item.data.type || '無'}屬性`;
+            // **核心修改點**
+            const elementType = item.data.type || '無';
+            const elementCssKey = getElementCssClassKey(elementType);
+            typeSpan.textContent = `${elementType}屬性`;
+            typeSpan.className = `dna-type-text text-element-${elementCssKey}`; // 重新設定 class
 
             slot.draggable = true;
             slot.dataset.dnaId = item.data.id;
             slot.dataset.dnaBaseId = item.data.baseId;
             slot.dataset.dnaSource = 'temporaryBackpack';
             slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
-            applyDnaItemStyle(slot, item.data); // applyDnaItemStyle 會處理抖動
+            applyDnaItemStyle(slot, item.data);
         } else {
             slot.innerHTML = `<span class="dna-name-text">空位</span>`;
             slot.draggable = false;
-            applyDnaItemStyle(slot, null); // applyDnaItemStyle 會處理抖動
+            applyDnaItemStyle(slot, null);
         }
         container.appendChild(slot);
     });
