@@ -46,8 +46,8 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
 def _update_leaderboard_monster(player_id: str, monster_data: Optional[Monster]):
     """
     在專用的 MD_LeaderboardMonsters 集合中，建立、更新或刪除怪獸的條目。
-    - 如果提供了 monster_data，則執行更新或插入（upsert）。
-    - 如果 monster_data 為 None，表示該玩家沒有出戰怪獸，則刪除其舊有條目。
+    如果提供了 monster_data，則執行更新或插入（upsert）。
+    如果 monster_data 為 None，表示該玩家沒有出戰怪獸，則刪除其舊有條目。
     """
     db = MD_firebase_config.db
     if not db:
@@ -70,11 +70,12 @@ def _update_leaderboard_monster(player_id: str, monster_data: Optional[Monster])
             player_services_logger.error(f"排行榜更新失敗：怪獸缺少ID。")
             return
 
-        # 準備一個扁平化的資料物件，只包含排行榜需要的欄位。
+        # **核心修改點：寫入更完整的怪獸資料到排行榜**
         leaderboard_data = {
             'id': monster_id,
             'nickname': monster_data.get('nickname'),
             'elements': monster_data.get('elements'),
+            'elementComposition': monster_data.get('elementComposition'),
             'rarity': monster_data.get('rarity'),
             'score': monster_data.get('score', 0),
             'resume': monster_data.get('resume', {'wins': 0, 'losses': 0}),
@@ -82,7 +83,24 @@ def _update_leaderboard_monster(player_id: str, monster_data: Optional[Monster])
             'owner_nickname': monster_data.get('owner_nickname'),
             'farmStatus': monster_data.get('farmStatus', {}),
             'hp': monster_data.get('hp'),
+            'mp': monster_data.get('mp'),
             'initial_max_hp': monster_data.get('initial_max_hp'),
+            'initial_max_mp': monster_data.get('initial_max_mp'),
+            'attack': monster_data.get('attack'),
+            'defense': monster_data.get('defense'),
+            'speed': monster_data.get('speed'),
+            'crit': monster_data.get('crit'),
+            'skills': monster_data.get('skills', []),
+            'title': monster_data.get('title'),
+            'custom_element_nickname': monster_data.get('custom_element_nickname'),
+            'description': monster_data.get('description'),
+            'personality': monster_data.get('personality'),
+            'creationTime': monster_data.get('creationTime'),
+            'resistances': monster_data.get('resistances', {}),
+            'constituent_dna_ids': monster_data.get('constituent_dna_ids', []),
+            'cultivation_gains': monster_data.get('cultivation_gains', {}),
+            'aiIntroduction': monster_data.get('aiIntroduction', ''),
+            'aiEvaluation': monster_data.get('aiEvaluation', '')
         }
         player_services_logger.info(f"正在更新排行榜上的怪獸 {monster_id}，分數: {leaderboard_data['score']}, 勝敗: {leaderboard_data['resume']}")
         leaderboard_ref.document(monster_id).set(leaderboard_data, merge=True)
@@ -285,21 +303,17 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     current_time_unix = int(time.time())
 
     try:
-        # **核心修改點 1: 尋找需要更新到排行榜的怪獸**
         selected_monster_id = game_data.get("selectedMonsterId")
         monster_to_update_on_leaderboard = None
         if selected_monster_id:
             for monster in game_data.get("farmedMonsters", []):
                 if monster.get("id") == selected_monster_id:
                     monster_to_update_on_leaderboard = monster
-                    # 確保 owner_nickname 在物件中，以便排行榜函數使用
                     monster_to_update_on_leaderboard['owner_nickname'] = game_data.get('nickname')
                     break
         
-        # **核心修改點 2: 呼叫輔助函數來更新專用的排行榜集合**
         _update_leaderboard_monster(player_id, monster_to_update_on_leaderboard)
 
-        # 繼續執行原有的儲存玩家完整資料的邏輯
         data_to_save: Dict[str, Any] = {
             "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
             "farmedMonsters": game_data.get("farmedMonsters", []),
