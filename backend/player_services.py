@@ -48,7 +48,7 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
 def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nickname: str):
     """
     更新或創建單個怪獸在 MonsterLeaderboard 集合中的條目。
-    這個版本會寫入完整的怪獸資料以供彈窗使用。
+    這是一個獨立的、高效的寫入操作。
     """
     if not monster or not monster.get("id"):
         return
@@ -56,20 +56,22 @@ def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nicknam
     try:
         leaderboard_ref = db.collection('MonsterLeaderboard').document(monster["id"])
         
-        # 創建一個包含所有前端所需資訊的完整物件
-        # 我們直接複製整個 monster 物件，然後再添加/覆蓋 owner 資訊
-        leaderboard_data = monster.copy()
+        # 創建一個只包含排行榜所需資訊的簡化版物件
+        leaderboard_data = {
+            "monster_id": monster["id"],
+            "nickname": monster.get("nickname", "未知怪獸"),
+            "score": monster.get("score", 0),
+            "elements": monster.get("elements", []),
+            "rarity": monster.get("rarity", "普通"),
+            "resume": monster.get("resume", {"wins": 0, "losses": 0}),
+            "farmStatus": monster.get("farmStatus", {}),
+            "owner_id": owner_id,
+            "owner_nickname": owner_nickname,
+            "last_updated": firestore.SERVER_TIMESTAMP
+        }
         
-        # 添加或覆蓋 owner 資訊
-        leaderboard_data["owner_id"] = owner_id
-        leaderboard_data["owner_nickname"] = owner_nickname
-        leaderboard_data["last_updated"] = firestore.SERVER_TIMESTAMP
-        
-        # 確保 monster_id 欄位存在，以利於可能的未來查詢
-        leaderboard_data["monster_id"] = monster["id"]
-
-        leaderboard_ref.set(leaderboard_data) # 使用 set 而不是 merge=True 來確保資料的完整覆蓋
-        player_services_logger.info(f"成功將怪獸 '{monster['nickname']}' (ID: {monster['id']}) 的完整資料更新至排行榜。")
+        leaderboard_ref.set(leaderboard_data, merge=True)
+        player_services_logger.info(f"成功更新怪獸 '{monster['nickname']}' (ID: {monster['id']}) 的排行榜條目。")
 
     except Exception as e:
         player_services_logger.error(f"更新怪獸 {monster.get('id')} 的排行榜條目失敗: {e}", exc_info=True)
@@ -292,16 +294,20 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_ref.set(data_to_save) 
         
-        # **新增：儲存後，更新對應的出戰怪獸到排行榜**
-        selected_monster_id = data_to_save.get("selectedMonsterId")
-        if selected_monster_id:
-            selected_monster = next((m for m in data_to_save.get("farmedMonsters", []) if m.get("id") == selected_monster_id), None)
-            if selected_monster:
-                _update_leaderboard_entry(
+        # **修改：從只更新出戰怪獸，改為更新農場中所有怪獸的排行榜狀態**
+        farmed_monsters = data_to_save.get("farmedMonsters", [])
+        owner_nickname = data_to_save.get("nickname", "未知玩家")
+        
+        # 遍歷所有怪獸，並更新它們在排行榜上的狀態
+        for monster in farmed_monsters:
+            # 只有分數高於一定值的怪獸才需要更新到排行榜，可以節省寫入次數
+            # 這裡我們暫定一個閾值，例如 100 分，您可以根據遊戲平衡調整
+            if monster and monster.get("score", 0) > 100:
+                 _update_leaderboard_entry(
                     db=db,
-                    monster=selected_monster,
+                    monster=monster,
                     owner_id=player_id,
-                    owner_nickname=data_to_save.get("nickname", "未知玩家")
+                    owner_nickname=owner_nickname
                 )
         
         try:
