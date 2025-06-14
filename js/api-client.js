@@ -87,6 +87,20 @@ async function getPlayerData(playerId) {
 }
 
 /**
+ * 獲取指定怪獸的最新即時資料
+ * @param {string} ownerId 怪獸擁有者的玩家 ID
+ * @param {string} monsterId 怪獸 ID
+ * @returns {Promise<object>} 最新的怪獸資料
+ */
+async function getLatestMonsterData(ownerId, monsterId) {
+    if (!ownerId || !monsterId) {
+        throw new Error("獲取怪獸最新資料需要 ownerId 和 monsterId。");
+    }
+    return fetchAPI(`/player/${ownerId}/monster/${monsterId}/latest`);
+}
+
+
+/**
  * 將玩家的遊戲資料保存到後端。
  * @param {string} playerId 玩家 ID
  * @param {object} playerData 玩家的完整遊戲資料物件
@@ -134,13 +148,13 @@ async function drawFreeDNA() {
  * @param {object} battleRequestData - 包含 player_monster_data 和 opponent_monster_data 的物件
  * @returns {Promise<object>} 戰鬥結果，包含 AI 生成的戰報內容
  */
-async function simulateBattle(battleRequestData) { // 修正：現在只接收一個參數
+async function simulateBattle(battleRequestData) { 
     if (!battleRequestData || !battleRequestData.player_monster_data || !battleRequestData.opponent_monster_data) {
         throw new Error("simulateBattle 函數需要一個包含 player_monster_data 和 opponent_monster_data 的物件。");
     }
     return fetchAPI('/battle/simulate', {
         method: 'POST',
-        body: JSON.stringify(battleRequestData), // 修正：直接將傳入的物件字串化作為 body
+        body: JSON.stringify(battleRequestData),
     });
 }
 
