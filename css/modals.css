@@ -365,7 +365,6 @@ p.monster-role {
 
 p.monster-name {
     font-size: 1.1rem;
-    /* font-weight: bold; */
     word-break: break-all;
 }
 
@@ -387,6 +386,7 @@ p.monster-score {
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
 }
+
 .monster-vs-grid {
     position: relative;
     min-height: 280px; 
@@ -420,12 +420,23 @@ p.monster-score {
     bottom: 0;
     right: 0;
 }
+
+/* **核心修改點：將原有的 .monster-stats-card 樣式獨立出來，並新增橫式專用樣式** */
 .monster-stats-card {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 0.75rem;
     background-color: var(--bg-primary);
 }
+
+.monster-stats-card .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem 0.75rem;
+    font-size: 0.85rem;
+}
+/* **核心修改點結束** */
+
 .monster-stats-card .monster-name {
     font-size: 1.1rem;
 }
@@ -434,12 +445,7 @@ p.monster-score {
     color: var(--text-secondary);
     margin-bottom: 0.5rem;
 }
-.monster-stats-card .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.25rem 0.75rem;
-    font-size: 0.85rem;
-}
+
 .turn-divider-line {
     font-weight: bold;
     text-align: center;
@@ -515,7 +521,6 @@ p.monster-score {
     padding-left: 1.5rem;
 }
 
-/* **核心修改點：為戰鬥亮點列表項設定字體大小** */
 .battle-highlights-section li {
     padding-left: 0.5rem;
     margin-bottom: 0.5rem;
