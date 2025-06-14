@@ -595,10 +595,14 @@ def simulate_battle_full(
     final_battle_result: BattleResult = {
         "log_entries": [], "raw_full_log": all_raw_log_messages,
         "winner_id": winner_id, "loser_id": loser_id, "battle_end": battle_end,
-        "player_monster_final_hp": player_monster["current_hp"], "player_monster_final_mp": player_monster["current_mp"],
+        "player_monster_final_hp": player_monster["current_hp"], 
+        "player_monster_final_mp": player_monster["current_mp"],
+        "opponent_monster_final_hp": opponent_monster["current_hp"],
+        "opponent_monster_final_mp": opponent_monster["current_mp"],
         "player_monster_final_skills": player_monster.get("skills", []),
         "player_monster_final_resume": player_monster.get("resume", {"wins": 0, "losses": 0}),
-        "player_activity_log": player_activity_log, "opponent_activity_log": opponent_activity_log,
+        "player_activity_log": player_activity_log, 
+        "opponent_activity_log": opponent_activity_log,
         "battle_highlights": battle_highlights
     }
     
