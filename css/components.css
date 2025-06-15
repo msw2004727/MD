@@ -824,20 +824,20 @@ body.light-theme .leaderboard-table tr:hover td {
     display: none !important;
 }
 
-/* --- 【新增】綜合排行榜彈窗樣式 --- */
-.combined-leaderboard-container {
+/* --- 【新增】新版選擇彈窗樣式 --- */
+.selection-container {
     display: flex;
     flex-direction: column; /* 手機上預設為垂直堆疊 */
     gap: 1.5rem;
 }
 
-@media (min-width: 820px) { /* 在較寬的螢幕上改為水平排列 */
-    .combined-leaderboard-container {
-        flex-direction: row;
+@media (min-width: 768px) {
+    .selection-container {
+        flex-direction: row; /* 在較寬的螢幕上改為水平排列 */
     }
 }
 
-.leaderboard-column {
+.selection-column {
     flex: 1; /* 讓兩個欄位平分寬度 */
     display: flex;
     flex-direction: column;
@@ -848,23 +848,9 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 1px solid var(--border-color);
 }
 
-.leaderboard-column-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--accent-color);
-    text-align: center;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    margin: -1rem -1rem 0 -1rem;
-    padding-top: 1rem;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    background-color: var(--bg-slot);
-}
-
-.leaderboard-banner-placeholder {
+.selection-banner-placeholder {
     width: 100%;
-    height: 120px;
+    height: 180px; /* Banner 的高度 */
     background-color: var(--bg-slot);
     border-radius: 6px;
     display: flex;
@@ -875,12 +861,17 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 2px dashed var(--border-color);
 }
 
-.leaderboard-banner-placeholder::after {
-    content: 'Banner (未來圖片位置)';
+.selection-banner-placeholder::after {
+    content: 'Banner';
 }
 
-.leaderboard-content-area {
-    min-height: 300px;
-    max-height: 45vh; /* 限制最大高度，超出部分可滾動 */
-    overflow-y: auto;
+.selection-description-box {
+    width: 100%;
+    min-height: 80px; /* 說明欄的最小高度 */
+    background-color: var(--bg-slot);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
