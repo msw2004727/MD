@@ -246,15 +246,29 @@ class Monster(TypedDict):
 
 
 class PlayerStats(TypedDict):
+    """玩家統計資料模型"""
     rank: Union[str, int]
     wins: int
     losses: int
     score: int
-    titles: List[Dict[str, Any]] # 之前是 List[str]，現在是完整的物件列表
+    titles: List[Dict[str, Any]]
     achievements: List[str]
     medals: int
     nickname: str
-    equipped_title_id: NotRequired[Optional[str]] # 新增：儲存當前裝備的稱號ID
+    equipped_title_id: NotRequired[Optional[str]]
+    
+    # 【新增】用於追蹤稱號條件的欄位
+    current_win_streak: NotRequired[int]
+    current_loss_streak: NotRequired[int]
+    highest_win_streak: NotRequired[int]
+    completed_cultivations: NotRequired[int]
+    disassembled_monsters: NotRequired[int]
+    discovered_recipes: NotRequired[List[str]] # 儲存已發現的配方組合鍵
+    highest_rarity_created: NotRequired[RarityNames]
+    status_applied_counts: NotRequired[Dict[str, int]] # e.g., {"poisoned": 50, "paralyzed": 20}
+    leech_skill_uses: NotRequired[int]
+    flawless_victories: NotRequired[int]
+    special_victories: NotRequired[Dict[str, int]] # e.g., {"win_without_damage_skills": 5}
 
 
 class PlayerOwnedDNA(DNAFragment):
@@ -267,8 +281,9 @@ class PlayerGameData(TypedDict):
     playerStats: PlayerStats
     nickname: NotRequired[str]
     selectedMonsterId: NotRequired[Optional[str]]
-    lastSeen: NotRequired[int] # 新增：最後上線時間戳
-    dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]] # 新增：儲存組合槽的狀態
+    lastSeen: NotRequired[int]
+    dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
+    friends: NotRequired[List[Any]] # 確保 friends 欄位存在
 
 
 # --- 新增的組合配方模型 (MonsterRecipes) ---
