@@ -219,7 +219,7 @@ function updateMonsterSnapshot(monster) {
                     } else {
                         // --- 【核心修改】---
                         // 如果找不到特定圖片，就使用您指定的後備圖片 URL
-                        imgElement.src = 'https://github.com/msw2004727/MD/blob/main/images/parts/transparent.png?raw=true';
+                        imgElement.src = 'images/parts/transparent.png';
                         // --- 【核心修改結束】---
                     }
                     
