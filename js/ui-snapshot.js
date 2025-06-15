@@ -196,7 +196,6 @@ function updateMonsterSnapshot(monster) {
                 if (dnaData) {
                     partElement.classList.remove('empty-part');
                     
-                    // --- 【核心修改】---
                     const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
                     const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
                     
@@ -218,14 +217,14 @@ function updateMonsterSnapshot(monster) {
                     if (hasExactImage) {
                         imgElement.src = imgPath;
                     } else {
-                        // 如果找不到特定圖片，就使用 monster-part-assets.js 中定義的全局後備圖片
-                        imgElement.src = monsterPartAssets?.globalDefault || '';
+                        // --- 【核心修改】---
+                        // 如果找不到特定圖片，就使用您指定的後備圖片 URL
+                        imgElement.src = 'https://github.com/msw2004727/MD/blob/main/images/parts/transparent.png?raw=true';
+                        // --- 【核心修改結束】---
                     }
                     
-                    // 無論如何都顯示圖片標籤，只是內容不同
                     imgElement.style.display = 'block';
                     imgElement.classList.add('active');
-                    // --- 【核心修改結束】---
                 }
             }
         });
