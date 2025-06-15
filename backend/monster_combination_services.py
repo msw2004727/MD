@@ -126,19 +126,40 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
 
     db = firestore_db_instance
 
-    if not dna_objects_from_request or len(dna_objects_from_request) < 2:
-        monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空或數量不足。")
+    if not dna_objects_from_request:
+        monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空。")
         return None
 
-    # 直接使用從請求中傳來的 DNA 物件資料
-    combined_dnas_data: List[DNAFragment] = dna_objects_from_request
-    # 提取 DNA 模板 ID (baseId) 用於生成配方鍵值
-    constituent_dna_template_ids: List[str] = [dna.get("baseId") or dna.get("id", "") for dna in combined_dnas_data if dna]
+    # ---【修改】---
+    # 新增更穩健的邏輯來處理和驗證傳入的DNA資料
+    combined_dnas_data: List[DNAFragment] = []
+    constituent_dna_template_ids: List[str] = []
 
-    if len(combined_dnas_data) < 2:
-        monster_combination_services_logger.error("組合 DNA 數量不足 (至少需要 2 個)。")
-        return None
+    for i, dna_obj in enumerate(dna_objects_from_request):
+        # 確保傳入的項目是有效的字典物件
+        if not dna_obj or not isinstance(dna_obj, dict):
+            monster_combination_services_logger.warning(f"在組合槽 {i} 中發現無效的 DNA 資料 (非字典或為 None)，已跳過。")
+            continue
+
+        # 優先使用 baseId (模板ID)，如果沒有再用 id (實例ID)。確保ID是字串。
+        template_id = dna_obj.get("baseId") or dna_obj.get("id")
+        
+        if template_id and isinstance(template_id, str):
+            # 根據ID從遊戲設定中找到完整的DNA模板資訊
+            dna_template = next((f for f in game_configs.get("dna_fragments", []) if f.get("id") == template_id), None)
+            if dna_template:
+                combined_dnas_data.append(dna_template)
+                constituent_dna_template_ids.append(template_id)
+            else:
+                 monster_combination_services_logger.warning(f"在組合槽 {i} 中發現一個ID為 '{template_id}' 的DNA，但在遊戲設定中找不到對應的模板資料，已跳過。")
+        else:
+            monster_combination_services_logger.warning(f"在組合槽 {i} 的 DNA 物件中找不到有效的 'baseId' 或 'id'，已跳過。DNA 物件: {dna_obj}")
     
+    if len(combined_dnas_data) < 2:
+        monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
+        return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
+    # ---【修改結束】---
+
     combination_key = _generate_combination_key(constituent_dna_template_ids)
     monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
     recipe_doc = monster_recipes_ref.get()
@@ -215,17 +236,15 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
 
         player_stats = player_data.get("playerStats", {})
         
-        # --- 修正暱稱產生邏輯 ---
-        player_title = "新手" # 預設值
+        player_title = "新手" 
         equipped_id = player_stats.get("equipped_title_id")
         owned_titles = player_stats.get("titles", [])
         if equipped_id:
             equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
             if equipped_title_obj:
                 player_title = equipped_title_obj.get("name", "新手")
-        elif owned_titles: # 如果沒有裝備ID，但有稱號列表，則使用第一個
+        elif owned_titles and isinstance(owned_titles[0], dict):
              player_title = owned_titles[0].get("name", "新手")
-        # --- 修正結束 ---
         
         monster_achievement = random.choice(game_configs.get("monster_achievements_list", ["新秀"]))
         element_nickname = game_configs.get("element_nicknames", {}).get(primary_element, primary_element)
