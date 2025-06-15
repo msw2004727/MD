@@ -59,13 +59,25 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
             "condition": {"type": "default", "value": 0}, "buffs": {}
         }
 
+    # 【修改】初始化所有新的追蹤欄位
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
         "titles": [default_title_object], 
         "achievements": ["首次登入異世界"],
         "medals": 0,
         "nickname": nickname,
-        "equipped_title_id": default_title_object["id"] 
+        "equipped_title_id": default_title_object["id"],
+        "current_win_streak": 0,
+        "current_loss_streak": 0,
+        "highest_win_streak": 0,
+        "completed_cultivations": 0,
+        "disassembled_monsters": 0,
+        "discovered_recipes": [],
+        "highest_rarity_created": "普通",
+        "status_applied_counts": {},
+        "leech_skill_uses": 0,
+        "flawless_victories": 0,
+        "special_victories": {}
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
