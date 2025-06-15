@@ -8,8 +8,8 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
         '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
         '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
     };
-    const colorPair = colors.hasOwnProperty(primaryElement) ? colors?.[primaryElement] : colors['無'];
-    return `https://placehold.co/120x90/<span class="math-inline">\{colorPair\}?text\=</span>{encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
+    const colorPair = colors[primaryElement] || colors['無'];
+    return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
 }
 
 function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
@@ -18,25 +18,25 @@ function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
         return null;
     }
 
-    const partData = monsterPartAssets?.[partName];
+    const partData = monsterPartAssets[partName];
     if (!partData) {
-        return monsterPartAssets?.globalDefault;
+        return monsterPartAssets.globalDefault; 
     }
 
     // 優先匹配精確的屬性+稀有度
-    if (partData?.[dnaType]?.[dnaRarity]) {
-        return partData?.[dnaType]?.[dnaRarity];
+    if (partData[dnaType] && partData[dnaType][dnaRarity]) {
+        return partData[dnaType][dnaRarity];
     }
     // 次之匹配屬性預設 (如果有的話)
-    if (partData?.[dnaType]?.default) {
-        return partData?.[dnaType]?.default;
+    if (partData[dnaType] && partData[dnaType].default) {
+        return partData[dnaType].default;
     }
     // 再次之匹配部位預設
-    if (partData?.default) {
-        return partData?.default;
+    if (partData.default) {
+        return partData.default;
     }
 
-    return monsterPartAssets?.globalDefault;
+    return monsterPartAssets.globalDefault; 
 }
 
 
@@ -49,22 +49,20 @@ function clearMonsterBodyPartsDisplay() {
         RightLeg: DOMElements.monsterPartRightLeg,
     };
     for (const partName in partsMap) {
-        if (partsMap.hasOwnProperty(partName)) {
-            const partElement = partsMap?.[partName];
-            if (partElement) {
-                partElement.classList.add('empty-part');
-                
-                const imgElement = partElement.querySelector('.monster-part-image');
-                if (imgElement) {
-                    imgElement.style.display = 'none';
-                    imgElement.src = '';
-                    imgElement.classList.remove('active');
-                }
+        const partElement = partsMap[partName];
+        if (partElement) {
+            partElement.classList.add('empty-part');
+            
+            const imgElement = partElement.querySelector('.monster-part-image');
+            if (imgElement) {
+                imgElement.style.display = 'none';
+                imgElement.src = '';
+                imgElement.classList.remove('active');
+            }
 
-                const overlayElement = partElement.querySelector('.monster-part-overlay');
-                if(overlayElement) {
-                    overlayElement.style.display = 'none';
-                }
+            const overlayElement = partElement.querySelector('.monster-part-overlay');
+            if(overlayElement) {
+                overlayElement.style.display = 'none';
             }
         }
     }
@@ -141,10 +139,10 @@ function updateMonsterSnapshot(monster) {
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        const rarityKey = monster.rarity ? (rarityMap?.[monster.rarity] || 'common') : 'common';
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements?.[0] : '無';
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         const elementNickname = monster.custom_element_nickname || 
                                 (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
         const achievement = monster.title || '新秀';
@@ -157,7 +155,7 @@ function updateMonsterSnapshot(monster) {
         if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
             monster.constituent_dna_ids.forEach((id, i) => {
                 if (i < 5) {
-                    dnaSlots?.[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
+                    dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
                 }
             });
         }
@@ -176,61 +174,58 @@ function updateMonsterSnapshot(monster) {
         };
 
         Object.keys(gameState.dnaSlotToBodyPartMapping).forEach(slotIndex => {
-            if (gameState.dnaSlotToBodyPartMapping.hasOwnProperty(slotIndex)) {
-                const partKey = gameState.dnaSlotToBodyPartMapping?.[slotIndex];
-                const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
-                const partElement = partsMap?.[capitalizedPartKey];
-                const dnaData = dnaSlots?.[slotIndex];
+            const partKey = gameState.dnaSlotToBodyPartMapping[slotIndex]; 
+            const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
+            const partElement = partsMap[capitalizedPartKey];
+            const dnaData = dnaSlots[slotIndex];
 
-                if (partElement) {
-                    const imgElement = partElement.querySelector('.monster-part-image');
-                    const overlayElement = partElement.querySelector('.monster-part-overlay');
-                    const textElement = overlayElement ? overlayElement.querySelector('.dna-name-text') : null;
+            if (partElement) {
+                const imgElement = partElement.querySelector('.monster-part-image');
+                const overlayElement = partElement.querySelector('.monster-part-overlay');
+                const textElement = overlayElement ? overlayElement.querySelector('.dna-name-text') : null;
 
-                    if (!imgElement || !overlayElement || !textElement) return;
+                if (!imgElement || !overlayElement || !textElement) return;
 
-                    // 預設先隱藏所有內容
-                    imgElement.style.display = 'none';
-                    imgElement.src = '';
-                    imgElement.classList.remove('active');
-                    overlayElement.style.display = 'none';
-                    partElement.classList.add('empty-part');
+                // 預設先隱藏所有內容
+                imgElement.style.display = 'none';
+                imgElement.src = '';
+                imgElement.classList.remove('active');
+                overlayElement.style.display = 'none';
+                partElement.classList.add('empty-part');
 
-                    if (dnaData) {
-                        partElement.classList.remove('empty-part');
-                        
-                        // 關鍵修改：直接檢查精確路徑是否存在
-                        let hasExactImage = false;
-                        if (monsterPartAssets?.[partKey]?.[dnaData.type]?.[dnaData.rarity]) {
-                            hasExactImage = true;
-                        }
+                if (dnaData) {
+                    partElement.classList.remove('empty-part');
+                    
+                    // --- 【核心修改】---
+                    // 步驟1：只要有DNA，就永遠顯示文字圖層
+                    const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
+                    const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
+                    
+                    overlayElement.style.display = 'flex';
+                    overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
+                    
+                    textElement.textContent = dnaData.name || '';
+                    textElement.className = 'dna-name-text'; // 確保是預設樣式
+                    textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
 
-                        if (hasExactImage) {
-                            // 情境1: 有專屬圖片
-                            const imgPath = monsterPartAssets?.[partKey]?.[dnaData.type]?.[dnaData.rarity];
-                            const typeKey = dnaData.type ? (elementTypeMap?.[dnaData.type] || dnaData.type.toLowerCase()) : '無';
-                            const dnaRarityKey = dnaData.rarity ? (rarityMap?.[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
-                            
-                            // 顯示底層
-                            overlayElement.style.display = 'flex';
-                            overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
-                            // 設定文字
-                            textElement.textContent = dnaData.name || '';
-                            textElement.className = 'dna-name-text';
-                            textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
-                            
-                            // 顯示頂層圖片
-                            imgElement.src = imgPath;
-                            imgElement.style.display = 'block';
-                            imgElement.classList.add('active');
-                        } else {
-                            // 情境2: 無專屬圖片，隱藏圖片標籤
-                            imgElement.style.display = 'none'; // 【新增】
-                            imgElement.src = '';             // 【新增】
-                            overlayElement.style.display = 'none';
-                            textElement.textContent = '';
-                        }
+                    // 步驟2：獨立判斷是否有對應圖片
+                    let hasExactImage = false;
+                    if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.type][dnaData.rarity]) {
+                        hasExactImage = true;
                     }
+
+                    if (hasExactImage) {
+                        // 如果有圖，就顯示圖片
+                        const imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
+                        imgElement.src = imgPath;
+                        imgElement.style.display = 'block';
+                        imgElement.classList.add('active');
+                    } else {
+                        // 如果沒圖，就確定圖片標籤是隱藏的
+                        imgElement.style.display = 'none';
+                        imgElement.src = '';
+                    }
+                    // --- 【核心修改結束】---
                 }
             }
         });
