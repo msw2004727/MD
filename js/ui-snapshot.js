@@ -87,8 +87,11 @@ function updateMonsterSnapshot(monster) {
     const existingGuideBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-guide-btn');
     if (existingGuideBtn) existingGuideBtn.remove();
     
+    // 移除舊的排行榜按鈕，並用新的 selection-modal-btn 取代
     const existingLeaderboardBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-combined-leaderboard-btn');
     if (existingLeaderboardBtn) existingLeaderboardBtn.remove();
+    const existingSelectionBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-selection-modal-btn');
+    if (existingSelectionBtn) existingSelectionBtn.remove();
     // --- 【修改結束】 ---
 
     // 玩家資訊按鈕 (最下方)
@@ -119,7 +122,7 @@ function updateMonsterSnapshot(monster) {
     guideBtn.innerHTML = '🔰';
     guideBtn.classList.add('corner-button');
     guideBtn.style.position = 'absolute';
-    guideBtn.style.bottom = '44px'; // 位置不變
+    guideBtn.style.bottom = '44px';
     guideBtn.style.left = '8px';
     guideBtn.style.width = '32px';
     guideBtn.style.height = '32px';
@@ -136,21 +139,21 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(guideBtn);
 
-    // --- 【新增】新的綜合排行榜按鈕 (最上方) ---
-    const combinedLeaderboardBtn = document.createElement('button');
-    combinedLeaderboardBtn.id = 'snapshot-combined-leaderboard-btn'; // 新的按鈕ID
-    combinedLeaderboardBtn.title = '綜合排行榜';
-    combinedLeaderboardBtn.innerHTML = '🪜';
-    combinedLeaderboardBtn.classList.add('corner-button');
-    combinedLeaderboardBtn.style.position = 'absolute';
-    combinedLeaderboardBtn.style.bottom = '80px'; // 放在新手指南按鈕的上方
-    combinedLeaderboardBtn.style.left = '8px';
-    combinedLeaderboardBtn.style.width = '32px';
-    combinedLeaderboardBtn.style.height = '32px';
-    combinedLeaderboardBtn.style.fontSize = '0.9rem';
-    combinedLeaderboardBtn.style.zIndex = '5';
-    // 點擊事件將在最後一步加入
-    DOMElements.monsterSnapshotArea.appendChild(combinedLeaderboardBtn);
+    // --- 【新增】新的「階梯」按鈕，觸發新的選擇彈窗 ---
+    const selectionBtn = document.createElement('button');
+    selectionBtn.id = 'snapshot-selection-modal-btn'; // 新的按鈕ID
+    selectionBtn.title = '綜合選單';
+    selectionBtn.innerHTML = '🪜';
+    selectionBtn.classList.add('corner-button');
+    selectionBtn.style.position = 'absolute';
+    selectionBtn.style.bottom = '80px'; // 放在新手指南按鈕的上方
+    selectionBtn.style.left = '8px';
+    selectionBtn.style.width = '32px';
+    selectionBtn.style.height = '32px';
+    selectionBtn.style.fontSize = '0.9rem';
+    selectionBtn.style.zIndex = '5';
+    // 點擊事件將在下一步加入
+    DOMElements.monsterSnapshotArea.appendChild(selectionBtn);
     // --- 【新增結束】 ---
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
@@ -205,7 +208,6 @@ function updateMonsterSnapshot(monster) {
 
                 if (!imgElement || !overlayElement || !textElement) return;
 
-                // 預設先隱藏所有內容
                 imgElement.style.display = 'none';
                 imgElement.src = '';
                 imgElement.classList.remove('active');
@@ -236,10 +238,7 @@ function updateMonsterSnapshot(monster) {
                     if (hasExactImage) {
                         imgElement.src = imgPath;
                     } else {
-                        // --- 【核心修改】---
-                        // 如果找不到特定圖片，就使用您指定的後備圖片 URL
                         imgElement.src = 'images/parts/transparent.png';
-                        // --- 【核心修改結束】---
                     }
                     
                     imgElement.style.display = 'block';
