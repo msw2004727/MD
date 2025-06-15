@@ -5,19 +5,19 @@ function initializeUIEventHandlers() {
     handleAuthForms();
     handleTopNavButtons();
     handleTabSwitching();
-    handleModalCloseButtons(); // This function will be modified
+    handleModalCloseButtons(); 
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
     
-    // 使用事件委派來處理動態生成的技能連結點擊
+    // 使用事件委派來處理動態生成的技能連結點擊和新的排行榜按鈕
     document.body.addEventListener('click', function(event) {
-        if (event.target && event.target.matches('.skill-name-link')) {
+        if (event.target.matches('.skill-name-link')) {
             handleSkillLinkClick(event);
         }
-
         // --- 【新增】處理新的綜合排行榜按鈕點擊 ---
-        if (event.target && event.target.closest('#snapshot-combined-leaderboard-btn')) {
+        const combinedLeaderboardBtn = event.target.closest('#snapshot-combined-leaderboard-btn');
+        if (combinedLeaderboardBtn) {
             handleCombinedLeaderboardClick();
         }
     });
@@ -103,17 +103,13 @@ function handleTopNavButtons() {
         });
     }
 
-    // --- 【修改】舊的排行榜按鈕邏輯，讓它們也能使用新的綜合排行榜彈窗 ---
+    // --- 【修改】讓舊的排行榜按鈕也使用新的綜合排行榜彈窗 ---
     if (DOMElements.showMonsterLeaderboardBtn) {
-        DOMElements.showMonsterLeaderboardBtn.addEventListener('click', () => {
-            handleCombinedLeaderboardClick();
-        });
+        DOMElements.showMonsterLeaderboardBtn.addEventListener('click', handleCombinedLeaderboardClick);
     }
 
     if (DOMElements.showPlayerLeaderboardBtn) {
-        DOMElements.showPlayerLeaderboardBtn.addEventListener('click', () => {
-            handleCombinedLeaderboardClick();
-        });
+        DOMElements.showPlayerLeaderboardBtn.addEventListener('click', handleCombinedLeaderboardClick);
     }
     // --- 【修改結束】 ---
 
@@ -130,17 +126,17 @@ function handleTopNavButtons() {
     }
 }
 
-// --- 【新增】處理綜合排行榜按鈕點擊的函式 ---
+// --- 【新增】處理綜合排行榜按鈕點擊的核心函式 ---
 async function handleCombinedLeaderboardClick() {
     showFeedbackModal('載入中...', '正在獲取最新的排行榜資訊...', true);
     try {
-        // 同時獲取兩份排行榜資料
+        // 同時獲取怪獸和玩家兩份排行榜資料
         const [monsterData, playerData] = await Promise.all([
             getMonsterLeaderboard(20),
             getPlayerLeaderboard(20)
         ]);
 
-        // 更新到遊戲狀態中
+        // 更新到遊戲的全域狀態中
         gameState.monsterLeaderboard = monsterData || [];
         gameState.playerLeaderboard = playerData || [];
 
@@ -149,7 +145,7 @@ async function handleCombinedLeaderboardClick() {
         updateLeaderboardTable('player', gameState.playerLeaderboard, 'combined-player-leaderboard-container');
         
         hideModal('feedback-modal');
-        showModal('combined-leaderboard-modal'); // 顯示新的綜合排行榜
+        showModal('combined-leaderboard-modal'); // 顯示新的綜合排行榜彈窗
 
     } catch (error) {
         hideModal('feedback-modal');
@@ -157,7 +153,6 @@ async function handleCombinedLeaderboardClick() {
     }
 }
 // --- 【新增結束】 ---
-
 
 function handleTabSwitching() {
     if (DOMElements.dnaFarmTabs) {
@@ -186,7 +181,7 @@ function handleModalCloseButtons() {
         if (closeButton) {
             const modalId = closeButton.dataset.modalId || closeButton.closest('.modal')?.id;
             if (modalId) {
-                if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.length > 0) {
+                if (modalId === 'training-results-modal' && gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained && gameState.lastCultivationResult.items_obtained.some(item => item !== null)) {
                     showModal('reminder-modal');
                 } else {
                     hideModal(modalId);
@@ -195,7 +190,6 @@ function handleModalCloseButtons() {
         }
     });
     
-    // 提醒視窗的按鈕事件保持不變，因為它們是靜態的
     if (DOMElements.reminderConfirmCloseBtn) DOMElements.reminderConfirmCloseBtn.addEventListener('click', () => {
         hideModal('reminder-modal');
         hideModal('training-results-modal');
@@ -236,7 +230,6 @@ function handleNewbieGuideSearch() {
 }
 
 async function handleSkillLinkClick(event) {
-    // 這個函數現在可以正確接收到 event 物件
     if (!event || !event.target) return;
 
     const target = event.target.closest('.skill-name-link');
