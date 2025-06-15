@@ -323,15 +323,24 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         
         if (Object.keys(buffs).length > 0) {
             const getBuffDisplayName = (key) => {
-                 const names = { hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率' };
+                 const names = { 
+                     hp: 'HP值', mp: 'MP值', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
+                     cultivation_item_find_chance: '修煉物品發現率', cultivation_exp_gain: '修煉經驗提升',
+                     cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
+                     elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
+                     leech_skill_effect: '吸血效果提升', mp_regen_per_turn: 'MP每回合恢復',
+                     dna_return_rate_on_disassemble: '分解DNA返還率', fire_resistance: '火系抗性',
+                     water_resistance: '水系抗性', wood_resistance: '木系抗性', gold_resistance: '金系抗性',
+                     earth_resistance: '土系抗性', light_resistance: '光系抗性', dark_resistance: '暗系抗性'
+                 };
                  return names[key] || key;
             };
 
             messageHtml += `<div class="details-section mt-4" style="background-color: var(--bg-primary); padding: 10px;">`;
             messageHtml += `<h5 class="details-section-title" style="margin-bottom: 8px;">稱號能力</h5><ul style="list-style: none; padding: 0; margin: 0;">`;
             for (const [stat, value] of Object.entries(buffs)) {
-                // 將數值顯示為紅色
-                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: var(--danger-color); font-weight: bold;">+${value}</span></li>`;
+                const displayValue = (value > 0 && value < 1) ? `+${(value * 100).toFixed(0)}%` : `+${value}`;
+                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: var(--danger-color); font-weight: bold;">${displayValue}</span></li>`;
             }
             messageHtml += `</ul></div>`;
         }
