@@ -57,6 +57,7 @@ function clearMonsterBodyPartsDisplay() {
             
             const imgElement = partElement.querySelector('.monster-part-image');
             if (imgElement) {
+                imgElement.style.display = 'none';
                 imgElement.src = '';
                 imgElement.classList.remove('active');
             }
@@ -64,9 +65,6 @@ function clearMonsterBodyPartsDisplay() {
             const overlayElement = partElement.querySelector('.monster-part-overlay');
             if(overlayElement) {
                 overlayElement.style.display = 'none';
-                overlayElement.style.backgroundColor = '';
-                const textElement = overlayElement.querySelector('.dna-name-text');
-                if(textElement) textElement.textContent = '';
             }
         }
     }
@@ -190,34 +188,38 @@ function updateMonsterSnapshot(monster) {
 
                 if (dnaData && imgElement && overlayElement && textElement) {
                     partElement.classList.remove('empty-part');
-
-                    // 1. 設定底層的文字與背景
+                    
                     const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
                     const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
                     
-                    overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
-                    textElement.textContent = dnaData.name || '';
-                    textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
-                    
-                    // 2. 尋找頂層的圖片
                     const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
                     
-                    // 3. 根據有無圖片決定最終顯示
                     if (imgPath && imgPath !== monsterPartAssets.globalDefault) {
-                        // 有圖片：顯示圖片和底層
+                        // 情境1: 有DNA，有圖片
                         overlayElement.style.display = 'flex';
+                        overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
+                        textElement.textContent = dnaData.name || '';
+                        textElement.className = 'dna-name-text'; // 恢復正常樣式
+                        textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
+
                         imgElement.src = imgPath;
+                        imgElement.style.display = 'block';
                         imgElement.classList.add('active');
                     } else {
-                        // 無圖片：隱藏所有東西，達成透明效果
-                        overlayElement.style.display = 'none';
+                        // 情境2: 有DNA，但無圖片
+                        overlayElement.style.display = 'flex';
+                        overlayElement.style.backgroundColor = 'transparent'; // 背景透明
+                        textElement.textContent = '圖片積極開發中';
+                        textElement.className = 'dna-name-text fallback-text'; // 使用後備文字樣式
+
+                        imgElement.style.display = 'none';
                         imgElement.src = '';
                         imgElement.classList.remove('active');
-                        partElement.classList.add('empty-part');
                     }
                 } else {
-                    // 沒有DNA資料，確保一切都是隱藏的
+                    // 情境3: 無DNA
                     if (imgElement) {
+                        imgElement.style.display = 'none';
                         imgElement.src = '';
                         imgElement.classList.remove('active');
                     }
