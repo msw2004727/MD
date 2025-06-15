@@ -15,14 +15,12 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
     // 確保 monsterPartAssets 已載入
     if (typeof monsterPartAssets === 'undefined') {
-        console.warn('monsterPartAssets 未載入，無法獲取部位圖片路徑。');
         return null;
     }
 
     const partData = monsterPartAssets[partName];
     if (!partData) {
-        console.warn(`未找到部位 '${partName}' 的圖片配置。`);
-        return monsterPartAssets.globalDefault; // 使用全局預設圖
+        return monsterPartAssets.globalDefault; 
     }
 
     // 優先匹配精確的屬性+稀有度
@@ -38,7 +36,7 @@ function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
         return partData.default;
     }
 
-    return monsterPartAssets.globalDefault; // 最終使用全局預設圖
+    return monsterPartAssets.globalDefault; 
 }
 
 
@@ -186,7 +184,6 @@ function updateMonsterSnapshot(monster) {
                 const overlayElement = partElement.querySelector('.monster-part-overlay');
                 const textElement = overlayElement ? overlayElement.querySelector('.dna-name-text') : null;
 
-                // 確保所有元素都存在
                 if (!imgElement || !overlayElement || !textElement) return;
 
                 // 預設先隱藏所有內容
@@ -196,20 +193,26 @@ function updateMonsterSnapshot(monster) {
                 partElement.classList.add('empty-part');
 
                 if (dnaData) {
-                    // 如果有DNA資料，則移除空格樣式
                     partElement.classList.remove('empty-part');
-                    const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
+                    
+                    // 關鍵修改：直接檢查精確路徑是否存在
+                    let hasExactImage = false;
+                    if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.type][dnaData.rarity]) {
+                        hasExactImage = true;
+                    }
 
-                    if (imgPath && imgPath !== monsterPartAssets.globalDefault) {
-                        // 情境1: 有DNA，且有對應圖片
-                        // 顯示底層
+                    if (hasExactImage) {
+                        // 情境1: 有專屬圖片
+                        const imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
                         const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
                         const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
-                        overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
+                        
+                        // 顯示底層
                         overlayElement.style.display = 'flex';
+                        overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
                         // 設定文字
                         textElement.textContent = dnaData.name || '';
-                        textElement.className = 'dna-name-text'; // 恢復正常樣式
+                        textElement.className = 'dna-name-text';
                         textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
                         
                         // 顯示頂層圖片
@@ -217,16 +220,15 @@ function updateMonsterSnapshot(monster) {
                         imgElement.style.display = 'block';
                         imgElement.classList.add('active');
                     } else {
-                        // 情境2: 有DNA，但無對應圖片
+                        // 情境2: 無專屬圖片
                         overlayElement.style.display = 'flex';
-                        overlayElement.style.backgroundColor = 'transparent'; // 背景設為透明
+                        overlayElement.style.backgroundColor = 'transparent';
                         // 設定後備文字與樣式
                         textElement.textContent = '圖片積極開發中';
                         textElement.className = 'dna-name-text fallback-text';
-                        textElement.style.color = 'var(--text-secondary)'; // 設定為灰色系
+                        textElement.style.color = 'var(--text-secondary)';
                     }
                 }
-                // 如果沒有 dnaData，則維持預設的隱藏狀態，達成透明虛線框效果
             }
         });
 
