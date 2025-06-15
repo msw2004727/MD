@@ -418,6 +418,17 @@ function showBattleLogModal(battleResult) {
         `;
     };
 
+    // 【修改】移除了 vs-divider
+    reportContainer.innerHTML += `
+        <div class="report-section battle-intro-section">
+            <h4 class="report-section-title">戰鬥對陣</h4>
+            <div class="monster-vs-container">
+                <div class="player-side-card">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
+                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
+            </div>
+        </div>
+    `;
+
     const battleDescriptionContentDiv = document.createElement('div');
     battleDescriptionContentDiv.classList.add('battle-description-content');
 
@@ -475,7 +486,6 @@ function showBattleLogModal(battleResult) {
         const playerRarityKey = playerMonsterData.rarity ? (rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common') : 'common';
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common') : 'common';
 
-        // 【修改】狀態欄也改用屬性名
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             statusHtml += `
                 <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerDisplayName}</div>
