@@ -376,7 +376,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         addBannerAndHints(loadingBannerUrl, '結算中');
     }
     else if (isLoading && title.startsWith('DNA抽取中')) {
-        addBannerAndHints(loadingBannerUrl, 'DNA抽取中');
+        const dnaDrawingBannerUrl = gameState.assetPaths?.images?.modals?.dnaDrawing || loadingBannerUrl;
+        addBannerAndHints(dnaDrawingBannerUrl, 'DNA抽取中');
     }
     else if (isLoading && title.startsWith('準備戰鬥')) {
         addBannerAndHints(loadingBannerUrl, '準備戰鬥');
