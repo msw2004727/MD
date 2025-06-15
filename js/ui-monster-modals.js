@@ -293,6 +293,67 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             switchTabContent('monster-details-tab', firstTabButton, 'monster-info-modal');
         }
     }
+
+    // --- 【新增】暱稱編輯事件綁定 ---
+    const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
+    const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
+    const editBtn = DOMElements.monsterInfoModalHeader.querySelector('#edit-monster-nickname-btn');
+    const confirmBtn = DOMElements.monsterInfoModalHeader.querySelector('#confirm-nickname-change-btn');
+    const cancelBtn = DOMElements.monsterInfoModalHeader.querySelector('#cancel-nickname-change-btn');
+    const nicknameInput = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-input');
+
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            if (displayContainer) displayContainer.style.display = 'none';
+            if (editContainer) editContainer.style.display = 'flex';
+        });
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (displayContainer) displayContainer.style.display = 'flex';
+            if (editContainer) editContainer.style.display = 'none';
+        });
+    }
+
+    if (confirmBtn && nicknameInput) {
+        confirmBtn.addEventListener('click', async () => {
+            const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
+            const newNickname = nicknameInput.value.trim();
+            const maxLen = nicknameInput.maxLength || 5;
+
+            if (newNickname.length > maxLen) {
+                showFeedbackModal('錯誤', `暱稱不能超過 ${maxLen} 個字。`);
+                return;
+            }
+            
+            confirmBtn.disabled = true;
+            showFeedbackModal('更新中...', '正在更新怪獸的屬性代表名...', true);
+
+            try {
+                const result = await updateMonsterCustomNickname(monsterId, newNickname);
+                if (result && result.success) {
+                    await refreshPlayerData(); // 重新獲取玩家資料
+                    // 重新渲染當前打開的 modal
+                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                    if (updatedMonster) {
+                        updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
+                    }
+                    hideModal('feedback-modal');
+                    showFeedbackModal('成功', '怪獸屬性代表名已更新！');
+                } else {
+                    throw new Error(result.error || '更新失敗');
+                }
+            } catch (error) {
+                hideModal('feedback-modal');
+                showFeedbackModal('錯誤', `更新暱稱失敗：${error.message}`);
+                confirmBtn.disabled = false;
+                // 還原UI
+                if (displayContainer) displayContainer.style.display = 'flex';
+                if (editContainer) editContainer.style.display = 'none';
+            }
+        });
+    }
 }
 
 function showBattleLogModal(battleResult) {
