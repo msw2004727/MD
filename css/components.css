@@ -818,3 +818,8 @@ body.light-theme .leaderboard-table tr:hover td {
 #training-items-grid .pickup-btn {
     margin-top: auto;
 }
+
+/* --- 【新增】強制隱藏沒有圖片時的後備文字 --- */
+.monster-part-overlay .fallback-text {
+    display: none !important;
+}
