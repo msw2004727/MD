@@ -61,6 +61,7 @@ function clearMonsterBodyPartsDisplay() {
             if (imgElement) {
                 imgElement.src = '';
                 imgElement.classList.remove('active');
+                imgElement.style.display = 'none'; // 直接隱藏圖片
             }
             partElement.classList.add('empty-part');
         }
@@ -180,36 +181,26 @@ function updateMonsterSnapshot(monster) {
             if (partElement) {
                 const imgElement = partElement.querySelector('.monster-part-image');
                 
-                partElement.innerHTML = '';
-                if (imgElement) {
-                    partElement.appendChild(imgElement);
-                } else {
-                    const newImgElement = document.createElement('img');
-                    newImgElement.className = 'monster-part-image';
-                    newImgElement.alt = `${capitalizedPartKey} 部位圖片`;
-                    partElement.appendChild(newImgElement);
-                }
-                const currentImgElement = partElement.querySelector('.monster-part-image');
-
                 if (typeof applyDnaItemStyle === 'function') {
                     applyDnaItemStyle(partElement, dnaData);
                 }
                 
-                if (dnaData && currentImgElement) {
+                if (dnaData && imgElement) {
                     const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
                     if (imgPath) {
-                        currentImgElement.src = imgPath;
-                        currentImgElement.classList.add('active');
+                        imgElement.src = imgPath;
+                        imgElement.style.display = 'block'; // 確保圖片可見
+                        imgElement.classList.add('active');
                     } else {
-                        currentImgElement.src = '';
-                        currentImgElement.classList.remove('active');
+                        imgElement.src = '';
+                        imgElement.style.display = 'none';
+                        imgElement.classList.remove('active');
                     }
                     partElement.classList.remove('empty-part');
-                } else {
-                    if (currentImgElement) {
-                        currentImgElement.src = '';
-                        currentImgElement.classList.remove('active');
-                    }
+                } else if (imgElement) {
+                    imgElement.src = '';
+                    imgElement.style.display = 'none';
+                    imgElement.classList.remove('active');
                     partElement.classList.add('empty-part');
                 }
             }
