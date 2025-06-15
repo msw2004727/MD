@@ -170,7 +170,7 @@ def complete_cultivation_service(
 ) -> Optional[Dict[str, Any]]:
     """完成怪獸修煉，計算經驗、潛在新技能、數值成長和物品拾獲。"""
     monster_cultivation_services_logger.info(f"--- [Cultivation Service] Received request for monster_id: {monster_id}")
-    player_data = get_player_data_service(player_id, None, game_configs) 
+    player_data, _ = get_player_data_service(player_id, None, game_configs) 
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
         return {"success": False, "error": "找不到玩家資料或農場無怪獸。", "status_code": 404}
