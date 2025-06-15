@@ -79,9 +79,9 @@ function handleLeaderboardInteractions() {
                     updateMonsterInfoModal(monsterData, gameState.gameConfigs);
                     showModal('monster-info-modal');
                 }
-            } else {
-                 handleChallengeMonsterClick(event);
             }
+            // 【移除】移除了原本會導致錯誤觸發的 else 區塊。
+            // 現在只有點擊按鈕自身的 onclick 事件會觸發挑戰，點擊空白處則不會。
         });
     }
 
