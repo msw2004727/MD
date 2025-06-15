@@ -10,14 +10,13 @@ function initializeUIEventHandlers() {
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
     
-    // 使用事件委派來處理動態生成的技能連結點擊和新的排行榜按鈕
     document.body.addEventListener('click', function(event) {
         if (event.target.matches('.skill-name-link')) {
             handleSkillLinkClick(event);
         }
-        // --- 【新增】處理新的綜合排行榜按鈕點擊 ---
         const combinedLeaderboardBtn = event.target.closest('#snapshot-combined-leaderboard-btn');
         if (combinedLeaderboardBtn) {
+            console.log("綜合排行榜按鈕 (🪜) 已被點擊！");
             handleCombinedLeaderboardClick();
         }
     });
@@ -91,6 +90,7 @@ function handleAuthForms() {
     }
 }
 
+// ---【修改】恢復舊按鈕的原始功能 ---
 function handleTopNavButtons() {
     if (DOMElements.playerInfoButton) {
         DOMElements.playerInfoButton.addEventListener('click', () => {
@@ -103,15 +103,13 @@ function handleTopNavButtons() {
         });
     }
 
-    // --- 【修改】讓舊的排行榜按鈕也使用新的綜合排行榜彈窗 ---
     if (DOMElements.showMonsterLeaderboardBtn) {
-        DOMElements.showMonsterLeaderboardBtn.addEventListener('click', handleCombinedLeaderboardClick);
+        DOMElements.showMonsterLeaderboardBtn.addEventListener('click', handleMonsterLeaderboardClick);
     }
 
     if (DOMElements.showPlayerLeaderboardBtn) {
-        DOMElements.showPlayerLeaderboardBtn.addEventListener('click', handleCombinedLeaderboardClick);
+        DOMElements.showPlayerLeaderboardBtn.addEventListener('click', handlePlayerLeaderboardClick);
     }
-    // --- 【修改結束】 ---
 
     if (DOMElements.newbieGuideBtn) {
         DOMElements.newbieGuideBtn.addEventListener('click', () => {
@@ -126,33 +124,79 @@ function handleTopNavButtons() {
     }
 }
 
-// --- 【新增】處理綜合排行榜按鈕點擊的核心函式 ---
+// --- 【新增】處理舊怪獸排行榜按鈕的獨立函式 ---
+async function handleMonsterLeaderboardClick() {
+    try {
+        showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
+        const leaderboardData = await getMonsterLeaderboard(20);
+        
+        gameState.monsterLeaderboard = leaderboardData || [];
+        
+        // 使用改造後的函式，將表格渲染到舊的怪獸排行榜彈窗容器中
+        updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container'); 
+        
+        if (DOMElements.monsterLeaderboardElementTabs && DOMElements.monsterLeaderboardElementTabs.innerHTML.trim() === '') {
+            const allElements = ['all', '火', '水', '木', '金', '土', '光', '暗', '毒', '風', '混', '無'];
+            updateMonsterLeaderboardElementTabs(allElements);
+        }
+
+        hideModal('feedback-modal');
+        showModal('monster-leaderboard-modal'); // 顯示舊的怪獸排行榜彈窗
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('載入失敗', `無法獲取怪獸排行榜: ${error.message}`);
+    }
+}
+
+// --- 【新增】處理舊玩家排行榜按鈕的獨立函式 ---
+async function handlePlayerLeaderboardClick() {
+    try {
+        showFeedbackModal('載入中...', '正在獲取玩家排行榜...', true);
+        const leaderboardData = await getPlayerLeaderboard(20);
+
+        gameState.playerLeaderboard = leaderboardData || [];
+
+        // 使用改造後的函式，將表格渲染到舊的玩家排行榜彈窗容器中
+        updateLeaderboardTable('player', gameState.playerLeaderboard, 'player-leaderboard-table-container');
+
+        hideModal('feedback-modal');
+        showModal('player-leaderboard-modal'); // 顯示舊的玩家排行榜彈窗
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('載入失敗', `無法獲取玩家排行榜: ${error.message}`);
+    }
+}
+
+
+// 處理綜合排行榜按鈕點擊的核心函式 (維持不變)
 async function handleCombinedLeaderboardClick() {
+    console.log("handleCombinedLeaderboardClick 函式已觸發。");
     showFeedbackModal('載入中...', '正在獲取最新的排行榜資訊...', true);
     try {
-        // 同時獲取怪獸和玩家兩份排行榜資料
         const [monsterData, playerData] = await Promise.all([
             getMonsterLeaderboard(20),
             getPlayerLeaderboard(20)
         ]);
+        console.log("已成功獲取怪獸與玩家排行榜資料。");
 
-        // 更新到遊戲的全域狀態中
         gameState.monsterLeaderboard = monsterData || [];
         gameState.playerLeaderboard = playerData || [];
 
-        // 使用我們改造過的函式，將資料渲染到新的彈窗容器中
         updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'combined-monster-leaderboard-container');
         updateLeaderboardTable('player', gameState.playerLeaderboard, 'combined-player-leaderboard-container');
+        console.log("排行榜表格已渲染。");
         
         hideModal('feedback-modal');
-        showModal('combined-leaderboard-modal'); // 顯示新的綜合排行榜彈窗
+        showModal('combined-leaderboard-modal'); 
+        console.log("顯示綜合排行榜彈窗。");
 
     } catch (error) {
+        console.error("處理綜合排行榜點擊時發生錯誤:", error);
         hideModal('feedback-modal');
         showFeedbackModal('載入失敗', `無法獲取排行榜資訊: ${error.message}`);
     }
 }
-// --- 【新增結束】 ---
+
 
 function handleTabSwitching() {
     if (DOMElements.dnaFarmTabs) {
@@ -175,7 +219,6 @@ function handleTabSwitching() {
 }
 
 function handleModalCloseButtons() {
-    // 使用事件委派來處理所有 modal 的關閉按鈕
     document.body.addEventListener('click', (event) => {
         const closeButton = event.target.closest('.modal-close');
         if (closeButton) {
@@ -281,3 +324,16 @@ async function handleSkillLinkClick(event) {
         showFeedbackModal('錯誤', `找不到名為 "${skillName}" 的技能詳細資料。`);
     }
 }
+
+document.body.addEventListener('click', function(event) {
+    const skillLink = event.target.closest('.skill-name-link');
+    if (skillLink) {
+        handleSkillLinkClick(event);
+    }
+
+    const combinedLeaderboardBtn = event.target.closest('#snapshot-combined-leaderboard-btn');
+    if (combinedLeaderboardBtn) {
+        console.log("綜合排行榜按鈕 (🪜) 已被點擊！");
+        handleCombinedLeaderboardClick();
+    }
+});
