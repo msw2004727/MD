@@ -151,7 +151,7 @@ def equip_title_route():
         return jsonify({"error": "請求中缺少 'title_id'。"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0] #【修改】取回元組的第一個元素
 
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
@@ -211,13 +211,20 @@ def get_player_info_route(requested_player_id: str):
     else:
         routes_logger.info(f"公開查詢玩家 {target_player_id_to_fetch} 的資料。")
 
-    player_data = get_player_data_service(
+    # 【修改】接收服務層回傳的元組 (player_data, is_new)
+    player_data, is_new_player = get_player_data_service(
         player_id=target_player_id_to_fetch,
         nickname_from_auth=nickname_for_init,
         game_configs=game_configs
     )
 
     if player_data:
+        # 【修改】如果是新玩家，在此處添加稱號授予標記
+        if is_new_player:
+            newly_awarded_titles = player_data.get("playerStats", {}).get("titles", [])
+            if newly_awarded_titles:
+                player_data["newly_awarded_titles"] = newly_awarded_titles
+                routes_logger.info(f"偵測到新玩家 {target_player_id_to_fetch}，已在回傳資料中加入 newly_awarded_titles 標記。")
         return jsonify(player_data), 200
     else:
         routes_logger.warning(f"在服務層未能獲取或初始化玩家 {target_player_id_to_fetch} 的資料。")
@@ -258,7 +265,7 @@ def combine_dna_api_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法組合DNA。"}), 500
 
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         routes_logger.error(f"組合DNA前無法獲取玩家 {user_id} 的資料。")
         return jsonify({"error": "無法獲取玩家資料以進行DNA組合。"}), 500
@@ -335,20 +342,17 @@ def simulate_battle_api_route():
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法模擬戰鬥。"}), 500
-
-    # 【修改】獲取發起挑戰的玩家的完整資料
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "無法獲取您的玩家資料以開始戰鬥。"}), 404
 
-    # 【修改】如果對手不是NPC，也獲取其完整玩家資料
     opponent_player_data = None
     if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
-        opponent_player_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
+        opponent_player_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)[0]
         if not opponent_player_data:
             routes_logger.warning(f"無法獲取對手玩家 {opponent_owner_id_req} 的資料，戰鬥將在沒有其稱號加成的情況下進行。")
 
-    # 【修改】將玩家資料傳遞給戰鬥服務
     battle_result: BattleResult = simulate_battle_full( 
         player_monster_data=player_monster_data_req,
         opponent_monster_data=opponent_monster_data_req,
@@ -357,18 +361,15 @@ def simulate_battle_api_route():
         opponent_player_data=opponent_player_data
     )
 
-    newly_awarded_titles = [] # 初始化
+    newly_awarded_titles = [] 
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'):
-            # player_data 已經在戰鬥模擬前獲取，這裡直接使用
             if player_data:
                 player_stats = player_data.get("playerStats")
                 if player_stats and isinstance(player_stats, dict):
                     if battle_result.get("winner_id") == player_monster_data_req['id']:
                         player_stats["wins"] = player_stats.get("wins", 0) + 1
-                        # --- 稱號授予檢查點 ---
                         player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
-                        # --- 稱號授予檢查點結束 ---
                     elif battle_result.get("loser_id") == player_monster_data_req['id']:
                         player_stats["losses"] = player_stats.get("losses", 0) + 1
                     
@@ -424,7 +425,6 @@ def simulate_battle_api_route():
                 routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
         
         if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
-            # opponent_data 已在戰鬥模擬前獲取，這裡直接使用
             if opponent_player_data:
                 opponent_stats = opponent_player_data.get("playerStats")
                 if opponent_stats and isinstance(opponent_stats, dict):
@@ -457,7 +457,6 @@ def simulate_battle_api_route():
             else:
                 routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
 
-    # 將新獲得的稱號資訊加入到回傳結果中
     if newly_awarded_titles:
         battle_result["newly_awarded_titles"] = newly_awarded_titles
     
@@ -496,7 +495,7 @@ def update_monster_nickname_route(monster_id: str):
         return jsonify({"error": "請求格式錯誤，需要 'custom_element_nickname' (字串)"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "找不到玩家資料"}), 404
 
@@ -528,7 +527,7 @@ def heal_monster_route(monster_id: str):
         return jsonify({"error": "無效的治療類型。"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "找不到玩家資料"}), 404
 
@@ -552,7 +551,7 @@ def disassemble_monster_route(monster_id: str):
     if error_response: return error_response
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "找不到玩家資料"}), 404
 
@@ -561,22 +560,13 @@ def disassemble_monster_route(monster_id: str):
     )
 
     if disassembly_result and disassembly_result.get("success"):
-        # 移除將DNA加回物品欄的邏輯
-        # returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
-        # current_owned_dna = player_data.get("playerOwnedDNA", [])
-        # import datetime
-        # for dna_template in returned_dna_templates:
-        #     ... (此處原有邏輯被移除) ...
-        # player_data["playerOwnedDNA"] = current_owned_dna
-        
-        # 直接使用服務層已更新的怪獸列表
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
 
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "message": disassembly_result.get("message"),
-                "returned_dna_templates_info": [], # DNA不再退回，返回空列表
+                "returned_dna_templates_info": [], 
                 "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
@@ -599,7 +589,7 @@ def recharge_monster_route(monster_id: str):
         return jsonify({"error": "請求格式錯誤，需要 'dna_instance_id' 和 'recharge_target' ('hp' 或 'mp')"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "找不到玩家資料"}), 404
 
@@ -662,7 +652,7 @@ def replace_monster_skill_route(monster_id: str):
         return jsonify({"error": "請求格式錯誤，需要有效的 'new_skill_template' 物件。"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
-    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)[0]
     if not player_data:
         return jsonify({"error": "找不到玩家資料"}), 404
 
@@ -683,7 +673,6 @@ def replace_monster_skill_route(monster_id: str):
 def get_monster_leaderboard_route():
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
     if error_response:
-        # 未授權請求，返回空列表，因為沒有玩家所屬怪獸可顯示
         routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
         return jsonify([]), 200
 
@@ -699,14 +688,10 @@ def get_monster_leaderboard_route():
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
 
-    # 獲取所有玩家的「出戰」怪獸
-    # 這個服務現在會遍歷所有玩家的 selectedMonsterId
     all_player_selected_monsters = get_all_player_selected_monsters_service(game_configs)
 
-    # 根據分數重新排序
     all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
     
-    # 返回 Top N 的怪獸
     final_leaderboard = all_player_selected_monsters[:top_n]
 
     return jsonify(final_leaderboard), 200
