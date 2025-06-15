@@ -186,48 +186,47 @@ function updateMonsterSnapshot(monster) {
                 const overlayElement = partElement.querySelector('.monster-part-overlay');
                 const textElement = overlayElement ? overlayElement.querySelector('.dna-name-text') : null;
 
-                if (dnaData && imgElement && overlayElement && textElement) {
+                // 確保所有元素都存在
+                if (!imgElement || !overlayElement || !textElement) return;
+
+                // 預設先隱藏所有內容
+                imgElement.style.display = 'none';
+                imgElement.classList.remove('active');
+                overlayElement.style.display = 'none';
+                partElement.classList.add('empty-part');
+
+                if (dnaData) {
+                    // 如果有DNA資料，則移除空格樣式
                     partElement.classList.remove('empty-part');
-                    
-                    const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
-                    const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
-                    
                     const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
-                    
+
                     if (imgPath && imgPath !== monsterPartAssets.globalDefault) {
-                        // 情境1: 有DNA，有圖片
-                        overlayElement.style.display = 'flex';
+                        // 情境1: 有DNA，且有對應圖片
+                        // 顯示底層
+                        const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
+                        const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
                         overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
+                        overlayElement.style.display = 'flex';
+                        // 設定文字
                         textElement.textContent = dnaData.name || '';
                         textElement.className = 'dna-name-text'; // 恢復正常樣式
                         textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
-
+                        
+                        // 顯示頂層圖片
                         imgElement.src = imgPath;
                         imgElement.style.display = 'block';
                         imgElement.classList.add('active');
                     } else {
-                        // 情境2: 有DNA，但無圖片
+                        // 情境2: 有DNA，但無對應圖片
                         overlayElement.style.display = 'flex';
-                        overlayElement.style.backgroundColor = 'transparent'; // 背景透明
+                        overlayElement.style.backgroundColor = 'transparent'; // 背景設為透明
+                        // 設定後備文字與樣式
                         textElement.textContent = '圖片積極開發中';
-                        textElement.className = 'dna-name-text fallback-text'; // 使用後備文字樣式
-
-                        imgElement.style.display = 'none';
-                        imgElement.src = '';
-                        imgElement.classList.remove('active');
+                        textElement.className = 'dna-name-text fallback-text';
+                        textElement.style.color = 'var(--text-secondary)'; // 設定為灰色系
                     }
-                } else {
-                    // 情境3: 無DNA
-                    if (imgElement) {
-                        imgElement.style.display = 'none';
-                        imgElement.src = '';
-                        imgElement.classList.remove('active');
-                    }
-                    if(overlayElement) {
-                        overlayElement.style.display = 'none';
-                    }
-                    partElement.classList.add('empty-part');
                 }
+                // 如果沒有 dnaData，則維持預設的隱藏狀態，達成透明虛線框效果
             }
         });
 
