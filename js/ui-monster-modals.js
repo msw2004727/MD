@@ -163,52 +163,9 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
     `;
 
-    let constituentDnaHtml = '';
-    const dnaSlots = new Array(5).fill(null);
-    if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
-        monster.constituent_dna_ids.forEach((id, i) => {
-            if (i < 5) {
-                dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
-            }
-        });
-    }
+    // ---【移除】---
+    // 舊的、有問題的 constituentDnaHtml 生成邏輯被移除。
     
-    const dnaItemsHtml = dnaSlots.map(dna => {
-        if (dna) {
-            const elementCssKey = getElementCssClassKey(dna.type || '無');
-            const elementChar = (dna.type || '無').charAt(0);
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item occupied" data-dna-ref-id="${dna.id}">
-                        <span class="dna-name-text">${dna.name}</span>
-                    </div>
-                    <div class="dna-attribute-box text-element-${elementCssKey}">
-                        ${elementChar}
-                    </div>
-                </div>`;
-        } else {
-            return `
-                <div class="dna-composition-item-wrapper">
-                    <div class="dna-item empty">
-                        <span class="dna-name-text">無</span>
-                    </div>
-                    <div class="dna-attribute-box empty">
-                        -
-                    </div>
-                </div>`;
-        }
-    }).join('');
-
-
-    constituentDnaHtml = `
-        <div class="details-section">
-            <h5 class="details-section-title">怪獸DNA組成</h5>
-            <div class="inventory-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
-                ${dnaItemsHtml}
-            </div>
-        </div>
-    `;
-
     const gains = monster.cultivation_gains || {};
     const getGainHtml = (statName) => {
         const gain = gains[statName] || 0;
@@ -240,7 +197,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                     <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
-                ${constituentDnaHtml}
+                
+                <div id="monster-dna-composition-container" class="details-section">
+                    <h5 class="details-section-title">怪獸DNA組成</h5>
+                    <div class="inventory-grid" style="grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+                        </div>
+                </div>
+
             </div>
 
             <div class="details-column-right">
@@ -269,6 +232,61 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
+
+    // --- 【新增】全新的 constituentDnaHtml 生成邏輯 ---
+    const dnaCompositionGrid = detailsBody.querySelector('#monster-dna-composition-container .inventory-grid');
+    if (dnaCompositionGrid) {
+        dnaCompositionGrid.innerHTML = ''; // 清空舊內容
+        const dnaSlotsData = new Array(5).fill(null);
+
+        if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
+            monster.constituent_dna_ids.forEach((id, i) => {
+                if (i < 5) {
+                    dnaSlotsData[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
+                }
+            });
+        }
+
+        dnaSlotsData.forEach(dna => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'dna-composition-item-wrapper';
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'dna-name-text';
+            
+            const attrBox = document.createElement('div');
+            attrBox.className = 'dna-attribute-box';
+
+            if (dna) {
+                itemDiv.classList.add('occupied');
+                itemDiv.dataset.dnaRefId = dna.id;
+                nameSpan.textContent = dna.name;
+                
+                const elementCssKey = getElementCssClassKey(dna.type || '無');
+                const elementChar = (dna.type || '無').charAt(0);
+                attrBox.classList.add(`text-element-${elementCssKey}`);
+                attrBox.textContent = elementChar;
+                
+                // 這裡也需要調用 applyDnaItemStyle 來上色
+                applyDnaItemStyle(itemDiv, dna);
+
+            } else {
+                itemDiv.classList.add('empty');
+                nameSpan.textContent = '無';
+                attrBox.classList.add('empty');
+                attrBox.textContent = '-';
+            }
+            
+            itemDiv.appendChild(nameSpan);
+            wrapper.appendChild(itemDiv);
+            wrapper.appendChild(attrBox);
+            dnaCompositionGrid.appendChild(wrapper);
+        });
+    }
+
 
     detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
         const dnaId = el.dataset.dnaRefId;
