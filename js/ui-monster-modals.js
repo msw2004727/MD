@@ -319,7 +319,6 @@ function showBattleLogModal(battleResult) {
         return;
     }
 
-    // 【新增】在函數開頭預先計算好雙方的顯示名稱
     const getDisplayName = (monster) => {
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         return monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
@@ -351,14 +350,12 @@ function showBattleLogModal(battleResult) {
         const applyMonNameColor = (monData, displayName) => {
             if (monData && monData.nickname && displayName) {
                 const monColor = rarityColors[monData.rarity] || 'var(--text-primary)';
-                // 【修改】將正則表達式中的 monData.nickname 替換為 displayName
                 const regex = new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monData.nickname})(?!<\\/span>|<\\/strong>)`, 'g');
                 const replacement = `<span style="color: ${monColor}; font-weight: bold;">${displayName}</span>`;
                 styledText = styledText.replace(regex, replacement);
             }
         };
         
-        // 【修改】傳入預先計算好的 displayName
         if (playerMon) applyMonNameColor(playerMon, playerDisplayName);
         if (opponentMon) applyMonNameColor(opponentMon, opponentDisplayName);
 
@@ -403,7 +400,6 @@ function showBattleLogModal(battleResult) {
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        // 【修改】直接使用傳入的 displayName
         const nicknameSpan = `<span class="monster-name">${prefix}${displayName}</span>`;
 
         return `
@@ -422,13 +418,14 @@ function showBattleLogModal(battleResult) {
         `;
     };
 
+    // 【修改】將 battle-vs-grid 改為新的上下結構
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
-            <div class="monster-vs-grid">
-                <div class="player-side">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
+            <div class="monster-vs-container">
+                <div class="player-side-card">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
                 <div class="vs-divider">VS</div>
-                <div class="opponent-side">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
+                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
             </div>
         </div>
     `;
@@ -490,6 +487,7 @@ function showBattleLogModal(battleResult) {
         const playerRarityKey = playerMonsterData.rarity ? (rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common') : 'common';
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common') : 'common';
 
+        // 【修改】狀態欄也改用屬性名
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             statusHtml += `
                 <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerDisplayName}</div>
