@@ -40,7 +40,7 @@ function updateLeaderboardTable(tableType, data) {
     if (tableType === 'monster') {
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
-            { text: '怪獸暱稱', key: 'nickname' },
+            { text: '怪獸', key: 'nickname' },
             { text: '元素', key: 'elements', align: 'center' },
             { text: '稀有度', key: 'rarity', align: 'center' },
             { text: '總評價', key: 'score', align: 'center' },
@@ -73,6 +73,9 @@ function updateLeaderboardTable(tableType, data) {
     data.forEach((item, index) => {
         const row = tbody.insertRow();
         row.dataset.monsterId = item.id; 
+        row.dataset.ownerId = item.owner_id;
+        row.dataset.ownerNickname = item.owner_nickname;
+
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -88,9 +91,26 @@ function updateLeaderboardTable(tableType, data) {
             const link = document.createElement('a');
             link.href = '#';
             link.className = 'leaderboard-monster-link';
-            link.classList.add(`text-rarity-${rarityKey}`);
             link.style.textDecoration = 'none';
-            link.textContent = item.nickname;
+            link.style.display = 'block';
+            link.style.textAlign = 'left';
+            link.style.whiteSpace = 'nowrap';
+            link.style.overflow = 'hidden';
+            link.style.textOverflow = 'ellipsis';
+            link.style.fontSize = '0.9em';
+            
+            // 【新增】複製怪獸農場的名稱顯示邏輯
+            const primaryElement = item.elements && item.elements.length > 0 ? item.elements[0] : '無';
+            const elementNickname = item.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+            const monsterAchievement = item.title || '';
+            const fullNickname = item.nickname || '';
+            const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
+
+            link.innerHTML = `
+                <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
+                <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
+                <span class="text-rarity-${rarityKey}">${elementNickname}</span>
+            `;
             nicknameCell.appendChild(link);
 
 
