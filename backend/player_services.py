@@ -3,7 +3,7 @@
 
 import time
 import logging
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 import firebase_admin
 from firebase_admin import firestore
 # 新增導入 FieldPath
@@ -97,17 +97,17 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "lastSeen": int(time.time()),
         "selectedMonsterId": None,
         "friends": [],
-        "dnaCombinationSlots": [None] * 5,  # 新增：初始化空的組合槽
+        "dnaCombinationSlots": [None] * 5,
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
 
-def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Optional[PlayerGameData]:
-    """獲取玩家遊戲資料，如果不存在則初始化並儲存。"""
+def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], bool]:
+    """獲取玩家遊戲資料，如果不存在則初始化並儲存。返回 (玩家資料, 是否為新玩家) 的元組。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
-        return None
+        return None, False
 
     db = firestore_db_instance
 
@@ -141,7 +141,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 player_services_logger.info(f"成功為玩家 {player_id} 創建 Firestore users 集合中的 profile，暱稱: {authoritative_nickname}")
             except Exception as e:
                 player_services_logger.error(f"建立玩家 {player_id} 的 Firestore users 集合 profile 失敗: {e}", exc_info=True)
-                return None
+                return None, False
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_doc = game_data_ref.get()
@@ -213,31 +213,25 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
                 "friends": player_game_data_dict.get("friends", []),
-                # 新增：讀取組合槽，如果不存在則提供預設值
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                 player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
-            return player_game_data
+            return player_game_data, False
         
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
-        # 【新增】為新玩家資料添加標記，以便前端觸發彈窗
-        newly_awarded_titles = new_player_data.get("playerStats", {}).get("titles", [])
-        if newly_awarded_titles:
-            new_player_data["newly_awarded_titles"] = newly_awarded_titles
-
         if save_player_data_service(player_id, new_player_data):
             player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
-            return new_player_data
+            return new_player_data, True
         else:
             player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
-            return new_player_data
+            return new_player_data, True
 
     except Exception as e:
         player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
-        return None
+        return None, False
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
@@ -259,7 +253,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "lastSeen": current_time_unix,
             "selectedMonsterId": game_data.get("selectedMonsterId"),
             "friends": game_data.get("friends", []),
-            # 新增：儲存組合槽狀態
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
         }
 
