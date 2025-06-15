@@ -96,6 +96,28 @@ async function initializeGame() {
         if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
+        // 【新增】檢查後端回傳的玩家資料中，是否有新授予的稱號
+        if (playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
+            const newTitle = playerData.newly_awarded_titles[0]; // 假設一次只顯示一個
+            if (typeof showFeedbackModal === 'function') {
+                // 使用我們之前做好的稱號彈窗來顯示
+                showFeedbackModal(
+                    '榮譽加身！',
+                    '', // message 留空，因為會使用自訂排版
+                    false,
+                    null,
+                    [{ text: '開啟我的冒險！', class: 'success' }],
+                    { // 傳入 awardDetails 物件來觸發特殊排版
+                        type: 'title',
+                        name: newTitle.name,
+                        description: newTitle.description,
+                        buffs: newTitle.buffs,
+                        bannerUrl: gameState.assetPaths.images.modals.titleAward
+                    }
+                );
+            }
+        }
+
     } catch (error) {
         console.error("Game initialization failed:", error);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
