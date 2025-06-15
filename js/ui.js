@@ -491,9 +491,17 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
 
         if (playerMonster && opponentMonster) {
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-            const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
-            const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
             
+            // 【新增】取得玩家怪獸的屬性名
+            const playerPrimaryElement = playerMonster.elements && playerMonster.elements.length > 0 ? playerMonster.elements[0] : '無';
+            const playerDisplayName = playerMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[playerPrimaryElement] || playerPrimaryElement);
+            const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
+            
+            // 【新增】取得對手怪獸的屬性名
+            const opponentPrimaryElement = opponentMonster.elements && opponentMonster.elements.length > 0 ? opponentMonster.elements[0] : '無';
+            const opponentDisplayName = opponentMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[opponentPrimaryElement] || opponentPrimaryElement);
+            const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
+
             bodyHtml = `
                 <div class="confirmation-banner" style="text-align: center; margin-bottom: 1rem;">
                     <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="對戰" style="max-width: 100%; border-radius: 6px;">
@@ -501,12 +509,12 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
                 <div class="battle-confirm-grid">
                     <div class="monster-confirm-details player">
                         <p class="monster-role">您的怪獸</p>
-                        <p class="monster-name text-rarity-${playerRarityKey}">${playerMonster.nickname}</p>
+                        <p class="monster-name text-rarity-${playerRarityKey}">${playerDisplayName}</p>
                         <p class="monster-score">(評價: ${playerMonster.score})</p>
                     </div>
                     <div class="monster-confirm-details opponent">
                         <p class="monster-role">對手的怪獸</p>
-                        <p class="monster-name text-rarity-${opponentRarityKey}">${opponentMonster.nickname}</p>
+                        <p class="monster-name text-rarity-${opponentRarityKey}">${opponentDisplayName}</p>
                         <p class="monster-score">(評價: ${opponentMonster.score})</p>
                     </div>
                 </div>
