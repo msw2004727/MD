@@ -13,9 +13,7 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 }
 
 function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
-    // [偵錯日誌] 印出傳入的參數
-    console.log(`[DEBUG] getMonsterPartImagePath called with: partName='${partName}', dnaType='${dnaType}', dnaRarity='${dnaRarity}'`);
-
+    // 確保 monsterPartAssets 已載入
     if (typeof monsterPartAssets === 'undefined') {
         console.warn('monsterPartAssets 未載入，無法獲取部位圖片路徑。');
         return null;
@@ -23,30 +21,24 @@ function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
 
     const partData = monsterPartAssets[partName];
     if (!partData) {
-        console.warn(`[DEBUG] 未找到部位 '${partName}' 的圖片配置。`);
-        return monsterPartAssets.globalDefault;
+        console.warn(`未找到部位 '${partName}' 的圖片配置。`);
+        return monsterPartAssets.globalDefault; // 使用全局預設圖
     }
 
+    // 優先匹配精確的屬性+稀有度
     if (partData[dnaType] && partData[dnaType][dnaRarity]) {
-        const path = partData[dnaType][dnaRarity];
-        console.log(`[DEBUG] 完全匹配成功！找到的路徑為: ${path}`);
-        return path;
+        return partData[dnaType][dnaRarity];
     }
-    
+    // 次之匹配屬性預設 (如果有的話)
     if (partData[dnaType] && partData[dnaType].default) {
-        const path = partData[dnaType].default;
-        console.log(`[DEBUG] 屬性預設匹配成功！找到的路徑為: ${path}`);
-        return path;
+        return partData[dnaType].default;
+    }
+    // 再次之匹配部位預設
+    if (partData.default) {
+        return partData.default;
     }
 
-    if (partData.default) {
-        const path = partData.default;
-        console.log(`[DEBUG] 部位預設匹配成功！找到的路徑為: ${path}`);
-        return path;
-    }
-    
-    console.warn(`[DEBUG] 所有匹配均失敗，返回全局預設圖片。`);
-    return monsterPartAssets.globalDefault;
+    return monsterPartAssets.globalDefault; // 最終使用全局預設圖
 }
 
 
@@ -64,11 +56,11 @@ function clearMonsterBodyPartsDisplay() {
             if (typeof applyDnaItemStyle === 'function') {
                 applyDnaItemStyle(partElement, null);
             }
+            // 清空圖片的 src 並移除 active class
             const imgElement = partElement.querySelector('.monster-part-image');
             if (imgElement) {
                 imgElement.src = '';
                 imgElement.classList.remove('active');
-                imgElement.style.display = 'none';
             }
             partElement.classList.add('empty-part');
         }
@@ -84,6 +76,8 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
+    // **核心修改點：管理所有快照按鈕**
+    // 每次更新時，先移除可能已存在的舊按鈕，避免重複
     const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
     if (existingMonsterBtn) {
         existingMonsterBtn.remove();
@@ -97,6 +91,7 @@ function updateMonsterSnapshot(monster) {
         existingGuideBtn.remove();
     }
 
+    // **核心修改點：創建玩家資訊按鈕 (📑)**
     const playerBtn = document.createElement('button');
     playerBtn.id = 'snapshot-player-details-btn';
     playerBtn.title = '查看玩家資訊';
@@ -117,13 +112,14 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(playerBtn);
 
+    // **核心修改點：創建新手上路按鈕 (🔰)**
     const guideBtn = document.createElement('button');
     guideBtn.id = 'snapshot-guide-btn';
     guideBtn.title = '新手上路';
     guideBtn.innerHTML = '🔰';
     guideBtn.classList.add('corner-button');
     guideBtn.style.position = 'absolute';
-    guideBtn.style.bottom = '44px';
+    guideBtn.style.bottom = '44px'; // 8px (間距) + 32px (下方按鈕高度) + 4px (間距)
     guideBtn.style.left = '8px';
     guideBtn.style.width = '32px';
     guideBtn.style.height = '32px';
@@ -146,9 +142,6 @@ function updateMonsterSnapshot(monster) {
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        // [偵錯日誌] 印出正在處理的怪獸物件
-        console.log("[DEBUG] updateMonsterSnapshot - 正在更新怪獸:", monster);
-
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
@@ -183,9 +176,6 @@ function updateMonsterSnapshot(monster) {
             const capitalizedPartKey = partKey.charAt(0).toUpperCase() + partKey.slice(1);
             const partElement = partsMap[capitalizedPartKey];
             const dnaData = dnaSlots[slotIndex];
-            
-            // [偵錯日誌] 印出每個部位正在處理的DNA資料
-            console.log(`[DEBUG] Slot ${slotIndex} (Part: ${partKey}):`, dnaData);
 
             if (partElement) {
                 const imgElement = partElement.querySelector('.monster-part-image');
@@ -196,19 +186,15 @@ function updateMonsterSnapshot(monster) {
                 
                 if (dnaData && imgElement) {
                     const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
+                    imgElement.src = imgPath || '';
                     if (imgPath) {
-                        imgElement.src = imgPath;
-                        imgElement.style.display = 'block';
                         imgElement.classList.add('active');
                     } else {
-                        imgElement.src = '';
-                        imgElement.style.display = 'none';
                         imgElement.classList.remove('active');
                     }
                     partElement.classList.remove('empty-part');
                 } else if (imgElement) {
                     imgElement.src = '';
-                    imgElement.style.display = 'none';
                     imgElement.classList.remove('active');
                     partElement.classList.add('empty-part');
                 }
@@ -235,6 +221,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
+        // **核心修改點：僅在有怪獸時，創建怪獸資訊按鈕 (📜)**
         const monsterBtn = document.createElement('button');
         monsterBtn.id = 'snapshot-monster-details-btn';
         monsterBtn.title = '查看怪獸詳細資訊';
@@ -243,7 +230,7 @@ function updateMonsterSnapshot(monster) {
         monsterBtn.classList.add('corner-button');
         monsterBtn.style.position = 'absolute';
         monsterBtn.style.bottom = '8px';
-        monsterBtn.style.left = '44px';
+        monsterBtn.style.left = '44px'; // 放在玩家資訊按鈕右邊 (8 + 32 + 4)
         monsterBtn.style.width = '32px';
         monsterBtn.style.height = '32px';
         monsterBtn.style.fontSize = '0.9rem';
