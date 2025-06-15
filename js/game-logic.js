@@ -558,24 +558,24 @@ async function handleDeployMonsterClick(monsterId) {
         showFeedbackModal('提示', '該怪獸正在修煉中，需要先召回才可以指派出戰。');
         return;
     }
+    
+    // 【新增】檢查瀕死狀態
+    if (monster.hp < monster.initial_max_hp * 0.25) {
+        showFeedbackModal('無法出戰', '瀕死狀態下無法出戰，請先治療您的怪獸。');
+        return;
+    }
 
-    // **核心修改點 1: 直接更新頂層和玩家資料中的 selectedMonsterId**
     gameState.selectedMonsterId = monsterId;
     gameState.playerData.selectedMonsterId = monsterId;
     
-    // **核心修改點 2: 直接重新渲染UI，無需再單獨查找怪獸**
-    // 1. 更新頂部的怪獸快照
     if (typeof updateMonsterSnapshot === 'function') {
-        // 直接傳入我們已經找到的 monster 物件
         updateMonsterSnapshot(monster);
     }
-    // 2. 更新農場列表，按鈕狀態會改變
     if (typeof renderMonsterFarm === 'function') {
         renderMonsterFarm();
     }
 
     try {
-        // 異步儲存更新後的玩家資料到後端
         await savePlayerData(gameState.playerId, gameState.playerData);
         console.log(`玩家 ${gameState.playerId} 已將怪獸 ${monsterId} 設為出戰並儲存。`);
 
