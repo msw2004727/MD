@@ -384,12 +384,17 @@ function showBattleLogModal(battleResult) {
         if (!monster) return '<div>對手資料錯誤</div>';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+        
+        // 【新增】取得怪獸的屬性名
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        const displayName = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
         const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        const nicknameSpan = `<span class="monster-name">${prefix}${monster.nickname}</span>`;
+        const nicknameSpan = `<span class="monster-name">${prefix}${displayName}</span>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
