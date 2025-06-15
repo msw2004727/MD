@@ -163,13 +163,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
     `;
 
-    // ---【修改】---
-    // 這是新的、更簡潔的DNA組成區塊生成邏輯
     const dnaSlots = new Array(5).fill(null);
     if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
         monster.constituent_dna_ids.forEach((id, i) => {
             if (i < 5) {
-                dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id === id) || null;
+                // ---【修改】---
+                // 在比對ID時，使用 .trim() 去除前後可能存在的空白字元，增強比對的穩健性
+                dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id.trim() === id.trim()) || null;
             }
         });
     }
@@ -213,7 +213,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
     `;
-    // ---【修改結束】---
 
     const gains = monster.cultivation_gains || {};
     const getGainHtml = (statName) => {
@@ -292,7 +291,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         }
     }
 
-    // --- 【新增】暱稱編輯事件綁定 ---
     const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
     const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
     const editBtn = DOMElements.monsterInfoModalHeader.querySelector('#edit-monster-nickname-btn');
@@ -331,8 +329,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             try {
                 const result = await updateMonsterCustomNickname(monsterId, newNickname);
                 if (result && result.success) {
-                    await refreshPlayerData(); // 重新獲取玩家資料
-                    // 重新渲染當前打開的 modal
+                    await refreshPlayerData(); 
                     const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                     if (updatedMonster) {
                         updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
@@ -346,7 +343,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 hideModal('feedback-modal');
                 showFeedbackModal('錯誤', `更新暱稱失敗：${error.message}`);
                 confirmBtn.disabled = false;
-                // 還原UI
                 if (displayContainer) displayContainer.style.display = 'flex';
                 if (editContainer) editContainer.style.display = 'none';
             }
@@ -478,7 +474,6 @@ function showBattleLogModal(battleResult) {
         `;
     };
 
-    // 【修改】移除了 vs-divider
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
