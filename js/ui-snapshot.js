@@ -220,13 +220,9 @@ function updateMonsterSnapshot(monster) {
                         imgElement.style.display = 'block';
                         imgElement.classList.add('active');
                     } else {
-                        // 情境2: 無專屬圖片
-                        overlayElement.style.display = 'flex';
-                        overlayElement.style.backgroundColor = 'transparent';
-                        // 設定後備文字與樣式
-                        textElement.textContent = '圖片積極開發中';
-                        textElement.className = 'dna-name-text fallback-text';
-                        textElement.style.color = 'var(--text-secondary)';
+                        // 情境2: 無專屬圖片，根據用戶要求，不顯示任何提示文字
+                        overlayElement.style.display = 'none';
+                        textElement.textContent = '';
                     }
                 }
             }
