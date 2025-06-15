@@ -96,7 +96,6 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
         elif cond_type == "monsters_owned" and len(farmed_monsters) >= cond_value:
             unlocked = True
         
-        # 【新增】檢查其他稱號條件
         elif cond_type == "monster_elements_count":
             if any(len(monster.get("elements", [])) >= cond_value for monster in farmed_monsters):
                 unlocked = True
@@ -225,7 +224,9 @@ def get_player_info_route(requested_player_id: str):
     target_player_id_to_fetch = requested_player_id
     nickname_for_init = None
 
-    if token_player_id and token_player_id == requested_player_id:
+    is_self_request = token_player_id is not None and token_player_id == requested_player_id
+
+    if is_self_request:
         routes_logger.info(f"獲取當前登入玩家 {target_player_id_to_fetch} 的資料。")
         nickname_for_init = nickname_from_auth_token
     else:
@@ -238,11 +239,24 @@ def get_player_info_route(requested_player_id: str):
     )
 
     if player_data:
-        if is_new_player:
-            newly_awarded_titles = player_data.get("playerStats", {}).get("titles", [])
+        newly_awarded_titles = []
+        # 【修改】只有在請求是玩家本人時，才進行稱號檢查與授予
+        if is_self_request:
+            player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
+            
+            if is_new_player:
+                # 如果是新玩家，將初始稱號也加入待顯示列表
+                initial_titles = player_data.get("playerStats", {}).get("titles", [])
+                for it in initial_titles:
+                    if it not in newly_awarded_titles:
+                        newly_awarded_titles.append(it)
+            
+            # 如果有任何新稱號（來自新玩家或舊玩家補發），則儲存並加入回傳標記
             if newly_awarded_titles:
                 player_data["newly_awarded_titles"] = newly_awarded_titles
-                routes_logger.info(f"偵測到新玩家 {target_player_id_to_fetch}，已在回傳資料中加入 newly_awarded_titles 標記。")
+                routes_logger.info(f"玩家 {target_player_id_to_fetch} 獲得了 {len(newly_awarded_titles)} 個新稱號，將儲存並回傳。")
+                save_player_data_service(target_player_id_to_fetch, player_data)
+
         return jsonify(player_data), 200
     else:
         routes_logger.warning(f"在服務層未能獲取或初始化玩家 {target_player_id_to_fetch} 的資料。")
