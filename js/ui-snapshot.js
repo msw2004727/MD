@@ -53,16 +53,12 @@ function clearMonsterBodyPartsDisplay() {
     for (const partName in partsMap) {
         const partElement = partsMap[partName];
         if (partElement) {
-            if (typeof applyDnaItemStyle === 'function') {
-                applyDnaItemStyle(partElement, null);
-            }
-            // 清空圖片的 src 並移除 active class
+            partElement.classList.add('empty-part');
             const imgElement = partElement.querySelector('.monster-part-image');
             if (imgElement) {
                 imgElement.src = '';
                 imgElement.classList.remove('active');
             }
-            partElement.classList.add('empty-part');
         }
     }
     if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
@@ -76,8 +72,6 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // **核心修改點：管理所有快照按鈕**
-    // 每次更新時，先移除可能已存在的舊按鈕，避免重複
     const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
     if (existingMonsterBtn) {
         existingMonsterBtn.remove();
@@ -91,7 +85,6 @@ function updateMonsterSnapshot(monster) {
         existingGuideBtn.remove();
     }
 
-    // **核心修改點：創建玩家資訊按鈕 (📑)**
     const playerBtn = document.createElement('button');
     playerBtn.id = 'snapshot-player-details-btn';
     playerBtn.title = '查看玩家資訊';
@@ -112,14 +105,13 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(playerBtn);
 
-    // **核心修改點：創建新手上路按鈕 (🔰)**
     const guideBtn = document.createElement('button');
     guideBtn.id = 'snapshot-guide-btn';
     guideBtn.title = '新手上路';
     guideBtn.innerHTML = '🔰';
     guideBtn.classList.add('corner-button');
     guideBtn.style.position = 'absolute';
-    guideBtn.style.bottom = '44px'; // 8px (間距) + 32px (下方按鈕高度) + 4px (間距)
+    guideBtn.style.bottom = '44px';
     guideBtn.style.left = '8px';
     guideBtn.style.width = '32px';
     guideBtn.style.height = '32px';
@@ -180,10 +172,6 @@ function updateMonsterSnapshot(monster) {
             if (partElement) {
                 const imgElement = partElement.querySelector('.monster-part-image');
                 
-                if (typeof applyDnaItemStyle === 'function') {
-                    applyDnaItemStyle(partElement, dnaData);
-                }
-                
                 if (dnaData && imgElement) {
                     const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
                     imgElement.src = imgPath || '';
@@ -221,7 +209,6 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
-        // **核心修改點：僅在有怪獸時，創建怪獸資訊按鈕 (📜)**
         const monsterBtn = document.createElement('button');
         monsterBtn.id = 'snapshot-monster-details-btn';
         monsterBtn.title = '查看怪獸詳細資訊';
@@ -230,7 +217,7 @@ function updateMonsterSnapshot(monster) {
         monsterBtn.classList.add('corner-button');
         monsterBtn.style.position = 'absolute';
         monsterBtn.style.bottom = '8px';
-        monsterBtn.style.left = '44px'; // 放在玩家資訊按鈕右邊 (8 + 32 + 4)
+        monsterBtn.style.left = '44px';
         monsterBtn.style.width = '32px';
         monsterBtn.style.height = '32px';
         monsterBtn.style.fontSize = '0.9rem';
