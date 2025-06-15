@@ -653,25 +653,33 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         return;
     }
 
-    let opponentMonsterSnapshot = null;
-    const opponentMonsterFromLeaderboard = gameState.monsterLeaderboard.find(m => m.id === monsterIdToChallenge);
-    if (opponentMonsterFromLeaderboard) {
-        opponentMonsterSnapshot = opponentMonsterFromLeaderboard;
-    }
-
     try {
         showFeedbackModal('準備戰鬥...', '正在獲取對手最新資訊...', true);
         
         let latestOpponentData;
         if (npcId) {
+            // NPC的資料是固定的，直接從遊戲設定中取用即可
             const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
             latestOpponentData = npcTemplates.find(npc => npc.id === npcId);
             if (!latestOpponentData) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
-            latestOpponentData = JSON.parse(JSON.stringify(latestOpponentData));
+            latestOpponentData = JSON.parse(JSON.stringify(latestOpponentData)); // 確保是副本
             latestOpponentData.isNPC = true;
         } else if (monsterIdToChallenge && ownerId) {
+            // **核心修改：呼叫新的API來獲取對手最新資料**
             latestOpponentData = await getLatestMonsterData(ownerId, monsterIdToChallenge);
-            if (!latestOpponentData) throw new Error('無法獲取對手的最新資料，對方可能已將怪獸放生。');
+            if (!latestOpponentData) throw new Error('無法獲取對手的最新資料，對方可能已將怪獸放生或網路發生問題。');
+            
+            // **核心修改：獲取最新資料後，立刻檢查狀態**
+            if (latestOpponentData.farmStatus?.isTraining) {
+                hideModal('feedback-modal');
+                showFeedbackModal('無法挑戰', `對手怪獸 ${latestOpponentData.nickname} 目前正在修煉中。`);
+                return;
+            }
+            if ((latestOpponentData.hp / latestOpponentData.initial_max_hp) < 0.25) {
+                hideModal('feedback-modal');
+                showFeedbackModal('無法挑戰', `對手怪獸 ${latestOpponentData.nickname} 已瀕死，需要治療才能再戰。`);
+                return;
+            }
         } else {
             throw new Error('挑戰目標資訊不完整。');
         }
