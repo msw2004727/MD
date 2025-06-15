@@ -44,7 +44,7 @@ const monsterPartAssets = {
         },
         // 土屬性
         '土': {
-            '普通': 'images/parts/head/earth-common.png',
+            '普通': 'https://placehold.co/64x64/D2B48C/000000?text=土-頭',
             '稀有': 'images/parts/head/earth-rare.png',
             '菁英': 'images/parts/head/earth-elite.png',
             '傳奇': 'images/parts/head/earth-legendary.png',
