@@ -1,7 +1,9 @@
 // js/ui-leaderboard-modals.js
 //這個檔案負責處理與排行榜相關的彈窗內容，例如排行榜的表頭、表格內容更新，以及元素篩選頁籤的顯示。
-function setupLeaderboardTableHeaders(tableId, headersConfig) {
-    const table = document.getElementById(tableId);
+
+// ---【修改】---
+// 讓此函式接受一個 table HTML 元素，而不是 tableId
+function setupLeaderboardTableHeaders(table, headersConfig) {
     if (!table) return;
     let thead = table.querySelector('thead');
     if (!thead) {
@@ -27,14 +29,20 @@ function setupLeaderboardTableHeaders(tableId, headersConfig) {
     tbody.innerHTML = '';
 }
 
-function updateLeaderboardTable(tableType, data) {
-    console.log("updateLeaderboardTable called with data:", data);
-    const tableId = tableType === 'monster' ? 'monster-leaderboard-table' : 'player-leaderboard-table';
-    const table = document.getElementById(tableId);
-    if (!table) {
-        console.error("Leaderboard table element not found:", tableId);
+
+// ---【修改】---
+// 整個函式被重構，以接受一個 containerId 作為目標來渲染表格
+function updateLeaderboardTable(tableType, data, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error("Leaderboard container element not found:", containerId);
+        container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4">錯誤：找不到排行榜容器。</p>`;
         return;
     }
+    container.innerHTML = ''; // 清空舊內容
+
+    const table = document.createElement('table');
+    table.className = 'leaderboard-table';
 
     let headersConfig;
     if (tableType === 'monster') {
@@ -58,16 +66,16 @@ function updateLeaderboardTable(tableType, data) {
             { text: '敗場', key: 'losses', align: 'center' }
         ];
     }
-    setupLeaderboardTableHeaders(tableId, headersConfig);
+    setupLeaderboardTableHeaders(table, headersConfig);
 
     const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-
     if (!data || data.length === 0) {
         const colSpan = headersConfig.length;
         tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-3 text-[var(--text-secondary)]">排行榜無資料。</td></tr>`;
+        container.appendChild(table);
         return;
     }
+    
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
     data.forEach((item, index) => {
@@ -75,7 +83,6 @@ function updateLeaderboardTable(tableType, data) {
         row.dataset.monsterId = item.id; 
         row.dataset.ownerId = item.owner_id;
         row.dataset.ownerNickname = item.owner_nickname;
-
 
         if (tableType === 'monster') {
             const isTraining = item.farmStatus?.isTraining || false;
@@ -99,7 +106,6 @@ function updateLeaderboardTable(tableType, data) {
             link.style.textOverflow = 'ellipsis';
             link.style.fontSize = '0.9em';
             
-            // 【新增】複製怪獸農場的名稱顯示邏輯
             const primaryElement = item.elements && item.elements.length > 0 ? item.elements[0] : '無';
             const elementNickname = item.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
             const monsterAchievement = item.title || '';
@@ -226,8 +232,11 @@ function updateLeaderboardTable(tableType, data) {
             lossesCell.style.textAlign = 'center';
         }
     });
+
+    container.appendChild(table); // 將建立好的 table 加入到指定的容器中
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
+
 
 function updateLeaderboardSortHeader(table, sortKey, order) {
     if (!table) return;
