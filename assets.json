@@ -6,20 +6,22 @@
       "bodySilhouette": "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"
     },
     "placeholders": {
-      "comment": "動態生成的圖片",
+      "comment": "動態生成的圖片，或圖片載入前的預設圖",
       "monsterPartDefault": "https://placehold.co/120x90/4a5568/a0aec0?text=預覽&font=noto-sans-tc"
     },
     "modals": {
       "comment": "各類彈出視窗中使用的橫幅 (Banner)",
       "announcement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
       "synthesisSuccess": "https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true",
-      "loading": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+      "loadingGeneric": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
       "trainingStart": "https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true",
       "trainingResults": "https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true",
       "endTrainingEarly": "https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true",
-      "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+      "loadingAlt": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+      "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true",
       "titleAward": "https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true",
-      "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true"
+      "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+      "battleLogHeader": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true"
     },
     "cultivation": {
       "comment": "修煉地點選擇卡片",
