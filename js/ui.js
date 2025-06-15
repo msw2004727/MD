@@ -271,6 +271,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
     // Helper function to add banners and hints
     const addBannerAndHints = (bannerUrl, altText) => {
+        if (!bannerUrl) return; // Do not add banner if URL is missing
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
@@ -302,11 +303,12 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    const loadingGenericBannerUrl = gameState.assetPaths?.images?.modals?.loadingGeneric || "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true";
+    const loadingBanners = gameState.assetPaths?.images?.modals?.loadingBanners || {};
+    const genericLoadingBanner = loadingBanners.generic || '';
 
     // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
-        const bannerUrl = gameState.assetPaths?.images?.modals?.titleAward || 'https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true';
+        const bannerUrl = gameState.assetPaths?.images?.modals?.titleAward || '';
         const awardType = awardDetails.type === 'title' ? '稱號' : '成就';
         const awardName = awardDetails.name || '未知的榮譽';
         const buffs = awardDetails.buffs || {};
@@ -348,28 +350,45 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
     // --- Start of New Independent Loading Modals ---
-    else if (isLoading && (title.startsWith('遊戲載入中') || title.startsWith('登入中') || title.startsWith('註冊中') || title.startsWith('登出中') || title.startsWith('載入中') || title.startsWith('處理中') || title.startsWith('更新中'))) {
-        addBannerAndHints(loadingGenericBannerUrl, '讀取中');
+    else if (isLoading && title.startsWith('遊戲載入中')) {
+        addBannerAndHints(loadingBanners.gameLoad || genericLoadingBanner, '遊戲載入中');
+    }
+    else if (isLoading && title.startsWith('登入中')) {
+        addBannerAndHints(loadingBanners.login || genericLoadingBanner, '登入中');
+    }
+    else if (isLoading && title.startsWith('註冊中')) {
+        addBannerAndHints(loadingBanners.register || genericLoadingBanner, '註冊中');
+    }
+    else if (isLoading && title.startsWith('登出中')) {
+        addBannerAndHints(loadingBanners.logout || genericLoadingBanner, '登出中');
+    }
+    else if (isLoading && title.startsWith('載入中')) { 
+        addBannerAndHints(loadingBanners.generic || genericLoadingBanner, '載入中');
+    }
+    else if (isLoading && title.startsWith('處理中')) { 
+        addBannerAndHints(loadingBanners.processing || genericLoadingBanner, '處理中');
+    }
+    else if (isLoading && title.startsWith('更新中')) { 
+        addBannerAndHints(loadingBanners.updating || genericLoadingBanner, '更新中');
     }
     else if (isLoading && title.startsWith('怪獸合成中')) {
-        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
-        addBannerAndHints(banner, '怪獸合成中');
+        addBannerAndHints(loadingBanners.synthesis || genericLoadingBanner, '怪獸合成中');
     }
     else if (isLoading && title.startsWith('結算中')) {
-        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
-        addBannerAndHints(banner, '結算中');
+        addBannerAndHints(loadingBanners.calculating || genericLoadingBanner, '結算中');
     }
     else if (isLoading && title.startsWith('DNA抽取中')) {
-        const banner = gameState.assetPaths?.images?.modals?.dnaDrawing || loadingGenericBannerUrl;
+        const banner = gameState.assetPaths?.images?.modals?.dnaDrawing || genericLoadingBanner;
         addBannerAndHints(banner, 'DNA抽取中');
     }
-    else if (isLoading && (title.startsWith('準備戰鬥') || title.startsWith('戰鬥中'))) {
-        const banner = gameState.assetPaths?.images?.modals?.battleConfirmation || loadingGenericBannerUrl;
-        addBannerAndHints(banner, '戰鬥準備');
+    else if (isLoading && title.startsWith('準備戰鬥')) {
+        addBannerAndHints(loadingBanners.battlePrep || genericLoadingBanner, '準備戰鬥');
+    }
+    else if (isLoading && title.startsWith('戰鬥中')) {
+        addBannerAndHints(loadingBanners.battling || genericLoadingBanner, '戰鬥中');
     }
     else if (isLoading && (title.startsWith('學習中') || title.startsWith('替換技能中'))) {
-        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
-        addBannerAndHints(banner, '技能學習中');
+        addBannerAndHints(loadingBanners.skillLearn || genericLoadingBanner, '技能學習中');
     }
     // --- End of New Independent Loading Modals ---
     else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
