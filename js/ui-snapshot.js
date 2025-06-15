@@ -77,19 +77,21 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
+    // --- 【修改】移除所有舊按鈕，以便重新定位和新增 ---
     const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
-    if (existingMonsterBtn) {
-        existingMonsterBtn.remove();
-    }
+    if (existingMonsterBtn) existingMonsterBtn.remove();
+    
     const existingPlayerBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-player-details-btn');
-    if (existingPlayerBtn) {
-        existingPlayerBtn.remove();
-    }
+    if (existingPlayerBtn) existingPlayerBtn.remove();
+    
     const existingGuideBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-guide-btn');
-    if (existingGuideBtn) {
-        existingGuideBtn.remove();
-    }
+    if (existingGuideBtn) existingGuideBtn.remove();
+    
+    const existingLeaderboardBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-combined-leaderboard-btn');
+    if (existingLeaderboardBtn) existingLeaderboardBtn.remove();
+    // --- 【修改結束】 ---
 
+    // 玩家資訊按鈕 (最下方)
     const playerBtn = document.createElement('button');
     playerBtn.id = 'snapshot-player-details-btn';
     playerBtn.title = '查看玩家資訊';
@@ -110,13 +112,14 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(playerBtn);
 
+    // 新手上路按鈕 (中間)
     const guideBtn = document.createElement('button');
     guideBtn.id = 'snapshot-guide-btn';
     guideBtn.title = '新手上路';
     guideBtn.innerHTML = '🔰';
     guideBtn.classList.add('corner-button');
     guideBtn.style.position = 'absolute';
-    guideBtn.style.bottom = '44px';
+    guideBtn.style.bottom = '44px'; // 位置不變
     guideBtn.style.left = '8px';
     guideBtn.style.width = '32px';
     guideBtn.style.height = '32px';
@@ -133,6 +136,22 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(guideBtn);
 
+    // --- 【新增】新的綜合排行榜按鈕 (最上方) ---
+    const combinedLeaderboardBtn = document.createElement('button');
+    combinedLeaderboardBtn.id = 'snapshot-combined-leaderboard-btn'; // 新的按鈕ID
+    combinedLeaderboardBtn.title = '綜合排行榜';
+    combinedLeaderboardBtn.innerHTML = '🪜';
+    combinedLeaderboardBtn.classList.add('corner-button');
+    combinedLeaderboardBtn.style.position = 'absolute';
+    combinedLeaderboardBtn.style.bottom = '80px'; // 放在新手指南按鈕的上方
+    combinedLeaderboardBtn.style.left = '8px';
+    combinedLeaderboardBtn.style.width = '32px';
+    combinedLeaderboardBtn.style.height = '32px';
+    combinedLeaderboardBtn.style.fontSize = '0.9rem';
+    combinedLeaderboardBtn.style.zIndex = '5';
+    // 點擊事件將在最後一步加入
+    DOMElements.monsterSnapshotArea.appendChild(combinedLeaderboardBtn);
+    // --- 【新增結束】 ---
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
