@@ -137,7 +137,8 @@ async function handleItemClick(event) {
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
-            showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
+            // ---【修改】---
+            // showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
         });
         return; 
     }
@@ -251,7 +252,8 @@ async function handleDrop(event) {
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
-            showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
+            // ---【修改】---
+            // showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
