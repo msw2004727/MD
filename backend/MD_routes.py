@@ -335,19 +335,32 @@ def simulate_battle_api_route():
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法模擬戰鬥。"}), 500
-    
+
+    # 【修改】獲取發起挑戰的玩家的完整資料
+    player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+    if not player_data:
+        return jsonify({"error": "無法獲取您的玩家資料以開始戰鬥。"}), 404
+
+    # 【修改】如果對手不是NPC，也獲取其完整玩家資料
+    opponent_player_data = None
+    if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
+        opponent_player_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
+        if not opponent_player_data:
+            routes_logger.warning(f"無法獲取對手玩家 {opponent_owner_id_req} 的資料，戰鬥將在沒有其稱號加成的情況下進行。")
+
+    # 【修改】將玩家資料傳遞給戰鬥服務
     battle_result: BattleResult = simulate_battle_full( 
-        player_monster_data_req,
-        opponent_monster_data_req,
-        game_configs,
-        player_nickname=nickname_from_token,
-        opponent_nickname=opponent_owner_nickname_req
+        player_monster_data=player_monster_data_req,
+        opponent_monster_data=opponent_monster_data_req,
+        game_configs=game_configs,
+        player_data=player_data,
+        opponent_player_data=opponent_player_data
     )
 
     newly_awarded_titles = [] # 初始化
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'):
-            player_data = get_player_data_service(user_id, nickname_from_token, game_configs)
+            # player_data 已經在戰鬥模擬前獲取，這裡直接使用
             if player_data:
                 player_stats = player_data.get("playerStats")
                 if player_stats and isinstance(player_stats, dict):
@@ -411,17 +424,17 @@ def simulate_battle_api_route():
                 routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
         
         if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
-            opponent_data = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
-            if opponent_data:
-                opponent_stats = opponent_data.get("playerStats")
+            # opponent_data 已在戰鬥模擬前獲取，這裡直接使用
+            if opponent_player_data:
+                opponent_stats = opponent_player_data.get("playerStats")
                 if opponent_stats and isinstance(opponent_stats, dict):
                     if battle_result.get("winner_id") == opponent_monster_data_req['id']:
                         opponent_stats["wins"] = opponent_stats.get("wins", 0) + 1
                     elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
                         opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
-                    opponent_data["playerStats"] = opponent_stats
+                    opponent_player_data["playerStats"] = opponent_stats
 
-                    opponent_farm = opponent_data.get("farmedMonsters", [])
+                    opponent_farm = opponent_player_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(opponent_farm):
                         if monster_in_farm.get("id") == opponent_monster_data_req['id']:
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
@@ -437,9 +450,9 @@ def simulate_battle_api_route():
                                     monster_in_farm["activityLog"] = []
                                 monster_in_farm["activityLog"].insert(0, battle_result["opponent_activity_log"])
                             break
-                    opponent_data["farmedMonsters"] = opponent_farm
+                    opponent_player_data["farmedMonsters"] = opponent_farm
 
-                    if not save_player_data_service(opponent_owner_id_req, opponent_data):
+                    if not save_player_data_service(opponent_owner_id_req, opponent_player_data):
                         routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
             else:
                 routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
