@@ -44,7 +44,7 @@ const monsterPartAssets = {
         },
         // 土屬性
         '土': {
-            '普通': 'images/parts/head/earth-common.png',
+            '普通': 'https://github.com/msw2004727/MD/blob/main/images/earth/T001.png?raw=true',
             '稀有': 'images/parts/head/earth-rare.png',
             '菁英': 'images/parts/head/earth-elite.png',
             '傳奇': 'images/parts/head/earth-legendary.png',
@@ -134,7 +134,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/left-arm/gold-mythical.png',
         },
         '土': {
-            '普通': 'images/parts/left-arm/earth-common.png',
+            '普通': 'https://github.com/msw2004727/MD/blob/main/images/earth/T002.png?raw=true',
             '稀有': 'images/parts/left-arm/earth-rare.png',
             '菁英': 'images/parts/left-arm/earth-elite.png',
             '傳奇': 'images/parts/left-arm/earth-legendary.png',
@@ -218,7 +218,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/right-arm/gold-mythical.png',
         },
         '土': {
-            '普通': 'images/parts/right-arm/earth-common.png',
+            '普通': 'https://github.com/msw2004727/MD/blob/main/images/earth/T005.png?raw=true',
             '稀有': 'images/parts/right-arm/earth-rare.png',
             '菁英': 'images/parts/right-arm/earth-elite.png',
             '傳奇': 'images/parts/right-arm/earth-legendary.png',
@@ -302,7 +302,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/left-leg/gold-mythical.png',
         },
         '土': {
-            '普通': 'images/parts/left-leg/earth-common.png',
+            '普通': 'https://github.com/msw2004727/MD/blob/main/images/earth/T003.png?raw=true',
             '稀有': 'images/parts/left-leg/earth-rare.png',
             '菁英': 'images/parts/left-leg/earth-elite.png',
             '傳奇': 'images/parts/left-leg/earth-legendary.png',
@@ -386,7 +386,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/right-leg/gold-mythical.png',
         },
         '土': {
-            '普通': 'images/parts/right-leg/earth-common.png',
+            '普通': 'https://github.com/msw2004727/MD/blob/main/images/earth/T004.png?raw=true',
             '稀有': 'images/parts/right-leg/earth-rare.png',
             '菁英': 'images/parts/right-leg/earth-elite.png',
             '傳奇': 'images/parts/right-leg/earth-legendary.png',
