@@ -10,6 +10,19 @@
     "buffs": {}
   },
   {
+    "id": "title_031",
+    "name": "初試啼聲",
+    "description": "初次嶄露頭角，在異世界中留下了屬於自己的勝利足跡。",
+    "condition": {
+      "type": "wins",
+      "value": 5
+    },
+    "buffs": {
+      "attack": 3,
+      "hp": 10
+    }
+  },
+  {
     "id": "title_002",
     "name": "百戰將",
     "description": "身經百戰，累積了10場勝利的證明。",
