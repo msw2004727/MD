@@ -23,6 +23,18 @@
     }
   },
   {
+    "id": "title_032",
+    "name": "屢敗屢戰",
+    "description": "重要的不是永不跌倒，而是每次跌倒後都能勇敢站起來。",
+    "condition": {
+      "type": "loss_streak",
+      "value": 5
+    },
+    "buffs": {
+      "defense": 10
+    }
+  },
+  {
     "id": "title_002",
     "name": "百戰將",
     "description": "身經百戰，累積了10場勝利的證明。",
