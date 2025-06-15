@@ -278,13 +278,18 @@ def complete_cultivation_service(
             for _ in range(growth_chances):
                 chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
                 gain_amount = random.randint(1, 2)
-                if chosen_stat in ['hp', 'mp']:
-                    max_stat_key = f'initial_max_{chosen_stat}'
-                    monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
-                else:
-                    monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
+                
+                # 【移除】不再直接修改怪獸的基礎（白字）數值
+                # if chosen_stat in ['hp', 'mp']:
+                #     max_stat_key = f'initial_max_{chosen_stat}'
+                #     monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
+                # else:
+                #     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
+                
+                # 【保留】只更新 cultivation_gains 這個獨立的欄位
                 cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
                 skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+            
             monster_to_update["cultivation_gains"] = cultivation_gains
             
         if not any(log.startswith("💪") for log in skill_updates_log):
@@ -361,8 +366,10 @@ def complete_cultivation_service(
     monster_to_update["activityLog"].insert(0, new_log_entry)
     
     # 8. 確保修煉後 HP/MP 為滿值
-    monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0)
-    monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0)
+    # 【修改】這裡的邏輯也要跟著調整，應該用加上修煉加成後的值來回滿血
+    gains = monster_to_update.get("cultivation_gains", {})
+    monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + gains.get("hp", 0)
+    monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + gains.get("mp", 0)
                                    
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
