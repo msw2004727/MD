@@ -319,6 +319,15 @@ function showBattleLogModal(battleResult) {
         return;
     }
 
+    // 【新增】在函數開頭預先計算好雙方的顯示名稱
+    const getDisplayName = (monster) => {
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        return monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+    };
+    const playerDisplayName = getDisplayName(playerMonsterData);
+    const opponentDisplayName = getDisplayName(opponentMonsterData);
+
+
     function formatBasicText(text) {
         if (!text) return '';
         return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -339,14 +348,19 @@ function showBattleLogModal(battleResult) {
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         if (!text) return '(內容為空)';
         let styledText = text;
-        const applyMonNameColor = (monData) => {
-            if (monData && monData.nickname && monData.rarity) {
+        const applyMonNameColor = (monData, displayName) => {
+            if (monData && monData.nickname && displayName) {
                 const monColor = rarityColors[monData.rarity] || 'var(--text-primary)';
-                styledText = styledText.replace(new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monData.nickname})(?!<\\/span>|<\\/strong>)`, 'g'), `<span style="color: ${monColor}; font-weight: bold;">$1</span>`);
+                // 【修改】將正則表達式中的 monData.nickname 替換為 displayName
+                const regex = new RegExp(`(?![^<]*>)(?<!<span[^>]*?>|<strong>)(${monData.nickname})(?!<\\/span>|<\\/strong>)`, 'g');
+                const replacement = `<span style="color: ${monColor}; font-weight: bold;">${displayName}</span>`;
+                styledText = styledText.replace(regex, replacement);
             }
         };
-        if (playerMon) applyMonNameColor(playerMon);
-        if (opponentMon) applyMonNameColor(opponentMon);
+        
+        // 【修改】傳入預先計算好的 displayName
+        if (playerMon) applyMonNameColor(playerMon, playerDisplayName);
+        if (opponentMon) applyMonNameColor(opponentMon, opponentDisplayName);
 
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
@@ -380,20 +394,16 @@ function showBattleLogModal(battleResult) {
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    const renderMonsterStats = (monster, isPlayer) => {
+    const renderMonsterStats = (monster, displayName, isPlayer) => {
         if (!monster) return '<div>對手資料錯誤</div>';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        
-        // 【新增】取得怪獸的屬性名
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const displayName = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
-
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
         const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
+        // 【修改】直接使用傳入的 displayName
         const nicknameSpan = `<span class="monster-name">${prefix}${displayName}</span>`;
 
         return `
@@ -416,9 +426,9 @@ function showBattleLogModal(battleResult) {
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-vs-grid">
-                <div class="player-side">${renderMonsterStats(playerMonsterData, true)}</div>
+                <div class="player-side">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
                 <div class="vs-divider">VS</div>
-                <div class="opponent-side">${renderMonsterStats(opponentMonsterData, false)}</div>
+                <div class="opponent-side">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
             </div>
         </div>
     `;
@@ -482,14 +492,14 @@ function showBattleLogModal(battleResult) {
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             statusHtml += `
-                <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerMonsterData.nickname}</div>
+                <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerDisplayName}</div>
                 ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.playerStatus.mp.current, turn.playerStatus.mp.max, 'var(--accent-color)')}
             `;
         }
         if (turn.opponentStatus.hp && turn.opponentStatus.mp) {
              statusHtml += `
-                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">🛡️ ${opponentMonsterData.nickname}</div>
+                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">🛡️ ${opponentDisplayName}</div>
                 ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.opponentStatus.mp.current, turn.opponentStatus.mp.max, 'var(--accent-color)')}
              `;
