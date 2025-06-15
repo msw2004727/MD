@@ -197,7 +197,6 @@ function updateMonsterSnapshot(monster) {
                     partElement.classList.remove('empty-part');
                     
                     // --- 【核心修改】---
-                    // 步驟1：只要有DNA，就永遠顯示文字圖層
                     const typeKey = dnaData.type ? (elementTypeMap[dnaData.type] || dnaData.type.toLowerCase()) : '無';
                     const dnaRarityKey = dnaData.rarity ? (rarityMap[dnaData.rarity] || dnaData.rarity.toLowerCase()) : 'common';
                     
@@ -205,26 +204,27 @@ function updateMonsterSnapshot(monster) {
                     overlayElement.style.backgroundColor = `var(--element-${typeKey}-bg, var(--bg-slot))`;
                     
                     textElement.textContent = dnaData.name || '';
-                    textElement.className = 'dna-name-text'; // 確保是預設樣式
+                    textElement.className = 'dna-name-text';
                     textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
 
-                    // 步驟2：獨立判斷是否有對應圖片
                     let hasExactImage = false;
+                    let imgPath = '';
+
                     if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.type][dnaData.rarity]) {
                         hasExactImage = true;
+                        imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
                     }
 
                     if (hasExactImage) {
-                        // 如果有圖，就顯示圖片
-                        const imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
                         imgElement.src = imgPath;
-                        imgElement.style.display = 'block';
-                        imgElement.classList.add('active');
                     } else {
-                        // 如果沒圖，就確定圖片標籤是隱藏的
-                        imgElement.style.display = 'none';
-                        imgElement.src = '';
+                        // 如果找不到特定圖片，就使用 monster-part-assets.js 中定義的全局後備圖片
+                        imgElement.src = monsterPartAssets?.globalDefault || '';
                     }
+                    
+                    // 無論如何都顯示圖片標籤，只是內容不同
+                    imgElement.style.display = 'block';
+                    imgElement.classList.add('active');
                     // --- 【核心修改結束】---
                 }
             }
