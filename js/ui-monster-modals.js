@@ -383,7 +383,8 @@ function showBattleLogModal(battleResult) {
 
     const battleHeaderBanner = document.createElement('div');
     battleHeaderBanner.classList.add('battle-header-banner');
-    battleHeaderBanner.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="戰鬥記錄橫幅">`;
+    const bannerUrl = gameState.assetPaths?.images?.modals?.battleLogHeader || '';
+    battleHeaderBanner.innerHTML = `<img src="${bannerUrl}" alt="戰鬥記錄橫幅">`;
     const modalContent = DOMElements.battleLogModal.querySelector('.modal-content');
     if (modalContent) {
         const existingBanner = modalContent.querySelector('.battle-header-banner');
@@ -630,7 +631,8 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const dividerStyle = `border: none; height: 1px; background-color: var(--border-color); margin: 1rem 0;`;
 
-    const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
+    const bannerUrl = gameState.assetPaths?.images?.modals?.trainingResults || '';
+    const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="${bannerUrl}" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
     let hintHtml = '';
     if (TRAINING_GAME_HINTS.length > 0) {
         const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
