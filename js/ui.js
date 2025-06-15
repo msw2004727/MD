@@ -302,7 +302,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    const loadingBannerUrl = "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true";
+    const loadingGenericBannerUrl = gameState.assetPaths?.images?.modals?.loadingGeneric || "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true";
 
     // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
@@ -348,45 +348,28 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
     // --- Start of New Independent Loading Modals ---
-    else if (isLoading && title.startsWith('遊戲載入中')) {
-        addBannerAndHints(loadingBannerUrl, '遊戲載入中');
-    }
-    else if (isLoading && title.startsWith('登入中')) {
-        addBannerAndHints(loadingBannerUrl, '登入中');
-    }
-    else if (isLoading && title.startsWith('註冊中')) {
-        addBannerAndHints(loadingBannerUrl, '註冊中');
-    }
-    else if (isLoading && title.startsWith('登出中')) {
-        addBannerAndHints(loadingBannerUrl, '登出中');
-    }
-    else if (isLoading && title.startsWith('載入中')) { // For leaderboards, player info
-        addBannerAndHints(loadingBannerUrl, '載入中');
-    }
-    else if (isLoading && title.startsWith('處理中')) { // For releasing monster
-        addBannerAndHints(loadingBannerUrl, '處理中');
-    }
-    else if (isLoading && title.startsWith('更新中')) { // For renaming
-        addBannerAndHints(loadingBannerUrl, '更新中');
+    else if (isLoading && (title.startsWith('遊戲載入中') || title.startsWith('登入中') || title.startsWith('註冊中') || title.startsWith('登出中') || title.startsWith('載入中') || title.startsWith('處理中') || title.startsWith('更新中'))) {
+        addBannerAndHints(loadingGenericBannerUrl, '讀取中');
     }
     else if (isLoading && title.startsWith('怪獸合成中')) {
-        addBannerAndHints(loadingBannerUrl, '怪獸合成中');
+        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
+        addBannerAndHints(banner, '怪獸合成中');
     }
     else if (isLoading && title.startsWith('結算中')) {
-        addBannerAndHints(loadingBannerUrl, '結算中');
+        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
+        addBannerAndHints(banner, '結算中');
     }
     else if (isLoading && title.startsWith('DNA抽取中')) {
-        const dnaDrawingBannerUrl = gameState.assetPaths?.images?.modals?.dnaDrawing || loadingBannerUrl;
-        addBannerAndHints(dnaDrawingBannerUrl, 'DNA抽取中');
+        const banner = gameState.assetPaths?.images?.modals?.dnaDrawing || loadingGenericBannerUrl;
+        addBannerAndHints(banner, 'DNA抽取中');
     }
-    else if (isLoading && title.startsWith('準備戰鬥')) {
-        addBannerAndHints(loadingBannerUrl, '準備戰鬥');
-    }
-    else if (isLoading && title.startsWith('戰鬥中')) {
-        addBannerAndHints(loadingBannerUrl, '戰鬥中');
+    else if (isLoading && (title.startsWith('準備戰鬥') || title.startsWith('戰鬥中'))) {
+        const banner = gameState.assetPaths?.images?.modals?.battleConfirmation || loadingGenericBannerUrl;
+        addBannerAndHints(banner, '戰鬥準備');
     }
     else if (isLoading && (title.startsWith('學習中') || title.startsWith('替換技能中'))) {
-        addBannerAndHints(loadingBannerUrl, '技能學習中');
+        const banner = gameState.assetPaths?.images?.modals?.loadingGeneric || loadingGenericBannerUrl;
+        addBannerAndHints(banner, '技能學習中');
     }
     // --- End of New Independent Loading Modals ---
     else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
@@ -401,7 +384,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        const bannerUrl = gameState.assetPaths?.images?.modals?.trainingStart || '';
+        bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
 
         DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-rarity-${rarityKey}">${elementNickname}</strong> 已出發開始修煉。</p>`;
@@ -412,7 +396,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
-        bannerContainer.innerHTML = `<img src="https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true" alt="合成成功橫幅" style="max-width: 100%; border-radius: 6px;">`;
+        const bannerUrl = gameState.assetPaths?.images?.modals?.synthesisSuccess || '';
+        bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="合成成功橫幅" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
 
         const successMessage = "成功合成了新的怪獸";
@@ -500,10 +485,12 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
             const opponentPrimaryElement = opponentMonster.elements && opponentMonster.elements.length > 0 ? opponentMonster.elements[0] : '無';
             const opponentDisplayName = opponentMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[opponentPrimaryElement] || opponentPrimaryElement);
             const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
+            
+            const bannerUrl = gameState.assetPaths?.images?.modals?.battleConfirmation || '';
 
             bodyHtml = `
                 <div class="confirmation-banner" style="text-align: center; margin-bottom: 1rem;">
-                    <img src="https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true" alt="對戰" style="max-width: 100%; border-radius: 6px;">
+                    <img src="${bannerUrl}" alt="對戰" style="max-width: 100%; border-radius: 6px;">
                 </div>
                 <div class="battle-confirm-grid">
                     <div class="monster-confirm-details player">
@@ -523,9 +510,10 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
              bodyHtml = `<p>${message}</p>`; // Fallback
         }
     } else if (title === '提前結束修煉') {
+        const bannerUrl = gameState.assetPaths?.images?.modals?.endTrainingEarly || '';
         bodyHtml += `
             <div class="confirmation-banner" style="text-align: center; margin-bottom: 15px;">
-                <img src="https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true" alt="提前結束修煉橫幅" style="max-width: 100%; border-radius: 6px;">
+                <img src="${bannerUrl}" alt="提前結束修煉橫幅" style="max-width: 100%; border-radius: 6px;">
             </div>
             <p>${message}</p>
         `;
