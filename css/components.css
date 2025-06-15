@@ -345,20 +345,40 @@ body.light-theme .leaderboard-table tr:hover td {
     height: 100%;
     z-index: 1;
     display: none; 
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start; /* 改為從頂部對齊 */
+    justify-content: flex-start; /* 預設靠左對齊 */
     padding: 4px;
     box-sizing: border-box;
     border-radius: 6px;
 }
 
+/* 特定部位的文字靠右上對齊 */
+#monster-part-right-arm .monster-part-overlay,
+#monster-part-right-leg .monster-part-overlay {
+    justify-content: flex-end; /* 靠右對齊 */
+    text-align: right;
+}
+
 .monster-part-overlay .dna-name-text {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: bold;
     color: var(--text-primary);
     text-shadow: 0 0 3px rgba(0,0,0,0.8);
     word-break: break-all;
     line-height: 1.2;
+}
+
+.monster-part-overlay .dna-name-text.fallback-text {
+    font-size: 0.75rem; /* xs size */
+    font-weight: normal;
+    color: var(--text-secondary);
+    text-shadow: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .monster-part-image {
