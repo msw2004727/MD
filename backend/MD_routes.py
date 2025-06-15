@@ -319,6 +319,11 @@ def combine_dna_api_route():
                 if "首次組合怪獸" not in player_stats_achievements:
                     player_stats_achievements.append("首次組合怪獸")
                     player_data["playerStats"]["achievements"] = player_stats_achievements
+
+            # ---【修改】---
+            # 在儲存前，清空組合槽
+            player_data["dnaCombinationSlots"] = [None] * 5
+            routes_logger.info(f"玩家 {user_id} 合成成功，已在後端清除組合槽資料。")
             
             if save_player_data_service(user_id, player_data):
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
