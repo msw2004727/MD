@@ -99,7 +99,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/head/mix-mythical.png',
         },
         // 頭部預設圖片
-        'default': 'images/parts/head/default.png'
+        'default': 'images/parts/transparent.png'
     },
     // =======================================================================
     // 左手臂 (Left Arm)
@@ -183,7 +183,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/left-arm/mix-mythical.png',
         },
         // 左手臂預設圖片
-        'default': 'images/parts/left-arm/default.png'
+        'default': 'images/parts/transparent.png'
     },
     // =======================================================================
     // 右手臂 (Right Arm)
@@ -267,7 +267,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/right-arm/mix-mythical.png',
         },
         // 右手臂預設圖片
-        'default': 'images/parts/right-arm/default.png'
+        'default': 'images/parts/transparent.png'
     },
     // =======================================================================
     // 左腳 (Left Leg)
@@ -351,7 +351,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/left-leg/mix-mythical.png',
         },
         // 左腳預設圖片
-        'default': 'images/parts/left-leg/default.png'
+        'default': 'images/parts/transparent.png'
     },
     // =======================================================================
     // 右腳 (Right Leg)
@@ -435,7 +435,7 @@ const monsterPartAssets = {
             '神話': 'images/parts/right-leg/mix-mythical.png',
         },
         // 右腳預設圖片
-        'default': 'images/parts/right-leg/default.png'
+        'default': 'images/parts/transparent.png'
     },
     // =======================================================================
     // 全局後備 (Global Fallback)
