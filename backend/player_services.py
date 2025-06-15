@@ -223,6 +223,11 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
+        # 【新增】為新玩家資料添加標記，以便前端觸發彈窗
+        newly_awarded_titles = new_player_data.get("playerStats", {}).get("titles", [])
+        if newly_awarded_titles:
+            new_player_data["newly_awarded_titles"] = newly_awarded_titles
+
         if save_player_data_service(player_id, new_player_data):
             player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
             return new_player_data
