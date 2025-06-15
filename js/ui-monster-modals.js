@@ -660,8 +660,15 @@ function updateTrainingResultsModal(results, monsterName) {
     const statGrowthLogs = results.skill_updates_log.filter(log => log.startsWith("💪"));
     let statGrowthHtml = '<ul>';
     if (statGrowthLogs.length > 0) {
+        const statNameMap = {
+            'HP': '生命值', 'MP': '魔力值', 'ATTACK': '攻擊', 'DEFENSE': '防禦', 'SPEED': '速度', 'CRIT': '爆擊率'
+        };
         statGrowthLogs.forEach(log => {
             let cleanLog = log.substring(log.indexOf(' ') + 1);
+            cleanLog = cleanLog.replace(/'(.*?)'/g, (match, statKey) => {
+                const translatedName = statNameMap[statKey] || statKey;
+                return `<span style="color: gold; font-weight: bold;">${translatedName}</span>`;
+            });
             cleanLog = cleanLog.replace('提升', '<span style="color: var(--danger-color); font-weight: bold;">▲</span>');
             statGrowthHtml += `<li>${cleanLog}</li>`;
         });
