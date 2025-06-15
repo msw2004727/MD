@@ -403,5 +403,246 @@
     "buffs": {
       "score_gain_boost": 0.05
     }
+  },
+  {
+    "id": "title_033",
+    "name": "一擊必殺",
+    "description": "追求極致的破壞力，將所有力量灌注於一擊之中。",
+    "condition": {
+      "type": "overkill_damage",
+      "value": 500
+    },
+    "buffs": {
+      "crit": 5
+    }
+  },
+  {
+    "id": "title_034",
+    "name": "不動明王",
+    "description": "如同山嶽般沉穩，承受所有攻擊卻依然屹立不搖。",
+    "condition": {
+      "type": "tank_damage_and_win",
+      "value": 1000
+    },
+    "buffs": {
+      "defense": 15
+    }
+  },
+  {
+    "id": "title_035",
+    "name": "持久戰大師",
+    "description": "耐心與策略的勝利，將敵人拖入無法逃離的消耗戰。",
+    "condition": {
+      "type": "win_long_battle",
+      "value": 20
+    },
+    "buffs": {
+      "hp": 50
+    }
+  },
+  {
+    "id": "title_036",
+    "name": "逆轉的劇本",
+    "description": "在絕望的深淵中，譜寫出最令人熱血沸騰的逆轉詩篇。",
+    "condition": {
+      "type": "win_comeback",
+      "value": 3
+    },
+    "buffs": {
+      "attack": 10,
+      "crit": 3
+    }
+  },
+  {
+    "id": "title_037",
+    "name": "玻璃大砲",
+    "description": "捨棄所有防禦，只為追求極致的、曇花一現的破壞力。",
+    "condition": {
+      "type": "win_low_defense_monster",
+      "value": 50
+    },
+    "buffs": {
+      "attack": 10
+    }
+  },
+  {
+    "id": "title_038",
+    "name": "屬性專精",
+    "description": "將單一元素的力量發揮到極致的專家。",
+    "condition": {
+      "type": "win_with_mono_element_team",
+      "value": 10
+    },
+    "buffs": {
+      "elemental_resistance": 3
+    }
+  },
+  {
+    "id": "title_039",
+    "name": "賭徒",
+    "description": "敢於將命運交給未知，並從中尋求勝利的機會。",
+    "condition": {
+      "type": "win_with_specific_skill",
+      "skill_name": "揮指"
+    },
+    "buffs": {
+      "crit": 7
+    }
+  },
+  {
+    "id": "title_040",
+    "name": "完美的造物",
+    "description": "智慧與運氣的結晶，一件行走於世間的完美藝術品。",
+    "condition": {
+      "type": "create_high_score_monster",
+      "value": 500
+    },
+    "buffs": {
+      "hp": 20,
+      "mp": 20
+    }
+  },
+  {
+    "id": "title_041",
+    "name": "瘋狂科學家",
+    "description": "打破常規，挑戰禁忌，對知識的追求已近乎瘋狂。",
+    "condition": {
+      "type": "create_multi_element_monster",
+      "value": 4
+    },
+    "buffs": {
+      "cultivation_exp_gain": 0.05
+    }
+  },
+  {
+    "id": "title_042",
+    "name": "廢土之王",
+    "description": "有時候，創造出最獨特的「失敗品」也是一種無與倫比的才能。",
+    "condition": {
+      "type": "create_low_score_monster",
+      "value": 100
+    },
+    "buffs": {
+      "dna_return_rate_on_disassemble": 0.05
+    }
+  },
+  {
+    "id": "title_043",
+    "name": "傳奇收藏家",
+    "description": "您的農場金光閃閃，每一位成員都是能被載入史詩的傳說。",
+    "condition": {
+      "type": "own_legendary_plus_monsters",
+      "value": 5
+    },
+    "buffs": {
+      "score_gain_boost": 0.1
+    }
+  },
+  {
+    "id": "title_044",
+    "name": "元素調和者",
+    "description": "理解並駕馭了構成世界的基本元素之力。",
+    "condition": {
+      "type": "own_all_main_elements"
+    },
+    "buffs": {
+      "elemental_damage_boost": 0.05
+    }
+  },
+  {
+    "id": "title_045",
+    "name": "萬分強者",
+    "description": "實力的證明，您的名字已在異世界的強者中佔有一席之地。",
+    "condition": {
+      "type": "reach_player_score",
+      "value": 10000
+    },
+    "buffs": {
+      "attack": 10,
+      "defense": 10
+    }
+  },
+  {
+    "id": "title_046",
+    "name": "社交名流",
+    "description": "朋友，是您在異世界中最寶貴的財富。",
+    "condition": {
+      "type": "friends_count",
+      "value": 50
+    },
+    "buffs": {
+      "cultivation_time_reduction": 0.1
+    }
+  },
+  {
+    "id": "title_047",
+    "name": "頂點之一",
+    "description": "站在無數訓練師的頂點，俯瞰著屬於您的時代。",
+    "condition": {
+      "type": "reach_player_rank",
+      "value": 10
+    },
+    "buffs": {
+      "score_gain_boost": 0.15
+    }
+  },
+  {
+    "id": "title_048",
+    "name": "潛能激發",
+    "description": "日復一日的刻苦修煉，終於打破了能力的枷鎖。",
+    "condition": {
+      "type": "cultivation_stat_gain",
+      "value": 50
+    },
+    "buffs": {
+      "cultivation_point_gain": 1
+    }
+  },
+  {
+    "id": "title_049",
+    "name": "幸運尋寶者",
+    "description": "您的怪獸似乎總能在最意想不到的地方找到驚喜。",
+    "condition": {
+      "type": "find_legendary_dna_in_cultivation",
+      "value": 5
+    },
+    "buffs": {
+      "cultivation_item_find_chance": 0.1
+    }
+  },
+  {
+    "id": "title_050",
+    "name": "回收大師",
+    "description": "在您眼中，沒有無用的怪獸，只有放錯位置的資源。",
+    "condition": {
+      "type": "disassemble_monsters",
+      "value": 50
+    },
+    "buffs": {
+      "dna_return_rate_on_disassemble": 0.1
+    }
+  },
+  {
+    "id": "title_051",
+    "name": "一步之遙",
+    "description": "距離勝利只差最後一絲氣息，下次一定能贏回來！",
+    "condition": {
+      "type": "lose_by_a_little",
+      "value": 10
+    },
+    "buffs": {
+      "crit": 2
+    }
+  },
+  {
+    "id": "title_052",
+    "name": "自食其果",
+    "description": "親手創造的傑作，如今成了自己最強大的敵人。",
+    "condition": {
+      "type": "lose_to_own_creation"
+    },
+    "buffs": {
+      "defense": 8
+    }
   }
 ]
