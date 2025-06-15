@@ -33,8 +33,6 @@ from .leaderboard_search_services import (
 # 從設定和 AI 服務模組引入函式
 from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
-# 新增導入，以便在重建路由中使用
-from . import MD_firebase_config
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__)
@@ -426,9 +424,6 @@ def simulate_battle_api_route():
                     opponent_farm = opponent_data.get("farmedMonsters", [])
                     for m_idx, monster_in_farm in enumerate(opponent_farm):
                         if monster_in_farm.get("id") == opponent_monster_data_req['id']:
-                            monster_in_farm["hp"] = battle_result["opponent_monster_final_hp"]
-                            monster_in_farm["mp"] = battle_result["opponent_monster_final_mp"]
-
                             if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
                                 monster_in_farm["resume"] = {"wins": 0, "losses": 0}
 
@@ -553,13 +548,22 @@ def disassemble_monster_route(monster_id: str):
     )
 
     if disassembly_result and disassembly_result.get("success"):
+        # 移除將DNA加回物品欄的邏輯
+        # returned_dna_templates = disassembly_result.get("returned_dna_templates", [])
+        # current_owned_dna = player_data.get("playerOwnedDNA", [])
+        # import datetime
+        # for dna_template in returned_dna_templates:
+        #     ... (此處原有邏輯被移除) ...
+        # player_data["playerOwnedDNA"] = current_owned_dna
+        
+        # 直接使用服務層已更新的怪獸列表
         player_data["farmedMonsters"] = disassembly_result.get("updated_farmed_monsters", player_data.get("farmedMonsters"))
 
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "message": disassembly_result.get("message"),
-                "returned_dna_templates_info": [], 
+                "returned_dna_templates_info": [], # DNA不再退回，返回空列表
                 "updated_player_owned_dna_count": len(player_data.get("playerOwnedDNA", [])),
                 "updated_farmed_monsters_count": len(player_data.get("farmedMonsters", []))
             }), 200
@@ -664,22 +668,35 @@ def replace_monster_skill_route(monster_id: str):
 
 @md_bp.route('/leaderboard/monsters', methods=['GET'])
 def get_monster_leaderboard_route():
-    user_id, _, error_response = _get_authenticated_user_id()
+    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
     if error_response:
+        # 未授權請求，返回空列表，因為沒有玩家所屬怪獸可顯示
         routes_logger.warning("未授權請求怪獸排行榜，返回空列表。")
         return jsonify([]), 200
 
-    top_n_str = request.args.get('top_n', '20')
+
+    top_n_str = request.args.get('top_n', '10')
     try:
         top_n = int(top_n_str)
-        if top_n <= 0 or top_n > 100: top_n = 20
+        if top_n <=0 or top_n > 50: top_n = 10
     except ValueError:
-        top_n = 20
+        top_n = 10
 
-    leaderboard_data = get_all_player_selected_monsters_service(top_n)
+    game_configs = _get_game_configs_data_from_app_context()
+    if not game_configs:
+        return jsonify({"error": "遊戲設定載入失敗，無法獲取排行榜。"}), 500
+
+    # 獲取所有玩家的「出戰」怪獸
+    # 這個服務現在會遍歷所有玩家的 selectedMonsterId
+    all_player_selected_monsters = get_all_player_selected_monsters_service(game_configs)
+
+    # 根據分數重新排序
+    all_player_selected_monsters.sort(key=lambda m: m.get("score", 0), reverse=True)
     
-    return jsonify(leaderboard_data), 200
+    # 返回 Top N 的怪獸
+    final_leaderboard = all_player_selected_monsters[:top_n]
 
+    return jsonify(final_leaderboard), 200
 
 @md_bp.route('/leaderboard/players', methods=['GET'])
 def get_player_leaderboard_route():
@@ -707,94 +724,3 @@ def get_friends_statuses_route():
 
     statuses = get_friends_statuses_service(friend_ids)
     return jsonify({"success": True, "statuses": statuses}), 200
-
-
-@md_bp.route('/player/<owner_id>/monster/<monster_id>/latest', methods=['GET'])
-def get_latest_monster_data_route(owner_id: str, monster_id: str):
-    game_configs = _get_game_configs_data_from_app_context()
-    if not game_configs:
-        return jsonify({"error": "遊戲設定載入失敗。"}), 500
-
-    player_data = get_player_data_service(owner_id, None, game_configs)
-    
-    if not player_data or "farmedMonsters" not in player_data:
-        return jsonify({"error": "找不到該玩家或其怪獸資料。"}), 404
-
-    latest_monster_data = next((m for m in player_data["farmedMonsters"] if m.get("id") == monster_id), None)
-
-    if latest_monster_data:
-        routes_logger.info(f"成功為挑戰獲取怪獸 {monster_id} 的最新資料。")
-        return jsonify(latest_monster_data), 200
-    else:
-        routes_logger.warning(f"玩家 {owner_id} 的農場中找不到怪獸 {monster_id}。")
-        return jsonify({"error": "在該玩家的農場中找不到指定的怪獸。"}), 404
-
-# --- 【新增】管理員專用：重建 MonsterLeaderboard 的路由 ---
-@md_bp.route('/admin/rebuild-leaderboard', methods=['GET'])
-def rebuild_leaderboard_route():
-    routes_logger.info("接收到重建排行榜的管理員請求...")
-    
-    # 這裡可以加入一層管理員權限驗證，但為求簡單，暫時省略
-    # user_id, _, error_response = _get_authenticated_user_id()
-    # if error_response or user_id not in ADMIN_UID_LIST:
-    #     return jsonify({"error": "僅管理員可執行此操作"}), 403
-
-    db = MD_firebase_config.db
-    if not db:
-        return jsonify({"error": "資料庫未初始化。"}), 500
-        
-    processed_count = 0
-    try:
-        # 1. 遍歷所有玩家
-        users_ref = db.collection('users')
-        for user_doc in users_ref.stream():
-            player_id = user_doc.id
-            player_nickname = user_doc.to_dict().get("nickname", "未知玩家")
-            
-            # 2. 獲取每個玩家的遊戲資料
-            game_data_doc = db.collection('users').document(player_id).collection('gameData').document('main').get()
-            if not game_data_doc.exists:
-                continue
-                
-            game_data = game_data_doc.to_dict()
-            if not game_data:
-                continue
-            
-            # 3. 找到他們的出戰怪獸
-            selected_monster_id = game_data.get("selectedMonsterId")
-            if not selected_monster_id:
-                continue
-
-            farmed_monsters = game_data.get("farmedMonsters", [])
-            selected_monster = next((m for m in farmed_monsters if m.get("id") == selected_monster_id), None)
-            
-            if not selected_monster:
-                continue
-
-            # 4. 將怪獸資料寫入 MonsterLeaderboard
-            leaderboard_ref = db.collection('MonsterLeaderboard').document(selected_monster["id"])
-            leaderboard_data = {
-                "monster_id": selected_monster["id"],
-                "nickname": selected_monster.get("nickname", "未知怪獸"),
-                "score": selected_monster.get("score", 0),
-                "elements": selected_monster.get("elements", []),
-                "rarity": selected_monster.get("rarity", "普通"),
-                "resume": selected_monster.get("resume", {"wins": 0, "losses": 0}),
-                "farmStatus": selected_monster.get("farmStatus", {}),
-                "hp": selected_monster.get("hp", 0),
-                "initial_max_hp": selected_monster.get("initial_max_hp", 1),
-                "owner_id": player_id,
-                "owner_nickname": player_nickname,
-                "last_updated": firestore.SERVER_TIMESTAMP
-            }
-            leaderboard_ref.set(leaderboard_data)
-            processed_count += 1
-            routes_logger.info(f"已重建怪獸 '{selected_monster['nickname']}' 的排行榜資料。")
-
-        message = f"排行榜重建完成！共處理了 {processed_count} 隻出戰怪獸。"
-        routes_logger.info(message)
-        return jsonify({"success": True, "message": message}), 200
-
-    except Exception as e:
-        routes_logger.error(f"重建排行榜時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": f"重建失敗: {str(e)}"}), 500

@@ -337,9 +337,7 @@ function showBattleLogModal(battleResult) {
     };
 
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
-        // **核心修改點：如果傳入的文字是空的或只有空白，直接回傳一個空字串**
-        if (!text || text.trim() === '') return '';
-
+        if (!text) return '(內容為空)';
         let styledText = text;
         const applyMonNameColor = (monData) => {
             if (monData && monData.nickname && monData.rarity) {
@@ -497,9 +495,7 @@ function showBattleLogModal(battleResult) {
         turn.actions.forEach(action => {
             const p = document.createElement('p');
             p.innerHTML = applyDynamicStylingToBattleReport(action, playerMonsterData, opponentMonsterData);
-            if (p.innerHTML.trim() !== '') { // 只添加非空的 p 元素
-                battleDescriptionContentDiv.appendChild(p);
-            }
+            battleDescriptionContentDiv.appendChild(p);
         });
     });
 

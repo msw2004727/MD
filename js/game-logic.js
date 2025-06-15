@@ -632,9 +632,8 @@ async function refreshPlayerData() {
  * @param {string} [monsterIdToChallenge=null] - 如果是從農場或排行榜挑戰特定怪獸，傳入其ID。
  * @param {string} [ownerId=null] - 如果挑戰的是其他玩家的怪獸，傳入擁有者ID。
  * @param {string} [npcId=null] - 如果挑戰的是NPC，傳入NPC ID。
- * @param {string} [ownerNickname=null] - 對手玩家的暱稱。
  */
-async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null) {
     if(event) event.stopPropagation();
 
     const playerMonsterId = gameState.selectedMonsterId;
@@ -653,53 +652,58 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         return;
     }
 
+    let opponentMonster = null;
+
     try {
-        showFeedbackModal('準備戰鬥...', '正在獲取對手最新資訊...', true);
+        showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
         
-        let latestOpponentData;
+        playerMonster.farmStatus = { ...playerMonster.farmStatus, isBattling: true };
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
+
         if (npcId) {
-            // NPC的資料是固定的，直接從遊戲設定中取用即可
             const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
-            latestOpponentData = npcTemplates.find(npc => npc.id === npcId);
-            if (!latestOpponentData) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
-            latestOpponentData = JSON.parse(JSON.stringify(latestOpponentData)); // 確保是副本
-            latestOpponentData.isNPC = true;
-        } else if (monsterIdToChallenge && ownerId) {
-            // **核心修改：呼叫新的API來獲取對手最新資料**
-            latestOpponentData = await getLatestMonsterData(ownerId, monsterIdToChallenge);
-            if (!latestOpponentData) throw new Error('無法獲取對手的最新資料，對方可能已將怪獸放生或網路發生問題。');
-            
-            // **核心修改：獲取最新資料後，立刻檢查狀態**
-            if (latestOpponentData.farmStatus?.isTraining) {
-                hideModal('feedback-modal');
-                showFeedbackModal('無法挑戰', `對手怪獸 ${latestOpponentData.nickname} 目前正在修煉中。`);
-                return;
-            }
-            if ((latestOpponentData.hp / latestOpponentData.initial_max_hp) < 0.25) {
-                hideModal('feedback-modal');
-                showFeedbackModal('無法挑戰', `對手怪獸 ${latestOpponentData.nickname} 已瀕死，需要治療才能再戰。`);
-                return;
-            }
+            opponentMonster = npcTemplates.find(npc => npc.id === npcId);
+            if (!opponentMonster) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
+            opponentMonster = JSON.parse(JSON.stringify(opponentMonster));
+            opponentMonster.isNPC = true;
+        } else if (monsterIdToChallenge && ownerId && ownerId !== gameState.playerId) {
+            const opponentPlayerData = await getPlayerData(ownerId);
+            if (!opponentPlayerData || !opponentPlayerData.farmedMonsters) throw new Error('無法獲取對手玩家資料。');
+            opponentMonster = opponentPlayerData.farmedMonsters.find(m => m.id === monsterIdToChallenge);
+            if (!opponentMonster) throw new Error(`找不到對手玩家的怪獸ID ${monsterIdToChallenge}。`);
         } else {
-            throw new Error('挑戰目標資訊不完整。');
+            const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
+            if (npcTemplates.length > 0) {
+                opponentMonster = JSON.parse(JSON.stringify(npcTemplates[Math.floor(Math.random() * npcTemplates.length)]));
+                opponentMonster.isNPC = true;
+                console.log(`為玩家怪獸 ${playerMonster.nickname} 匹配到NPC對手: ${opponentMonster.nickname}`);
+            } else {
+                throw new Error('沒有可用的NPC對手進行挑戰。');
+            }
         }
-        
         hideModal('feedback-modal');
 
-        gameState.battleTargetMonster = latestOpponentData;
+        if (!opponentMonster) {
+            showFeedbackModal('錯誤', '未能找到合適的挑戰對手。');
+            playerMonster.farmStatus.isBattling = false;
+            renderMonsterFarm();
+            updateMonsterSnapshot(playerMonster);
+            return;
+        }
+
+        gameState.battleTargetMonster = opponentMonster;
 
         showConfirmationModal(
             '確認出戰',
-            `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${latestOpponentData.nickname} (評價: ${latestOpponentData.score}) 嗎？`,
+            `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${opponentMonster.nickname} (評價: ${opponentMonster.score}) 嗎？`,
             async () => {
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
                     
                     const { battle_result: battleResult } = await simulateBattle({
                         player_monster_data: playerMonster,
-                        opponent_monster_data: latestOpponentData, // 使用最新的對手資料
-                        opponent_owner_id: ownerId,
-                        opponent_owner_nickname: ownerNickname
+                        opponent_monster_data: opponentMonster
                     });
 
                     await refreshPlayerData(); 
@@ -719,9 +723,11 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         );
 
     } catch (error) {
-        hideModal('feedback-modal');
         showFeedbackModal('錯誤', `準備戰鬥失敗: ${error.message}`);
         console.error("準備戰鬥錯誤:", error);
+        playerMonster.farmStatus.isBattling = false;
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
     }
 }
 

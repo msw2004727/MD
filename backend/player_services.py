@@ -11,7 +11,7 @@ from google.cloud.firestore_v1.field_path import FieldPath
 import random # 引入 random 模組
 
 # 從 MD_models 導入相關的 TypedDict 定義
-from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster
+from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
 
 player_services_logger = logging.getLogger(__name__)
 
@@ -44,39 +44,6 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "cultivation_config": {},
     "elemental_advantage_chart": {},
 }
-
-def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nickname: str):
-    """
-    更新或創建單個怪獸在 MonsterLeaderboard 集合中的條目。
-    這是一個獨立的、高效的寫入操作。
-    """
-    if not monster or not monster.get("id"):
-        return
-
-    try:
-        leaderboard_ref = db.collection('MonsterLeaderboard').document(monster["id"])
-        
-        # 創建一個只包含排行榜所需資訊的簡化版物件
-        leaderboard_data = {
-            "monster_id": monster["id"],
-            "nickname": monster.get("nickname", "未知怪獸"),
-            "score": monster.get("score", 0),
-            "elements": monster.get("elements", []),
-            "rarity": monster.get("rarity", "普通"),
-            "resume": monster.get("resume", {"wins": 0, "losses": 0}),
-            "farmStatus": monster.get("farmStatus", {}),
-            "hp": monster.get("hp", 0),  # 新增：寫入當前HP
-            "initial_max_hp": monster.get("initial_max_hp", 1), # 新增：寫入最大HP
-            "owner_id": owner_id,
-            "owner_nickname": owner_nickname,
-            "last_updated": firestore.SERVER_TIMESTAMP
-        }
-        
-        leaderboard_ref.set(leaderboard_data, merge=True)
-        player_services_logger.info(f"成功更新怪獸 '{monster['nickname']}' (ID: {monster['id']}) 的排行榜條目。")
-
-    except Exception as e:
-        player_services_logger.error(f"更新怪獸 {monster.get('id')} 的排行榜條目失敗: {e}", exc_info=True)
 
 
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
@@ -130,7 +97,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "lastSeen": int(time.time()),
         "selectedMonsterId": None,
         "friends": [],
-        "dnaCombinationSlots": [None] * 5,
+        "dnaCombinationSlots": [None] * 5,  # 新增：初始化空的組合槽
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -246,6 +213,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
                 "friends": player_game_data_dict.get("friends", []),
+                # 新增：讀取組合槽，如果不存在則提供預設值
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
@@ -267,7 +235,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         return None
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
-    """儲存玩家遊戲資料到 Firestore，並同步更新排行榜條目和 lastSeen。"""
+    """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
@@ -286,6 +254,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "lastSeen": current_time_unix,
             "selectedMonsterId": game_data.get("selectedMonsterId"),
             "friends": game_data.get("friends", []),
+            # 新增：儲存組合槽狀態
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
         }
 
@@ -295,18 +264,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
 
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_ref.set(data_to_save) 
-        
-        farmed_monsters = data_to_save.get("farmedMonsters", [])
-        owner_nickname = data_to_save.get("nickname", "未知玩家")
-        
-        for monster in farmed_monsters:
-            if monster and monster.get("score", 0) > 100:
-                 _update_leaderboard_entry(
-                    db=db,
-                    monster=monster,
-                    owner_id=player_id,
-                    owner_nickname=owner_nickname
-                )
         
         try:
             user_profile_ref = db.collection('users').document(player_id)

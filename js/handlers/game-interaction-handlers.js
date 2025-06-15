@@ -8,80 +8,9 @@ function initializeGameInteractionEventHandlers() {
     // 綁定其他互動事件
     handleDnaDrawModal();
     handleFriendAndPlayerInteractions();
-    handleCultivationStart();
-    handleNicknameChanges(); // **核心修改點：加入新函數的呼叫**
-}
-
-// --- 核心修改點：新增處理暱稱變更的完整函數 ---
-function handleNicknameChanges() {
-    if (!DOMElements.monsterInfoModalHeader) return;
-
-    // 使用事件委派來處理動態生成的按鈕
-    DOMElements.monsterInfoModalHeader.addEventListener('click', async (event) => {
-        const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
-        const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
-        const inputField = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-input');
-
-        if (!displayContainer || !editContainer || !inputField) return;
-
-        // 點擊 "編輯" 按鈕 (✏️)
-        if (event.target.id === 'edit-monster-nickname-btn') {
-            displayContainer.style.display = 'none';
-            editContainer.style.display = 'flex';
-            inputField.focus();
-            inputField.select();
-        }
-
-        // 點擊 "取消" 按鈕 (❌)
-        if (event.target.id === 'cancel-nickname-change-btn') {
-            displayContainer.style.display = 'flex';
-            editContainer.style.display = 'none';
-        }
-
-        // 點擊 "確認" 按鈕 (✔️)
-        if (event.target.id === 'confirm-nickname-change-btn') {
-            const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
-            const newNickname = inputField.value.trim();
-
-            if (!monsterId) {
-                showFeedbackModal('錯誤', '找不到怪獸ID，無法改名。');
-                return;
-            }
-            if (!newNickname) {
-                showFeedbackModal('提示', '暱稱不能為空。');
-                return;
-            }
-            
-            showFeedbackModal('更新中...', `正在為怪獸更新暱稱...`, true);
-
-            try {
-                const result = await updateMonsterCustomNickname(monsterId, newNickname);
-                if (result && result.success) {
-                    await refreshPlayerData(); // 刷新所有玩家資料以確保一致性
-                    
-                    // 找到更新後的怪獸資料以刷新當前彈窗
-                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-                    if (updatedMonster) {
-                        updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
-                    }
-                    
-                    hideModal('feedback-modal');
-                    showFeedbackModal('成功', '怪獸暱稱已更新！');
-                    
-                    // 刷新農場列表，因為完整暱稱也變了
-                    renderMonsterFarm();
-                } else {
-                    throw new Error(result.error || '發生未知錯誤。');
-                }
-            } catch (error) {
-                hideModal('feedback-modal');
-                showFeedbackModal('更新失敗', `錯誤: ${error.message}`);
-                 // 切換回顯示模式
-                displayContainer.style.display = 'flex';
-                editContainer.style.display = 'none';
-            }
-        }
-    });
+    handleCultivationStart(); // 新增呼叫
+    
+    // 注意：原先在此處的其他函數（如 farm, leaderboard, nickname 等）已被移至更專門的 monster-handlers.js 中，此處不再需要呼叫。
 }
 
 
