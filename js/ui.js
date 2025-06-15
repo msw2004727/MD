@@ -304,8 +304,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     
     const loadingBannerUrl = "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true";
 
+    // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
-        const bannerUrl = awardDetails.bannerUrl || 'https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true';
+        const bannerUrl = gameState.assetPaths?.images?.modals?.titleAward || 'https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true';
         const awardType = awardDetails.type === 'title' ? '稱號' : '成就';
         const awardName = awardDetails.name || '未知的榮譽';
         const buffs = awardDetails.buffs || {};
@@ -317,30 +318,20 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="榮譽橫幅" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
 
-        let messageHtml = `<p class="text-center text-base text-[var(--text-secondary)] mb-2">恭喜您獲得新的${awardType}！</p>`;
+        let messageHtml = `<p class="text-center text-base text-[var(--text-secondary)] mb-2">恭喜 ${gameState.playerNickname || '您'} 獲得新的${awardType}！</p>`;
         messageHtml += `<h4 class="text-2xl font-bold text-center mb-3" style="color: gold; text-shadow: 0 0 8px #000;">${awardName}</h4>`;
         
         if (Object.keys(buffs).length > 0) {
-            const statColorMap = {
-                hp: 'var(--success-color)',
-                mp: 'var(--accent-color)',
-                attack: 'var(--danger-color)',
-                defense: 'var(--rarity-rare-text)', 
-                speed: 'var(--warning-color)',
-                crit: 'var(--rarity-elite-text)', 
-                default: 'var(--text-primary)'
-            };
-
             const getBuffDisplayName = (key) => {
                  const names = { hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率' };
                  return names[key] || key;
             };
 
-            messageHtml += `<div class="details-section mt-4" style="background-color: var(--bg-primary);">`;
-            messageHtml += `<h5 class="details-section-title">稱號效果</h5><ul style="list-style: none; padding: 0; margin: 0;">`;
+            messageHtml += `<div class="details-section mt-4" style="background-color: var(--bg-primary); padding: 10px;">`;
+            messageHtml += `<h5 class="details-section-title" style="margin-bottom: 8px;">稱號能力</h5><ul style="list-style: none; padding: 0; margin: 0;">`;
             for (const [stat, value] of Object.entries(buffs)) {
-                const color = statColorMap[stat] || statColorMap.default;
-                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="color: ${color}; font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: ${color}; font-weight: bold;">+${value}</span></li>`;
+                // 將數值顯示為紅色
+                messageHtml += `<li style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border-color);"><span style="font-weight: 500;">${getBuffDisplayName(stat)}</span><span style="color: var(--danger-color); font-weight: bold;">+${value}</span></li>`;
             }
             messageHtml += `</ul></div>`;
         }
@@ -492,12 +483,10 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
         if (playerMonster && opponentMonster) {
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             
-            // 【新增】取得玩家怪獸的屬性名
             const playerPrimaryElement = playerMonster.elements && playerMonster.elements.length > 0 ? playerMonster.elements[0] : '無';
             const playerDisplayName = playerMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[playerPrimaryElement] || playerPrimaryElement);
             const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
             
-            // 【新增】取得對手怪獸的屬性名
             const opponentPrimaryElement = opponentMonster.elements && opponentMonster.elements.length > 0 ? opponentMonster.elements[0] : '無';
             const opponentDisplayName = opponentMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[opponentPrimaryElement] || opponentPrimaryElement);
             const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
