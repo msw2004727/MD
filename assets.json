@@ -13,15 +13,28 @@
       "comment": "各類彈出視窗中使用的橫幅 (Banner)",
       "announcement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
       "synthesisSuccess": "https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true",
-      "loadingGeneric": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
       "trainingStart": "https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true",
       "trainingResults": "https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true",
       "endTrainingEarly": "https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true",
-      "loadingAlt": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
       "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true",
       "titleAward": "https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true",
       "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
-      "battleLogHeader": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true"
+      "battleLogHeader": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+      "loadingBanners": {
+        "comment": "所有讀取中狀態的獨立橫幅",
+        "gameLoad": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+        "login": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+        "register": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+        "logout": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+        "generic": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "processing": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "updating": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "synthesis": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "calculating": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "battlePrep": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+        "battling": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+        "skillLearn": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true"
+      }
     },
     "cultivation": {
       "comment": "修煉地點選擇卡片",
