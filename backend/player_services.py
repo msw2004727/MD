@@ -65,6 +65,8 @@ def _update_leaderboard_entry(db, monster: Monster, owner_id: str, owner_nicknam
             "rarity": monster.get("rarity", "普通"),
             "resume": monster.get("resume", {"wins": 0, "losses": 0}),
             "farmStatus": monster.get("farmStatus", {}),
+            "hp": monster.get("hp", 0),  # 新增：寫入當前HP
+            "initial_max_hp": monster.get("initial_max_hp", 1), # 新增：寫入最大HP
             "owner_id": owner_id,
             "owner_nickname": owner_nickname,
             "last_updated": firestore.SERVER_TIMESTAMP
@@ -294,14 +296,10 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         game_data_ref = db.collection('users').document(player_id).collection('gameData').document('main')
         game_data_ref.set(data_to_save) 
         
-        # **修改：從只更新出戰怪獸，改為更新農場中所有怪獸的排行榜狀態**
         farmed_monsters = data_to_save.get("farmedMonsters", [])
         owner_nickname = data_to_save.get("nickname", "未知玩家")
         
-        # 遍歷所有怪獸，並更新它們在排行榜上的狀態
         for monster in farmed_monsters:
-            # 只有分數高於一定值的怪獸才需要更新到排行榜，可以節省寫入次數
-            # 這裡我們暫定一個閾值，例如 100 分，您可以根據遊戲平衡調整
             if monster and monster.get("score", 0) > 100:
                  _update_leaderboard_entry(
                     db=db,
