@@ -137,7 +137,7 @@ function renderMonsterFarm() {
             nameHtml = `
                 <div style="display: flex; align-items: baseline; gap: 0.5em;">
                     <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
-                    <span style="color: var(--text-primary);">${monsterAchievement}</span>
+                    <span style="color: var(--accent-color);">${monsterAchievement}</span>
                     <span class="text-rarity-${rarityKey}">${elementNickname}</span>
                 </div>
             `;
