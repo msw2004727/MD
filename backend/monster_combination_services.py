@@ -258,6 +258,9 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         standard_monster_data: Monster = {
             "id": f"template_{combination_key}",
             "nickname": full_nickname,
+            "player_title_part": player_title,
+            "achievement_part": monster_achievement,
+            "element_nickname_part": element_nickname,
             "elements": elements_present,
             "elementComposition": element_composition,
             "hp": initial_max_hp,
