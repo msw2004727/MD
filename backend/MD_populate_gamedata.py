@@ -222,12 +222,20 @@ def populate_game_configs():
     ]
     db_client.collection('MD_GameConfigs').document('MonsterAchievementsList').set({'achievements': monster_achievements_data})
 
-    # 元素預設名 (ElementNicknames)
-    element_nicknames_data = {
-        "火": "炎魂獸", "水": "碧波精", "木": "森之裔", "金": "鐵甲衛", "土": "岩心怪",
-        "光": "聖輝使", "暗": "影匿者", "毒": "毒牙獸", "風": "疾風行", "無": "元氣寶", "混": "混沌體"
-    }
-    db_client.collection('MD_GameConfigs').document('ElementNicknames').set({'nicknames': element_nicknames_data})
+    # --- 載入並寫入元素預設名 (從 element_nicknames.json) ---
+    try:
+        nicknames_path = os.path.join(data_dir, 'element_nicknames.json')
+        with open(nicknames_path, 'r', encoding='utf-8') as f:
+            element_nicknames_data = json.load(f)
+        script_logger.info(f"成功從 {nicknames_path} 載入元素暱稱資料。")
+        db_client.collection('MD_GameConfigs').document('ElementNicknames').set({'nicknames': element_nicknames_data})
+        script_logger.info("成功將 element_nicknames.json 的內容寫入 Firestore 的 ElementNicknames 文件。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到元素暱稱設定檔 {nicknames_path}。請確認檔案已建立。")
+        return
+    except Exception as e:
+        script_logger.error(f"處理 ElementNicknames 資料失敗: {e}")
+        return
 
     # 命名限制設定 (NamingConstraints)
     naming_constraints_data = {
@@ -249,16 +257,17 @@ def populate_game_configs():
     db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
 
     # 新手指南資料 (NewbieGuide)
-    newbie_guide_data = [
-        {"title": "遊戲目標", "content": "歡迎來到怪獸異世界！您的目標是透過組合不同的DNA碎片，創造出獨一無二的強大怪獸，並透過養成提升它們的能力，最終在排行榜上名列前茅。"},
-        {"title": "怪獸命名規則", "content": "怪獸的完整名稱將由「您的當前稱號」+「怪獸獲得的成就」+「怪獸的屬性代表名」自動組成，總長度不超過15個字。您可以在怪獸詳細資料中修改其「屬性代表名」(最多5個字)。"},
-        {"title": "DNA組合與怪獸農場", "content": "在「DNA管理」頁籤的「DNA組合」区塊，您可以將擁有的「DNA碎片」拖曳到上方的組合槽中。合成的怪獸會出現在「怪物農場」。農場是您培育、出戰、放生怪獸的地方。"},
-        {"title": "戰鬥與吸收", "content": "您可以指派怪獸出戰並挑戰其他怪獸。勝利後，您有機會吸收敗方怪獸的精華，這可能會讓您的怪獸獲得數值成長，並獲得敗方怪獸的DNA碎片作為戰利品！"},
-        {"title": "醫療站", "content": "「醫療站」是您照護怪獸的地方。您可以為受傷的怪獸恢復HP、MP，或治療不良的健康狀態。此外，您還可以將不需要的怪獸分解成DNA碎片，或使用特定的DNA為同屬性怪獸進行充能恢復HP。"},
-        {"title": "修煉與技能成長", "content": "透過「養成」功能，您的怪獸可以進行修煉。修煉不僅能提升基礎數值、獲得物品，還有機會讓怪獸的技能獲得經驗值。技能經驗值滿了就能升級，變得更強！修煉中還有可能領悟全新的技能(等級1)！您將有機會決定是否讓怪獸學習新技能或替換現有技能。"},
-        {"title": "屬性克制與技能類別", "content": "遊戲中存在屬性克制關係（詳見元素克制表）。此外，技能分為近戰、遠程、魔法、輔助等不同類別，怪獸的個性會影響它們使用不同類別技能的傾向。"},
-    ]
-    db_client.collection('MD_GameConfigs').document('NewbieGuide').set({'guide_entries': newbie_guide_data})
+    try:
+        guide_path = os.path.join(data_dir, 'newbie_guide.json')
+        with open(guide_path, 'r', encoding='utf-8') as f:
+            newbie_guide_data = json.load(f)
+        script_logger.info(f"成功從 {guide_path} 載入新手指南資料。")
+        db_client.collection('MD_GameConfigs').document('NewbieGuide').set({'guide_entries': newbie_guide_data})
+        script_logger.info("成功寫入 NewbieGuide 資料。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到新手指南設定檔 {guide_path}。")
+    except Exception as e:
+        script_logger.error(f"處理 NewbieGuide 資料失敗: {e}")
 
     # 價值設定資料 (ValueSettings)
     value_settings_data = {
