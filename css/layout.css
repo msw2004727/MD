@@ -214,8 +214,8 @@
     width: 100vw;
     height: 100vh;
     
-    /* 背景圖與深色濾鏡 */
-    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.95)), url('https://github.com/msw2004727/MD/blob/main/images/001.png?raw=true');
+    /* 【修改】降低深色濾鏡的不透明度，讓背景圖更明顯 */
+    background-image: linear-gradient(rgba(18, 18, 18, 0.4), rgba(18, 18, 18, 0.6)), url('https://github.com/msw2004727/MD/blob/main/images/001.png?raw=true');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
