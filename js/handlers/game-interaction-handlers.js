@@ -251,6 +251,12 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
          showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
         return;
     }
+    
+    // 【新增】檢查瀕死狀態
+    if (playerMonster.hp < playerMonster.initial_max_hp * 0.25) {
+        showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
+        return;
+    }
 
     let opponentMonster = null;
 
