@@ -185,9 +185,15 @@ function hideModal(modalId) {
         if (gameState.activeModalId === modalId) {
             gameState.activeModalId = null;
         }
+        // 清除通用回饋視窗的計時器
         if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
             clearInterval(gameState.feedbackHintInterval);
             gameState.feedbackHintInterval = null;
+        }
+        // 清除修煉成果視窗的計時器
+        if (modalId === 'training-results-modal' && gameState.trainingHintInterval) {
+            clearInterval(gameState.trainingHintInterval);
+            gameState.trainingHintInterval = null;
         }
     }
 }
@@ -198,6 +204,10 @@ function hideAllModals() {
         if (modal.id === 'feedback-modal' && gameState.feedbackHintInterval) {
             clearInterval(gameState.feedbackHintInterval);
             gameState.feedbackHintInterval = null;
+        }
+        if (modal.id === 'training-results-modal' && gameState.trainingHintInterval) {
+            clearInterval(gameState.trainingHintInterval);
+            gameState.trainingHintInterval = null;
         }
         modal.style.display = 'none';
     });
