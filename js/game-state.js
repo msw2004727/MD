@@ -78,6 +78,8 @@ const gameState = {
     cultivationStartTime: null,
     cultivationDurationSet: 0,
     lastCultivationResult: null,
+    feedbackHintInterval: null, // 通用回饋視窗的提示計時器
+    trainingHintInterval: null, // 修煉成果視窗的提示計時器
     
     // 戰鬥相關
     battleTargetMonster: null,
