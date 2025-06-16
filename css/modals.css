@@ -566,7 +566,6 @@ p.monster-score {
     font-size: 0.875rem;
 }
 
-/* --- 核心修改處 START --- */
 /* Announcement Modal Section Box */
 .announcement-section {
     border: 1px solid var(--border-color);
@@ -605,5 +604,47 @@ p.monster-score {
     font-size: 1.5rem;
     line-height: 1;
     color: var(--accent-color);
+}
+
+/* --- 核心修改處 START --- */
+/* Banner-Only Modal Styles */
+.modal-content.banner-only {
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    max-width: 600px; /* 您可以根據您的 Banner 寬度調整 */
+    overflow: visible; /* 允許關閉按鈕稍微超出範圍 */
+}
+
+.banner-placeholder {
+    width: 100%;
+    /* 這裡可以設定一個長寬比，讓 Banner 區域保持比例 */
+    aspect-ratio: 16 / 9; 
+    background-color: var(--bg-slot);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+}
+
+.banner-close-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 32px;
+    height: 32px;
+    background-color: var(--danger-color);
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
 }
 /* --- 核心修改處 END --- */
