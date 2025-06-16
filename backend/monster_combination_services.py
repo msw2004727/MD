@@ -29,7 +29,7 @@ DEFAULT_GAME_CONFIGS_FOR_COMBINATION: GameConfigs = {
     "personalities": [{"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰":1.0}}], # type: ignore
     "titles": ["新手"],
     "monster_achievements_list": ["新秀"],
-    "element_nicknames": {"火": "炎魂獸"},
+    "element_nicknames": {"火": {"普通": ["炎魂獸"]}}, # type: ignore
     "naming_constraints": {
         "max_player_title_len": 5, "max_monster_achievement_len": 5,
         "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
@@ -130,22 +130,17 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空。")
         return None
 
-    # ---【修改】---
-    # 新增更穩健的邏輯來處理和驗證傳入的DNA資料
     combined_dnas_data: List[DNAFragment] = []
     constituent_dna_template_ids: List[str] = []
 
     for i, dna_obj in enumerate(dna_objects_from_request):
-        # 確保傳入的項目是有效的字典物件
         if not dna_obj or not isinstance(dna_obj, dict):
             monster_combination_services_logger.warning(f"在組合槽 {i} 中發現無效的 DNA 資料 (非字典或為 None)，已跳過。")
             continue
 
-        # 優先使用 baseId (模板ID)，如果沒有再用 id (實例ID)。確保ID是字串。
         template_id = dna_obj.get("baseId") or dna_obj.get("id")
         
         if template_id and isinstance(template_id, str):
-            # 根據ID從遊戲設定中找到完整的DNA模板資訊
             dna_template = next((f for f in game_configs.get("dna_fragments", []) if f.get("id") == template_id), None)
             if dna_template:
                 combined_dnas_data.append(dna_template)
@@ -158,7 +153,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
     if len(combined_dnas_data) < 2:
         monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
         return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
-    # ---【修改結束】---
 
     combination_key = _generate_combination_key(constituent_dna_template_ids)
     monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
@@ -185,7 +179,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
-        # 返回怪獸物件，讓路由層處理後續
         return {"monster": new_monster_instance}
 
     else:
