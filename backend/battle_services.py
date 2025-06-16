@@ -529,6 +529,15 @@ def simulate_battle_full(
     elif winner_id == opponent_monster['id']: player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
     else: player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {defender_display} 戰成平手。"}
 
+    # 【新增】為被挑戰方（防禦方）產生紀錄
+    if winner_id == opponent_monster['id']:
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 向您發起挑戰，防禦成功！"}
+    elif winner_id == player_monster['id']:
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 向您發起挑戰，防禦失敗！"}
+    else: # 平手
+        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {challenger_display} 戰成平手。"}
+
+
     final_battle_result: BattleResult = {
         "log_entries": [], "raw_full_log": all_raw_log_messages,
         "winner_id": winner_id, "loser_id": loser_id, "battle_end": battle_end,
