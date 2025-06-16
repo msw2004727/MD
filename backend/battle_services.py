@@ -167,6 +167,13 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     return BASIC_ATTACK
 
 def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs, performer_player_data: Optional[PlayerGameData], target_player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
+    # --- 核心修改處 START ---
+    stat_translation = {
+        "hp": "HP", "mp": "MP", "attack": "攻擊", "defense": "防禦",
+        "speed": "速度", "crit": "爆擊", "accuracy": "命中", "evasion": "閃避"
+    }
+    # --- 核心修改處 END ---
+
     effective_skill = _get_effective_skill_stats(skill)
     action_details: Dict[str, Any] = {"performer_id": performer["id"], "target_id": target["id"], "skill_name": effective_skill["name"]}
     
@@ -212,7 +219,10 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             stat_log_parts = []
             for stat, amount in zip(stats_to_change, amounts):
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + amount
-                stat_log_parts.append(f"{effect_target['nickname']} 的 {stat.upper()} {'提升' if amount > 0 else '下降'}了！")
+                # --- 核心修改處 START ---
+                translated_stat = stat_translation.get(stat, stat.upper())
+                stat_log_parts.append(f"{effect_target['nickname']} 的 **{translated_stat}** {'提升' if amount > 0 else '下降'}了！")
+                # --- 核心修改處 END ---
             log_parts.append(" " + " ".join(stat_log_parts))
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
