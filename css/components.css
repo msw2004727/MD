@@ -425,32 +425,24 @@ body.light-theme .leaderboard-table tr:hover td {
     left: 50%;
     transform: translateX(-50%);
     z-index: 4;
-    /* 將容器設為相對定位的基準點，且寬度由其內容決定 */
-    position: relative;
-    display: inline-block;
-    /* 確保成就名不會因為寬度問題換行 */
-    white-space: nowrap;
-}
-
-#snapshot-nickname {
-    /* 作為置中的主要元素，它留在正常的文檔流中 */
-    display: inline-block;
-    position: relative; /* 成為成就名絕對定位的基準 */
-    font-size: 1.1rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5em;
+    width: 90%;
 }
 
 #snapshot-achievement-title {
-    /* 絕對定位，相對於 #snapshot-nickname */
-    position: absolute;
-    right: 100%; /* 將自己的右邊緣對齊到暱稱的左邊緣 */
-    bottom: -2px;  /* 根據字體大小和行高進行垂直微調，使其看起來對齊 */
-    margin-right: 0.5em; /* 在兩者之間創建間距 */
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-secondary);
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+#snapshot-nickname {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
 /* --- 核心修改處 END --- */
 
