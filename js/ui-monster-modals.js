@@ -678,13 +678,16 @@ function showDnaDrawModal(drawnItems) {
             const elementType = dna.type || '無';
             const elementCssKey = getElementCssClassKey(elementType);
             const typeSpanClass = `dna-type text-element-${elementCssKey}`;
+            const rarityKey = dna.rarity ? dna.rarity.toLowerCase() : 'common';
 
+            // --- 核心修改處 START ---
             itemDiv.innerHTML = `
-                <span class="dna-name">${dna.name}</span>
+                <span class="dna-name text-rarity-${rarityKey}">${dna.name}</span>
                 <span class="${typeSpanClass}">${elementType}屬性</span>
-                <span class="dna-rarity text-rarity-${dna.rarity.toLowerCase()}">${dna.rarity}</span>
+                <span class="dna-rarity text-rarity-${rarityKey}">${dna.rarity}</span>
                 <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
             `;
+            // --- 核心修改處 END ---
             grid.appendChild(itemDiv);
         });
     }
