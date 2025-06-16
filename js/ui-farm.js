@@ -135,8 +135,8 @@ function renderMonsterFarm() {
         // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
         if (playerTitle && monsterAchievement && elementNickname) {
             nameHtml = `
-                <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
-                <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
+                <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
+                <span style="color: var(--text-primary); margin: 0 0.5em;">${monsterAchievement}</span>
                 <span class="text-rarity-${rarityKey}">${elementNickname}</span>
             `;
         } else {
@@ -145,7 +145,7 @@ function renderMonsterFarm() {
         }
         
         colInfo.innerHTML = `
-            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; display: block; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9em;">
+            <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; display: flex; align-items: baseline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9em;">
                 ${nameHtml}
             </a>`;
         // --- 修改結束 ---
