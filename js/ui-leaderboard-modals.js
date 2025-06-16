@@ -113,7 +113,7 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.fontSize = '0.9em';
             
             const primaryElement = item.elements && item.elements.length > 0 ? item.elements[0] : '無';
-            const elementNickname = item.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+            const elementNickname = item.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[item.rarity] ? gameState.gameConfigs.element_nicknames[primaryElement][item.rarity][0] : primaryElement);
             const monsterAchievement = item.title || '';
             const fullNickname = item.nickname || '';
             const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
