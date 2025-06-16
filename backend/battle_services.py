@@ -271,6 +271,8 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     action_details["is_miss"] = False
 
     damage = 0
+    log_message_parts = []
+
     if effective_skill.get("power", 0) > 0:
         base_damage = effective_skill["power"]
         
@@ -282,7 +284,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         raw_damage = max(1, (base_damage + (attacker_attack_stat / 2) - (defender_defense_stat / 4)))
         damage = int(raw_damage * element_multiplier)
 
-        log_message = f"- {performer['nickname']} 使用了 {effective_skill['name']} 攻擊 {target['nickname']}"
+        log_message = f"{performer['nickname']} 使用了 {effective_skill['name']} 攻擊 {target['nickname']}"
         
         if is_crit:
             damage = int(damage * crit_multiplier)
@@ -300,38 +302,72 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         target["current_hp"] = target.get("current_hp", target["hp"]) - damage
         action_details["damage_dealt"] = damage
         
-        mp_cost_str = f" (消耗MP: {mp_cost})" if mp_cost > 0 else ""
-        action_details["log_message"] = log_message + f"造成 <damage>{damage}</damage> 點傷害{mp_cost_str}。"
-        
-        if target["current_hp"] <= 0:
-            action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
-            target["current_hp"] = 0
+        log_message_parts.append(f"{log_message}造成 <damage>{damage}</damage> 點傷害。")
+    else:
+        # 非傷害性技能的開頭日誌
+        log_message_parts.append(f"{performer['nickname']} 使用了 {effective_skill['name']}。")
 
+
+    # --- 【核心修改】智能判斷效果目標並應用效果 ---
     if effective_skill.get("effect"):
         skill_probability = effective_skill.get("probability", 100)
         if random.randint(1, 100) <= skill_probability:
-            if effective_skill["effect"] == "heal" and effective_skill.get("amount"):
+            
+            effect_type = effective_skill["effect"]
+            effect_target_monster = target # 預設目標是對手
+            is_buff = False
+
+            # 判斷是否為增益效果 (提升能力或治療)
+            if effect_type == "stat_change" and isinstance(effective_skill.get("amount"), (int, float)) and effective_skill.get("amount") > 0:
+                is_buff = True
+            elif effect_type == "heal":
+                is_buff = True
+            
+            # 如果是輔助技能，或屬於增益型的變化技能，目標改為自己
+            if effective_skill.get("skill_category") == "輔助" or is_buff:
+                effect_target_monster = performer
+
+            # 應用治療效果
+            if effect_type == "heal" and effective_skill.get("amount"):
                 heal_amount = effective_skill["amount"]
-                # 【修改】使用計算後的總血量作為上限
                 performer_max_hp = attacker_current_stats["initial_max_hp"]
                 performer["current_hp"] = min(performer_max_hp, performer.get("current_hp", performer["hp"]) + heal_amount)
                 action_details["damage_healed"] = heal_amount
-                action_details["log_message"] += f" {performer['nickname']} 恢復了 <heal>{heal_amount}</heal> 點 HP。"
-            elif effective_skill["effect"] == "status_change" and effective_skill.get("status_id"):
+                log_message_parts.append(f"{performer['nickname']} 恢復了 <heal>{heal_amount}</heal> 點 HP。")
+
+            # 應用能力值變化效果
+            elif effect_type == "stat_change" and effective_skill.get("stat") and effective_skill.get("amount"):
+                stat_to_change = effective_skill["stat"]
+                amount_to_change = effective_skill["amount"]
+                temp_modifier_key = f"temp_{stat_to_change}_modifier"
+                
+                # 初始化暫時修正值欄位
+                if temp_modifier_key not in effect_target_monster:
+                    effect_target_monster[temp_modifier_key] = 0
+                
+                effect_target_monster[temp_modifier_key] += amount_to_change
+                log_message_parts.append(f"{effect_target_monster['nickname']} 的 {stat_to_change.upper()} {'提升' if amount_to_change > 0 else '下降'}了！")
+            
+            # 應用狀態變化效果
+            elif effect_type == "status_change" and effective_skill.get("status_id"):
                 status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == effective_skill["status_id"]), None)
                 if status_template:
-                    target_monster_for_status = target if effective_skill.get("effect_target", "opponent") == "opponent" else performer
-                    if not any(cond["id"] == status_template["id"] for cond in target_monster_for_status.get("healthConditions", [])):
-                        if "healthConditions" not in target_monster_for_status:
-                            target_monster_for_status["healthConditions"] = []
+                    if not any(cond["id"] == status_template["id"] for cond in effect_target_monster.get("healthConditions", [])):
+                        if "healthConditions" not in effect_target_monster:
+                            effect_target_monster["healthConditions"] = []
                         new_status = copy.deepcopy(status_template)
                         new_status["duration"] = effective_skill.get("duration", status_template.get("duration", 1))
-                        target_monster_for_status["healthConditions"].append(new_status)
+                        effect_target_monster["healthConditions"].append(new_status)
                         action_details["status_applied"] = status_template["id"]
-                        action_details["log_message"] += f" {target_monster_for_status['nickname']} 陷入了**{status_template['name']}**狀態！"
-        elif action_details["log_message"]:
-             action_details["log_message"] += " 但附加效果沒有發動。"
+                        log_message_parts.append(f"{effect_target_monster['nickname']} 陷入了**{status_template['name']}**狀態！")
+
+    mp_cost_str = f" (消耗MP: {mp_cost})" if mp_cost > 0 else ""
+    action_details["log_message"] = " ".join(log_message_parts) + mp_cost_str
     
+    if target["current_hp"] <= 0:
+        action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
+        target["current_hp"] = 0
+
     return action_details
 
 def _process_health_conditions(monster: Monster, current_stats: Dict[str, Any]) -> Tuple[bool, List[str]]:
