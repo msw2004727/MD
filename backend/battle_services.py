@@ -225,15 +225,21 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 action_details["status_applied"] = status_template["id"]
                 effect_log = f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！"
         
-        # ... TODO: Add logic for other effects like 'rest', 'baton_pass' ...
+    # --- 新增：強制附加除錯日誌 ---
+    debug_info = f" [DEBUG: pwr={effective_skill.get('power', 0)}, eff='{effective_skill.get('effect', 'N/A')}', eff_log_len={len(effect_log)}]"
+    final_log_message = log_message + damage_log + effect_log + debug_info
     
-    action_details["log_message"] = log_message + damage_log + effect_log
-    if target["current_hp"] == 0: action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
+    action_details["log_message"] = final_log_message
+    
+    if target["current_hp"] == 0: 
+        action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
+        
     return action_details
 
 def _process_health_conditions(monster: Monster, current_stats: Dict[str, Any]) -> Tuple[bool, List[str]]:
     log_messages: List[str] = []
     skip_turn = False
+    
     if not monster.get("healthConditions"):
         return skip_turn, log_messages
 
@@ -260,6 +266,7 @@ def _process_health_conditions(monster: Monster, current_stats: Dict[str, Any]) 
     
     monster["healthConditions"] = new_conditions
     return skip_turn, log_messages
+
 
 def simulate_battle_full(
     player_monster_data: Monster,
