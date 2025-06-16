@@ -3,13 +3,13 @@
 function initializeUIEventHandlers() {
     handleThemeSwitch();
     handleAuthForms();
-    handleTopNavButtons();
+    // handleTopNavButtons(); // 已移除
     handleTabSwitching();
     handleModalCloseButtons(); 
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
-    handleSelectionModalActions(); // 新增呼叫
+    handleSelectionModalActions();
 }
 
 // --- 個別事件處理函式 ---
@@ -94,39 +94,6 @@ function handleAuthForms() {
             } catch (error) {
                 hideModal('feedback-modal');
                 showFeedbackModal('登出失敗', `登出時發生錯誤: ${error.message}`);
-            }
-        });
-    }
-}
-
-function handleTopNavButtons() {
-    if (DOMElements.playerInfoButton) {
-        DOMElements.playerInfoButton.addEventListener('click', () => {
-            if (gameState.playerData && gameState.currentUser) {
-                updatePlayerInfoModal(gameState.playerData, gameState.gameConfigs);
-                showModal('player-info-modal');
-            } else {
-                showFeedbackModal('錯誤', '無法載入玩家資訊，請先登入。');
-            }
-        });
-    }
-
-    if (DOMElements.showMonsterLeaderboardBtn) {
-        DOMElements.showMonsterLeaderboardBtn.addEventListener('click', handleMonsterLeaderboardClick);
-    }
-
-    if (DOMElements.showPlayerLeaderboardBtn) {
-        DOMElements.showPlayerLeaderboardBtn.addEventListener('click', handlePlayerLeaderboardClick);
-    }
-
-    if (DOMElements.newbieGuideBtn) {
-        DOMElements.newbieGuideBtn.addEventListener('click', () => {
-            if (gameState.gameConfigs && gameState.gameConfigs.newbie_guide) {
-                updateNewbieGuideModal(gameState.gameConfigs.newbie_guide);
-                if(DOMElements.newbieGuideSearchInput) DOMElements.newbieGuideSearchInput.value = '';
-                showModal('newbie-guide-modal');
-            } else {
-                showFeedbackModal('錯誤', '新手指南尚未載入。');
             }
         });
     }
