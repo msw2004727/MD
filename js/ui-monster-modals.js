@@ -19,7 +19,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
     const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-    const defaultElementNickname = gameConfigs.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement;
+    const defaultElementNickname = monster.element_nickname_part || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement);
     const editableNickname = monster.custom_element_nickname || defaultElementNickname;
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
@@ -375,30 +375,30 @@ function showBattleLogModal(battleResult) {
     }
 
     // --- 核心修改處 ---
-    // 建立一個新的、能正確處理名稱的函式
     const getCorrectDisplayName = (monster) => {
+        // 優先使用後端儲存的拆分欄位
+        if (monster.element_nickname_part) {
+            return monster.element_nickname_part;
+        }
+        // 若無，則使用自訂暱稱
+        if (monster.custom_element_nickname) {
+            return monster.custom_element_nickname;
+        }
+        // 最後才用預設邏輯
         const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        let displayName = monster.custom_element_nickname;
-        if (!displayName) {
-            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-            if (nicknamesByElement && typeof nicknamesByElement === 'object') {
-                const namesByRarity = nicknamesByElement[monster.rarity];
-                if (namesByRarity && namesByRarity.length > 0) {
-                    displayName = namesByRarity[0];
-                } else {
-                    displayName = primaryElement;
-                }
-            } else {
-                displayName = primaryElement;
+        const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+        if (nicknamesByElement && typeof nicknamesByElement === 'object') {
+            const namesByRarity = nicknamesByElement[monster.rarity];
+            if (namesByRarity && namesByRarity.length > 0) {
+                return namesByRarity[0];
             }
         }
-        return displayName;
+        return primaryElement; // 最終備用
     };
     
     const playerDisplayName = getCorrectDisplayName(playerMonsterData);
     const opponentDisplayName = getCorrectDisplayName(opponentMonsterData);
     // --- 修改結束 ---
-
 
     function formatBasicText(text) {
         if (!text) return '';
@@ -417,23 +417,29 @@ function showBattleLogModal(battleResult) {
         '神話': 'var(--rarity-mythical-text)'
     };
 
+    // --- 核心修改處 ---
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         if (!text) return '(內容為空)';
         let styledText = text;
-        const applyMonNameColor = (monData, displayName) => {
-            if (monData && monData.nickname && displayName) {
-                const monColor = rarityColors[monData.rarity] || 'var(--text-primary)';
-                // 將正則表達式目標從 monData.nickname 改為 displayName
-                const regex = new RegExp(displayName.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
-                const replacement = `<span style="color: ${monColor}; font-weight: bold;">${displayName}</span>`;
-                styledText = styledText.replace(regex, replacement);
-            }
-        };
-        
-        // 使用修正後的名字來取代
-        if (playerMon) applyMonNameColor(playerMon, playerDisplayName);
-        if (opponentMon) applyMonNameColor(opponentMon, opponentDisplayName);
 
+        // 定義一個內部函式來處理取代邏輯
+        const replaceName = (fullNickname, shortName, rarity) => {
+            const monColor = rarityColors[rarity] || 'var(--text-primary)';
+            // 使用正規表達式，確保只取代完整的單字，避免部分符合
+            const searchRegex = new RegExp(fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
+            const replacement = `<span style="color: ${monColor}; font-weight: bold;">${shortName}</span>`;
+            styledText = styledText.replace(searchRegex, replacement);
+        };
+
+        // 為玩家和對手執行名稱取代
+        if (playerMon && playerMon.nickname) {
+            replaceName(playerMon.nickname, playerDisplayName, playerMon.rarity);
+        }
+        if (opponentMon && opponentMon.nickname) {
+            replaceName(opponentMon.nickname, opponentDisplayName, opponentMon.rarity);
+        }
+        
+        // --- 後續技能、傷害等樣式處理維持不變 ---
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
         if (opponentMon && opponentMon.skills) allSkills.push(...opponentMon.skills);
@@ -452,6 +458,7 @@ function showBattleLogModal(battleResult) {
 
         return styledText;
     }
+    // --- 修改結束 ---
 
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
