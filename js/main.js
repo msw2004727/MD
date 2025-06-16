@@ -96,18 +96,16 @@ async function initializeGame() {
         if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
-        // 【新增】檢查後端回傳的玩家資料中，是否有新授予的稱號
         if (playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
-            const newTitle = playerData.newly_awarded_titles[0]; // 假設一次只顯示一個
+            const newTitle = playerData.newly_awarded_titles[0]; 
             if (typeof showFeedbackModal === 'function') {
-                // 使用我們之前做好的稱號彈窗來顯示
                 showFeedbackModal(
                     '榮譽加身！',
-                    '', // message 留空，因為會使用自訂排版
+                    '', 
                     false,
                     null,
                     [{ text: '開啟我的冒險！', class: 'success' }],
-                    { // 傳入 awardDetails 物件來觸發特殊排版
+                    {
                         type: 'title',
                         name: newTitle.name,
                         description: newTitle.description,
@@ -167,29 +165,31 @@ async function onAuthStateChangedHandler(user) {
     }
 }
 
+// --- 【修改】 ---
+// 修改了 attemptToInitializeApp 函式，使其能印出具體的錯誤資訊
 function attemptToInitializeApp() {
     const requiredFunctions = [
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
-        'initializeMonsterEventHandlers' // 新增的檢查
+        'initializeMonsterEventHandlers'
     ];
     
-    const allFunctionsDefined = requiredFunctions.every(fnName => typeof window[fnName] === 'function');
+    // 找出所有未定義的函式
+    const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
 
-    if (allFunctionsDefined) {
+    if (undefinedFunctions.length === 0) {
+        // 如果所有函式都已定義，則正常執行遊戲初始化
         console.log("所有核心函式已準備就緒，開始初始化應用程式。");
         initializeDOMElements(); 
         clearGameCacheOnExitOrRefresh();
         initializeFirebaseApp();
         RosterAuthListener(onAuthStateChangedHandler);
 
-        // 初始化所有拆分後的事件監聽器
         initializeUIEventHandlers();
         initializeGameInteractionEventHandlers();
         initializeDragDropEventHandlers();
-        initializeMonsterEventHandlers(); // 新增的呼叫
+        initializeMonsterEventHandlers();
 
-        // 全域計時器
         setInterval(updateAllTimers, 1000);
 
         if (DOMElements.dnaFarmTabs && DOMElements.dnaFarmTabs.querySelector('.tab-button[data-tab-target="dna-inventory-content"]')) {
@@ -198,10 +198,12 @@ function attemptToInitializeApp() {
             }
         }
     } else {
-        console.warn("一個或多個核心初始化函式尚未定義，將在 100ms 後重試...");
+        // 如果有函式未定義，則在主控台印出確切是哪個函式不見了，然後重試
+        console.warn(`一個或多個核心初始化函式尚未定義: [${undefinedFunctions.join(', ')}]，將在 100ms 後重試...`);
         setTimeout(attemptToInitializeApp, 100);
     }
 }
+
 
 document.addEventListener('DOMContentLoaded', attemptToInitializeApp);
 window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
