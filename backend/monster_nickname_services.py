@@ -8,6 +8,8 @@ from typing import Optional, List, Dict, Any
 from .MD_models import Monster, PlayerGameData, GameConfigs, NamingConstraints, ElementTypes, PlayerStats
 # 從 MD_firebase_config 導入 db 實例，因為這裡的服務需要與 Firestore 互動
 from . import MD_firebase_config
+# --- 新增: 從 utils_services 導入共用函式 ---
+from .utils_services import generate_monster_full_nickname
 
 monster_nickname_services_logger = logging.getLogger(__name__)
 
@@ -34,15 +36,7 @@ DEFAULT_GAME_CONFIGS_FOR_NICKNAME: GameConfigs = {
     "elemental_advantage_chart": {},
 }
 
-# --- 輔助函式 ---
-# 這個輔助函數從 monster_combination_services.py 移過來，因為它也用於怪獸暱稱更新
-def _generate_monster_full_nickname(player_title: str, monster_achievement: str, element_nickname_part: str, naming_constraints: NamingConstraints) -> str:
-    """根據玩家稱號、怪獸成就和元素暱稱部分生成怪獸的完整暱稱。"""
-    pt = player_title[:naming_constraints.get("max_player_title_len", 5)]
-    ma = monster_achievement[:naming_constraints.get("max_monster_achievement_len", 5)]
-    en = element_nickname_part[:naming_constraints.get("max_element_nickname_len", 5)]
-    full_name = f"{pt}{ma}{en}"
-    return full_name[:naming_constraints.get("max_monster_full_nickname_len", 15)]
+# --- 移除: _generate_monster_full_nickname 函式已移至 utils_services.py ---
 
 
 # --- 怪獸自定義暱稱服務 ---
@@ -106,7 +100,8 @@ def update_monster_custom_element_nickname_service(
 
     monster_achievement = monster_to_update.get("title", "新秀") # type: ignore
 
-    monster_to_update["nickname"] = _generate_monster_full_nickname(
+    # --- 修改: 呼叫從 utils 導入的函式 ---
+    monster_to_update["nickname"] = generate_monster_full_nickname(
         player_current_title_name, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
     )
 
