@@ -8,16 +8,19 @@ import copy
 import time
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
 
+# 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
     Monster, Skill, HealthCondition, ElementTypes, RarityDetail, GameConfigs,
     BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory, MonsterActivityLogEntry,
-    PlayerGameData
+    PlayerGameData 
 )
+# 從 MD_ai_services 導入實際的 AI 文本生成函數
 from .MD_ai_services import generate_battle_report_content
 
 
 battle_logger = logging.getLogger(__name__)
 
+# --- 新增：定義基礎的普通攻擊 ---
 BASIC_ATTACK: Skill = {
     "name": "普通攻擊",
     "power": 15,
@@ -29,6 +32,8 @@ BASIC_ATTACK: Skill = {
     "baseLevel": 1
 }
 
+
+# --- 預設遊戲設定 (用於輔助函式，避免循環導入 GameConfigs) ---
 DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "dna_fragments": [],
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
@@ -62,6 +67,8 @@ DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "cultivation_config": {},
     "elemental_advantage_chart": {},
 }
+
+# --- 輔助函式 ---
 
 def _roll_dice(sides: int, num_dice: int = 1) -> int:
     return sum(random.randint(1, sides) for _ in range(num_dice))
@@ -225,10 +232,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 action_details["status_applied"] = status_template["id"]
                 effect_log = f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！"
         
-    # --- 新增：強制附加除錯日誌 ---
-    debug_info = f" [DEBUG: pwr={effective_skill.get('power', 0)}, eff='{effective_skill.get('effect', 'N/A')}', eff_log_len={len(effect_log)}]"
-    final_log_message = log_message + damage_log + effect_log + debug_info
-    
+    final_log_message = log_message + damage_log + effect_log
     action_details["log_message"] = final_log_message
     
     if target["current_hp"] == 0: 
