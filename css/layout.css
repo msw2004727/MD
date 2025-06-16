@@ -1,244 +1,248 @@
 /* css/layout.css */
-/* --- 通用佈局 --- */
-body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: 'Noto Sans TC', 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    transition: background-color 0.3s ease, color 0.3s ease;
+
+/* Main container for the game interface */
+.main-container {
+    width: 100%;
+    max-width: 768px;
+    background-color: var(--bg-panel);
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border: 1px solid var(--border-color);
+    position: relative;
+    transition: background-color 0.3s, border-color 0.3s;
+    margin: 1rem auto;
 }
 
-#auth-screen {
+@media (min-width: 768px) {
+    .main-container {
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+}
+
+/* Panel base style */
+.panel {
+    background-color: var(--bg-slot);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Modal base styles */
+.modal {
+    display: none;
     position: fixed;
-    top: 0;
+    z-index: 1000; /* 預設模態框的層級 */
     left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.75);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* 確保彈窗的層級更高 */
+#confirmation-modal {
+    z-index: 1010; 
+}
+
+#player-info-modal {
+    z-index: 1010;
+}
+
+#monster-info-modal {
+    z-index: 1020; /* 提高層級，確保能蓋過 player-info-modal */
+}
+
+#feedback-modal {
+    z-index: 1030; /* 確保回饋/提示彈窗在最上層 */
+}
+
+
+/* 確保訓練結果彈窗的層級也可以高於普通模態框，但低於確認彈窗 */
+#training-results-modal {
+    z-index: 1000; 
+}
+
+
+.modal-content {
+    background-color: var(--bg-panel);
+    color: var(--text-primary);
+    margin: auto;
+    padding: 1.25rem;
+    border-radius: 8px;
+    width: 95%;
+    max-width: 500px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    position: relative;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.modal-content.large { max-width: 720px; }
+.modal-content.xlarge { max-width: 850px; }
+.modal-content.feedback-wide { max-width: 600px; }
+
+/* Grid for DNA combination slots */
+.dna-combination-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Inventory and Backpack Grids */
+.inventory-grid,
+.temp-backpack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+/* Action buttons grid */
+.action-buttons-grid.dual-buttons {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+.action-buttons-grid.dual-buttons > button {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    /* --- 【修改】 --- */
-    /* 使用線性漸變疊加在圖片上，製造深色濾鏡效果，確保文字清晰 */
-    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.95)), url('https://github.com/msw2004727/MD/blob/main/images/001.png?raw=true');
-    background-size: cover; /* 讓背景圖填滿整個容器 */
-    background-position: center; /* 將圖片置中 */
-    background-repeat: no-repeat; /* 避免圖片重複 */
-
-    z-index: 1000;
+}
+@media (max-width: 480px) {
+    .action-buttons-grid.dual-buttons {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
 }
 
-.auth-container {
-    text-align: center;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: rgba(0, 0, 0, 0.3); /* 為按鈕區塊加上輕微的背景，與底圖區分 */
-    backdrop-filter: blur(4px); /* 毛玻璃效果 */
-    -webkit-backdrop-filter: blur(4px); /* 兼容 Safari */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
+/* ======================================= */
+/* ====== Monster Farm Layout Grid ======= */
+/* ======================================= */
 
-.auth-title {
-    font-size: 3em;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
-    margin-bottom: 2rem;
-}
-
-#game-container {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    max-width: 1200px; /* 限制最大寬度，避免在大螢幕上過度拉伸 */
-    margin: 0 auto; /* 左右置中 */
-    width: 100%;
-}
-
-.main-container {
-    display: grid;
-    grid-template-columns: 350px 1fr; /* 左側固定寬度，右側自適應 */
-    gap: 15px; /* 左右面板間距 */
-    width: 100%;
-    max-width: 1200px;
-    padding: 15px;
-    position: relative;
-}
-
-.panel {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-.panel-title {
-    font-size: 1.25em;
-    font-weight: bold;
-    color: var(--text-primary);
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--accent-color);
-}
-
-.panel-title-container {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 10px;
+#farm-table-wrapper {
+    overflow-x: auto;
     padding-bottom: 5px;
 }
 
-.panel-title-hint {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-}
-
-/* --- DNA 組合與庫存網格 --- */
-.dna-combination-grid, .inventory-grid, .temp-backpack-grid {
-    display: grid;
-    gap: 10px;
-}
-
-.dna-combination-grid {
-    grid-template-columns: repeat(5, 1fr);
-}
-
-.inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-}
-
-.temp-backpack-grid {
-    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
-}
-
-.farm-header-grid, .farm-row-grid {
-    display: grid;
-    grid-template-columns: 80px 1fr 100px 100px 120px; /* 調整欄位寬度 */
-    gap: 10px;
-    align-items: center;
-    padding: 8px;
-    border-bottom: 1px solid var(--border-color);
+#farmed-monsters-list {
+    padding-bottom: 5px;
 }
 
 .farm-header-grid {
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 1rem;
     color: var(--text-secondary);
-}
-
-.farm-row-grid:last-child {
-    border-bottom: none;
-}
-
-.farm-monster-name, .farm-monster-score, .farm-monster-status {
-    font-size: 0.9em;
-}
-
-.cultivation-locations-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.cultivation-location-card {
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
+    padding-bottom: 0.5rem;
     text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-    background-color: var(--bg-primary);
+    border-bottom: 2px solid var(--accent-color);
 }
 
-.cultivation-location-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--accent-color);
-    box-shadow: 0 4px 15px rgba(var(--accent-color-rgb), 0.2);
-}
-
-.cultivation-location-card img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 6px;
-    margin-bottom: 10px;
-}
-
-.cultivation-location-card h5 {
-    font-size: 1.1em;
-    font-weight: bold;
-    color: var(--text-primary);
-    margin-bottom: 5px;
-}
-
-.cultivation-location-card p {
-    font-size: 0.9em;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-
-/* 新增：天梯排行榜選擇彈窗的佈局 */
-.selection-container {
+.farm-header-grid, .farm-monster-item {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 10px;
+    /* 【修改】調整欄位寬度以符合新需求 */
+    grid-template-columns: 30px 80px minmax(200px, 1fr) 70px 145px 140px;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    min-width: 720px; /* 增加最小寬度以容納所有欄位 */
 }
 
-.selection-column {
+/* Center align all header and column content by default */
+.farm-header-grid > div,
+.farm-monster-item > .farm-col {
+    text-align: center;
+    display: flex; /* Use flex to center content vertically and horizontally */
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* Specifically align monster info column to the left */
+/* 【修改】現在對應到第3個子元素 */
+.farm-header-grid > div:nth-child(3),
+.farm-monster-item .farm-col-info {
+    text-align: left;
+    justify-self: start;
+    justify-content: flex-start; /* Align flex items to the start */
+    display: block; /* Revert to block for normal text flow */
+}
+
+.farm-monster-item:last-child { 
+    border-bottom: none; 
+}
+
+/* Auth screen layout */
+#auth-screen {
+    /* 保持原有的佈局屬性 */
     display: flex;
     flex-direction: column;
     align-items: center;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 15px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-.selection-column:hover {
-    border-color: var(--accent-color);
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(var(--accent-color-rgb), 0.2);
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+
+    /* 新增：設定相對定位以控制偽元素的層級 */
+    position: relative;
+    z-index: 1; /* 確保內容在偽元素之上 */
+    overflow: hidden; /* 避免偽元素超出邊界 */
 }
 
-.selection-banner-placeholder {
-    width: 100%;
-    padding-top: 56.25%; /* 16:9 比例 */
-    background-color: var(--bg-slot);
-    border-radius: 6px;
-    margin-bottom: 15px;
+/* 新增：使用 ::before 偽元素來專門設定背景圖層 */
+#auth-screen::before {
+    content: '';
+    position: fixed; /* 固定定位，使其填滿整個視窗 */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    
+    /* 背景圖與深色濾鏡 */
+    background-image: linear-gradient(rgba(18, 18, 18, 0.85), rgba(18, 18, 18, 0.95)), url('https://github.com/msw2004727/MD/blob/main/images/001.png?raw=true');
     background-size: cover;
     background-position: center;
-}
-/* 個別設定橫幅圖片 */
-#open-monster-leaderboard-from-selection .selection-banner-placeholder {
-    background-image: var(--monster-leaderboard-banner);
-}
-#open-player-leaderboard-from-selection .selection-banner-placeholder {
-    background-image: var(--player-leaderboard-banner);
+    background-repeat: no-repeat;
+    
+    /* 將這個偽元素放在 #auth-screen 內容的後面 */
+    z-index: -1; 
 }
 
-.selection-description-box {
-    width: 100%;
-    padding: 10px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
+
+.auth-container {
+    background-color: var(--bg-panel);
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
     text-align: center;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid var(--border-color);
 }
-
-
-/* --- 響應式設計 --- */
-@media (max-width: 768px) {
-    .main-container {
-        grid-template-columns: 1fr; /* 在小螢幕上堆疊 */
-    }
-    .auth-title {
-        font-size: 2.5em;
+/* Details grid for monster info, player info etc. */
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem 1rem;
+}
+@media (min-width: 540px) {
+    .details-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     }
 }
