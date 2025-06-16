@@ -6,38 +6,31 @@ import firebase_admin
 from firebase_admin import auth
 import logging
 import random
-import copy # 用於深拷貝怪獸數據
-import time # 導入 time 模組
-from typing import List, Dict, Any, Tuple # 引入 Tuple
+import copy 
+import time 
+from typing import List, Dict, Any, Tuple
 
-from flask_cors import cross_origin # 修正：導入 cross_origin
+from flask_cors import cross_origin
 
-# 從拆分後的新服務模組中導入函式
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service
 from .monster_combination_services import combine_dna_service 
-
-# 直接從更細分的怪物管理服務模組中導入
 from .monster_nickname_services import update_monster_custom_element_nickname_service
 from .monster_healing_services import heal_monster_service, recharge_monster_with_dna_service
 from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
-from .battle_services import simulate_battle_full # 導入新的完整戰鬥服務，而不是逐回合
-
+from .battle_services import simulate_battle_full 
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
     get_all_player_selected_monsters_service
 )
-
-# 從設定和 AI 服務模組引入函式
 from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__)
 
-# --- 輔助函式：獲取遊戲設定 ---
 def _get_game_configs_data_from_app_context():
     if 'MD_GAME_CONFIGS' not in current_app.config:
         routes_logger.warning("MD_GAME_CONFIGS 未在 current_app.config 中找到，將嘗試即時載入。")
@@ -45,7 +38,6 @@ def _get_game_configs_data_from_app_context():
         current_app.config['MD_GAME_CONFIGS'] = load_configs_inner()
     return current_app.config['MD_GAME_CONFIGS']
 
-# --- 輔助函式：獲取已驗證的使用者 ID ---
 def _get_authenticated_user_id():
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
@@ -69,7 +61,6 @@ def _get_authenticated_user_id():
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
 
-# --- 稱號授予檢查輔助函式 ---
 def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfigs) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
     player_stats = player_data.get("playerStats", {})
     if not player_stats:
@@ -130,7 +121,6 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
 
     return player_data, newly_awarded_titles
 
-# --- API 端點 ---
 @md_bp.route('/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "ok", "message": "MD API 運作中！"})
@@ -240,18 +230,15 @@ def get_player_info_route(requested_player_id: str):
 
     if player_data:
         newly_awarded_titles = []
-        # 【修改】只有在請求是玩家本人時，才進行稱號檢查與授予
         if is_self_request:
             player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
             
             if is_new_player:
-                # 如果是新玩家，將初始稱號也加入待顯示列表
                 initial_titles = player_data.get("playerStats", {}).get("titles", [])
                 for it in initial_titles:
                     if it not in newly_awarded_titles:
                         newly_awarded_titles.append(it)
             
-            # 如果有任何新稱號（來自新玩家或舊玩家補發），則儲存並加入回傳標記
             if newly_awarded_titles:
                 player_data["newly_awarded_titles"] = newly_awarded_titles
                 routes_logger.info(f"玩家 {target_player_id_to_fetch} 獲得了 {len(newly_awarded_titles)} 個新稱號，將儲存並回傳。")
@@ -320,8 +307,6 @@ def combine_dna_api_route():
                     player_stats_achievements.append("首次組合怪獸")
                     player_data["playerStats"]["achievements"] = player_stats_achievements
 
-            # ---【修改】---
-            # 在儲存前，清空組合槽
             player_data["dnaCombinationSlots"] = [None] * 5
             routes_logger.info(f"玩家 {user_id} 合成成功，已在後端清除組合槽資料。")
             
@@ -398,10 +383,13 @@ def simulate_battle_api_route():
         opponent_player_data=opponent_player_data
     )
 
+    routes_logger.info(f"DEBUG: Battle result received. Winner: {battle_result.get('winner_id')}")
+
     newly_awarded_titles = [] 
     if battle_result.get("battle_end"):
         if user_id and player_monster_data_req.get('id'):
             if player_data:
+                routes_logger.info(f"DEBUG: Processing battle result for player: {user_id}")
                 player_stats = player_data.get("playerStats")
                 if player_stats and isinstance(player_stats, dict):
                     if battle_result.get("winner_id") == player_monster_data_req['id']:
@@ -413,8 +401,14 @@ def simulate_battle_api_route():
                     player_data["playerStats"] = player_stats
 
                     farmed_monsters = player_data.get("farmedMonsters", [])
+                    routes_logger.info(f"DEBUG: Searching for monster ID {player_monster_data_req.get('id')} in player's farm.")
+                    
+                    monster_found_in_farm = False
                     for m_idx, monster_in_farm in enumerate(farmed_monsters):
                         if monster_in_farm.get("id") == player_monster_data_req['id']:
+                            monster_found_in_farm = True
+                            routes_logger.info(f"DEBUG: Found monster {monster_in_farm.get('id')}. Current activityLog length: {len(monster_in_farm.get('activityLog', []))}")
+                            
                             monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
                             monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
                             
@@ -432,28 +426,19 @@ def simulate_battle_api_route():
                                 monster_in_farm["farmStatus"]["isBattling"] = False
 
                             if battle_result.get("player_activity_log"):
+                                routes_logger.info(f"DEBUG: Activity log found in battle result. Message: {battle_result['player_activity_log']['message']}")
                                 if "activityLog" not in monster_in_farm:
                                     monster_in_farm["activityLog"] = []
                                 monster_in_farm["activityLog"].insert(0, battle_result["player_activity_log"])
+                                routes_logger.info(f"DEBUG: New log inserted. New activityLog length: {len(monster_in_farm.get('activityLog'))}")
                             break
+                    
+                    if not monster_found_in_farm:
+                        routes_logger.error(f"CRITICAL: Monster ID {player_monster_data_req.get('id')} was NOT found in player's farm after battle.")
+
                     player_data["farmedMonsters"] = farmed_monsters
                     
-                    if battle_result.get("winner_id") == player_monster_data_req.get('id') and \
-                       battle_result.get("loser_id") == opponent_monster_data_req.get('id') and \
-                       not opponent_monster_data_req.get('isNPC'):
-                        routes_logger.info(f"怪獸 {player_monster_data_req.get('nickname')} 勝利，嘗試吸收 {opponent_monster_data_req.get('nickname')}")
-                        absorption_result = absorb_defeated_monster_service(
-                            player_id=user_id,
-                            winning_monster_id=player_monster_data_req['id'],
-                            defeated_monster_snapshot=opponent_monster_data_req,
-                            game_configs=game_configs,
-                            player_data=player_data
-                        )
-                        if absorption_result and absorption_result.get("success"):
-                            battle_result["absorption_details"] = absorption_result
-                        elif absorption_result:
-                            battle_result["absorption_details"] = {"error": absorption_result.get("error")}
-                    
+                    routes_logger.info(f"DEBUG: Attempting to save updated player_data for user {user_id}.")
                     if not save_player_data_service(user_id, player_data):
                         routes_logger.warning(f"警告：戰鬥結果/吸收後，儲存攻擊方玩家 {user_id} 資料失敗。")
                 else:
