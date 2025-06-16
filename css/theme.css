@@ -51,14 +51,14 @@
 
     /* Rarity Colors (Text) Dark Theme */
     --rarity-common-text-dark: var(--text-primary-dark);     /* #c9d1d9 */
-    --rarity-rare-text-dark: var(--accent-color-dark);       /* #58a6ff */
+    --rarity-rare-text-dark: var(--success-color-dark);      /* #3fb950, 原為 --accent-color-dark */
     --rarity-elite-text-dark: #ff704d;                       /* orangey-red */
     --rarity-legendary-text-dark: var(--element-gold-text-dark); /* #e3b341 */
     --rarity-mythical-text-dark: var(--element-poison-text-dark);/* #d87ff8 */
 
     /* NEW: Rarity RGB values for background opacity (Dark Theme) */
     --rarity-common-rgb-dark: 201, 209, 217; /* from --text-primary-dark */
-    --rarity-rare-rgb-dark: 88, 166, 255;    /* from --accent-color-dark */
+    --rarity-rare-rgb-dark: 63, 185, 80;    /* from --success-color-dark, 原為 88, 166, 255 */
     --rarity-elite-rgb-dark: 255, 112, 77;   /* from --rarity-elite-text-dark */
     --rarity-legendary-rgb-dark: 227, 179, 65;/* from --element-gold-text-dark */
     --rarity-mythical-rgb-dark: 216, 127, 248;/* from --element-poison-text-dark */
@@ -116,14 +116,14 @@
 
     /* Rarity Colors (Text) Light Theme */
     --rarity-common-text-light: var(--text-primary-light);    /* #1f2328 */
-    --rarity-rare-text-light: var(--accent-color-light);      /* #0969da */
+    --rarity-rare-text-light: var(--success-color-light);     /* #1a7f37, 原為 --accent-color-light */
     --rarity-elite-text-light: #d32f2f;                       /* red */
     --rarity-legendary-text-light: var(--element-gold-text-light); /* #b08800 */
     --rarity-mythical-text-light: var(--element-poison-text-light);/* #732d91 */
 
     /* NEW: Rarity RGB values for background opacity (Light Theme) */
     --rarity-common-rgb-light: 108, 117, 125; /* A mid-gray, as text is dark */
-    --rarity-rare-rgb-light: 9, 105, 218;     /* from --accent-color-light */
+    --rarity-rare-rgb-light: 26, 127, 55;     /* from --success-color-light, 原為 9, 105, 218 */
     --rarity-elite-rgb-light: 211, 47, 47;    /* from --rarity-elite-text-light */
     --rarity-legendary-rgb-light: 176, 136, 0;/* from --element-gold-text-light */
     --rarity-mythical-rgb-light: 115, 45, 145;/* from --element-poison-text-light */
