@@ -633,7 +633,7 @@ async function refreshPlayerData() {
  * @param {string} [ownerId=null] - 如果挑戰的是其他玩家的怪獸，傳入擁有者ID。
  * @param {string} [npcId=null] - 如果挑戰的是NPC，傳入NPC ID。
  */
-async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null) {
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
     if(event) event.stopPropagation();
 
     const playerMonsterId = gameState.selectedMonsterId;
@@ -703,7 +703,9 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     
                     const { battle_result: battleResult } = await simulateBattle({
                         player_monster_data: playerMonster,
-                        opponent_monster_data: opponentMonster
+                        opponent_monster_data: opponentMonster,
+                        opponent_owner_id: ownerId,
+                        opponent_owner_nickname: ownerNickname
                     });
 
                     await refreshPlayerData(); 
@@ -783,7 +785,8 @@ function sortAndRenderLeaderboard(tableType, dataToRender = null) {
     });
 
     if (typeof updateLeaderboardTable === 'function') {
-        updateLeaderboardTable(tableType, data);
+        const containerId = `${tableType}-leaderboard-table-container`;
+        updateLeaderboardTable(tableType, data, containerId);
     }
 }
 
