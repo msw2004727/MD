@@ -106,7 +106,7 @@
     --element-wood-text-light: #1e8449;       --element-wood-bg-light: rgba(30, 132, 73, 0.1);
     --element-gold-text-light: #b08800;       --element-gold-bg-light: rgba(176, 136, 0, 0.15);
     --element-earth-text-light: #a15c38;      --element-earth-bg-light: rgba(161, 92, 56, 0.1);
-    --element-light-text-light: #525252;      --element-light-bg-light: rgba(230, 230, 230, 0.5);
+    --element-light-text-light: #525252;      --element-light-bg-light: rgba(230, 230, 230, 0.15); /* 透明度已調整 */
     --element-dark-text-light: #32383e;       --element-dark-bg-light: rgba(50, 56, 62, 0.1);
     --element-poison-text-light: #732d91;     --element-poison-bg-light: rgba(115, 45, 145, 0.1);
     --element-wind-text-light: #16a085;       --element-wind-bg-light: rgba(22, 160, 133, 0.1);
