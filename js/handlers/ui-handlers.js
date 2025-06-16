@@ -315,12 +315,9 @@ document.body.addEventListener('click', function(event) {
         handleSkillLinkClick(event);
     }
 
-    // --- 【修改】將綜合排行榜按鈕的點擊事件暫時註解掉 ---
-    /*
-    const combinedLeaderboardBtn = event.target.closest('#snapshot-combined-leaderboard-btn');
-    if (combinedLeaderboardBtn) {
-        console.log("綜合排行榜按鈕 (🪜) 已被點擊！");
-        handleCombinedLeaderboardClick();
+    // --- 【新增】處理綜合選單按鈕的點擊事件 ---
+    const selectionBtn = event.target.closest('#snapshot-selection-modal-btn');
+    if (selectionBtn) {
+        showModal('selection-modal');
     }
-    */
 });
