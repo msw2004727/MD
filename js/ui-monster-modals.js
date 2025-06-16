@@ -683,17 +683,10 @@ function updateTrainingResultsModal(results, monsterName) {
     
     const modalBody = DOMElements.trainingResultsModal.querySelector('.modal-body');
 
-    const dividerStyle = `border: none; height: 1px; background-color: var(--border-color); margin: 1rem 0;`;
-
     const bannerUrl = gameState.assetPaths?.images?.modals?.trainingResults || '';
     const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="${bannerUrl}" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
     
-    let hintHtml = '';
-    const hintsArray = gameState.uiTextContent?.training_hints || [];
-    if (hintsArray.length > 0) {
-        const randomIndex = Math.floor(Math.random() * hintsArray.length);
-        hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p>${hintsArray[randomIndex]}</p></div>`;
-    }
+    const hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p id="training-hints-carousel">正在讀取提示...</p></div>`;
 
     let storyHtml = '';
     const storyContent = (results.adventure_story || "").replace(/\n/g, '<br>');
@@ -745,6 +738,26 @@ function updateTrainingResultsModal(results, monsterName) {
     }
 
     modalBody.innerHTML = bannerHtml + hintHtml + storyHtml + abilityGrowthSectionHtml + valueChangeSectionHtml + itemsSectionHtml;
+
+    const hintElement = modalBody.querySelector('#training-hints-carousel');
+    const hintsArray = gameState.uiTextContent?.training_hints || [];
+    
+    if (gameState.trainingHintInterval) {
+        clearInterval(gameState.trainingHintInterval);
+        gameState.trainingHintInterval = null;
+    }
+
+    if (hintElement && hintsArray.length > 0) {
+        const firstRandomIndex = Math.floor(Math.random() * hintsArray.length);
+        hintElement.textContent = `💡 ${hintsArray[firstRandomIndex]}`;
+        gameState.trainingHintInterval = setInterval(() => {
+            const randomIndex = Math.floor(Math.random() * hintsArray.length);
+            hintElement.textContent = `💡 ${hintsArray[randomIndex]}`;
+        }, 5000);
+    } else if (hintElement) {
+        const hintContainer = hintElement.closest('.training-hints-container');
+        if (hintContainer) hintContainer.style.display = 'none';
+    }
 
     const itemsGridContainer = modalBody.querySelector('#training-items-grid');
     if (itemsGridContainer && typeof applyDnaItemStyle === 'function') {
