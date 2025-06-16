@@ -162,9 +162,22 @@ function updateMonsterSnapshot(monster) {
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const elementNickname = monster.custom_element_nickname || 
-                                (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+        // --- 核心修改處 START ---
+        let elementNickname;
+        if (monster.custom_element_nickname) {
+            elementNickname = monster.custom_element_nickname;
+        } else {
+            const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+            const monsterRarity = monster.rarity || '普通';
+            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+            if (nicknamesByElement && nicknamesByElement[monsterRarity] && nicknamesByElement[monsterRarity].length > 0) {
+                elementNickname = nicknamesByElement[monsterRarity][0];
+            } else {
+                elementNickname = primaryElement; 
+            }
+        }
+        // --- 核心修改處 END ---
+        
         const achievement = monster.title || '新秀';
         
         DOMElements.snapshotNickname.textContent = elementNickname;
