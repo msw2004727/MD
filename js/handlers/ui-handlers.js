@@ -18,14 +18,13 @@ function initializeUIEventHandlers() {
 }
 
 // --- 核心修改處 START ---
-// 新增函式來處理 Banner 彈窗的開啟與關閉
+// 新增函式來處理 Banner 彈窗的開啟
 function handleInventoryGuideModal() {
     const openBtn = document.getElementById('inventory-guide-button');
     const bannerModal = document.getElementById('banner-modal');
     const bannerContent = document.getElementById('banner-modal-content');
-    const closeBtn = bannerModal ? bannerModal.querySelector('.banner-close-button') : null;
 
-    if (openBtn && bannerModal && closeBtn) {
+    if (openBtn && bannerModal) {
         openBtn.addEventListener('click', () => {
             // 在這裡可以設定 Banner 的內容，例如圖片
             // 為了演示，我們先用文字代替
@@ -35,10 +34,6 @@ function handleInventoryGuideModal() {
                 bannerContent.innerHTML = '<p style="font-size: 1.2rem;">這裡是 Banner 內容</p>';
             }
             showModal('banner-modal');
-        });
-
-        closeBtn.addEventListener('click', () => {
-            hideModal('banner-modal');
         });
     }
 }
