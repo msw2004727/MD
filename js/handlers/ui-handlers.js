@@ -9,10 +9,29 @@ function initializeUIEventHandlers() {
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
-    
+    handleSelectionModalActions(); // 新增呼叫
 }
 
 // --- 個別事件處理函式 ---
+
+// 【新增】處理天梯-排行榜彈窗內的點擊事件
+function handleSelectionModalActions() {
+    const selectionModal = document.getElementById('selection-modal');
+    if (!selectionModal) return;
+
+    selectionModal.addEventListener('click', (event) => {
+        const monsterColumn = event.target.closest('#open-monster-leaderboard-from-selection');
+        const playerColumn = event.target.closest('#open-player-leaderboard-from-selection');
+
+        if (monsterColumn) {
+            hideModal('selection-modal');
+            handleMonsterLeaderboardClick(); // 呼叫現有的函式來打開怪獸排行榜
+        } else if (playerColumn) {
+            hideModal('selection-modal');
+            handlePlayerLeaderboardClick(); // 呼叫現有的函式來打開玩家排行榜
+        }
+    });
+}
 
 function handleThemeSwitch() {
     if (DOMElements.themeSwitcherBtn) {
@@ -315,7 +334,6 @@ document.body.addEventListener('click', function(event) {
         handleSkillLinkClick(event);
     }
 
-    // --- 【新增】處理綜合選單按鈕的點擊事件 ---
     const selectionBtn = event.target.closest('#snapshot-selection-modal-btn');
     if (selectionBtn) {
         showModal('selection-modal');
