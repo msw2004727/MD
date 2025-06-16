@@ -10,9 +10,39 @@ function initializeUIEventHandlers() {
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
     handleSelectionModalActions();
+    
+    // --- 核心修改處 START ---
+    // 為新的 Banner 彈窗按鈕綁定事件
+    handleInventoryGuideModal();
+    // --- 核心修改處 END ---
 }
 
-// --- 個別事件處理函式 ---
+// --- 核心修改處 START ---
+// 新增函式來處理 Banner 彈窗的開啟與關閉
+function handleInventoryGuideModal() {
+    const openBtn = document.getElementById('inventory-guide-button');
+    const bannerModal = document.getElementById('banner-modal');
+    const bannerContent = document.getElementById('banner-modal-content');
+    const closeBtn = bannerModal ? bannerModal.querySelector('.banner-close-button') : null;
+
+    if (openBtn && bannerModal && closeBtn) {
+        openBtn.addEventListener('click', () => {
+            // 在這裡可以設定 Banner 的內容，例如圖片
+            // 為了演示，我們先用文字代替
+            if (bannerContent) {
+                // 這裡您可以動態載入圖片
+                // 例如：bannerContent.innerHTML = '<img src="您的圖片路徑" alt="說明圖" style="width:100%; height:100%; object-fit:contain;">';
+                bannerContent.innerHTML = '<p style="font-size: 1.2rem;">這裡是 Banner 內容</p>';
+            }
+            showModal('banner-modal');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            hideModal('banner-modal');
+        });
+    }
+}
+// --- 核心修改處 END ---
 
 // 【新增】處理天梯-排行榜彈窗內的點擊事件
 function handleSelectionModalActions() {
