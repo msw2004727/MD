@@ -174,13 +174,11 @@
 
 
 /* Specifically align monster info column to the left */
-/* 【修改】現在對應到第3個子元素 */
 .farm-header-grid > div:nth-child(3),
 .farm-monster-item .farm-col-info {
     text-align: left;
     justify-self: start;
     justify-content: flex-start; /* Align flex items to the start */
-    display: block; /* Revert to block for normal text flow */
 }
 
 .farm-monster-item:last-child { 
