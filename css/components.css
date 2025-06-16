@@ -417,19 +417,35 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 .snapshot-info-left { text-align: left; }
 .snapshot-info-right { text-align: right; }
+
+/* --- 核心修改處 START --- */
+#snapshot-main-content {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5em;
+    width: 90%;
+}
+
 #snapshot-achievement-title {
-    font-size: 0.75rem;
-    font-weight: normal;
+    font-size: 0.8rem;
+    font-weight: 500;
     color: var(--text-secondary);
-    display: block;
-    margin-bottom: 2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
+
 #snapshot-nickname {
-    font-size: 1rem;
-    display: block;
-    margin-top: 1px;
-    font-weight: normal;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
+/* --- 核心修改處 END --- */
+
 #snapshot-evaluation {
     font-size: 0.875rem;
     font-weight: normal;
@@ -447,17 +463,6 @@ body.light-theme .leaderboard-table tr:hover td {
     border-radius: 4px;
 }
 #snapshot-win-loss span { display: block; }
-#snapshot-main-content {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 4;
-    text-align: center;
-}
-#snapshot-main-content #snapshot-nickname {
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
-}
 
 .farm-col-info .monster-name-display {
     font-weight: bold;
