@@ -29,6 +29,43 @@ function initializeFirebaseApp() {
     }
 }
 
+async function loadAndDisplayAnnouncement() {
+    try {
+        // 從根目錄讀取新的公告檔案
+        const response = await fetch('./announcement.json');
+        if (!response.ok) {
+            throw new Error('無法讀取公告檔案，網路回應錯誤。');
+        }
+        const announcementData = await response.json();
+
+        // 選取要填入內容的 DOM 元素
+        const titleElement = document.querySelector('#official-announcement-modal .modal-header');
+        const contentContainer = document.getElementById('announcement-content');
+
+        if (titleElement && contentContainer) {
+            // 更新標題
+            titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
+
+            // 組合公告內容的 HTML
+            let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
+            
+            (announcementData.paragraphs || []).forEach(paragraph => {
+                contentHtml += `<p>${paragraph}</p>`;
+            });
+
+            contentHtml += `<p style="text-align: right; margin-top: 20px;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
+
+            // 將組合好的 HTML 填入內容容器中
+            contentContainer.innerHTML = contentHtml;
+        }
+
+    } catch (error) {
+        console.error('讀取或顯示公告時發生錯誤:', error);
+        // 如果載入失敗，公告彈窗將維持空白，不會影響遊戲主體功能。
+    }
+}
+
+
 async function initializeGame() {
     console.log("Initializing game...");
     if (typeof showFeedbackModal === 'function') {
@@ -82,6 +119,9 @@ async function initializeGame() {
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
         if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
         if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
+        
+        // 新增：呼叫讀取並顯示公告的函式
+        loadAndDisplayAnnouncement();
 
         const defaultMonster = getDefaultSelectedMonster();
         setTimeout(() => {
