@@ -57,6 +57,13 @@ async function loadAndDisplayAnnouncement() {
 
             // 將組合好的 HTML 填入內容容器中
             contentContainer.innerHTML = contentHtml;
+
+            // --- 核心修改處 START ---
+            // 在HTML內容被插入後，立即更新玩家暱稱
+            if (typeof updateAnnouncementPlayerName === 'function') {
+                updateAnnouncementPlayerName(gameState.playerNickname);
+            }
+            // --- 核心修改處 END ---
         }
 
     } catch (error) {
@@ -137,8 +144,10 @@ async function initializeGame() {
 
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
+        
+        // --- 核心修改處：移除此處的呼叫 ---
+        // if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
 
-        if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
         if (playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
@@ -190,7 +199,7 @@ async function onAuthStateChangedHandler(user) {
         await initializeGame();
         
         if (localStorage.getItem('announcementShown_v1') !== 'true') {
-            if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
+            // --- 核心修改處：移除此處的呼叫 ---
             if (typeof showModal === 'function') showModal('official-announcement-modal');
         }
 
