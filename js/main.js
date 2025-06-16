@@ -53,7 +53,7 @@ async function loadAndDisplayAnnouncement() {
                 contentHtml += `<p>${paragraph}</p>`;
             });
 
-            contentHtml += `<p style="text-align: right; margin-top: 20px;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
+            contentHtml += `<p style="text-align: right; margin-top: 20px; color: var(--rarity-legendary-text); font-weight: bold;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
 
             // 將組合好的 HTML 填入內容容器中
             contentContainer.innerHTML = contentHtml;
