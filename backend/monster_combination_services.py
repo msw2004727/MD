@@ -8,6 +8,10 @@ from typing import List, Dict, Optional, Union, Tuple, Literal, Any
 from collections import Counter
 import copy # 用於深拷貝怪獸數據
 
+# --- 核心修改處 START ---
+from datetime import datetime, timedelta, timezone
+# --- 核心修改處 END ---
+
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
     PlayerGameData, PlayerStats, PlayerOwnedDNA,
@@ -148,6 +152,11 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
         return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
 
+    # --- 核心修改處 START ---
+    gmt8 = timezone(timedelta(hours=8))
+    now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
+    # --- 核心修改處 END ---
+
     combination_key = _generate_combination_key(constituent_dna_template_ids)
     monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
     recipe_doc = monster_recipes_ref.get()
@@ -164,7 +173,9 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
         new_monster_instance["creationTime"] = int(time.time())
         new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
-        new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "從既有配方召喚。"}]
+        # --- 核心修改處 START ---
+        new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "從既有配方召喚。"}]
+        # --- 核心修改處 END ---
         new_monster_instance.setdefault("cultivation_gains", {})
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
@@ -315,6 +326,8 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}"
         new_monster_instance["creationTime"] = int(time.time())
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
-        new_monster_instance["activityLog"] = [{"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
+        # --- 核心修改處 START ---
+        new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
+        # --- 核心修改處 END ---
         
         return {"monster": new_monster_instance}
