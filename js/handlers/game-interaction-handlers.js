@@ -231,3 +231,104 @@ function handleCultivationStart() {
         }
     });
 }
+
+
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
+    if(event) event.stopPropagation();
+
+    const playerMonsterId = gameState.selectedMonsterId;
+    if (!playerMonsterId) {
+        showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
+        return;
+    }
+
+    const playerMonster = getSelectedMonster();
+    if (!playerMonster) {
+        showFeedbackModal('錯誤', '找不到您選擇的出戰怪獸資料。');
+        return;
+    }
+    if (playerMonster.farmStatus?.isTraining) {
+         showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
+        return;
+    }
+
+    let opponentMonster = null;
+
+    try {
+        showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
+        
+        playerMonster.farmStatus = { ...playerMonster.farmStatus, isBattling: true };
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
+
+        if (npcId) {
+            const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
+            opponentMonster = npcTemplates.find(npc => npc.id === npcId);
+            if (!opponentMonster) throw new Error(`找不到ID為 ${npcId} 的NPC對手。`);
+            opponentMonster = JSON.parse(JSON.stringify(opponentMonster));
+            opponentMonster.isNPC = true;
+        } else if (monsterIdToChallenge && ownerId && ownerId !== gameState.playerId) {
+            const opponentPlayerData = await getPlayerData(ownerId);
+            if (!opponentPlayerData || !opponentPlayerData.farmedMonsters) throw new Error('無法獲取對手玩家資料。');
+            opponentMonster = opponentPlayerData.farmedMonsters.find(m => m.id === monsterIdToChallenge);
+            if (!opponentMonster) throw new Error(`找不到對手玩家的怪獸ID ${monsterIdToChallenge}。`);
+        } else {
+            const npcTemplates = gameState.gameConfigs?.npc_monsters || [];
+            if (npcTemplates.length > 0) {
+                opponentMonster = JSON.parse(JSON.stringify(npcTemplates[Math.floor(Math.random() * npcTemplates.length)]));
+                opponentMonster.isNPC = true;
+                console.log(`為玩家怪獸 ${playerMonster.nickname} 匹配到NPC對手: ${opponentMonster.nickname}`);
+            } else {
+                throw new Error('沒有可用的NPC對手進行挑戰。');
+            }
+        }
+        hideModal('feedback-modal');
+
+        if (!opponentMonster) {
+            showFeedbackModal('錯誤', '未能找到合適的挑戰對手。');
+            playerMonster.farmStatus.isBattling = false;
+            renderMonsterFarm();
+            updateMonsterSnapshot(playerMonster);
+            return;
+        }
+
+        gameState.battleTargetMonster = opponentMonster;
+
+        showConfirmationModal(
+            '確認出戰',
+            `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${opponentMonster.nickname} (評價: ${opponentMonster.score}) 嗎？`,
+            async () => {
+                try {
+                    showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
+                    
+                    const { battle_result: battleResult } = await simulateBattle({
+                        player_monster_data: playerMonster,
+                        opponent_monster_data: opponentMonster,
+                        opponent_owner_id: ownerId,
+                        opponent_owner_nickname: ownerNickname
+                    });
+
+                    await refreshPlayerData(); 
+                    updateMonsterSnapshot(getSelectedMonster()); 
+
+                    showBattleLogModal(battleResult);
+
+                    hideModal('feedback-modal');
+
+                } catch (battleError) {
+                    showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
+                    console.error("模擬戰鬥錯誤:", battleError);
+                    await refreshPlayerData(); 
+                }
+            },
+            { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
+        );
+
+    } catch (error) {
+        showFeedbackModal('錯誤', `準備戰鬥失敗: ${error.message}`);
+        console.error("準備戰鬥錯誤:", error);
+        playerMonster.farmStatus.isBattling = false;
+        renderMonsterFarm();
+        updateMonsterSnapshot(playerMonster);
+    }
+}
