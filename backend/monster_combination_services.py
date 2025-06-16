@@ -18,6 +18,8 @@ from .MD_models import (
 )
 # 引入 AI 服務模組
 from .MD_ai_services import generate_monster_ai_details
+# --- 新增: 從 utils_services 導入共用函式 ---
+from .utils_services import generate_monster_full_nickname
 
 monster_combination_services_logger = logging.getLogger(__name__)
 
@@ -94,14 +96,6 @@ def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, m
         "recoilDamage": skill_template.get("recoilDamage") # 反傷比例
     }
     return new_skill_instance
-
-def _generate_monster_full_nickname(player_title: str, monster_achievement: str, element_nickname_part: str, naming_constraints: NamingConstraints) -> str:
-    """根據玩家稱號、怪獸成就和元素暱稱部分生成怪獸的完整暱稱。"""
-    pt = player_title[:naming_constraints.get("max_player_title_len", 5)]
-    ma = monster_achievement[:naming_constraints.get("max_monster_achievement_len", 5)]
-    en = element_nickname_part[:naming_constraints.get("max_element_nickname_len", 5)]
-    full_name = f"{pt}{ma}{en}"
-    return full_name[:naming_constraints.get("max_monster_full_nickname_len", 15)]
 
 def _generate_combination_key(dna_template_ids: List[str]) -> str:
     """
@@ -249,7 +243,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         element_nickname = random.choice(possible_nicknames)
         
         naming_constraints = game_configs.get("naming_constraints", {})
-        full_nickname = _generate_monster_full_nickname(player_title, monster_achievement, element_nickname, naming_constraints)
+        full_nickname = generate_monster_full_nickname(player_title, monster_achievement, element_nickname, naming_constraints)
 
         stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
         initial_max_hp = int(base_stats.get("hp", 50) * stat_multiplier)
