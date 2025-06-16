@@ -2192,12 +2192,10 @@
       "baseLevel": 1,
       "level_milestones": {
         "5": {
-          "description": "速度提升效果增加。",
-          "add_effect": {"amount": 30}
+          "description": "速度提升效果增加。"
         },
         "10": {
-          "description": "使用後，下一回合的攻擊必定先手。",
-          "add_effect": {"effect": "priority_boost", "duration": 1}
+          "description": "使用後，下一回合的攻擊必定先手。"
         }
       }
     },
@@ -2529,6 +2527,7 @@
       "stat": "attack",
       "amount": -8,
       "probability": 100,
+      "target": "opponent",
       "baseLevel": 1,
       "level_milestones": {
         "5": {
@@ -2577,6 +2576,7 @@
       "stat": "defense",
       "amount": -8,
       "probability": 100,
+      "target": "opponent",
       "baseLevel": 1,
       "level_milestones": {
         "5": {
