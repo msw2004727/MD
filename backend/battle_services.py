@@ -8,19 +8,16 @@ import copy
 import time
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
 
-# 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
     Monster, Skill, HealthCondition, ElementTypes, RarityDetail, GameConfigs,
     BattleLogEntry, BattleAction, BattleResult, Personality, ValueSettings, SkillCategory, MonsterActivityLogEntry,
-    PlayerGameData 
+    PlayerGameData
 )
-# 從 MD_ai_services 導入實際的 AI 文本生成函數
 from .MD_ai_services import generate_battle_report_content
 
 
 battle_logger = logging.getLogger(__name__)
 
-# --- 新增：定義基礎的普通攻擊 ---
 BASIC_ATTACK: Skill = {
     "name": "普通攻擊",
     "power": 15,
@@ -32,8 +29,6 @@ BASIC_ATTACK: Skill = {
     "baseLevel": 1
 }
 
-
-# --- 預設遊戲設定 (用於輔助函式，避免循環導入 GameConfigs) ---
 DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "dna_fragments": [],
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
@@ -67,8 +62,6 @@ DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "cultivation_config": {},
     "elemental_advantage_chart": {},
 }
-
-# --- 輔助函式 ---
 
 def _roll_dice(sides: int, num_dice: int = 1) -> int:
     return sum(random.randint(1, sides) for _ in range(num_dice))
@@ -199,6 +192,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     log_message = f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"
     damage_log = ""
     effect_log = ""
+    heal_log = ""
 
     if effective_skill.get("power", 0) > 0:
         element_multiplier = _calculate_elemental_advantage(effective_skill["type"], target.get("elements", []), game_configs)
@@ -224,6 +218,22 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 log_parts.append(f"{effect_target['nickname']} 的 {stat.upper()} {'提升' if amount > 0 else '下降'}了！")
             effect_log = " " + " ".join(log_parts)
 
+        elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
+            heal_amount = effective_skill["amount"]
+            max_hp = _get_monster_current_stats(effect_target, performer_player_data if is_buff else target_player_data)["initial_max_hp"]
+            healed_hp = min(heal_amount, max_hp - effect_target.get("current_hp", 0))
+            effect_target["current_hp"] += healed_hp
+            action_details["damage_healed"] = healed_hp
+            heal_log = f" {effect_target['nickname']} 恢復了 <heal>{healed_hp}</heal> 點HP！"
+
+        elif effect_type == "leech" and "amount" in effective_skill and action_details.get("damage_dealt", 0) > 0:
+            leech_amount = int(action_details["damage_dealt"] * (effective_skill["amount"] / 100))
+            max_hp = _get_monster_current_stats(performer, performer_player_data)["initial_max_hp"]
+            healed_hp = min(leech_amount, max_hp - performer.get("current_hp", 0))
+            performer["current_hp"] += healed_hp
+            action_details["damage_healed"] = healed_hp
+            heal_log = f" {performer['nickname']} 吸取了 <heal>{healed_hp}</heal> 點生命！"
+
         elif effect_type == "status_change" and "status_id" in effective_skill:
             status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == effective_skill["status_id"]), None)
             if status_template and not any(cond.get("id") == status_template["id"] for cond in effect_target.get("healthConditions", [])):
@@ -232,7 +242,8 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 action_details["status_applied"] = status_template["id"]
                 effect_log = f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！"
         
-    final_log_message = log_message + damage_log + effect_log
+    final_log_message = log_message + damage_log + heal_log + effect_log
+    
     action_details["log_message"] = final_log_message
     
     if target["current_hp"] == 0: 
