@@ -46,24 +46,57 @@ async function loadAndDisplayAnnouncement() {
             // 更新標題
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
 
+            // --- 核心修改處 START ---
             // 組合公告內容的 HTML
             let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
             
+            let inSection = false;
+            let sectionHtml = "";
+
             (announcementData.paragraphs || []).forEach(paragraph => {
-                contentHtml += `<p>${paragraph}</p>`;
+                if (paragraph.startsWith("目前已發放功能如下：") || paragraph.startsWith("接下來開發目標：")) {
+                    if (inSection) { // Close previous section if open
+                        sectionHtml += `</ul></div>`;
+                        contentHtml += sectionHtml;
+                    }
+                    // Start new section
+                    sectionHtml = `<div class="announcement-section"><p class="announcement-section-title">${paragraph}</p><ul>`;
+                    inSection = true;
+                } else if (paragraph.startsWith("．")) {
+                    if (inSection) {
+                        sectionHtml += `<li>${paragraph.substring(1).trim()}</li>`;
+                    } else {
+                        contentHtml += `<p>${paragraph}</p>`;
+                    }
+                } else {
+                    if (inSection) { // Close section if it's followed by a normal paragraph or empty line
+                        sectionHtml += `</ul></div>`;
+                        contentHtml += sectionHtml;
+                        sectionHtml = "";
+                        inSection = false;
+                    }
+                    if (paragraph.trim() !== '') { // Only add non-empty paragraphs
+                        contentHtml += `<p>${paragraph}</p>`;
+                    }
+                }
             });
+
+            // Append the last section if the loop ends while inside one
+            if (inSection) {
+                sectionHtml += `</ul></div>`;
+                contentHtml += sectionHtml;
+            }
 
             contentHtml += `<p style="text-align: right; margin-top: 20px; color: var(--rarity-legendary-text); font-weight: bold;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
 
             // 將組合好的 HTML 填入內容容器中
             contentContainer.innerHTML = contentHtml;
+            // --- 核心修改處 END ---
 
-            // --- 核心修改處 START ---
             // 在HTML內容被插入後，立即更新玩家暱稱
             if (typeof updateAnnouncementPlayerName === 'function') {
                 updateAnnouncementPlayerName(gameState.playerNickname);
             }
-            // --- 核心修改處 END ---
         }
 
     } catch (error) {
@@ -145,9 +178,6 @@ async function initializeGame() {
         if (DOMElements.authScreen) toggleElementDisplay(DOMElements.authScreen, false);
         if (DOMElements.gameContainer) toggleElementDisplay(DOMElements.gameContainer, true, 'flex');
         
-        // --- 核心修改處：移除此處的呼叫 ---
-        // if (typeof updateAnnouncementPlayerName === 'function') updateAnnouncementPlayerName(gameState.playerNickname);
-
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
         if (playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
@@ -199,7 +229,6 @@ async function onAuthStateChangedHandler(user) {
         await initializeGame();
         
         if (localStorage.getItem('announcementShown_v1') !== 'true') {
-            // --- 核心修改處：移除此處的呼叫 ---
             if (typeof showModal === 'function') showModal('official-announcement-modal');
         }
 
