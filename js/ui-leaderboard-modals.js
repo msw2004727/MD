@@ -112,8 +112,29 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.textOverflow = 'ellipsis';
             link.style.fontSize = '0.9em';
             
+            // --- 核心修改處 ---
             const primaryElement = item.elements && item.elements.length > 0 ? item.elements[0] : '無';
-            const elementNickname = item.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[item.rarity] ? gameState.gameConfigs.element_nicknames[primaryElement][item.rarity][0] : primaryElement);
+            let elementNickname = item.custom_element_nickname;
+
+            if (!elementNickname) {
+                const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+                if (nicknamesByElement && typeof nicknamesByElement === 'object') {
+                    // 新結構: { "普通": ["名1"], "稀有": ["名2"] }
+                    const namesByRarity = nicknamesByElement[item.rarity];
+                    if (namesByRarity && namesByRarity.length > 0) {
+                        elementNickname = namesByRarity[0]; // 排行榜顯示第一個作為代表
+                    } else {
+                        elementNickname = primaryElement; // 備用
+                    }
+                } else if (nicknamesByElement && Array.isArray(nicknamesByElement)) {
+                    // 舊結構: ["名1", "名2"]
+                    elementNickname = nicknamesByElement[0];
+                } else {
+                    elementNickname = primaryElement; // 最終備用
+                }
+            }
+            // --- 修改結束 ---
+
             const monsterAchievement = item.title || '';
             const fullNickname = item.nickname || '';
             const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
