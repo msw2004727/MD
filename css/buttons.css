@@ -279,3 +279,33 @@ button.warning-outline:hover, .button.warning-outline:hover {
     line-height: 1;
     min-width: auto;
 }
+
+/* --- 核心修改處 START --- */
+.title-action-button {
+    background-color: var(--button-secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%; /* 圓形 */
+    width: 32px;
+    height: 32px;
+    font-size: 1rem; /* 圖標大小 */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: background-color 0.2s, transform 0.1s;
+    /* 移除不必要的繼承樣式 */
+    font-weight: normal;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.title-action-button:hover {
+    background-color: var(--button-secondary-hover-bg);
+    transform: translateY(-1px);
+}
+
+.title-action-button:active {
+    transform: translateY(0);
+}
+/* --- 核心修改處 END --- */
