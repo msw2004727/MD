@@ -11,7 +11,9 @@ from google.cloud.firestore_v1.field_path import FieldPath
 import random # 引入 random 模組
 
 # 從 MD_models 導入相關的 TypedDict 定義
-from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment
+from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes
+# 從 utils_services 導入共用函式
+from .utils_services import generate_monster_full_nickname
 
 player_services_logger = logging.getLogger(__name__)
 
@@ -167,20 +169,18 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
-            needs_migration_save = False
+            # --- 原有的稱號遷移邏輯 ---
+            needs_title_migration_save = False
             update_payload = {}
-            
             player_stats = player_game_data_dict.get("playerStats", {})
-
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
                 all_titles_config = game_configs.get("titles", [])
                 new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
                 player_stats["titles"] = new_titles_list
                 update_payload["playerStats.titles"] = new_titles_list
-                needs_migration_save = True
+                needs_title_migration_save = True
                 player_services_logger.info(f"玩家 {player_id} 的稱號資料已從字串遷移至物件格式。")
-
             if "equipped_title_id" not in player_stats:
                 current_titles_obj = player_stats.get("titles", [])
                 default_equip_id = None
@@ -193,20 +193,72 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                         player_stats["titles"] = [default_title_obj]
                         default_equip_id = default_title_obj["id"]
                         update_payload["playerStats.titles"] = [default_title_obj]
-                
                 if default_equip_id:
                     player_stats["equipped_title_id"] = default_equip_id
                     update_payload["playerStats.equipped_title_id"] = default_equip_id
-                    needs_migration_save = True
+                    needs_title_migration_save = True
                     player_services_logger.info(f"為舊玩家 {player_id} 補上預設裝備稱號 ID: {default_equip_id}")
 
-            if needs_migration_save:
+            if needs_title_migration_save:
                 try:
                     game_data_ref.update(update_payload)
                     player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
                     player_game_data_dict["playerStats"] = player_stats
                 except Exception as e:
                     player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
+            
+            # --- 新增：怪獸名稱欄位遷移邏輯 ---
+            farmed_monsters = player_game_data_dict.get("farmedMonsters", [])
+            needs_monster_name_migration = False
+            if farmed_monsters: # 只有在有怪獸時才執行
+                # 獲取一次性的設定，避免在迴圈中重複獲取
+                element_nicknames_map = game_configs.get("element_nicknames", {})
+                naming_constraints = game_configs.get("naming_constraints", {})
+                # 獲取玩家當前稱號
+                player_current_title_name = "新手"
+                equipped_id = player_stats.get("equipped_title_id")
+                owned_titles = player_stats.get("titles", [])
+                if equipped_id:
+                    equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
+                    if equipped_title_obj: player_current_title_name = equipped_title_obj.get("name", "新手")
+                elif owned_titles and isinstance(owned_titles[0], dict):
+                    player_current_title_name = owned_titles[0].get("name", "新手")
+                
+                for monster in farmed_monsters:
+                    if "player_title_part" not in monster: # 如果缺少任一部分，就認定為舊資料並修補
+                        needs_monster_name_migration = True
+                        player_services_logger.info(f"偵測到玩家 {player_id} 的怪獸 {monster.get('id')} 需要進行名稱欄位遷移。")
+                        
+                        # 1. 修補玩家稱號部分
+                        monster["player_title_part"] = player_current_title_name
+                        
+                        # 2. 修補怪獸成就部分
+                        monster["achievement_part"] = monster.get("title", "新秀")
+                        
+                        # 3. 修補元素暱稱部分
+                        if monster.get("custom_element_nickname"):
+                            monster["element_nickname_part"] = monster["custom_element_nickname"]
+                        else:
+                            primary_element = monster.get("elements", ["無"])[0]
+                            monster_rarity = monster.get("rarity", "普通")
+                            rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
+                            possible_nicknames = rarity_specific_nicknames.get(monster_rarity, [primary_element])
+                            monster["element_nickname_part"] = possible_nicknames[0] if possible_nicknames else primary_element
+                        
+                        # 4. 根據修補好的三部分，重新生成完整的暱稱
+                        monster["nickname"] = generate_monster_full_nickname(
+                            monster["player_title_part"],
+                            monster["achievement_part"],
+                            monster["element_nickname_part"],
+                            naming_constraints
+                        )
+                
+                if needs_monster_name_migration:
+                    player_services_logger.info(f"玩家 {player_id} 的部分怪獸資料已完成名稱欄位遷移，將進行一次性儲存。")
+                    player_game_data_dict["farmedMonsters"] = farmed_monsters
+                    save_player_data_service(player_id, player_game_data_dict) # 儲存遷移後的資料
+
+            # --- 遷移邏輯結束 ---
             
             loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
             max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
