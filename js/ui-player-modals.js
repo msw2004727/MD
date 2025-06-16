@@ -193,12 +193,31 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  const resume = m.resume || { wins: 0, losses: 0 };
                  const totalGames = resume.wins + resume.losses;
                  const winRate = totalGames > 0 ? ((resume.wins / totalGames) * 100).toFixed(1) + '%' : 'N/A';
+                 
+                 // --- 核心修改處 ---
+                 const playerTitle = m.player_title_part;
+                 const monsterAchievement = m.achievement_part;
+                 const elementNickname = m.element_nickname_part || m.custom_element_nickname;
+
+                 let nameHtml;
+                 if (playerTitle && monsterAchievement && elementNickname) {
+                     nameHtml = `
+                        <div style="display: flex; align-items: baseline; gap: 0.5em;">
+                            <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
+                            <span style="color: var(--text-primary);">${monsterAchievement}</span>
+                            <span class="text-rarity-${rarityKey}">${elementNickname}</span>
+                        </div>
+                     `;
+                 } else {
+                     nameHtml = `<span class="text-rarity-${rarityKey}">${m.nickname || '名稱錯誤'}</span>`;
+                 }
+                 // --- 修改結束 ---
 
                  return `
                     <div class="player-monster-row">
                         <div class="monster-name-cell">
-                            <a href="#" class="monster-name text-rarity-${rarityKey} player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">
-                                ${m.nickname}
+                            <a href="#" class="player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">
+                                ${nameHtml}
                             </a>
                         </div>
                         <div class="monster-score-cell">${m.score || 0}</div>
