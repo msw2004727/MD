@@ -753,7 +753,7 @@ function updateTrainingResultsModal(results, monsterName) {
         gameState.trainingHintInterval = setInterval(() => {
             const randomIndex = Math.floor(Math.random() * hintsArray.length);
             hintElement.textContent = `💡 ${hintsArray[randomIndex]}`;
-        }, 5000);
+        }, 2000);
     } else if (hintElement) {
         const hintContainer = hintElement.closest('.training-hints-container');
         if (hintContainer) hintContainer.style.display = 'none';
