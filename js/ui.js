@@ -376,12 +376,24 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
     // --- End of New Independent Loading Modals ---
     else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
+        // --- 核心修改處 START ---
         const monster = monsterDetails.monster;
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const elementNickname = monster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
-        
+        let displayName;
+        if (monster.custom_element_nickname) {
+            displayName = monster.custom_element_nickname;
+        } else {
+            const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+            const monsterRarity = monster.rarity || '普通';
+            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+            if (nicknamesByElement && nicknamesByElement[monsterRarity] && nicknamesByElement[monsterRarity].length > 0) {
+                displayName = nicknamesByElement[monsterRarity][0];
+            } else {
+                displayName = primaryElement;
+            }
+        }
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+        // --- 核心修改處 END ---
         
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
@@ -391,7 +403,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="修煉橫幅" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
 
-        DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-rarity-${rarityKey}">${elementNickname}</strong> 已出發開始修煉。</p>`;
+        DOMElements.feedbackModalMessage.innerHTML = `<p class="text-center text-base">怪獸 <strong class="text-rarity-${rarityKey}">${displayName}</strong> 已出發開始修煉。</p>`;
         DOMElements.feedbackModal.querySelector('.modal-content').classList.remove('large-feedback-modal');
     }
     else if (monsterDetails) { // Fallback for original synthesis success
