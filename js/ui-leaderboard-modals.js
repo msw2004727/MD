@@ -113,37 +113,25 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.fontSize = '0.9em';
             
             // --- 核心修改處 ---
-            const primaryElement = item.elements && item.elements.length > 0 ? item.elements[0] : '無';
-            let elementNickname = item.custom_element_nickname;
+            const playerTitle = item.player_title_part;
+            const monsterAchievement = item.achievement_part;
+            const elementNickname = item.element_nickname_part || item.custom_element_nickname;
 
-            if (!elementNickname) {
-                const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-                if (nicknamesByElement && typeof nicknamesByElement === 'object') {
-                    // 新結構: { "普通": ["名1"], "稀有": ["名2"] }
-                    const namesByRarity = nicknamesByElement[item.rarity];
-                    if (namesByRarity && namesByRarity.length > 0) {
-                        elementNickname = namesByRarity[0]; // 排行榜顯示第一個作為代表
-                    } else {
-                        elementNickname = primaryElement; // 備用
-                    }
-                } else if (nicknamesByElement && Array.isArray(nicknamesByElement)) {
-                    // 舊結構: ["名1", "名2"]
-                    elementNickname = nicknamesByElement[0];
-                } else {
-                    elementNickname = primaryElement; // 最終備用
-                }
+            let nameHtml;
+            // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
+            if (playerTitle && monsterAchievement && elementNickname) {
+                nameHtml = `
+                    <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
+                    <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
+                    <span class="text-rarity-${rarityKey}">${elementNickname}</span>
+                `;
+            } else {
+                // 否則，直接顯示舊的完整暱稱，以相容舊資料
+                nameHtml = `<span class="text-rarity-${rarityKey}">${item.nickname || '名稱錯誤'}</span>`;
             }
+            link.innerHTML = nameHtml;
             // --- 修改結束 ---
-
-            const monsterAchievement = item.title || '';
-            const fullNickname = item.nickname || '';
-            const playerTitle = fullNickname.replace(elementNickname, '').replace(monsterAchievement, '').trim();
-
-            link.innerHTML = `
-                <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
-                <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
-                <span class="text-rarity-${rarityKey}">${elementNickname}</span>
-            `;
+            
             nicknameCell.appendChild(link);
 
 
