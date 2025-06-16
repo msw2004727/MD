@@ -30,6 +30,7 @@ const gameState = {
     },
     gameConfigs: null, // 從後端獲取的遊戲核心設定
     assetPaths: null, // 新增：用於存放從 assets.json 讀取的圖片路徑
+    uiTextContent: {}, // 新增：用於存放從 ui_text.json 讀取的文字內容
     
     // UI 相關狀態
     isLoading: false, 
