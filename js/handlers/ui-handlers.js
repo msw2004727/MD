@@ -26,12 +26,15 @@ function handleInventoryGuideModal() {
 
     if (openBtn && bannerModal) {
         openBtn.addEventListener('click', () => {
-            // 在這裡可以設定 Banner 的內容，例如圖片
-            // 為了演示，我們先用文字代替
-            if (bannerContent) {
-                // 這裡您可以動態載入圖片
-                // 例如：bannerContent.innerHTML = '<img src="您的圖片路徑" alt="說明圖" style="width:100%; height:100%; object-fit:contain;">';
-                bannerContent.innerHTML = '<p style="font-size: 1.2rem;">這裡是 Banner 內容</p>';
+            // 從遊戲狀態中讀取在 assets.json 設定好的圖片路徑
+            const bannerUrl = gameState.assetPaths?.images?.modals?.dnaGuideBanner;
+
+            if (bannerContent && bannerUrl) {
+                // 將彈窗內容設為包含該圖片的<img>標籤
+                bannerContent.innerHTML = `<img src="${bannerUrl}" alt="DNA碎片說明圖" style="max-width: 100%; height: auto; display: block; border-radius: 6px;">`;
+            } else if (bannerContent) {
+                // 如果找不到圖片路徑，則顯示錯誤訊息
+                bannerContent.innerHTML = '<p>說明圖片載入失敗。</p>';
             }
             showModal('banner-modal');
         });
