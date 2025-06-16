@@ -83,10 +83,11 @@ async function initializeGame() {
             return;
         }
 
-        const [configs, playerData, assetPaths] = await Promise.all([
+        const [configs, playerData, assetPaths, uiTextContent] = await Promise.all([
             getGameConfigs(),
             getPlayerData(gameState.currentUser.uid),
-            fetch('./assets.json').then(res => res.json())
+            fetch('./assets.json').then(res => res.json()),
+            fetch('./ui_text.json').then(res => res.json())
         ]);
 
         if (!configs || Object.keys(configs).length === 0) {
@@ -98,11 +99,15 @@ async function initializeGame() {
         if (!assetPaths) {
             throw new Error("無法獲取遊戲圖片資源設定。");
         }
+        if (!uiTextContent) {
+            throw new Error("無法獲取介面文字內容設定。");
+        }
         
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
             assetPaths: assetPaths,
+            uiTextContent: uiTextContent,
             playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
         });
         console.log("Game configs, player data, and asset paths loaded and saved to gameState.");
