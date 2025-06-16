@@ -45,6 +45,11 @@
     "logos": {
       "comment": "Logo 或其他圖標",
       "loadingIcon": "https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true"
+    },
+    "selectionBanners": {
+      "comment": "天梯選擇彈窗橫幅",
+      "monsterLeaderboard": "https://github.com/msw2004727/MD/blob/main/images/Ladder003.png?raw=true",
+      "playerLeaderboard": "https://github.com/msw2004727/MD/blob/main/images/Ladder002.png?raw=true"
     }
   }
 }
