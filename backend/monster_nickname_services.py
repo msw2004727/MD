@@ -73,20 +73,31 @@ def update_monster_custom_element_nickname_service(
     naming_constraints: NamingConstraints = game_configs.get("naming_constraints", DEFAULT_GAME_CONFIGS_FOR_NICKNAME["naming_constraints"]) # type: ignore
     max_len = naming_constraints.get("max_element_nickname_len", 5)
 
-    element_nicknames_map: Dict[ElementTypes, str] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_NICKNAME["element_nicknames"]) # type: ignore
-    primary_element: ElementTypes = monster_to_update.get("elements", ["無"])[0] # type: ignore
-
+    element_nicknames_map: Dict[ElementTypes, Any] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_NICKNAME["element_nicknames"]) # type: ignore
+    
+    # --- 核心修改處 START ---
     if not new_custom_element_nickname:
+        # 如果傳入空字串，代表使用者想重設為預設名稱
         monster_to_update["custom_element_nickname"] = None
-        element_nickname_part_for_full_name = element_nicknames_map.get(primary_element, primary_element) # type: ignore
+        # 重新計算預設的 element_nickname_part
+        primary_element: ElementTypes = monster_to_update.get("elements", ["無"])[0] # type: ignore
+        monster_rarity = monster_to_update.get("rarity", "普通")
+        rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
+        possible_nicknames = rarity_specific_nicknames.get(monster_rarity, [primary_element])
+        default_nickname_part = possible_nicknames[0] if possible_nicknames else primary_element
+        
+        monster_to_update["element_nickname_part"] = default_nickname_part
+        element_nickname_part_for_full_name = default_nickname_part
     else:
+        # 如果有新名稱，則更新 custom 和 part 兩個欄位
         processed_nickname = new_custom_element_nickname.strip()[:max_len]
         monster_to_update["custom_element_nickname"] = processed_nickname
+        monster_to_update["element_nickname_part"] = processed_nickname
         element_nickname_part_for_full_name = processed_nickname
+    # --- 核心修改處 END ---
 
-    # 【修改】更安全的獲取玩家稱號邏輯
     player_stats = player_data.get("playerStats", {})
-    player_current_title_name = "新手"  # 預設值
+    player_current_title_name = "新手"
     
     equipped_id = player_stats.get("equipped_title_id")
     owned_titles = player_stats.get("titles", [])
@@ -100,7 +111,6 @@ def update_monster_custom_element_nickname_service(
 
     monster_achievement = monster_to_update.get("title", "新秀") # type: ignore
 
-    # --- 修改: 呼叫從 utils 導入的函式 ---
     monster_to_update["nickname"] = generate_monster_full_nickname(
         player_current_title_name, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
     )
