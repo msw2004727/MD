@@ -189,10 +189,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     is_crit = random.randint(1, 100) <= (attacker_current_stats["crit"] + effective_skill.get("crit", 0))
     action_details["is_crit"] = is_crit
     
-    log_message = f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"
-    damage_log = ""
-    effect_log = ""
-    heal_log = ""
+    log_parts = [f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"]
 
     if effective_skill.get("power", 0) > 0:
         element_multiplier = _calculate_elemental_advantage(effective_skill["type"], target.get("elements", []), game_configs)
@@ -201,8 +198,8 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         
         target["current_hp"] = max(0, target.get("current_hp", 0) - damage)
         action_details["damage_dealt"] = damage
-        damage_log = f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。"
-        if is_crit: damage_log += " **是暴擊！**"
+        log_parts.append(f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。")
+        if is_crit: log_parts.append(" **是暴擊！**")
 
     if effective_skill.get("effect") and random.randint(1, 100) <= effective_skill.get("probability", 100):
         effect_type = effective_skill["effect"]
@@ -212,27 +209,29 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
             stats_to_change = [effective_skill["stat"]] if isinstance(effective_skill["stat"], str) else effective_skill["stat"]
             amounts = [effective_skill["amount"]] if isinstance(effective_skill["amount"], int) else effective_skill["amount"]
-            log_parts = []
+            stat_log_parts = []
             for stat, amount in zip(stats_to_change, amounts):
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + amount
-                log_parts.append(f"{effect_target['nickname']} 的 {stat.upper()} {'提升' if amount > 0 else '下降'}了！")
-            effect_log = " " + " ".join(log_parts)
+                stat_log_parts.append(f"{effect_target['nickname']} 的 {stat.upper()} {'提升' if amount > 0 else '下降'}了！")
+            log_parts.append(" " + " ".join(stat_log_parts))
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
             heal_amount = effective_skill["amount"]
             max_hp = _get_monster_current_stats(effect_target, performer_player_data if is_buff else target_player_data)["initial_max_hp"]
             healed_hp = min(heal_amount, max_hp - effect_target.get("current_hp", 0))
-            effect_target["current_hp"] += healed_hp
-            action_details["damage_healed"] = healed_hp
-            heal_log = f" {effect_target['nickname']} 恢復了 <heal>{healed_hp}</heal> 點HP！"
+            if healed_hp > 0:
+                effect_target["current_hp"] += healed_hp
+                action_details["damage_healed"] = healed_hp
+                log_parts.append(f" {effect_target['nickname']} 恢復了 <heal>{healed_hp}</heal> 點HP！")
 
         elif effect_type == "leech" and "amount" in effective_skill and action_details.get("damage_dealt", 0) > 0:
             leech_amount = int(action_details["damage_dealt"] * (effective_skill["amount"] / 100))
             max_hp = _get_monster_current_stats(performer, performer_player_data)["initial_max_hp"]
             healed_hp = min(leech_amount, max_hp - performer.get("current_hp", 0))
-            performer["current_hp"] += healed_hp
-            action_details["damage_healed"] = healed_hp
-            heal_log = f" {performer['nickname']} 吸取了 <heal>{healed_hp}</heal> 點生命！"
+            if healed_hp > 0:
+                performer["current_hp"] += healed_hp
+                action_details["damage_healed"] = healed_hp
+                log_parts.append(f" {performer['nickname']} 吸取了 <heal>{healed_hp}</heal> 點生命！")
 
         elif effect_type == "status_change" and "status_id" in effective_skill:
             status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == effective_skill["status_id"]), None)
@@ -240,11 +239,9 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 new_status = {**status_template, "duration": effective_skill.get("duration", status_template.get("duration", 1))}
                 effect_target.setdefault("healthConditions", []).append(new_status)
                 action_details["status_applied"] = status_template["id"]
-                effect_log = f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！"
+                log_parts.append(f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！")
         
-    final_log_message = log_message + damage_log + heal_log + effect_log
-    
-    action_details["log_message"] = final_log_message
+    action_details["log_message"] = "".join(log_parts)
     
     if target["current_hp"] == 0: 
         action_details["log_message"] += f" {target['nickname']} 被擊倒了！"
