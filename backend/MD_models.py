@@ -202,6 +202,9 @@ class Monster(TypedDict):
     """怪獸實例模型"""
     id: str
     nickname: str
+    player_title_part: NotRequired[str]      # 新增
+    achievement_part: NotRequired[str]       # 新增
+    element_nickname_part: NotRequired[str]  # 新增
     elements: List[ElementTypes]
     elementComposition: Dict[ElementTypes, float]
     hp: int
