@@ -7,6 +7,9 @@ import math
 import time 
 from typing import List, Dict, Optional, Union, Tuple, Any
 from collections import Counter
+# --- 核心修改處 START ---
+from datetime import datetime, timedelta, timezone
+# --- 核心修改處 END ---
 
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
@@ -358,10 +361,16 @@ def complete_cultivation_service(
     else:
         log_message_parts.append("撿拾物品：無")
     
+    # --- 核心修改處 START ---
+    gmt8 = timezone(timedelta(hours=8))
+    now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
+
     new_log_entry: MonsterActivityLogEntry = {
-        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "time": now_gmt8_str,
         "message": "\n".join(log_message_parts)
     }
+    # --- 核心修改處 END ---
+
     if "activityLog" not in monster_to_update: monster_to_update["activityLog"] = []
     monster_to_update["activityLog"].insert(0, new_log_entry)
     
