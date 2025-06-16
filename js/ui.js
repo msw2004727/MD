@@ -481,12 +481,31 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
         if (playerMonster && opponentMonster) {
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             
-            const playerPrimaryElement = playerMonster.elements && playerMonster.elements.length > 0 ? playerMonster.elements[0] : '無';
-            const playerDisplayName = playerMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[playerPrimaryElement] || playerPrimaryElement);
+            // --- 核心修改處 ---
+            const getCorrectDisplayName = (monster) => {
+                const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+                let displayName = monster.custom_element_nickname;
+                if (!displayName) {
+                    const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+                    if (nicknamesByElement && typeof nicknamesByElement === 'object') {
+                        const namesByRarity = nicknamesByElement[monster.rarity];
+                        if (namesByRarity && namesByRarity.length > 0) {
+                            displayName = namesByRarity[0];
+                        } else {
+                            displayName = primaryElement;
+                        }
+                    } else {
+                        displayName = primaryElement;
+                    }
+                }
+                return displayName;
+            };
+
+            const playerDisplayName = getCorrectDisplayName(playerMonster);
+            const opponentDisplayName = getCorrectDisplayName(opponentMonster);
+            // --- 修改結束 ---
+
             const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
-            
-            const opponentPrimaryElement = opponentMonster.elements && opponentMonster.elements.length > 0 ? opponentMonster.elements[0] : '無';
-            const opponentDisplayName = opponentMonster.custom_element_nickname || (gameState.gameConfigs?.element_nicknames?.[opponentPrimaryElement] || opponentPrimaryElement);
             const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
             
             const bannerUrl = gameState.assetPaths?.images?.modals?.battleConfirmation || '';
