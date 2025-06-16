@@ -250,9 +250,14 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         
         # --- 主要修改處 ---
         element_nicknames_map = game_configs.get("element_nicknames", {})
-        possible_nicknames = element_nicknames_map.get(primary_element, [primary_element])
-        if not possible_nicknames: # Fallback for safety, in case the list for an element is empty
+        # 根據主屬性，獲取對應的稀有度名稱字典
+        rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
+        # 根據怪獸的稀有度，獲取對應的名稱列表
+        possible_nicknames = rarity_specific_nicknames.get(monster_rarity_name, [primary_element])
+        # 安全檢查，如果列表為空，則使用主屬性作為備用
+        if not possible_nicknames:
             possible_nicknames = [primary_element]
+        # 從列表中隨機選擇一個名稱
         element_nickname = random.choice(possible_nicknames)
         # --- 修改結束 ---
         
