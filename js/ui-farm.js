@@ -125,10 +125,30 @@ function renderMonsterFarm() {
         colInfo.className = 'farm-col farm-col-info';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
         
-        const elementNickname = monster.custom_element_nickname || 
-                                (gameState.gameConfigs?.element_nicknames?.[primaryElement] || primaryElement);
+        // --- 核心修改處 ---
+        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+        let elementNickname = monster.custom_element_nickname;
+        
+        if (!elementNickname) {
+            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
+            if (nicknamesByElement && typeof nicknamesByElement === 'object') {
+                // 新結構: { "普通": ["名1"], "稀有": ["名2"] }
+                const namesByRarity = nicknamesByElement[monster.rarity];
+                if (namesByRarity && namesByRarity.length > 0) {
+                    elementNickname = namesByRarity[0]; // 農場顯示第一個作為代表
+                } else {
+                    elementNickname = primaryElement; // 備用
+                }
+            } else if (nicknamesByElement && Array.isArray(nicknamesByElement)) {
+                // 舊結構: ["名1", "名2"]
+                elementNickname = nicknamesByElement[0];
+            } else {
+                elementNickname = primaryElement; // 最終備用
+            }
+        }
+        // --- 修改結束 ---
+
         const monsterAchievement = monster.title || '';
         const fullNickname = monster.nickname || '';
         
