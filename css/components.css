@@ -653,12 +653,15 @@ body.light-theme .leaderboard-table tr:hover td {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* --- 核心修改處 START --- */
 .dna-draw-result-item .dna-name {
     font-weight: bold;
     font-size: 1rem;
-    color: var(--text-primary);
-    margin-bottom: 0.25rem; /* 與下方元素的間距 */
+    /* color: var(--text-primary); <-- 移除這行，讓稀有度顏色生效 */
+    margin-bottom: 0.25rem;
 }
+/* --- 核心修改處 END --- */
+
 
 .dna-draw-result-item .dna-type {
     font-size: 0.8rem;
