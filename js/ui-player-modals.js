@@ -1,5 +1,66 @@
 // js/ui-player-modals.js
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
+
+async function handleAddFriend(friendUid, friendNickname) {
+    if (!friendUid || !friendNickname) {
+        console.error("handleAddFriend: 無效的參數。");
+        return;
+    }
+
+    if (friendUid === gameState.playerId) {
+        showFeedbackModal('操作無效', '您不能將自己加為好友。');
+        return;
+    }
+
+    if (!gameState.playerData.friends) {
+        gameState.playerData.friends = [];
+    }
+
+    if (gameState.playerData.friends.some(f => f.uid === friendUid)) {
+        showFeedbackModal('提示', `「${friendNickname}」已經是您的好友了。`);
+        return;
+    }
+
+    // 先在本地端更新狀態以提供即時反饋
+    gameState.playerData.friends.push({
+        uid: friendUid,
+        nickname: friendNickname
+    });
+
+    // 更新UI
+    if (typeof renderFriendsList === 'function') {
+        renderFriendsList();
+    }
+    const searchResultsContainer = DOMElements.friendsSearchResultsArea;
+    if (searchResultsContainer) {
+        const button = searchResultsContainer.querySelector(`button[onclick="handleAddFriend('${friendUid}', '${friendNickname}')"]`);
+        if (button) {
+            button.textContent = '已加入';
+            button.disabled = true;
+        }
+    }
+
+    try {
+        // 呼叫後端儲存整個玩家資料
+        await savePlayerData(gameState.playerId, gameState.playerData);
+        showFeedbackModal('成功', `已成功將「${friendNickname}」加入您的好友列表！`);
+    } catch (error) {
+        // 如果儲存失敗，則復原在本地端的變更
+        gameState.playerData.friends = gameState.playerData.friends.filter(f => f.uid !== friendUid);
+        renderFriendsList();
+        if (searchResultsContainer) {
+           const button = searchResultsContainer.querySelector(`button[onclick="handleAddFriend('${friendUid}', '${friendNickname}')"]`);
+            if (button) {
+                button.textContent = '加為好友';
+                button.disabled = false;
+            }
+        }
+        showFeedbackModal('錯誤', `新增好友失敗：${error.message}`);
+        console.error("新增好友後儲存玩家資料失敗:", error);
+    }
+}
+
+
 function updatePlayerInfoModal(playerData, gameConfigs) {
     const body = DOMElements.playerInfoModalBody;
     if (!body || !playerData || !playerData.playerStats) {
