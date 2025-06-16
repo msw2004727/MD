@@ -607,6 +607,10 @@ p.monster-score {
 }
 
 /* --- 核心修改處 START --- */
+#banner-modal {
+    z-index: 1040; /* 設定比其他大部分彈窗更高的層級 */
+}
+
 /* Banner-Only Modal Styles */
 .modal-content.banner-only {
     padding: 0;
