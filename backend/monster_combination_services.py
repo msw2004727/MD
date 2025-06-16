@@ -29,7 +29,7 @@ DEFAULT_GAME_CONFIGS_FOR_COMBINATION: GameConfigs = {
     "personalities": [{"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰":1.0}}], # type: ignore
     "titles": ["新手"],
     "monster_achievements_list": ["新秀"],
-    "element_nicknames": {"火": "炎獸"},
+    "element_nicknames": {"火": "炎魂獸"},
     "naming_constraints": {
         "max_player_title_len": 5, "max_monster_achievement_len": 5,
         "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
@@ -247,7 +247,14 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
              player_title = owned_titles[0].get("name", "新手")
         
         monster_achievement = random.choice(game_configs.get("monster_achievements_list", ["新秀"]))
-        element_nickname = game_configs.get("element_nicknames", {}).get(primary_element, primary_element)
+        
+        # --- 主要修改處 ---
+        element_nicknames_map = game_configs.get("element_nicknames", {})
+        possible_nicknames = element_nicknames_map.get(primary_element, [primary_element])
+        if not possible_nicknames: # Fallback for safety, in case the list for an element is empty
+            possible_nicknames = [primary_element]
+        element_nickname = random.choice(possible_nicknames)
+        # --- 修改結束 ---
         
         naming_constraints = game_configs.get("naming_constraints", {})
         full_nickname = _generate_monster_full_nickname(player_title, monster_achievement, element_nickname, naming_constraints)
