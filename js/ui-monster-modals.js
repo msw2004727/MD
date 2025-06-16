@@ -687,10 +687,12 @@ function updateTrainingResultsModal(results, monsterName) {
 
     const bannerUrl = gameState.assetPaths?.images?.modals?.trainingResults || '';
     const bannerHtml = `<div class="training-banner" style="text-align: center; margin-bottom: 1rem;"><img src="${bannerUrl}" alt="修煉成果橫幅" style="max-width: 100%; border-radius: 6px;"></div>`;
+    
     let hintHtml = '';
-    if (TRAINING_GAME_HINTS.length > 0) {
-        const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-        hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p>${TRAINING_GAME_HINTS[randomIndex]}</p></div>`;
+    const hintsArray = gameState.uiTextContent?.training_hints || [];
+    if (hintsArray.length > 0) {
+        const randomIndex = Math.floor(Math.random() * hintsArray.length);
+        hintHtml = `<div class="training-hints-container" style="margin-bottom: 1rem; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; text-align: center; font-style: italic; color: var(--text-secondary);"><p>${hintsArray[randomIndex]}</p></div>`;
     }
 
     let storyHtml = '';
