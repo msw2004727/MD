@@ -565,3 +565,45 @@ p.monster-score {
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
 }
+
+/* --- 核心修改處 START --- */
+/* Announcement Modal Section Box */
+.announcement-section {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--bg-primary);
+}
+
+.announcement-section-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.announcement-section ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.announcement-section li {
+    padding-left: 1.25rem;
+    position: relative;
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.announcement-section li::before {
+    content: '·'; /* Using a bullet character */
+    position: absolute;
+    left: 0.25rem;
+    top: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--accent-color);
+}
+/* --- 核心修改處 END --- */
