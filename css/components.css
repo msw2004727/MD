@@ -422,14 +422,16 @@ body.light-theme .leaderboard-table tr:hover td {
 #snapshot-main-content {
     position: absolute;
     top: 8px;
-    left: 0;
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 4;
-    text-align: center;
-    height: auto;
+    /* 讓容器寬度自適應內容，且作為相對定位的基準 */
+    position: relative;
+    display: inline-block;
 }
 
 #snapshot-nickname {
+    /* 這是置中的主要元素 */
     display: inline-block;
     position: relative;
     font-size: 1.1rem;
@@ -438,16 +440,16 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 #snapshot-achievement-title {
+    /* 這是絕對定位在主要元素左邊的次要元素 */
     position: absolute;
     right: 100%;
-    bottom: 0;
+    bottom: -2px; /* 根據字體大小微調垂直對齊 */
     margin-right: 0.5em;
     font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-secondary);
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     white-space: nowrap;
-    line-height: 1.1rem;
 }
 /* --- 核心修改處 END --- */
 
