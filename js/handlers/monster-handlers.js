@@ -65,11 +65,16 @@ function handleFarmActions() {
 
 
 function handleLeaderboardInteractions() {
-    // 處理怪獸排行榜中的點擊
-    if (DOMElements.monsterLeaderboardTable) {
-        DOMElements.monsterLeaderboardTable.addEventListener('click', (event) => {
+    const monsterContainer = DOMElements.monsterLeaderboardTableContainer;
+    const playerContainer = DOMElements.playerLeaderboardTableContainer;
+
+    // 【修改】對怪獸排行榜容器進行事件監聽，統一處理點擊與排序
+    if (monsterContainer) {
+        monsterContainer.addEventListener('click', (event) => {
             const link = event.target.closest('a.leaderboard-monster-link');
-            if (link) {
+            const th = event.target.closest('th');
+
+            if (link) { // 處理點擊怪獸名稱
                 event.preventDefault();
                 const monsterId = link.closest('tr')?.dataset.monsterId;
                 if (!monsterId) return;
@@ -78,11 +83,33 @@ function handleLeaderboardInteractions() {
                     updateMonsterInfoModal(monsterData, gameState.gameConfigs);
                     showModal('monster-info-modal');
                 }
+            } else if (th && th.dataset.sortKey) { // 處理點擊表頭排序
+                const sortKey = th.dataset.sortKey;
+                let currentSortConfig = gameState.leaderboardSortConfig?.monster || {};
+                let newSortOrder = (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') ? 'asc' : 'desc';
+                
+                gameState.leaderboardSortConfig.monster = { key: sortKey, order: newSortOrder };
+                filterAndRenderMonsterLeaderboard();
             }
         });
     }
 
-    // 處理元素篩選頁籤
+    // 【修改】對玩家排行榜容器進行事件監聽，專門處理排序
+    if (playerContainer) {
+        playerContainer.addEventListener('click', (event) => {
+            const th = event.target.closest('th');
+            if (th && th.dataset.sortKey) { // 只處理表頭點擊
+                const sortKey = th.dataset.sortKey;
+                let currentSortConfig = gameState.leaderboardSortConfig?.player || {};
+                let newSortOrder = (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') ? 'asc' : 'desc';
+
+                gameState.leaderboardSortConfig.player = { key: sortKey, order: newSortOrder };
+                sortAndRenderLeaderboard('player');
+            }
+        });
+    }
+
+    // 處理元素篩選頁籤 (維持不變)
     if (DOMElements.monsterLeaderboardElementTabs) {
         DOMElements.monsterLeaderboardElementTabs.addEventListener('click', (event) => {
             if (event.target.classList.contains('tab-button')) {
@@ -95,33 +122,7 @@ function handleLeaderboardInteractions() {
         });
     }
     
-    // 處理排行榜排序
-    const tables = [DOMElements.monsterLeaderboardTable, DOMElements.playerLeaderboardTable];
-    tables.forEach(table => {
-        if (table) {
-            table.addEventListener('click', (event) => {
-                const th = event.target.closest('th');
-                if (!th || !th.dataset.sortKey) return;
-
-                const sortKey = th.dataset.sortKey;
-                const tableType = table.id.includes('monster') ? 'monster' : 'player';
-                let currentSortConfig = gameState.leaderboardSortConfig?.[tableType] || {};
-                let newSortOrder = 'desc';
-                if (currentSortConfig.key === sortKey && currentSortConfig.order === 'desc') newSortOrder = 'asc';
-                else if (currentSortConfig.key === sortKey && currentSortConfig.order === 'asc') newSortOrder = 'desc';
-                
-                gameState.leaderboardSortConfig[tableType] = { key: sortKey, order: newSortOrder };
-                
-                if (tableType === 'monster') {
-                    filterAndRenderMonsterLeaderboard();
-                } else {
-                    sortAndRenderLeaderboard(tableType);
-                }
-            });
-        }
-    });
-
-    // 處理排行榜刷新按鈕
+    // 處理排行榜刷新按鈕 (維持不變)
     if (DOMElements.refreshMonsterLeaderboardBtn) {
         DOMElements.refreshMonsterLeaderboardBtn.addEventListener('click', fetchAndDisplayMonsterLeaderboard);
     }
