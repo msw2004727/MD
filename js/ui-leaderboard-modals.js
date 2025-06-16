@@ -31,7 +31,7 @@ function setupLeaderboardTableHeaders(table, headersConfig) {
 
 
 // ---【修改】---
-// 整個函式被重構，以接受一個 containerId 作為目標來渲染表格
+// 整個函式被重構，不再重新創建<table>，而是更新現有的表格內容
 function updateLeaderboardTable(tableType, data, containerId) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -39,10 +39,14 @@ function updateLeaderboardTable(tableType, data, containerId) {
         container.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4">錯誤：找不到排行榜容器。</p>`;
         return;
     }
-    container.innerHTML = ''; // 清空舊內容
-
-    const table = document.createElement('table');
-    table.className = 'leaderboard-table';
+    
+    // 直接從容器中找到對應的表格元素
+    const tableId = `${tableType}-leaderboard-table`;
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error(`Leaderboard table element #${tableId} not found inside container #${containerId}.`);
+        return;
+    }
 
     let headersConfig;
     if (tableType === 'monster') {
@@ -66,13 +70,15 @@ function updateLeaderboardTable(tableType, data, containerId) {
             { text: '敗場', key: 'losses', align: 'center' }
         ];
     }
+    
     setupLeaderboardTableHeaders(table, headersConfig);
 
     const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+
     if (!data || data.length === 0) {
         const colSpan = headersConfig.length;
         tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-3 text-[var(--text-secondary)]">排行榜無資料。</td></tr>`;
-        container.appendChild(table);
         return;
     }
     
@@ -233,7 +239,6 @@ function updateLeaderboardTable(tableType, data, containerId) {
         }
     });
 
-    container.appendChild(table); // 將建立好的 table 加入到指定的容器中
     updateLeaderboardSortHeader(table, gameState.leaderboardSortConfig[tableType]?.key, gameState.leaderboardSortConfig[tableType]?.order);
 }
 
