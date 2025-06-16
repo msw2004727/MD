@@ -7,6 +7,9 @@ import math
 import copy
 import time
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
+# --- 核心修改處 START ---
+from datetime import datetime, timedelta, timezone
+# --- 核心修改處 END ---
 
 from .MD_models import (
     Monster, Skill, HealthCondition, ElementTypes, RarityDetail, GameConfigs,
@@ -318,6 +321,11 @@ def simulate_battle_full(
     max_turns = game_configs.get("value_settings", {}).get("max_battle_turns", 30)
     first_striker_name = ""
 
+    # --- 核心修改處 START ---
+    # 建立 GMT+8 的時區物件
+    gmt8 = timezone(timedelta(hours=8))
+    # --- 核心修改處 END ---
+
     for turn_num in range(1, max_turns + 2):
         if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
             break
@@ -422,16 +430,21 @@ def simulate_battle_full(
     challenger_display = f"「{challenger_name}」的「{challenger_monster_name}」"
     defender_display = f"「{defender_name}」的「{defender_monster_name}」"
 
-    if winner_id == player_monster['id']: player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您獲勝了！"}
-    elif winner_id == opponent_monster['id']: player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"挑戰 {defender_display}，您不幸戰敗。"}
-    else: player_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {defender_display} 戰成平手。"}
+    # --- 核心修改處 START ---
+    # 使用 gmt8 時區物件來產生當前時間字串
+    now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
+
+    if winner_id == player_monster['id']: player_activity_log = {"time": now_gmt8_str, "message": f"挑戰 {defender_display}，您獲勝了！"}
+    elif winner_id == opponent_monster['id']: player_activity_log = {"time": now_gmt8_str, "message": f"挑戰 {defender_display}，您不幸戰敗。"}
+    else: player_activity_log = {"time": now_gmt8_str, "message": f"與 {defender_display} 戰成平手。"}
 
     if winner_id == opponent_monster['id']:
-        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 向您發起挑戰，防禦成功！"}
+        opponent_activity_log = {"time": now_gmt8_str, "message": f"{challenger_display} 向您發起挑戰，防禦成功！"}
     elif winner_id == player_monster['id']:
-        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"{challenger_display} 向您發起挑戰，防禦失敗！"}
+        opponent_activity_log = {"time": now_gmt8_str, "message": f"{challenger_display} 向您發起挑戰，防禦失敗！"}
     else:
-        opponent_activity_log = {"time": time.strftime("%Y-%m-%d %H:%M:%S"), "message": f"與 {challenger_display} 戰成平手。"}
+        opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {challenger_display} 戰成平手。"}
+    # --- 核心修改處 END ---
 
 
     final_battle_result: BattleResult = {
