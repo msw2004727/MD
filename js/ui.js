@@ -6,29 +6,6 @@ console.log("DEBUG: ui.js starting to load and define functions."); // Add this 
 
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
 
-const TRAINING_GAME_HINTS = [
-    "修煉時間越長，獲得的技能經驗值也越多。",
-    "完成修煉是領悟新技能的主要途徑！",
-    "在不同的修煉地點，怪獸的數值成長方向和可能拾獲的DNA類型會有所不同。",
-    "即使修煉被中斷，已經過的時間仍然會提供部分獎勵。",
-    "稀有度越高的怪獸，在修煉中越有可能找到更高品質的DNA碎片。",
-    "修煉歸來的怪獸HP和MP會完全恢復！",
-    "記得將修煉獲得的物品從「暫存背包」移入主庫存。",
-    "怪獸的「個性」會影響其在修煉故事中的行為。",
-    "累積足夠的技能經驗值後，技能等級會自動提升！",
-    "修煉是提升怪獸基礎數值(白值)的唯一方式。",
-    "修煉中，怪獸無法出戰或被放生。",
-    "想要特定屬性的DNA？試試去對應的元素修煉地冒險吧！",
-    "修煉時間越久，遭遇奇特事件的機率也越高。",
-    "看看修煉後的「活動紀錄」，那裡記載了怪獸的成長軌跡。",
-    "技能最高可升至10級，威力會大幅提升。",
-    "如果技能已滿，領悟新技能時將有機會替換掉舊的。",
-    "臨時背包空間有限，記得及時清理。",
-    "怪獸的元素屬性會影響牠在某些修煉地的成長效率。",
-    "有時候，一無所獲的修煉也是一種修行。",
-    "冒險故事是由AI生成的，每次修煉都獨一無二！"
-];
-
 // ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
     let tabButtonsContainer, tabContentsContainer;
@@ -289,12 +266,14 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         DOMElements.feedbackModalMessage.insertAdjacentElement('afterend', hintsContainer);
         
         const hintElement = document.getElementById('loading-hints-carousel');
-        if (hintElement && TRAINING_GAME_HINTS.length > 0) {
-            const firstRandomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-            hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[firstRandomIndex]}`;
+        const hintsArray = gameState.uiTextContent?.training_hints || [];
+
+        if (hintElement && hintsArray.length > 0) {
+            const firstRandomIndex = Math.floor(Math.random() * hintsArray.length);
+            hintElement.textContent = `💡 ${hintsArray[firstRandomIndex]}`;
             gameState.feedbackHintInterval = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * TRAINING_GAME_HINTS.length);
-                hintElement.textContent = `💡 ${TRAINING_GAME_HINTS[randomIndex]}`;
+                const randomIndex = Math.floor(Math.random() * hintsArray.length);
+                hintElement.textContent = `💡 ${hintsArray[randomIndex]}`;
             }, 5000); 
         }
     };
