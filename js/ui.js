@@ -153,7 +153,6 @@ function initializeDOMElements() {
         closeDnaDrawBtn: document.getElementById('close-dna-draw-btn'),
         officialAnnouncementModal: document.getElementById('official-announcement-modal'),
         officialAnnouncementCloseX: document.getElementById('official-announcement-close-x'),
-        announcementPlayerName: document.getElementById('announcement-player-name'),
         refreshMonsterLeaderboardBtn: document.getElementById('refresh-monster-leaderboard-btn'),
         snapshotBarsContainer: document.getElementById('snapshot-bars-container'),
         snapshotHpFill: document.getElementById('snapshot-hp-fill'),
@@ -592,8 +591,10 @@ function getElementCssClassKey(chineseElement) {
 }
 
 function updateAnnouncementPlayerName(playerName) {
-    if (DOMElements.announcementPlayerName) {
-        DOMElements.announcementPlayerName.textContent = playerName || "玩家";
+    // 改為在函式內直接獲取元素，確保元素存在
+    const announcementPlayerNameElement = document.getElementById('announcement-player-name');
+    if (announcementPlayerNameElement) {
+        announcementPlayerNameElement.textContent = playerName || "玩家";
     }
 }
 
