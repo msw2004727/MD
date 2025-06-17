@@ -19,7 +19,8 @@ from .monster_healing_services import heal_monster_service, recharge_monster_wit
 from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
-from .battle_services import simulate_battle_full 
+from .battle_services import simulate_battle_full
+from .monster_chat_services import generate_monster_chat_response_service 
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
@@ -268,7 +269,6 @@ def save_player_data_route(player_id: str):
     else:
         return jsonify({"success": False, "error": "玩家資料保存失敗。"}), 500
 
-# 【新增】註記 API 路由
 @md_bp.route('/notes', methods=['POST'])
 def add_note_route():
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
@@ -302,6 +302,43 @@ def add_note_route():
     else:
         routes_logger.warning(f"為玩家 {user_id} 新增註記失敗，服務層返回 None。")
         return jsonify({"error": "新增註記失敗，請檢查請求參數。"}), 400
+
+@md_bp.route('/monster/<monster_id>/chat', methods=['POST'])
+def chat_with_monster_route(monster_id: str):
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    player_message = data.get('message')
+    if not player_message or not isinstance(player_message, str):
+        return jsonify({"error": "請求中缺少 'message' 字串。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    if not game_configs:
+        return jsonify({"error": "遊戲設定載入失敗，無法進行聊天。"}), 500
+    
+    # 呼叫聊天服務
+    service_result = generate_monster_chat_response_service(
+        player_id=user_id,
+        monster_id=monster_id,
+        player_message=player_message,
+        game_configs=game_configs
+    )
+
+    if not service_result:
+        return jsonify({"error": "生成聊天回應時發生內部錯誤。"}), 500
+
+    # 服務成功，獲取AI回覆和更新後的玩家資料
+    ai_reply = service_result.get("ai_reply")
+    updated_player_data = service_result.get("updated_player_data")
+
+    # 儲存更新後的玩家資料（包含了新的聊天紀錄）
+    if not save_player_data_service(user_id, updated_player_data):
+        routes_logger.warning(f"警告：聊天回應已生成，但儲存玩家 {user_id} 的聊天紀錄失敗。")
+        # 即使儲存失敗，我們仍然回傳 AI 回應，以確保前端體驗流暢
+    
+    return jsonify({"success": True, "reply": ai_reply}), 200
 
 
 @md_bp.route('/combine', methods=['POST'])
