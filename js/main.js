@@ -254,7 +254,7 @@ function attemptToInitializeApp() {
     const requiredFunctions = [
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
-        'initializeMonsterEventHandlers'
+        'initializeMonsterEventHandlers', 'initializeNoteHandlers'
     ];
     
     // 找出所有未定義的函式
@@ -272,6 +272,7 @@ function attemptToInitializeApp() {
         initializeGameInteractionEventHandlers();
         initializeDragDropEventHandlers();
         initializeMonsterEventHandlers();
+        initializeNoteHandlers();
 
         setInterval(updateAllTimers, 1000);
 
