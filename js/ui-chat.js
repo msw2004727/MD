@@ -72,15 +72,48 @@ function setupChatTab(monster) {
 
     const chatHistory = monster.chatHistory || [];
     if (chatHistory.length > 0) {
-        // 【修改】將反向迴圈 (i--) 改為正向迴圈 (i++)，以修正歷史紀錄的顯示順序
+        // 將反向迴圈 (i--) 改為正向迴圈 (i++)，以修正歷史紀錄的顯示順序
         for (let i = 0; i < chatHistory.length; i++) {
             const entry = chatHistory[i];
             const role = entry.content.startsWith('（你') ? 'interaction' : entry.role;
             renderChatMessage(entry.content, role);
         }
     } else {
+        // --- 【修改】使用新的問候語資料庫來產生多樣化的開場白 ---
+        const greetingsDB = gameState.chatGreetings;
         const shortName = monster.element_nickname_part || monster.nickname;
-        renderChatMessage(`你好，我是 ${shortName}！有什麼事嗎？`, 'assistant');
+        let greetingPool = [];
+        let finalGreeting = `你好，我是 ${shortName}！`; // 預設的後備問候語
+
+        if (greetingsDB) {
+            const personalityName = monster.personality?.name;
+            const primaryElement = monster.elements?.[0];
+            const rarity = monster.rarity;
+
+            // 根據個性、屬性、稀有度收集所有可能的問候語
+            if (personalityName && greetingsDB.personality?.[personalityName]) {
+                greetingPool.push(...greetingsDB.personality[personalityName]);
+            }
+            if (primaryElement && greetingsDB.element?.[primaryElement]) {
+                greetingPool.push(...greetingsDB.element[primaryElement]);
+            }
+            if (rarity && greetingsDB.rarity?.[rarity]) {
+                greetingPool.push(...greetingsDB.rarity[rarity]);
+            }
+
+            // 如果沒有特定問候語，或為了增加多樣性，加入通用問候語
+            if (greetingPool.length === 0 && greetingsDB.default) {
+                greetingPool.push(...greetingsDB.default);
+            }
+            
+            // 從池中隨機挑選一句
+            if (greetingPool.length > 0) {
+                finalGreeting = greetingPool[Math.floor(Math.random() * greetingPool.length)];
+            }
+        }
+        
+        // 替換名字佔位符並顯示
+        renderChatMessage(finalGreeting.replace('{shortName}', shortName), 'assistant');
     }
 }
 
