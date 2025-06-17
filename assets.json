@@ -27,14 +27,14 @@
         "login": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
         "register": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
         "logout": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
-        "generic": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
-        "processing": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "generic": "",
+        "processing": "",
         "updating": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
         "synthesis": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
-        "calculating": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true",
+        "calculating": "",
         "battlePrep": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
         "battling": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
-        "skillLearn": "https://github.com/msw2004727/MD/blob/main/images/BN003.png?raw=true"
+        "skillLearn": ""
       }
     },
     "cultivation": {
