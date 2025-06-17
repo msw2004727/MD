@@ -299,5 +299,18 @@ async function getFriendsStatuses(friendIds) {
     });
 }
 
+/**
+ * 【新增】與怪獸進行物理互動
+ * @param {string} monsterId 怪獸的 ID
+ * @param {'punch' | 'pat' | 'kiss'} action 互動的類型
+ * @returns {Promise<object>} 包含 AI 回應的物件
+ */
+async function interactWithMonster(monsterId, action) {
+    return fetchAPI(`/monster/${monsterId}/interact`, {
+        method: 'POST',
+        body: JSON.stringify({ action: action }),
+    });
+}
+
 
 console.log("API client module loaded.");
