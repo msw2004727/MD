@@ -29,6 +29,20 @@ function renderChatMessage(message, role) {
     messageBubble.classList.add('chat-message-bubble');
     messageBubble.innerHTML = message.replace(/\n/g, '<br>'); // 支援換行
 
+    // --- 【核心修改】為怪獸訊息添加屬性顏色 ---
+    if (role === 'assistant' && currentChatMonsterId) {
+        const monster = gameState.playerData.farmedMonsters.find(m => m.id === currentChatMonsterId);
+        if (monster && monster.elements && monster.elements.length > 0) {
+            const primaryElement = monster.elements[0];
+            const elementCssKey = getElementCssClassKey(primaryElement); // 呼叫在 ui.js 中的輔助函式
+            if (elementCssKey) {
+                messageBubble.classList.add(`text-element-${elementCssKey}`);
+                messageBubble.style.color = `var(--element-${elementCssKey}-text)`; // 直接應用CSS變數確保顏色正確
+            }
+        }
+    }
+    // --- 【修改結束】 ---
+
     messageWrapper.appendChild(messageBubble);
     
     // 將新訊息插入到頂部 (因為 logArea 使用了 flex-direction: column-reverse)
@@ -62,6 +76,7 @@ function setupChatTab(monster) {
         renderChatMessage(`你好，我是 ${monster.nickname}！有什麼事嗎？`, 'assistant');
     }
 }
+
 
 /**
  * 處理發送訊息的邏輯
@@ -106,6 +121,7 @@ async function handleSendMessage() {
         chatElements.input.focus(); // 發送後讓使用者可以繼續輸入
     }
 }
+
 
 /**
  * 初始化聊天系統的所有事件監聽器
