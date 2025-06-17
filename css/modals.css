@@ -652,3 +652,51 @@ p.monster-score {
     line-height: 1;
 }
 /* --- 核心修改處 END --- */
+
+/* --- Chat Tab Styles --- */
+.chat-message-wrapper {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+.chat-message-bubble {
+    max-width: 80%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.role-user {
+    justify-content: flex-end;
+}
+
+.role-user .chat-message-bubble {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-bottom-right-radius: 2px;
+}
+
+.role-assistant {
+    justify-content: flex-start;
+}
+
+.role-assistant .chat-message-bubble {
+    background-color: var(--button-secondary-bg);
+    color: var(--text-primary);
+    border-bottom-left-radius: 2px;
+}
+
+.role-system .chat-message-bubble {
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-align: center;
+    width: 100%;
+}
+
+.role-assistant-thinking .chat-message-bubble {
+    background-color: var(--button-secondary-bg);
+    color: var(--text-secondary);
+    font-style: italic;
+}
