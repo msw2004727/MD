@@ -256,12 +256,20 @@
             <div class="tab-buttons" id="monster-info-tabs">
                 <button class="tab-button active" data-tab-target="monster-details-tab" data-parent-modal="monster-info-modal">📜 詳細資訊</button>
                 <button class="tab-button" data-tab-target="monster-logs-tab" data-parent-modal="monster-info-modal">🐾 活動紀錄</button>
+                <button class="tab-button" data-tab-target="monster-notes-tab" data-parent-modal="monster-info-modal">📝 備註</button>
             </div>
             <div id="monster-details-tab" class="tab-content active modal-body"></div>
             <div id="monster-logs-tab" class="tab-content modal-body">
                 <div id="monster-activity-logs" class="max-h-[300px] overflow-y-auto">
                     <p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>
                 </div>
+            </div>
+            <div id="monster-notes-tab" class="tab-content modal-body">
+                <div id="monster-notes-display" class="max-h-[250px] overflow-y-auto mb-3 p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)]">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">尚無備註。</p>
+                </div>
+                <textarea id="monster-note-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="為這隻怪獸寫下一些筆記..."></textarea>
+                <button id="save-monster-note-btn" class="button primary w-full mt-2">儲存備註</button>
             </div>
         </div>
     </div>
