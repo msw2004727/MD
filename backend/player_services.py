@@ -348,6 +348,11 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
     if not note_content.strip():
         player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
         return player_data
+        
+    # 【新增】後端長度驗證
+    if len(note_content) > 100:
+        player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
+        return None # 返回 None 表示驗證失敗
 
     new_note: NoteEntry = {
         "timestamp": int(time.time()),
