@@ -93,7 +93,6 @@ def get_ai_chat_completion(
         ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 聊天服務。")
         return DEFAULT_CHAT_REPLY
     
-    # 【新增】定義怪獸在對話中的自稱
     monster_short_name = monster_data.get('element_nickname_part') or monster_data.get('nickname', '怪獸')
 
 
@@ -107,7 +106,6 @@ def get_ai_chat_completion(
 
     if knowledge_context:
         # --- 知識問答模式 ---
-        # 【修改】在系統指令中加入關於表情符號的要求
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -127,7 +125,6 @@ def get_ai_chat_completion(
 """
     else:
         # --- 一般閒聊模式 ---
-        # 【修改】在系統指令中加入關於表情符號的要求
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -143,14 +140,34 @@ def get_ai_chat_completion(
         skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
         dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
+        activity_log_entries = monster_data.get("activityLog", [])
+        recent_activities_str = ""
+        if activity_log_entries:
+            recent_logs = activity_log_entries[:3]
+            formatted_logs = [f"- {log.get('time', '')}: {log.get('message', '').replace('\n', ' ')}" for log in recent_logs]
+            recent_activities_str = "\n".join(formatted_logs)
+        else:
+            recent_activities_str = "- 最近沒發生什麼特別的事。"
+
+        # 【新增】讀取並格式化數值與狀態
+        stats_str = f"HP: {monster_data.get('hp')}/{monster_data.get('initial_max_hp')}, 攻擊: {monster_data.get('attack')}, 防禦: {monster_data.get('defense')}, 速度: {monster_data.get('speed')}"
+        health_conditions = monster_data.get("healthConditions", [])
+        conditions_str = "、".join([cond.get('name', '未知狀態') for cond in health_conditions]) if health_conditions else "非常健康"
+
+
+        # 【修改】將數值與狀態加入到AI的參考資料中
         monster_profile = f"""
 --- 我的資料 ---
 - 我的名字：{monster_short_name}
 - 我的屬性：{', '.join(monster_data.get('elements', []))}
 - 我的稀有度：{monster_data.get('rarity')}
+- 我的數值：{stats_str}
+- 我的狀態：{conditions_str}
 - 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
 - 我的技能：{', '.join(skills_with_desc) or '無'}
 - 我的DNA組成：{', '.join(dna_with_desc) or '謎'}
+- 我的最近動態：
+{recent_activities_str}
 """
         formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
         user_content = f"""
