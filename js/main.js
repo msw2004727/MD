@@ -123,11 +123,13 @@ async function initializeGame() {
             return;
         }
 
-        const [configs, playerData, assetPaths, uiTextContent] = await Promise.all([
+        // 【修改】在 Promise.all 中新增對 chat_greetings.json 的讀取
+        const [configs, playerData, assetPaths, uiTextContent, chatGreetings] = await Promise.all([
             getGameConfigs(),
             getPlayerData(gameState.currentUser.uid),
             fetch('./assets.json').then(res => res.json()),
-            fetch('./ui_text.json').then(res => res.json())
+            fetch('./ui_text.json').then(res => res.json()),
+            fetch('./chat_greetings.json').then(res => res.json()) // 新增這一行
         ]);
 
         if (!configs || Object.keys(configs).length === 0) {
@@ -142,15 +144,21 @@ async function initializeGame() {
         if (!uiTextContent) {
             throw new Error("無法獲取介面文字內容設定。");
         }
+        // 【新增】檢查新載入的問候語檔案
+        if (!chatGreetings) {
+            throw new Error("無法獲取怪獸問候語資料庫。");
+        }
         
+        // 【修改】將讀取到的 chatGreetings 存入全域遊戲狀態
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
             assetPaths: assetPaths,
             uiTextContent: uiTextContent,
+            chatGreetings: chatGreetings, // 新增這一行
             playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
         });
-        console.log("Game configs, player data, and asset paths loaded and saved to gameState.");
+        console.log("Game configs, player data, asset paths, and chat greetings loaded and saved to gameState.");
 
         if (typeof populateImageAssetSources === 'function') {
             populateImageAssetSources();
