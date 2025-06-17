@@ -22,8 +22,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const defaultElementNickname = monster.element_nickname_part || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement);
     const editableNickname = monster.custom_element_nickname || defaultElementNickname;
 
-    // 【新增】檢查怪獸是否為玩家自己的
-    const isOwnMonster = !monster.owner_id || monster.owner_id === gameState.playerId;
+    // 【修改】修正檢查怪獸是否為玩家自己的邏輯
+    const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
@@ -297,7 +297,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
         // 如果不是自己的怪獸，則強制切換回第一個頁籤
         const firstTabButton = DOMElements.monsterInfoTabs.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
-        if (firstTabButton) {
+        if (!isOwnMonster && firstTabButton) {
             // 不論當前是什麼狀態，都重新設定一次，確保介面正確
             switchTabContent('monster-details-tab', firstTabButton, 'monster-info-modal');
         }
