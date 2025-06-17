@@ -110,7 +110,8 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.whiteSpace = 'nowrap';
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
-            link.style.fontSize = '0.9em';
+            // 【修改】將字體大小從 0.9em 提升至 1.1rem
+            link.style.fontSize = '1.1rem'; 
             
             // --- 核心修改處 ---
             const playerTitle = item.player_title_part;
