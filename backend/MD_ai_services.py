@@ -37,41 +37,6 @@ DEFAULT_BATTLE_REPORT_CONTENT = {
 DEFAULT_CHAT_REPLY = "嗯...（牠似乎在思考要說些什麼，但又不知道怎麼開口。）"
 
 
-def call_deepseek_api(payload: Dict[str, Any], timeout: int = 90) -> Optional[Dict[str, Any]]:
-    """
-    【新增的共用函式】
-    一個集中的函式，用於呼叫 DeepSeek API 並處理常見錯誤。
-    """
-    if not DEEPSEEK_API_KEY:
-        ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 服務。")
-        return None
-
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    ai_logger.debug(f"DEBUG AI: 請求 DeepSeek URL: {DEEPSEEK_API_URL}, 模型: {payload.get('model')}")
-    ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
-
-    try:
-        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=timeout)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as http_err:
-        status_code = http_err.response.status_code if http_err.response else 'N/A'
-        ai_logger.error(f"ERROR AI: DeepSeek API HTTP 錯誤: {http_err}. 狀態碼: {status_code}.")
-        if status_code == 401:
-            ai_logger.error("ERROR AI: DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
-        return None
-    except requests.exceptions.RequestException as req_err:
-        ai_logger.error(f"ERROR AI: DeepSeek API 請求錯誤: {req_err}")
-        return None
-    except Exception as e:
-        ai_logger.error(f"ERROR AI: 呼叫 DeepSeek API 時發生未知錯誤: {e}", exc_info=True)
-        return None
-
-
 def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs, player_data: PlayerGameData, current_monster_id: str) -> Optional[Dict[str, Any]]:
     """
     分析玩家的訊息，判斷是否在詢問遊戲知識。
@@ -141,6 +106,7 @@ def get_ai_chat_completion(
         knowledge_context = None
 
     if knowledge_context:
+        # --- 知識問答模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -158,6 +124,7 @@ def get_ai_chat_completion(
 我:
 """
     else:
+        # --- 一般閒聊模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -280,44 +247,87 @@ def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
         "temperature": 0.9,
         "max_tokens": 500,
     }
+
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
     
-    # 【修改】使用新的共用函式
-    response_json = call_deepseek_api(payload, timeout=90)
+    ai_logger.debug(f"DEBUG AI: 請求 DeepSeek URL: {DEEPSEEK_API_URL}, 模型: {DEEPSEEK_MODEL}")
+    ai_logger.debug(f"DEBUG AI: 請求 Payload: {json.dumps(payload, ensure_ascii=False, indent=2)}")
 
-    if response_json:
-        if (response_json.get("choices") and
-            len(response_json["choices"]) > 0 and
-            response_json["choices"][0].get("message") and
-            response_json["choices"][0]["message"].get("content")):
+    max_retries = 3
+    retry_delay = 5
 
-            generated_text_json_str = response_json["choices"][0]["message"]["content"]
-            
-            cleaned_json_str = generated_text_json_str.strip()
-            if cleaned_json_str.startswith("```json"):
-                cleaned_json_str = cleaned_json_str[7:]
-            if cleaned_json_str.endswith("```"):
-                cleaned_json_str = cleaned_json_str[:-3]
-            cleaned_json_str = cleaned_json_str.strip()
+    for attempt in range(max_retries):
+        try:
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 發送請求...")
+            response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=90)
+            response.raise_for_status() 
 
-            try:
-                generated_content = json.loads(cleaned_json_str)
-                ai_details = {
-                    "aiIntroduction": generated_content.get("aiIntroduction", DEFAULT_AI_RESPONSES["aiIntroduction"]),
-                    "aiEvaluation": generated_content.get("aiEvaluation", DEFAULT_AI_RESPONSES["aiEvaluation"])
-                }
-                ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
-                return ai_details
-            except json.JSONDecodeError as json_err:
-                ai_logger.error(f"ERROR AI: 解析 DeepSeek API 回應中的 JSON 字串失敗: {json_err}。清理後的字串: '{cleaned_json_str}'。")
+            response_json = response.json()
+            ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 收到原始 JSON 響應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+
+            if (response_json.get("choices") and
+                len(response_json["choices"]) > 0 and
+                response_json["choices"][0].get("message") and
+                response_json["choices"][0]["message"].get("content")):
+
+                generated_text_json_str = response_json["choices"][0]["message"]["content"]
+                
+                cleaned_json_str = generated_text_json_str.strip()
+                if cleaned_json_str.startswith("```json"):
+                    cleaned_json_str = cleaned_json_str[7:]
+                if cleaned_json_str.endswith("```"):
+                    cleaned_json_str = cleaned_json_str[:-3]
+                cleaned_json_str = cleaned_json_str.strip()
+
+                try:
+                    generated_content = json.loads(cleaned_json_str)
+                    ai_logger.debug(f"DEBUG AI: 嘗試 {attempt + 1}/{max_retries} - 成功解析 AI JSON 內容。")
+                    ai_details = {
+                        "aiIntroduction": generated_content.get("aiIntroduction", DEFAULT_AI_RESPONSES["aiIntroduction"]),
+                        "aiEvaluation": generated_content.get("aiEvaluation", DEFAULT_AI_RESPONSES["aiEvaluation"])
+                    }
+                    ai_logger.info(f"成功為怪獸 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
+                    return ai_details
+                except json.JSONDecodeError as json_err:
+                    ai_logger.error(f"ERROR AI: 解析 DeepSeek API 回應中的 JSON 字串失敗: {json_err}。清理後的字串: '{cleaned_json_str}'。")
+                    return DEFAULT_AI_RESPONSES.copy()
+            else:
+                error_detail = response_json.get("error", {})
+                error_message = error_detail.get("message", "DeepSeek API 回應格式不符合預期或包含錯誤。")
+                ai_logger.error(f"ERROR AI: DeepSeek API 回應無效。完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
                 return DEFAULT_AI_RESPONSES.copy()
-        else:
-            ai_logger.error(f"ERROR AI: DeepSeek API 回應無效。完整回應: {json.dumps(response_json, ensure_ascii=False, indent=2)}")
-            return DEFAULT_AI_RESPONSES.copy()
-    else:
-        # call_deepseek_api 已經記錄了詳細錯誤
-        ai_logger.error(f"ERROR AI: 無法為 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊，因為 API 呼叫失敗。")
-        return DEFAULT_AI_RESPONSES.copy()
 
+        except requests.exceptions.HTTPError as http_err:
+            status_code = http_err.response.status_code if http_err.response else 'N/A'
+            ai_logger.error(f"ERROR AI: DeepSeek API HTTP 錯誤 (嘗試 {attempt+1}): {http_err}. 狀態碼: {status_code}.")
+            if status_code == 401:
+                ai_logger.error("ERROR AI: DeepSeek API 金鑰無效或未授權。請檢查金鑰是否正確。")
+                return DEFAULT_AI_RESPONSES.copy()
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_AI_RESPONSES.copy()
+        except requests.exceptions.RequestException as req_err:
+            ai_logger.error(f"ERROR AI: DeepSeek API 請求錯誤 (嘗試 {attempt+1}): {req_err}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_AI_RESPONSES.copy()
+        except Exception as e:
+            ai_logger.error(f"ERROR AI: 生成 AI 怪獸詳細資訊時發生未知錯誤 (嘗試 {attempt+1}): {e}", exc_info=True)
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+            return DEFAULT_AI_RESPONSES.copy()
+
+    ai_logger.error(f"ERROR AI: 所有重試均失敗，無法為 '{monster_nickname}' (使用 DeepSeek) 生成 AI 詳細資訊。")
+    return DEFAULT_AI_RESPONSES.copy()
 
 def generate_cultivation_story(monster_name: str, duration_percentage: float, skill_updates_log: List[str], items_obtained: List[Dict]) -> str:
     """
@@ -363,14 +373,26 @@ def generate_cultivation_story(monster_name: str, duration_percentage: float, sk
         "temperature": 0.8,
     }
     
-    response_json = call_deepseek_api(payload, timeout=120)
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-    if response_json and response_json.get("choices") and response_json["choices"][0].get("message"):
-        story = response_json["choices"][0]["message"].get("content", DEFAULT_ADVENTURE_STORY)
-        ai_logger.info(f"成功為 '{monster_name}' 生成修煉故事。")
-        return story.strip()
-    else:
-        ai_logger.error(f"DeepSeek API 回應格式不符，使用預設故事。回應: {response_json}")
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=120)
+        response.raise_for_status()
+        response_json = response.json()
+        
+        if (response_json.get("choices") and response_json["choices"][0].get("message")):
+            story = response_json["choices"][0]["message"].get("content", DEFAULT_ADVENTURE_STORY)
+            ai_logger.info(f"成功為 '{monster_name}' 生成修煉故事。")
+            return story.strip()
+        else:
+            ai_logger.error(f"DeepSeek API 回應格式不符，使用預設故事。回應: {response_json}")
+            return DEFAULT_ADVENTURE_STORY
+            
+    except Exception as e:
+        ai_logger.error(f"呼叫 DeepSeek API 生成修煉故事時發生錯誤: {e}", exc_info=True)
         return DEFAULT_ADVENTURE_STORY
 
 
@@ -409,6 +431,15 @@ def generate_battle_report_content(
         formatted_description = "戰鬥瞬間結束，未能記錄詳細過程。"
 
     # --- 2. 準備給 AI 的 prompt (僅用於生成總結) ---
+    if not DEEPSEEK_API_KEY:
+        ai_logger.error("DeepSeek API 金鑰未設定。無法為戰鬥生成 AI 總結。")
+        return {
+            "battle_description": formatted_description,
+            "battle_summary": "戰報總結生成失敗：AI服務未設定。",
+            "loot_info": "戰利品資訊待補。",
+            "growth_info": "怪獸成長資訊待補。"
+        }
+    
     winner_id = battle_result.get('winner_id')
     winner_name = player_monster.get('nickname') if winner_id == player_monster.get('id') else opponent_monster.get('nickname')
     highlights_str = "、".join(battle_result.get("battle_highlights", []))
@@ -428,12 +459,22 @@ def generate_battle_report_content(
         "max_tokens": 150, 
     }
     
-    response_json = call_deepseek_api(payload, timeout=25)
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
     
     ai_summary = DEFAULT_BATTLE_REPORT_CONTENT["battle_summary"]
-    if response_json and response_json.get("choices") and response_json["choices"][0].get("message"):
-        ai_summary = response_json["choices"][0]["message"].get("content", ai_summary).strip()
-        ai_logger.info(f"成功為戰鬥生成 AI 總結。")
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=25) # 將超時設為25秒，小於Gunicorn的30秒
+        response.raise_for_status()
+        response_json = response.json()
+        
+        if (response_json.get("choices") and response_json["choices"][0].get("message")):
+            ai_summary = response_json["choices"][0]["message"].get("content", ai_summary).strip()
+            ai_logger.info(f"成功為戰鬥生成 AI 總結。")
+    except Exception as e:
+        ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
 
     # --- 3. 組合最終結果 ---
     absorption_details = battle_result.get("absorption_details", {})

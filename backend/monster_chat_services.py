@@ -4,16 +4,16 @@
 import logging
 from typing import Dict, Any, List, Optional
 import requests
-import random 
+import random # 【新增】導入 random 函式庫
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
 from .player_services import get_player_data_service
 
-# --- 【修改】從 MD_ai_services 導入共用函式與變數 ---
+# --- 【新增】從 MD_ai_services 導入必要的變數與函式 ---
 from .MD_ai_services import (
-    call_deepseek_api, get_ai_chat_completion, DEFAULT_CHAT_REPLY,
-    DEEPSEEK_MODEL, DEEPSEEK_API_KEY, DEEPSEEK_API_URL
+    DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, 
+    DEFAULT_CHAT_REPLY, _get_world_knowledge_context, ai_logger
 )
 
 # 設定日誌記錄器
@@ -22,6 +22,7 @@ chat_logger = logging.getLogger(__name__)
 # 定義短期記憶的長度 (儲存的對話數量)
 CHAT_HISTORY_LIMIT = 20
 
+# 【新增】定義互動反應的函式
 def generate_monster_interaction_response_service(
     player_id: str,
     monster_id: str,
@@ -31,6 +32,7 @@ def generate_monster_interaction_response_service(
     """
     生成怪獸對玩家物理互動的反應。
     """
+    # 1. 獲取資料
     player_data, _ = get_player_data_service(player_id, None, game_configs)
     if not player_data:
         chat_logger.error(f"無法獲取玩家 {player_id} 的資料。")
@@ -41,6 +43,7 @@ def generate_monster_interaction_response_service(
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
+    # 2. 根據動作類型和個性組合 Prompt
     action_map = {
         "punch": "揍了你一拳",
         "pat": "摸了摸你的頭",
@@ -62,33 +65,52 @@ def generate_monster_interaction_response_service(
 我:
 """
 
-    payload = {
-        "model": DEEPSEEK_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        "temperature": 0.9,
-        "max_tokens": 80,
-    }
-    
-    # 【修改】使用新的共用函式
-    response_json = call_deepseek_api(payload, timeout=30)
-    
-    if response_json and response_json.get("choices") and response_json["choices"][0].get("message"):
-        reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
-        
-        interaction_log = f"（你{action_desc}）"
-        monster_to_react.setdefault("chatHistory", []).append({"role": "user", "content": interaction_log})
-        monster_to_react["chatHistory"].append({"role": "assistant", "content": reply})
-        monster_to_react["chatHistory"] = monster_to_react["chatHistory"][-CHAT_HISTORY_LIMIT:]
+    # 3. 呼叫 AI 生成回應 (這裡可以重用 get_ai_chat_completion 的部分邏輯，或建立一個新的輔助函式)
+    # 為了簡潔，我們直接呼叫 AI API
+    try:
+        from .MD_ai_services import DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, DEFAULT_CHAT_REPLY
+        if not DEEPSEEK_API_KEY:
+            chat_logger.error("DeepSeek API 金鑰未設定。")
+            return None
 
-        return {
-            "ai_reply": reply,
-            "updated_player_data": player_data
+        payload = {
+            "model": DEEPSEEK_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "temperature": 0.9,
+            "max_tokens": 80,
         }
-    else:
-        chat_logger.error(f"呼叫 AI 互動服務失敗或回應格式不正確。")
+        headers = {
+            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        response_json = response.json()
+
+        if response_json.get("choices") and response_json["choices"][0].get("message"):
+            reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
+            
+            # 將互動也加入聊天歷史
+            interaction_log = f"（你{action_desc}）"
+            monster_to_react.setdefault("chatHistory", []).append({"role": "user", "content": interaction_log})
+            monster_to_react["chatHistory"].append({"role": "assistant", "content": reply})
+            
+            # 維持歷史紀錄長度
+            monster_to_react["chatHistory"] = monster_to_react["chatHistory"][-CHAT_HISTORY_LIMIT:]
+
+            return {
+                "ai_reply": reply,
+                "updated_player_data": player_data
+            }
+        else:
+            return None
+
+    except Exception as e:
+        chat_logger.error(f"生成互動回應時發生錯誤: {e}", exc_info=True)
         return None
 
 
@@ -101,19 +123,22 @@ def generate_monster_chat_response_service(
     """
     生成怪獸的聊天回應，並管理其對話歷史。
     """
+    # 1. 獲取最新的玩家資料
     player_data, _ = get_player_data_service(player_id, None, game_configs)
     if not player_data:
         chat_logger.error(f"無法獲取玩家 {player_id} 的資料。")
         return None
 
+    # 2. 從玩家資料中找到目標怪獸
     monster_to_chat = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
     if not monster_to_chat:
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
+    # 3. 獲取或初始化怪獸的對話歷史 (短期記憶)
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
-    # 【修改】呼叫 AI 服務的邏輯保持不變，因為它已經被重構到 MD_ai_services.py 中
+    # 4. 呼叫 AI 服務以生成回應
     ai_reply_text = get_ai_chat_completion(
         monster_data=monster_to_chat,
         player_data=player_data,
@@ -125,10 +150,15 @@ def generate_monster_chat_response_service(
         chat_logger.error(f"AI 服務未能為怪獸 {monster_id} 生成回應。")
         return None
 
+    # 5. 更新對話歷史
     chat_history.append({"role": "user", "content": player_message})
     chat_history.append({"role": "assistant", "content": ai_reply_text})
+
+    # 6. 維護短期記憶長度，移除最舊的紀錄
     if len(chat_history) > CHAT_HISTORY_LIMIT:
         chat_history = chat_history[-CHAT_HISTORY_LIMIT:]
+
+    # 7. 將更新後的對話歷史寫回怪獸物件
     monster_to_chat["chatHistory"] = chat_history
 
     result = {
@@ -139,9 +169,7 @@ def generate_monster_chat_response_service(
     chat_logger.info(f"成功為怪獸 {monster_id} 生成聊天回應。")
     return result
 
-# ... (檔案中剩餘的其他函式 get_ai_chat_completion 維持不變)
-# 注意：為了完整性，這裡保留 get_ai_chat_completion，但它內部呼叫的 _get_world_knowledge_context 和 call_deepseek_api
-# 現在是從 MD_ai_services.py 導入的。
+
 def get_ai_chat_completion(
     monster_data: Monster,
     player_data: PlayerGameData,
@@ -233,14 +261,27 @@ def get_ai_chat_completion(
         "temperature": 0.85, 
         "max_tokens": 150,
     }
-    
-    # 【修改】使用新的共用函式
-    response_json = call_deepseek_api(payload, timeout=30)
-    
-    if response_json and response_json.get("choices") and response_json["choices"][0].get("message"):
-        reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
-        ai_logger.info(f"成功為怪獸 {monster_data.get('id')} 生成聊天回應。")
-        return reply
-    else:
-        ai_logger.error(f"DeepSeek API 聊天回應格式不符: {response_json}")
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        response_json = response.json()
+        if response_json.get("choices") and response_json["choices"][0].get("message"):
+            reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
+            ai_logger.info(f"成功為怪獸 {monster_data.get('id')} 生成聊天回應。")
+            return reply
+        else:
+            ai_logger.error(f"DeepSeek API 聊天回應格式不符: {response_json}")
+            return DEFAULT_CHAT_REPLY
+    except requests.exceptions.RequestException as e:
+        ai_logger.error(f"呼叫 DeepSeek API 進行聊天時發生網路錯誤: {e}", exc_info=True)
+        return "（網路訊號好像不太好，我聽不太清楚...）"
+    except Exception as e:
+        ai_logger.error(f"生成 AI 聊天回應時發生未知錯誤: {e}", exc_info=True)
         return DEFAULT_CHAT_REPLY
+
+# ... (檔案中剩餘的其他函式 generate_monster_ai_details, generate_cultivation_story, generate_battle_report_content 維持不變)
