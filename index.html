@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '1.0.3'; 
+        const gameVersion = '0.1.1'; // 例如從 '1.0.0' 改為 '1.0.1'
 
         const cssFiles = [
             'css/theme.css',
@@ -164,10 +164,7 @@
                     </div>
                     <div id="inventory-items" class="inventory-grid mt-2"></div>
                     <div class="mt-4">
-                        <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
-                            <h3 class="panel-title dna-panel-title text-sm">🎒 暫存背包</h3>
-                            <span class="panel-title-hint dna-panel-hint">※退出網頁背包就會清空</span>
-                        </div>
+                        <h3 class="panel-title dna-panel-title text-sm mb-2">🎒 暫存背包</h3>
                         <div id="temporary-backpack-items" class="temp-backpack-grid"></div>
                     </div>
                 </div>
@@ -472,15 +469,9 @@
     
     <script>
         (function() {
-            const gameVersion = '1.0.2'; 
-
-            const cssFiles = [
-                'css/theme.css',
-                'css/layout.css',
-                'css/buttons.css',
-                'css/components.css',
-                'css/modals.css'
-            ];
+            // 這個版本號是實現強制更新的關鍵。
+            // 每次更新遊戲檔案後，只需要修改這個變數的值 (例如 '1.0.1')
+            const gameVersion = '1.0.1'; 
 
             const jsFiles = [
                 'js/firebase-config.js',
@@ -506,30 +497,10 @@
                 'js/main.js'
             ];
 
-            cssFiles.forEach(path => {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = `${path}?v=${gameVersion}`;
-                document.head.appendChild(link);
+            // 使用 document.write 確保腳本按順序同步加載和解析
+            jsFiles.forEach(path => {
+                document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
             });
-
-            function loadScript(index) {
-                if (index >= jsFiles.length) {
-                    return; 
-                }
-                const script = document.createElement('script');
-                script.src = `${jsFiles[index]}?v=${gameVersion}`;
-                script.defer = true;
-                script.onload = () => {
-                    loadScript(index + 1);
-                };
-                script.onerror = () => {
-                    console.error(`Failed to load script: ${jsFiles[index]}`);
-                    loadScript(index + 1); 
-                };
-                document.body.appendChild(script);
-            }
-            loadScript(0);
         })();
     </script>
 </body>
