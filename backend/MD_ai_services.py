@@ -42,15 +42,15 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
     分析玩家的訊息，判斷是否在詢問遊戲知識。
     如果是，則從 game_configs 或 player_data 中查找相關資訊並返回。
     """
-    # 【新增】檢查是否在詢問關於農場裡的其他怪獸
+    # 檢查是否在詢問關於農場裡的其他怪獸
     farmed_monsters = player_data.get("farmedMonsters", [])
     for monster in farmed_monsters:
-        monster_name = monster.get("nickname")
-        # 確保怪獸有名字，且不是正在對話的這隻怪獸自己
-        if monster_name and monster_name in player_message and monster.get("id") != current_monster_id:
+        # 【修改】使用怪獸的短稱呼（屬性代表名）來進行匹配
+        monster_short_name = monster.get("element_nickname_part") or monster.get("nickname")
+        if monster_short_name and monster_short_name in player_message and monster.get("id") != current_monster_id:
             skills_str = ', '.join([s.get('name', '未知技能') for s in monster.get('skills', [])]) or '沒有特殊技能'
-            context_str = f"關於我的夥伴「{monster_name}」的資料：牠是一隻 {monster.get('rarity')} 的 {monster.get('elements', ['未知'])[0]} 屬性怪獸。聽說牠的技能有 {skills_str}。"
-            return {"topic_type": "Monster", "topic_name": monster_name, "context": context_str}
+            context_str = f"關於我的夥伴「{monster_short_name}」的資料：牠是一隻 {monster.get('rarity')} 的 {monster.get('elements', ['未知'])[0]} 屬性怪獸。聽說牠的技能有 {skills_str}。"
+            return {"topic_type": "Monster", "topic_name": monster_short_name, "context": context_str}
 
     # 檢查是否在詢問關於特定 DNA 的資訊
     all_dna = game_configs.get("dna_fragments", [])
@@ -92,11 +92,14 @@ def get_ai_chat_completion(
     if not DEEPSEEK_API_KEY:
         ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 聊天服務。")
         return DEFAULT_CHAT_REPLY
+    
+    # 【新增】定義怪獸在對話中的自稱
+    monster_short_name = monster_data.get('element_nickname_part') or monster_data.get('nickname', '怪獸')
+
 
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
         game_configs = load_all_game_configs_from_firestore()
-        # 【修改】將玩家資料和當前怪獸ID傳入知識查找函式
         knowledge_context = _get_world_knowledge_context(player_message, game_configs, player_data, monster_data.get("id", ""))
     except Exception as e:
         ai_logger.error(f"查找世界知識時出錯: {e}", exc_info=True)
@@ -105,7 +108,7 @@ def get_ai_chat_completion(
     if knowledge_context:
         # --- 知識問答模式 ---
         system_prompt = f"""
-你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
+你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
 你的飼主「{player_data.get('nickname', '訓練師')}」正在向你請教遊戲知識。
@@ -117,13 +120,13 @@ def get_ai_chat_completion(
 ---
 玩家的問題是：「{player_message}」
 
-現在，請以「{monster_data.get('nickname', '怪獸')}」的身份回答。
+現在，請以「{monster_short_name}」的身份回答。
 我:
 """
     else:
         # --- 一般閒聊模式 ---
         system_prompt = f"""
-你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
+你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
 你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。你可以參照你的技能和DNA組成來豐富你的回答，但不要像在讀說明書。
@@ -138,7 +141,7 @@ def get_ai_chat_completion(
 
         monster_profile = f"""
 --- 我的資料 ---
-- 我的名字：{monster_data.get('nickname')}
+- 我的名字：{monster_short_name}
 - 我的屬性：{', '.join(monster_data.get('elements', []))}
 - 我的稀有度：{monster_data.get('rarity')}
 - 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
@@ -159,7 +162,7 @@ def get_ai_chat_completion(
 **特別指示：** 在你的回應中，除了回覆玩家的話，請自然地向玩家反問一個簡單的問題，像是「你今天過得怎麼樣？」、「你喜歡吃什麼？」或「你覺得我該加強哪個技能？」。
 """
         user_content += f"""
-現在，請以「{monster_data.get('nickname', '怪獸')}」的身份，用符合你個性的方式回應玩家。
+現在，請以「{monster_short_name}」的身份，用符合你個性的方式回應玩家。
 我:
 """
 
