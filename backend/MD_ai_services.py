@@ -7,6 +7,7 @@ import requests # 用於發送 HTTP 請求
 import logging
 import time
 from typing import Dict, Any, List, Optional # 用於類型提示
+import random # 導入 random 模組
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import Monster, PlayerGameData, ChatHistoryEntry
@@ -59,6 +60,15 @@ def get_ai_chat_completion(
 你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
 """
 
+    # 【修改】新的隨機反問機制
+    should_ask_question = False
+    # 一次對話包含玩家提問與怪獸回答。當對話歷史長度為4時，代表即將進行第3回合的回答。
+    # (len(chat_history) - 4) % 6 == 0 這個公式可以找出第3、6、9...個回合。
+    if len(chat_history) >= 4 and (len(chat_history) - 4) % 6 == 0:
+        # 在這些觸發點，給予 25% 的機率進行反問
+        if random.random() < 0.25:
+            should_ask_question = True
+
     # 將怪獸的詳細資料整理成易於理解的文字
     monster_profile = f"""
 --- 我的資料 ---
@@ -80,6 +90,14 @@ def get_ai_chat_completion(
 {formatted_history}
 玩家: {player_message}
 ---
+"""
+    # 如果觸發反問，則加入特別指示
+    if should_ask_question:
+        user_content += """
+**特別指示：** 在你的回應中，除了回覆玩家的話，請自然地向玩家反問一個簡單的問題，像是「你今天過得怎麼樣？」、「你喜歡吃什麼？」或「你覺得我該加強哪個技能？」。
+"""
+
+    user_content += f"""
 現在，請以「{monster_data.get('nickname', '怪獸')}」的身份，用符合你個性的方式回應玩家。
 我:
 """
