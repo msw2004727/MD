@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Optional # 用於類型提示
 import random 
 
 # 從專案的其他模組導入必要的模型
-from .MD_models import Monster, PlayerGameData, ChatHistoryEntry
+from .MD_models import Monster, PlayerGameData, ChatHistoryEntry, GameConfigs
 
 
 # 設定日誌記錄器
@@ -37,6 +37,41 @@ DEFAULT_BATTLE_REPORT_CONTENT = {
 DEFAULT_CHAT_REPLY = "嗯...（牠似乎在思考要說些什麼，但又不知道怎麼開口。）"
 
 
+def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs) -> Optional[Dict[str, Any]]:
+    """
+    分析玩家的訊息，判斷是否在詢問遊戲知識。
+    如果是，則從 game_configs 中查找相關資訊並返回。
+    """
+    # 檢查是否在詢問關於特定 DNA 的資訊
+    all_dna = game_configs.get("dna_fragments", [])
+    for dna in all_dna:
+        if dna['name'] in player_message:
+            context_str = f"關於「{dna['name']}」的資料：{dna['description']} 它是 {dna['rarity']} 的 {dna['type']} 屬性 DNA，主要影響HP({dna['hp']})、攻擊({dna['attack']})、防禦({dna['defense']})等能力。"
+            return {"topic_type": "DNA", "topic_name": dna['name'], "context": context_str}
+
+    # 檢查是否在詢問關於特定技能的資訊
+    all_skills = game_configs.get("skills", {})
+    for element_skills in all_skills.values():
+        for skill in element_skills:
+            if skill['name'] in player_message:
+                context_str = f"關於技能「{skill['name']}」的資料：{skill.get('description', '一個神秘的招式')} 這是個 {skill.get('rarity', '普通')} 的 {skill.get('type', '無')} 屬性 {skill.get('skill_category', '技能')}，威力是 {skill.get('power', 0)}，消耗MP是 {skill.get('mp_cost', 0)}。"
+                return {"topic_type": "Skill", "topic_name": skill['name'], "context": context_str}
+
+    # 檢查是否在詢問一般性的遊戲指南問題
+    guide_keywords = ["怎麼", "如何", "什麼是", "教我", "合成", "修煉", "屬性", "克制"]
+    if any(keyword in player_message for keyword in guide_keywords):
+        all_guides = game_configs.get("newbie_guide", [])
+        # 尋找標題最匹配的指南
+        for entry in all_guides:
+            if any(keyword in entry['title'] for keyword in player_message.split()):
+                return {"topic_type": "Guide", "topic_name": entry['title'], "context": f"關於「{entry['title']}」的說明：{entry['content']}"}
+        # 如果沒有找到，但觸發了關鍵字，可以回傳一個通用的介紹
+        if all_guides:
+            return {"topic_type": "Guide", "topic_name": "遊戲目標", "context": f"關於「遊戲目標」的說明：{all_guides[0]['content']}"}
+
+    return None
+
+
 def get_ai_chat_completion(
     monster_data: Monster,
     player_data: PlayerGameData,
@@ -50,50 +85,50 @@ def get_ai_chat_completion(
         ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 聊天服務。")
         return DEFAULT_CHAT_REPLY
 
-    # --- 1. 組合 Prompt ---
-    # 【修改】更新系統指令，鼓勵 AI 使用更詳細的資料
-    system_prompt = f"""
+    # --- 1. 判斷對話模式：知識問答 vs 一般閒聊 ---
+    try:
+        from .MD_config_services import load_all_game_configs_from_firestore
+        game_configs = load_all_game_configs_from_firestore()
+        knowledge_context = _get_world_knowledge_context(player_message, game_configs)
+    except Exception as e:
+        ai_logger.error(f"查找世界知識時出錯: {e}", exc_info=True)
+        knowledge_context = None
+
+    # --- 2. 根據模式組合不同的 Prompt ---
+    if knowledge_context:
+        # --- 知識問答模式 ---
+        system_prompt = f"""
+你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
+你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
+你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
+你的飼主「{player_data.get('nickname', '訓練師')}」正在向你請教遊戲知識。
+你的任務是根據以下提供的「相關資料」，用你自己的個性和口吻，自然地回答玩家的問題。不要只是照本宣科。
+"""
+        user_content = f"""
+--- 相關資料 ---
+{knowledge_context.get('context')}
+---
+玩家的問題是：「{player_message}」
+
+現在，請以「{monster_data.get('nickname', '怪獸')}」的身份回答。
+我:
+"""
+    else:
+        # --- 一般閒聊模式 ---
+        system_prompt = f"""
 你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
 你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。你可以參照你的技能和DNA組成來豐富你的回答，但不要像在讀說明書。
 你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
 """
-    
-    # 隨機反問機制
-    should_ask_question = False
-    if len(chat_history) >= 4 and (len(chat_history) - 4) % 6 == 0:
-        if random.random() < 0.25:
+        should_ask_question = False
+        if len(chat_history) >= 4 and (len(chat_history) - 4) % 6 == 0 and random.random() < 0.25:
             should_ask_question = True
 
-    # --- 【新增】建立更詳細的怪獸資料 Profile ---
-    try:
-        from .MD_config_services import load_all_game_configs_from_firestore
-        game_configs = load_all_game_configs_from_firestore()
-
-        # 整理技能描述
-        skills_with_desc = []
-        all_skills_db = game_configs.get("skills", {})
-        for skill_instance in monster_data.get("skills", []):
-            skill_name = skill_instance.get("name")
-            skill_template = None
-            for element_skills in all_skills_db.values():
-                found = next((s for s in element_skills if s.get("name") == skill_name), None)
-                if found:
-                    skill_template = found
-                    break
-            skill_desc = skill_template.get('description', '一個神秘的招式') if skill_template else '一個神秘的招式'
-            skills_with_desc.append(f"「{skill_name}」({skill_desc})")
-        
-        # 整理 DNA 描述
-        dna_with_desc = []
-        all_dna_db = game_configs.get("dna_fragments", [])
-        for dna_id in monster_data.get("constituent_dna_ids", []):
-            dna_template = next((d for d in all_dna_db if d.get("id") == dna_id), None)
-            if dna_template:
-                dna_name = dna_template.get("name")
-                dna_desc = dna_template.get("description")
-                dna_with_desc.append(f"「{dna_name}」({dna_desc})")
+        # 組合閒聊模式下的詳細資料
+        skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
+        dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
         monster_profile = f"""
 --- 我的資料 ---
@@ -101,31 +136,11 @@ def get_ai_chat_completion(
 - 我的屬性：{', '.join(monster_data.get('elements', []))}
 - 我的稀有度：{monster_data.get('rarity')}
 - 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
-
---- 我的技能組成 ---
-{', '.join(skills_with_desc) or '我好像還沒學會任何特別的技能。'}
-
---- 我的DNA組成 ---
-{', '.join(dna_with_desc) or '我的身體構成是個謎。'}
+- 我的技能：{', '.join(skills_with_desc) or '無'}
+- 我的DNA組成：{', '.join(dna_with_desc) or '謎'}
 """
-    except Exception as e:
-        ai_logger.error(f"組合怪獸詳細資料時出錯: {e}")
-        # 如果出錯，則退回使用基本資料，確保功能不中斷
-        monster_profile = f"""
---- 我的資料 ---
-- 我的名字：{monster_data.get('nickname')}
-- 我的屬性：{', '.join(monster_data.get('elements', []))}
-- 我的稀有度：{monster_data.get('rarity')}
-- 我的技能：{', '.join([s.get('name', '') for s in monster_data.get('skills', [])]) or '無'}
-- 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
-"""
-    # --- 詳細 Profile 建立結束 ---
-
-    # 格式化對話歷史
-    formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
-    
-    # 組合最終的用戶輸入內容
-    user_content = f"""
+        formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
+        user_content = f"""
 {monster_profile}
 
 --- 最近的對話如下 ---
@@ -133,17 +148,16 @@ def get_ai_chat_completion(
 玩家: {player_message}
 ---
 """
-    if should_ask_question:
-        user_content += """
+        if should_ask_question:
+            user_content += """
 **特別指示：** 在你的回應中，除了回覆玩家的話，請自然地向玩家反問一個簡單的問題，像是「你今天過得怎麼樣？」、「你喜歡吃什麼？」或「你覺得我該加強哪個技能？」。
 """
-
-    user_content += f"""
+        user_content += f"""
 現在，請以「{monster_data.get('nickname', '怪獸')}」的身份，用符合你個性的方式回應玩家。
 我:
 """
 
-    # --- 2. 準備 API 請求 ---
+    # --- 3. 準備並發送 API 請求 ---
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
@@ -151,20 +165,17 @@ def get_ai_chat_completion(
             {"role": "user", "content": user_content}
         ],
         "temperature": 0.85, 
-        "max_tokens": 100,
+        "max_tokens": 150, # 稍微增加長度以應對知識問答
     }
-
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
         "Content-Type": "application/json"
     }
 
-    # --- 3. 發送請求並處理回應 ---
     try:
         response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
         response_json = response.json()
-
         if response_json.get("choices") and response_json["choices"][0].get("message"):
             reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
             ai_logger.info(f"成功為怪獸 {monster_data.get('id')} 生成聊天回應。")
