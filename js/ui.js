@@ -184,6 +184,30 @@ function hideModal(modalId) {
         if (gameState.activeModalId === modalId) {
             gameState.activeModalId = null;
         }
+        
+        // --- 【修改】新增重置彈窗狀態的邏輯 ---
+        // 1. 重置所有可滾動內容區域的捲軸到頂部
+        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content');
+        scrollableBodies.forEach(body => {
+            if (body.scrollTop > 0) {
+                body.scrollTop = 0;
+            }
+        });
+
+        // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
+        const tabButtonsContainer = modal.querySelector('.tab-buttons');
+        if (tabButtonsContainer) {
+            const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
+            if (firstTabButton) {
+                const firstTabTargetId = firstTabButton.dataset.tabTarget;
+                if (typeof switchTabContent === 'function') {
+                    // 傳入 modalId 確保只操作當前彈窗內的頁籤
+                    switchTabContent(firstTabTargetId, firstTabButton, modalId);
+                }
+            }
+        }
+        // --- 修改結束 ---
+
         // 清除通用回饋視窗的計時器
         if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
             clearInterval(gameState.feedbackHintInterval);
@@ -200,15 +224,8 @@ function hideModal(modalId) {
 function hideAllModals() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        if (modal.id === 'feedback-modal' && gameState.feedbackHintInterval) {
-            clearInterval(gameState.feedbackHintInterval);
-            gameState.feedbackHintInterval = null;
-        }
-        if (modal.id === 'training-results-modal' && gameState.trainingHintInterval) {
-            clearInterval(gameState.trainingHintInterval);
-            gameState.trainingHintInterval = null;
-        }
-        modal.style.display = 'none';
+        // 在隱藏所有彈窗時，也執行重置邏輯
+        hideModal(modal.id); 
     });
     gameState.activeModalId = null;
 }
