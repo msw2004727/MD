@@ -3,12 +3,18 @@
 
 import logging
 from typing import Dict, Any, List, Optional
-import requests # 【新增】導入 requests 函式庫
+import requests
+import random # 【新增】導入 random 函式庫
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
 from .player_services import get_player_data_service
-from .MD_ai_services import get_ai_chat_completion # 我們現在將實際使用這個函式
+
+# --- 【新增】從 MD_ai_services 導入必要的變數與函式 ---
+from .MD_ai_services import (
+    DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, 
+    DEFAULT_CHAT_REPLY, _get_world_knowledge_context, ai_logger
+)
 
 # 設定日誌記錄器
 chat_logger = logging.getLogger(__name__)
