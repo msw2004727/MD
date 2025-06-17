@@ -3,6 +3,7 @@
 
 import logging
 from typing import Dict, Any, List, Optional
+import requests # 【新增】導入 requests 函式庫
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
