@@ -23,7 +23,7 @@
       "dnaGuideBanner": "https://github.com/msw2004727/MD/blob/main/images/DNAbanner.png?raw=true",
       "loadingBanners": {
         "comment": "所有讀取中狀態的獨立橫幅",
-        "gameLoad": "",
+        "gameLoad": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
         "login": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
         "register": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
         "logout": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
