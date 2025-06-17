@@ -216,7 +216,7 @@ function initializeChatSystem() {
         });
     }
 
-    // 【新增】為三個互動按鈕綁定事件
+    // 為三個互動按鈕綁定事件
     if (chatElements.punchBtn) {
         chatElements.punchBtn.addEventListener('click', () => handleInteractionClick('punch'));
     }
