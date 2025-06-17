@@ -12,7 +12,7 @@ from typing import List, Dict, Any, Tuple
 
 from flask_cors import cross_origin
 
-from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service
+from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
 from .monster_healing_services import heal_monster_service, recharge_monster_with_dna_service
@@ -267,6 +267,41 @@ def save_player_data_route(player_id: str):
         return jsonify({"success": True, "message": "玩家資料保存成功。"}), 200
     else:
         return jsonify({"success": False, "error": "玩家資料保存失敗。"}), 500
+
+# 【新增】註記 API 路由
+@md_bp.route('/notes', methods=['POST'])
+def add_note_route():
+    user_id, nickname_from_token, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    target_type = data.get('target_type')
+    note_content = data.get('note_content')
+    monster_id = data.get('monster_id') # 可選
+
+    if not target_type or not note_content:
+        return jsonify({"error": "請求中缺少 'target_type' 或 'note_content'。"}), 400
+    if target_type == 'monster' and not monster_id:
+        return jsonify({"error": "當 target_type 為 'monster' 時，必須提供 'monster_id'。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname_from_token, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    updated_player_data = add_note_service(player_data, target_type, note_content, monster_id)
+
+    if updated_player_data:
+        if save_player_data_service(user_id, updated_player_data):
+            routes_logger.info(f"玩家 {user_id} 的註記已成功儲存。目標類型: {target_type}, 怪獸ID: {monster_id}")
+            return jsonify({"success": True, "message": "註記已成功儲存。"}), 200
+        else:
+            routes_logger.error(f"儲存玩家 {user_id} 的註記後，保存資料失敗。")
+            return jsonify({"error": "儲存註記失敗，請稍後再試。"}), 500
+    else:
+        routes_logger.warning(f"為玩家 {user_id} 新增註記失敗，服務層返回 None。")
+        return jsonify({"error": "新增註記失敗，請檢查請求參數。"}), 400
 
 
 @md_bp.route('/combine', methods=['POST'])
