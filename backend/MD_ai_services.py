@@ -140,22 +140,25 @@ def get_ai_chat_completion(
         skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
         dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
+        # 【修改】修正f-string語法錯誤
         activity_log_entries = monster_data.get("activityLog", [])
         recent_activities_str = ""
         if activity_log_entries:
             recent_logs = activity_log_entries[:3]
-            formatted_logs = [f"- {log.get('time', '')}: {log.get('message', '').replace('\n', ' ')}" for log in recent_logs]
+            formatted_logs = []
+            for log in recent_logs:
+                # 先將訊息處理好，再放入f-string
+                message = log.get('message', '').replace('\n', ' ')
+                formatted_logs.append(f"- {log.get('time', '')}: {message}")
             recent_activities_str = "\n".join(formatted_logs)
         else:
             recent_activities_str = "- 最近沒發生什麼特別的事。"
 
-        # 【新增】讀取並格式化數值與狀態
         stats_str = f"HP: {monster_data.get('hp')}/{monster_data.get('initial_max_hp')}, 攻擊: {monster_data.get('attack')}, 防禦: {monster_data.get('defense')}, 速度: {monster_data.get('speed')}"
         health_conditions = monster_data.get("healthConditions", [])
         conditions_str = "、".join([cond.get('name', '未知狀態') for cond in health_conditions]) if health_conditions else "非常健康"
 
 
-        # 【修改】將數值與狀態加入到AI的參考資料中
         monster_profile = f"""
 --- 我的資料 ---
 - 我的名字：{monster_short_name}
