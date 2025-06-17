@@ -334,54 +334,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         player_services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
         return False
 
-def add_note_service(player_data: PlayerGameData, target_type: str, note_content: str, monster_id: Optional[str] = None) -> Optional[PlayerGameData]:
-    """
-    新增一條註記到玩家或指定的怪獸。
-    """
-    if not note_content.strip():
-        player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
-        return player_data
-        
-    # 【新增】後端長度驗證
-    if len(note_content) > 100:
-        player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
-        return None # 返回 None 表示驗證失敗
-
-    new_note: NoteEntry = {
-        "timestamp": int(time.time()),
-        "content": note_content
-    }
-
-    if target_type == "player":
-        if "playerNotes" not in player_data or not isinstance(player_data.get("playerNotes"), list):
-            player_data["playerNotes"] = []
-        player_data["playerNotes"].append(new_note)
-        player_services_logger.info(f"已為玩家新增一條通用註記。")
-        return player_data
-
-    elif target_type == "monster":
-        if not monster_id:
-            player_services_logger.error("新增怪獸註記失敗：未提供怪獸 ID。")
-            return None # 返回 None 表示操作失敗
-
-        monster_to_update = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
-
-        if not monster_to_update:
-            player_services_logger.error(f"新增怪獸註記失敗：找不到 ID 為 {monster_id} 的怪獸。")
-            return None # 返回 None 表示操作失敗
-        
-        if "monsterNotes" not in monster_to_update or not isinstance(monster_to_update.get("monsterNotes"), list):
-            monster_to_update["monsterNotes"] = []
-        
-        monster_to_update["monsterNotes"].append(new_note)
-        player_services_logger.info(f"已為怪獸 {monster_id} 新增一條註記。")
-        return player_data
-
-    else:
-        player_services_logger.error(f"新增註記失敗：未知的目標類型 '{target_type}'。")
-        return None # 返回 None 表示操作失敗
-
-
 def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     """
     執行免費的 DNA 抽取。
@@ -451,3 +403,50 @@ def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[in
             player_services_logger.error(f"查詢好友狀態時發生錯誤 (chunk: {chunk}): {e}", exc_info=True)
 
     return statuses
+
+def add_note_service(player_data: PlayerGameData, target_type: str, note_content: str, monster_id: Optional[str] = None) -> Optional[PlayerGameData]:
+    """
+    新增一條註記到玩家或指定的怪獸。
+    """
+    if not note_content.strip():
+        player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
+        return player_data
+        
+    # 【新增】後端長度驗證
+    if len(note_content) > 100:
+        player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
+        return None # 返回 None 表示驗證失敗
+
+    new_note: NoteEntry = {
+        "timestamp": int(time.time()),
+        "content": note_content
+    }
+
+    if target_type == "player":
+        if "playerNotes" not in player_data or not isinstance(player_data.get("playerNotes"), list):
+            player_data["playerNotes"] = []
+        player_data["playerNotes"].append(new_note)
+        player_services_logger.info(f"已為玩家新增一條通用註記。")
+        return player_data
+
+    elif target_type == "monster":
+        if not monster_id:
+            player_services_logger.error("新增怪獸註記失敗：未提供怪獸 ID。")
+            return None # 返回 None 表示操作失敗
+
+        monster_to_update = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
+
+        if not monster_to_update:
+            player_services_logger.error(f"新增怪獸註記失敗：找不到 ID 為 {monster_id} 的怪獸。")
+            return None # 返回 None 表示操作失敗
+        
+        if "monsterNotes" not in monster_to_update or not isinstance(monster_to_update.get("monsterNotes"), list):
+            monster_to_update["monsterNotes"] = []
+        
+        monster_to_update["monsterNotes"].append(new_note)
+        player_services_logger.info(f"已為怪獸 {monster_id} 新增一條註記。")
+        return player_data
+
+    else:
+        player_services_logger.error(f"新增註記失敗：未知的目標類型 '{target_type}'。")
+        return None # 返回 None 表示操作失敗
