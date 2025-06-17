@@ -274,8 +274,13 @@
             </div>
             <div id="monster-chat-tab" class="tab-content modal-body">
                 <div id="chat-log-area" style="height: 350px; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-primary);">
-                    </div>
-                <div class="chat-input-container" style="margin-top: 10px; display: flex; gap: 10px;">
+                </div>
+                <div id="chat-interaction-buttons" class="chat-interaction-buttons" style="display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0;">
+                    <button id="interact-punch-btn" class="chat-interact-btn" title="揍">👊</button>
+                    <button id="interact-pat-btn" class="chat-interact-btn" title="摸">👋</button>
+                    <button id="interact-kiss-btn" class="chat-interact-btn" title="親">😘</button>
+                </div>
+                <div class="chat-input-container" style="display: flex; gap: 10px;">
                     <input type="text" id="chat-input" class="auth-input" style="flex-grow: 1; margin-bottom: 0;" placeholder="跟牠說點什麼...">
                     <button id="send-chat-btn" class="button primary" style="white-space: nowrap;">發送</button>
                 </div>
