@@ -93,7 +93,7 @@ async function handleSendMessage() {
     
     // 禁用發送按鈕並顯示等待狀態
     chatElements.sendBtn.disabled = true;
-    renderChatMessage("...", 'assistant-thinking');
+    renderChatMessage("(正在思考主人的意思)", 'assistant-thinking'); // 顯示等待中的樣式
 
     try {
         const response = await fetchAPI(`/monster/${currentChatMonsterId}/chat`, {
