@@ -37,11 +37,21 @@ DEFAULT_BATTLE_REPORT_CONTENT = {
 DEFAULT_CHAT_REPLY = "嗯...（牠似乎在思考要說些什麼，但又不知道怎麼開口。）"
 
 
-def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs) -> Optional[Dict[str, Any]]:
+def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs, player_data: PlayerGameData, current_monster_id: str) -> Optional[Dict[str, Any]]:
     """
     分析玩家的訊息，判斷是否在詢問遊戲知識。
-    如果是，則從 game_configs 中查找相關資訊並返回。
+    如果是，則從 game_configs 或 player_data 中查找相關資訊並返回。
     """
+    # 【新增】檢查是否在詢問關於農場裡的其他怪獸
+    farmed_monsters = player_data.get("farmedMonsters", [])
+    for monster in farmed_monsters:
+        monster_name = monster.get("nickname")
+        # 確保怪獸有名字，且不是正在對話的這隻怪獸自己
+        if monster_name and monster_name in player_message and monster.get("id") != current_monster_id:
+            skills_str = ', '.join([s.get('name', '未知技能') for s in monster.get('skills', [])]) or '沒有特殊技能'
+            context_str = f"關於我的夥伴「{monster_name}」的資料：牠是一隻 {monster.get('rarity')} 的 {monster.get('elements', ['未知'])[0]} 屬性怪獸。聽說牠的技能有 {skills_str}。"
+            return {"topic_type": "Monster", "topic_name": monster_name, "context": context_str}
+
     # 檢查是否在詢問關於特定 DNA 的資訊
     all_dna = game_configs.get("dna_fragments", [])
     for dna in all_dna:
@@ -61,11 +71,9 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs)
     guide_keywords = ["怎麼", "如何", "什麼是", "教我", "合成", "修煉", "屬性", "克制"]
     if any(keyword in player_message for keyword in guide_keywords):
         all_guides = game_configs.get("newbie_guide", [])
-        # 尋找標題最匹配的指南
         for entry in all_guides:
             if any(keyword in entry['title'] for keyword in player_message.split()):
                 return {"topic_type": "Guide", "topic_name": entry['title'], "context": f"關於「{entry['title']}」的說明：{entry['content']}"}
-        # 如果沒有找到，但觸發了關鍵字，可以回傳一個通用的介紹
         if all_guides:
             return {"topic_type": "Guide", "topic_name": "遊戲目標", "context": f"關於「遊戲目標」的說明：{all_guides[0]['content']}"}
 
@@ -85,16 +93,15 @@ def get_ai_chat_completion(
         ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 聊天服務。")
         return DEFAULT_CHAT_REPLY
 
-    # --- 1. 判斷對話模式：知識問答 vs 一般閒聊 ---
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
         game_configs = load_all_game_configs_from_firestore()
-        knowledge_context = _get_world_knowledge_context(player_message, game_configs)
+        # 【修改】將玩家資料和當前怪獸ID傳入知識查找函式
+        knowledge_context = _get_world_knowledge_context(player_message, game_configs, player_data, monster_data.get("id", ""))
     except Exception as e:
         ai_logger.error(f"查找世界知識時出錯: {e}", exc_info=True)
         knowledge_context = None
 
-    # --- 2. 根據模式組合不同的 Prompt ---
     if knowledge_context:
         # --- 知識問答模式 ---
         system_prompt = f"""
@@ -126,7 +133,6 @@ def get_ai_chat_completion(
         if len(chat_history) >= 4 and (len(chat_history) - 4) % 6 == 0 and random.random() < 0.25:
             should_ask_question = True
 
-        # 組合閒聊模式下的詳細資料
         skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
         dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
@@ -157,7 +163,6 @@ def get_ai_chat_completion(
 我:
 """
 
-    # --- 3. 準備並發送 API 請求 ---
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
@@ -165,7 +170,7 @@ def get_ai_chat_completion(
             {"role": "user", "content": user_content}
         ],
         "temperature": 0.85, 
-        "max_tokens": 150, # 稍微增加長度以應對知識問答
+        "max_tokens": 150,
     }
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
