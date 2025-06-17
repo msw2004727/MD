@@ -72,8 +72,8 @@ function setupChatTab(monster) {
 
     const chatHistory = monster.chatHistory || [];
     if (chatHistory.length > 0) {
-        // 反向遍歷以確保最新的訊息在最上面 (因為 logArea 是 column-reverse)
-        for (let i = chatHistory.length - 1; i >= 0; i--) {
+        // 【修改】將反向迴圈 (i--) 改為正向迴圈 (i++)，以修正歷史紀錄的顯示順序
+        for (let i = 0; i < chatHistory.length; i++) {
             const entry = chatHistory[i];
             const role = entry.content.startsWith('（你') ? 'interaction' : entry.role;
             renderChatMessage(entry.content, role);
