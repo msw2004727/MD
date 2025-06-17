@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 # 從專案的其他模組導入必要的模型和服務
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
 from .player_services import get_player_data_service
-from .MD_ai_services import get_ai_chat_completion # 我們稍後會建立這個函式
+from .MD_ai_services import get_ai_chat_completion # 我們現在將實際使用這個函式
 
 # 設定日誌記錄器
 chat_logger = logging.getLogger(__name__)
@@ -48,12 +48,13 @@ def generate_monster_chat_response_service(
     # 3. 獲取或初始化怪獸的對話歷史 (短期記憶)
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
-    # 4. 呼叫 AI 服務以生成回應 (目前為佔位符)
-    # 實際的 AI 呼叫會發生在這裡，我們會傳入怪獸資料、玩家資料和對話歷史
-    # 為了先建立架構，我們暫時返回一個固定的回應
-    # TODO: 替換為真實的 AI 呼叫
-    # ai_reply_text = get_ai_chat_completion(monster_to_chat, player_data, chat_history, player_message)
-    ai_reply_text = f"（{monster_to_chat.get('nickname')} 正在思考如何回應...）" # 暫時的預設回應
+    # 4. 呼叫 AI 服務以生成回應
+    ai_reply_text = get_ai_chat_completion(
+        monster_data=monster_to_chat,
+        player_data=player_data,
+        chat_history=chat_history,
+        player_message=player_message
+    )
 
     if not ai_reply_text:
         chat_logger.error(f"AI 服務未能為怪獸 {monster_id} 生成回應。")
