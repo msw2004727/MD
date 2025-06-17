@@ -271,6 +271,9 @@
                 <textarea id="monster-note-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="為這隻怪獸寫下一些筆記..." maxlength="100"></textarea>
                 <button id="save-monster-note-btn" class="button primary w-full mt-2">儲存備註</button>
             </div>
+            <div class="modal-footer">
+                <button id="chat-with-monster-btn" class="button primary w-full">💬 與我聊天</button>
+            </div>
         </div>
     </div>
 
@@ -440,6 +443,19 @@
             <button class="banner-close-button modal-close" data-modal-id="banner-modal">&times;</button>
             <div id="banner-modal-content" class="banner-placeholder">
                 </div>
+        </div>
+    </div>
+
+    <div id="chat-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="chat-modal">&times;</span>
+            <h3 id="chat-modal-header" class="modal-header">與怪獸聊天</h3>
+            <div id="chat-log-area" class="modal-body" style="height: 400px; overflow-y: auto; display: flex; flex-direction: column-reverse;">
+                </div>
+            <div class="modal-footer" style="margin-top: 10px; display: flex; gap: 10px;">
+                <input type="text" id="chat-input" class="auth-input" style="flex-grow: 1; margin-bottom: 0;" placeholder="跟牠說點什麼...">
+                <button id="send-chat-btn" class="button primary" style="white-space: nowrap;">發送</button>
+            </div>
         </div>
     </div>
 
