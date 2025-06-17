@@ -8,6 +8,10 @@ import logging
 import time
 from typing import Dict, Any, List, Optional # 用於類型提示
 
+# 從專案的其他模組導入必要的模型
+from .MD_models import Monster, PlayerGameData, ChatHistoryEntry
+
+
 # 設定日誌記錄器
 ai_logger = logging.getLogger(__name__)
 
@@ -29,6 +33,92 @@ DEFAULT_BATTLE_REPORT_CONTENT = {
     "loot_info": "戰利品資訊待補。",
     "growth_info": "怪獸成長資訊待補。"
 }
+DEFAULT_CHAT_REPLY = "嗯...（牠似乎在思考要說些什麼，但又不知道怎麼開口。）"
+
+
+def get_ai_chat_completion(
+    monster_data: Monster,
+    player_data: PlayerGameData,
+    chat_history: List[ChatHistoryEntry],
+    player_message: str
+) -> Optional[str]:
+    """
+    根據怪獸的完整資料、玩家資訊和對話歷史，生成個人化的聊天回應。
+    """
+    if not DEEPSEEK_API_KEY:
+        ai_logger.error("DeepSeek API 金鑰未設定。無法呼叫 AI 聊天服務。")
+        return DEFAULT_CHAT_REPLY
+
+    # --- 1. 組合 Prompt ---
+    # 系統指令，設定 AI 的角色和行為準則
+    system_prompt = f"""
+你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
+你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
+你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
+你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。不要使用書面語或過於複雜的詞彙。
+你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
+"""
+
+    # 將怪獸的詳細資料整理成易於理解的文字
+    monster_profile = f"""
+--- 我的資料 ---
+- 我的名字：{monster_data.get('nickname')}
+- 我的屬性：{', '.join(monster_data.get('elements', []))}
+- 我的稀有度：{monster_data.get('rarity')}
+- 我的技能：{', '.join([s.get('name', '') for s in monster_data.get('skills', [])]) or '無'}
+- 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
+"""
+
+    # 格式化對話歷史
+    formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
+    
+    # 組合最終的用戶輸入內容
+    user_content = f"""
+{monster_profile}
+
+--- 最近的對話如下 ---
+{formatted_history}
+玩家: {player_message}
+---
+現在，請以「{monster_data.get('nickname', '怪獸')}」的身份，用符合你個性的方式回應玩家。
+我:
+"""
+
+    # --- 2. 準備 API 請求 ---
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content}
+        ],
+        "temperature": 0.85, # 稍微調高以增加回應的「個性化」程度
+        "max_tokens": 100,  # 限制回應長度，使其更像聊天
+    }
+
+    headers = {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # --- 3. 發送請求並處理回應 ---
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=30)
+        response.raise_for_status()
+        response_json = response.json()
+
+        if response_json.get("choices") and response_json["choices"][0].get("message"):
+            reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
+            ai_logger.info(f"成功為怪獸 {monster_data.get('id')} 生成聊天回應。")
+            return reply
+        else:
+            ai_logger.error(f"DeepSeek API 聊天回應格式不符: {response_json}")
+            return DEFAULT_CHAT_REPLY
+    except requests.exceptions.RequestException as e:
+        ai_logger.error(f"呼叫 DeepSeek API 進行聊天時發生網路錯誤: {e}", exc_info=True)
+        return "（網路訊號好像不太好，我聽不太清楚...）"
+    except Exception as e:
+        ai_logger.error(f"生成 AI 聊天回應時發生未知錯誤: {e}", exc_info=True)
+        return DEFAULT_CHAT_REPLY
 
 
 def generate_monster_ai_details(monster_data: Dict[str, Any]) -> Dict[str, str]:
