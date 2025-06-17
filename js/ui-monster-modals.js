@@ -22,12 +22,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const defaultElementNickname = monster.element_nickname_part || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement);
     const editableNickname = monster.custom_element_nickname || defaultElementNickname;
 
+    // 【新增】檢查怪獸是否為玩家自己的
+    const isOwnMonster = !monster.owner_id || monster.owner_id === gameState.playerId;
+
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
             <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
                 ${monster.nickname}
             </h4>
-            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
+            ${isOwnMonster ? `<button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>` : ''}
         </div>
         <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
             <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
@@ -284,12 +287,22 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         logsContainer.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>';
     }
 
+    // --- 【新增】根據是否為自己的怪獸，顯示或隱藏特定頁籤 ---
     if (DOMElements.monsterInfoTabs) {
+        const notesTab = DOMElements.monsterInfoTabs.querySelector('[data-tab-target="monster-notes-tab"]');
+        if (notesTab) notesTab.style.display = isOwnMonster ? 'block' : 'none';
+        
+        const chatTab = DOMElements.monsterInfoTabs.querySelector('[data-tab-target="monster-chat-tab"]');
+        if (chatTab) chatTab.style.display = isOwnMonster ? 'block' : 'none';
+
+        // 如果不是自己的怪獸，則強制切換回第一個頁籤
         const firstTabButton = DOMElements.monsterInfoTabs.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
         if (firstTabButton) {
+            // 不論當前是什麼狀態，都重新設定一次，確保介面正確
             switchTabContent('monster-details-tab', firstTabButton, 'monster-info-modal');
         }
     }
+
 
     const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
     const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
