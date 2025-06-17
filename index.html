@@ -11,13 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/modals.css">
-    
-</head>
+    </head>
 <body>
     <div id="auth-screen">
         <div class="auth-container">
@@ -457,29 +451,63 @@
         </div>
     </div>
 
-    <script src="js/firebase-config.js" defer></script>
-    <script src="js/config.js" defer></script> 
-    <script src="js/game-state.js" defer></script>
-    <script src="js/api-client.js" defer></script>
-    <script src="js/auth.js" defer></script>
-    <script src="js/game-logic.js" defer></script>
-    
-    <script src="js/monster-part-assets.js" defer></script>
-    <script src="js/ui.js" defer></script>
-    <script src="js/ui-inventory.js" defer></script>
-    <script src="js/ui-snapshot.js" defer></script>
-    <script src="js/ui-farm.js" defer></script>
-    <script src="js/ui-player-modals.js" defer></script>
-    <script src="js/ui-monster-modals.js" defer></script>
-    <script src="js/ui-leaderboard-modals.js" defer></script>
-    <script src="js/ui-notes.js" defer></script>
-    <script src="js/ui-chat.js" defer></script>
-    
-    <script src="js/handlers/ui-handlers.js" defer></script>
-    <script src="js/handlers/game-interaction-handlers.js" defer></script>
-    <script src="js/handlers/drag-drop-handlers.js" defer></script>
-    <script src="js/handlers/monster-handlers.js" defer></script>
-    
-    <script src="js/main.js" defer></script>
-</body>
+    <script>
+        // 這個版本號是實現強制更新的關鍵。
+        // 當您更新了任何 .css 或 .js 檔案後，只需要修改這個版本號，
+        // 例如從 "1.0.0" 改成 "1.0.1"，所有玩家的瀏覽器就會自動下載新檔案。
+        const gameVersion = '1.0.0'; 
+
+        const cssFiles = [
+            'css/theme.css',
+            'css/layout.css',
+            'css/buttons.css',
+            'css/components.css',
+            'css/modals.css'
+        ];
+
+        const jsFiles = [
+            'js/firebase-config.js',
+            'js/config.js',
+            'js/game-state.js',
+            'js/api-client.js',
+            'js/auth.js',
+            'js/game-logic.js',
+            'js/monster-part-assets.js',
+            'js/ui.js',
+            'js/ui-inventory.js',
+            'js/ui-snapshot.js',
+            'js/ui-farm.js',
+            'js/ui-player-modals.js',
+            'js/ui-monster-modals.js',
+            'js/ui-leaderboard-modals.js',
+            'js/ui-notes.js',
+            'js/ui-chat.js',
+            'js/handlers/ui-handlers.js',
+            'js/handlers/game-interaction-handlers.js',
+            'js/handlers/drag-drop-handlers.js',
+            'js/handlers/monster-handlers.js',
+            'js/main.js'
+        ];
+
+        function loadAssets() {
+            const head = document.head;
+
+            cssFiles.forEach(path => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = `${path}?v=${gameVersion}`;
+                head.appendChild(link);
+            });
+
+            jsFiles.forEach(path => {
+                const script = document.createElement('script');
+                script.src = `${path}?v=${gameVersion}`;
+                script.defer = true;
+                head.appendChild(script);
+            });
+        }
+
+        loadAssets();
+    </script>
+    </body>
 </html>
