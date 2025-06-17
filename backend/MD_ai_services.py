@@ -7,7 +7,7 @@ import requests # 用於發送 HTTP 請求
 import logging
 import time
 from typing import Dict, Any, List, Optional # 用於類型提示
-import random # 導入 random 模組
+import random 
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import Monster, PlayerGameData, ChatHistoryEntry
@@ -51,26 +51,67 @@ def get_ai_chat_completion(
         return DEFAULT_CHAT_REPLY
 
     # --- 1. 組合 Prompt ---
-    # 系統指令，設定 AI 的角色和行為準則
+    # 【修改】更新系統指令，鼓勵 AI 使用更詳細的資料
     system_prompt = f"""
 你現在將扮演一隻名為「{monster_data.get('nickname', '怪獸')}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
-你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。不要使用書面語或過於複雜的詞彙。
+你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。你可以參照你的技能和DNA組成來豐富你的回答，但不要像在讀說明書。
 你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
 """
-
-    # 【修改】新的隨機反問機制
+    
+    # 隨機反問機制
     should_ask_question = False
-    # 一次對話包含玩家提問與怪獸回答。當對話歷史長度為4時，代表即將進行第3回合的回答。
-    # (len(chat_history) - 4) % 6 == 0 這個公式可以找出第3、6、9...個回合。
     if len(chat_history) >= 4 and (len(chat_history) - 4) % 6 == 0:
-        # 在這些觸發點，給予 25% 的機率進行反問
         if random.random() < 0.25:
             should_ask_question = True
 
-    # 將怪獸的詳細資料整理成易於理解的文字
-    monster_profile = f"""
+    # --- 【新增】建立更詳細的怪獸資料 Profile ---
+    try:
+        from .MD_config_services import load_all_game_configs_from_firestore
+        game_configs = load_all_game_configs_from_firestore()
+
+        # 整理技能描述
+        skills_with_desc = []
+        all_skills_db = game_configs.get("skills", {})
+        for skill_instance in monster_data.get("skills", []):
+            skill_name = skill_instance.get("name")
+            skill_template = None
+            for element_skills in all_skills_db.values():
+                found = next((s for s in element_skills if s.get("name") == skill_name), None)
+                if found:
+                    skill_template = found
+                    break
+            skill_desc = skill_template.get('description', '一個神秘的招式') if skill_template else '一個神秘的招式'
+            skills_with_desc.append(f"「{skill_name}」({skill_desc})")
+        
+        # 整理 DNA 描述
+        dna_with_desc = []
+        all_dna_db = game_configs.get("dna_fragments", [])
+        for dna_id in monster_data.get("constituent_dna_ids", []):
+            dna_template = next((d for d in all_dna_db if d.get("id") == dna_id), None)
+            if dna_template:
+                dna_name = dna_template.get("name")
+                dna_desc = dna_template.get("description")
+                dna_with_desc.append(f"「{dna_name}」({dna_desc})")
+
+        monster_profile = f"""
+--- 我的資料 ---
+- 我的名字：{monster_data.get('nickname')}
+- 我的屬性：{', '.join(monster_data.get('elements', []))}
+- 我的稀有度：{monster_data.get('rarity')}
+- 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
+
+--- 我的技能組成 ---
+{', '.join(skills_with_desc) or '我好像還沒學會任何特別的技能。'}
+
+--- 我的DNA組成 ---
+{', '.join(dna_with_desc) or '我的身體構成是個謎。'}
+"""
+    except Exception as e:
+        ai_logger.error(f"組合怪獸詳細資料時出錯: {e}")
+        # 如果出錯，則退回使用基本資料，確保功能不中斷
+        monster_profile = f"""
 --- 我的資料 ---
 - 我的名字：{monster_data.get('nickname')}
 - 我的屬性：{', '.join(monster_data.get('elements', []))}
@@ -78,6 +119,7 @@ def get_ai_chat_completion(
 - 我的技能：{', '.join([s.get('name', '') for s in monster_data.get('skills', [])]) or '無'}
 - 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
 """
+    # --- 詳細 Profile 建立結束 ---
 
     # 格式化對話歷史
     formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
@@ -91,7 +133,6 @@ def get_ai_chat_completion(
 玩家: {player_message}
 ---
 """
-    # 如果觸發反問，則加入特別指示
     if should_ask_question:
         user_content += """
 **特別指示：** 在你的回應中，除了回覆玩家的話，請自然地向玩家反問一個簡單的問題，像是「你今天過得怎麼樣？」、「你喜歡吃什麼？」或「你覺得我該加強哪個技能？」。
@@ -109,8 +150,8 @@ def get_ai_chat_completion(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content}
         ],
-        "temperature": 0.85, # 稍微調高以增加回應的「個性化」程度
-        "max_tokens": 100,  # 限制回應長度，使其更像聊天
+        "temperature": 0.85, 
+        "max_tokens": 100,
     }
 
     headers = {
