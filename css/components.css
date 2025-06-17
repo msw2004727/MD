@@ -883,3 +883,28 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
+
+/* 【新增】聊天互動按鈕樣式 */
+.chat-interact-btn {
+    background: var(--button-secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem; /* Emoji size */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.chat-interact-btn:hover {
+    background-color: var(--button-secondary-hover-bg);
+    transform: scale(1.1);
+}
+
+.chat-interact-btn:active {
+    transform: scale(0.95);
+}
