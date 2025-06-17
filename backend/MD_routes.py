@@ -20,7 +20,8 @@ from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
 from .battle_services import simulate_battle_full
-from .monster_chat_services import generate_monster_chat_response_service 
+# 【新增】導入新的互動服務函式
+from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service 
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
@@ -816,3 +817,39 @@ def get_friends_statuses_route():
 
     statuses = get_friends_statuses_service(friend_ids)
     return jsonify({"success": True, "statuses": statuses}), 200
+
+# 【新增】處理身體互動的路由
+@md_bp.route('/monster/<monster_id>/interact', methods=['POST'])
+def interact_with_monster_route(monster_id: str):
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    action_type = data.get('action')
+    if action_type not in ['punch', 'pat', 'kiss']:
+        return jsonify({"error": "無效的互動類型。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    if not game_configs:
+        return jsonify({"error": "遊戲設定載入失敗，無法進行互動。"}), 500
+    
+    # 呼叫新的互動服務
+    service_result = generate_monster_interaction_response_service(
+        player_id=user_id,
+        monster_id=monster_id,
+        action_type=action_type,
+        game_configs=game_configs
+    )
+
+    if not service_result:
+        return jsonify({"error": "生成互動回應時發生內部錯誤。"}), 500
+
+    ai_reply = service_result.get("ai_reply")
+    updated_player_data = service_result.get("updated_player_data")
+
+    # 儲存可能更新的玩家資料（例如，互動可能影響好感度等）
+    if not save_player_data_service(user_id, updated_player_data):
+        routes_logger.warning(f"警告：互動回應已生成，但儲存玩家 {user_id} 的資料失敗。")
+    
+    return jsonify({"success": True, "reply": ai_reply}), 200
