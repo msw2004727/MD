@@ -12,6 +12,12 @@ RarityNames = Literal["普通", "稀有", "菁英", "傳奇", "神話"]
 SkillCategory = Literal["近戰", "遠程", "魔法", "輔助", "物理", "特殊", "變化", "其他"] # 技能類別
 BattleLogStyle = Literal["嚴肅", "幽默", "武俠", "科幻", "驚悚", "獵奇"] # 戰鬥日誌風格
 
+# --- 【新增】註記項目結構 ---
+class NoteEntry(TypedDict):
+    """單條註記的結構"""
+    timestamp: int
+    content: str
+
 # --- 設定檔模型 (對應 Firestore 中 MD_GameConfigs 集合的結構) ---
 
 class DNAFragment(TypedDict):
@@ -239,6 +245,7 @@ class Monster(TypedDict):
     resume: NotRequired[MonsterResume]
     constituent_dna_ids: NotRequired[List[str]]
     cultivation_gains: NotRequired[Dict[str, int]] # 新增：用於儲存修煉獲得的額外數值
+    monsterNotes: NotRequired[List[NoteEntry]] # 【新增】怪獸的專屬註記
     # 戰鬥相關動態數值 (非持久化，僅用於戰鬥模擬)
     temp_attack_modifier: NotRequired[int]
     temp_defense_modifier: NotRequired[int]
@@ -287,6 +294,7 @@ class PlayerGameData(TypedDict):
     lastSeen: NotRequired[int]
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
     friends: NotRequired[List[Any]] # 確保 friends 欄位存在
+    playerNotes: NotRequired[List[NoteEntry]] # 【新增】玩家的通用註記
 
 
 # --- 新增的組合配方模型 (MonsterRecipes) ---
