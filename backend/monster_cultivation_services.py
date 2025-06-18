@@ -212,7 +212,6 @@ def complete_cultivation_service(
 
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
             
-            # --- 核心修改處 START ---
             # 只從可學習的技能中，篩選出「稀有」的技能
             rare_learnable_skills = [s for s in learnable_skills if s.get("rarity") == "稀有"]
             
@@ -221,7 +220,6 @@ def complete_cultivation_service(
                 learned_new_skill_template = random.choice(rare_learnable_skills)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
             # 如果沒有可學習的稀有技能，則不學習任何新技能 (原本的 rarity_bias 和 fallback 邏輯被移除)
-            # --- 核心修改處 END ---
 
         # 3. 基礎數值成長
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
@@ -400,6 +398,7 @@ def replace_monster_skill_service(
         "probability": new_skill_template_data.get("probability", 50),
         "story": new_skill_template_data.get("story", new_skill_template_data.get("description", "一個神秘的招式")),
         "type": new_skill_template_data.get("type", "無"),
+        "rarity": new_skill_template_data.get("rarity", "普通"),
         "baseLevel": new_skill_template_data.get("baseLevel", 1),
         "level": 1, # 新學的技能等級為 1
         "mp_cost": new_skill_template_data.get("mp_cost", 0),
