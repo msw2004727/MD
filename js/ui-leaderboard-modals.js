@@ -99,26 +99,22 @@ function updateLeaderboardTable(tableType, data, containerId) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
-            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             
             const link = document.createElement('a');
             link.href = '#';
             link.className = 'leaderboard-monster-link';
             link.style.textDecoration = 'none';
-            link.style.display = 'block';
+            // --- 核心修改處 ---
+            link.style.display = 'block'; // 確保 <a> 標籤佔滿整個儲存格寬度
+            // --- 修改結束 ---
             link.style.textAlign = 'left';
             link.style.whiteSpace = 'nowrap';
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
-            // 【修改】將字體大小從 0.9em 提升至 1.1rem
             link.style.fontSize = '1.1rem'; 
             
-            // --- 核心修改處 ---
-            // 移除手動組合名稱的邏輯
-            // 直接呼叫 getMonsterDisplayNameHtml 函式
             const nameHtml = getMonsterDisplayNameHtml(item);
             link.innerHTML = nameHtml;
-            // --- 修改結束 ---
             
             nicknameCell.appendChild(link);
 
@@ -132,6 +128,7 @@ function updateLeaderboardTable(tableType, data, containerId) {
             }
 
             const rarityCell = row.insertCell();
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             rarityCell.textContent = item.rarity;
             rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';
