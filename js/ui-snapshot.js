@@ -163,19 +163,8 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
         // --- 核心修改處 START ---
-        let elementNickname;
-        if (monster.custom_element_nickname) {
-            elementNickname = monster.custom_element_nickname;
-        } else {
-            const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-            const monsterRarity = monster.rarity || '普通';
-            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-            if (nicknamesByElement && nicknamesByElement[monsterRarity] && nicknamesByElement[monsterRarity].length > 0) {
-                elementNickname = nicknamesByElement[monsterRarity][0];
-            } else {
-                elementNickname = primaryElement; 
-            }
-        }
+        // 使用新的共用函式來取代原本重複的邏輯
+        const elementNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
         // --- 核心修改處 END ---
         
         const achievement = monster.title || '新秀';
