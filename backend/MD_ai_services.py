@@ -455,41 +455,31 @@ def generate_battle_report_content(
     opponent_monster: Dict[str, Any],
     battle_result: Dict[str, Any],
     full_raw_battle_log: List[str] 
-) -> Dict[str, str]:
+) -> Dict[str, Any]:
     """
-    根據戰鬥數據，生成完整的戰報內容。
-    修改：交戰描述將由此函式根據原始日誌重新格式化，以符合用戶需求。
+    根據戰鬥數據，生成完整的戰報內容，包含總結與 Hashtag。
     """
     ai_logger.info(f"開始為戰鬥生成 AI 戰報 (玩家: {player_monster.get('nickname')}, 對手: {opponent_monster.get('nickname')})。")
 
-    # --- 1. 全新的日誌解析與格式化邏輯 ---
     battle_description_parts = []
-    # 遍歷原始日誌，只提取並格式化需要的行動訊息
     for raw_line in full_raw_battle_log:
         line = raw_line.strip()
-        # 處理行動日誌 (以 "- " 開頭)
         if line.startswith("- "):
-            # 移除開頭的 "- "
             action_line = line[2:]
-            # 將內部的 <damage> 和 <heal> 標籤保留，以便前端處理
-            # action_line = action_line.replace("<damage>", "-").replace("</damage>", "")
-            # action_line = action_line.replace("<heal>", "+").replace("</heal>", "")
             battle_description_parts.append(action_line)
-        # 對於非行動日誌（如回合分隔線、HP/MP狀態），直接保留
         else:
             battle_description_parts.append(line)
-
 
     formatted_description = "\n".join(battle_description_parts)
     if not formatted_description.strip():
         formatted_description = "戰鬥瞬間結束，未能記錄詳細過程。"
 
-    # --- 2. 準備給 AI 的 prompt (僅用於生成總結) ---
     if not DEEPSEEK_API_KEY:
         ai_logger.error("DeepSeek API 金鑰未設定。無法為戰鬥生成 AI 總結。")
         return {
             "battle_description": formatted_description,
             "battle_summary": "戰報總結生成失敗：AI服務未設定。",
+            "tags": [],
             "loot_info": "戰利品資訊待補。",
             "growth_info": "怪獸成長資訊待補。"
         }
@@ -499,18 +489,34 @@ def generate_battle_report_content(
     highlights_str = "、".join(battle_result.get("battle_highlights", []))
 
     if winner_id != "平手":
-        summary_prompt = f"一場激烈的怪獸對戰剛剛結束，最終由「{winner_name}」取得了勝利。請你根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，為這場戰鬥撰寫一段約50-70字的精彩戰報總結。"
+        prompt_intro = f"一場激烈的怪獸對戰剛剛結束，最終由「{winner_name}」取得了勝利。"
     else:
-        summary_prompt = f"一場激烈的怪獸對戰剛剛以「平手」告終。請你根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，為這場戰鬥撰寫一段約50-70字的戰報總結，描述雙方勢均力敵的膠著戰況。"
+        prompt_intro = f"一場激烈的怪獸對戰剛剛以「平手」告終。"
+
+    # ----- BUG 修正邏輯 START -----
+    # 新的指令，要求 AI 提供 JSON 格式的回應
+    summary_prompt = f"""
+{prompt_intro}
+請根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，完成以下任務：
+1. 撰寫一段約50-70字的精彩戰報總結。
+2. 根據戰鬥亮點和總結，提煉出1到3個有趣的、吸引眼球的中文 Hashtag (例如：#逆轉勝 #一擊必殺 #持久戰大師)。
+
+請嚴格按照以下JSON格式提供回應，不要有任何額外的解釋或開頭文字：
+{{
+  "summary": "（請在此處填寫戰報總結）",
+  "tags": ["#範例標籤一", "#範例標籤二"]
+}}
+"""
+    # ----- BUG 修正邏輯 END -----
 
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [
-            {"role": "system", "content": "你是一位專業的怪獸戰報記者，精通中文，擅長撰寫生動、有張力的戰鬥報告。"},
+            {"role": "system", "content": "你是一位專業的怪獸戰報記者，精通中文，擅長撰寫生動、有張力的戰鬥報告，並且會嚴格遵循用戶指定的JSON格式輸出。"},
             {"role": "user", "content": summary_prompt}
         ],
         "temperature": 0.8,
-        "max_tokens": 150, 
+        "max_tokens": 250, 
     }
     
     headers = {
@@ -519,18 +525,39 @@ def generate_battle_report_content(
     }
     
     ai_summary = DEFAULT_BATTLE_REPORT_CONTENT["battle_summary"]
+    ai_tags = []
     try:
-        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=25) # 將超時設為25秒，小於Gunicorn的30秒
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=25)
         response.raise_for_status()
         response_json = response.json()
         
         if (response_json.get("choices") and response_json["choices"][0].get("message")):
-            ai_summary = response_json["choices"][0]["message"].get("content", ai_summary).strip()
-            ai_logger.info(f"成功為戰鬥生成 AI 總結。")
+            content_str = response_json["choices"][0]["message"].get("content", "{}").strip()
+            
+            # 清理可能的 markdown 標記
+            if content_str.startswith("```json"):
+                content_str = content_str[7:]
+            if content_str.endswith("```"):
+                content_str = content_str[:-3]
+            content_str = content_str.strip()
+
+            try:
+                parsed_content = json.loads(content_str)
+                ai_summary = parsed_content.get("summary", DEFAULT_BATTLE_REPORT_CONTENT["battle_summary"])
+                ai_tags = parsed_content.get("tags", [])
+                ai_logger.info(f"成功為戰鬥生成 AI 總結與標籤。")
+            except json.JSONDecodeError:
+                ai_logger.error(f"解析戰報AI回應的JSON失敗。將整個回應作為總結。原始字串: {content_str}")
+                ai_summary = content_str # 如果JSON解析失敗，退回原始行為
+                
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
 
-    # --- 3. 組合最終結果 ---
+    # 將標籤附加到總結後面
+    if ai_tags:
+        tags_str = " ".join(ai_tags)
+        ai_summary += f"\n\n{tags_str}"
+
     absorption_details = battle_result.get("absorption_details", {})
     loot_info_parts = []
     if absorption_details.get("extracted_dna_templates"):
