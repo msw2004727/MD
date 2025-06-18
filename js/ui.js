@@ -185,7 +185,7 @@ function hideModal(modalId) {
             gameState.activeModalId = null;
         }
         
-        // --- 【修改】新增重置彈窗狀態的邏輯 ---
+        // --- 核心修改處 START ---
         // 1. 重置所有可滾動內容區域的捲軸到頂部
         const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content');
         scrollableBodies.forEach(body => {
@@ -206,7 +206,7 @@ function hideModal(modalId) {
                 }
             }
         }
-        // --- 修改結束 ---
+        // --- 核心修改處 END ---
 
         // 清除通用回饋視窗的計時器
         if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
@@ -304,7 +304,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    // --- 核心修改處 START ---
     // 建立一個標題和橫幅圖片類型的對應表
     // 這個表的鍵名，對應 assets.json 中 "loadingBanners" 物件的鍵名
     const loadingTitleMap = {
@@ -337,7 +336,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     
     const loadingBanners = gameState.assetPaths?.images?.modals?.loadingBanners || {};
     const genericLoadingBanner = loadingBanners.generic || '';
-    // --- 核心修改處 END ---
 
     // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
@@ -382,13 +380,11 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
-    // --- 核心修改處 START ---
     // 使用新的 loadingKey 來判斷，取代舊的 if/else if 長鏈
     else if (loadingKey) {
         const bannerUrl = loadingBanners[loadingKey] || genericLoadingBanner;
         addBannerAndHints(bannerUrl, title);
     }
-    // --- 核心修改處 END ---
     else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
         const monster = monsterDetails.monster;
         let displayName;
