@@ -36,8 +36,6 @@ DEFAULT_GAME_CONFIGS_FOR_NICKNAME: GameConfigs = {
     "elemental_advantage_chart": {},
 }
 
-# --- 移除: _generate_monster_full_nickname 函式已移至 utils_services.py ---
-
 
 # --- 怪獸自定義暱稱服務 ---
 def update_monster_custom_element_nickname_service(
@@ -75,11 +73,8 @@ def update_monster_custom_element_nickname_service(
 
     element_nicknames_map: Dict[ElementTypes, Any] = game_configs.get("element_nicknames", DEFAULT_GAME_CONFIGS_FOR_NICKNAME["element_nicknames"]) # type: ignore
     
-    # --- 核心修改處 START ---
     if not new_custom_element_nickname:
-        # 如果傳入空字串，代表使用者想重設為預設名稱
         monster_to_update["custom_element_nickname"] = None
-        # 重新計算預設的 element_nickname_part
         primary_element: ElementTypes = monster_to_update.get("elements", ["無"])[0] # type: ignore
         monster_rarity = monster_to_update.get("rarity", "普通")
         rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
@@ -87,32 +82,25 @@ def update_monster_custom_element_nickname_service(
         default_nickname_part = possible_nicknames[0] if possible_nicknames else primary_element
         
         monster_to_update["element_nickname_part"] = default_nickname_part
-        element_nickname_part_for_full_name = default_nickname_part
     else:
-        # 如果有新名稱，則更新 custom 和 part 兩個欄位
         processed_nickname = new_custom_element_nickname.strip()[:max_len]
         monster_to_update["custom_element_nickname"] = processed_nickname
         monster_to_update["element_nickname_part"] = processed_nickname
-        element_nickname_part_for_full_name = processed_nickname
-    # --- 核心修改處 END ---
 
-    player_stats = player_data.get("playerStats", {})
-    player_current_title_name = "新手"
-    
-    equipped_id = player_stats.get("equipped_title_id")
-    owned_titles = player_stats.get("titles", [])
+    element_nickname_part_for_full_name = monster_to_update["element_nickname_part"]
 
-    if equipped_id:
-        equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
-        if equipped_title_obj:
-            player_current_title_name = equipped_title_obj.get("name", "新手")
-    elif owned_titles and isinstance(owned_titles[0], dict):
-        player_current_title_name = owned_titles[0].get("name", "新手")
+    # ----- BUG 修正邏輯 START -----
+    # 直接從怪獸物件本身讀取它誕生時的「玩家稱號」和「怪獸成就」，而不是重新抓取玩家當前的稱號
+    player_title_part = monster_to_update.get("player_title_part", "新手")
+    monster_achievement_part = monster_to_update.get("achievement_part", "新秀")
+    # ----- BUG 修正邏輯 END -----
 
-    monster_achievement = monster_to_update.get("title", "新秀") # type: ignore
-
+    # 使用正確的、儲存在怪獸身上的零件來重新組合完整名稱
     monster_to_update["nickname"] = generate_monster_full_nickname(
-        player_current_title_name, monster_achievement, element_nickname_part_for_full_name, naming_constraints # type: ignore
+        player_title_part, 
+        monster_achievement_part, 
+        element_nickname_part_for_full_name, # type: ignore
+        naming_constraints
     )
 
     player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
