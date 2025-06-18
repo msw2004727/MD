@@ -206,25 +206,22 @@ def complete_cultivation_service(
             potential_new_skills: List[Skill] = []
             current_skill_names = {s.get("name") for s in current_skills}
             
-            # --- 核心修改處 START ---
-            # 只從主屬性和「無」屬性技能池中學習
             potential_new_skills.extend(all_skills_db.get(primary_element, []))
             if primary_element != "無":
                 potential_new_skills.extend(all_skills_db.get("無", []))
-            # --- 核心修改處 END ---
 
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
-            if learnable_skills:
-                rarity_bias = cultivation_cfg.get("new_skill_rarity_bias", {})
-                biased_skills_pool = []
-                for skill_template in learnable_skills:
-                    skill_rarity = skill_template.get("rarity", "普通") # type: ignore
-                    bias_factor = rarity_bias.get(skill_rarity, 0.0) # type: ignore
-                    biased_skills_pool.extend([skill_template] * int(bias_factor * 100))
-                
-                if not biased_skills_pool: biased_skills_pool = learnable_skills
-                learned_new_skill_template = random.choice(biased_skills_pool)
+            
+            # --- 核心修改處 START ---
+            # 只從可學習的技能中，篩選出「稀有」的技能
+            rare_learnable_skills = [s for s in learnable_skills if s.get("rarity") == "稀有"]
+            
+            if rare_learnable_skills:
+                # 如果有可學習的稀有技能，就從中隨機選擇一個
+                learned_new_skill_template = random.choice(rare_learnable_skills)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
+            # 如果沒有可學習的稀有技能，則不學習任何新技能 (原本的 rarity_bias 和 fallback 邏輯被移除)
+            # --- 核心修改處 END ---
 
         # 3. 基礎數值成長
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
