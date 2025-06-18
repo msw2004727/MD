@@ -17,15 +17,15 @@
         {
           "title": "目前0.2.9v已實裝功能：",
           "items": [
-            { "text": "DNA合成", "color": "accent" },
-            { "text": "修煉系統(技能、數值養成)", "color": "accent" },
-            { "text": "(技能、數值養成)", "color": "accent" },
-            { "text": "排行榜挑戰", "color": "accent" },
-            { "text": "好友功能", "color": "accent" },
-            { "text": "AI怪獸聊天", "color": "accent" },
-            { "text": "怪獸素材已補完", "color": "accent" },
-            { "text": "戰鬥邏輯升級", "color": "accent" },
-            { "text": "怪獸牽絆系統", "color": "accent" },
+            "DNA合成",
+            "修煉系統(技能、數值養成)",
+            "(技能、數值養成)",
+            "排行榜挑戰",
+            "好友功能",
+            "AI怪獸聊天",
+            "怪獸素材已補完",
+            "戰鬥邏輯升級",
+            "怪獸牽絆系統",
           ]
         },
         {
