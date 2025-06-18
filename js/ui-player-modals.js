@@ -74,32 +74,22 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     const ownedTitles = stats.titles || [];
     const equippedTitleId = stats.equipped_title_id || (ownedTitles.length > 0 ? ownedTitles[0].id : null);
     
-    // ----- BUG 修正邏輯 START -----
-    // 判斷當前查看的是否為自己的個人資料
-    // 我們需要確保即使 player_data 是從舊的 gameState.playerData 來的 (沒有 uid)，也能正確判斷
-    // 因此，直接比較 nickname 可能更可靠，或者確保所有 playerData 物件都有 uid
-    // 這裡我們假設從 `viewPlayerInfo` 過來的 playerData 必定有 uid
     const isOwnProfile = (playerData.uid && playerData.uid === gameState.playerId) || (!playerData.uid && nickname === gameState.playerNickname);
-    // ----- BUG 修正邏輯 END -----
 
     if (ownedTitles.length > 0) {
         titlesHtml = ownedTitles.map(title => {
             const isEquipped = title.id === equippedTitleId;
             
-            // ----- BUG 修正邏輯 START -----
-            let buttonHtml = ''; // 預設為空，不顯示任何按鈕
+            let buttonHtml = ''; 
             if (isOwnProfile) {
-                // 如果是自己的個人資料，才顯示「裝備」或「已裝備」按鈕
                 buttonHtml = isEquipped
                     ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
                     : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
             } else {
-                // 如果是別人的個人資料，只在對方有裝備該稱號時顯示「已裝備」狀態，否則不顯示任何東西
                 if (isEquipped) {
                     buttonHtml = `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`;
                 }
             }
-            // ----- BUG 修正邏輯 END -----
 
 
             let buffsHtml = '';
@@ -408,7 +398,7 @@ async function renderFriendsList() {
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
-                        <span class="online-status ${isOnline ? 'online' : 'online'}"></span>
+                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
                         <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
                             ${displayName}
                         </a>
