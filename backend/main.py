@@ -8,20 +8,28 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # --- 路徑修正結束 ---
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS 
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 import logging
 
-# 將原本的相對導入改成從 backend 開始的絕對導入
+# ----- BUG 修正邏輯 START -----
+# 從新建立的日誌設定檔中導入設定函式
+from backend.logging_config import setup_logging
+# ----- BUG 修正邏輯 END -----
+
 from backend.MD_routes import md_bp
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
 
-# 設定日誌
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# ----- BUG 修正邏輯 START -----
+# 執行日誌設定
+setup_logging()
+# ----- BUG 修正邏輯 END -----
+
+# 現在，我們可以像平常一樣獲取日誌記錄器
 app_logger = logging.getLogger(__name__)
 
 # 初始化 Flask 應用程式
@@ -42,7 +50,7 @@ CORS(app,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
      expose_headers=["Content-Type", "Authorization"]
 )
-app_logger.info(f"CORS configured to allow origins: {allowed_origins}")
+app_logger.info("CORS configured to allow origins: %s", allowed_origins)
 
 
 # 註冊藍圖
@@ -53,11 +61,11 @@ SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
 firebase_app_initialized = False
 cred = None
 
-app_logger.info(f"--- 開始 Firebase Admin SDK 初始化 ---")
+app_logger.info("--- 開始 Firebase Admin SDK 初始化 ---")
 
 if not firebase_admin._apps:
     firebase_credentials_json_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
-    app_logger.info(f"環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: {'已設定' if firebase_credentials_json_env else '未設定'}")
+    app_logger.info("環境變數 FIREBASE_SERVICE_ACCOUNT_KEY: %s", '已設定' if firebase_credentials_json_env else '未設定')
 
     if firebase_credentials_json_env:
         app_logger.info("嘗試從環境變數載入 Firebase 憑證...")
@@ -66,15 +74,15 @@ if not firebase_admin._apps:
             cred = credentials.Certificate(cred_obj)
             app_logger.info("成功從環境變數解析憑證物件。")
         except Exception as e:
-            app_logger.error(f"從環境變數解析 Firebase 憑證失敗: {e}", exc_info=True)
+            app_logger.error("從環境變數解析 Firebase 憑證失敗: %s", e, exc_info=True)
             cred = None
-    elif os.path.exists(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH)): # 修正路徑檢查
-        app_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
+    elif os.path.exists(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH)):
+        app_logger.info("未設定環境變數憑證，嘗試從本地檔案 '%s' 載入 (適用於本地開發)。", SERVICE_ACCOUNT_KEY_PATH)
         try:
             cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH))
-            app_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
+            app_logger.info("成功從本地檔案 '%s' 創建憑證物件。", SERVICE_ACCOUNT_KEY_PATH)
         except Exception as e:
-            app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
+            app_logger.error("從本地檔案 '%s' 創建 Firebase 憑證物件失敗: %s", SERVICE_ACCOUNT_KEY_PATH, e, exc_info=True)
             cred = None
     else:
         app_logger.warning("未找到環境變數或本地服務帳戶金鑰檔案。Firebase 將無法初始化。")
@@ -86,7 +94,7 @@ if not firebase_admin._apps:
             app_logger.info("Firebase Admin SDK 已使用提供的憑證成功初始化。")
             firebase_app_initialized = True
         except Exception as e:
-            app_logger.error(f"使用提供的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
+            app_logger.error("使用提供的憑證初始化 Firebase Admin SDK 失敗: %s", e, exc_info=True)
             firebase_app_initialized = False
     else:
         app_logger.error("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
@@ -95,8 +103,8 @@ else:
     app_logger.info("Firebase Admin SDK 已初始化，跳過重複初始化。")
     firebase_app_initialized = True
 
-app_logger.info(f"Firebase Admin SDK 初始化狀態: {firebase_app_initialized}")
-app_logger.info(f"--- Firebase Admin SDK 初始化結束 ---")
+app_logger.info("Firebase Admin SDK 初始化狀態: %s", firebase_app_initialized)
+app_logger.info("--- Firebase Admin SDK 初始化結束 ---")
 
 
 # 獲取 Firestore 客戶端並注入
@@ -106,7 +114,7 @@ if firebase_app_initialized and firebase_admin._apps:
         MD_firebase_config.set_firestore_client(db_client)
         app_logger.info("Firestore 客戶端已成功獲取並注入到 MD_firebase_config。")
     except Exception as e:
-        app_logger.error(f"獲取 Firestore 客戶端或注入時發生錯誤: {e}", exc_info=True)
+        app_logger.error("獲取 Firestore 客戶端或注入時發生錯誤: %s", e, exc_info=True)
         firebase_app_initialized = False
 else:
     app_logger.error("因 Firebase Admin SDK 初始化問題，無法獲取 Firestore 客戶端。")
@@ -133,8 +141,18 @@ def index():
         "message": "怪獸養成後端服務運行中！",
         "firebase_status": firebase_status,
         "game_configs_loaded": game_configs_loaded,
-        "api_health_check": "/api/MD/health"
+        "api_health_check": "/api/MD/health",
+        "log_viewer_url": "/api/MD/logs"
     }), 200
+
+# 新增一個路由來提供日誌檔案
+@app.route('/api/MD/logs')
+def view_logs():
+    """提供一個網頁來查看即時日誌。"""
+    log_directory = os.path.join(os.path.dirname(__file__), 'logs')
+    app_logger.info("請求查看日誌頁面...")
+    return send_from_directory(log_directory, 'game_log.html')
+
 
 # 如果直接運行此檔案 (例如本地開發)，則啟動 Flask 內建的開發伺服器
 if __name__ == '__main__':
