@@ -24,8 +24,6 @@ chat_logger = logging.getLogger(__name__)
 # 定義短期記憶的長度 (儲存的對話數量)
 CHAT_HISTORY_LIMIT = 20
 
-
-# --- 核心修改處 START ---
 def _update_bond_with_diminishing_returns(
     interaction_stats: Dict[str, Any],
     action_key: str,
@@ -65,6 +63,21 @@ def _update_bond_with_diminishing_returns(
     
     chat_logger.info(f"感情值變化: 動作='{action_key}', 第 {count_in_window} 次, 乘數={multiplier:.2f}, 點數變化={point_change}, 最終值={new_bond}")
     return point_change
+
+
+# --- 核心修改處 START ---
+def _get_bond_level_tone_instruction(bond_points: int) -> str:
+    """根據感情值，決定AI的語氣指示。"""
+    if bond_points <= -76:
+        return "你的語氣必須充滿敵意和不耐煩。你可能會直接拒絕回答問題，或者用簡短、尖銳的詞語來回應。"
+    elif bond_points <= -11:
+        return "你的語氣必須非常冷淡和疏遠。你會用『喔』、『嗯』、『隨便』這類詞語，字裡行間透露出不感興趣。"
+    elif bond_points <= 10:
+        return "你的語氣是中立的，主要根據你的天生個性來回應。"
+    elif bond_points <= 75:
+        return "你的語氣必須是友善且熱心的。你會更願意分享資訊，在句末可能會加上一些溫和的表情符號。"
+    else:  # bond_points >= 76
+        return "你的語氣必須非常親密和熱情。你會稱呼玩家為『摯友』或『夥伴』，並在回答中充滿信任感和依賴感。"
 # --- 核心修改處 END ---
 
 
@@ -90,14 +103,11 @@ def generate_monster_interaction_response_service(
     interaction_stats = monster_to_react.setdefault("interaction_stats", {})
     interaction_stats["touch_count"] = interaction_stats.get("touch_count", 0) + 1
 
-    # --- 核心修改處 START ---
-    # 根據互動類型增減感情值
     if action_type in ['pat', 'kiss']:
         _update_bond_with_diminishing_returns(interaction_stats, "touch", 5)
     elif action_type == 'punch':
         current_bond = interaction_stats.get("bond_points", 0)
         interaction_stats["bond_points"] = max(-100, current_bond - 10)
-    # --- 核心修改處 END ---
 
     action_map = {
         "punch": "揍了你一拳",
@@ -106,17 +116,24 @@ def generate_monster_interaction_response_service(
     }
     action_desc = action_map.get(action_type, "對你做了一個奇怪的動作")
 
+    # --- 核心修改處 START ---
+    # 獲取當前的感情值和對應的語氣指示
+    bond_points = interaction_stats.get("bond_points", 0)
+    bond_tone_instruction = _get_bond_level_tone_instruction(bond_points)
+    # --- 核心修改處 END ---
+
     system_prompt = f"""
 你現在將扮演一隻名為「{monster_to_react.get('element_nickname_part') or monster_to_react.get('nickname', '怪獸')}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_to_react.get('personality', {}).get('name', '未知')}」，這意味著：{monster_to_react.get('personality', {}).get('description', '你很普通')}。
 你的回應必須簡短、口語化、並且絕對符合你的個性。
+{bond_tone_instruction}
 """
     
     user_prompt = f"""
 你的飼主「{player_data.get('nickname', '訓練師')}」剛剛對你做了這個動作：**{action_desc}**。
 
-請根據你的個性，對這個動作做出一個自然且符合情境的反應。
+請根據你的個性和感情狀態，對這個動作做出一個自然且符合情境的反應。
 我:
 """
 
@@ -187,10 +204,7 @@ def generate_monster_chat_response_service(
     interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
     interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
     
-    # --- 核心修改處 START ---
-    # 增加聊天對應的感情值
     _update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
-    # --- 核心修改處 END ---
 
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
@@ -237,6 +251,11 @@ def get_ai_chat_completion(
     
     monster_short_name = monster_data.get('element_nickname_part') or monster_data.get('nickname', '怪獸')
 
+    # --- 核心修改處 START ---
+    interaction_stats = monster_data.get("interaction_stats", {})
+    bond_points = interaction_stats.get("bond_points", 0)
+    bond_tone_instruction = _get_bond_level_tone_instruction(bond_points)
+    # --- 核心修改處 END ---
 
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
@@ -253,6 +272,7 @@ def get_ai_chat_completion(
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
 你的回應中，請根據你的個性和當下情境，自然地加入適當的 emoji 和日式顏文字（如 (´・ω・`) 或 (✧∀✧)），讓你的角色更生動。
 你的飼主「{player_data.get('nickname', '訓練師')}」正在向你請教遊戲知識。
+{bond_tone_instruction}
 你的任務是根據以下提供的「相關資料」，用你自己的個性和口吻，自然地回答玩家的問題。不要只是照本宣科。
 """
         user_content = f"""
@@ -269,6 +289,7 @@ def get_ai_chat_completion(
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
+{bond_tone_instruction}
 你的回應中，請根據你的個性和當下情境，自然地加入適當的 emoji 和日式顏文字（如 (´・ω・`) 或 (✧∀✧)），讓你的角色更生動。
 你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。你可以參照你的技能和DNA組成來豐富你的回答，但不要像在讀說明書。
 你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
