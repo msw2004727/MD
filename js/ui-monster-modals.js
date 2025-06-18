@@ -102,11 +102,18 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const elementTextVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-text)`;
             const attributeBadgeHtml = `<span class="skill-attribute-badge text-element-${getElementCssClassKey(skill.type || '無')}" style="background-color: ${elementBgVar}; color: ${elementTextVar};">${skillTypeChar}</span>`;
             
+            // --- 核心修改處 START ---
+            // 根據技能的稀有度，為技能名稱的連結<a>標籤添加對應的CSS class
+            const skillRarity = skill.rarity || '普通';
+            const skillRarityKey = rarityMap[skillRarity] || 'common';
+            const skillRarityClass = `text-rarity-${skillRarityKey}`;
+
             const skillNameAndBadgeHtml = `
                 <div class="skill-name-container">
-                    <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${level})</a>
+                    <a href="#" class="skill-name-link ${skillRarityClass}" data-skill-name="${skill.name}" style="text-decoration: none;">${skill.name} (Lv.${level})</a>
                     ${attributeBadgeHtml}
                 </div>`;
+            // --- 核心修改處 END ---
             
             let milestonesHtml = '';
             let skillTemplate = null;
