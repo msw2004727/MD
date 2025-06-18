@@ -7,9 +7,7 @@ import math
 import time 
 from typing import List, Dict, Optional, Union, Tuple, Any
 from collections import Counter
-# --- 核心修改處 START ---
 from datetime import datetime, timedelta, timezone
-# --- 核心修改處 END ---
 
 # 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import (
@@ -25,7 +23,7 @@ from .utils_services import calculate_exp_to_next_level, get_effective_skill_wit
 
 monster_cultivation_services_logger = logging.getLogger(__name__)
 
-# --- 預設遊戲設定 (用於輔助函式，避免循環導入) ---
+# --- 預設遊戲設定 (省略，與上次相同) ---
 DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
@@ -62,7 +60,7 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
 }
 
 
-# --- 輔助函式 (僅用於此模組) ---
+# --- 輔助函式 (省略，與上次相同) ---
 def _generate_story_from_library(
     monster_name: str,
     game_configs: GameConfigs,
@@ -72,30 +70,21 @@ def _generate_story_from_library(
     learned_new_skill_template: Optional[Skill],
     training_location: str
 ) -> str:
-    """從故事庫中生成組合式冒險故事。"""
+    # ... (此函式內容不變)
     story_library = game_configs.get("cultivation_stories", {})
     if not story_library:
         return f"{monster_name} 結束了一次紮實的修煉，感覺自己又變強了一些。"
-
-    # 確定時間階段
     if duration_percentage <= 0.25: tier_key = "tier_25"
     elif duration_percentage <= 0.5: tier_key = "tier_50"
     elif duration_percentage <= 0.75: tier_key = "tier_75"
     else: tier_key = "tier_100"
-
-    # 確定事件結果
     if learned_new_skill_template and items_obtained: outcome_key = "item_and_new_skill"
     elif learned_new_skill_template: outcome_key = "new_skill_learned"
     elif items_obtained: outcome_key = "item_found"
     else: outcome_key = "base_story"
-
-    # 安全地獲取故事庫內容，如果特定地點或階段不存在，則使用預設
     location_stories = story_library.get(training_location, story_library.get("gaia", {}))
     tier_stories = location_stories.get(tier_key, location_stories.get("tier_25", {}))
-
     story_parts = []
-    
-    # 組合故事
     if outcome_key == "base_story":
         base_templates = tier_stories.get("base_story", ["{monster_name} 順利地完成了修煉，沒有發生特別的事情。"])
         if base_templates:
@@ -104,23 +93,16 @@ def _generate_story_from_library(
         opening_templates = tier_stories.get("opening", [])
         event_templates = tier_stories.get("event", {}).get(outcome_key, [])
         closing_templates = tier_stories.get("closing", [])
-
         if opening_templates: story_parts.append(random.choice(opening_templates))
         if event_templates: story_parts.append(random.choice(event_templates))
         if closing_templates: story_parts.append(random.choice(closing_templates))
-
     if not story_parts:
         return f"{monster_name} 的修煉充滿了無法言喻的經歷。"
-
-    # 替換佔位符
     final_story = " ".join(story_parts)
-    
-    # 準備替換用的字串
     item_list_str = "、".join([item.get('name', '神秘碎片') for item in items_obtained]) if items_obtained else "神秘物品"
     new_skill_name_str = learned_new_skill_template.get('name', '神秘技能') if learned_new_skill_template else "新招式"
     trained_skills_list = [log.split("'")[1] for log in skill_updates_log if "技能" in log and "領悟" not in log]
     trained_skills_str = "、".join(trained_skills_list) or "各種技巧"
-
     return final_story.format(
         monster_name=monster_name,
         item_list=item_list_str,
@@ -159,14 +141,30 @@ def complete_cultivation_service(
         monster_cultivation_services_logger.error(f"完成修煉失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
         return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。", "status_code": 404}
 
-    # --- 核心修改處 START ---
-    # 初始化互動統計（如果不存在），並增加修煉次數
     interaction_stats = monster_to_update.setdefault("interaction_stats", {})
     interaction_stats["cultivation_count"] = interaction_stats.get("cultivation_count", 0) + 1
+
+    # --- 核心修改處 START ---
+    # 計算時間衰減乘數
+    current_time = int(time.time())
+    last_cult_time = interaction_stats.get("last_cultivation_timestamp", 0)
+    count_in_window = interaction_stats.get("cultivation_count_in_window", 0)
+    
+    time_window = 3600 # 1 小時
+    
+    if (current_time - last_cult_time) > time_window:
+        count_in_window = 1
+    else:
+        count_in_window += 1
+        
+    interaction_stats["last_cultivation_timestamp"] = current_time
+    interaction_stats["cultivation_count_in_window"] = count_in_window
+    
+    diminishing_multiplier = 0.75 ** (count_in_window - 1)
+    monster_cultivation_services_logger.info(f"修煉衰減機制: 第 {count_in_window} 次, 獎勵乘數為 {diminishing_multiplier:.2f}")
     # --- 核心修改處 END ---
 
-    # 獲取並重置修煉狀態
-    training_location = monster_to_update.get("farmStatus", {}).get("trainingLocation", "gaia") # 先獲取地點
+    training_location = monster_to_update.get("farmStatus", {}).get("trainingLocation", "gaia")
     if not monster_to_update.get("farmStatus"): monster_to_update["farmStatus"] = {}
     monster_to_update["farmStatus"]["isTraining"] = False
     monster_to_update["farmStatus"]["trainingStartTime"] = None
@@ -187,81 +185,69 @@ def complete_cultivation_service(
     else:
         monster_cultivation_services_logger.info(f"開始為怪獸 {monster_to_update.get('nickname')} 結算修煉成果。時長: {duration_seconds}秒。")
         
-        # 1. 技能經驗與升級
         current_skills: List[Skill] = monster_to_update.get("skills", [])
         exp_gain_min, exp_gain_max = cultivation_cfg.get("skill_exp_gain_range", (15,75))
         max_skill_lvl = cultivation_cfg.get("max_skill_level", 10)
         exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100)
         for skill in current_skills:
             if skill.get("level", 1) >= max_skill_lvl: continue
-            exp_gained = random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)
-            skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
-            while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
-                skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
-                skill["level"] = skill.get("level", 1) + 1
-                skill["exp_to_next_level"] = calculate_exp_to_next_level(skill["level"], exp_multiplier)
-                skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
+            exp_gained = int((random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)) * diminishing_multiplier)
+            if exp_gained > 0:
+                skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
+                while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
+                    skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
+                    skill["level"] = skill.get("level", 1) + 1
+                    skill["exp_to_next_level"] = calculate_exp_to_next_level(skill["level"], exp_multiplier)
+                    skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
         monster_to_update["skills"] = current_skills
 
-        # 2. 領悟新技能
-        actual_new_skill_chance = cultivation_cfg.get("new_skill_chance", 0.1) * (1 + duration_percentage)
+        actual_new_skill_chance = cultivation_cfg.get("new_skill_chance", 0.1) * (1 + duration_percentage) * diminishing_multiplier
         if random.random() < actual_new_skill_chance:
             monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"])
             primary_element = monster_elements[0] if monster_elements else "無"
             all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
             potential_new_skills: List[Skill] = []
             current_skill_names = {s.get("name") for s in current_skills}
-            
             potential_new_skills.extend(all_skills_db.get(primary_element, []))
             if primary_element != "無":
                 potential_new_skills.extend(all_skills_db.get("無", []))
-
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
-            
             rare_learnable_skills = [s for s in learnable_skills if s.get("rarity") == "稀有"]
-            
             if rare_learnable_skills:
                 learned_new_skill_template = random.choice(rare_learnable_skills)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
 
-        # 3. 基礎數值成長
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
-        growth_chances = max(1, math.floor(duration_seconds / stat_divisor))
+        base_growth_chances = max(1, math.floor(duration_seconds / stat_divisor))
+        growth_chances = math.floor(base_growth_chances * diminishing_multiplier)
         
-        location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {}) # type: ignore
-        current_location_bias = location_configs.get(training_location, {}) # type: ignore
-        default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
-        growth_weights_map = current_location_bias.get("stat_growth_weights", default_stat_growth_weights) # type: ignore
-        
-        monster_primary_element = monster_to_update.get("elements", ["無"])[0]
-        element_bias_list = current_location_bias.get("element_bias", []) # type: ignore
-        
-        final_growth_weights = {**growth_weights_map}
-        if monster_primary_element in element_bias_list:
-            for stat_key in final_growth_weights:
-                final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * 1.2)
+        if growth_chances > 0:
+            location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
+            current_location_bias = location_configs.get(training_location, {})
+            default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
+            growth_weights_map = current_location_bias.get("stat_growth_weights", default_stat_growth_weights)
+            monster_primary_element = monster_to_update.get("elements", ["無"])[0]
+            element_bias_list = current_location_bias.get("element_bias", [])
+            final_growth_weights = {**growth_weights_map}
+            if monster_primary_element in element_bias_list:
+                for stat_key in final_growth_weights:
+                    final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * 1.2)
+            if final_growth_weights and sum(final_growth_weights.values()) > 0:
+                stats_pool = list(final_growth_weights.keys())
+                weights = list(final_growth_weights.values())
+                cultivation_gains = monster_to_update.get("cultivation_gains", {})
+                if not isinstance(cultivation_gains, dict): cultivation_gains = {}
+                for _ in range(growth_chances):
+                    chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
+                    gain_amount = random.randint(1, 2)
+                    cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
+                    skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
+                monster_to_update["cultivation_gains"] = cultivation_gains
 
-        if final_growth_weights and sum(final_growth_weights.values()) > 0:
-            stats_pool = list(final_growth_weights.keys())
-            weights = list(final_growth_weights.values())
-            
-            cultivation_gains = monster_to_update.get("cultivation_gains", {})
-            if not isinstance(cultivation_gains, dict): cultivation_gains = {}
-
-            for _ in range(growth_chances):
-                chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
-                gain_amount = random.randint(1, 2)
-                
-                cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
-                skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
-            
-            monster_to_update["cultivation_gains"] = cultivation_gains
-            
         if not any(log.startswith("💪") for log in skill_updates_log):
             skill_updates_log.append("這趟試煉基礎數值沒有提升。")
-
-        # 4. 拾獲DNA碎片
-        actual_dna_find_chance = cultivation_cfg.get("dna_find_chance", 0.5) * (1 + duration_percentage)
+        
+        actual_dna_find_chance = cultivation_cfg.get("dna_find_chance", 0.5) * (1 + duration_percentage) * diminishing_multiplier
         if random.random() < actual_dna_find_chance:
             dna_find_divisor = cultivation_cfg.get("dna_find_duration_divisor", 1200)
             num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
@@ -269,12 +255,10 @@ def complete_cultivation_service(
             loot_table = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
             all_dna_templates = game_configs.get("dna_fragments", [])
             monster_elements = monster_to_update.get("elements", ["無"])
-            
             dna_pool = []
             if element_bias_list: dna_pool = [dna for dna in all_dna_templates if dna.get("type") in element_bias_list]
             if not dna_pool: dna_pool = [dna for dna in all_dna_templates if dna.get("type") in monster_elements]
             if not dna_pool: dna_pool = all_dna_templates
-                
             for _ in range(min(num_items, len(dna_pool))):
                 if not dna_pool or not loot_table: break
                 rarity_pool, rarity_weights = zip(*loot_table.items())
@@ -282,9 +266,7 @@ def complete_cultivation_service(
                 quality_pool = [dna for dna in dna_pool if dna.get("rarity") == chosen_rarity]
                 if quality_pool: items_obtained.append(random.choice(quality_pool))
     
-    # 5. 生成修煉故事 (從故事庫)
     monster_name_for_story = monster_to_update.get('nickname', '一隻怪獸')
-    monster_cultivation_services_logger.info(f"--- [Cultivation Service] Generating story for monster_name: '{monster_name_for_story}'")
     adventure_story = _generate_story_from_library(
         monster_name=monster_name_for_story,
         game_configs=game_configs,
@@ -295,7 +277,6 @@ def complete_cultivation_service(
         training_location=training_location
     )
 
-    # 6. 重新計算總評價 (使用更新後的基礎數值)
     rarity_order: List[RarityNames] = ["普通", "稀有", "菁英", "傳奇", "神話"]
     current_hp_for_score = monster_to_update.get("initial_max_hp", 0)
     current_mp_for_score = monster_to_update.get("initial_max_mp", 0)
@@ -313,7 +294,6 @@ def complete_cultivation_service(
                                    (len(monster_to_update.get("skills",[])) * 15) + \
                                    (rarity_order.index(monster_to_update.get("rarity","普通")) * 30)
     
-    # 7. 將修煉總結加入活動紀錄
     log_message_parts = [f"修煉時間：{duration_seconds}s"]
     growth_summary = [log for log in skill_updates_log if log.startswith("🎉") or log.startswith("🌟") or log.startswith("💪")]
     log_message_parts.append(f"成長資訊：{', '.join(growth_summary) if growth_summary else '無'}")
@@ -334,7 +314,6 @@ def complete_cultivation_service(
     if "activityLog" not in monster_to_update: monster_to_update["activityLog"] = []
     monster_to_update["activityLog"].insert(0, new_log_entry)
     
-    # 8. 確保修煉後 HP/MP 為滿值
     gains = monster_to_update.get("cultivation_gains", {})
     monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + gains.get("hp", 0)
     monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + gains.get("mp", 0)
@@ -382,7 +361,6 @@ def replace_monster_skill_service(
     current_skills: List[Skill] = monster_to_update.get("skills", [])
     max_monster_skills = game_configs.get("value_settings", {}).get("max_monster_skills", 3)
 
-    # 實例化新技能
     new_skill_instance: Skill = {
         "name": new_skill_template_data.get("name", "未知技能"),
         "power": new_skill_template_data.get("power", 10),
@@ -392,7 +370,7 @@ def replace_monster_skill_service(
         "type": new_skill_template_data.get("type", "無"),
         "rarity": new_skill_template_data.get("rarity", "普通"),
         "baseLevel": new_skill_template_data.get("baseLevel", 1),
-        "level": 1, # 新學的技能等級為 1
+        "level": 1, 
         "mp_cost": new_skill_template_data.get("mp_cost", 0),
         "skill_category": new_skill_template_data.get("skill_category", "其他"),
         "current_exp": 0,
