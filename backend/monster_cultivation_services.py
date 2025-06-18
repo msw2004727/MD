@@ -159,6 +159,12 @@ def complete_cultivation_service(
         monster_cultivation_services_logger.error(f"完成修煉失敗：玩家 {player_id} 沒有 ID 為 {monster_id} 的怪獸。")
         return {"success": False, "error": f"找不到ID為 {monster_id} 的怪獸。", "status_code": 404}
 
+    # --- 核心修改處 START ---
+    # 初始化互動統計（如果不存在），並增加修煉次數
+    interaction_stats = monster_to_update.setdefault("interaction_stats", {})
+    interaction_stats["cultivation_count"] = interaction_stats.get("cultivation_count", 0) + 1
+    # --- 核心修改處 END ---
+
     # 獲取並重置修煉狀態
     training_location = monster_to_update.get("farmStatus", {}).get("trainingLocation", "gaia") # 先獲取地點
     if not monster_to_update.get("farmStatus"): monster_to_update["farmStatus"] = {}
@@ -212,14 +218,11 @@ def complete_cultivation_service(
 
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
             
-            # 只從可學習的技能中，篩選出「稀有」的技能
             rare_learnable_skills = [s for s in learnable_skills if s.get("rarity") == "稀有"]
             
             if rare_learnable_skills:
-                # 如果有可學習的稀有技能，就從中隨機選擇一個
                 learned_new_skill_template = random.choice(rare_learnable_skills)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
-            # 如果沒有可學習的稀有技能，則不學習任何新技能 (原本的 rarity_bias 和 fallback 邏輯被移除)
 
         # 3. 基礎數值成長
         stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
@@ -249,14 +252,6 @@ def complete_cultivation_service(
                 chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
                 gain_amount = random.randint(1, 2)
                 
-                # 【移除】不再直接修改怪獸的基礎（白字）數值
-                # if chosen_stat in ['hp', 'mp']:
-                #     max_stat_key = f'initial_max_{chosen_stat}'
-                #     monster_to_update[max_stat_key] = monster_to_update.get(max_stat_key, 0) + gain_amount
-                # else:
-                #     monster_to_update[chosen_stat] = monster_to_update.get(chosen_stat, 0) + gain_amount
-                
-                # 【保留】只更新 cultivation_gains 這個獨立的欄位
                 cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
                 skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
             
@@ -328,7 +323,6 @@ def complete_cultivation_service(
     else:
         log_message_parts.append("撿拾物品：無")
     
-    # --- 核心修改處 START ---
     gmt8 = timezone(timedelta(hours=8))
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -336,13 +330,11 @@ def complete_cultivation_service(
         "time": now_gmt8_str,
         "message": "\n".join(log_message_parts)
     }
-    # --- 核心修改處 END ---
 
     if "activityLog" not in monster_to_update: monster_to_update["activityLog"] = []
     monster_to_update["activityLog"].insert(0, new_log_entry)
     
     # 8. 確保修煉後 HP/MP 為滿值
-    # 【修改】這裡的邏輯也要跟著調整，應該用加上修煉加成後的值來回滿血
     gains = monster_to_update.get("cultivation_gains", {})
     monster_to_update["hp"] = monster_to_update.get("initial_max_hp", 0) + gains.get("hp", 0)
     monster_to_update["mp"] = monster_to_update.get("initial_max_mp", 0) + gains.get("mp", 0)
