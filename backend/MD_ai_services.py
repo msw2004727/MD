@@ -17,7 +17,7 @@ from .MD_models import Monster, PlayerGameData, ChatHistoryEntry, GameConfigs
 ai_logger = logging.getLogger(__name__)
 
 # --- DeepSeek API 設定 ---
-DEEPSEEK_API_KEY = None # 修改：初始化為 None
+DEEPSEEK_API_KEY = None # 初始化為 None
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions" # DeepSeek API 端點
 DEEPSEEK_MODEL = "deepseek-chat" # 常用的 DeepSeek 模型，如有需要請更改
 
@@ -45,14 +45,19 @@ def _load_deepseek_api_key():
         key_file_path = os.path.join(os.path.dirname(__file__), 'api_key.txt')
         if os.path.exists(key_file_path):
             with open(key_file_path, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-                # 假設檔案內容格式為 "deepseek api key sk-xxxxxxxx"
-                parts = content.split()
-                if len(parts) > 1 and parts[-1].startswith("sk-"):
-                    DEEPSEEK_API_KEY = parts[-1]
-                    ai_logger.info("成功從 api_key.txt 載入 DeepSeek API Key。")
-                else:
-                    ai_logger.warning("在 api_key.txt 中未找到符合格式的金鑰 (sk-...)。")
+                for line in f:
+                    line = line.strip()
+                    if "deepseek api key" in line.lower():
+                        parts = line.split()
+                        for part in parts:
+                            if part.startswith("sk-"):
+                                DEEPSEEK_API_KEY = part
+                                ai_logger.info("成功從 api_key.txt 載入 DeepSeek API Key。")
+                                return # 找到金鑰後就結束函式
+            
+            # 如果迴圈結束了還沒找到金鑰
+            if not DEEPSEEK_API_KEY:
+                ai_logger.warning("在 api_key.txt 中未找到符合格式的金鑰 (sk-...)。")
         else:
             ai_logger.warning(f"api_key.txt 檔案不存在於: {key_file_path}。AI 服務將無法運作。")
     except Exception as e:
