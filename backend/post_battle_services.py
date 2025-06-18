@@ -104,29 +104,48 @@ def process_battle_results(
                 opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
             opponent_player_data["playerStats"] = opponent_stats
 
-    # 2. 更新參與戰鬥的怪獸數據 (血量、履歷、活動紀錄)
-    for p_data, m_data, m_final_hp, m_final_mp, m_final_skills, m_final_resume, m_activity_log in [
-        (player_data, player_monster_data, battle_result["player_monster_final_hp"], battle_result["player_monster_final_mp"], battle_result["player_monster_final_skills"], battle_result["player_monster_final_resume"], battle_result.get("player_activity_log")),
-        (opponent_player_data, opponent_monster_data, None, None, None, None, battle_result.get("opponent_activity_log")) # 對手只更新履歷和日誌
-    ]:
-        if not p_data: continue
+    # 2. 更新參與戰鬥的怪獸數據
+    # 2.1 更新玩家怪獸的資料
+    player_monster_in_farm = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == player_monster_data['id']), None)
+    if player_monster_in_farm:
+        player_monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
+        player_monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
+        player_monster_in_farm["skills"] = battle_result["player_monster_final_skills"]
         
-        farmed_monsters = p_data.get("farmedMonsters", [])
-        for monster_in_farm in farmed_monsters:
-            if monster_in_farm.get("id") == m_data['id']:
-                if m_final_hp is not None: monster_in_farm["hp"] = m_final_hp
-                if m_final_mp is not None: monster_in_farm["mp"] = m_final_mp
-                if m_final_skills is not None: monster_in_farm["skills"] = m_final_skills
-                if m_final_resume is not None: monster_in_farm["resume"] = m_final_resume
-                
-                if monster_in_farm.get("farmStatus"):
-                    monster_in_farm["farmStatus"]["isBattling"] = False
-                    
-                if m_activity_log:
-                    monster_in_farm.setdefault("activityLog", []).insert(0, m_activity_log)
-                break
-        p_data["farmedMonsters"] = farmed_monsters
+        # ----- BUG 修正邏輯 START -----
+        # 直接根據戰鬥結果更新怪獸的 resume (履歷)
+        monster_resume = player_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
+        if battle_result.get("winner_id") == player_monster_data['id']:
+            monster_resume["wins"] = monster_resume.get("wins", 0) + 1
+            post_battle_logger.info(f"玩家怪獸 {player_monster_in_farm.get('nickname')} 勝利，勝場 +1")
+        elif battle_result.get("loser_id") == player_monster_data['id']:
+            monster_resume["losses"] = monster_resume.get("losses", 0) + 1
+            post_battle_logger.info(f"玩家怪獸 {player_monster_in_farm.get('nickname')} 戰敗，敗場 +1")
+        player_monster_in_farm["resume"] = monster_resume
+        # ----- BUG 修正邏輯 END -----
 
+        if player_monster_in_farm.get("farmStatus"):
+            player_monster_in_farm["farmStatus"]["isBattling"] = False
+            
+        player_activity_log = battle_result.get("player_activity_log")
+        if player_activity_log:
+            player_monster_in_farm.setdefault("activityLog", []).insert(0, player_activity_log)
+    
+    # 2.2 更新對手怪獸的資料 (如果不是NPC)
+    if opponent_player_data and opponent_id:
+        opponent_monster_in_farm = next((m for m in opponent_player_data.get("farmedMonsters", []) if m.get("id") == opponent_monster_data['id']), None)
+        if opponent_monster_in_farm:
+            # 只更新對手的履歷和活動日誌
+            opponent_resume = opponent_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
+            if battle_result.get("winner_id") == opponent_monster_data['id']:
+                opponent_resume["wins"] = opponent_resume.get("wins", 0) + 1
+            elif battle_result.get("loser_id") == opponent_monster_data['id']:
+                opponent_resume["losses"] = opponent_resume.get("losses", 0) + 1
+            opponent_monster_in_farm["resume"] = opponent_resume
+            
+            opponent_activity_log = battle_result.get("opponent_activity_log")
+            if opponent_activity_log:
+                opponent_monster_in_farm.setdefault("activityLog", []).insert(0, opponent_activity_log)
 
     # 3. 執行勝利吸收邏輯 (如果勝利)
     if battle_result.get("winner_id") == player_monster_data['id']:
