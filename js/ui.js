@@ -661,13 +661,18 @@ function getMonsterDisplayNameHtml(monster) {
     const elementNickname = monster.element_nickname_part || monster.custom_element_nickname;
 
     if (playerTitle && monsterAchievement && elementNickname) {
+        // --- 核心修改處 START ---
+        // 1. 將外層的 div 改為 span
+        // 2. 將 justify-content: center 移除
+        // 3. 將 flex-wrap: wrap; 改為 flex-wrap: nowrap;
         return `
-            <div style="display: flex; align-items: baseline; gap: 0.5em; flex-wrap: wrap; justify-content: center;">
+            <span style="display: flex; align-items: baseline; gap: 0.5em; flex-wrap: nowrap;">
                 <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
                 <span style="color: var(--text-primary);">${monsterAchievement}</span>
                 <span class="text-rarity-${rarityKey}">${elementNickname}</span>
-            </div>
+            </span>
         `;
+        // --- 核心修改處 END ---
     } else {
         // 備用邏輯，直接顯示舊的 nickname 欄位
         return `<span class="text-rarity-${rarityKey}">${monster.nickname || '名稱錯誤'}</span>`;
