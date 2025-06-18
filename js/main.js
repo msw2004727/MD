@@ -31,77 +31,62 @@ function initializeFirebaseApp() {
 
 async function loadAndDisplayAnnouncement() {
     try {
-        // 從根目錄讀取新的公告檔案
         const response = await fetch('./announcement.json');
         if (!response.ok) {
             throw new Error('無法讀取公告檔案，網路回應錯誤。');
         }
         const announcementData = await response.json();
 
-        // 選取要填入內容的 DOM 元素
         const titleElement = document.querySelector('#official-announcement-modal .modal-header');
         const contentContainer = document.getElementById('announcement-content');
 
         if (titleElement && contentContainer) {
-            // 更新標題
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
-
-            // --- 核心修改處 START ---
-            // 組合公告內容的 HTML
-            let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
             
-            let inSection = false;
-            let sectionHtml = "";
+            // ----- BUG 修正邏輯 START -----
+            let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
 
-            (announcementData.paragraphs || []).forEach(paragraph => {
-                if (paragraph.startsWith("目前已發放功能如下：") || paragraph.startsWith("接下來開發目標：")) {
-                    if (inSection) { // Close previous section if open
-                        sectionHtml += `</ul></div>`;
-                        contentHtml += sectionHtml;
-                    }
-                    // Start new section
-                    sectionHtml = `<div class="announcement-section"><p class="announcement-section-title">${paragraph}</p><ul>`;
-                    inSection = true;
-                } else if (paragraph.startsWith("．")) {
-                    if (inSection) {
-                        sectionHtml += `<li>${paragraph.substring(1).trim()}</li>`;
-                    } else {
-                        contentHtml += `<p>${paragraph}</p>`;
-                    }
-                } else {
-                    if (inSection) { // Close section if it's followed by a normal paragraph or empty line
-                        sectionHtml += `</ul></div>`;
-                        contentHtml += sectionHtml;
-                        sectionHtml = "";
-                        inSection = false;
-                    }
-                    if (paragraph.trim() !== '') { // Only add non-empty paragraphs
-                        contentHtml += `<p>${paragraph}</p>`;
-                    }
+            (announcementData.contentBlocks || []).forEach(block => {
+                switch (block.type) {
+                    case 'paragraph':
+                        contentHtml += `<p>${block.text}</p>`;
+                        break;
+                    case 'image':
+                        contentHtml += `<div class="announcement-image-container"><img src="${block.src}" alt="${block.alt || '公告圖片'}"></div>`;
+                        break;
+                    case 'columns':
+                        contentHtml += `<div class="announcement-columns-container">`;
+                        (block.columns || []).forEach(column => {
+                            contentHtml += `<div class="announcement-column">`;
+                            contentHtml += `<h5>${column.title}</h5>`;
+                            contentHtml += `<ul>`;
+                            (column.items || []).forEach(item => {
+                                if (typeof item === 'string') {
+                                    contentHtml += `<li>${item}</li>`;
+                                } else if (typeof item === 'object' && item.text) {
+                                    const colorClass = `text-color-${item.color || 'default'}`;
+                                    contentHtml += `<li><span class="${colorClass}">${item.text}</span></li>`;
+                                }
+                            });
+                            contentHtml += `</ul>`;
+                            contentHtml += `</div>`;
+                        });
+                        contentHtml += `</div>`;
+                        break;
                 }
             });
 
-            // Append the last section if the loop ends while inside one
-            if (inSection) {
-                sectionHtml += `</ul></div>`;
-                contentHtml += sectionHtml;
-            }
-
             contentHtml += `<p style="text-align: right; margin-top: 20px; color: var(--rarity-legendary-text); font-weight: bold;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
-
-            // 將組合好的 HTML 填入內容容器中
+            
             contentContainer.innerHTML = contentHtml;
-            // --- 核心修改處 END ---
+            // ----- BUG 修正邏輯 END -----
 
-            // 在HTML內容被插入後，立即更新玩家暱稱
             if (typeof updateAnnouncementPlayerName === 'function') {
                 updateAnnouncementPlayerName(gameState.playerNickname);
             }
         }
-
     } catch (error) {
         console.error('讀取或顯示公告時發生錯誤:', error);
-        // 如果載入失敗，公告彈窗將維持空白，不會影響遊戲主體功能。
     }
 }
 
@@ -123,13 +108,12 @@ async function initializeGame() {
             return;
         }
 
-        // 【修改】在 Promise.all 中新增對 chat_greetings.json 的讀取
         const [configs, playerData, assetPaths, uiTextContent, chatGreetings] = await Promise.all([
             getGameConfigs(),
             getPlayerData(gameState.currentUser.uid),
             fetch('./assets.json').then(res => res.json()),
             fetch('./ui_text.json').then(res => res.json()),
-            fetch('./chat_greetings.json').then(res => res.json()) // 新增這一行
+            fetch('./chat_greetings.json').then(res => res.json())
         ]);
 
         if (!configs || Object.keys(configs).length === 0) {
@@ -144,18 +128,16 @@ async function initializeGame() {
         if (!uiTextContent) {
             throw new Error("無法獲取介面文字內容設定。");
         }
-        // 【新增】檢查新載入的問候語檔案
         if (!chatGreetings) {
             throw new Error("無法獲取怪獸問候語資料庫。");
         }
         
-        // 【修改】將讀取到的 chatGreetings 存入全域遊戲狀態
         updateGameState({
             gameConfigs: configs,
             playerData: playerData,
             assetPaths: assetPaths,
             uiTextContent: uiTextContent,
-            chatGreetings: chatGreetings, // 新增這一行
+            chatGreetings: chatGreetings,
             playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
         });
         console.log("Game configs, player data, asset paths, and chat greetings loaded and saved to gameState.");
@@ -173,7 +155,6 @@ async function initializeGame() {
         if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
         if (typeof renderTemporaryBackpack === 'function') renderTemporaryBackpack();
         
-        // 新增：呼叫讀取並顯示公告的函式
         loadAndDisplayAnnouncement();
 
         const defaultMonster = getDefaultSelectedMonster();
@@ -256,8 +237,6 @@ async function onAuthStateChangedHandler(user) {
     }
 }
 
-// --- 【修改】 ---
-// 修改了 attemptToInitializeApp 函式，使其能印出具體的錯誤資訊
 function attemptToInitializeApp() {
     const requiredFunctions = [
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
@@ -265,11 +244,9 @@ function attemptToInitializeApp() {
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem'
     ];
     
-    // 找出所有未定義的函式
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
 
     if (undefinedFunctions.length === 0) {
-        // 如果所有函式都已定義，則正常執行遊戲初始化
         console.log("所有核心函式已準備就緒，開始初始化應用程式。");
         initializeDOMElements(); 
         clearGameCacheOnExitOrRefresh();
@@ -291,7 +268,6 @@ function attemptToInitializeApp() {
             }
         }
     } else {
-        // 如果有函式未定義，則在主控台印出確切是哪個函式不見了，然後重試
         console.warn(`一個或多個核心初始化函式尚未定義: [${undefinedFunctions.join(', ')}]，將在 100ms 後重試...`);
         setTimeout(attemptToInitializeApp, 100);
     }
