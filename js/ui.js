@@ -172,25 +172,30 @@ function toggleElementDisplay(element, show, displayType = 'block') {
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        // --- 核心修改處 START: 將重設邏輯從 hideModal 移至此處 ---
-        // 1. 重置所有可滾動內容區域的捲軸到頂部
-        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container');
-        scrollableBodies.forEach(body => {
-            body.scrollTop = 0;
-        });
+        // --- 核心修改處 START: 將重設邏輯移至此處 ---
+        // 使用 setTimeout 確保重設操作在瀏覽器渲染 modal 後執行
+        setTimeout(() => {
+            // 1. 重置所有可滾動內容區域的捲軸到頂部
+            const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container, #battle-log-area');
+            scrollableBodies.forEach(body => {
+                body.scrollTop = 0;
+            });
 
-        // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
-        const tabButtonsContainer = modal.querySelector('.tab-buttons');
-        if (tabButtonsContainer) {
-            const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
-            if (firstTabButton && typeof switchTabContent === 'function') {
-                const firstTabTargetId = firstTabButton.dataset.tabTarget;
-                // 傳入 modalId 確保只操作當前彈窗內的頁籤
-                switchTabContent(firstTabTargetId, firstTabButton, modalId);
+            // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
+            const tabButtonsContainer = modal.querySelector('.tab-buttons');
+            if (tabButtonsContainer) {
+                const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
+                if (firstTabButton && typeof switchTabContent === 'function') {
+                    // 如果第一個分頁不是 active, 才執行切換
+                    if (!firstTabButton.classList.contains('active')) {
+                        const firstTabTargetId = firstTabButton.dataset.tabTarget;
+                        switchTabContent(firstTabTargetId, firstTabButton, modalId);
+                    }
+                }
             }
-        }
+        }, 0);
         // --- 核心修改處 END ---
-
+        
         modal.style.display = 'flex';
         gameState.activeModalId = modalId;
     }
@@ -204,8 +209,6 @@ function hideModal(modalId) {
             gameState.activeModalId = null;
         }
         
-        // --- 核心修改處：已將重設邏輯移至 showModal ---
-
         // 清除通用回饋視窗的計時器
         if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
             clearInterval(gameState.feedbackHintInterval);
@@ -222,7 +225,6 @@ function hideModal(modalId) {
 function hideAllModals() {
     const modals = document.querySelectorAll('.modal');
     modals.forEach(modal => {
-        // 在隱藏所有彈窗時，也執行重置邏輯
         hideModal(modal.id); 
     });
     gameState.activeModalId = null;
@@ -302,8 +304,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    // 建立一個標題和橫幅圖片類型的對應表
-    // 這個表的鍵名，對應 assets.json 中 "loadingBanners" 物件的鍵名
     const loadingTitleMap = {
         '遊戲載入中': 'gameLoad',
         '登入中': 'login',
@@ -323,11 +323,10 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
     let loadingKey = null;
     if (isLoading) {
-        // 遍歷對應表，找到符合的鍵名
         for (const keyTitle in loadingTitleMap) {
             if (title.startsWith(keyTitle)) {
                 loadingKey = loadingTitleMap[keyTitle];
-                break; // 找到就停止
+                break;
             }
         }
     }
@@ -335,7 +334,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     const loadingBanners = gameState.assetPaths?.images?.modals?.loadingBanners || {};
     const genericLoadingBanner = loadingBanners.generic || '';
 
-    // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
         const bannerUrl = gameState.assetPaths?.images?.modals?.titleAward || '';
         const awardType = awardDetails.type === 'title' ? '稱號' : '成就';
@@ -378,7 +376,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
-    // 使用新的 loadingKey 來判斷，取代舊的 if/else if 長鏈
     else if (loadingKey) {
         const bannerUrl = loadingBanners[loadingKey] || genericLoadingBanner;
         addBannerAndHints(bannerUrl, title);
