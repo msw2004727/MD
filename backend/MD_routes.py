@@ -8,6 +8,7 @@ import logging
 import random
 import copy 
 import time 
+import math # 【新增】導入 math 函式庫以進行數學運算
 from typing import List, Dict, Any, Tuple
 
 from flask_cors import cross_origin
@@ -508,8 +509,26 @@ def simulate_battle_api_route():
 
                             # --- 核心修改處 START ---
                             interaction_stats = monster_in_farm.setdefault("interaction_stats", {})
-                            if battle_result.get("loser_id") == player_monster_data_req['id']:
+                            current_bond = interaction_stats.get("bond_points", 0)
+                            point_change = 0
+
+                            if battle_result.get("winner_id") == player_monster_data_req['id']:
+                                point_change += 5  # 基礎勝利點數
+                                player_score = monster_in_farm.get("score", 1) or 1
+                                opponent_score = opponent_monster_data_req.get("score", 1) or 1
+                                if opponent_score > player_score:
+                                    bonus = math.floor(((opponent_score / player_score) - 1) * 10)
+                                    point_change += max(0, min(10, bonus)) # 加成最多10點
+                            
+                            elif battle_result.get("loser_id") == player_monster_data_req['id']:
+                                point_change -= 5  # 戰敗懲罰
+                                point_change -= 8  # 瀕死懲罰
                                 interaction_stats["near_death_count"] = interaction_stats.get("near_death_count", 0) + 1
+
+                            if point_change != 0:
+                                new_bond = max(-100, min(100, current_bond + point_change))
+                                interaction_stats["bond_points"] = new_bond
+                                routes_logger.info(f"戰鬥結束，怪獸 {monster_in_farm.get('id')} 感情值變化 {point_change}，目前為 {new_bond}。")
                             # --- 核心修改處 END ---
 
                             break
