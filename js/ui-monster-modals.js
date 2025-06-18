@@ -42,18 +42,30 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
+    // ----- BUG 修正邏輯 START -----
     let titleBuffs = {};
-    const monsterOwnerId = monster.owner_id || gameState.playerId;
-    if (monsterOwnerId === gameState.playerId && gameState.playerData.playerStats) {
-        const stats = gameState.playerData.playerStats;
-        const equippedId = stats.equipped_title_id;
-        if (equippedId && stats.titles) {
-            const equippedTitle = stats.titles.find(t => t.id === equippedId);
+    let ownerStats = null;
+
+    // 1. 檢查怪獸是否屬於當前登入的玩家
+    if (gameState.playerData && gameState.playerData.farmedMonsters.some(m => m.id === monster.id)) {
+        ownerStats = gameState.playerData.playerStats;
+    } 
+    // 2. 如果不屬於，則檢查是否屬於當前正在查看的另一位玩家
+    else if (gameState.viewedPlayerData && gameState.viewedPlayerData.farmedMonsters.some(m => m.id === monster.id)) {
+        ownerStats = gameState.viewedPlayerData.playerStats;
+    }
+
+    // 3. 如果找到了擁有者，則從該擁有者的資料中獲取稱號加成
+    if (ownerStats) {
+        const equippedId = ownerStats.equipped_title_id;
+        if (equippedId && ownerStats.titles) {
+            const equippedTitle = ownerStats.titles.find(t => t.id === equippedId);
             if (equippedTitle && equippedTitle.buffs) {
                 titleBuffs = equippedTitle.buffs;
             }
         }
     }
+    // ----- BUG 修正邏輯 END -----
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -72,7 +84,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            const description = skill.description || skill.story || '暫無描述';
+            const description = skill.description || skill.story || '暫無描述。';
             const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
             const expBarHtml = `
                 <div style="margin-top: 5px;">
