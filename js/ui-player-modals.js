@@ -192,16 +192,14 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  const totalGames = resume.wins + resume.losses;
                  const winRate = totalGames > 0 ? ((resume.wins / totalGames) * 100).toFixed(1) + '%' : 'N/A';
                  
-                 // --- 核心修改處 ---
-                 // 移除手動組合名稱的邏輯
-                 // 直接呼叫 getMonsterDisplayNameHtml 函式
                  const nameHtml = getMonsterDisplayNameHtml(m);
-                 // --- 修改結束 ---
 
+                 // --- 核心修改處 ---
+                 // 在 a 標籤的 style 中新增 'display: block;'
                  return `
                     <div class="player-monster-row">
                         <div class="monster-name-cell">
-                            <a href="#" class="player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none;">
+                            <a href="#" class="player-info-monster-link" data-monster-id="${m.id}" data-owner-uid="${playerData.uid}" style="text-decoration: none; display: block;">
                                 ${nameHtml}
                             </a>
                         </div>
@@ -209,6 +207,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                         <div class="monster-winrate-cell">${winRate}</div>
                     </div>
                  `;
+                 // --- 修改結束 ---
             }).join('');
             
             container.innerHTML = `
