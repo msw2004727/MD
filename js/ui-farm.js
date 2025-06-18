@@ -126,13 +126,11 @@ function renderMonsterFarm() {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
-        // --- 核心修改處 START ---
         const playerTitle = monster.player_title_part;
         const monsterAchievement = monster.achievement_part;
         const elementNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
         
         let nameHtml;
-        // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
         if (playerTitle && monsterAchievement && elementNickname) {
             nameHtml = `
                 <div style="display: flex; align-items: baseline; gap: 0.5em;">
@@ -142,7 +140,6 @@ function renderMonsterFarm() {
                 </div>
             `;
         } else {
-            // 否則，直接顯示舊的完整暱稱，以相容舊資料
             nameHtml = `<span class="text-rarity-${rarityKey}">${monster.nickname || '名稱錯誤'}</span>`;
         }
         
@@ -150,7 +147,6 @@ function renderMonsterFarm() {
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; width: 100%;">
                 ${nameHtml}
             </a>`;
-        // --- 核心修改處 END ---
         
         const colScore = document.createElement('div');
         colScore.className = 'farm-col farm-col-score';
@@ -162,6 +158,8 @@ function renderMonsterFarm() {
         colStatus.style.flexDirection = 'column';
         colStatus.style.lineHeight = '1.2';
         
+        // ----- BUG 修正邏輯 START -----
+        // 調整判斷順序，讓「修煉中」和「瀕死」的優先級高於「出戰中」
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
@@ -169,13 +167,14 @@ function renderMonsterFarm() {
                 <div style="color: var(--accent-color);">修煉中</div>
                 <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}" style="font-size: 0.8em;">(0/${duration/1000}s)</div>
             `;
-        } else if (isDeployed) {
-            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             colStatus.innerHTML = `<span style="color: var(--danger-color);">瀕死</span>`;
+        } else if (isDeployed) {
+            colStatus.innerHTML = `<span style="color: var(--rarity-mythical-text);">出戰中</span>`;
         } else {
             colStatus.textContent = '閒置中';
         }
+        // ----- BUG 修正邏輯 END -----
         
         const colActions = document.createElement('div');
         colActions.className = 'farm-col farm-col-actions';
