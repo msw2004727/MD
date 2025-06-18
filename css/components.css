@@ -949,3 +949,32 @@ body.light-theme .leaderboard-table tr:hover td {
     transition: left 0.5s ease-out;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
+/* --- 新增：排行榜頭像樣式 --- */
+.leaderboard-avatar-cell {
+    width: 40px; /* 頭像欄位的寬度 */
+    height: 40px; /* 頭像欄位的高度 */
+    padding: 0 !important;
+}
+
+.leaderboard-avatar-container {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* 圓形頭像框 */
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* 隱藏超出頭像框的圖片部分 */
+    position: relative;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+}
+
+.leaderboard-avatar-image {
+    width: 150%; /* 讓背景圖片比框大，以便只顯示中間部分 */
+    height: 150%;
+    background-size: cover; /* 縮放圖片以完全覆蓋容器 */
+    background-position: center; /* 將圖片置中 */
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 確保圖片絕對置中 */
+}
