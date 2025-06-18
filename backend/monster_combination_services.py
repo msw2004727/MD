@@ -23,7 +23,7 @@ from .MD_models import (
 # 引入 AI 服務模組
 from .MD_ai_services import generate_monster_ai_details
 # --- 新增: 從 utils_services 導入共用函式 ---
-from .utils_services import generate_monster_full_nickname
+from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 
 monster_combination_services_logger = logging.getLogger(__name__)
 
@@ -63,44 +63,6 @@ DEFAULT_GAME_CONFIGS_FOR_COMBINATION: GameConfigs = {
 
 
 # --- 輔助函式 (僅用於此模組，或可進一步拆分到 utils_services.py) ---
-def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
-    """計算升到下一級所需的經驗值。"""
-    if level <= 0: level = 1
-    return (level + 1) * base_multiplier
-
-def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
-    """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。"""
-    cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_COMBINATION["cultivation_config"])
-
-    if target_level is not None:
-        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 10)))
-    else:
-        skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
-        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 10))) # type: ignore
-
-    new_skill_instance: Skill = {
-        "name": skill_template.get("name", "未知技能"),
-        "power": skill_template.get("power", 10),
-        "crit": skill_template.get("crit", 5),
-        "probability": skill_template.get("probability", 50),
-        "story": skill_template.get("story", skill_template.get("description", "一個神秘的招式")),
-        "type": skill_template.get("type", "無"), # type: ignore
-        "baseLevel": skill_template.get("baseLevel", 1),
-        "level": skill_level,
-        "mp_cost": skill_template.get("mp_cost", 0),
-        "skill_category": skill_template.get("skill_category", "其他"), # type: ignore
-        "current_exp": 0,
-        "exp_to_next_level": _calculate_exp_to_next_level(skill_level, cultivation_cfg.get("skill_exp_base_multiplier", 100)), # type: ignore
-        "effect": skill_template.get("effect"), # 簡要效果標識
-        # 以下為更詳細的效果參數，用於實現輔助性、恢復性、同歸於盡性等
-        "stat": skill_template.get("stat"),     # 影響的數值
-        "amount": skill_template.get("amount"),   # 影響的量
-        "duration": skill_template.get("duration"), # 持續回合
-        "damage": skill_template.get("damage"),   # 額外傷害或治療量 (非 DoT)
-        "recoilDamage": skill_template.get("recoilDamage") # 反傷比例
-    }
-    return new_skill_instance
-
 def _generate_combination_key(dna_template_ids: List[str]) -> str:
     """
     根據 DNA 模板 ID 列表生成唯一的組合鍵。
@@ -179,7 +141,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance.setdefault("cultivation_gains", {})
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
-            skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100))
+            skill["exp_to_next_level"] = calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100))
         new_monster_instance["hp"] = new_monster_instance.get("initial_max_hp", 1)
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
@@ -222,13 +184,28 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             num_skills = random.randint(1, min(game_configs.get("value_settings", {}).get("max_monster_skills", 3), len(potential_skills)))
             selected_templates = random.sample(potential_skills, num_skills)
             for template in selected_templates:
-                generated_skills.append(_get_skill_from_template(template, game_configs, monster_rarity_data))
-        
+                cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_COMBINATION["cultivation_config"])
+                initial_level = template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
+                initial_level = max(1, min(initial_level, cultivation_cfg.get("max_skill_level", 10)))
+                
+                # 使用共用函式，並手動設定新技能的 EXP
+                new_skill = get_effective_skill_with_level(template, initial_level)
+                new_skill['current_exp'] = 0
+                new_skill['exp_to_next_level'] = calculate_exp_to_next_level(initial_level, cultivation_cfg.get("skill_exp_base_multiplier", 100))
+                generated_skills.append(new_skill)
+
         if not generated_skills:
             monster_combination_services_logger.warning(f"怪獸屬性 {elements_present} 無可用技能，將指派預設'無'屬性技能。")
             default_skill_template = all_skills_db.get("無", [{}])[0]
             if default_skill_template:
-                generated_skills.append(_get_skill_from_template(default_skill_template, game_configs, monster_rarity_data))
+                cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_COMBINATION["cultivation_config"])
+                initial_level = default_skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
+                initial_level = max(1, min(initial_level, cultivation_cfg.get("max_skill_level", 10)))
+
+                new_skill = get_effective_skill_with_level(default_skill_template, initial_level)
+                new_skill['current_exp'] = 0
+                new_skill['exp_to_next_level'] = calculate_exp_to_next_level(initial_level, cultivation_cfg.get("skill_exp_base_multiplier", 100))
+                generated_skills.append(new_skill)
             else:
                 monster_combination_services_logger.error("連預設的'無'屬性技能都找不到，怪獸將沒有技能！")
 
