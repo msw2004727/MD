@@ -191,19 +191,7 @@ async function handleEndCultivationClick(event, monsterId, trainingStartTime, tr
 
     if (elapsedTimeSeconds < totalDurationSeconds) {
         // --- 核心修改處 START ---
-        let displayName;
-        if (monster.custom_element_nickname) {
-            displayName = monster.custom_element_nickname;
-        } else {
-            const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-            const monsterRarity = monster.rarity || '普通';
-            const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-            if (nicknamesByElement && nicknamesByElement[monsterRarity] && nicknamesByElement[monsterRarity].length > 0) {
-                displayName = nicknamesByElement[monsterRarity][0];
-            } else {
-                displayName = primaryElement; 
-            }
-        }
+        const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
         // --- 核心修改處 END ---
 
         showConfirmationModal(
