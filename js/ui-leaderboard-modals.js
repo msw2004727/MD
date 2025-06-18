@@ -50,8 +50,11 @@ function updateLeaderboardTable(tableType, data, containerId) {
 
     let headersConfig;
     if (tableType === 'monster') {
+        // ----- BUG 修正邏輯 START -----
+        // 新增「頭像」欄位
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
+            { text: '頭像', key: 'avatar', align: 'center' }, // 新增
             { text: '怪獸', key: 'nickname' },
             { text: '元素', key: 'elements', align: 'center' },
             { text: '稀有度', key: 'rarity', align: 'center' },
@@ -60,6 +63,7 @@ function updateLeaderboardTable(tableType, data, containerId) {
             { text: '擁有者', key: 'owner_nickname' },
             { text: '操作', key: 'actions', align: 'center' }
         ];
+        // ----- BUG 修正邏輯 END -----
     } else { // player
         headersConfig = [
             { text: '排名', key: 'rank', align: 'center' },
@@ -98,6 +102,25 @@ function updateLeaderboardTable(tableType, data, containerId) {
             rankCell.textContent = index + 1;
             rankCell.style.textAlign = 'center';
 
+            // ----- BUG 修正邏輯 START -----
+            // 渲染頭像欄位
+            const avatarCell = row.insertCell();
+            avatarCell.className = 'leaderboard-avatar-cell'; // 套用新的 CSS class
+
+            const headInfo = item.head_dna_info || { type: '無', rarity: '普通' };
+            const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+            
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'leaderboard-avatar-container';
+            const avatarImage = document.createElement('div');
+            avatarImage.className = 'leaderboard-avatar-image';
+            if (imagePath) {
+                avatarImage.style.backgroundImage = `url('${imagePath}')`;
+            }
+            avatarContainer.appendChild(avatarImage);
+            avatarCell.appendChild(avatarContainer);
+            // ----- BUG 修正邏輯 END -----
+
             const nicknameCell = row.insertCell();
             const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             
@@ -110,16 +133,13 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.whiteSpace = 'nowrap';
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
-            // 【修改】將字體大小從 0.9em 提升至 1.1rem
             link.style.fontSize = '1.1rem'; 
             
-            // --- 核心修改處 START ---
             const playerTitle = item.player_title_part;
             const monsterAchievement = item.achievement_part;
             const elementNickname = getMonsterDisplayName(item, gameState.gameConfigs);
 
             let nameHtml;
-            // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
             if (playerTitle && monsterAchievement && elementNickname) {
                 nameHtml = `
                     <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
@@ -127,11 +147,9 @@ function updateLeaderboardTable(tableType, data, containerId) {
                     <span class="text-rarity-${rarityKey}">${elementNickname}</span>
                 `;
             } else {
-                // 否則，直接顯示舊的完整暱稱，以相容舊資料
                 nameHtml = `<span class="text-rarity-${rarityKey}">${item.nickname || '名稱錯誤'}</span>`;
             }
             link.innerHTML = nameHtml;
-            // --- 核心修改處 END ---
             
             nicknameCell.appendChild(link);
 
