@@ -201,11 +201,18 @@ def complete_cultivation_service(
         actual_new_skill_chance = cultivation_cfg.get("new_skill_chance", 0.1) * (1 + duration_percentage)
         if random.random() < actual_new_skill_chance:
             monster_elements: List[ElementTypes] = monster_to_update.get("elements", ["無"])
+            primary_element = monster_elements[0] if monster_elements else "無"
             all_skills_db: Dict[ElementTypes, List[Skill]] = game_configs.get("skills", {})
             potential_new_skills: List[Skill] = []
             current_skill_names = {s.get("name") for s in current_skills}
-            for el in monster_elements: potential_new_skills.extend(all_skills_db.get(el, []))
-            if "無" not in monster_elements and "無" in all_skills_db: potential_new_skills.extend(all_skills_db.get("無", []))
+            
+            # --- 核心修改處 START ---
+            # 只從主屬性和「無」屬性技能池中學習
+            potential_new_skills.extend(all_skills_db.get(primary_element, []))
+            if primary_element != "無":
+                potential_new_skills.extend(all_skills_db.get("無", []))
+            # --- 核心修改處 END ---
+
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
             if learnable_skills:
                 rarity_bias = cultivation_cfg.get("new_skill_rarity_bias", {})
