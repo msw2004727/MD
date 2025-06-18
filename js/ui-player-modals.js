@@ -76,7 +76,10 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     
     // ----- BUG 修正邏輯 START -----
     // 判斷當前查看的是否為自己的個人資料
-    const isOwnProfile = playerData.uid === gameState.playerId;
+    // 我們需要確保即使 player_data 是從舊的 gameState.playerData 來的 (沒有 uid)，也能正確判斷
+    // 因此，直接比較 nickname 可能更可靠，或者確保所有 playerData 物件都有 uid
+    // 這裡我們假設從 `viewPlayerInfo` 過來的 playerData 必定有 uid
+    const isOwnProfile = (playerData.uid && playerData.uid === gameState.playerId) || (!playerData.uid && nickname === gameState.playerNickname);
     // ----- BUG 修正邏輯 END -----
 
     if (ownedTitles.length > 0) {
@@ -405,7 +408,7 @@ async function renderFriendsList() {
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
-                        <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
+                        <span class="online-status ${isOnline ? 'online' : 'online'}"></span>
                         <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
                             ${displayName}
                         </a>
