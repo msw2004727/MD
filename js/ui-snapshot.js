@@ -277,7 +277,11 @@ function updateMonsterSnapshot(monster) {
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
-        gameState.selectedMonsterId = monster.id;
+        
+        // 修改：更新 playerData 中的 selectedMonsterId
+        if (gameState.playerData) {
+            gameState.playerData.selectedMonsterId = monster.id;
+        }
 
         // 怪獸詳細資訊按鈕 (第1個)
         const monsterBtn = document.createElement('button');
@@ -313,6 +317,10 @@ function updateMonsterSnapshot(monster) {
         toggleElementDisplay(DOMElements.snapshotBarsContainer, false);
         DOMElements.monsterSnapshotArea.style.borderColor = 'var(--border-color)';
         DOMElements.monsterSnapshotArea.style.boxShadow = 'none';
-        gameState.selectedMonsterId = null;
+        
+        // 修改：更新 playerData 中的 selectedMonsterId
+        if (gameState.playerData) {
+            gameState.playerData.selectedMonsterId = null;
+        }
     }
 }
