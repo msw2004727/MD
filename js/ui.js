@@ -304,8 +304,40 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
+    // --- 核心修改處 START ---
+    // 建立一個標題和橫幅圖片類型的對應表
+    // 這個表的鍵名，對應 assets.json 中 "loadingBanners" 物件的鍵名
+    const loadingTitleMap = {
+        '遊戲載入中': 'gameLoad',
+        '登入中': 'login',
+        '註冊中': 'register',
+        '登出中': 'logout',
+        '怪獸合成中': 'synthesis',
+        '結算中': 'calculating',
+        'DNA抽取中': 'dnaDrawing',
+        '準備戰鬥': 'battlePrep',
+        '戰鬥中': 'battling',
+        '學習中': 'skillLearn',
+        '替換技能中': 'skillLearn',
+        '載入中': 'generic',
+        '處理中': 'processing',
+        '更新中': 'updating'
+    };
+
+    let loadingKey = null;
+    if (isLoading) {
+        // 遍歷對應表，找到符合的鍵名
+        for (const keyTitle in loadingTitleMap) {
+            if (title.startsWith(keyTitle)) {
+                loadingKey = loadingTitleMap[keyTitle];
+                break; // 找到就停止
+            }
+        }
+    }
+    
     const loadingBanners = gameState.assetPaths?.images?.modals?.loadingBanners || {};
     const genericLoadingBanner = loadingBanners.generic || '';
+    // --- 核心修改處 END ---
 
     // 【新增】處理新稱號/成就的顯示邏輯
     if (awardDetails) { 
@@ -350,50 +382,14 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         
         DOMElements.feedbackModalMessage.innerHTML = messageHtml;
     }
-    // --- Start of New Independent Loading Modals ---
-    else if (isLoading && title.startsWith('遊戲載入中')) {
-        addBannerAndHints(loadingBanners.gameLoad || genericLoadingBanner, '遊戲載入中');
+    // --- 核心修改處 START ---
+    // 使用新的 loadingKey 來判斷，取代舊的 if/else if 長鏈
+    else if (loadingKey) {
+        const bannerUrl = loadingBanners[loadingKey] || genericLoadingBanner;
+        addBannerAndHints(bannerUrl, title);
     }
-    else if (isLoading && title.startsWith('登入中')) {
-        addBannerAndHints(loadingBanners.login || genericLoadingBanner, '登入中');
-    }
-    else if (isLoading && title.startsWith('註冊中')) {
-        addBannerAndHints(loadingBanners.register || genericLoadingBanner, '註冊中');
-    }
-    else if (isLoading && title.startsWith('登出中')) {
-        addBannerAndHints(loadingBanners.logout || genericLoadingBanner, '登出中');
-    }
-    else if (isLoading && title.startsWith('載入中')) { 
-        addBannerAndHints(loadingBanners.generic || genericLoadingBanner, '載入中');
-    }
-    else if (isLoading && title.startsWith('處理中')) { 
-        addBannerAndHints(loadingBanners.processing || genericLoadingBanner, '處理中');
-    }
-    else if (isLoading && title.startsWith('更新中')) { 
-        addBannerAndHints(loadingBanners.updating || genericLoadingBanner, '更新中');
-    }
-    else if (isLoading && title.startsWith('怪獸合成中')) {
-        addBannerAndHints(loadingBanners.synthesis || genericLoadingBanner, '怪獸合成中');
-    }
-    else if (isLoading && title.startsWith('結算中')) {
-        addBannerAndHints(loadingBanners.calculating || genericLoadingBanner, '結算中');
-    }
-    else if (isLoading && title.startsWith('DNA抽取中')) {
-        const banner = gameState.assetPaths?.images?.modals?.dnaDrawing || genericLoadingBanner;
-        addBannerAndHints(banner, 'DNA抽取中');
-    }
-    else if (isLoading && title.startsWith('準備戰鬥')) {
-        addBannerAndHints(loadingBanners.battlePrep || genericLoadingBanner, '準備戰鬥');
-    }
-    else if (isLoading && title.startsWith('戰鬥中')) {
-        addBannerAndHints(loadingBanners.battling || genericLoadingBanner, '戰鬥中');
-    }
-    else if (isLoading && (title.startsWith('學習中') || title.startsWith('替換技能中'))) {
-        addBannerAndHints(loadingBanners.skillLearn || genericLoadingBanner, '技能學習中');
-    }
-    // --- End of New Independent Loading Modals ---
+    // --- 核心修改處 END ---
     else if (monsterDetails && monsterDetails.type === 'cultivation_start' && monsterDetails.monster) {
-        // --- 核心修改處 START ---
         const monster = monsterDetails.monster;
         let displayName;
         if (monster.custom_element_nickname) {
@@ -410,7 +406,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-        // --- 核心修改處 END ---
         
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
