@@ -20,6 +20,8 @@ from .MD_models import (
 from . import MD_firebase_config
 # 從 player_services 導入 get_player_data_service
 from .player_services import get_player_data_service, save_player_data_service # 確保這裡也導入 save_player_data_service
+# 新增：導入新的共用函式
+from .utils_services import calculate_exp_to_next_level, get_effective_skill_with_level
 
 monster_cultivation_services_logger = logging.getLogger(__name__)
 
@@ -61,43 +63,6 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
 
 
 # --- 輔助函式 (僅用於此模組) ---
-def _calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
-    """計算升到下一級所需的經驗值。"""
-    if level <= 0: level = 1
-    return (level + 1) * base_multiplier
-
-def _get_skill_from_template(skill_template: Skill, game_configs: GameConfigs, monster_rarity_data: RarityDetail, target_level: Optional[int] = None) -> Skill:
-    """根據技能模板、遊戲設定和怪獸稀有度來實例化一個技能。"""
-    cultivation_cfg = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
-
-    if target_level is not None:
-        skill_level = max(1, min(target_level, cultivation_cfg.get("max_skill_level", 10)))
-    else:
-        skill_level = skill_template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
-        skill_level = max(1, min(skill_level, cultivation_cfg.get("max_skill_level", 10))) # type: ignore
-
-    new_skill_instance: Skill = {
-        "name": skill_template.get("name", "未知技能"),
-        "power": skill_template.get("power", 10),
-        "crit": skill_template.get("crit", 5),
-        "probability": skill_template.get("probability", 50),
-        "story": skill_template.get("story", skill_template.get("description", "一個神秘的招式")),
-        "type": skill_template.get("type", "無"), # type: ignore
-        "baseLevel": skill_template.get("baseLevel", 1),
-        "level": skill_level,
-        "mp_cost": skill_template.get("mp_cost", 0),
-        "skill_category": skill_template.get("skill_category", "其他"), # type: ignore
-        "current_exp": 0,
-        "exp_to_next_level": _calculate_exp_to_next_level(skill_level, cultivation_cfg.get("skill_exp_base_multiplier", 100)), # type: ignore
-        "effect": skill_template.get("effect"),
-        "stat": skill_template.get("stat"),     # 影響的數值
-        "amount": skill_template.get("amount"),   # 影響的量
-        "duration": skill_template.get("duration"), # 持續回合
-        "damage": skill_template.get("damage"),   # 額外傷害或治療量 (非 DoT)
-        "recoilDamage": skill_template.get("recoilDamage")
-    }
-    return new_skill_instance
-
 def _generate_story_from_library(
     monster_name: str,
     game_configs: GameConfigs,
@@ -228,7 +193,7 @@ def complete_cultivation_service(
             while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
                 skill["current_exp"] -= skill.get("exp_to_next_level", 9999)
                 skill["level"] = skill.get("level", 1) + 1
-                skill["exp_to_next_level"] = _calculate_exp_to_next_level(skill["level"], exp_multiplier)
+                skill["exp_to_next_level"] = calculate_exp_to_next_level(skill["level"], exp_multiplier)
                 skill_updates_log.append(f"🎉 技能 '{skill.get('name')}' 等級提升至 {skill.get('level')}！")
         monster_to_update["skills"] = current_skills
 
@@ -423,13 +388,28 @@ def replace_monster_skill_service(
     current_skills: List[Skill] = monster_to_update.get("skills", [])
     max_monster_skills = game_configs.get("value_settings", {}).get("max_monster_skills", 3)
 
-    monster_rarity_name: RarityNames = monster_to_update.get("rarity", "普通")
-    all_rarities_db: Dict[str, RarityDetail] = game_configs.get("rarities", {})
-    rarity_key_lookup = {data["name"]: key for key, data in all_rarities_db.items()}
-    monster_rarity_key = rarity_key_lookup.get(monster_rarity_name, "COMMON")
-    monster_rarity_data: RarityDetail = all_rarities_db.get(monster_rarity_key, DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["rarities"]["COMMON"]) # type: ignore
+    # 實例化新技能
+    new_skill_instance: Skill = {
+        "name": new_skill_template_data.get("name", "未知技能"),
+        "power": new_skill_template_data.get("power", 10),
+        "crit": new_skill_template_data.get("crit", 5),
+        "probability": new_skill_template_data.get("probability", 50),
+        "story": new_skill_template_data.get("story", new_skill_template_data.get("description", "一個神秘的招式")),
+        "type": new_skill_template_data.get("type", "無"),
+        "baseLevel": new_skill_template_data.get("baseLevel", 1),
+        "level": 1, # 新學的技能等級為 1
+        "mp_cost": new_skill_template_data.get("mp_cost", 0),
+        "skill_category": new_skill_template_data.get("skill_category", "其他"),
+        "current_exp": 0,
+        "exp_to_next_level": calculate_exp_to_next_level(1, game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100)),
+        "effect": new_skill_template_data.get("effect"),
+        "stat": new_skill_template_data.get("stat"),
+        "amount": new_skill_template_data.get("amount"),
+        "duration": new_skill_template_data.get("duration"),
+        "damage": new_skill_template_data.get("damage"),
+        "recoilDamage": new_skill_template_data.get("recoilDamage")
+    }
 
-    new_skill_instance = _get_skill_from_template(new_skill_template_data, game_configs, monster_rarity_data, target_level=1)
 
     if slot_to_replace_index is not None and 0 <= slot_to_replace_index < len(current_skills):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能槽 {slot_to_replace_index} 將被替換為 '{new_skill_instance['name']}'。")
@@ -444,9 +424,9 @@ def replace_monster_skill_service(
     monster_to_update["skills"] = current_skills
     player_data["farmedMonsters"][monster_idx] = monster_to_update
 
-    if save_player_data_service(player_id, player_data):
+    if save_player_data_service(user_id, player_data):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
         return player_data
     else:
-        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {player_id} 資料失敗。")
+        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {user_id} 資料失敗。")
         return None
