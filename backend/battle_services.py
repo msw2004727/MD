@@ -179,7 +179,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
             stats_to_change = [effective_skill["stat"]] if isinstance(effective_skill["stat"], str) else effective_skill["stat"]
             amounts = [effective_skill["amount"]] if isinstance(effective_skill["amount"], int) else effective_skill["amount"]
-            stat_log_parts = []
+            
             for stat, amount in zip(stats_to_change, amounts):
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + amount
                 
@@ -187,7 +187,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 change_text = '提升' if amount > 0 else '下降'
                 abs_amount = abs(amount)
                 
-                log_parts.append(f" {effect_target['nickname']} 的 **{translated_stat}** {change_text}了 {abs_amount} 點！")
+                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了{abs_amount}點。")
         # --- 核心修改處 END ---
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
