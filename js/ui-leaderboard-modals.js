@@ -114,22 +114,9 @@ function updateLeaderboardTable(tableType, data, containerId) {
             link.style.fontSize = '1.1rem'; 
             
             // --- 核心修改處 ---
-            const playerTitle = item.player_title_part;
-            const monsterAchievement = item.achievement_part;
-            const elementNickname = item.element_nickname_part || item.custom_element_nickname;
-
-            let nameHtml;
-            // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
-            if (playerTitle && monsterAchievement && elementNickname) {
-                nameHtml = `
-                    <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
-                    <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
-                    <span class="text-rarity-${rarityKey}">${elementNickname}</span>
-                `;
-            } else {
-                // 否則，直接顯示舊的完整暱稱，以相容舊資料
-                nameHtml = `<span class="text-rarity-${rarityKey}">${item.nickname || '名稱錯誤'}</span>`;
-            }
+            // 移除手動組合名稱的邏輯
+            // 直接呼叫 getMonsterDisplayNameHtml 函式
+            const nameHtml = getMonsterDisplayNameHtml(item);
             link.innerHTML = nameHtml;
             // --- 修改結束 ---
             
