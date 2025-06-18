@@ -69,8 +69,10 @@ def generate_monster_full_nickname(
     m_achieve = monster_achievement[:max_len_monster_achievement]
     e_nick = element_nickname[:max_len_element_nickname]
     
-    # 組合最終的暱稱
-    full_nickname = f"「{p_title}」的「{m_achieve}」{e_nick}"
+    # ----- BUG 修正邏輯 START -----
+    # 組合最終的暱稱，移除引號和「的」
+    full_nickname = f"{p_title}{m_achieve}{e_nick}"
+    # ----- BUG 修正邏輯 END -----
     
     # 再次檢查總長度
     max_total_len = naming_constraints.get("max_monster_full_nickname_len", 20)
