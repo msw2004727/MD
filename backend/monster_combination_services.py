@@ -93,11 +93,11 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
     combined_dnas_data: List[DNAFragment] = []
     constituent_dna_template_ids: List[str] = []
 
-    for i, dna_obj in enumerate(dna_objects_from_request):
-        if not dna_obj or not isinstance(dna_obj, dict):
-            monster_combination_services_logger.warning(f"在組合槽 {i} 中發現無效的 DNA 資料 (非字典或為 None)，已跳過。")
-            continue
-
+    # ----- BUG 修正邏輯 START -----
+    # 使用更安全的列表推導式來過濾無效的 DNA 物件
+    valid_dna_objects = [dna for dna in dna_objects_from_request if dna and isinstance(dna, dict)]
+    
+    for dna_obj in valid_dna_objects:
         template_id = dna_obj.get("baseId") or dna_obj.get("id")
         
         if template_id and isinstance(template_id, str):
@@ -106,13 +106,14 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
                 combined_dnas_data.append(dna_template)
                 constituent_dna_template_ids.append(template_id)
             else:
-                 monster_combination_services_logger.warning(f"在組合槽 {i} 中發現一個ID為 '{template_id}' 的DNA，但在遊戲設定中找不到對應的模板資料，已跳過。")
+                 monster_combination_services_logger.warning(f"在組合槽中發現一個ID為 '{template_id}' 的DNA，但在遊戲設定中找不到對應的模板資料，已跳過。")
         else:
-            monster_combination_services_logger.warning(f"在組合槽 {i} 的 DNA 物件中找不到有效的 'baseId' 或 'id'，已跳過。DNA 物件: {dna_obj}")
+            monster_combination_services_logger.warning(f"在組合槽的 DNA 物件中找不到有效的 'baseId' 或 'id'，已跳過。DNA 物件: {dna_obj}")
     
     if len(combined_dnas_data) < 2:
         monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
         return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
+    # ----- BUG 修正邏輯 END -----
 
     gmt8 = timezone(timedelta(hours=8))
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
@@ -121,7 +122,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
     monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
     recipe_doc = monster_recipes_ref.get()
 
-    # --- 初始化互動統計資料的預設值 ---
     default_interaction_stats = {
         "chat_count": 0, "cultivation_count": 0, "touch_count": 0,
         "heal_count": 0, "near_death_count": 0, "feed_count": 0,
@@ -142,7 +142,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "從既有配方召喚。"}]
         new_monster_instance.setdefault("cultivation_gains", {})
-        # 【新增】確保從舊配方生成的怪獸也有互動統計欄位
         new_monster_instance.setdefault("interaction_stats", default_interaction_stats)
 
         for skill in new_monster_instance.get("skills", []):
@@ -273,7 +272,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "resume": {"wins": 0, "losses": 0},
             "constituent_dna_ids": constituent_dna_template_ids,
             "cultivation_gains": {},
-            "interaction_stats": default_interaction_stats, # 【新增】為全新怪獸加入互動統計欄位
+            "interaction_stats": default_interaction_stats,
         }
         
         base_resistances = Counter()
