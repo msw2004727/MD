@@ -144,8 +144,6 @@ def complete_cultivation_service(
     interaction_stats = monster_to_update.setdefault("interaction_stats", {})
     interaction_stats["cultivation_count"] = interaction_stats.get("cultivation_count", 0) + 1
 
-    # --- 核心修改處 START ---
-    # 計算時間衰減乘數
     current_time = int(time.time())
     last_cult_time = interaction_stats.get("last_cultivation_timestamp", 0)
     count_in_window = interaction_stats.get("cultivation_count_in_window", 0)
@@ -162,6 +160,17 @@ def complete_cultivation_service(
     
     diminishing_multiplier = 0.75 ** (count_in_window - 1)
     monster_cultivation_services_logger.info(f"修煉衰減機制: 第 {count_in_window} 次, 獎勵乘數為 {diminishing_multiplier:.2f}")
+
+    # --- 核心修改處 START ---
+    # 應用感情值變化
+    base_bond_gain = 3
+    bond_point_change = math.floor(base_bond_gain * diminishing_multiplier)
+    
+    if bond_point_change > 0:
+        current_bond = interaction_stats.get("bond_points", 0)
+        new_bond = max(-100, min(100, current_bond + bond_point_change))
+        interaction_stats["bond_points"] = new_bond
+        monster_cultivation_services_logger.info(f"修煉完成，感情值增加 {bond_point_change} 點，目前為 {new_bond}。")
     # --- 核心修改處 END ---
 
     training_location = monster_to_update.get("farmStatus", {}).get("trainingLocation", "gaia")
