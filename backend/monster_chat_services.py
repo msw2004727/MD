@@ -43,6 +43,12 @@ def generate_monster_interaction_response_service(
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
+    # --- 核心修改處 START ---
+    # 初始化互動統計（如果不存在），並增加接觸次數
+    interaction_stats = monster_to_react.setdefault("interaction_stats", {})
+    interaction_stats["touch_count"] = interaction_stats.get("touch_count", 0) + 1
+    # --- 核心修改處 END ---
+
     # 2. 根據動作類型和個性組合 Prompt
     action_map = {
         "punch": "揍了你一拳",
@@ -135,6 +141,12 @@ def generate_monster_chat_response_service(
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
+    # --- 核心修改處 START ---
+    # 初始化互動統計（如果不存在），並增加聊天次數
+    interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
+    interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
+    # --- 核心修改處 END ---
+
     # 3. 獲取或初始化怪獸的對話歷史 (短期記憶)
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
@@ -185,6 +197,7 @@ def get_ai_chat_completion(
     
     monster_short_name = monster_data.get('element_nickname_part') or monster_data.get('nickname', '怪獸')
 
+
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
         game_configs = load_all_game_configs_from_firestore()
@@ -194,10 +207,12 @@ def get_ai_chat_completion(
         knowledge_context = None
 
     if knowledge_context:
+        # --- 知識問答模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
+你的回應中，請根據你的個性和當下情境，自然地加入適當的 emoji 和日式顏文字（如 (´・ω・`) 或 (✧∀✧)），讓你的角色更生動。
 你的飼主「{player_data.get('nickname', '訓練師')}」正在向你請教遊戲知識。
 你的任務是根據以下提供的「相關資料」，用你自己的個性和口吻，自然地回答玩家的問題。不要只是照本宣科。
 """
@@ -211,10 +226,12 @@ def get_ai_chat_completion(
 我:
 """
     else:
+        # --- 一般閒聊模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
 你的個性是「{monster_data.get('personality', {}).get('name', '未知')}」，這意味著：{monster_data.get('personality', {}).get('description', '你很普通')}。
+你的回應中，請根據你的個性和當下情境，自然地加入適當的 emoji 和日式顏文字（如 (´・ω・`) 或 (✧∀✧)），讓你的角色更生動。
 你的回應必須簡短、口語化，並且絕對符合你被賦予的個性和以下資料。你可以參照你的技能和DNA組成來豐富你的回答，但不要像在讀說明書。
 你的飼主，也就是正在與你對話的玩家，名字是「{player_data.get('nickname', '訓練師')}」。
 """
@@ -225,14 +242,37 @@ def get_ai_chat_completion(
         skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
         dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
+        # 【修改】修正f-string語法錯誤
+        activity_log_entries = monster_data.get("activityLog", [])
+        recent_activities_str = ""
+        if activity_log_entries:
+            recent_logs = activity_log_entries[:3]
+            formatted_logs = []
+            for log in recent_logs:
+                # 先將訊息處理好，再放入f-string
+                message = log.get('message', '').replace('\n', ' ')
+                formatted_logs.append(f"- {log.get('time', '')}: {message}")
+            recent_activities_str = "\n".join(formatted_logs)
+        else:
+            recent_activities_str = "- 最近沒發生什麼特別的事。"
+
+        stats_str = f"HP: {monster_data.get('hp')}/{monster_data.get('initial_max_hp')}, 攻擊: {monster_data.get('attack')}, 防禦: {monster_data.get('defense')}, 速度: {monster_data.get('speed')}"
+        health_conditions = monster_data.get("healthConditions", [])
+        conditions_str = "、".join([cond.get('name', '未知狀態') for cond in health_conditions]) if health_conditions else "非常健康"
+
+
         monster_profile = f"""
 --- 我的資料 ---
 - 我的名字：{monster_short_name}
 - 我的屬性：{', '.join(monster_data.get('elements', []))}
 - 我的稀有度：{monster_data.get('rarity')}
+- 我的數值：{stats_str}
+- 我的狀態：{conditions_str}
 - 我的簡介：{monster_data.get('aiIntroduction', '一個謎。')}
 - 我的技能：{', '.join(skills_with_desc) or '無'}
 - 我的DNA組成：{', '.join(dna_with_desc) or '謎'}
+- 我的最近動態：
+{recent_activities_str}
 """
         formatted_history = "\n".join([f"{'玩家' if entry['role'] == 'user' else '我'}: {entry['content']}" for entry in chat_history])
         user_content = f"""
