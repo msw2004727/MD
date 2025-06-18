@@ -382,7 +382,7 @@ class BattleResult(TypedDict):
     player_activity_log: Optional[MonsterActivityLogEntry]
     opponent_activity_log: Optional[MonsterActivityLogEntry]
     battle_highlights: List[str]
-    ai_battle_report_content: Dict[str, str]
+    ai_battle_report_content: Dict[str, Any]
     absorption_details: NotRequired[Dict[str, Any]]
 
 
