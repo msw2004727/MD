@@ -123,11 +123,28 @@ function renderMonsterFarm() {
         
         const colInfo = document.createElement('div');
         colInfo.className = 'farm-col farm-col-info';
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
         // --- 核心修改處 ---
-        // 移除手動組合名稱的邏輯
-        // 直接呼叫 getMonsterDisplayNameHtml 函式
-        const nameHtml = getMonsterDisplayNameHtml(monster);
+        const playerTitle = monster.player_title_part;
+        const monsterAchievement = monster.achievement_part;
+        const elementNickname = monster.element_nickname_part || monster.custom_element_nickname;
+        
+        let nameHtml;
+        // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
+        if (playerTitle && monsterAchievement && elementNickname) {
+            nameHtml = `
+                <div style="display: flex; align-items: baseline; gap: 0.5em;">
+                    <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
+                    <span style="color: var(--text-primary);">${monsterAchievement}</span>
+                    <span class="text-rarity-${rarityKey}">${elementNickname}</span>
+                </div>
+            `;
+        } else {
+            // 否則，直接顯示舊的完整暱稱，以相容舊資料
+            nameHtml = `<span class="text-rarity-${rarityKey}">${monster.nickname || '名稱錯誤'}</span>`;
+        }
         
         colInfo.innerHTML = `
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; width: 100%;">

@@ -99,22 +99,39 @@ function updateLeaderboardTable(tableType, data, containerId) {
             rankCell.style.textAlign = 'center';
 
             const nicknameCell = row.insertCell();
+            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             
             const link = document.createElement('a');
             link.href = '#';
             link.className = 'leaderboard-monster-link';
             link.style.textDecoration = 'none';
-            // --- 核心修改處 ---
-            link.style.display = 'block'; // 確保 <a> 標籤佔滿整個儲存格寬度
-            // --- 修改結束 ---
+            link.style.display = 'block';
             link.style.textAlign = 'left';
             link.style.whiteSpace = 'nowrap';
             link.style.overflow = 'hidden';
             link.style.textOverflow = 'ellipsis';
+            // 【修改】將字體大小從 0.9em 提升至 1.1rem
             link.style.fontSize = '1.1rem'; 
             
-            const nameHtml = getMonsterDisplayNameHtml(item);
+            // --- 核心修改處 ---
+            const playerTitle = item.player_title_part;
+            const monsterAchievement = item.achievement_part;
+            const elementNickname = item.element_nickname_part || item.custom_element_nickname;
+
+            let nameHtml;
+            // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
+            if (playerTitle && monsterAchievement && elementNickname) {
+                nameHtml = `
+                    <span style="color: var(--rarity-legendary-text); margin-right: 4px;">${playerTitle}</span>
+                    <span style="color: var(--text-primary); margin-right: 4px;">${monsterAchievement}</span>
+                    <span class="text-rarity-${rarityKey}">${elementNickname}</span>
+                `;
+            } else {
+                // 否則，直接顯示舊的完整暱稱，以相容舊資料
+                nameHtml = `<span class="text-rarity-${rarityKey}">${item.nickname || '名稱錯誤'}</span>`;
+            }
             link.innerHTML = nameHtml;
+            // --- 修改結束 ---
             
             nicknameCell.appendChild(link);
 
@@ -128,7 +145,6 @@ function updateLeaderboardTable(tableType, data, containerId) {
             }
 
             const rarityCell = row.insertCell();
-            const rarityKey = item.rarity ? (rarityMap[item.rarity] || 'common') : 'common';
             rarityCell.textContent = item.rarity;
             rarityCell.className = `text-rarity-${rarityKey}`;
             rarityCell.style.textAlign = 'center';

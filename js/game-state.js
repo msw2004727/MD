@@ -35,6 +35,7 @@ const gameState = {
     // UI 相關狀態
     isLoading: false, 
     currentTheme: 'dark',
+    selectedMonsterId: null, 
     
     // 移除：dnaCombinationSlots 已移至 playerData 中
     
@@ -95,12 +96,10 @@ function updateGameState(newState) {
 
 // 函數：獲取當前選中的怪獸對象
 function getSelectedMonster() {
-    // 修改：現在只從 playerData 中獲取 selectedMonsterId
-    const selectedId = gameState.playerData?.selectedMonsterId;
-    if (!selectedId || !gameState.playerData || !gameState.playerData.farmedMonsters) {
+    if (!gameState.selectedMonsterId || !gameState.playerData || !gameState.playerData.farmedMonsters) {
         return null;
     }
-    return gameState.playerData.farmedMonsters.find(m => m.id === selectedId) || null;
+    return gameState.playerData.farmedMonsters.find(m => m.id === gameState.selectedMonsterId) || null;
 }
 
 // 函數：獲取玩家農場中的第一隻怪獸作為預設選中
