@@ -16,6 +16,11 @@ from .MD_models import (
 )
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
+# --- 核心修改處 START ---
+# 從共用函式庫導入感情值計算工具
+from .utils_services import update_bond_with_diminishing_returns
+# --- 核心修改處 END ---
+
 
 monster_healing_services_logger = logging.getLogger(__name__)
 
@@ -132,28 +137,11 @@ def heal_monster_service(
         interaction_stats = monster_to_heal.setdefault("interaction_stats", {})
         interaction_stats["heal_count"] = interaction_stats.get("heal_count", 0) + 1
         
-        # 套用感情值變化與時間衰減
-        current_time = int(time.time())
-        last_heal_time = interaction_stats.get("last_heal_timestamp", 0)
-        count_in_window = interaction_stats.get("heal_count_in_window", 0)
-        time_window = 3600  # 1 小時
-
-        if (current_time - last_heal_time) > time_window:
-            count_in_window = 1
-        else:
-            count_in_window += 1
-            
-        interaction_stats["last_heal_timestamp"] = current_time
-        interaction_stats["heal_count_in_window"] = count_in_window
-        
-        multiplier = 0.75 ** (count_in_window - 1)
-        point_change = math.floor(1 * multiplier)  # 治療的基礎點數為 +1
+        # 改為呼叫共用的函式
+        point_change = update_bond_with_diminishing_returns(interaction_stats, "heal", 1)
 
         if point_change > 0:
-            current_bond = interaction_stats.get("bond_points", 0)
-            new_bond = max(-100, min(100, current_bond + point_change))
-            interaction_stats["bond_points"] = new_bond
-            monster_healing_services_logger.info(f"治療成功，感情值增加 {point_change} 點，目前為 {new_bond}。")
+            monster_healing_services_logger.info(f"治療成功，感情值增加 {point_change} 點，目前為 {interaction_stats.get('bond_points', 0)}。")
         # --- 核心修改處 END ---
         
         player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
