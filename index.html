@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.2.1'; // 例如從 '1.0.0' 改為 '1.0.1'
+        const gameVersion = '0.2.2'; // 例如從 '1.0.0' 改為 '1.0.1'
 
         const cssFiles = [
             'css/theme.css',
@@ -143,6 +143,7 @@
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
                     <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪獸農場</button>
                     <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友列表</button>
+                    <button class="tab-button" data-tab-target="medical-content">🚑 醫療站</button>
                     <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> 
                     <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
                     <button class="tab-button" data-tab-target="homestead-content">🛠️ 家園建設</button>
@@ -198,6 +199,10 @@
                     <div id="friends-list-display-area" class="mt-2">
                         <p class="text-center text-sm text-[var(--text-secondary)] py-4">好友列表空空如也，快去搜尋並新增好友吧！</p>
                     </div>
+                </div>
+
+                <div id="medical-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🚑 正在招募醫護人員中，敬請期待！</p>
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
