@@ -126,6 +126,11 @@ def heal_monster_service(
             monster_healing_services_logger.info(f"怪獸 {monster_id} 的健康狀況已清除。")
 
     if healed:
+        # --- 核心修改處 START ---
+        interaction_stats = monster_to_heal.setdefault("interaction_stats", {})
+        interaction_stats["heal_count"] = interaction_stats.get("heal_count", 0) + 1
+        # --- 核心修改處 END ---
+        
         player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
         monster_healing_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
         return player_data
