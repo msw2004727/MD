@@ -80,7 +80,7 @@ class Skill(TypedDict):
     story: NotRequired[str] # 招式敘述，用於戰鬥履歷
     description: NotRequired[str] # 備用敘述欄位
     type: ElementTypes
-    rarity: NotRequired[RarityNames] # 【新增】技能稀有度
+    rarity: NotRequired[RarityNames]
     baseLevel: int
     mp_cost: NotRequired[int]
     skill_category: NotRequired[SkillCategory]
@@ -181,6 +181,19 @@ class NamingConstraints(TypedDict): # 新增：命名限制設定
 
 # --- 玩家及怪獸資料模型 ---
 
+# --- 新增：怪獸互動統計資料模型 ---
+class MonsterInteractionStats(TypedDict):
+    chat_count: NotRequired[int]
+    cultivation_count: NotRequired[int]
+    battle_count: NotRequired[int]
+    touch_count: NotRequired[int]
+    heal_count: NotRequired[int]
+    near_death_count: NotRequired[int]
+    feed_count: NotRequired[int]
+    gift_count: NotRequired[int]
+    bond_level: NotRequired[int]
+    bond_points: NotRequired[int]
+
 class MonsterFarmStatus(TypedDict):
     active: bool
     type: NotRequired[Optional[str]]
@@ -253,6 +266,7 @@ class Monster(TypedDict):
     cultivation_gains: NotRequired[Dict[str, int]] # 新增：用於儲存修煉獲得的額外數值
     monsterNotes: NotRequired[List[NoteEntry]] # 【新增】怪獸的專屬註記
     chatHistory: NotRequired[List[ChatHistoryEntry]] # 【新增】怪獸的聊天歷史
+    interaction_stats: NotRequired[MonsterInteractionStats] # 【新增】互動統計資料
     # 戰鬥相關動態數值 (非持久化，僅用於戰鬥模擬)
     temp_attack_modifier: NotRequired[int]
     temp_defense_modifier: NotRequired[int]
