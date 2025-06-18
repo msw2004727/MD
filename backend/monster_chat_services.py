@@ -4,7 +4,9 @@
 import logging
 from typing import Dict, Any, List, Optional
 import requests
-import random # 【新增】導入 random 函式庫
+import random
+import time
+import math
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
@@ -22,7 +24,50 @@ chat_logger = logging.getLogger(__name__)
 # 定義短期記憶的長度 (儲存的對話數量)
 CHAT_HISTORY_LIMIT = 20
 
-# 【新增】定義互動反應的函式
+
+# --- 核心修改處 START ---
+def _update_bond_with_diminishing_returns(
+    interaction_stats: Dict[str, Any],
+    action_key: str,
+    base_point_change: int
+) -> int:
+    """
+    計算並應用帶有時間衰減的感情值變化。
+    返回實際變動的點數。
+    """
+    current_time = int(time.time())
+    timestamp_key = f"last_{action_key}_timestamp"
+    count_key = f"{action_key}_count_in_window"
+    
+    last_action_time = interaction_stats.get(timestamp_key, 0)
+    count_in_window = interaction_stats.get(count_key, 0)
+    
+    time_window = 3600  # 1 小時
+    
+    if (current_time - last_action_time) > time_window:
+        count_in_window = 1
+    else:
+        count_in_window += 1
+        
+    interaction_stats[timestamp_key] = current_time
+    interaction_stats[count_key] = count_in_window
+    
+    # 時間衰減公式
+    multiplier = 0.75 ** (count_in_window - 1)
+    point_change = math.floor(base_point_change * multiplier)
+    
+    if point_change == 0 and base_point_change > 0:
+        point_change = 1 # 確保至少有1點獎勵，除非基礎值為0
+        
+    current_bond = interaction_stats.get("bond_points", 0)
+    new_bond = max(-100, min(100, current_bond + point_change))
+    interaction_stats["bond_points"] = new_bond
+    
+    chat_logger.info(f"感情值變化: 動作='{action_key}', 第 {count_in_window} 次, 乘數={multiplier:.2f}, 點數變化={point_change}, 最終值={new_bond}")
+    return point_change
+# --- 核心修改處 END ---
+
+
 def generate_monster_interaction_response_service(
     player_id: str,
     monster_id: str,
@@ -32,7 +77,6 @@ def generate_monster_interaction_response_service(
     """
     生成怪獸對玩家物理互動的反應。
     """
-    # 1. 獲取資料
     player_data, _ = get_player_data_service(player_id, None, game_configs)
     if not player_data:
         chat_logger.error(f"無法獲取玩家 {player_id} 的資料。")
@@ -43,13 +87,18 @@ def generate_monster_interaction_response_service(
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
-    # --- 核心修改處 START ---
-    # 初始化互動統計（如果不存在），並增加接觸次數
     interaction_stats = monster_to_react.setdefault("interaction_stats", {})
     interaction_stats["touch_count"] = interaction_stats.get("touch_count", 0) + 1
+
+    # --- 核心修改處 START ---
+    # 根據互動類型增減感情值
+    if action_type in ['pat', 'kiss']:
+        _update_bond_with_diminishing_returns(interaction_stats, "touch", 5)
+    elif action_type == 'punch':
+        current_bond = interaction_stats.get("bond_points", 0)
+        interaction_stats["bond_points"] = max(-100, current_bond - 10)
     # --- 核心修改處 END ---
 
-    # 2. 根據動作類型和個性組合 Prompt
     action_map = {
         "punch": "揍了你一拳",
         "pat": "摸了摸你的頭",
@@ -71,8 +120,6 @@ def generate_monster_interaction_response_service(
 我:
 """
 
-    # 3. 呼叫 AI 生成回應 (這裡可以重用 get_ai_chat_completion 的部分邏輯，或建立一個新的輔助函式)
-    # 為了簡潔，我們直接呼叫 AI API
     try:
         from .MD_ai_services import DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, DEFAULT_CHAT_REPLY
         if not DEEPSEEK_API_KEY:
@@ -100,12 +147,10 @@ def generate_monster_interaction_response_service(
         if response_json.get("choices") and response_json["choices"][0].get("message"):
             reply = response_json["choices"][0]["message"].get("content", DEFAULT_CHAT_REPLY).strip()
             
-            # 將互動也加入聊天歷史
             interaction_log = f"（你{action_desc}）"
             monster_to_react.setdefault("chatHistory", []).append({"role": "user", "content": interaction_log})
             monster_to_react["chatHistory"].append({"role": "assistant", "content": reply})
             
-            # 維持歷史紀錄長度
             monster_to_react["chatHistory"] = monster_to_react["chatHistory"][-CHAT_HISTORY_LIMIT:]
 
             return {
@@ -129,28 +174,26 @@ def generate_monster_chat_response_service(
     """
     生成怪獸的聊天回應，並管理其對話歷史。
     """
-    # 1. 獲取最新的玩家資料
     player_data, _ = get_player_data_service(player_id, None, game_configs)
     if not player_data:
         chat_logger.error(f"無法獲取玩家 {player_id} 的資料。")
         return None
 
-    # 2. 從玩家資料中找到目標怪獸
     monster_to_chat = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
     if not monster_to_chat:
         chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
         return None
 
-    # --- 核心修改處 START ---
-    # 初始化互動統計（如果不存在），並增加聊天次數
     interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
     interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
+    
+    # --- 核心修改處 START ---
+    # 增加聊天對應的感情值
+    _update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
     # --- 核心修改處 END ---
 
-    # 3. 獲取或初始化怪獸的對話歷史 (短期記憶)
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
-    # 4. 呼叫 AI 服務以生成回應
     ai_reply_text = get_ai_chat_completion(
         monster_data=monster_to_chat,
         player_data=player_data,
@@ -162,15 +205,12 @@ def generate_monster_chat_response_service(
         chat_logger.error(f"AI 服務未能為怪獸 {monster_id} 生成回應。")
         return None
 
-    # 5. 更新對話歷史
     chat_history.append({"role": "user", "content": player_message})
     chat_history.append({"role": "assistant", "content": ai_reply_text})
 
-    # 6. 維護短期記憶長度，移除最舊的紀錄
     if len(chat_history) > CHAT_HISTORY_LIMIT:
         chat_history = chat_history[-CHAT_HISTORY_LIMIT:]
 
-    # 7. 將更新後的對話歷史寫回怪獸物件
     monster_to_chat["chatHistory"] = chat_history
 
     result = {
@@ -207,7 +247,6 @@ def get_ai_chat_completion(
         knowledge_context = None
 
     if knowledge_context:
-        # --- 知識問答模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -226,7 +265,6 @@ def get_ai_chat_completion(
 我:
 """
     else:
-        # --- 一般閒聊模式 ---
         system_prompt = f"""
 你現在將扮演一隻名為「{monster_short_name}」的怪獸。
 你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
@@ -242,14 +280,12 @@ def get_ai_chat_completion(
         skills_with_desc = [f"「{s.get('name')}」" for s in monster_data.get("skills", [])]
         dna_with_desc = [f"「{d.get('name')}」" for d in game_configs.get("dna_fragments", []) if d.get("id") in monster_data.get("constituent_dna_ids", [])]
 
-        # 【修改】修正f-string語法錯誤
         activity_log_entries = monster_data.get("activityLog", [])
         recent_activities_str = ""
         if activity_log_entries:
             recent_logs = activity_log_entries[:3]
             formatted_logs = []
             for log in recent_logs:
-                # 先將訊息處理好，再放入f-string
                 message = log.get('message', '').replace('\n', ' ')
                 formatted_logs.append(f"- {log.get('time', '')}: {message}")
             recent_activities_str = "\n".join(formatted_logs)
