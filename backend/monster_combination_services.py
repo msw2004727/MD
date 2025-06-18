@@ -174,10 +174,14 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_rarity_data = all_rarities_db.get(rarity_key, {})
 
         potential_skills = []
-        for el in elements_present:
-            potential_skills.extend(all_skills_db.get(el, []))
-        if "無" not in elements_present:
+        # --- 核心修改處 START ---
+        # 只從主屬性技能池中抓取技能
+        potential_skills.extend(all_skills_db.get(primary_element, []))
+        
+        # 如果主屬性不是「無」，則額外加入「無」屬性技能池
+        if primary_element != "無" and "無" in all_skills_db:
             potential_skills.extend(all_skills_db.get("無", []))
+        # --- 核心修改處 END ---
             
         generated_skills = []
         if potential_skills:
