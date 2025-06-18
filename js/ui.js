@@ -187,7 +187,7 @@ function hideModal(modalId) {
         
         // --- 核心修改處 START ---
         // 1. 重置所有可滾動內容區域的捲軸到頂部
-        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content');
+        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container');
         scrollableBodies.forEach(body => {
             if (body.scrollTop > 0) {
                 body.scrollTop = 0;
