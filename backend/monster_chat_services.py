@@ -11,6 +11,10 @@ import math
 # 從專案的其他模組導入必要的模型
 from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
 from .player_services import get_player_data_service
+# --- 核心修改處 START ---
+# 從共用函式庫導入感情值計算工具
+from .utils_services import update_bond_with_diminishing_returns
+# --- 核心修改處 END ---
 
 # --- 【新增】從 MD_ai_services 導入必要的變數與函式 ---
 from .MD_ai_services import (
@@ -24,48 +28,6 @@ chat_logger = logging.getLogger(__name__)
 # 定義短期記憶的長度 (儲存的對話數量)
 CHAT_HISTORY_LIMIT = 20
 
-def _update_bond_with_diminishing_returns(
-    interaction_stats: Dict[str, Any],
-    action_key: str,
-    base_point_change: int
-) -> int:
-    """
-    計算並應用帶有時間衰減的感情值變化。
-    返回實際變動的點數。
-    """
-    current_time = int(time.time())
-    timestamp_key = f"last_{action_key}_timestamp"
-    count_key = f"{action_key}_count_in_window"
-    
-    last_action_time = interaction_stats.get(timestamp_key, 0)
-    count_in_window = interaction_stats.get(count_key, 0)
-    
-    time_window = 3600  # 1 小時
-    
-    if (current_time - last_action_time) > time_window:
-        count_in_window = 1
-    else:
-        count_in_window += 1
-        
-    interaction_stats[timestamp_key] = current_time
-    interaction_stats[count_key] = count_in_window
-    
-    # 時間衰減公式
-    multiplier = 0.75 ** (count_in_window - 1)
-    point_change = math.floor(base_point_change * multiplier)
-    
-    if point_change == 0 and base_point_change > 0:
-        point_change = 1 # 確保至少有1點獎勵，除非基礎值為0
-        
-    current_bond = interaction_stats.get("bond_points", 0)
-    new_bond = max(-100, min(100, current_bond + point_change))
-    interaction_stats["bond_points"] = new_bond
-    
-    chat_logger.info(f"感情值變化: 動作='{action_key}', 第 {count_in_window} 次, 乘數={multiplier:.2f}, 點數變化={point_change}, 最終值={new_bond}")
-    return point_change
-
-
-# --- 核心修改處 START ---
 def _get_bond_level_tone_instruction(bond_points: int) -> str:
     """根據感情值，決定AI的語氣指示。"""
     if bond_points <= -76:
@@ -78,8 +40,6 @@ def _get_bond_level_tone_instruction(bond_points: int) -> str:
         return "你的語氣必須是友善且熱心的。你會更願意分享資訊，在句末可能會加上一些溫和的表情符號。"
     else:  # bond_points >= 76
         return "你的語氣必須非常親密和熱情。你會稱呼玩家為『摯友』或『夥伴』，並在回答中充滿信任感和依賴感。"
-# --- 核心修改處 END ---
-
 
 def generate_monster_interaction_response_service(
     player_id: str,
@@ -104,7 +64,10 @@ def generate_monster_interaction_response_service(
     interaction_stats["touch_count"] = interaction_stats.get("touch_count", 0) + 1
 
     if action_type in ['pat', 'kiss']:
-        _update_bond_with_diminishing_returns(interaction_stats, "touch", 5)
+        # --- 核心修改處 START ---
+        # 改為呼叫共用的函式
+        update_bond_with_diminishing_returns(interaction_stats, "touch", 5)
+        # --- 核心修改處 END ---
     elif action_type == 'punch':
         current_bond = interaction_stats.get("bond_points", 0)
         interaction_stats["bond_points"] = max(-100, current_bond - 10)
@@ -116,11 +79,8 @@ def generate_monster_interaction_response_service(
     }
     action_desc = action_map.get(action_type, "對你做了一個奇怪的動作")
 
-    # --- 核心修改處 START ---
-    # 獲取當前的感情值和對應的語氣指示
     bond_points = interaction_stats.get("bond_points", 0)
     bond_tone_instruction = _get_bond_level_tone_instruction(bond_points)
-    # --- 核心修改處 END ---
 
     system_prompt = f"""
 你現在將扮演一隻名為「{monster_to_react.get('element_nickname_part') or monster_to_react.get('nickname', '怪獸')}」的怪獸。
@@ -204,7 +164,10 @@ def generate_monster_chat_response_service(
     interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
     interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
     
-    _update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
+    # --- 核心修改處 START ---
+    # 改為呼叫共用的函式
+    update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
+    # --- 核心修改處 END ---
 
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
@@ -251,11 +214,9 @@ def get_ai_chat_completion(
     
     monster_short_name = monster_data.get('element_nickname_part') or monster_data.get('nickname', '怪獸')
 
-    # --- 核心修改處 START ---
     interaction_stats = monster_data.get("interaction_stats", {})
     bond_points = interaction_stats.get("bond_points", 0)
     bond_tone_instruction = _get_bond_level_tone_instruction(bond_points)
-    # --- 核心修改處 END ---
 
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
@@ -380,5 +341,3 @@ def get_ai_chat_completion(
     except Exception as e:
         ai_logger.error(f"生成 AI 聊天回應時發生未知錯誤: {e}", exc_info=True)
         return DEFAULT_CHAT_REPLY
-
-# ... (檔案中剩餘的其他函式 generate_monster_ai_details, generate_cultivation_story, generate_battle_report_content 維持不變)
