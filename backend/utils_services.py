@@ -1,76 +1,124 @@
 # backend/utils_services.py
-# 存放通用輔助函數
+# 存放遊戲中可共用的輔助函式
 
-import logging
-from typing import Dict, Any, Optional
 import copy
+from typing import List, Dict, Optional, Any, Literal
 import math
+import time
 
-# 從 MD_models 導入 NamingConstraints 和 Skill
-from .MD_models import NamingConstraints, Skill
+from .MD_models import Skill, GameConfigs, ValueSettings, NamingConstraints
 
-utils_logger = logging.getLogger(__name__)
+# --- 新增：感情值計算的共用函式 START ---
+def update_bond_with_diminishing_returns(
+    interaction_stats: Dict[str, Any],
+    action_key: str,
+    base_point_change: int
+) -> int:
+    """
+    計算並應用帶有時間衰減的感情值變化。
+    返回實際變動的點數。
+    """
+    current_time = int(time.time())
+    timestamp_key = f"last_{action_key}_timestamp"
+    count_key = f"{action_key}_count_in_window"
+    
+    last_action_time = interaction_stats.get(timestamp_key, 0)
+    count_in_window = interaction_stats.get(count_key, 0)
+    
+    time_window = 3600  # 1 小時
+    
+    if (current_time - last_action_time) > time_window:
+        count_in_window = 1
+    else:
+        count_in_window += 1
+        
+    interaction_stats[timestamp_key] = current_time
+    interaction_stats[count_key] = count_in_window
+    
+    # 時間衰減公式
+    multiplier = 0.75 ** (count_in_window - 1)
+    point_change = math.floor(base_point_change * multiplier)
+    
+    if point_change == 0 and base_point_change > 0:
+        point_change = 1 # 確保正向互動至少有1點獎勵
+        
+    current_bond = interaction_stats.get("bond_points", 0)
+    new_bond = max(-100, min(100, current_bond + point_change))
+    interaction_stats["bond_points"] = new_bond
+    
+    # 日誌記錄可以在呼叫它的服務中進行，這裡保持函式純粹
+    return point_change
+# --- 新增：感情值計算的共用函式 END ---
 
-def calculate_exp_to_next_level(level: int, base_multiplier: int) -> int:
+
+def generate_monster_full_nickname(
+    player_title: str,
+    monster_achievement: str,
+    element_nickname: str,
+    naming_constraints: NamingConstraints
+) -> str:
+    """
+    根據玩家稱號、怪獸成就和元素暱稱，生成完整的怪獸暱稱。
+    """
+    max_len_player_title = naming_constraints.get("max_player_title_len", 5)
+    max_len_monster_achievement = naming_constraints.get("max_monster_achievement_len", 5)
+    max_len_element_nickname = naming_constraints.get("max_element_nickname_len", 5)
+    
+    # 截斷各部分以符合長度限制
+    p_title = player_title[:max_len_player_title]
+    m_achieve = monster_achievement[:max_len_monster_achievement]
+    e_nick = element_nickname[:max_len_element_nickname]
+    
+    # 組合最終的暱稱
+    full_nickname = f"「{p_title}」的「{m_achieve}」{e_nick}"
+    
+    # 再次檢查總長度
+    max_total_len = naming_constraints.get("max_monster_full_nickname_len", 20)
+    if len(full_nickname) > max_total_len:
+        # 如果超長，則進行截斷並加上省略號
+        full_nickname = full_nickname[:max_total_len-1] + "…"
+        
+    return full_nickname
+
+
+def calculate_exp_to_next_level(current_level: int, base_multiplier: int = 100) -> int:
     """
     計算升到下一級所需的經驗值。
-    - 確保 level 不小於 1。
-    - (level + 1) * base_multiplier。
+    公式可以根據需要調整，例如加入指數增長。
     """
-    if level <= 0:
-        level = 1
-    return (level + 1) * base_multiplier
+    if current_level <= 0:
+        current_level = 1
+    
+    # 一個簡單的線性增長公式，可以根據需要調整
+    # 例如： level 1 -> 100, level 2 -> 120, level 3 -> 140 ...
+    # return base_multiplier + (current_level - 1) * 20
+    
+    # 或者一個指數增長公式
+    return int(base_multiplier * (1.2 ** (current_level - 1)))
+
 
 def get_effective_skill_with_level(skill_template: Skill, level: int) -> Skill:
     """
-    根據技能模板和指定等級，計算出技能的有效數值，包含里程碑效果。
-    這是取代各服務中重複邏輯的中央函式。
+    根據技能模板和當前等級，計算技能的實際效果（如威力、MP消耗）。
     """
+    if level <= 1:
+        return copy.deepcopy(skill_template)
+
     effective_skill = copy.deepcopy(skill_template)
     effective_skill['level'] = level
 
-    # 根據等級調整基礎數值
-    if level > 1:
-        base_power = skill_template.get("power", 0)
-        if base_power > 0:
-            # 每級提升 8% 的基礎威力
-            effective_skill["power"] = int(base_power * (1 + (level - 1) * 0.08))
+    # 威力成長：每級提升 8%
+    if 'power' in effective_skill and effective_skill['power'] > 0:
+        effective_skill['power'] = math.floor(effective_skill['power'] * (1 + (level - 1) * 0.08))
 
-        base_mp_cost = skill_template.get("mp_cost", 0)
-        if base_mp_cost > 0:
-            # 每 2 級減少 1 點 MP 消耗
-            effective_skill["mp_cost"] = max(1, base_mp_cost - math.floor((level - 1) / 2))
-
-        base_crit = skill_template.get("crit", 0)
-        if base_crit >= 0:
-            # 每 2 級提升 1 點爆擊率
-            effective_skill["crit"] = base_crit + math.floor((level - 1) / 2)
-
-    # 檢查並應用已達成的里程碑效果
-    milestones = skill_template.get("level_milestones")
-    if milestones and isinstance(milestones, dict):
-        for milestone_level_str, milestone_data in milestones.items():
-            try:
-                milestone_level = int(milestone_level_str)
-                if level >= milestone_level:
-                    # 應用里程碑提供的直接數值加成或效果修改
-                    if "add_power" in milestone_data:
-                        effective_skill["power"] = effective_skill.get("power", 0) + milestone_data["add_power"]
-                    if "add_crit" in milestone_data:
-                        effective_skill["crit"] = effective_skill.get("crit", 0) + milestone_data["add_crit"]
-                    if "probability" in milestone_data:
-                        effective_skill["probability"] = milestone_data["probability"]
-                    # 可以根據需要擴展更多里程碑效果的應用
-            except (ValueError, TypeError):
-                continue
+    # MP 消耗降低：每 2 級降低 1 點
+    if 'mp_cost' in effective_skill and effective_skill['mp_cost'] > 0:
+        reduction = math.floor((level - 1) / 2)
+        effective_skill['mp_cost'] = max(0, effective_skill['mp_cost'] - reduction)
+    
+    # 效果量成長 (例如 buff/debuff/heal 的量)
+    if 'amount' in effective_skill and isinstance(effective_skill['amount'], (int, float)):
+        # 假設效果量也以類似威力的形式成長
+        effective_skill['amount'] = math.floor(effective_skill['amount'] * (1 + (level - 1) * 0.05))
 
     return effective_skill
-
-
-def generate_monster_full_nickname(player_title: str, monster_achievement: str, element_nickname_part: str, naming_constraints: NamingConstraints) -> str:
-    """根據玩家稱號、怪獸成就和元素暱稱部分生成怪獸的完整暱稱。"""
-    pt = player_title[:naming_constraints.get("max_player_title_len", 5)]
-    ma = monster_achievement[:naming_constraints.get("max_monster_achievement_len", 5)]
-    en = element_nickname_part[:naming_constraints.get("max_element_nickname_len", 5)]
-    full_name = f"{pt}{ma}{en}"
-    return full_name[:naming_constraints.get("max_monster_full_nickname_len", 15)]
