@@ -17,6 +17,7 @@ from .MD_models import (
     PlayerGameData
 )
 from .MD_ai_services import generate_battle_report_content
+from .utils_services import get_effective_skill_with_level # 新增：導入新的共用函式
 
 
 battle_logger = logging.getLogger(__name__)
@@ -109,50 +110,10 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
                     stats[stat] += value
     return stats
 
-def _get_effective_skill_stats(skill: Skill) -> Skill:
-    effective_skill = copy.deepcopy(skill)
-    level = effective_skill.get("level", 1)
-    
-    if level > 1:
-        base_power = skill.get("power", 0)
-        if base_power > 0:
-            effective_skill["power"] = int(base_power * (1 + (level - 1) * 0.08))
-
-        base_probability = skill.get("probability", 100)
-        effective_skill["probability"] = min(100, base_probability + (level - 1) * 3)
-
-        base_mp_cost = skill.get("mp_cost", 0)
-        if base_mp_cost > 0:
-            effective_skill["mp_cost"] = max(1, base_mp_cost - math.floor((level - 1) / 2))
-
-        base_amount = skill.get("amount")
-        if isinstance(base_amount, int):
-            effective_skill["amount"] = int(base_amount * (1 + (level - 1) * 0.1))
-        
-        base_duration = skill.get("duration")
-        if isinstance(base_duration, int):
-            effective_skill["duration"] = base_duration + math.floor((level - 1) / 3)
-
-        base_crit = skill.get("crit", 0)
-        if base_crit >= 0:
-            effective_skill["crit"] = base_crit + math.floor((level - 1) / 2)
-
-    milestones = skill.get("level_milestones")
-    if milestones and isinstance(milestones, dict):
-        for milestone_level_str in sorted(milestones.keys(), key=int):
-            if level >= int(milestone_level_str):
-                milestone_data = milestones[milestone_level_str]
-                if "add_power" in milestone_data:
-                    effective_skill["power"] = effective_skill.get("power", 0) + milestone_data["add_power"]
-                if "add_effect" in milestone_data and isinstance(milestone_data["add_effect"], dict):
-                    for key, value in milestone_data["add_effect"].items():
-                        effective_skill[key] = value
-    return effective_skill
-
 def _get_active_skills(monster: Monster, current_mp: int) -> List[Skill]:
     active_skills = []
     for skill in monster.get("skills", []):
-        effective_skill = _get_effective_skill_stats(skill)
+        effective_skill = get_effective_skill_with_level(skill, skill.get("level", 1))
         mp_cost = effective_skill.get("mp_cost", 0)
         if current_mp >= mp_cost:
             active_skills.append(skill)
@@ -177,7 +138,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     }
     # --- 核心修改處 END ---
 
-    effective_skill = _get_effective_skill_stats(skill)
+    effective_skill = get_effective_skill_with_level(skill, skill.get("level", 1))
     action_details: Dict[str, Any] = {"performer_id": performer["id"], "target_id": target["id"], "skill_name": effective_skill["name"]}
     
     mp_cost = effective_skill.get("mp_cost", 0)
