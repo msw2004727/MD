@@ -888,7 +888,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .chat-interact-btn {
     background: var(--button-secondary-bg);
     border: 1px solid var(--border-color);
-    border-radius: 50%;
+    border-radius: 50%; /* 圓形 */
     width: 40px;
     height: 40px;
     font-size: 1.25rem; /* Emoji size */
@@ -907,4 +907,45 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .chat-interact-btn:active {
     transform: scale(0.95);
+}
+
+/* 【新增】怪獸互動 - 感情條樣式 */
+.bond-bar-container {
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+}
+.bond-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: 0 5px;
+    margin-bottom: 4px;
+}
+.bond-bar {
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(to right, 
+        var(--danger-color), 
+        var(--text-secondary) 45% 55%, 
+        var(--success-color)
+    );
+    border-radius: 6px;
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+.bond-bar-marker {
+    width: 4px;
+    height: 16px; /* 比進度條高一點，更顯眼 */
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 2px;
+    position: absolute;
+    top: -3px; /* 垂直置中 */
+    transform: translateX(-50%);
+    transition: left 0.5s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
