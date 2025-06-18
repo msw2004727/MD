@@ -114,14 +114,19 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
         return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
 
-    # --- 核心修改處 START ---
     gmt8 = timezone(timedelta(hours=8))
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
-    # --- 核心修改處 END ---
 
     combination_key = _generate_combination_key(constituent_dna_template_ids)
     monster_recipes_ref = db.collection('MonsterRecipes').document(combination_key)
     recipe_doc = monster_recipes_ref.get()
+
+    # --- 初始化互動統計資料的預設值 ---
+    default_interaction_stats = {
+        "chat_count": 0, "cultivation_count": 0, "touch_count": 0,
+        "heal_count": 0, "near_death_count": 0, "feed_count": 0,
+        "gift_count": 0, "bond_level": 1, "bond_points": 0
+    }
 
     if recipe_doc.exists:
         monster_combination_services_logger.info(f"配方 '{combination_key}' 已存在，直接讀取。")
@@ -135,10 +140,11 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
         new_monster_instance["creationTime"] = int(time.time())
         new_monster_instance["farmStatus"] = {"active": False, "completed": False, "isBattling": False, "isTraining": False, "boosts": {}}
-        # --- 核心修改處 START ---
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "從既有配方召喚。"}]
-        # --- 核心修改處 END ---
         new_monster_instance.setdefault("cultivation_gains", {})
+        # 【新增】確保從舊配方生成的怪獸也有互動統計欄位
+        new_monster_instance.setdefault("interaction_stats", default_interaction_stats)
+
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
             skill["exp_to_next_level"] = calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100))
@@ -174,14 +180,9 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_rarity_data = all_rarities_db.get(rarity_key, {})
 
         potential_skills = []
-        # --- 核心修改處 START ---
-        # 只從主屬性技能池中抓取技能
         potential_skills.extend(all_skills_db.get(primary_element, []))
-        
-        # 如果主屬性不是「無」，則額外加入「無」屬性技能池
         if primary_element != "無" and "無" in all_skills_db:
             potential_skills.extend(all_skills_db.get("無", []))
-        # --- 核心修改處 END ---
             
         generated_skills = []
         if potential_skills:
@@ -192,7 +193,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
                 initial_level = template.get("baseLevel", 1) + monster_rarity_data.get("skillLevelBonus", 0)
                 initial_level = max(1, min(initial_level, cultivation_cfg.get("max_skill_level", 10)))
                 
-                # 使用共用函式，並手動設定新技能的 EXP
                 new_skill = get_effective_skill_with_level(template, initial_level)
                 new_skill['current_exp'] = 0
                 new_skill['exp_to_next_level'] = calculate_exp_to_next_level(initial_level, cultivation_cfg.get("skill_exp_base_multiplier", 100))
@@ -272,7 +272,8 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "resistances": {},
             "resume": {"wins": 0, "losses": 0},
             "constituent_dna_ids": constituent_dna_template_ids,
-            "cultivation_gains": {}
+            "cultivation_gains": {},
+            "interaction_stats": default_interaction_stats, # 【新增】為全新怪獸加入互動統計欄位
         }
         
         base_resistances = Counter()
@@ -307,8 +308,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["id"] = f"m_{player_id}_{int(time.time() * 1000)}"
         new_monster_instance["creationTime"] = int(time.time())
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
-        # --- 核心修改處 START ---
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
-        # --- 核心修改處 END ---
         
         return {"monster": new_monster_instance}
