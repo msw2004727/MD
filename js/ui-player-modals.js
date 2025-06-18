@@ -73,13 +73,31 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     let titlesHtml = '<p>尚無稱號</p>';
     const ownedTitles = stats.titles || [];
     const equippedTitleId = stats.equipped_title_id || (ownedTitles.length > 0 ? ownedTitles[0].id : null);
+    
+    // ----- BUG 修正邏輯 START -----
+    // 判斷當前查看的是否為自己的個人資料
+    const isOwnProfile = playerData.uid === gameState.playerId;
+    // ----- BUG 修正邏輯 END -----
 
     if (ownedTitles.length > 0) {
         titlesHtml = ownedTitles.map(title => {
             const isEquipped = title.id === equippedTitleId;
-            const buttonHtml = isEquipped
-                ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
-                : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
+            
+            // ----- BUG 修正邏輯 START -----
+            let buttonHtml = ''; // 預設為空，不顯示任何按鈕
+            if (isOwnProfile) {
+                // 如果是自己的個人資料，才顯示「裝備」或「已裝備」按鈕
+                buttonHtml = isEquipped
+                    ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
+                    : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
+            } else {
+                // 如果是別人的個人資料，只在對方有裝備該稱號時顯示「已裝備」狀態，否則不顯示任何東西
+                if (isEquipped) {
+                    buttonHtml = `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`;
+                }
+            }
+            // ----- BUG 修正邏輯 END -----
+
 
             let buffsHtml = '';
             if (title.buffs && Object.keys(title.buffs).length > 0) {
