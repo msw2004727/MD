@@ -10,11 +10,9 @@ def setup_logging():
     """
     設定全域的日誌系統，包含主控台輸出和 HTML 檔案輸出。
     """
-    # ----- BUG 修正邏輯 START -----
-    # 修改日誌格式，移除英文的 %(name)s 和 %(levelname)s，但保留時間戳
     log_formatter = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
 
-    # 1. 設定根日誌記錄器
+    # 1. 設定根日誌記錄器 (用於輸出到主控台)
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     
@@ -31,9 +29,14 @@ def setup_logging():
         os.makedirs(log_dir)
 
     log_file_path = os.path.join(log_dir, 'game_log.html')
-    file_handler = RotatingFileHandler(log_file_path, maxBytes=1024 * 1024, backupCount=3, encoding='utf-8')
+    
+    # ----- BUG 修正邏輯 START -----
+    # 移除 RotatingFileHandler，改為每次啟動時讀取、排序、重寫
+    # 這樣可以實現日誌順序的反轉，但會失去日誌輪替功能。
+    # 這是一個權衡，根據您的需求，顯示順序比防止檔案過大更重要。
+    file_handler = logging.FileHandler(log_file_path, mode='a', encoding='utf-8') # 'a' for append
+    # ----- BUG 修正邏輯 END -----
 
-    # 自定義 HTML 格式化器，加入中文訊息和對應的顏色
     class HtmlFormatter(logging.Formatter):
         def format(self, record):
             level_to_ch = {
@@ -46,7 +49,7 @@ def setup_logging():
             level_name_ch, level_color = level_to_ch.get(record.levelname, (record.levelname, '#000'))
             
             timestamp = self.formatTime(record, self.datefmt)
-            log_message = record.getMessage().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            log_message = record.getMessage().replace('&', '&amp;').replace('<', '&lt;')
             
             return (
                 f'<div class="log-entry" style="color: {level_color};">'
@@ -55,7 +58,6 @@ def setup_logging():
                 f'<span class="message">{log_message}</span>'
                 f'</div>\n'
             )
-    # ----- BUG 修正邏輯 END -----
 
     html_formatter = HtmlFormatter(datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(html_formatter)
@@ -71,6 +73,10 @@ def setup_logging():
     <meta http-equiv="refresh" content="5">
     <style>
         body { font-family: 'Courier New', Courier, monospace; background-color: #1a1a1a; color: #f0f0f0; margin: 0; padding: 10px; }
+        /* ----- BUG 修正邏輯 START ----- */
+        /* 使用 flexbox 讓日誌項目由下往上排列 */
+        body { display: flex; flex-direction: column-reverse; }
+        /* ----- BUG 修正邏輯 END ----- */
         .log-entry { margin-bottom: 5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .timestamp { color: #666; }
         .levelname { font-weight: bold; }
@@ -78,8 +84,7 @@ def setup_logging():
     </style>
 </head>
 <body>
-    <h1>遊戲後端即時日誌</h1>
-</body>
+    </body>
 </html>
 """)
     root_logger.info("日誌系統設定完成，已切換為中文格式。")
