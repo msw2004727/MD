@@ -62,6 +62,22 @@ def absorb_defeated_monster_service(
     player_data: PlayerGameData
 ) -> Optional[Dict[str, Any]]:
     """處理勝利怪獸吸收被擊敗怪獸的邏輯。"""
+
+    # --- 功能開關 ---
+    # 若要暫時關閉此功能，直接讓函式在此處返回即可。
+    # 未來若要重新開啟，只要將下面的 return 區塊整個刪除或註解掉。
+    return {
+        "success": True,
+        "message": "吸收功能已停用。",
+        "extracted_dna_templates": [],
+        "stat_gains": {},
+        "updated_winning_monster": next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == winning_monster_id), None),
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA")
+    }
+    # --- 功能開關結束 ---
+
+    """
+    # --- 以下為原始程式碼，已暫時停用 ---
     if not MD_firebase_config.db:
         monster_absorption_services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。"}
@@ -198,3 +214,4 @@ def absorb_defeated_monster_service(
         "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
         "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
     }
+    """
