@@ -18,16 +18,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-    const defaultElementNickname = monster.element_nickname_part || (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement);
-    const editableNickname = monster.custom_element_nickname || defaultElementNickname;
+    const editableNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
+    
+    const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
             <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
                 ${monster.nickname}
             </h4>
-            <button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>
+            ${isOwnMonster ? `<button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>` : ''}
         </div>
         <div id="monster-nickname-edit-container" class="monster-nickname-edit-container" style="display: none;">
             <input type="text" id="monster-nickname-input" placeholder="輸入5個字以內" value="${editableNickname}" maxlength="5">
@@ -40,23 +40,32 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     // --- 核心修改處 START ---
     let titleBuffs = {};
-    const monsterOwnerId = monster.owner_id || null;
+    let dataSource = null;
 
-    if (monsterOwnerId && monsterOwnerId === gameState.playerId) {
-        // 如果是當前玩家自己的怪獸，從 gameState.playerData 讀取
-        const playerStats = gameState.playerData?.playerStats;
-        if (playerStats) {
-            const equippedId = playerStats.equipped_title_id;
-            if (equippedId && playerStats.titles) {
-                const equippedTitle = playerStats.titles.find(t => t.id === equippedId);
-                if (equippedTitle && equippedTitle.buffs) {
-                    titleBuffs = equippedTitle.buffs;
-                }
+    // 判斷正確的資料來源
+    // 1. 如果怪獸在當前玩家的農場裡，資料來源就是當前玩家
+    if (gameState.playerData && gameState.playerData.farmedMonsters.some(m => m.id === monster.id)) {
+        dataSource = gameState.playerData;
+    } 
+    // 2. 如果怪獸在「正在查看」的玩家資料中，資料來源就是那個被查看的玩家
+    else if (gameState.viewedPlayerData && gameState.viewedPlayerData.farmedMonsters.some(m => m.id === monster.id)) {
+        dataSource = gameState.viewedPlayerData;
+    } 
+    // 3. 其他情況（例如從排行榜點擊），我們沒有完整的玩家資料，所以不顯示稱號加成
+    else {
+        dataSource = null; 
+    }
+    
+    // 從正確的資料來源計算加成
+    if (dataSource && dataSource.playerStats) {
+        const stats = dataSource.playerStats;
+        const equippedId = stats.equipped_title_id;
+        if (equippedId && stats.titles) {
+            const equippedTitle = stats.titles.find(t => t.id === equippedId);
+            if (equippedTitle && equippedTitle.buffs) {
+                titleBuffs = equippedTitle.buffs;
             }
         }
-    } else if (monster.owner_title_buffs) {
-        // 如果是其他玩家的怪獸（從排行榜點擊），直接使用後端附加的資料
-        titleBuffs = monster.owner_title_buffs;
     }
     // --- 核心修改處 END ---
 
@@ -78,7 +87,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            const skillTypeClass = typeof skill.type === 'string' ? `text-element-${getElementCssClassKey(skill.type)}` : '';
             const description = skill.description || skill.story || '暫無描述';
             const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
             const expBarHtml = `
@@ -108,9 +116,13 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const elementTextVar = `var(--element-${getElementCssClassKey(skill.type || '無')}-text)`;
             const attributeBadgeHtml = `<span class="skill-attribute-badge text-element-${getElementCssClassKey(skill.type || '無')}" style="background-color: ${elementBgVar}; color: ${elementTextVar};">${skillTypeChar}</span>`;
             
+            const skillRarity = skill.rarity || '普通';
+            const skillRarityKey = rarityMap[skillRarity] || 'common';
+            const skillRarityClass = `text-rarity-${skillRarityKey}`;
+
             const skillNameAndBadgeHtml = `
                 <div class="skill-name-container">
-                    <a href="#" class="skill-name-link ${skillTypeClass}" data-skill-name="${skill.name}" style="text-decoration: none; color: inherit;">${skill.name} (Lv.${level})</a>
+                    <a href="#" class="skill-name-link ${skillRarityClass}" data-skill-name="${skill.name}" style="text-decoration: none;">${skill.name} (Lv.${level})</a>
                     ${attributeBadgeHtml}
                 </div>`;
             
@@ -177,8 +189,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
         monster.constituent_dna_ids.forEach((id, i) => {
             if (i < 5) {
-                // ---【修改】---
-                // 在比對ID時，使用 .trim() 去除前後可能存在的空白字元，增強比對的穩健性
                 dnaSlots[i] = gameState.gameConfigs.dna_fragments.find(d => d.id.trim() === id.trim()) || null;
             }
         });
@@ -241,6 +251,36 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
+    const interactionStats = monster.interaction_stats || {};
+    const battleCount = (monster.resume?.wins || 0) + (monster.resume?.losses || 0);
+    const bondPoints = interactionStats.bond_points || 0;
+    const bondPercentage = ((bondPoints + 100) / 200) * 100;
+
+    const interactionHtml = `
+        <div class="details-section">
+            <h5 class="details-section-title">怪獸互動</h5>
+            <div class="details-item"><span class="details-label">聊天次數：</span><span class="details-value">${interactionStats.chat_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">修煉次數：</span><span class="details-value">${interactionStats.cultivation_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">對戰次數：</span><span class="details-value">${battleCount}</span></div>
+            <div class="details-item"><span class="details-label">接觸次數：</span><span class="details-value">${interactionStats.touch_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">治療次數：</span><span class="details-value">${interactionStats.heal_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">瀕死次數：</span><span class="details-value">${interactionStats.near_death_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">餵食次數：</span><span class="details-value">${interactionStats.feed_count || 0}</span></div>
+            <div class="details-item"><span class="details-label">收禮次數：</span><span class="details-value">${interactionStats.gift_count || 0}</span></div>
+            
+            <div class="bond-bar-container">
+                 <div class="bond-bar-labels">
+                     <span>厭惡</span>
+                     <span>冷漠</span>
+                     <span>熱情</span>
+                 </div>
+                 <div class="bond-bar">
+                     <div class="bond-bar-marker" style="left: ${bondPercentage}%;"></div>
+                 </div>
+            </div>
+        </div>
+    `;
+
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
             <div class="details-column-left" style="display: flex; flex-direction: column;">
@@ -256,6 +296,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
+                ${interactionHtml}
             </div>
 
             <div class="details-column-right">
@@ -295,11 +336,18 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 
     if (DOMElements.monsterInfoTabs) {
+        const notesTab = DOMElements.monsterInfoTabs.querySelector('[data-tab-target="monster-notes-tab"]');
+        if (notesTab) notesTab.style.display = isOwnMonster ? 'block' : 'none';
+        
+        const chatTab = DOMElements.monsterInfoTabs.querySelector('[data-tab-target="monster-chat-tab"]');
+        if (chatTab) chatTab.style.display = isOwnMonster ? 'block' : 'none';
+
         const firstTabButton = DOMElements.monsterInfoTabs.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
-        if (firstTabButton) {
+        if (!isOwnMonster && firstTabButton) {
             switchTabContent('monster-details-tab', firstTabButton, 'monster-info-modal');
         }
     }
+
 
     const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
     const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
@@ -384,31 +432,8 @@ function showBattleLogModal(battleResult) {
         return;
     }
 
-    // --- 核心修改處 ---
-    const getCorrectDisplayName = (monster) => {
-        // 優先使用後端儲存的拆分欄位
-        if (monster.element_nickname_part) {
-            return monster.element_nickname_part;
-        }
-        // 若無，則使用自訂暱稱
-        if (monster.custom_element_nickname) {
-            return monster.custom_element_nickname;
-        }
-        // 最後才用預設邏輯
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-        if (nicknamesByElement && typeof nicknamesByElement === 'object') {
-            const namesByRarity = nicknamesByElement[monster.rarity];
-            if (namesByRarity && namesByRarity.length > 0) {
-                return namesByRarity[0];
-            }
-        }
-        return primaryElement; // 最終備用
-    };
-    
-    const playerDisplayName = getCorrectDisplayName(playerMonsterData);
-    const opponentDisplayName = getCorrectDisplayName(opponentMonsterData);
-    // --- 修改結束 ---
+    const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
+    const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
 
     function formatBasicText(text) {
         if (!text) return '';
@@ -427,21 +452,17 @@ function showBattleLogModal(battleResult) {
         '神話': 'var(--rarity-mythical-text)'
     };
 
-    // --- 核心修改處 ---
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         if (!text) return '(內容為空)';
         let styledText = text;
 
-        // 定義一個內部函式來處理取代邏輯
         const replaceName = (fullNickname, shortName, rarity) => {
             const monColor = rarityColors[rarity] || 'var(--text-primary)';
-            // 使用正規表達式，確保只取代完整的單字，避免部分符合
             const searchRegex = new RegExp(fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
             const replacement = `<span style="color: ${monColor}; font-weight: bold;">${shortName}</span>`;
             styledText = styledText.replace(searchRegex, replacement);
         };
 
-        // 為玩家和對手執行名稱取代
         if (playerMon && playerMon.nickname) {
             replaceName(playerMon.nickname, playerDisplayName, playerMon.rarity);
         }
@@ -449,7 +470,6 @@ function showBattleLogModal(battleResult) {
             replaceName(opponentMon.nickname, opponentDisplayName, opponentMon.rarity);
         }
         
-        // --- 後續技能、傷害等樣式處理維持不變 ---
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
         if (opponentMon && opponentMon.skills) allSkills.push(...opponentMon.skills);
@@ -468,7 +488,6 @@ function showBattleLogModal(battleResult) {
 
         return styledText;
     }
-    // --- 修改結束 ---
 
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
@@ -690,14 +709,12 @@ function showDnaDrawModal(drawnItems) {
             const typeSpanClass = `dna-type text-element-${elementCssKey}`;
             const rarityKey = dna.rarity ? dna.rarity.toLowerCase() : 'common';
 
-            // --- 核心修改處 START ---
             itemDiv.innerHTML = `
                 <span class="dna-name text-rarity-${rarityKey}">${dna.name}</span>
                 <span class="${typeSpanClass}">${elementType}屬性</span>
                 <span class="dna-rarity text-rarity-${rarityKey}">${dna.rarity}</span>
                 <button class="add-drawn-dna-to-backpack-btn button primary text-xs mt-2" data-dna-index="${index}">加入背包</button>
             `;
-            // --- 核心修改處 END ---
             grid.appendChild(itemDiv);
         });
     }
@@ -714,9 +731,7 @@ function updateTrainingResultsModal(results, monsterName) {
 
     let titleName = monsterName;
     if (monster) {
-        const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-        titleName = monster.custom_element_nickname || 
-                    (gameState.gameConfigs?.element_nicknames?.[primaryElement]?.[monster.rarity]?.[0] || primaryElement);
+        titleName = getMonsterDisplayName(monster, gameState.gameConfigs);
     }
     
     DOMElements.trainingResultsModalTitle.innerHTML = `<span style="color: ${rarityColorVar};">${titleName}</span> <span style="font-weight: normal;">的修煉成果</span>`;
@@ -872,3 +887,4 @@ function updateTrainingResultsModal(results, monsterName) {
 
 
 console.log("UI Modals module loaded.");
+}
