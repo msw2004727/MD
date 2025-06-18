@@ -30,6 +30,11 @@ from .leaderboard_search_services import (
 )
 from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
+# --- 核心修改處 START ---
+# 從新的戰鬥後服務檔案中，導入處理結果的函式
+from .post_battle_services import process_battle_results
+# --- 核心修改處 END ---
+
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
 routes_logger = logging.getLogger(__name__)
@@ -64,65 +69,9 @@ def _get_authenticated_user_id():
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
 
-def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfigs) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
-    player_stats = player_data.get("playerStats", {})
-    if not player_stats:
-        return player_data, []
-
-    all_titles = game_configs.get("titles", [])
-    owned_title_ids = {t.get("id") for t in player_stats.get("titles", [])}
-    newly_awarded_titles = []
-    
-    farmed_monsters = player_data.get("farmedMonsters", [])
-
-    for title in all_titles:
-        title_id = title.get("id")
-        if not title_id or title_id in owned_title_ids:
-            continue
-
-        condition = title.get("condition", {})
-        cond_type = condition.get("type")
-        cond_value = condition.get("value")
-
-        unlocked = False
-        if cond_type == "wins" and player_stats.get("wins", 0) >= cond_value:
-            unlocked = True
-        elif cond_type == "monsters_owned" and len(farmed_monsters) >= cond_value:
-            unlocked = True
-        
-        elif cond_type == "monster_elements_count":
-            if any(len(monster.get("elements", [])) >= cond_value for monster in farmed_monsters):
-                unlocked = True
-        
-        elif cond_type == "own_elemental_monsters":
-            cond_element = condition.get("element")
-            count = sum(1 for monster in farmed_monsters if monster.get("elements") and monster["elements"][0] == cond_element)
-            if count >= cond_value:
-                unlocked = True
-
-        elif cond_type == "max_skill_level":
-            if any(skill.get("level", 0) >= cond_value for monster in farmed_monsters for skill in monster.get("skills", [])):
-                unlocked = True
-        
-        elif cond_type == "monster_stat_reach":
-            stat_to_check = condition.get("stat")
-            if any(monster.get(stat_to_check, 0) >= cond_value for monster in farmed_monsters):
-                unlocked = True
-
-        elif cond_type == "friends_count":
-            if len(player_data.get("friends", [])) >= cond_value:
-                unlocked = True
-
-        if unlocked:
-            player_stats.get("titles", []).insert(0, title)
-            player_stats["equipped_title_id"] = title_id
-            newly_awarded_titles.append(title)
-            routes_logger.info(f"玩家 {player_data.get('nickname')} 達成條件，授予新稱號: {title.get('name')}")
-    
-    if newly_awarded_titles:
-        player_data["playerStats"] = player_stats
-
-    return player_data, newly_awarded_titles
+# --- 核心修改處 START ---
+# 移除 _check_and_award_titles 函式，它已經被搬到 post_battle_services.py
+# --- 核心修改處 END ---
 
 @md_bp.route('/health', methods=['GET'])
 def health_check():
@@ -190,6 +139,11 @@ def equip_title_route():
 
 @md_bp.route('/player/<path:requested_player_id>', methods=['GET'])
 def get_player_info_route(requested_player_id: str):
+    # 此路由函式需要 _check_and_award_titles，但現在它在 post_battle_services 中
+    # 為了避免循環導入，我們在這裡重新定義它或將其移動到更合適的地方，例如 player_services
+    # 暫時保持原樣，因為這個稱號檢查只在獲取自己的資料時觸發，我們可以後續再優化
+    from .post_battle_services import _check_and_award_titles as check_titles_utility
+
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法獲取玩家資料。"}), 500
@@ -233,7 +187,7 @@ def get_player_info_route(requested_player_id: str):
 
     if player_data:
         if is_self_request:
-            player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
+            player_data, newly_awarded_titles = check_titles_utility(player_data, game_configs)
             
             if is_new_player:
                 initial_titles = player_data.get("playerStats", {}).get("titles", [])
@@ -458,129 +412,25 @@ def simulate_battle_api_route():
         opponent_player_data=opponent_player_data
     )
 
-    routes_logger.info(f"DEBUG: Battle result received. Winner: {battle_result.get('winner_id')}")
-
-    newly_awarded_titles = [] 
+    # --- 核心修改處 START ---
+    # 移除所有戰鬥後結算的邏輯，改為呼叫新的服務
     if battle_result.get("battle_end"):
-        if user_id and player_monster_data_req.get('id'):
-            if player_data:
-                routes_logger.info(f"DEBUG: Processing battle result for player: {user_id}")
-                player_stats = player_data.get("playerStats")
-                if player_stats and isinstance(player_stats, dict):
-                    if battle_result.get("winner_id") == player_monster_data_req['id']:
-                        player_stats["wins"] = player_stats.get("wins", 0) + 1
-                        player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
-                    elif battle_result.get("loser_id") == player_monster_data_req['id']:
-                        player_stats["losses"] = player_stats.get("losses", 0) + 1
-                    
-                    player_data["playerStats"] = player_stats
-
-                    farmed_monsters = player_data.get("farmedMonsters", [])
-                    routes_logger.info(f"DEBUG: Searching for monster ID {player_monster_data_req.get('id')} in player's farm.")
-                    
-                    monster_found_in_farm = False
-                    for m_idx, monster_in_farm in enumerate(farmed_monsters):
-                        if monster_in_farm.get("id") == player_monster_data_req['id']:
-                            monster_found_in_farm = True
-                            routes_logger.info(f"DEBUG: Found monster {monster_in_farm.get('id')}. Current activityLog length: {len(monster_in_farm.get('activityLog', []))}")
-                            
-                            monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
-                            monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
-                            
-                            if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
-                                monster_in_farm["resume"] = {"wins": 0, "losses": 0}
-
-                            if battle_result.get("winner_id") == player_monster_data_req['id']:
-                                monster_in_farm["resume"]["wins"] = monster_in_farm["resume"].get("wins", 0) + 1
-                            elif battle_result.get("loser_id") == player_monster_data_req['id']:
-                                monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
-                            
-                            monster_in_farm["skills"] = battle_result["player_monster_final_skills"]
-                            
-                            if monster_in_farm.get("farmStatus"):
-                                monster_in_farm["farmStatus"]["isBattling"] = False
-
-                            if battle_result.get("player_activity_log"):
-                                routes_logger.info(f"DEBUG: Activity log found in battle result. Message: {battle_result['player_activity_log']['message']}")
-                                if "activityLog" not in monster_in_farm:
-                                    monster_in_farm["activityLog"] = []
-                                monster_in_farm["activityLog"].insert(0, battle_result["player_activity_log"])
-                                routes_logger.info(f"DEBUG: New log inserted. New activityLog length: {len(monster_in_farm.get('activityLog'))}")
-
-                            # --- 核心修改處 START ---
-                            interaction_stats = monster_in_farm.setdefault("interaction_stats", {})
-                            current_bond = interaction_stats.get("bond_points", 0)
-                            point_change = 0
-
-                            if battle_result.get("winner_id") == player_monster_data_req['id']:
-                                point_change += 5  # 基礎勝利點數
-                                player_score = monster_in_farm.get("score", 1) or 1
-                                opponent_score = opponent_monster_data_req.get("score", 1) or 1
-                                if opponent_score > player_score:
-                                    bonus = math.floor(((opponent_score / player_score) - 1) * 10)
-                                    point_change += max(0, min(10, bonus)) # 加成最多10點
-                            
-                            elif battle_result.get("loser_id") == player_monster_data_req['id']:
-                                point_change -= 5  # 戰敗懲罰
-                                point_change -= 8  # 瀕死懲罰
-                                interaction_stats["near_death_count"] = interaction_stats.get("near_death_count", 0) + 1
-
-                            if point_change != 0:
-                                new_bond = max(-100, min(100, current_bond + point_change))
-                                interaction_stats["bond_points"] = new_bond
-                                routes_logger.info(f"戰鬥結束，怪獸 {monster_in_farm.get('id')} 感情值變化 {point_change}，目前為 {new_bond}。")
-                            # --- 核心修改處 END ---
-
-                            break
-                    
-                    if not monster_found_in_farm:
-                        routes_logger.error(f"CRITICAL: Monster ID {player_monster_data_req.get('id')} was NOT found in player's farm after battle.")
-
-                    player_data["farmedMonsters"] = farmed_monsters
-                    
-                    routes_logger.info(f"DEBUG: Attempting to save updated player_data for user {user_id}.")
-                    if not save_player_data_service(user_id, player_data):
-                        routes_logger.warning(f"警告：戰鬥結果/吸收後，儲存攻擊方玩家 {user_id} 資料失敗。")
-                else:
-                    routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績，或 player_stats 結構不正確。")
-            else:
-                routes_logger.warning(f"無法獲取攻擊方玩家 {user_id} 資料以更新戰績。")
+        routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
+        updated_player_data, newly_awarded_titles = process_battle_results(
+            player_id=user_id,
+            opponent_id=opponent_owner_id_req,
+            player_data=player_data,
+            opponent_player_data=opponent_player_data,
+            player_monster_data=player_monster_data_req,
+            opponent_monster_data=opponent_monster_data_req,
+            battle_result=battle_result,
+            game_configs=game_configs
+        )
         
-        if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
-            if opponent_player_data:
-                opponent_stats = opponent_player_data.get("playerStats")
-                if opponent_stats and isinstance(opponent_stats, dict):
-                    if battle_result.get("winner_id") == opponent_monster_data_req['id']:
-                        opponent_stats["wins"] = opponent_stats.get("wins", 0) + 1
-                    elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
-                        opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
-                    opponent_player_data["playerStats"] = opponent_stats
-
-                    opponent_farm = opponent_player_data.get("farmedMonsters", [])
-                    for m_idx, monster_in_farm in enumerate(opponent_farm):
-                        if monster_in_farm.get("id") == opponent_monster_data_req['id']:
-                            if "resume" not in monster_in_farm or not isinstance(monster_in_farm["resume"], dict):
-                                monster_in_farm["resume"] = {"wins": 0, "losses": 0}
-
-                            if battle_result.get("winner_id") == opponent_monster_data_req['id']:
-                                monster_in_farm["resume"]["wins"] = monster_in_farm["resume"].get("wins", 0) + 1
-                            elif battle_result.get("loser_id") == opponent_monster_data_req['id']:
-                                monster_in_farm["resume"]["losses"] = monster_in_farm["resume"].get("losses", 0) + 1
-
-                            if battle_result.get("opponent_activity_log"):
-                                if "activityLog" not in monster_in_farm:
-                                    monster_in_farm["activityLog"] = []
-                                monster_in_farm["activityLog"].insert(0, battle_result["opponent_activity_log"])
-                            break
-                    opponent_player_data["farmedMonsters"] = opponent_farm
-
-                    if not save_player_data_service(opponent_owner_id_req, opponent_player_data):
-                        routes_logger.warning(f"警告：儲存被挑戰方玩家 {opponent_owner_id_req} 資料失敗。")
-            else:
-                routes_logger.warning(f"無法獲取被挑戰方玩家 {opponent_owner_id_req} 資料以更新戰績。")
-
-    if newly_awarded_titles:
-        battle_result["newly_awarded_titles"] = newly_awarded_titles
+        # 將新獲得的稱號附加到最終的回應中
+        if newly_awarded_titles:
+            battle_result["newly_awarded_titles"] = newly_awarded_titles
+    # --- 核心修改處 END ---
     
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
