@@ -194,7 +194,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  const totalGames = resume.wins + resume.losses;
                  const winRate = totalGames > 0 ? ((resume.wins / totalGames) * 100).toFixed(1) + '%' : 'N/A';
                  
-                 // --- 核心修改處 START ---
+                 // --- 核心修改處 ---
                  const playerTitle = m.player_title_part;
                  const monsterAchievement = m.achievement_part;
                  const elementNickname = getMonsterDisplayName(m, gameState.gameConfigs);
@@ -202,7 +202,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  let nameHtml;
                  if (playerTitle && monsterAchievement && elementNickname) {
                      nameHtml = `
-                        <div style="display: flex; align-items: baseline; gap: 0.5em;">
+                        <div style="display: flex; align-items: baseline; gap: 0.5em; white-space: nowrap;">
                             <span style="color: var(--rarity-legendary-text);">${playerTitle}</span>
                             <span style="color: var(--text-primary);">${monsterAchievement}</span>
                             <span class="text-rarity-${rarityKey}">${elementNickname}</span>
@@ -211,7 +211,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  } else {
                      nameHtml = `<span class="text-rarity-${rarityKey}">${m.nickname || '名稱錯誤'}</span>`;
                  }
-                 // --- 核心修改處 END ---
+                 // --- 修改結束 ---
 
                  return `
                     <div class="player-monster-row">
