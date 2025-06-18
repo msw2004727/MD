@@ -700,3 +700,57 @@ p.monster-score {
     color: var(--text-secondary);
     font-style: italic;
 }
+
+/* --- 新增：公告彈窗排版樣式 --- */
+.announcement-columns-container {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1rem 0;
+    flex-wrap: wrap; /* 在螢幕較窄時，讓欄位自動換行 */
+}
+
+.announcement-column {
+    flex: 1;
+    min-width: 180px; /* 每個欄位的最小寬度，防止被過度擠壓 */
+    background-color: var(--bg-primary);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.announcement-column h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.announcement-column ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.announcement-column li {
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.announcement-image-container {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.announcement-image-container img {
+    max-width: 100%;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+/* 文字顏色輔助 class */
+.text-color-default { color: inherit; }
+.text-color-accent { color: var(--accent-color); }
+.text-color-success { color: var(--success-color); }
+.text-color-danger { color: var(--danger-color); }
