@@ -120,15 +120,60 @@ def _get_active_skills(monster: Monster, current_mp: int) -> List[Skill]:
     return active_skills
 
 def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfigs, player_data: Optional[PlayerGameData]) -> Skill:
-    current_attacker_stats = _get_monster_current_stats(attacker, player_data)
-    available_skills = _get_active_skills(attacker, current_attacker_stats["mp"])
+    attacker_current_stats = _get_monster_current_stats(attacker, player_data)
+    all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"])
 
-    if available_skills and random.random() <= 0.85:
+    # --- 核心修改處 START ---
+    # 過濾出當前情況下「合理」的技能
+    sensible_skills = []
+    for skill in all_mp_available_skills:
+        skill_category = skill.get("skill_category")
+        skill_effect = skill.get("effect")
+
+        # 規則1: 如果HP已滿，則跳過所有治療型輔助技能
+        if skill_category == "輔助" and skill_effect in ["heal", "heal_large", "rest"]:
+            if attacker_current_stats["hp"] >= attacker_current_stats["initial_max_hp"]:
+                continue  # HP已滿，此技能不合理，跳過
+
+        # 規則2: 如果已經有Buff，則跳過同類型的強化型輔助技能 (簡化判斷)
+        if skill_category == "輔助" and skill_effect == "stat_change":
+            amounts = skill.get("amount", [0])
+            if isinstance(amounts, int): amounts = [amounts]
+            is_a_buff = any(a > 0 for a in amounts)
+
+            if is_a_buff:
+                stats_to_buff = skill.get("stat", [])
+                if isinstance(stats_to_buff, str): stats_to_buff = [stats_to_buff]
+                
+                already_buffed = False
+                for stat in stats_to_buff:
+                    if attacker.get(f"temp_{stat}_modifier", 0) > 0:
+                        already_buffed = True
+                        break
+                if already_buffed:
+                    continue # 已經有此類強化，此技能不合理，跳過
+
+        # 如果技能通過所有檢查，則將其視為合理技能
+        sensible_skills.append(skill)
+
+    # 從「合理技能池」中根據個性偏好進行選擇
+    if sensible_skills and random.random() <= 0.85:
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
-        weighted_skills = [skill for skill in available_skills for _ in range(int(personality_prefs.get(skill.get("skill_category", "其他"), 1.0) * 10))]
-        return random.choice(weighted_skills) if weighted_skills else random.choice(available_skills)
-    
+        
+        weighted_skills = [
+            skill for skill in sensible_skills
+            for _ in range(int(personality_prefs.get(skill.get("skill_category", "其他"), 1.0) * 10))
+        ]
+        
+        if weighted_skills:
+            return random.choice(weighted_skills)
+        else:
+            # 如果因為某些原因（例如所有合理技能的偏好權重都是0），則從合理技能中隨機選一個
+            return random.choice(sensible_skills)
+
+    # 如果沒有合理的技能可用，或觸發了15%的機率，則使用普通攻擊
     return BASIC_ATTACK
+    # --- 核心修改處 END ---
 
 def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs, performer_player_data: Optional[PlayerGameData], target_player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
     stat_translation = {
