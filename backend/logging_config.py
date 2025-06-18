@@ -5,14 +5,38 @@ import os
 import sys
 import logging
 from logging.handlers import RotatingFileHandler
+# ----- BUG 修正邏輯 START -----
+# 導入 datetime 和 timezone 模組來處理時區轉換
+from datetime import datetime, timezone, timedelta
+# ----- BUG 修正邏輯 END -----
 
 def setup_logging():
     """
     設定全域的日誌系統，包含主控台輸出和 HTML 檔案輸出。
     """
-    log_formatter = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+    # ----- BUG 修正邏輯 START -----
+    # 建立一個代表 UTC+8 (台灣/亞洲/台北) 的時區物件
+    CST = timezone(timedelta(hours=8))
 
-    # 1. 設定根日誌記錄器 (用於輸出到主控台)
+    # 自定義 Formatter，讓時間轉換為 UTC+8
+    class CstFormatter(logging.Formatter):
+        def converter(self, timestamp):
+            dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            return dt.astimezone(CST)
+
+        def formatTime(self, record, datefmt=None):
+            dt = self.converter(record.created)
+            if datefmt:
+                s = dt.strftime(datefmt)
+            else:
+                s = dt.isoformat(timespec='milliseconds')
+            return s
+
+    # 使用新的 Formatter 來設定日誌格式
+    log_formatter = CstFormatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+    # ----- BUG 修正邏輯 END -----
+
+    # 1. 設定根日誌記錄器
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     
@@ -29,15 +53,10 @@ def setup_logging():
         os.makedirs(log_dir)
 
     log_file_path = os.path.join(log_dir, 'game_log.html')
-    
-    # ----- BUG 修正邏輯 START -----
-    # 移除 RotatingFileHandler，改為每次啟動時讀取、排序、重寫
-    # 這樣可以實現日誌順序的反轉，但會失去日誌輪替功能。
-    # 這是一個權衡，根據您的需求，顯示順序比防止檔案過大更重要。
-    file_handler = logging.FileHandler(log_file_path, mode='a', encoding='utf-8') # 'a' for append
-    # ----- BUG 修正邏輯 END -----
+    file_handler = logging.FileHandler(log_file_path, mode='a', encoding='utf-8')
 
-    class HtmlFormatter(logging.Formatter):
+    # 自定義 HTML 格式化器
+    class HtmlFormatter(CstFormatter): # 繼承我們新的 CstFormatter
         def format(self, record):
             level_to_ch = {
                 'DEBUG': ('除錯', '#888'),
@@ -49,7 +68,7 @@ def setup_logging():
             level_name_ch, level_color = level_to_ch.get(record.levelname, (record.levelname, '#000'))
             
             timestamp = self.formatTime(record, self.datefmt)
-            log_message = record.getMessage().replace('&', '&amp;').replace('<', '&lt;')
+            log_message = record.getMessage().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             
             return (
                 f'<div class="log-entry" style="color: {level_color};">'
@@ -73,10 +92,7 @@ def setup_logging():
     <meta http-equiv="refresh" content="5">
     <style>
         body { font-family: 'Courier New', Courier, monospace; background-color: #1a1a1a; color: #f0f0f0; margin: 0; padding: 10px; }
-        /* ----- BUG 修正邏輯 START ----- */
-        /* 使用 flexbox 讓日誌項目由下往上排列 */
         body { display: flex; flex-direction: column-reverse; }
-        /* ----- BUG 修正邏輯 END ----- */
         .log-entry { margin-bottom: 5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .timestamp { color: #666; }
         .levelname { font-weight: bold; }
