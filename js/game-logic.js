@@ -578,7 +578,7 @@ async function handleDeployMonsterClick(monsterId) {
         return;
     }
 
-    gameState.selectedMonsterId = monsterId;
+    // 修改：只更新 playerData 中的 selectedMonsterId
     gameState.playerData.selectedMonsterId = monsterId;
     
     if (typeof updateMonsterSnapshot === 'function') {
@@ -649,7 +649,7 @@ async function refreshPlayerData() {
 async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
     if(event) event.stopPropagation();
 
-    const playerMonsterId = gameState.selectedMonsterId;
+    const playerMonsterId = gameState.playerData?.selectedMonsterId;
     if (!playerMonsterId) {
         showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
         return;
