@@ -754,3 +754,32 @@ p.monster-score {
 .text-color-accent { color: var(--accent-color); }
 .text-color-success { color: var(--success-color); }
 .text-color-danger { color: var(--danger-color); }
+
+/* --- 新增：聊天頭像樣式 --- */
+.chat-message-wrapper.role-assistant {
+    gap: 0.75rem; /* 在頭像和對話泡泡之間增加間距 */
+}
+
+.chat-avatar-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0; /* 防止頭像在 flex 佈局中被壓縮 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.chat-avatar-image {
+    width: 150%;
+    height: 150%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
