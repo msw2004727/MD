@@ -10,13 +10,14 @@ def setup_logging():
     """
     設定全域的日誌系統，包含主控台輸出和 HTML 檔案輸出。
     """
-    log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', '%Y-%m-%d %H:%M:%S')
+    # ----- BUG 修正邏輯 START -----
+    # 修改日誌格式，移除英文的 %(name)s 和 %(levelname)s，但保留時間戳
+    log_formatter = logging.Formatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
 
-    # 1. 設定根日誌記錄器 (用於輸出到主控台)
+    # 1. 設定根日誌記錄器
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     
-    # 清除可能由其他模組（如 gunicorn）預先設定的 handlers
     if root_logger.hasHandlers():
         root_logger.handlers.clear()
         
@@ -25,46 +26,41 @@ def setup_logging():
     root_logger.addHandler(console_handler)
 
     # 2. 設定專門寫入 HTML 檔案的日誌記錄器
-    # 確保 logs 目錄存在
     log_dir = os.path.join(os.path.dirname(__file__), 'logs')
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     log_file_path = os.path.join(log_dir, 'game_log.html')
-
-    # 使用 RotatingFileHandler，防止日誌檔無限增大
-    # 每個檔案最大 1MB，保留 3 個備份檔案
     file_handler = RotatingFileHandler(log_file_path, maxBytes=1024 * 1024, backupCount=3, encoding='utf-8')
 
-    # 自定義 HTML 格式化器
+    # 自定義 HTML 格式化器，加入中文訊息和對應的顏色
     class HtmlFormatter(logging.Formatter):
         def format(self, record):
-            level_colors = {
-                'DEBUG': '#888',
-                'INFO': '#3498db',
-                'WARNING': '#f39c12',
-                'ERROR': '#e74c3c',
-                'CRITICAL': '#c0392b'
+            level_to_ch = {
+                'DEBUG': ('除錯', '#888'),
+                'INFO': ('資訊', '#3498db'),
+                'WARNING': ('警告', '#f39c12'),
+                'ERROR': ('錯誤', '#e74c3c'),
+                'CRITICAL': ('嚴重錯誤', '#c0392b')
             }
+            level_name_ch, level_color = level_to_ch.get(record.levelname, (record.levelname, '#000'))
+            
             timestamp = self.formatTime(record, self.datefmt)
-            # 對訊息進行 HTML 轉義，防止 XSS 攻擊或排版錯亂
             log_message = record.getMessage().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             
             return (
-                f'<div class="log-entry" style="color: {level_colors.get(record.levelname, "#000")};">'
+                f'<div class="log-entry" style="color: {level_color};">'
                 f'<span class="timestamp">[{timestamp}]</span> '
-                f'<span class="levelname">[{record.levelname}]</span> '
+                f'<span class="levelname" style="font-weight: bold;">【{level_name_ch}】</span> '
                 f'<span class="message">{log_message}</span>'
                 f'</div>\n'
             )
+    # ----- BUG 修正邏輯 END -----
 
     html_formatter = HtmlFormatter(datefmt='%Y-%m-%d %H:%M:%S')
     file_handler.setFormatter(html_formatter)
-
-    # 將 file_handler 加到根日誌記錄器，這樣所有模組的日誌都會被寫入
     root_logger.addHandler(file_handler)
     
-    # 寫入一個初始的 HTML 頭部到日誌檔案中（如果檔案是空的）
     if not os.path.exists(log_file_path) or os.path.getsize(log_file_path) < 100:
         with open(log_file_path, 'w', encoding='utf-8') as f:
             f.write("""<!DOCTYPE html>
@@ -86,4 +82,4 @@ def setup_logging():
 </body>
 </html>
 """)
-    root_logger.info("日誌系統設定完成。")
+    root_logger.info("日誌系統設定完成，已切換為中文格式。")
