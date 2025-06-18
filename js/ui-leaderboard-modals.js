@@ -113,10 +113,10 @@ function updateLeaderboardTable(tableType, data, containerId) {
             // 【修改】將字體大小從 0.9em 提升至 1.1rem
             link.style.fontSize = '1.1rem'; 
             
-            // --- 核心修改處 ---
+            // --- 核心修改處 START ---
             const playerTitle = item.player_title_part;
             const monsterAchievement = item.achievement_part;
-            const elementNickname = item.element_nickname_part || item.custom_element_nickname;
+            const elementNickname = getMonsterDisplayName(item, gameState.gameConfigs);
 
             let nameHtml;
             // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
@@ -131,7 +131,7 @@ function updateLeaderboardTable(tableType, data, containerId) {
                 nameHtml = `<span class="text-rarity-${rarityKey}">${item.nickname || '名稱錯誤'}</span>`;
             }
             link.innerHTML = nameHtml;
-            // --- 修改結束 ---
+            // --- 核心修改處 END ---
             
             nicknameCell.appendChild(link);
 
