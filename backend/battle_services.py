@@ -123,24 +123,20 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     attacker_current_stats = _get_monster_current_stats(attacker, player_data)
     all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"])
 
-    # --- 核心修改處 START ---
-    # 過濾出當前情況下「合理」的技能
     sensible_skills = []
     for skill in all_mp_available_skills:
         skill_category = skill.get("skill_category")
         skill_effect = skill.get("effect")
 
-        # 規則1: 如果HP已滿，則跳過所有治療型輔助技能
         if skill_category == "輔助" and skill_effect in ["heal", "heal_large", "rest"]:
             if attacker_current_stats["hp"] >= attacker_current_stats["initial_max_hp"]:
-                continue  # HP已滿，此技能不合理，跳過
+                continue
 
-        # 規則2: 如果已經有Buff，則跳過同類型的強化型輔助技能 (簡化判斷)
         if skill_category == "輔助" and skill_effect == "stat_change":
             amounts = skill.get("amount", [0])
             if isinstance(amounts, int): amounts = [amounts]
             is_a_buff = any(a > 0 for a in amounts)
-
+            
             if is_a_buff:
                 stats_to_buff = skill.get("stat", [])
                 if isinstance(stats_to_buff, str): stats_to_buff = [stats_to_buff]
@@ -151,29 +147,43 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
                         already_buffed = True
                         break
                 if already_buffed:
-                    continue # 已經有此類強化，此技能不合理，跳過
+                    continue
 
-        # 如果技能通過所有檢查，則將其視為合理技能
         sensible_skills.append(skill)
 
-    # 從「合理技能池」中根據個性偏好進行選擇
     if sensible_skills and random.random() <= 0.85:
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
         
-        weighted_skills = [
-            skill for skill in sensible_skills
-            for _ in range(int(personality_prefs.get(skill.get("skill_category", "其他"), 1.0) * 10))
-        ]
+        # --- 核心修改處 START ---
+        # 檢查是否處於低血量狀態
+        hp_percentage = attacker_current_stats["hp"] / attacker_current_stats["initial_max_hp"] if attacker_current_stats["initial_max_hp"] > 0 else 0
+        is_low_hp = hp_percentage < 0.4  # 低血量閾值設為40%
+
+        weighted_skills = []
+        for skill in sensible_skills:
+            skill_category = skill.get("skill_category", "其他")
+            base_weight = personality_prefs.get(skill_category, 1.0)
+            
+            # 生存本能：如果血量低，動態調整權重
+            situational_multiplier = 1.0
+            if is_low_hp:
+                if skill_category == "輔助":  # 治療或防禦性Buff
+                    situational_multiplier = 3.0  # 大幅提高使用意願
+                elif skill_category == "變化" and skill.get("effect") == "stat_change" and any(a > 0 for a in ([skill.get("amount")] if isinstance(skill.get("amount"), int) else skill.get("amount", []))): # 防禦性變化技能
+                    situational_multiplier = 2.0  # 提高使用意願
+                elif skill_category in ["物理", "近戰", "遠程", "魔法", "特殊"]: # 攻擊性技能
+                    situational_multiplier = 0.5  # 降低攻擊意願
+            
+            final_weight = int(base_weight * situational_multiplier * 10)
+            weighted_skills.extend([skill] * final_weight)
+        # --- 核心修改處 END ---
         
         if weighted_skills:
             return random.choice(weighted_skills)
         else:
-            # 如果因為某些原因（例如所有合理技能的偏好權重都是0），則從合理技能中隨機選一個
             return random.choice(sensible_skills)
 
-    # 如果沒有合理的技能可用，或觸發了15%的機率，則使用普通攻擊
     return BASIC_ATTACK
-    # --- 核心修改處 END ---
 
 def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs, performer_player_data: Optional[PlayerGameData], target_player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
     stat_translation = {
