@@ -18,12 +18,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    // --- 核心修改處 START ---
-    // 使用新的共用函式來取代原本重複的邏輯
     const editableNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
-    // --- 核心修改處 END ---
-
-    // 【修改】修正檢查怪獸是否為玩家自己的邏輯
+    
     const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
@@ -42,20 +38,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
-    // ----- BUG 修正邏輯 START -----
     let titleBuffs = {};
     let ownerStats = null;
 
-    // 1. 檢查怪獸是否屬於當前登入的玩家
     if (gameState.playerData && gameState.playerData.farmedMonsters.some(m => m.id === monster.id)) {
         ownerStats = gameState.playerData.playerStats;
     } 
-    // 2. 如果不屬於，則檢查是否屬於當前正在查看的另一位玩家
     else if (gameState.viewedPlayerData && gameState.viewedPlayerData.farmedMonsters.some(m => m.id === monster.id)) {
         ownerStats = gameState.viewedPlayerData.playerStats;
     }
 
-    // 3. 如果找到了擁有者，則從該擁有者的資料中獲取稱號加成
     if (ownerStats) {
         const equippedId = ownerStats.equipped_title_id;
         if (equippedId && ownerStats.titles) {
@@ -65,7 +57,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             }
         }
     }
-    // ----- BUG 修正邏輯 END -----
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -253,19 +244,26 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const bondPoints = interactionStats.bond_points || 0;
     const bondPercentage = ((bondPoints + 100) / 200) * 100;
 
+    // ----- BUG 修正邏輯 START -----
+    // 重新建構互動區塊的 HTML，加入收摺功能
     const interactionHtml = `
         <div class="details-section">
-            <h5 class="details-section-title">怪獸互動</h5>
-            <div class="details-item"><span class="details-label">聊天次數：</span><span class="details-value">${interactionStats.chat_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">修煉次數：</span><span class="details-value">${interactionStats.cultivation_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">對戰次數：</span><span class="details-value">${battleCount}</span></div>
-            <div class="details-item"><span class="details-label">接觸次數：</span><span class="details-value">${interactionStats.touch_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">治療次數：</span><span class="details-value">${interactionStats.heal_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">瀕死次數：</span><span class="details-value">${interactionStats.near_death_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">餵食次數：</span><span class="details-value">${interactionStats.feed_count || 0}</span></div>
-            <div class="details-item"><span class="details-label">收禮次數：</span><span class="details-value">${interactionStats.gift_count || 0}</span></div>
+            <h5 id="interaction-header" class="details-section-title collapsible-header">
+                怪獸互動
+                <span class="toggle-icon">▼</span>
+            </h5>
+            <div id="interaction-details-content" class="collapsible-content" style="display: none; max-height: 0px;">
+                <div class="details-item"><span class="details-label">聊天次數：</span><span class="details-value">${interactionStats.chat_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">修煉次數：</span><span class="details-value">${interactionStats.cultivation_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">對戰次數：</span><span class="details-value">${battleCount}</span></div>
+                <div class="details-item"><span class="details-label">接觸次數：</span><span class="details-value">${interactionStats.touch_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">治療次數：</span><span class="details-value">${interactionStats.heal_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">瀕死次數：</span><span class="details-value">${interactionStats.near_death_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">餵食次數：</span><span class="details-value">${interactionStats.feed_count || 0}</span></div>
+                <div class="details-item"><span class="details-label">收禮次數：</span><span class="details-value">${interactionStats.gift_count || 0}</span></div>
+            </div>
             
-            <div class="bond-bar-container">
+            <div class="bond-bar-container" style="margin-top: 0.5rem;">
                  <div class="bond-bar-labels">
                      <span>厭惡</span>
                      <span>冷漠</span>
@@ -277,6 +275,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             </div>
         </div>
     `;
+    // ----- BUG 修正邏輯 END -----
 
     detailsBody.innerHTML = `
         <div class="details-grid-rearranged">
@@ -345,6 +344,26 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         }
     }
 
+    // ----- BUG 修正邏輯 START -----
+    // 為收摺標題綁定點擊事件
+    const interactionHeader = detailsBody.querySelector('#interaction-header');
+    if (interactionHeader) {
+        interactionHeader.addEventListener('click', () => {
+            const content = detailsBody.querySelector('#interaction-details-content');
+            const icon = interactionHeader.querySelector('.toggle-icon');
+            if (content && icon) {
+                const isCollapsed = content.style.maxHeight === '0px';
+                if (isCollapsed) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    content.style.maxHeight = '0px';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            }
+        });
+    }
+    // ----- BUG 修正邏輯 END -----
 
     const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
     const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
@@ -639,7 +658,7 @@ function showBattleLogModal(battleResult) {
         </div>
         <div class="report-section battle-summary-section">
             <h4 class="report-section-title">戰報總結</h4>
-            <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.battle_summary, playerMonsterData, opponentMonsterData))}</p>
+            <p class="battle-summary-text">${formatBasicText(applyDynamicStylingToBattleReport(battleResult.ai_battle_report_content.battle_summary, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     const highlights = battleResult.battle_highlights || [];
@@ -664,8 +683,8 @@ function showBattleLogModal(battleResult) {
     reportContainer.innerHTML += `
         <div class="report-section battle-outcome-section">
             <h4 class="report-section-title">戰鬥結果細項</h4>
-            <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
-            <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleResult.ai_battle_report_content.loot_info, playerMonsterData, opponentMonsterData))}</p>
+            <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleResult.ai_battle_report_content.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
 
     DOMElements.battleLogArea.appendChild(reportContainer);
