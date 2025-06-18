@@ -194,8 +194,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  
                  const nameHtml = getMonsterDisplayNameHtml(m);
 
-                 // --- 核心修改處 ---
-                 // 在 a 標籤的 style 中新增 'display: block;'
                  return `
                     <div class="player-monster-row">
                         <div class="monster-name-cell">
@@ -207,7 +205,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                         <div class="monster-winrate-cell">${winRate}</div>
                     </div>
                  `;
-                 // --- 修改結束 ---
             }).join('');
             
             container.innerHTML = `
@@ -235,20 +232,43 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         // 初始渲染
         renderPlayerMonstersTable();
 
-        // 綁定點擊事件
+        // --- 核心修改處 START ---
+        // 移除舊的、有問題的事件監聽器，替換為一個能同時處理排序和點擊連結的新監聽器
         container.addEventListener('click', (e) => {
             const header = e.target.closest('.sortable-header');
-            if (!header) return;
+            const monsterLink = e.target.closest('.player-info-monster-link');
 
-            const newKey = header.dataset.sortKey;
-            if (sortConfig.key === newKey) {
-                sortConfig.order = sortConfig.order === 'desc' ? 'asc' : 'desc';
-            } else {
-                sortConfig.key = newKey;
-                sortConfig.order = 'desc'; // 切換欄位時預設降序
+            if (header) { // 如果點擊的是表頭
+                const newKey = header.dataset.sortKey;
+                if (sortConfig.key === newKey) {
+                    sortConfig.order = sortConfig.order === 'desc' ? 'asc' : 'desc';
+                } else {
+                    sortConfig.key = newKey;
+                    sortConfig.order = 'desc'; // 切換欄位時預設降序
+                }
+                renderPlayerMonstersTable(); // 重新渲染以應用排序
+            } else if (monsterLink) { // 如果點擊的是怪獸名稱連結
+                e.preventDefault();
+                const monsterId = monsterLink.dataset.monsterId;
+                const ownerUid = monsterLink.dataset.ownerUid;
+                if (!monsterId || !ownerUid) return;
+
+                let monsterData;
+                // 根據 ownerUid 從正確的來源（自己的資料或正在查看的玩家資料）尋找怪獸
+                if (ownerUid === gameState.playerId) {
+                    monsterData = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                } else if (gameState.viewedPlayerData?.uid === ownerUid) {
+                    monsterData = gameState.viewedPlayerData.farmedMonsters.find(m => m.id === monsterId);
+                }
+
+                if (monsterData) {
+                    updateMonsterInfoModal(monsterData, gameState.gameConfigs);
+                    showModal('monster-info-modal');
+                }
             }
-            renderPlayerMonstersTable();
         });
+        // --- 核心修改處 END ---
+
     } else {
         container.innerHTML = '<p>尚無怪獸</p>';
     }
