@@ -30,7 +30,7 @@
         {
           "title": "接下來開發目標：",
           "items": [
-            { "text": "完善轉場圖片", "color": "default" },
+            { "text": "完善轉場圖片", "color": "accent" },
             { "text": "訓練場", "color": "accent" },
             { "text": "交易所", "color": "accent" },
             { "text": "醫療站", "color": "accent" },
