@@ -21,8 +21,6 @@
       "comment_zh_trainingResults": "修煉成果結算彈窗",
       "endTrainingEarly": "https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true",
       "comment_zh_endTrainingEarly": "確認是否要提早結束修煉的彈窗",
-      "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true",
-      "comment_zh_dnaDrawing": "DNA抽取中讀取彈窗",
       "titleAward": "https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true",
       "comment_zh_titleAward": "恭喜獲得新稱號的彈窗",
       "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
@@ -33,6 +31,8 @@
       "comment_zh_dnaGuideBanner": "DNA碎片說明的彈窗橫幅",
       "loadingBanners": {
         "comment": "所有讀取中狀態的獨立橫幅",
+        "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true",
+        "comment_zh_dnaDrawing": "DNA抽取中讀取彈窗",
         "gameLoad": "",
         "comment_zh_gameLoad": "遊戲載入中",
         "login": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
