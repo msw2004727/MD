@@ -161,8 +161,7 @@ def complete_cultivation_service(
     diminishing_multiplier = 0.75 ** (count_in_window - 1)
     monster_cultivation_services_logger.info(f"修煉衰減機制: 第 {count_in_window} 次, 獎勵乘數為 {diminishing_multiplier:.2f}")
 
-    # --- 核心修改處 START ---
-    # 應用感情值變化
+    from .utils_services import update_bond_with_diminishing_returns
     base_bond_gain = 3
     bond_point_change = math.floor(base_bond_gain * diminishing_multiplier)
     
@@ -171,7 +170,6 @@ def complete_cultivation_service(
         new_bond = max(-100, min(100, current_bond + bond_point_change))
         interaction_stats["bond_points"] = new_bond
         monster_cultivation_services_logger.info(f"修煉完成，感情值增加 {bond_point_change} 點，目前為 {new_bond}。")
-    # --- 核心修改處 END ---
 
     training_location = monster_to_update.get("farmStatus", {}).get("trainingLocation", "gaia")
     if not monster_to_update.get("farmStatus"): monster_to_update["farmStatus"] = {}
@@ -200,7 +198,12 @@ def complete_cultivation_service(
         exp_multiplier = cultivation_cfg.get("skill_exp_base_multiplier", 100)
         for skill in current_skills:
             if skill.get("level", 1) >= max_skill_lvl: continue
-            exp_gained = int((random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 10)) * diminishing_multiplier)
+            
+            # ----- BUG 修正邏輯 START -----
+            # 將秒數加成從 /10 調整為 /60，大幅降低時長帶來的經驗加成
+            exp_gained = int((random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 60)) * diminishing_multiplier)
+            # ----- BUG 修正邏輯 END -----
+
             if exp_gained > 0:
                 skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
                 while skill.get("level", 1) < max_skill_lvl and skill.get("current_exp", 0) >= skill.get("exp_to_next_level", 9999):
