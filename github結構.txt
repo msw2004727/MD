@@ -1,63 +1,76 @@
+好的，這是我根據您提供的所有檔案，為「怪獸異世界」專案整理出的最新結構樹狀圖。
+
+```
 MD/
-├── backend/                  <-- 後端伺服器 (Python Flask) 的所有程式碼
-│   ├── data/                 <-- 存放遊戲的核心設定資料
-│   │   ├── cultivation_stories.json  <-- 修煉系統中的冒險故事文字庫
-│   │   ├── dna_fragments.json        <-- 所有 DNA 碎片的屬性與數值定義
-│   │   ├── newbie_guide.json         <-- 新手指南的內容
-│   │   ├── personalities.csv         <-- 怪獸的個性與其行為偏好
-│   │   ├── skills.json               <-- 所有技能的詳細資料與升級效果
-│   │   └── titles.json               <-- 玩家可獲得的稱號及其效果
-│   ├── api_key.txt                 <-- 存放 API 金鑰等敏感資訊
-│   ├── battle_services.py          <-- 處理核心戰鬥邏輯，包括傷害計算、技能效果等
-│   ├── leaderboard_search_services.py <-- 處理排行榜數據的獲取與玩家搜尋功能
-│   ├── main.py                     <-- Flask 應用程式的主啟動檔案，負責初始化與運行後端服務
-│   ├── monster_absorption_services.py <-- 處理怪獸戰鬥勝利後吸收對手能力的邏輯
-│   ├── monster_combination_services.py <-- 處理 DNA 組合以生成新怪獸的核心邏輯
-│   ├── monster_cultivation_services.py <-- 處理怪獸修煉、技能成長與升級的服務
-│   ├── monster_disassembly_services.py <-- 處理分解怪獸以回收 DNA 的服務
-│   ├── monster_healing_services.py   <-- 處理怪獸的治療與使用道具充能的服務
-│   ├── monster_nickname_services.py  <-- 處理怪獸自定義暱稱的更新與管理
-│   ├── player_services.py          <-- 處理玩家資料的初始化、獲取、保存與其他玩家相關功能
-│   ├── requirements.txt            <-- 定義後端服務運行所需的 Python 套件
-│   ├── serviceAccountKey.json      <-- Firebase 服務帳戶的金鑰，用於後端驗證
-│   ├── utils_services.py           <-- 存放通用的輔助函式
-│   ├── MD_ai_services.py             <-- 負責與 AI 模型互動，生成怪獸描述、故事和戰報
-│   ├── MD_config_services.py       <-- 負責從 Firestore 載入遊戲核心設定
-│   ├── MD_firebase_config.py       <-- 提供一個全域變數供主程式注入 Firestore 客戶端
-│   ├── MD_models.py                  <-- 定義遊戲中所有資料結構的類別，如怪獸、技能、玩家資料等
-│   └── MD_populate_gamedata.py     <-- 用於將本地的遊戲設定資料一次性匯入 Firestore 的腳本
-├── css/                        <-- 前端所有的樣式表 (CSS)
-│   ├── buttons.css               <-- 定義遊戲中所有按鈕的樣式
-│   ├── components.css            <-- 定義遊戲各個 UI 組件的樣式，如 DNA 槽、面板標題等
-│   ├── game-components.css       <-- 一個舊的組件樣式檔，部分內容可能與 components.css 重疊
-│   ├── layout.css                <-- 定義遊戲主畫面的整體佈局，如面板、格線系統等
-│   ├── modals.css                <-- 定義所有彈出視窗的樣式
-│   └── theme.css                 <-- 定義淺色與深色主題的顏色變數與全域樣式
-├── images/                     <-- 遊戲中使用的圖片資源
-│   ├── BN001.png                 <-- 遊戲內橫幅圖片
-│   ├── a001.png                  <-- 怪獸快照的背景圖片
-│   └── mb01.png                  <-- 怪獸快照的身體輪廓圖片
-├── js/                         <-- 前端所有的腳本 (JavaScript)
-│   ├── handlers/               <-- 存放所有事件處理的相關腳本
-│   │   ├── drag-drop-handlers.js   <-- 管理所有拖曳、放下、長按抖動的互動邏輯
-│   │   ├── game-interaction-handlers.js <-- 處理核心遊戲互動，如合成、抽卡、好友等
-│   │   ├── monster-handlers.js     <-- 處理怪獸農場與排行榜頁籤內的互動
-│   │   └── ui-handlers.js        <-- 處理通用介面事件，如主題切換、彈窗關閉等
-│   ├── ui/                     <-- (這是一個邏輯上的分類，實體檔案在 js/ 資料夾下)
-│   │   ├── ui.js                 <-- UI 核心檔案，負責通用 UI 功能如彈窗顯示/隱藏
-│   │   ├── ui-farm.js            <-- 負責渲染「怪獸農場」頁籤的 UI
-│   │   ├── ui-inventory.js       <-- 負責渲染「DNA管理」頁籤的 UI
-│   │   ├── ui-leaderboard-modals.js <-- 負責渲染排行榜彈窗的 UI
-│   │   ├── ui-monster-modals.js      <-- 負責渲染怪獸詳細資訊等相關彈窗的 UI
-│   │   ├── ui-player-modals.js       <-- 負責渲染玩家資訊等相關彈窗的 UI
-│   │   └── ui-snapshot.js        <-- 負責渲染主畫面「怪獸快照」的 UI
-│   ├── api-client.js           <-- 負責與後端 API 溝通的所有 fetch 請求
-│   ├── auth.js                 <-- 處理 Firebase 的使用者註冊、登入、登出等身份驗證功能
-│   ├── config.js               <-- 存放前端設定，如後端 API 的基本 URL
-│   ├── firebase-config.js      <-- 存放前端連接 Firebase 所需的設定物件
-│   ├── game-logic.js           <-- 存放核心的前端遊戲邏輯，如 DNA 移動、戰鬥發起等
-│   ├── game-state.js           <-- 定義並管理前端的全局狀態物件 `gameState`
-│   ├── loadApiKey.js           <-- 用於載入 API 金鑰的模組
-│   └── main.js                 <-- 前端應用程式的主入口點，負責初始化與啟動遊戲
-├── github結構.txt              <-- 您提供的 GitHub 結構文字檔
-└── index.html                  <-- 遊戲的主 HTML 檔案，承載所有畫面與腳本
+├── backend/
+│   ├── data/
+│   │   ├── cultivation_stories.json
+│   │   ├── dna_fragments.json
+│   │   ├── element_nicknames.json
+│   │   ├── newbie_guide.json
+│   │   ├── personalities.csv
+│   │   ├── skills.json
+│   │   └── titles.json
+│   ├── api_key.txt
+│   ├── battle_services.py
+│   ├── leaderboard_search_services.py
+│   ├── main.py
+│   ├── monster_absorption_services.py
+│   ├── monster_chat_services.py
+│   ├── monster_combination_services.py
+│   ├── monster_cultivation_services.py
+│   ├── monster_disassembly_services.py
+│   ├── monster_healing_services.py
+│   ├── monster_nickname_services.py
+│   ├── player_services.py
+│   ├── post_battle_services.py
+│   ├── requirements.txt
+│   ├── serviceAccountKey.json
+│   ├── utils_services.py
+│   ├── MD_ai_services.py
+│   ├── MD_config_services.py
+│   ├── MD_firebase_config.py
+│   ├── MD_models.py
+│   └── MD_populate_gamedata.py
+├── css/
+│   ├── buttons.css
+│   ├── components.css
+│   ├── layout.css
+│   ├── modals.css
+│   └── theme.css
+├── images/
+│   ├── BN001.png
+│   ├── a001.png
+│   └── mb01.png
+├── js/
+│   ├── handlers/
+│   │   ├── drag-drop-handlers.js
+│   │   ├── game-interaction-handlers.js
+│   │   ├── monster-handlers.js
+│   │   └── ui-handlers.js
+│   ├── api-client.js
+│   ├── auth.js
+│   ├── config.js
+│   ├── firebase-config.js
+│   ├── game-logic.js
+│   ├── game-state.js
+│   ├── loadApiKey.js
+│   ├── main.js
+│   ├── monster-part-assets.js
+│   ├── ui.js
+│   ├── ui-chat.js
+│   ├── ui-farm.js
+│   ├── ui-inventory.js
+│   ├── ui-leaderboard-modals.js
+│   ├── ui-monster-modals.js
+│   ├── ui-notes.js
+│   ├── ui-player-modals.js
+│   ├── ui-snapshot.js
+│   └── utils.js
+├── announcement.json
+├── assets.json
+├── chat_greetings.json
+├── github結構.txt
+├── index.html
+└── ui_text.json
+```
