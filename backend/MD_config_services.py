@@ -17,7 +17,6 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
     """
     從 Firestore 的 MD_GameConfigs 集合中載入所有遊戲設定文檔，
     並將它們組合成一個符合 GameConfigs 型別的字典。
-    (新增) 最後會用本地的 newbie_guide.json 和 titles.json 檔案覆蓋對應的內容。
     """
     db = MD_firebase_config.db
     if not db:
@@ -62,55 +61,9 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
                 configs[config_key] = [] if is_list_type else {}
                 config_logger.warning(f"在 Firestore 中找不到設定文檔：'{doc_name}'，已使用預設空值。")
         
-        config_logger.info("Firestore 遠端設定已載入。")
+        config_logger.info("Firestore 遠端設定已成功載入。")
 
     except Exception as e:
         config_logger.error(f"從 Firestore 載入遊戲設定時發生嚴重錯誤: {e}", exc_info=True)
     
-    # --- 新增區塊：從本地檔案讀取並覆蓋新手指南 ---
-    config_logger.info("正在嘗試從本地檔案系統載入新手指南...")
-    try:
-        data_dir = os.path.join(os.path.dirname(__file__), 'data')
-        guide_path = os.path.join(data_dir, 'newbie_guide.json')
-        
-        if os.path.exists(guide_path):
-            with open(guide_path, 'r', encoding='utf-8') as f:
-                guide_data = json.load(f)
-            # 無論 Firestore 中是否有資料，都用本地檔案的內容覆蓋
-            configs['newbie_guide'] = guide_data
-            config_logger.info("成功從本地檔案 newbie_guide.json 載入並覆蓋新手指南設定。")
-        else:
-            config_logger.warning(f"在本地找不到 newbie_guide.json，將使用 Firestore 中的版本（如果存在的話）。")
-            if 'newbie_guide' not in configs:
-                configs['newbie_guide'] = [] # 確保鍵存在
-            
-    except Exception as e:
-        config_logger.error(f"從本地檔案載入新手指南時發生錯誤: {e}", exc_info=True)
-        if 'newbie_guide' not in configs:
-            configs['newbie_guide'] = [] # 確保鍵存在
-    # --- 新增區塊結束 ---
-
-    # --- 新增區塊：從本地檔案讀取並覆蓋稱號設定 ---
-    config_logger.info("正在嘗試從本地檔案系統載入稱號設定...")
-    try:
-        data_dir = os.path.join(os.path.dirname(__file__), 'data')
-        titles_path = os.path.join(data_dir, 'titles.json')
-        
-        if os.path.exists(titles_path):
-            with open(titles_path, 'r', encoding='utf-8') as f:
-                titles_data = json.load(f)
-            # 無論 Firestore 中是否有資料，都用本地檔案的內容覆蓋
-            configs['titles'] = titles_data
-            config_logger.info("成功從本地檔案 titles.json 載入並覆蓋稱號設定。")
-        else:
-            config_logger.warning(f"在本地找不到 titles.json，將使用 Firestore 中的版本（如果存在的話）。")
-            if 'titles' not in configs:
-                configs['titles'] = [] # 確保鍵存在
-            
-    except Exception as e:
-        config_logger.error(f"從本地檔案載入稱號設定時發生錯誤: {e}", exc_info=True)
-        if 'titles' not in configs:
-            configs['titles'] = [] # 確保鍵存在
-    # --- 新增區塊結束 ---
-
     return configs
