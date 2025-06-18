@@ -978,3 +978,31 @@ body.light-theme .leaderboard-table tr:hover td {
     left: 50%;
     transform: translate(-50%, -50%); /* 確保圖片絕對置中 */
 }
+/* --- 新增：資訊面板收摺功能樣式 --- */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.collapsible-header:hover {
+    color: var(--accent-hover-dark);
+}
+
+body.light-theme .collapsible-header:hover {
+    color: var(--accent-hover-light);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease-in-out;
+    display: inline-block;
+    font-size: 0.8em;
+}
+
+.collapsible-content {
+    /* 動畫效果，可選 */
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+}
