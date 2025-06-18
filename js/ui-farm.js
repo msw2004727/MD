@@ -126,10 +126,10 @@ function renderMonsterFarm() {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         
-        // --- 核心修改處 ---
+        // --- 核心修改處 START ---
         const playerTitle = monster.player_title_part;
         const monsterAchievement = monster.achievement_part;
-        const elementNickname = monster.element_nickname_part || monster.custom_element_nickname;
+        const elementNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
         
         let nameHtml;
         // 如果怪獸資料包含新的、拆分好的名稱欄位，就使用它們
@@ -150,7 +150,7 @@ function renderMonsterFarm() {
             <a href="#" class="monster-name-link" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none; width: 100%;">
                 ${nameHtml}
             </a>`;
-        // --- 修改結束 ---
+        // --- 核心修改處 END ---
         
         const colScore = document.createElement('div');
         colScore.className = 'farm-col farm-col-score';
