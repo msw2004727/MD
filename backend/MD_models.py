@@ -185,7 +185,6 @@ class NamingConstraints(TypedDict): # 新增：命名限制設定
 class MonsterInteractionStats(TypedDict):
     chat_count: NotRequired[int]
     cultivation_count: NotRequired[int]
-    battle_count: NotRequired[int]
     touch_count: NotRequired[int]
     heal_count: NotRequired[int]
     near_death_count: NotRequired[int]
@@ -193,6 +192,14 @@ class MonsterInteractionStats(TypedDict):
     gift_count: NotRequired[int]
     bond_level: NotRequired[int]
     bond_points: NotRequired[int]
+    last_touch_timestamp: NotRequired[int]
+    touch_count_in_window: NotRequired[int]
+    last_chat_timestamp: NotRequired[int]
+    chat_count_in_window: NotRequired[int]
+    last_heal_timestamp: NotRequired[int]
+    heal_count_in_window: NotRequired[int]
+    last_cultivation_timestamp: NotRequired[int]
+    cultivation_count_in_window: NotRequired[int]
 
 class MonsterFarmStatus(TypedDict):
     active: bool
