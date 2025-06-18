@@ -231,22 +231,30 @@ def get_player_info_route(requested_player_id: str):
     )
 
     if player_data:
-        newly_awarded_titles = []
+        # --- 核心修改處 START ---
         if is_self_request:
+            # 檢查是否有新稱號
             player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
             
+            # 如果是新玩家，將預設稱號也加入待通知列表
             if is_new_player:
                 initial_titles = player_data.get("playerStats", {}).get("titles", [])
                 for it in initial_titles:
                     if it not in newly_awarded_titles:
                         newly_awarded_titles.append(it)
             
+            # 如果有任何新稱號需要通知
             if newly_awarded_titles:
-                player_data["newly_awarded_titles"] = newly_awarded_titles
-                routes_logger.info(f"玩家 {target_player_id_to_fetch} 獲得了 {len(newly_awarded_titles)} 個新稱號，將儲存並回傳。")
+                # 1. 先將不包含通知旗標的永久資料存檔
                 save_player_data_service(target_player_id_to_fetch, player_data)
-
+                routes_logger.info(f"玩家 {target_player_id_to_fetch} 的稱號資料已更新並儲存。")
+                
+                # 2. 然後才在準備回傳給前端的資料中，臨時加上通知旗標
+                player_data["newly_awarded_titles"] = newly_awarded_titles
+                routes_logger.info(f"將授予的 {len(newly_awarded_titles)} 個新稱號附加到回傳資料中。")
+        
         return jsonify(player_data), 200
+        # --- 核心修改處 END ---
     else:
         routes_logger.warning(f"在服務層未能獲取或初始化玩家 {target_player_id_to_fetch} 的資料。")
         return jsonify({"error": f"找不到玩家 {target_player_id_to_fetch} 或無法初始化資料。"}), 404
