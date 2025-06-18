@@ -29,9 +29,30 @@ function renderChatMessage(message, role) {
     const messageWrapper = document.createElement('div');
     messageWrapper.classList.add('chat-message-wrapper', `role-${role}`);
 
+    // ----- BUG 修正邏輯 START -----
+    // 如果是怪獸的回應，就新增頭像
+    if (role === 'assistant') {
+        const monster = gameState.playerData.farmedMonsters.find(m => m.id === currentChatMonsterId);
+        if (monster) {
+            const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
+            const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+            
+            const avatarContainer = document.createElement('div');
+            avatarContainer.className = 'chat-avatar-container';
+            const avatarImage = document.createElement('div');
+            avatarImage.className = 'chat-avatar-image';
+            if (imagePath) {
+                avatarImage.style.backgroundImage = `url('${imagePath}')`;
+            }
+            avatarContainer.appendChild(avatarImage);
+            messageWrapper.appendChild(avatarContainer);
+        }
+    }
+    // ----- BUG 修正邏輯 END -----
+
     const messageBubble = document.createElement('div');
     messageBubble.classList.add('chat-message-bubble');
-    // 將換行符 \n 轉換為 <br>，並支援 interaction 的斜體樣式
+    
     if (role === 'interaction') {
         messageBubble.innerHTML = `<i>${message.replace(/\n/g, '<br>')}</i>`;
     } else {
@@ -72,14 +93,12 @@ function setupChatTab(monster) {
 
     const chatHistory = monster.chatHistory || [];
     if (chatHistory.length > 0) {
-        // 將反向迴圈 (i--) 改為正向迴圈 (i++)，以修正歷史紀錄的顯示順序
         for (let i = 0; i < chatHistory.length; i++) {
             const entry = chatHistory[i];
             const role = entry.content.startsWith('（你') ? 'interaction' : entry.role;
             renderChatMessage(entry.content, role);
         }
     } else {
-        // --- 【修改】使用新的問候語資料庫來產生多樣化的開場白 ---
         const greetingsDB = gameState.chatGreetings;
         const shortName = monster.element_nickname_part || monster.nickname;
         let greetingPool = [];
@@ -90,7 +109,6 @@ function setupChatTab(monster) {
             const primaryElement = monster.elements?.[0];
             const rarity = monster.rarity;
 
-            // 根據個性、屬性、稀有度收集所有可能的問候語
             if (personalityName && greetingsDB.personality?.[personalityName]) {
                 greetingPool.push(...greetingsDB.personality[personalityName]);
             }
@@ -101,18 +119,15 @@ function setupChatTab(monster) {
                 greetingPool.push(...greetingsDB.rarity[rarity]);
             }
 
-            // 如果沒有特定問候語，或為了增加多樣性，加入通用問候語
             if (greetingPool.length === 0 && greetingsDB.default) {
                 greetingPool.push(...greetingsDB.default);
             }
             
-            // 從池中隨機挑選一句
             if (greetingPool.length > 0) {
                 finalGreeting = greetingPool[Math.floor(Math.random() * greetingPool.length)];
             }
         }
         
-        // 替換名字佔位符並顯示
         renderChatMessage(finalGreeting.replace('{shortName}', shortName), 'assistant');
     }
 }
@@ -132,10 +147,8 @@ async function handleInteractionClick(action) {
     };
     const userActionText = actionTextMap[action];
 
-    // 立即在畫面上顯示玩家的動作
     renderChatMessage(`（${userActionText}）`, 'interaction');
     
-    // 禁用所有按鈕避免重複點擊
     Object.values(chatElements).forEach(btn => {
         if (btn && typeof btn.disabled !== 'undefined') btn.disabled = true;
     });
@@ -149,7 +162,7 @@ async function handleInteractionClick(action) {
 
         if (response && response.success && response.reply) {
             renderChatMessage(response.reply, 'assistant');
-            await refreshPlayerData(); // 重新整理玩家資料以同步聊天紀錄
+            await refreshPlayerData();
         } else {
             throw new Error(response.error || '收到無效的回應');
         }
@@ -160,7 +173,6 @@ async function handleInteractionClick(action) {
         renderChatMessage(`（發生錯誤，無法回應：${error.message}）`, 'system');
         console.error("發送互動請求失敗:", error);
     } finally {
-        // 重新啟用所有按鈕
         Object.values(chatElements).forEach(btn => {
             if (btn && typeof btn.disabled !== 'undefined') btn.disabled = false;
         });
@@ -249,7 +261,6 @@ function initializeChatSystem() {
         });
     }
 
-    // 為三個互動按鈕綁定事件
     if (chatElements.punchBtn) {
         chatElements.punchBtn.addEventListener('click', () => handleInteractionClick('punch'));
     }
