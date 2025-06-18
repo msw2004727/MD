@@ -172,6 +172,25 @@ function toggleElementDisplay(element, show, displayType = 'block') {
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        // --- 核心修改處 START: 將重設邏輯從 hideModal 移至此處 ---
+        // 1. 重置所有可滾動內容區域的捲軸到頂部
+        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container');
+        scrollableBodies.forEach(body => {
+            body.scrollTop = 0;
+        });
+
+        // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
+        const tabButtonsContainer = modal.querySelector('.tab-buttons');
+        if (tabButtonsContainer) {
+            const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
+            if (firstTabButton && typeof switchTabContent === 'function') {
+                const firstTabTargetId = firstTabButton.dataset.tabTarget;
+                // 傳入 modalId 確保只操作當前彈窗內的頁籤
+                switchTabContent(firstTabTargetId, firstTabButton, modalId);
+            }
+        }
+        // --- 核心修改處 END ---
+
         modal.style.display = 'flex';
         gameState.activeModalId = modalId;
     }
@@ -185,28 +204,7 @@ function hideModal(modalId) {
             gameState.activeModalId = null;
         }
         
-        // --- 核心修改處 START ---
-        // 1. 重置所有可滾動內容區域的捲軸到頂部
-        const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container');
-        scrollableBodies.forEach(body => {
-            if (body.scrollTop > 0) {
-                body.scrollTop = 0;
-            }
-        });
-
-        // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
-        const tabButtonsContainer = modal.querySelector('.tab-buttons');
-        if (tabButtonsContainer) {
-            const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
-            if (firstTabButton) {
-                const firstTabTargetId = firstTabButton.dataset.tabTarget;
-                if (typeof switchTabContent === 'function') {
-                    // 傳入 modalId 確保只操作當前彈窗內的頁籤
-                    switchTabContent(firstTabTargetId, firstTabButton, modalId);
-                }
-            }
-        }
-        // --- 核心修改處 END ---
+        // --- 核心修改處：已將重設邏輯移至 showModal ---
 
         // 清除通用回饋視窗的計時器
         if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
