@@ -60,18 +60,6 @@ def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[
                     selected_monster_id = player_game_data.get("selectedMonsterId")
                     farmed_monsters = player_game_data.get("farmedMonsters", [])
                     player_nickname = player_game_data.get("nickname", user_doc.id)
-                    
-                    # --- 核心修改處 START ---
-                    player_stats = player_game_data.get("playerStats", {})
-                    owner_title_buffs = {}
-                    if player_stats:
-                        equipped_id = player_stats.get("equipped_title_id")
-                        if equipped_id:
-                            owned_titles = player_stats.get("titles", [])
-                            equipped_title = next((t for t in owned_titles if t.get("id") == equipped_id), None)
-                            if equipped_title and equipped_title.get("buffs"):
-                                owner_title_buffs = equipped_title["buffs"]
-                    # --- 核心修改處 END ---
 
                     if selected_monster_id:
                         for monster_dict in farmed_monsters:
@@ -79,16 +67,11 @@ def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[
                                 monster_copy = copy.deepcopy(monster_dict)
                                 monster_copy["owner_nickname"] = player_nickname # type: ignore
                                 monster_copy["owner_id"] = user_doc.id # type: ignore
-                                
-                                # --- 核心修改處 START ---
-                                # 將主人的稱號效果附加到怪獸物件上
-                                monster_copy["owner_title_buffs"] = owner_title_buffs # type: ignore
-                                # --- 核心修改處 END ---
-
+                                # 確保 farmStatus 存在，即使是空字典，以便前端統一處理
                                 if "farmStatus" not in monster_copy:
                                     monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False}
                                 all_selected_monsters.append(monster_copy) # type: ignore
-                                break
+                                break # 找到選定的怪獸後即可跳出
         
         leaderboard_search_services_logger.info(f"成功獲取 {len(all_selected_monsters)} 隻玩家出戰怪獸。")
         return all_selected_monsters

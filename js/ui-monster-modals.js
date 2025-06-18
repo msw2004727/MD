@@ -18,8 +18,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
+    // --- 核心修改處 START ---
+    // 使用新的共用函式來取代原本重複的邏輯
     const editableNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
-    
+    // --- 核心修改處 END ---
+
+    // 【修改】修正檢查怪獸是否為玩家自己的邏輯
     const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
@@ -38,27 +42,10 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
-    // --- 核心修改處 START ---
     let titleBuffs = {};
-    let dataSource = null;
-
-    // 判斷正確的資料來源
-    // 1. 如果怪獸在當前玩家的農場裡，資料來源就是當前玩家
-    if (gameState.playerData && gameState.playerData.farmedMonsters.some(m => m.id === monster.id)) {
-        dataSource = gameState.playerData;
-    } 
-    // 2. 如果怪獸在「正在查看」的玩家資料中，資料來源就是那個被查看的玩家
-    else if (gameState.viewedPlayerData && gameState.viewedPlayerData.farmedMonsters.some(m => m.id === monster.id)) {
-        dataSource = gameState.viewedPlayerData;
-    } 
-    // 3. 其他情況（例如從排行榜點擊），我們沒有完整的玩家資料，所以不顯示稱號加成
-    else {
-        dataSource = null; 
-    }
-    
-    // 從正確的資料來源計算加成
-    if (dataSource && dataSource.playerStats) {
-        const stats = dataSource.playerStats;
+    const monsterOwnerId = monster.owner_id || gameState.playerId;
+    if (monsterOwnerId === gameState.playerId && gameState.playerData.playerStats) {
+        const stats = gameState.playerData.playerStats;
         const equippedId = stats.equipped_title_id;
         if (equippedId && stats.titles) {
             const equippedTitle = stats.titles.find(t => t.id === equippedId);
@@ -67,8 +54,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             }
         }
     }
-    // --- 核心修改處 END ---
-
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -887,4 +872,3 @@ function updateTrainingResultsModal(results, monsterName) {
 
 
 console.log("UI Modals module loaded.");
-}
