@@ -80,6 +80,7 @@ class Skill(TypedDict):
     story: NotRequired[str] # 招式敘述，用於戰鬥履歷
     description: NotRequired[str] # 備用敘述欄位
     type: ElementTypes
+    rarity: NotRequired[RarityNames] # 【新增】技能稀有度
     baseLevel: int
     mp_cost: NotRequired[int]
     skill_category: NotRequired[SkillCategory]
