@@ -44,28 +44,37 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
         confirmationTitle = `佔領第 ${rankToChallenge} 名`;
         confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
         
-        finalOpponent = {
-            id: `npc_guardian_${rankToChallenge}`,
-            nickname: '殿堂守護者',
-            element_nickname_part: '殿堂守護者', 
-            isNPC: true,
-            rarity: "稀有",
-            elements: ["混"],
-            initial_max_hp: 150 + (4 - rankToChallenge) * 50,
-            hp: 150 + (4 - rankToChallenge) * 50,
-            initial_max_mp: 50 + (4 - rankToChallenge) * 20,
-            mp: 50 + (4 - rankToChallenge) * 20,
-            attack: 30 + (4 - rankToChallenge) * 10,
-            defense: 30 + (4 - rankToChallenge) * 10,
-            speed: 30 + (4 - rankToChallenge) * 5,
-            crit: 10,
-            skills: [
-                { name: "揮指", power: 0, mp_cost: 10, type: "混", skill_category: "其他", level: 5 },
-                { name: "泰山壓頂", power: 65, mp_cost: 13, type: "無", skill_category: "物理", level: 5 }
-            ],
-            personality: { name: "冷静的" },
-            score: 200 + (4 - rankToChallenge) * 50
-        };
+        // 從遊戲設定檔讀取守門員資料
+        const guardians = gameState.gameConfigs?.champion_guardians;
+        const guardianData = guardians ? guardians[`rank${rankToChallenge}`] : null;
+
+        if (guardianData) {
+            finalOpponent = { ...guardianData }; // 複製一份以防萬一
+        } else {
+            // 後備的守門員資料
+             finalOpponent = {
+                id: `npc_guardian_${rankToChallenge}`,
+                nickname: '殿堂守護者',
+                element_nickname_part: '殿堂守護者', 
+                isNPC: true,
+                rarity: "稀有",
+                elements: ["混"],
+                initial_max_hp: 150 + (4 - rankToChallenge) * 50,
+                hp: 150 + (4 - rankToChallenge) * 50,
+                initial_max_mp: 50 + (4 - rankToChallenge) * 20,
+                mp: 50 + (4 - rankToChallenge) * 20,
+                attack: 30 + (4 - rankToChallenge) * 10,
+                defense: 30 + (4 - rankToChallenge) * 10,
+                speed: 30 + (4 - rankToChallenge) * 5,
+                crit: 10,
+                skills: [
+                    { name: "揮指", level: 5 },
+                    { name: "泰山壓頂", level: 5 }
+                ],
+                personality: { name: "冷静的" },
+                score: 200 + (4 - rankToChallenge) * 50
+            };
+        }
     }
 
     gameState.battleTargetMonster = finalOpponent;
@@ -141,15 +150,15 @@ function renderChampionSlots(championsData) {
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'champion-avatar';
         avatarContainer.appendChild(avatarDiv);
-
+        
+        // --- 核心修改處 START ---
+        // 容器現在是 champion-identity-container
         const identityContainer = document.createElement('div');
         identityContainer.className = 'champion-identity-container';
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'champion-name';
+        // --- 核心修改處 END ---
+
         const reignDiv = document.createElement('div');
         reignDiv.className = 'champion-reign-duration';
-        identityContainer.appendChild(nameSpan);
-        identityContainer.appendChild(reignDiv);
 
         const buttonEl = document.createElement('button');
         buttonEl.className = 'champion-challenge-btn button secondary text-xs';
@@ -166,12 +175,25 @@ function renderChampionSlots(championsData) {
             } else {
                  avatarDiv.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
             }
+            
+            // --- 核心修改處 START ---
+            // 建立新的暱稱和怪獸名稱元素
+            const ownerTag = document.createElement('span');
+            ownerTag.className = 'champion-owner-tag';
+            ownerTag.textContent = monster.owner_nickname || '未知玩家';
 
-            const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
-            nameSpan.textContent = displayName;
+            const monsterNameSpan = document.createElement('span');
+            monsterNameSpan.className = 'champion-monster-name';
+            monsterNameSpan.textContent = getMonsterDisplayName(monster, gameState.gameConfigs);
+            
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-            nameSpan.classList.add(`text-rarity-${rarityKey}`);
+            monsterNameSpan.classList.add(`text-rarity-${rarityKey}`);
+
+            identityContainer.appendChild(ownerTag);
+            identityContainer.appendChild(document.createTextNode(' 的 ')); // 加入 "的"
+            identityContainer.appendChild(monsterNameSpan);
+            // --- 核心修改處 END ---
 
             if (monster.occupiedTimestamp) {
                 const nowInSeconds = Math.floor(Date.now() / 1000);
@@ -206,7 +228,10 @@ function renderChampionSlots(championsData) {
         } else {
             avatarDiv.innerHTML = `<span class="champion-placeholder-text">虛位以待</span>`;
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
-            nameSpan.textContent = rankNames[rank];
+            const placeholderName = document.createElement('span');
+            placeholderName.className = 'champion-name';
+            placeholderName.textContent = rankNames[rank];
+            identityContainer.appendChild(placeholderName);
             
             let canOccupy = false;
             if (playerMonster) {
@@ -229,6 +254,7 @@ function renderChampionSlots(championsData) {
         
         slot.appendChild(avatarContainer);
         slot.appendChild(identityContainer);
+        // slot.appendChild(reignDiv); // reignDiv 已被移除，因為它現在是 identityContainer 的一部分
         slot.appendChild(buttonEl);
     });
 }
