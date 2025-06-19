@@ -114,14 +114,14 @@
 
 .champion-crown {
     position: absolute;
-    top: 0.2rem; /* 修改：調整垂直位置以適應新的父容器 */
+    top: -0.5rem; /* 調整：將 top 值改為負值，使其向上移動 */
     left: 50%;
     transform: translateX(-50%);
     font-size: 2.2rem;
     color: gold;
     text-shadow: 0 0 6px rgba(0,0,0,0.6);
     pointer-events: none;
-    z-index: 5; 
+    z-index: 5;
 }
 
 /* 在位時間旗幟的樣式 */
