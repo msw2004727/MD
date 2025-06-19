@@ -672,3 +672,16 @@ function populateImageAssetSources() {
     });
     console.log("Image asset sources have been populated dynamically.");
 }
+
+function updatePlayerCurrencyDisplay(amount) {
+    const amountElement = document.getElementById('player-currency-amount');
+    if (amountElement) {
+        const numAmount = Number(amount);
+        if (isNaN(numAmount)) {
+            amountElement.textContent = '0';
+            return;
+        }
+        // 使用 toLocaleString 來自動加上千分位符號
+        amountElement.textContent = numAmount.toLocaleString('en-US');
+    }
+}
