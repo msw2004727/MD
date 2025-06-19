@@ -325,10 +325,18 @@ def simulate_battle_full(
     
     player_initial_stats = _get_monster_current_stats(player_monster, player_data)
     opponent_initial_stats = _get_monster_current_stats(opponent_monster, opponent_player_data)
-    player_monster["current_hp"] = player_initial_stats["initial_max_hp"]
-    player_monster["current_mp"] = player_initial_stats["initial_max_mp"]
-    opponent_monster["current_hp"] = opponent_initial_stats["initial_max_hp"]
-    opponent_monster["current_mp"] = opponent_initial_stats["initial_max_mp"]
+    
+    # 移除
+    # player_monster["current_hp"] = player_initial_stats["initial_max_hp"]
+    # player_monster["current_mp"] = player_initial_stats["initial_max_mp"]
+    # opponent_monster["current_hp"] = opponent_initial_stats["initial_max_hp"]
+    # opponent_monster["current_mp"] = opponent_initial_stats["initial_max_mp"]
+    
+    # 新增
+    player_monster["current_hp"] = player_initial_stats["hp"]
+    player_monster["current_mp"] = player_initial_stats["mp"]
+    opponent_monster["current_hp"] = opponent_initial_stats["hp"]
+    opponent_monster["current_mp"] = opponent_initial_stats["mp"]
     
     player_monster.setdefault("healthConditions", [])
     opponent_monster.setdefault("healthConditions", [])
