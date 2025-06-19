@@ -338,3 +338,107 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         updateMonsterSnapshot(playerMonster);
     }
 }
+
+/**
+ * 【新增】處理點擊冠軍殿堂中的「佔領」或「挑戰」按鈕。
+ * @param {Event} event - 點擊事件。
+ * @param {number} rankToChallenge - 欲挑戰或佔領的排名 (1-4)。
+ * @param {object | null} opponentMonster - 該席位的怪獸物件，如果為空位則為 null。
+ */
+async function handleChampionChallengeClick(event, rankToChallenge, opponentMonster) {
+    if (event) event.stopPropagation();
+
+    const playerMonster = getSelectedMonster();
+    if (!playerMonster) {
+        showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
+        return;
+    }
+    if (playerMonster.farmStatus?.isTraining) {
+        showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
+        return;
+    }
+    if (playerMonster.hp < playerMonster.initial_max_hp * 0.25) {
+        showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
+        return;
+    }
+
+    let finalOpponent;
+    let confirmationTitle;
+    let confirmationMessage;
+
+    if (opponentMonster) {
+        // --- 挑戰現有冠軍 ---
+        finalOpponent = opponentMonster;
+        confirmationTitle = `挑戰第 ${rankToChallenge} 名`;
+        confirmationMessage = `您確定要讓 ${playerMonster.nickname} 挑戰 ${finalOpponent.nickname} 的冠軍席位嗎？`;
+    } else {
+        // --- 佔領空位，挑戰守門員NPC ---
+        confirmationTitle = `佔領第 ${rankToChallenge} 名`;
+        confirmationMessage = `您確定要挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
+        // 創建一個基礎的守門員NPC
+        finalOpponent = {
+            id: `npc_guardian_${rankToChallenge}`,
+            nickname: `第 ${rankToChallenge} 名守門員`,
+            isNPC: true,
+            rarity: "稀有",
+            elements: ["混"],
+            // 根據排名給予不同的強度
+            initial_max_hp: 150 + (4 - rankToChallenge) * 50,
+            hp: 150 + (4 - rankToChallenge) * 50,
+            initial_max_mp: 50 + (4 - rankToChallenge) * 20,
+            mp: 50 + (4 - rankToChallenge) * 20,
+            attack: 30 + (4 - rankToChallenge) * 10,
+            defense: 30 + (4 - rankToChallenge) * 10,
+            speed: 30 + (4 - rankToChallenge) * 5,
+            crit: 10,
+            skills: [
+                { name: "揮指", power: 0, mp_cost: 10, type: "混", skill_category: "其他", level: 5 },
+                { name: "泰山壓頂", power: 65, mp_cost: 13, type: "無", skill_category: "物理", level: 5 }
+            ],
+            personality: { name: "冷静的" },
+            score: 200 + (4 - rankToChallenge) * 50
+        };
+    }
+
+    gameState.battleTargetMonster = finalOpponent;
+
+    showConfirmationModal(
+        confirmationTitle,
+        confirmationMessage,
+        async () => {
+            try {
+                showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
+                
+                const { battle_result: battleResult } = await simulateBattle({
+                    player_monster_data: playerMonster,
+                    opponent_monster_data: finalOpponent,
+                    opponent_owner_id: finalOpponent.owner_id || null, // 傳遞擁有者ID
+                    opponent_owner_nickname: finalOpponent.owner_nickname || "冠軍守護者",
+                    // --- 核心參數：標記這是一場冠軍挑戰賽 ---
+                    is_champion_challenge: true,
+                    challenged_rank: rankToChallenge
+                });
+
+                // 戰鬥結束後刷新所有資料
+                await refreshPlayerData(); 
+                // 重新獲取並渲染排行榜 (這會自動更新冠軍殿堂)
+                if (typeof handleMonsterLeaderboardClick === 'function') {
+                    // 使用 setTimeout 確保在UI更新後再開啟新 modal
+                    setTimeout(() => {
+                       handleMonsterLeaderboardClick();
+                    }, 100);
+                }
+                
+                // 顯示戰報
+                hideModal('feedback-modal');
+                showBattleLogModal(battleResult);
+
+            } catch (battleError) {
+                showFeedbackModal('戰鬥失敗', `模擬冠軍戰鬥時發生錯誤: ${battleError.message}`);
+                console.error("模擬冠軍戰鬥錯誤:", battleError);
+                await refreshPlayerData(); 
+            }
+        },
+        { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
+    );
+}
