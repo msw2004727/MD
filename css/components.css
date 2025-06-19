@@ -1011,3 +1011,31 @@ body.light-theme .leaderboard-table tr:hover td {
 .confirm-stat-bar.mp .confirm-stat-bar-fill {
     background-color: var(--accent-color);
 }
+
+/* --- 新增：玩家貨幣面板樣式 --- */
+.player-currency-panel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* 右對齊 */
+    gap: 0.5rem;
+    padding: 4px 10px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 16px; /* 膠囊形狀 */
+    max-width: 160px; /* 限制最大寬度 */
+    margin-left: auto; /* 將其推到右邊 */
+    margin-right: 5px; /* 右邊留一點空隙 */
+    margin-bottom: 5px; /* 與下方頁籤的間距 */
+}
+
+.player-currency-panel .currency-icon {
+    font-size: 1.1rem; /* 錢幣圖示稍大 */
+}
+
+#player-currency-amount {
+    font-size: 0.95rem; /* 數字字體稍小 */
+    font-weight: bold;
+    color: var(--rarity-legendary-text); /* 使用金色來代表金錢 */
+    letter-spacing: 0.5px;
+    font-family: 'Inter', monospace; /* 使用等寬字體讓數字更好看 */
+}
