@@ -190,9 +190,7 @@ async function handleEndCultivationClick(event, monsterId, trainingStartTime, tr
     const totalDurationSeconds = trainingDuration / 1000;
 
     if (elapsedTimeSeconds < totalDurationSeconds) {
-        // --- 核心修改處 START ---
         const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
-        // --- 核心修改處 END ---
 
         showConfirmationModal(
             '提前結束修煉',
@@ -548,41 +546,74 @@ async function handleDeployMonsterClick(monsterId) {
         console.error("handleDeployMonsterClick: 無效的怪獸ID或玩家資料不存在。");
         return;
     }
-
-    const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-    if (!monster) {
-         console.error(`handleDeployMonsterClick: 在農場中找不到ID為 ${monsterId} 的怪獸。`);
-         return;
+    
+    const newMonsterToDeploy = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+    if (!newMonsterToDeploy) {
+        console.error(`handleDeployMonsterClick: 在農場中找不到ID為 ${monsterId} 的怪獸。`);
+        return;
     }
 
-    if (monster.farmStatus?.isTraining) {
+    if (newMonsterToDeploy.farmStatus?.isTraining) {
         showFeedbackModal('提示', '該怪獸正在修煉中，需要先召回才可以指派出戰。');
         return;
     }
     
-    // 【新增】檢查瀕死狀態
-    if (monster.hp < monster.initial_max_hp * 0.25) {
+    if (newMonsterToDeploy.hp < newMonsterToDeploy.initial_max_hp * 0.25) {
         showFeedbackModal('無法出戰', '瀕死狀態下無法出戰，請先治療您的怪獸。');
         return;
     }
 
-    gameState.selectedMonsterId = monsterId;
-    gameState.playerData.selectedMonsterId = monsterId;
+    const currentSelectedId = gameState.selectedMonsterId;
+    // 如果點擊的怪獸已經是出戰狀態，則不執行任何操作
+    if (currentSelectedId === monsterId) {
+        return;
+    }
+
+    const proceedWithDeployment = async () => {
+        gameState.selectedMonsterId = monsterId;
+        gameState.playerData.selectedMonsterId = monsterId;
+        
+        if (typeof updateMonsterSnapshot === 'function') {
+            updateMonsterSnapshot(newMonsterToDeploy);
+        }
+        if (typeof renderMonsterFarm === 'function') {
+            renderMonsterFarm();
+        }
+
+        try {
+            await savePlayerData(gameState.playerId, gameState.playerData);
+            console.log(`玩家 ${gameState.playerId} 已將怪獸 ${monsterId} 設為出戰並儲存。`);
+        } catch (error) {
+            console.error("設置出戰怪獸並儲存時發生錯誤:", error);
+            showFeedbackModal('錯誤', `設置出戰怪獸失敗: ${error.message}`);
+        }
+    };
     
-    if (typeof updateMonsterSnapshot === 'function') {
-        updateMonsterSnapshot(monster);
-    }
-    if (typeof renderMonsterFarm === 'function') {
-        renderMonsterFarm();
-    }
+    // 檢查舊的出戰怪獸是否在冠軍殿堂
+    if (currentSelectedId) {
+        showFeedbackModal('檢查中...', '正在確認冠軍席位...', true);
+        try {
+            const championsData = await getChampionsLeaderboard();
+            hideModal('feedback-modal');
+            
+            const isCurrentChampion = championsData.some(champ => champ && champ.monsterId === currentSelectedId);
 
-    try {
-        await savePlayerData(gameState.playerId, gameState.playerData);
-        console.log(`玩家 ${gameState.playerId} 已將怪獸 ${monsterId} 設為出戰並儲存。`);
-
-    } catch (error) {
-        console.error("設置出戰怪獸並儲存時發生錯誤:", error);
-        showFeedbackModal('錯誤', `設置出戰怪獸失敗: ${error.message}`);
+            if (isCurrentChampion) {
+                showConfirmationModal(
+                    '確認更換出戰',
+                    '您目前出戰的怪獸正位於冠軍殿堂中。更換出戰怪獸將會自動放棄目前的冠軍席位。您確定要更換嗎？',
+                    proceedWithDeployment, // 如果確認，則執行部署
+                    { confirmButtonClass: 'danger', confirmButtonText: '確定更換' }
+                );
+            } else {
+                await proceedWithDeployment(); // 如果不是冠軍，直接部署
+            }
+        } catch (error) {
+            hideModal('feedback-modal');
+            showFeedbackModal('錯誤', '檢查冠軍席位時發生錯誤，請稍後再試。');
+        }
+    } else {
+        await proceedWithDeployment(); // 如果之前沒有選擇怪獸，直接部署
     }
 }
 
