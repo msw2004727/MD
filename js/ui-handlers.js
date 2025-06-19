@@ -129,16 +129,29 @@ function handleAuthForms() {
 
 async function handleMonsterLeaderboardClick() {
     try {
-        showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
-        const leaderboardData = await getMonsterLeaderboard(20);
+        showFeedbackModal('載入中...', '正在獲取排行榜...', true);
         
+        // --- 核心修改：同時獲取兩份資料 ---
+        const [championsData, leaderboardData] = await Promise.all([
+            getChampionsLeaderboard(), // 呼叫新函式獲取冠軍資料
+            getMonsterLeaderboard(20)  // 繼續獲取一般排行榜資料
+        ]);
+        
+        // 將一般排行榜資料存入 gameState
         gameState.monsterLeaderboard = leaderboardData || [];
         
-        updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container');
-        
-        // 新增：呼叫渲染冠軍殿堂的函式
+        // 呼叫冠軍殿堂的渲染函式，並傳入正確的冠軍資料
         if (typeof renderChampionSlots === 'function') {
-            renderChampionSlots(gameState.monsterLeaderboard);
+            renderChampionSlots(championsData || [null, null, null, null]);
+        }
+        
+        // 呼叫一般排行榜的渲染函式，傳入一般排行榜資料
+        updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container'); 
+        
+        // 首次加載時，渲染元素篩選頁籤
+        if (DOMElements.monsterLeaderboardElementTabs && DOMElements.monsterLeaderboardElementTabs.innerHTML.trim() === '') {
+            const allElements = ['all', '火', '水', '木', '金', '土', '光', '暗', '毒', '風', '混', '無'];
+            updateMonsterLeaderboardElementTabs(allElements);
         }
 
         hideModal('feedback-modal');
