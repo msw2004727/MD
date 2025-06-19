@@ -114,7 +114,7 @@
 
 .champion-crown {
     position: absolute;
-    top: -0.5rem; /* 調整：將 top 值改為負值，使其向上移動 */
+    top: -0.9rem; /* 調整：將 top 值改為負值，使其向上移動 */
     left: 50%;
     transform: translateX(-50%);
     font-size: 2.2rem;
