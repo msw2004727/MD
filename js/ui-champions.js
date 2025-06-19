@@ -2,7 +2,7 @@
 // 負責渲染「冠軍殿堂」區塊的 UI
 
 /**
- * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位，並實作挑戰按鈕的資格判斷。
+ * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位，並實作挑戰按鈕的資格判斷與在位時間顯示。
  * @param {Array<object|null>} championsData - 從後端獲取的、包含四個冠軍槽位怪獸資料的陣列。
  */
 function renderChampionSlots(championsData) {
@@ -31,13 +31,13 @@ function renderChampionSlots(championsData) {
         const avatarEl = slot.querySelector(`#champion-avatar-${rank}`);
         const nameEl = slot.querySelector(`#champion-name-${rank}`);
         const buttonEl = slot.querySelector(`#champion-challenge-btn-${rank}`);
-        
-        // 移除了 reignDurationEl 的獲取
+        const reignDurationEl = slot.querySelector(`#champion-reign-duration-${rank}`);
 
-        if (!avatarEl || !nameEl || !buttonEl) return;
+        if (!avatarEl || !nameEl || !buttonEl || !reignDurationEl) return;
 
         // 清空舊內容
         avatarEl.innerHTML = '';
+        reignDurationEl.style.display = 'none'; // 預設隱藏
         slot.classList.remove('occupied');
 
         // 移除舊的監聽器以防重複綁定
@@ -67,8 +67,21 @@ function renderChampionSlots(championsData) {
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
             nameEl.className = `champion-name text-rarity-${rarityKey}`;
 
-            // 3. 移除了在位時間的計算與顯示邏輯
-            
+            // 3. 設置在位時間
+            if (monster.occupiedTimestamp) {
+                const occupiedDate = new Date(monster.occupiedTimestamp * 1000);
+                const nowDate = new Date();
+
+                occupiedDate.setHours(0, 0, 0, 0);
+                nowDate.setHours(0, 0, 0, 0);
+
+                const diffTime = Math.abs(nowDate - occupiedDate);
+                const daysInReign = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                reignDurationEl.textContent = `在位 ${daysInReign} 天`;
+                reignDurationEl.style.display = 'block'; // 顯示旗幟
+            }
+
             // 4. 設置按鈕邏輯
             if (monster.owner_id === playerId) {
                 newButtonEl.textContent = "你的席位";
@@ -102,6 +115,7 @@ function renderChampionSlots(championsData) {
             nameEl.textContent = rankNames[rank];
             nameEl.className = 'champion-name';
             
+            // --- 核心修改處 ---
             const canOccupy = playerMonster && playerChampionRank === 0 && rank === 4;
             newButtonEl.textContent = "佔領";
             newButtonEl.disabled = !canOccupy;
