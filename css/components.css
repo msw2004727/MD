@@ -978,3 +978,36 @@ body.light-theme .leaderboard-table tr:hover td {
     left: 50%;
     transform: translate(-50%, -50%); /* 確保圖片絕對置中 */
 }
+
+/* --- 新增：確認出戰彈窗的狀態條 --- */
+.confirm-stat-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px; /* 與上方文字的間距 */
+    width: 100%;
+}
+
+.confirm-stat-bar {
+    height: 8px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+
+.confirm-stat-bar-fill {
+    height: 100%;
+    width: 0%; /* Default width */
+    border-radius: 2px;
+    transition: width 0.4s ease-in-out;
+}
+
+.confirm-stat-bar.hp .confirm-stat-bar-fill {
+    background-color: var(--success-color);
+}
+
+.confirm-stat-bar.mp .confirm-stat-bar-fill {
+    background-color: var(--accent-color);
+}
