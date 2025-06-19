@@ -131,17 +131,19 @@ async function handleMonsterLeaderboardClick() {
     try {
         showFeedbackModal('載入中...', '正在獲取排行榜...', true);
         
-        // 【修改】同時獲取冠軍殿堂和一般排行榜的資料
+        // 同時獲取冠軍殿堂和一般排行榜的資料
         const [championsData, leaderboardData] = await Promise.all([
             getChampionsLeaderboard(),
             getMonsterLeaderboard(20)
         ]);
         
+        // 【新增】將獲取到的冠軍資料存到 gameState 中
+        gameState.champions = championsData || [null, null, null, null];
         gameState.monsterLeaderboard = leaderboardData || [];
         
-        // 【新增】呼叫渲染冠軍殿堂的函式
+        // 呼叫渲染冠軍殿堂的函式
         if (typeof renderChampionSlots === 'function') {
-            renderChampionSlots(championsData || [null, null, null, null]);
+            renderChampionSlots(gameState.champions);
         }
         
         // 渲染一般排行榜
