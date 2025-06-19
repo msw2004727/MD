@@ -63,7 +63,14 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
 
     full_details: List[Optional[Dict[str, Any]]] = [None] * 4
     
-    # 建立一個需要查詢的玩家ID列表，以優化資料庫讀取
+    # 【修改】預先載入 DNA 範本以供查詢
+    try:
+        dna_templates_doc = db.collection('MD_GameConfigs').document('DNAFragments').get()
+        all_dna_templates = dna_templates_doc.to_dict().get('all_fragments', []) if dna_templates_doc.exists else []
+    except Exception as e:
+        champion_logger.error(f"無法從 Firestore 載入 DNA 範本: {e}")
+        all_dna_templates = []
+    
     owners_to_fetch: Dict[str, List[Dict[str, Any]]] = {}
     for i in range(1, 5):
         slot_info: Optional[ChampionSlot] = champions_info.get(f"rank{i}")
@@ -71,14 +78,12 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
             owner_id = slot_info["ownerId"]
             if owner_id not in owners_to_fetch:
                 owners_to_fetch[owner_id] = []
-            # 儲存需要查找的完整資訊
             owners_to_fetch[owner_id].append({
                 "rank": i, 
                 "monster_id": slot_info["monsterId"],
                 "occupied_timestamp": slot_info.get("occupiedTimestamp")
             })
 
-    # 一次性獲取所有相關玩家的遊戲資料
     if owners_to_fetch:
         for owner_id, monsters_to_find in owners_to_fetch.items():
             try:
@@ -93,10 +98,21 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
                         found_monster = next((m for m in farmed_monsters if m.get("id") == monster_id), None)
                         
                         if found_monster:
-                            # 附加擁有者與時間戳資訊
                             found_monster["owner_id"] = owner_id
                             found_monster["owner_nickname"] = player_game_data.get("nickname", "未知玩家")
                             found_monster["occupiedTimestamp"] = item.get("occupied_timestamp")
+                            
+                            # 【新增】補上查詢頭像 DNA 的邏輯
+                            head_dna_info = { "type": "無", "rarity": "普通" } 
+                            constituent_ids = found_monster.get("constituent_dna_ids", [])
+                            if constituent_ids:
+                                head_dna_id = constituent_ids[0]
+                                head_dna_template = next((dna for dna in all_dna_templates if dna.get("id") == head_dna_id), None)
+                                if head_dna_template:
+                                    head_dna_info["type"] = head_dna_template.get("type", "無")
+                                    head_dna_info["rarity"] = head_dna_template.get("rarity", "普通")
+                            found_monster["head_dna_info"] = head_dna_info
+                            
                             full_details[rank - 1] = found_monster
                         else:
                             champion_logger.warning(f"在玩家 {owner_id} 的農場中找不到冠軍怪獸 {monster_id}。該席位將顯示為空。")
