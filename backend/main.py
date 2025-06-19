@@ -21,6 +21,7 @@ from backend.logging_config import setup_logging
 # ----- BUG 修正邏輯 END -----
 
 from backend.MD_routes import md_bp
+from backend.champion_routes import champion_bp # 新增：導入冠軍殿堂的藍圖
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
 
@@ -55,6 +56,7 @@ app_logger.info("CORS configured to allow origins: %s", allowed_origins)
 
 # 註冊藍圖
 app.register_blueprint(md_bp)
+app.register_blueprint(champion_bp) # 新增：註冊冠軍殿堂的藍圖
 
 # --- Firebase Admin SDK 初始化 ---
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'

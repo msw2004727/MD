@@ -8,7 +8,7 @@ import logging
 import random
 import copy 
 import time 
-import math # 【新增】導入 math 函式庫以進行數學運算
+import math
 from typing import List, Dict, Any, Tuple
 
 from flask_cors import cross_origin
@@ -21,7 +21,6 @@ from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
 from .battle_services import simulate_battle_full
-# 【新增】導入新的互動服務函式
 from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service 
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
@@ -30,10 +29,7 @@ from .leaderboard_search_services import (
 )
 from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
-# --- 核心修改處 START ---
-# 從新的戰鬥後服務檔案中，導入處理結果的函式
 from .post_battle_services import process_battle_results
-# --- 核心修改處 END ---
 
 
 md_bp = Blueprint('md_bp', __name__, url_prefix='/api/MD')
@@ -68,10 +64,6 @@ def _get_authenticated_user_id():
     except Exception as e:
         routes_logger.error(f"Token 處理時發生未知錯誤: {e}", exc_info=True)
         return None, None, (jsonify({"error": f"Token 處理錯誤: {str(e)}"}), 403)
-
-# --- 核心修改處 START ---
-# 移除 _check_and_award_titles 函式，它已經被搬到 post_battle_services.py
-# --- 核心修改處 END ---
 
 @md_bp.route('/health', methods=['GET'])
 def health_check():
@@ -139,9 +131,6 @@ def equip_title_route():
 
 @md_bp.route('/player/<path:requested_player_id>', methods=['GET'])
 def get_player_info_route(requested_player_id: str):
-    # 此路由函式需要 _check_and_award_titles，但現在它在 post_battle_services 中
-    # 為了避免循環導入，我們在這裡重新定義它或將其移動到更合適的地方，例如 player_services
-    # 暫時保持原樣，因為這個稱號檢查只在獲取自己的資料時觸發，我們可以後續再優化
     from .post_battle_services import _check_and_award_titles as check_titles_utility
 
     game_configs = _get_game_configs_data_from_app_context()
@@ -387,6 +376,10 @@ def simulate_battle_api_route():
     opponent_owner_id_req = data.get('opponent_owner_id')
     opponent_owner_nickname_req = data.get('opponent_owner_nickname')
 
+    # 新增：從請求中獲取冠軍挑戰的相關資訊
+    is_champion_challenge = data.get('is_champion_challenge', False)
+    challenged_rank = data.get('challenged_rank', None)
+
     if not player_monster_data_req or not opponent_monster_data_req:
         return jsonify({"error": "請求中必須包含兩隻怪獸的資料。"}), 400
 
@@ -412,8 +405,6 @@ def simulate_battle_api_route():
         opponent_player_data=opponent_player_data
     )
 
-    # --- 核心修改處 START ---
-    # 移除所有戰鬥後結算的邏輯，改為呼叫新的服務
     if battle_result.get("battle_end"):
         routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
         updated_player_data, newly_awarded_titles = process_battle_results(
@@ -424,13 +415,13 @@ def simulate_battle_api_route():
             player_monster_data=player_monster_data_req,
             opponent_monster_data=opponent_monster_data_req,
             battle_result=battle_result,
-            game_configs=game_configs
+            game_configs=game_configs,
+            is_champion_challenge=is_champion_challenge,
+            challenged_rank=challenged_rank
         )
         
-        # 將新獲得的稱號附加到最終的回應中
         if newly_awarded_titles:
             battle_result["newly_awarded_titles"] = newly_awarded_titles
-    # --- 核心修改處 END ---
     
     return jsonify({"success": True, "battle_result": battle_result}), 200
 

@@ -2,11 +2,14 @@
 # 新增的服務：專門處理戰鬥結束後的結算邏輯
 
 import logging
+import time
 from typing import Dict, Any, List, Optional, Tuple
 
-from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
+from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs, ChampionSlot
 from .player_services import save_player_data_service
 from .monster_absorption_services import absorb_defeated_monster_service
+# 新增：導入冠軍殿堂的服務
+from .champion_services import get_champions_data, update_champions_document
 
 post_battle_logger = logging.getLogger(__name__)
 
@@ -78,10 +81,12 @@ def process_battle_results(
     player_monster_data: Monster,
     opponent_monster_data: Monster,
     battle_result: BattleResult,
-    game_configs: GameConfigs
+    game_configs: GameConfigs,
+    is_champion_challenge: bool = False,
+    challenged_rank: Optional[int] = None
 ) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
     """
-    處理戰鬥結束後的所有數據更新。
+    處理戰鬥結束後的所有數據更新，包含冠軍殿堂邏輯。
     返回更新後的玩家數據和新獲得的稱號列表。
     """
     newly_awarded_titles: List[Dict[str, Any]] = []
@@ -105,15 +110,12 @@ def process_battle_results(
             opponent_player_data["playerStats"] = opponent_stats
 
     # 2. 更新參與戰鬥的怪獸數據
-    # 2.1 更新玩家怪獸的資料
     player_monster_in_farm = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == player_monster_data['id']), None)
     if player_monster_in_farm:
         player_monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
         player_monster_in_farm["mp"] = battle_result["player_monster_final_mp"]
         player_monster_in_farm["skills"] = battle_result["player_monster_final_skills"]
         
-        # ----- BUG 修正邏輯 START -----
-        # 直接根據戰鬥結果更新怪獸的 resume (履歷)
         monster_resume = player_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
         if battle_result.get("winner_id") == player_monster_data['id']:
             monster_resume["wins"] = monster_resume.get("wins", 0) + 1
@@ -122,7 +124,6 @@ def process_battle_results(
             monster_resume["losses"] = monster_resume.get("losses", 0) + 1
             post_battle_logger.info(f"玩家怪獸 {player_monster_in_farm.get('nickname')} 戰敗，敗場 +1")
         player_monster_in_farm["resume"] = monster_resume
-        # ----- BUG 修正邏輯 END -----
 
         if player_monster_in_farm.get("farmStatus"):
             player_monster_in_farm["farmStatus"]["isBattling"] = False
@@ -131,11 +132,9 @@ def process_battle_results(
         if player_activity_log:
             player_monster_in_farm.setdefault("activityLog", []).insert(0, player_activity_log)
     
-    # 2.2 更新對手怪獸的資料 (如果不是NPC)
     if opponent_player_data and opponent_id:
         opponent_monster_in_farm = next((m for m in opponent_player_data.get("farmedMonsters", []) if m.get("id") == opponent_monster_data['id']), None)
         if opponent_monster_in_farm:
-            # 只更新對手的履歷和活動日誌
             opponent_resume = opponent_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
             if battle_result.get("winner_id") == opponent_monster_data['id']:
                 opponent_resume["wins"] = opponent_resume.get("wins", 0) + 1
@@ -147,7 +146,45 @@ def process_battle_results(
             if opponent_activity_log:
                 opponent_monster_in_farm.setdefault("activityLog", []).insert(0, opponent_activity_log)
 
-    # 3. 執行勝利吸收邏輯 (如果勝利)
+    # 3. 如果是冠軍挑戰勝利，則處理名次變更
+    if is_champion_challenge and challenged_rank is not None and battle_result.get("winner_id") == player_monster_data['id']:
+        post_battle_logger.info(f"偵測到冠軍挑戰勝利！玩家 {player_id} 挑戰第 {challenged_rank} 名成功。開始處理名次變更...")
+        
+        champions_data = get_champions_data()
+        
+        new_champion_slot = ChampionSlot(
+            monsterId=player_monster_data["id"],
+            ownerId=player_id,
+            monsterNickname=player_monster_data.get("nickname"),
+            ownerNickname=player_data.get("nickname"),
+            occupiedTimestamp=int(time.time())
+        )
+
+        # 檢查勝利者是否已在殿堂中，如果是，清空其舊位置 (唯一席位原則)
+        for i in range(1, 5):
+            rank_key = f"rank{i}"
+            slot = champions_data.get(rank_key)
+            if slot and slot.get("ownerId") == player_id:
+                champions_data[rank_key] = None
+                post_battle_logger.info(f"唯一席位原則：挑戰者原為第 {i} 名，已將其舊席位清空。")
+                break
+        
+        challenged_rank_key = f"rank{challenged_rank}"
+        defeated_champion_slot = champions_data.get(challenged_rank_key)
+        
+        champions_data[challenged_rank_key] = new_champion_slot
+
+        if defeated_champion_slot:
+             # 如果是席位互換 (例如 #3 打贏 #2, #4 打贏 #3...)
+            if challenged_rank < 4:
+                champions_data[f"rank{challenged_rank + 1}"] = defeated_champion_slot
+                post_battle_logger.info(f"席位交換：原第 {challenged_rank} 名的冠軍被移至第 {challenged_rank + 1} 名。")
+            else:
+                post_battle_logger.info(f"原第 4 名的冠軍已被踢出殿堂。")
+        
+        update_champions_document(champions_data)
+
+    # 4. 執行勝利吸收邏輯 (如果勝利)
     if battle_result.get("winner_id") == player_monster_data['id']:
         absorption_result = absorb_defeated_monster_service(
             player_id, 
@@ -157,14 +194,13 @@ def process_battle_results(
             player_data
         )
         if absorption_result and absorption_result.get("success"):
-            # 將吸收結果更新回 player_data
             player_data["farmedMonsters"] = absorption_result.get("updated_player_farm", player_data.get("farmedMonsters"))
             player_data["playerOwnedDNA"] = absorption_result.get("updated_player_owned_dna", player_data.get("playerOwnedDNA"))
 
-    # 4. 檢查是否有新稱號達成
+    # 5. 檢查是否有新稱號達成
     player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
     
-    # 5. 儲存雙方玩家的數據
+    # 6. 儲存雙方玩家的數據
     save_player_data_service(player_id, player_data)
     if opponent_id and opponent_player_data:
         save_player_data_service(opponent_id, opponent_player_data)

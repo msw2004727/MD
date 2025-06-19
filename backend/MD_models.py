@@ -386,6 +386,27 @@ class BattleResult(TypedDict):
     absorption_details: NotRequired[Dict[str, Any]]
 
 
+# --- 新增：冠軍殿堂相關模型 ---
+class ChampionSlot(TypedDict):
+    """
+    代表冠軍殿堂中的一個席位。
+    """
+    monsterId: str
+    ownerId: str
+    monsterNickname: NotRequired[str] # 方便前端顯示
+    ownerNickname: NotRequired[str]   # 方便前端顯示
+    occupiedTimestamp: int          # 佔領該席位的時間戳
+
+class ChampionsData(TypedDict):
+    """
+    代表存儲在 Firestore 中 'MD_SystemData/Champions' 文件的結構。
+    """
+    rank1: Optional[ChampionSlot]
+    rank2: Optional[ChampionSlot]
+    rank3: Optional[ChampionSlot]
+    rank4: Optional[ChampionSlot]
+
+
 # --- 完整的遊戲設定檔模型 ---
 
 class GameConfigs(TypedDict):

@@ -2,7 +2,7 @@
 // 負責渲染「冠軍殿堂」區塊的 UI
 
 /**
- * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位，並實作挑戰按鈕的資格判斷與在位時間顯示。
+ * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位，並實作挑戰按鈕的資格判斷邏輯。
  * @param {Array<object|null>} championsData - 從後端獲取的、包含四個冠軍槽位怪獸資料的陣列。
  */
 function renderChampionSlots(championsData) {
