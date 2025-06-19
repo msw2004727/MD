@@ -15,7 +15,7 @@
       "type": "columns",
       "columns": [
         {
-          "title": "目前0.2.9v已實裝功能：",
+          "title": "目前0.3.0v已實裝功能：",
           "items": [
             { "text": "DNA合成", "color": "success" },
             { "text": "修煉系統 (養成)", "color": "success" },
@@ -26,6 +26,7 @@
             { "text": "戰鬥邏輯升級", "color": "success" },
             { "text": "怪獸牽絆系統", "color": "success", "size": "large" },
             { "text": "怪獸顯示頭像功能", "color": "success" }
+            { "text": "冠軍殿堂", "color": "success" },
           ]
         },
         {
