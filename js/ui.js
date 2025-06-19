@@ -525,6 +525,11 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
             
             const bannerUrl = gameState.assetPaths?.images?.modals?.battleConfirmation || '';
 
+            const playerHpPercent = playerMonster.initial_max_hp > 0 ? (playerMonster.hp / playerMonster.initial_max_hp) * 100 : 0;
+            const playerMpPercent = playerMonster.initial_max_mp > 0 ? (playerMonster.mp / playerMonster.initial_max_mp) * 100 : 0;
+            const opponentHpPercent = opponentMonster.initial_max_hp > 0 ? (opponentMonster.hp / opponentMonster.initial_max_hp) * 100 : 0;
+            const opponentMpPercent = opponentMonster.initial_max_mp > 0 ? (opponentMonster.mp / opponentMonster.initial_max_mp) * 100 : 0;
+
             bodyHtml = `
                 <div class="confirmation-banner" style="text-align: center; margin-bottom: 1rem;">
                     <img src="${bannerUrl}" alt="對戰" style="max-width: 100%; border-radius: 6px;">
@@ -534,11 +539,19 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
                         <p class="monster-role">您的怪獸</p>
                         <p class="monster-name text-rarity-${playerRarityKey}">${playerDisplayName}</p>
                         <p class="monster-score">(評價: ${playerMonster.score})</p>
+                        <div class="confirm-stat-bar-container">
+                            <div class="confirm-stat-bar hp"><div class="confirm-stat-bar-fill" style="width: ${playerHpPercent}%;"></div></div>
+                            <div class="confirm-stat-bar mp"><div class="confirm-stat-bar-fill" style="width: ${playerMpPercent}%;"></div></div>
+                        </div>
                     </div>
                     <div class="monster-confirm-details opponent">
                         <p class="monster-role">對手的怪獸</p>
                         <p class="monster-name text-rarity-${opponentRarityKey}">${opponentDisplayName}</p>
                         <p class="monster-score">(評價: ${opponentMonster.score})</p>
+                        <div class="confirm-stat-bar-container">
+                            <div class="confirm-stat-bar hp"><div class="confirm-stat-bar-fill" style="width: ${opponentHpPercent}%;"></div></div>
+                            <div class="confirm-stat-bar mp"><div class="confirm-stat-bar-fill" style="width: ${opponentMpPercent}%;"></div></div>
+                        </div>
                     </div>
                 </div>
                 <p class="text-center mt-4">確定挑戰嗎?</p>
