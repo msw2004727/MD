@@ -13,14 +13,15 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.3.0'; // 例如從 '1.0.0' 改為 '1.0.1'
+        const gameVersion = '0.2.9'; // 例如從 '1.0.0' 改為 '1.0.1'
 
         const cssFiles = [
             'css/theme.css',
             'css/layout.css',
             'css/buttons.css',
             'css/components.css',
-            'css/modals.css'
+            'css/modals.css',
+            'css/champions.css'
         ];
         
         cssFiles.forEach(path => {
@@ -245,6 +246,50 @@
                 <h3 class="modal-header">怪獸排行榜</h3>
                 <button id="refresh-monster-leaderboard-btn" class="button secondary text-xs" title="刷新列表">🔄</button>
             </div>
+            
+            <div class="champions-section">
+                <h4 class="champions-section-title">冠軍殿堂</h4>
+                <div class="champions-grid" id="champions-grid-container">
+                    <div class="champion-slot" data-rank="1">
+                        <div class="champion-avatar-container">
+                            <span class="champion-crown">👑</span>
+                            <div class="champion-avatar" id="champion-avatar-1">
+                                <span class="champion-placeholder-text">虛位以待</span>
+                            </div>
+                        </div>
+                        <span class="champion-name" id="champion-name-1">冠軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-1" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="2">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-2">
+                                <span class="champion-placeholder-text">虛位以待</span>
+                            </div>
+                        </div>
+                        <span class="champion-name" id="champion-name-2">亞軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-2" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="3">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-3">
+                                <span class="champion-placeholder-text">虛位以待</span>
+                            </div>
+                        </div>
+                        <span class="champion-name" id="champion-name-3">季軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-3" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="4">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-4">
+                                <span class="champion-placeholder-text">虛位以待</span>
+                            </div>
+                        </div>
+                        <span class="champion-name" id="champion-name-4">殿軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-4" disabled>挑戰</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="monster-leaderboard-table-container" class="modal-body">
                 <table id="monster-leaderboard-table" class="leaderboard-table"></table>
             </div>
