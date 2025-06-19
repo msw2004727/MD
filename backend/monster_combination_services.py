@@ -73,6 +73,45 @@ def _generate_combination_key(dna_template_ids: List[str]) -> str:
     sorted_ids = sorted(dna_template_ids)
     return "_".join(sorted_ids)
 
+def _calculate_final_resistances(base_resistances: Dict[str, int], game_configs: GameConfigs) -> Dict[str, int]:
+    """
+    根據克制關係計算最終的元素抗性。
+    實現「正正相抵」和「正負相加」的邏輯。
+    """
+    chart = game_configs.get("elemental_advantage_chart", {})
+    final_res = base_resistances.copy()
+
+    # 建立一個克制關係列表，例如 [('水', '火'), ('火', '木'), ...]
+    counter_pairs = []
+    for attacker, defender_map in chart.items():
+        for defender, multiplier in defender_map.items():
+            if multiplier > 1.0: # 如果 A 對 B 的傷害 > 1，則 A 剋 B
+                counter_pairs.append((attacker, defender))
+
+    # 進行兩輪計算以處理連鎖反應
+    for _ in range(2):
+        for stronger, weaker in counter_pairs:
+            res_strong = final_res.get(stronger, 0)
+            res_weak = final_res.get(weaker, 0)
+
+            # 規則2: 正負相加 (利用自身抗性反轉弱點)
+            if res_strong > 0 and res_weak < 0:
+                bonus = abs(res_weak)
+                final_res[stronger] = res_strong + bonus
+                final_res[weaker] = 0
+                # 更新數值以供後續計算
+                res_strong = final_res[stronger]
+                res_weak = 0
+
+            # 規則1: 正正相抵 (正抗性之間抵銷)
+            if res_strong > 0 and res_weak > 0:
+                cancellation = min(res_strong, res_weak)
+                final_res[stronger] = res_strong - cancellation
+                final_res[weaker] = res_weak - cancellation
+
+    # 清理掉值為 0 的抗性
+    return {k: v for k, v in final_res.items() if v != 0}
+
 
 # --- DNA 組合與怪獸生成服務 ---
 def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_configs: GameConfigs, player_data: PlayerGameData, player_id: str) -> Optional[Dict[str, Any]]:
@@ -275,13 +314,26 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "interaction_stats": default_interaction_stats,
         }
         
-        base_resistances = Counter()
+        # 移除
+        # base_resistances = Counter()
+        # for dna_frag in combined_dnas_data:
+        #     base_resistances.update(dna_frag.get("resistances", {}))
+        # resistance_bonus = monster_rarity_data.get("resistanceBonus", 0)
+        # for el in elements_present:
+        #     base_resistances[el] = base_resistances.get(el, 0) + resistance_bonus
+        # standard_monster_data["resistances"] = dict(base_resistances)
+        
+        # 新增
+        initial_resistances = Counter()
         for dna_frag in combined_dnas_data:
-            base_resistances.update(dna_frag.get("resistances", {}))
+            initial_resistances.update(dna_frag.get("resistances", {}))
+        
         resistance_bonus = monster_rarity_data.get("resistanceBonus", 0)
         for el in elements_present:
-            base_resistances[el] = base_resistances.get(el, 0) + resistance_bonus
-        standard_monster_data["resistances"] = dict(base_resistances)
+            initial_resistances[el] = initial_resistances.get(el, 0) + resistance_bonus
+
+        final_resistances = _calculate_final_resistances(dict(initial_resistances), game_configs)
+        standard_monster_data["resistances"] = final_resistances
         
         ai_details = generate_monster_ai_details(standard_monster_data)
         standard_monster_data.update(ai_details)
