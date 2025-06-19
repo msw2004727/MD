@@ -69,12 +69,17 @@ function renderChampionSlots(championsData) {
 
             // 3. 設置在位時間
             if (monster.occupiedTimestamp) {
-                const nowInSeconds = Math.floor(Date.now() / 1000);
-                const occupiedTimestamp = monster.occupiedTimestamp;
-                const durationInSeconds = nowInSeconds - occupiedTimestamp;
-                
-                // 86400 秒 = 1 天
-                const daysInReign = Math.floor(durationInSeconds / 86400);
+                // --- 核心修改處 START ---
+                const occupiedDate = new Date(monster.occupiedTimestamp * 1000);
+                const nowDate = new Date();
+
+                // 將時間都設定為當天的午夜來計算日曆天差異
+                occupiedDate.setHours(0, 0, 0, 0);
+                nowDate.setHours(0, 0, 0, 0);
+
+                const diffTime = Math.abs(nowDate - occupiedDate);
+                const daysInReign = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                // --- 核心修改處 END ---
 
                 reignDurationEl.textContent = `在位 ${daysInReign} 天`;
                 reignDurationEl.style.display = 'block'; // 顯示旗幟
