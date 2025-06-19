@@ -317,7 +317,7 @@ def get_ai_chat_completion(
             {"role": "user", "content": user_content}
         ],
         "temperature": 0.85, 
-        "max_tokens": 150,
+        "max_tokens": 300,
     }
     headers = {
         "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
