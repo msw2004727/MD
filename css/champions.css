@@ -88,7 +88,6 @@
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    /* 【修改】允許子元素(皇冠)超出此容器的邊界 */
     overflow: visible; 
 }
 
@@ -105,7 +104,6 @@
     justify-content: center;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    /* 【新增】確保頭像本身是圓的，並裁切內部的圖片 */
     border-radius: 50%;
     overflow: hidden;
 }
@@ -128,12 +126,33 @@
     z-index: 5;
 }
 
+/* 【修改】調整身份容器樣式 */
 .champion-identity-container {
     display: flex;
+    flex-wrap: wrap; /* 允許換行 */
     justify-content: center;
     align-items: baseline;
-    gap: 0.5rem; 
+    gap: 0.25rem 0.5rem; /* 垂直和水平間距 */
     min-height: 24px; 
+    text-align: center; /* 整體文字置中 */
+}
+
+/* 【新增】玩家暱稱標籤樣式 */
+.champion-owner-tag {
+    background-color: var(--accent-color);
+    color: var(--button-primary-text);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* 【新增】怪獸名稱樣式 */
+.champion-monster-name {
+    font-weight: bold;
+    font-size: 1.1em;
 }
 
 .champion-reign-duration {
