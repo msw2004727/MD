@@ -129,11 +129,22 @@ function handleAuthForms() {
 
 async function handleMonsterLeaderboardClick() {
     try {
-        showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
-        const leaderboardData = await getMonsterLeaderboard(20);
+        showFeedbackModal('載入中...', '正在獲取排行榜...', true);
+        
+        // 【修改】同時獲取冠軍殿堂和一般排行榜的資料
+        const [championsData, leaderboardData] = await Promise.all([
+            getChampionsLeaderboard(),
+            getMonsterLeaderboard(20)
+        ]);
         
         gameState.monsterLeaderboard = leaderboardData || [];
         
+        // 【新增】呼叫渲染冠軍殿堂的函式
+        if (typeof renderChampionSlots === 'function') {
+            renderChampionSlots(championsData || [null, null, null, null]);
+        }
+        
+        // 渲染一般排行榜
         updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container'); 
         
         if (DOMElements.monsterLeaderboardElementTabs && DOMElements.monsterLeaderboardElementTabs.innerHTML.trim() === '') {
