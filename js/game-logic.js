@@ -588,7 +588,7 @@ async function handleDeployMonsterClick(monsterId) {
     
     if (currentSelectedId) {
         // 【修改】更換提示文字
-        showFeedbackModal('怪獸交接中...', '正在確認冠軍席位狀態，請稍候...', true);
+        showFeedbackModal('怪獸交接中...', '怪獸交接中，主人請稍候...', true);
         try {
             const championsData = await getChampionsLeaderboard();
             hideModal('feedback-modal');
