@@ -54,7 +54,7 @@ function updateLeaderboardTable(tableType, data, containerId) {
             { text: '排名', key: 'rank', align: 'center' },
             { text: '頭像', key: 'avatar', align: 'center' },
             { text: '怪獸', key: 'nickname' },
-            { text: '元素', key: 'elements', align: 'center' },
+            { text: '最終抗性', key: 'elements', align: 'center' },
             { text: '稀有度', key: 'rarity', align: 'center' },
             { text: '總評價', key: 'score', align: 'center' },
             { text: '勝/敗', key: 'resume', align: 'center' },
@@ -151,10 +151,15 @@ function updateLeaderboardTable(tableType, data, containerId) {
 
             const elementsCell = row.insertCell();
             elementsCell.style.textAlign = 'center';
-            if(item.elements && Array.isArray(item.elements)) {
-                elementsCell.innerHTML = item.elements.map(el =>
+            const finalResistances = item.resistances || {};
+            const resistanceElements = Object.keys(finalResistances).filter(el => finalResistances[el] !== 0);
+            
+            if (resistanceElements.length > 0) {
+                elementsCell.innerHTML = resistanceElements.map(el =>
                     `<span class="text-xs text-element-${getElementCssClassKey(el)} font-bold mr-2">${el}</span>`
                 ).join('');
+            } else {
+                elementsCell.innerHTML = `<span class="text-xs text-element-無 font-bold">無</span>`;
             }
 
             const rarityCell = row.insertCell();
