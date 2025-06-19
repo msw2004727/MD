@@ -38,10 +38,12 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
         // --- 佔領空位，挑戰守門員NPC ---
         confirmationTitle = `佔領第 ${rankToChallenge} 名`;
         confirmationMessage = `您確定要挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
-        // 創建一個基礎的守門員NPC
+        
+        // 【修改】調整守門員NPC的名稱與顯示邏輯
         finalOpponent = {
             id: `npc_guardian_${rankToChallenge}`,
-            nickname: `第 ${rankToChallenge} 名守門員`,
+            nickname: '殿堂守護者', // 內部及後端記錄用名
+            element_nickname_part: '殿堂守護者', // 主要顯示名稱
             isNPC: true,
             rarity: "稀有",
             elements: ["混"],
@@ -202,14 +204,11 @@ function renderChampionSlots(championsData) {
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
             nameSpan.textContent = rankNames[rank];
             
-            // 【邏輯修正】允許挑戰更高一級的空位
             let canOccupy = false;
             if (playerMonster) {
-                // 如果玩家不是冠軍，只能佔領第4名
                 if (playerChampionRank === 0 && rank === 4) {
                     canOccupy = true;
                 } 
-                // 如果玩家已是冠軍，只能佔領高一級的空位
                 else if (playerChampionRank > 0 && rank === playerChampionRank - 1) {
                     canOccupy = true;
                 }
