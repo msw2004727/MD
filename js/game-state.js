@@ -37,8 +37,6 @@ const gameState = {
     currentTheme: 'dark',
     selectedMonsterId: null, 
     
-    // 移除：dnaCombinationSlots 已移至 playerData 中
-    
     // 新增：DNA組合槽與身體部位的映射關係
     dnaSlotToBodyPartMapping: {
         0: 'head',
@@ -59,6 +57,8 @@ const gameState = {
     // 排行榜數據
     monsterLeaderboard: [],
     playerLeaderboard: [],
+    // 【新增】用來存放當前獲取的冠軍殿堂名單
+    champions: [], 
     currentMonsterLeaderboardElementFilter: 'all',
 
     // 排行榜排序設定
