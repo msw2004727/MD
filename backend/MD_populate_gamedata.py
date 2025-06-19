@@ -62,7 +62,6 @@ def initialize_firebase_for_script():
                 cred = None
         else:
             script_logger.info(f"未設定環境變數憑證，嘗試從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 載入 (適用於本地開發)。")
-            # 修正路徑檢查
             if os.path.exists(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH)):
                 try:
                     cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH))
@@ -186,6 +185,18 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 CultivationStories 資料失敗: {e}")
 
+    # --- 【新增】載入冠軍守門員資料 ---
+    try:
+        guardians_path = os.path.join(data_dir, 'champion_guardians.json')
+        with open(guardians_path, 'r', encoding='utf-8') as f:
+            guardians_data = json.load(f)
+        script_logger.info(f"成功從 {guardians_path} 載入冠軍守門員資料。")
+        db_client.collection('MD_GameConfigs').document('ChampionGuardians').set({'guardians': guardians_data})
+        script_logger.info("成功寫入 ChampionGuardians 資料。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到冠軍守門員設定檔 {guardians_path}。")
+    except Exception as e:
+        script_logger.error(f"處理 ChampionGuardians 資料失敗: {e}")
 
     # --- 寫入其他設定 ---
     
@@ -205,7 +216,6 @@ def populate_game_configs():
         with open(titles_path, 'r', encoding='utf-8') as f:
             titles_data_from_json = json.load(f)
         script_logger.info(f"成功從 {titles_path} 載入 {len(titles_data_from_json)} 個稱號資料。")
-        # 注意：這裡的欄位名稱 'player_titles' 是為了與 config_services 中的 doc_map 保持一致
         db_client.collection('MD_GameConfigs').document('Titles').set({'player_titles': titles_data_from_json})
         script_logger.info("成功將 titles.json 的內容寫入 Firestore 的 Titles 文件。")
     except FileNotFoundError:
@@ -282,7 +292,8 @@ def populate_game_configs():
         "max_inventory_slots": 12,
         "max_temp_backpack_slots": 9,
         "max_cultivation_time_seconds": 3600,
-        "starting_gold": 500
+        "starting_gold": 500,
+        "cultivation_diminishing_return_window_seconds": 3600
     }
     db_client.collection('MD_GameConfigs').document('ValueSettings').set(value_settings_data)
 
@@ -370,7 +381,7 @@ def populate_game_configs():
         {
             "id": "npc_m_002", "nickname": "", "elements": ["木", "土"], "elementComposition": {"木": 70.0, "土": 30.0},
             "hp": 120, "mp": 25, "initial_max_hp": 120, "initial_max_mp": 25, "attack": 10, "defense": 20, "speed": 8, "crit": 3,
-            "skills": random.sample(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", []), min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))),
+            "skills": random.sample(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))),
             "rarity": "稀有", "title": random.choice(_monster_achievements),
             "custom_element_nickname": _element_nicknames.get("木", "木靈"), "description": "堅毅的森林守衛者幼苗，擁有大地與森林的祝福。",
             "personality": random.choice(personalities_data), "creationTime": int(time.time()),
