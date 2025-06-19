@@ -45,6 +45,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "CultivationSettings": ("cultivation_config", None),
             "ElementalAdvantageChart": ("elemental_advantage_chart", None),
             "CultivationStories": ("cultivation_stories", "story_library"),
+            "ChampionGuardians": ("champion_guardians", "guardians"), # 【新增】加入冠軍守門員的讀取規則
         }
 
         for doc_name, (config_key, field_name) in doc_map.items():
