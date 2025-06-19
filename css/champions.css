@@ -47,7 +47,7 @@
     border-radius: 8px;
     transition: all 0.3s ease;
     justify-content: center;
-    position: relative; /* 新增：讓此元素成為皇冠定位的基準 */
+    position: relative; 
 }
 
 /* 當欄位被佔據時的樣式 */
@@ -58,7 +58,7 @@
 
 /* 網格佈局定位 */
 .champion-slot[data-rank="1"] {
-    grid-column: 1 / 3; /* 橫跨兩欄 */
+    grid-column: 1 / 3; 
     grid-row: 1 / 2;
     border-color: var(--rarity-legendary-text);
 }
@@ -72,11 +72,11 @@
 .champion-slot[data-rank="3"] {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
-    border-color: #cd7f32; /* 古銅色 */
+    border-color: #cd7f32; 
 }
 
 .champion-slot[data-rank="4"] {
-    grid-column: 1 / 3; /* 橫跨兩欄 */
+    grid-column: 1 / 3; 
     grid-row: 3 / 4;
     border-color: var(--accent-color);
 }
@@ -114,7 +114,7 @@
 
 .champion-crown {
     position: absolute;
-    top: -0.9rem; /* 調整：將 top 值改為負值，使其向上移動 */
+    top: -0.5rem; 
     left: 50%;
     transform: translateX(-50%);
     font-size: 2.2rem;
@@ -124,22 +124,27 @@
     z-index: 5;
 }
 
-/* 在位時間旗幟的樣式 */
+/* 新增：用於包裹名稱和在位時間的容器 */
+.champion-identity-container {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.5rem; /* 名稱與旗幟之間的間距 */
+    min-height: 24px; /* 確保容器有固定高度 */
+}
+
+/* 修改：在位時間旗幟的新樣式 */
 .champion-reign-duration {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.65);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-align: center;
-    padding: 3px 0;
-    box-sizing: border-box;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
-    z-index: 4;
-    display: none; 
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    white-space: nowrap; /* 確保文字不換行 */
+    /* 移除所有絕對定位樣式 */
+    display: none; /* 初始隱藏，由 JS 控制顯示 */
 }
 
 
@@ -148,7 +153,6 @@
     font-weight: bold;
     font-size: 1rem;
     color: var(--text-primary);
-    margin-top: 0.25rem;
     text-align: center;
 }
 
