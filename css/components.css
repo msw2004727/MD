@@ -1043,3 +1043,22 @@ body.light-theme .leaderboard-table tr:hover td {
     letter-spacing: 0.5px;
     font-family: 'Inter', monospace;
 }
+
+/* --- 新增：怪獸快照頭部呼吸動畫 --- */
+@keyframes head-breath {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+#monster-part-head .monster-part-image.active {
+  animation: head-breath 3s infinite alternate ease-in-out;
+  transform-origin: center bottom; /* 讓縮放中心在底部中間，看起來更像在呼吸 */
+}
+}
