@@ -150,6 +150,12 @@ async function initializeGame() {
             DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
         }
         
+        // --- 新增：在遊戲初始化時更新貨幣顯示 ---
+        if (typeof updatePlayerCurrencyDisplay === 'function') {
+            updatePlayerCurrencyDisplay(gameState.playerData.playerStats.gold || 0);
+        }
+        // --- 修改結束 ---
+
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
         if (typeof renderMonsterFarm === 'function') renderMonsterFarm();
