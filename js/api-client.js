@@ -263,14 +263,6 @@ async function getMonsterLeaderboard(topN = 10) {
 }
 
 /**
- * 【新增】獲取冠軍殿堂排行榜
- * @returns {Promise<Array<object>>} 冠軍殿堂怪獸列表 (固定4個位置)
- */
-async function getChampionsLeaderboard() {
-    return fetchAPI('/champions');
-}
-
-/**
  * 獲取玩家排行榜
  * @param {number} topN 需要的排行數量
  * @returns {Promise<Array<object>>} 玩家排行榜列表
@@ -317,25 +309,6 @@ async function interactWithMonster(monsterId, action) {
     return fetchAPI(`/monster/${monsterId}/interact`, {
         method: 'POST',
         body: JSON.stringify({ action: action }),
-    });
-}
-
-/**
- * 【新增】新增玩家或怪獸的備註
- * @param {string} targetType - 'player' 或 'monster'
- * @param {string} noteContent - 備註內容
- * @param {string|null} monsterId - 如果 targetType 是 'monster'，則需要怪獸ID
- * @returns {Promise<object>} 操作結果
- */
-async function addNote(targetType, noteContent, monsterId = null) {
-    const payload = {
-        target_type: targetType,
-        note_content: noteContent,
-        monster_id: monsterId
-    };
-    return fetchAPI('/notes', {
-        method: 'POST',
-        body: JSON.stringify(payload)
     });
 }
 

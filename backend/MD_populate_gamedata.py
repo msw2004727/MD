@@ -20,7 +20,6 @@ from firebase_admin import credentials, firestore
 
 # 將原本的相對導入改成從 backend 開始的絕對導入
 from backend.MD_firebase_config import set_firestore_client
-from backend.MD_models import ChampionsData
 
 
 # 設定日誌記錄器
@@ -97,7 +96,7 @@ def initialize_firebase_for_script():
 
 def populate_game_configs():
     """
-    將遊戲設定資料寫入 Firestore 的 MD_GameConfigs 集合，並初始化系統資料。
+    將遊戲設定資料寫入 Firestore 的 MD_GameConfigs 集合。
     """
     if not initialize_firebase_for_script():
         script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
@@ -384,23 +383,6 @@ def populate_game_configs():
         }
     ]
     db_client.collection('MD_GameConfigs').document('NPCMonsters').set({'monsters': npc_monsters_data})
-    
-    script_logger.info("正在檢查並初始化系統資料 (如冠軍殿堂)...")
-    try:
-        champions_doc_ref = db_client.collection('MD_SystemData').document('Champions')
-        if not champions_doc_ref.get().exists:
-            default_champions_data: ChampionsData = {
-                "rank1": None,
-                "rank2": None,
-                "rank3": None,
-                "rank4": None
-            }
-            champions_doc_ref.set(default_champions_data)
-            script_logger.info("已成功初始化冠軍殿堂 (`MD_SystemData/Champions`) 文件。")
-        else:
-            script_logger.info("冠軍殿堂文件已存在，無需初始化。")
-    except Exception as e:
-        script_logger.error(f"初始化系統資料時發生錯誤: {e}")
 
     script_logger.info("所有遊戲設定資料填充/更新完畢。")
 

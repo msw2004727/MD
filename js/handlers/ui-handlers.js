@@ -11,10 +11,14 @@ function initializeUIEventHandlers() {
     handleNewbieGuideSearch();
     handleSelectionModalActions();
     
+    // --- 核心修改處 START ---
     // 為新的 Banner 彈窗按鈕綁定事件
     handleInventoryGuideModal();
+    // --- 核心修改處 END ---
 }
 
+// --- 核心修改處 START ---
+// 新增函式來處理 Banner 彈窗的開啟
 function handleInventoryGuideModal() {
     const openBtn = document.getElementById('inventory-guide-button');
     const bannerModal = document.getElementById('banner-modal');
@@ -22,18 +26,23 @@ function handleInventoryGuideModal() {
 
     if (openBtn && bannerModal) {
         openBtn.addEventListener('click', () => {
+            // 從遊戲狀態中讀取在 assets.json 設定好的圖片路徑
             const bannerUrl = gameState.assetPaths?.images?.modals?.dnaGuideBanner;
+
             if (bannerContent && bannerUrl) {
+                // 將彈窗內容設為包含該圖片的<img>標籤
                 bannerContent.innerHTML = `<img src="${bannerUrl}" alt="DNA碎片說明圖" style="max-width: 100%; height: auto; display: block; border-radius: 6px;">`;
             } else if (bannerContent) {
+                // 如果找不到圖片路徑，則顯示錯誤訊息
                 bannerContent.innerHTML = '<p>說明圖片載入失敗。</p>';
             }
             showModal('banner-modal');
         });
     }
 }
+// --- 核心修改處 END ---
 
-// 這個函式現在暫時不會被用到，但我們先保留它
+// 【新增】處理天梯-排行榜彈窗內的點擊事件
 function handleSelectionModalActions() {
     const selectionModal = document.getElementById('selection-modal');
     if (!selectionModal) return;
@@ -44,10 +53,10 @@ function handleSelectionModalActions() {
 
         if (monsterColumn) {
             hideModal('selection-modal');
-            handleMonsterLeaderboardClick();
+            handleMonsterLeaderboardClick(); // 呼叫現有的函式來打開怪獸排行榜
         } else if (playerColumn) {
             hideModal('selection-modal');
-            handlePlayerLeaderboardClick();
+            handlePlayerLeaderboardClick(); // 呼叫現有的函式來打開玩家排行榜
         }
     });
 }
@@ -120,24 +129,10 @@ function handleAuthForms() {
 
 async function handleMonsterLeaderboardClick() {
     try {
-        showFeedbackModal('載入中...', '正在獲取排行榜...', true);
-        
-        if (typeof refreshPlayerData === 'function') {
-            await refreshPlayerData();
-        }
-        
-        const [championsData, leaderboardData] = await Promise.all([
-            getChampionsLeaderboard(),
-            getMonsterLeaderboard(20)
-        ]);
+        showFeedbackModal('載入中...', '正在獲取怪獸排行榜...', true);
+        const leaderboardData = await getMonsterLeaderboard(20);
         
         gameState.monsterLeaderboard = leaderboardData || [];
-        
-        if (typeof renderChampionSlots === 'function') {
-            renderChampionSlots(championsData || [null, null, null, null]);
-        } else {
-            console.error("錯誤：renderChampionSlots 函式未定義或找不到！");
-        }
         
         updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container'); 
         
@@ -334,10 +329,8 @@ document.body.addEventListener('click', function(event) {
         handleSkillLinkClick(event);
     }
 
-    // --- 核心修改處 ---
-    // 讓天梯按鈕直接觸發怪獸排行榜的處理函式
     const selectionBtn = event.target.closest('#snapshot-selection-modal-btn');
     if (selectionBtn) {
-        handleMonsterLeaderboardClick();
+        showModal('selection-modal');
     }
 });
