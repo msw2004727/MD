@@ -47,6 +47,7 @@
     border-radius: 8px;
     transition: all 0.3s ease;
     justify-content: center;
+    position: relative; 
 }
 
 /* 當欄位被佔據時的樣式 */
@@ -57,7 +58,7 @@
 
 /* 網格佈局定位 */
 .champion-slot[data-rank="1"] {
-    grid-column: 1 / 3; /* 橫跨兩欄 */
+    grid-column: 1 / 3; 
     grid-row: 1 / 2;
     border-color: var(--rarity-legendary-text);
 }
@@ -71,11 +72,11 @@
 .champion-slot[data-rank="3"] {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
-    border-color: #cd7f32; /* 古銅色 */
+    border-color: #cd7f32; 
 }
 
 .champion-slot[data-rank="4"] {
-    grid-column: 1 / 3; /* 橫跨兩欄 */
+    grid-column: 1 / 3; 
     grid-row: 3 / 4;
     border-color: var(--accent-color);
 }
@@ -86,9 +87,9 @@
     position: relative;
     width: 80px;
     height: 80px;
-    /* 新增：確保能裁切掉超出範圍的旗幟 */
     border-radius: 50%;
-    overflow: hidden;
+    /* 【修改】允許子元素(皇冠)超出此容器的邊界 */
+    overflow: visible; 
 }
 
 .champion-avatar {
@@ -104,6 +105,9 @@
     justify-content: center;
     font-size: 0.8rem;
     color: var(--text-secondary);
+    /* 【新增】確保頭像本身是圓的，並裁切內部的圖片 */
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 .champion-avatar img {
@@ -124,22 +128,23 @@
     z-index: 5;
 }
 
-/* 新增：在位時間旗幟的樣式 */
+.champion-identity-container {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.5rem; 
+    min-height: 24px; 
+}
+
 .champion-reign-duration {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.65);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-align: center;
-    padding: 3px 0;
-    box-sizing: border-box;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
-    z-index: 4;
-    /* 初始隱藏，由 JS 控制顯示 */
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    white-space: nowrap; 
     display: none; 
 }
 
@@ -149,7 +154,6 @@
     font-weight: bold;
     font-size: 1rem;
     color: var(--text-primary);
-    margin-top: 0.25rem;
     text-align: center;
 }
 
