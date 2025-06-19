@@ -20,8 +20,8 @@ async function handleCombineDna() {
     const dnaObjectsForCombination = gameState.playerData.dnaCombinationSlots
         .filter(slot => slot && slot.id);
 
-    if (dnaObjectsForCombination.length < 2) {
-        showFeedbackModal('組合失敗', '至少需要選擇 2 個 DNA 碎片才能進行組合。');
+    if (dnaObjectsForCombination.length < 5) {
+        showFeedbackModal('組合失敗', '必須放入 5 個 DNA 碎片才能進行組合。');
         return;
     }
     
@@ -57,7 +57,7 @@ async function handleCombineDna() {
         console.error("合成DNA錯誤:", error);
     } finally {
         if (DOMElements.combineButton) {
-            const combinationSlotsFilled = gameState.playerData.dnaCombinationSlots.filter(s => s !== null).length >= 2;
+            const combinationSlotsFilled = gameState.playerData.dnaCombinationSlots.filter(s => s !== null).length >= 5;
             DOMElements.combineButton.disabled = !combinationSlotsFilled;
         }
     }
