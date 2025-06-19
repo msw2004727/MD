@@ -587,12 +587,12 @@ async function handleDeployMonsterClick(monsterId) {
     };
     
     if (currentSelectedId) {
-        showFeedbackModal('檢查中...', '正在確認冠軍席位...', true);
+        // 【修改】更換提示文字
+        showFeedbackModal('怪獸交接中...', '正在確認冠軍席位狀態，請稍候...', true);
         try {
             const championsData = await getChampionsLeaderboard();
             hideModal('feedback-modal');
             
-            // 【邏輯修正】檢查怪獸ID時，使用 champ.id 而非 champ.monsterId
             const isCurrentChampion = championsData.some(champ => champ && champ.id === currentSelectedId);
 
             if (isCurrentChampion) {
