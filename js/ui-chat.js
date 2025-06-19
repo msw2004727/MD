@@ -29,12 +29,24 @@ function renderChatMessage(message, role) {
     const messageWrapper = document.createElement('div');
     messageWrapper.classList.add('chat-message-wrapper', `role-${role}`);
 
-    // ----- BUG 修正邏輯 START -----
-    // 如果是怪獸的回應，就新增頭像
     if (role === 'assistant') {
         const monster = gameState.playerData.farmedMonsters.find(m => m.id === currentChatMonsterId);
         if (monster) {
-            const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
+            let headInfo = { type: '無', rarity: '普通' }; // 設定預設值
+            
+            // 新增的即時計算邏輯
+            const constituentIds = monster.get("constituent_dna_ids", []);
+            if (constituentIds && constituentIds.length > 0) {
+                const headDnaId = constituentIds[0]; // 頭部是第一個DNA
+                const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
+                const headDnaTemplate = allDnaTemplates.find(dna => dna.id === headDnaId);
+
+                if (headDnaTemplate) {
+                    headInfo.type = headDnaTemplate.type || '無';
+                    headInfo.rarity = headDnaTemplate.rarity || '普通';
+                }
+            }
+
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
             
             const avatarContainer = document.createElement('div');
@@ -48,7 +60,6 @@ function renderChatMessage(message, role) {
             messageWrapper.appendChild(avatarContainer);
         }
     }
-    // ----- BUG 修正邏輯 END -----
 
     const messageBubble = document.createElement('div');
     messageBubble.classList.add('chat-message-bubble');
