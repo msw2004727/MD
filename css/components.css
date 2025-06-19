@@ -1012,30 +1012,34 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--accent-color);
 }
 
-/* --- 新增：玩家貨幣面板樣式 --- */
+/* --- 玩家貨幣面板樣式 (已修改) --- */
 .player-currency-panel {
     display: flex;
     align-items: center;
-    justify-content: flex-end; /* 右對齊 */
-    gap: 0.5rem;
-    padding: 4px 10px;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    padding: 2px 10px; /* 減少垂直padding，讓欄位變細 */
     background-color: var(--bg-slot);
     border: 1px solid var(--border-color);
-    border-radius: 16px; /* 膠囊形狀 */
-    max-width: 160px; /* 限制最大寬度 */
-    margin-left: auto; /* 將其推到右邊 */
-    margin-right: 5px; /* 右邊留一點空隙 */
-    margin-bottom: 5px; /* 與下方頁籤的間距 */
+    border-radius: 16px;
+    max-width: 180px;
+    margin-left: auto;
+    margin-right: 5px;
+    margin-top: -12px; /* 負外距，使其向上移動，拉近與上方元素的距離 */
+    margin-bottom: -8px; /* 負外距，拉近與下方元素的距離 */
+    position: relative;
+    z-index: 5;
 }
 
 .player-currency-panel .currency-icon {
-    font-size: 1.1rem; /* 錢幣圖示稍大 */
+    font-size: 1rem; /* 調整圖示大小 */
+    margin-left: 4px;
 }
 
 #player-currency-amount {
-    font-size: 0.95rem; /* 數字字體稍小 */
+    font-size: 0.9rem;
     font-weight: bold;
-    color: var(--rarity-legendary-text); /* 使用金色來代表金錢 */
+    color: var(--rarity-legendary-text);
     letter-spacing: 0.5px;
-    font-family: 'Inter', monospace; /* 使用等寬字體讓數字更好看 */
+    font-family: 'Inter', monospace;
 }
