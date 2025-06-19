@@ -34,8 +34,8 @@ function renderChatMessage(message, role) {
         if (monster) {
             let headInfo = { type: '無', rarity: '普通' }; // 設定預設值
             
-            // 新增的即時計算邏輯
-            const constituentIds = monster.get("constituent_dna_ids", []);
+            // 修正：使用正確的 Javascript 物件屬性讀取方式
+            const constituentIds = monster.constituent_dna_ids || [];
             if (constituentIds && constituentIds.length > 0) {
                 const headDnaId = constituentIds[0]; // 頭部是第一個DNA
                 const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
