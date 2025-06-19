@@ -16,7 +16,7 @@ from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
 
-# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
+# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
@@ -67,6 +67,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "medals": 0,
         "nickname": nickname,
         "equipped_title_id": default_title_object["id"],
+        "gold": game_configs.get("value_settings", {}).get("starting_gold", 500), # 新增：給予初始金幣
         "current_win_streak": 0,
         "current_loss_streak": 0,
         "highest_win_streak": 0,
@@ -170,6 +171,13 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             needs_migration_save = False
             
             player_stats = player_game_data_dict.get("playerStats", {})
+            
+            # 新增：檢查並補上 gold 欄位
+            if "gold" not in player_stats:
+                player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
+                needs_migration_save = True
+                player_services_logger.info(f"為舊玩家 {player_id} 補上預設金幣欄位。")
+
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
                 all_titles_config = game_configs.get("titles", [])
