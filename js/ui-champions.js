@@ -42,7 +42,7 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
     } else {
         // --- 佔領空位，挑戰守門員NPC ---
         confirmationTitle = `佔領第 ${rankToChallenge} 名`;
-        confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
+        confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰殿堂守護者，以佔領第 ${rankToChallenge} 名的席位嗎？`;
         
         // 從遊戲設定檔讀取守門員資料
         const guardians = gameState.gameConfigs?.champion_guardians;
