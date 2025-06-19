@@ -185,7 +185,7 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 CultivationStories 資料失敗: {e}")
 
-    # --- 【新增】載入冠軍守門員資料 ---
+    # --- 載入冠軍守門員資料 ---
     try:
         guardians_path = os.path.join(data_dir, 'champion_guardians.json')
         with open(guardians_path, 'r', encoding='utf-8') as f:
@@ -381,7 +381,11 @@ def populate_game_configs():
         {
             "id": "npc_m_002", "nickname": "", "elements": ["木", "土"], "elementComposition": {"木": 70.0, "土": 30.0},
             "hp": 120, "mp": 25, "initial_max_hp": 120, "initial_max_mp": 25, "attack": 10, "defense": 20, "speed": 8, "crit": 3,
-            "skills": random.sample(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))),
+            # 【修正】修正此處的括號錯誤
+            "skills": random.sample(
+                skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", []),
+                min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))
+            ),
             "rarity": "稀有", "title": random.choice(_monster_achievements),
             "custom_element_nickname": _element_nicknames.get("木", "木靈"), "description": "堅毅的森林守衛者幼苗，擁有大地與森林的祝福。",
             "personality": random.choice(personalities_data), "creationTime": int(time.time()),
