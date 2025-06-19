@@ -29,21 +29,25 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
     let confirmationTitle;
     let confirmationMessage;
 
+    // 【修改】預先獲取玩家怪獸的顯示名稱
+    const playerDisplayName = getMonsterDisplayName(playerMonster, gameState.gameConfigs);
+
     if (opponentMonster) {
         // --- 挑戰現有冠軍 ---
         finalOpponent = opponentMonster;
         confirmationTitle = `挑戰第 ${rankToChallenge} 名`;
-        confirmationMessage = `您確定要讓 ${playerMonster.nickname} 挑戰 ${finalOpponent.nickname} 的冠軍席位嗎？`;
+        // 【修改】使用顯示名稱，並簡化文字
+        const opponentDisplayName = getMonsterDisplayName(finalOpponent, gameState.gameConfigs);
+        confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰 ${opponentDisplayName} 的席位嗎？`;
     } else {
         // --- 佔領空位，挑戰守門員NPC ---
         confirmationTitle = `佔領第 ${rankToChallenge} 名`;
-        confirmationMessage = `您確定要挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
+        confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
         
-        // 【修改】調整守門員NPC的名稱與顯示邏輯
         finalOpponent = {
             id: `npc_guardian_${rankToChallenge}`,
-            nickname: '殿堂守護者', // 內部及後端記錄用名
-            element_nickname_part: '殿堂守護者', // 主要顯示名稱
+            nickname: '殿堂守護者',
+            element_nickname_part: '殿堂守護者', 
             isNPC: true,
             rarity: "稀有",
             elements: ["混"],
