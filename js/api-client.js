@@ -263,6 +263,14 @@ async function getMonsterLeaderboard(topN = 10) {
 }
 
 /**
+ * 【新增】獲取冠軍殿堂排行榜
+ * @returns {Promise<Array<object>>} 冠軍殿堂怪獸列表 (固定4個位置)
+ */
+async function getChampionsLeaderboard() {
+    return fetchAPI('/champions');
+}
+
+/**
  * 獲取玩家排行榜
  * @param {number} topN 需要的排行數量
  * @returns {Promise<Array<object>>} 玩家排行榜列表
