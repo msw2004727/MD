@@ -1050,7 +1050,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.02);
+    transform: scale(1.10);
   }
   100% {
     transform: scale(1);
@@ -1058,7 +1058,7 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 #monster-part-head .monster-part-image.active {
-  animation: head-breath 3s infinite alternate ease-in-out;
+  animation: head-breath 2s infinite alternate ease-in-out;
   transform-origin: center bottom; /* 讓縮放中心在底部中間，看起來更像在呼吸 */
 }
 }
