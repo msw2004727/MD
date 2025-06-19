@@ -6,14 +6,13 @@ import logging
 from typing import List, Dict, Optional, Any, Tuple
 import firebase_admin
 from firebase_admin import firestore
-# 新增導入 FieldPath
 from google.cloud.firestore_v1.field_path import FieldPath
-import random # 引入 random 模組
+import random 
 
-# 從 MD_models 導入相關的 TypedDict 定義
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry
-# 從 utils_services 導入共用函式
 from .utils_services import generate_monster_full_nickname
+# 【新增】導入冠軍殿堂的服務
+from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
 
@@ -61,7 +60,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
             "condition": {"type": "default", "value": 0}, "buffs": {}
         }
 
-    # 【修改】初始化所有新的追蹤欄位
     player_stats: PlayerStats = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
         "titles": [default_title_object], 
@@ -169,11 +167,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
-            # ---【修改開始】---
-            # --- 舊資料遷移邏輯，包含稱號、怪獸名稱和這次的DNA baseId 修復 ---
             needs_migration_save = False
             
-            # 1. 稱號遷移
             player_stats = player_game_data_dict.get("playerStats", {})
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
@@ -199,7 +194,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     needs_migration_save = True
                     player_services_logger.info(f"為舊玩家 {player_id} 補上預設裝備稱號 ID: {default_equip_id}")
 
-            # 2. 怪獸名稱欄位遷移
             farmed_monsters = player_game_data_dict.get("farmedMonsters", [])
             if farmed_monsters:
                 element_nicknames_map = game_configs.get("element_nicknames", {})
@@ -216,7 +210,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 for monster in farmed_monsters:
                     if "player_title_part" not in monster:
                         needs_migration_save = True
-                        # ... (此處省略怪獸名稱遷移的詳細日誌，以保持清晰)
                         monster["player_title_part"] = player_current_title_name
                         monster["achievement_part"] = monster.get("title", "新秀")
                         if monster.get("custom_element_nickname"):
@@ -229,29 +222,23 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                             monster["element_nickname_part"] = possible_nicknames[0] if possible_nicknames else primary_element
                         monster["nickname"] = generate_monster_full_nickname(monster["player_title_part"], monster["achievement_part"], monster["element_nickname_part"], naming_constraints)
             
-            # 3. DNA 'baseId' 欄位修復遷移 (本次錯誤的核心修復)
             for dna_list_key in ["playerOwnedDNA", "dnaCombinationSlots"]:
                 dna_list = player_game_data_dict.get(dna_list_key, [])
                 for i, dna_item in enumerate(dna_list):
                     if dna_item and isinstance(dna_item, dict) and "baseId" not in dna_item:
                         item_id = dna_item.get("id", "")
-                        # 舊資料的 ID 就是模板 ID，新資料的實例 ID 以 "dna_inst_" 開頭
                         if item_id and not item_id.startswith("dna_inst_"):
                             needs_migration_save = True
                             player_services_logger.info(f"為玩家 {player_id} 的 DNA (ID: {item_id}) 進行 'baseId' 遷移。")
-                            # 將舊的ID (模板ID) 複製到 baseId
                             dna_item["baseId"] = item_id
-                            # 為這個舊物品生成一個新的、符合格式的實例ID
                             dna_item["id"] = f"dna_inst_{player_id}_{int(time.time() * 1000)}_{i}"
 
-            # 4. 如果有任何遷移發生，則儲存
             if needs_migration_save:
                 try:
                     save_player_data_service(player_id, player_game_data_dict) # type: ignore
                     player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
                 except Exception as e:
                     player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
-            # ---【修改結束】---
             
             loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
             max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
@@ -298,6 +285,36 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         return False
     
     db = firestore_db_instance
+    
+    # 【新增】在儲存前，檢查是否更換了出戰怪獸
+    try:
+        current_data_doc = db.collection('users').document(player_id).collection('gameData').document('main').get()
+        if current_data_doc.exists:
+            current_data = current_data_doc.to_dict()
+            old_selected_id = current_data.get("selectedMonsterId")
+            new_selected_id = game_data.get("selectedMonsterId")
+
+            if old_selected_id and old_selected_id != new_selected_id:
+                # 出戰怪獸被更換，檢查舊怪獸是否在冠軍殿堂
+                player_services_logger.info(f"玩家 {player_id} 更換出戰怪獸：從 {old_selected_id} 更換為 {new_selected_id}。檢查冠軍席位...")
+                champions_data = get_champions_data()
+                was_champion = False
+                for i in range(1, 5):
+                    rank_key = f"rank{i}"
+                    slot = champions_data.get(rank_key)
+                    if slot and slot.get("monsterId") == old_selected_id:
+                        champions_data[rank_key] = None # 清空席位
+                        was_champion = True
+                        player_services_logger.info(f"玩家 {player_id} 的舊出戰怪獸 {old_selected_id} 為第 {i} 名冠軍，已將其席位移除。")
+                        break
+                
+                if was_champion:
+                    update_champions_document(champions_data) # 更新冠軍文件
+
+    except Exception as e:
+        player_services_logger.error(f"儲存前檢查冠軍席位時發生錯誤: {e}", exc_info=True)
+        # 即使這裡出錯，也應繼續嘗試儲存玩家資料
+    
     current_time_unix = int(time.time())
 
     try:
@@ -311,7 +328,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "selectedMonsterId": game_data.get("selectedMonsterId"),
             "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
-            "playerNotes": game_data.get("playerNotes", []), # 【新增】儲存玩家註記
+            "playerNotes": game_data.get("playerNotes", []),
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
@@ -412,10 +429,9 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
         player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
         return player_data
         
-    # 【新增】後端長度驗證
     if len(note_content) > 100:
         player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
-        return None # 返回 None 表示驗證失敗
+        return None 
 
     new_note: NoteEntry = {
         "timestamp": int(time.time()),
@@ -432,13 +448,13 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
     elif target_type == "monster":
         if not monster_id:
             player_services_logger.error("新增怪獸註記失敗：未提供怪獸 ID。")
-            return None # 返回 None 表示操作失敗
+            return None 
 
         monster_to_update = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
 
         if not monster_to_update:
             player_services_logger.error(f"新增怪獸註記失敗：找不到 ID 為 {monster_id} 的怪獸。")
-            return None # 返回 None 表示操作失敗
+            return None 
         
         if "monsterNotes" not in monster_to_update or not isinstance(monster_to_update.get("monsterNotes"), list):
             monster_to_update["monsterNotes"] = []
@@ -449,4 +465,4 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
 
     else:
         player_services_logger.error(f"新增註記失敗：未知的目標類型 '{target_type}'。")
-        return None # 返回 None 表示操作失敗
+        return None
