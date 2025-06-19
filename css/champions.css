@@ -47,6 +47,7 @@
     border-radius: 8px;
     transition: all 0.3s ease;
     justify-content: center;
+    position: relative; /* 新增：讓此元素成為皇冠定位的基準 */
 }
 
 /* 當欄位被佔據時的樣式 */
@@ -86,7 +87,6 @@
     position: relative;
     width: 80px;
     height: 80px;
-    /* 新增：確保能裁切掉超出範圍的旗幟 */
     border-radius: 50%;
     overflow: hidden;
 }
@@ -114,17 +114,17 @@
 
 .champion-crown {
     position: absolute;
-    top: -22px;
+    top: 0.2rem; /* 修改：調整垂直位置以適應新的父容器 */
     left: 50%;
     transform: translateX(-50%);
     font-size: 2.2rem;
     color: gold;
     text-shadow: 0 0 6px rgba(0,0,0,0.6);
     pointer-events: none;
-    z-index: 5;
+    z-index: 5; 
 }
 
-/* 新增：在位時間旗幟的樣式 */
+/* 在位時間旗幟的樣式 */
 .champion-reign-duration {
     position: absolute;
     bottom: 0;
@@ -139,7 +139,6 @@
     box-sizing: border-box;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
     z-index: 4;
-    /* 初始隱藏，由 JS 控制顯示 */
     display: none; 
 }
 
