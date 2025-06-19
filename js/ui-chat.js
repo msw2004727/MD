@@ -241,7 +241,29 @@ function initializeChatSystem() {
                 if (monsterId) {
                     const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                     if (monster) {
-                        setupChatTab(monster);
+                        const isTraining = monster.farmStatus && monster.farmStatus.isTraining;
+                        
+                        if (!chatElements.logArea || !chatElements.input || !chatElements.sendBtn) {
+                            initializeChatDOMElements();
+                        }
+
+                        if (isTraining) {
+                            if (chatElements.logArea) {
+                                chatElements.logArea.innerHTML = `<p class="text-center text-lg text-[var(--text-secondary)] py-10">外出修煉中，不在身邊... 🐾</p>`;
+                            }
+                            if (chatElements.input) chatElements.input.disabled = true;
+                            if (chatElements.sendBtn) chatElements.sendBtn.disabled = true;
+                            if (chatElements.punchBtn) chatElements.punchBtn.disabled = true;
+                            if (chatElements.patBtn) chatElements.patBtn.disabled = true;
+                            if (chatElements.kissBtn) chatElements.kissBtn.disabled = true;
+                        } else {
+                            if (chatElements.input) chatElements.input.disabled = false;
+                            if (chatElements.sendBtn) chatElements.sendBtn.disabled = false;
+                            if (chatElements.punchBtn) chatElements.punchBtn.disabled = false;
+                            if (chatElements.patBtn) chatElements.patBtn.disabled = false;
+                            if (chatElements.kissBtn) chatElements.kissBtn.disabled = false;
+                            setupChatTab(monster);
+                        }
                     }
                 }
             }
