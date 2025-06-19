@@ -82,7 +82,6 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
 
                 await refreshPlayerData(); 
                 
-                // 【修改】直接呼叫 handleMonsterLeaderboardClick 來刷新整個排行榜，確保冠軍資料同步
                 if (typeof handleMonsterLeaderboardClick === 'function') {
                     await handleMonsterLeaderboardClick();
                 }
@@ -203,8 +202,19 @@ function renderChampionSlots(championsData) {
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
             nameSpan.textContent = rankNames[rank];
             
-            // 【邏輯修正】只有非冠軍玩家才能佔領第四名空位
-            const canOccupy = playerMonster && playerChampionRank === 0 && rank === 4;
+            // 【邏輯修正】允許挑戰更高一級的空位
+            let canOccupy = false;
+            if (playerMonster) {
+                // 如果玩家不是冠軍，只能佔領第4名
+                if (playerChampionRank === 0 && rank === 4) {
+                    canOccupy = true;
+                } 
+                // 如果玩家已是冠軍，只能佔領高一級的空位
+                else if (playerChampionRank > 0 && rank === playerChampionRank - 1) {
+                    canOccupy = true;
+                }
+            }
+
             buttonEl.textContent = "佔領";
             buttonEl.disabled = !canOccupy;
             if(canOccupy) buttonEl.classList.replace('secondary', 'success');
