@@ -56,7 +56,9 @@
         "battling": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
         "comment_zh_battling": "戰鬥中",
         "skillLearn": "",
-        "comment_zh_skillLearn": "學習技能中"
+        "comment_zh_skillLearn": "學習技能中",
+        "monsterSwitching": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
+        "comment_zh_monsterSwitching": "更換出戰怪獸交接中"
       }
     },
     "cultivation": {
