@@ -14,41 +14,46 @@ function renderChampionSlots(championsData) {
 
     const playerMonster = getSelectedMonster();
     const playerId = gameState.playerId;
-    let playerChampionRank = 0; // 0 表示玩家不是冠軍成員
+    let playerChampionRank = 0;
 
-    // 找出玩家自己是否在冠軍殿堂中，以及排名為何
+    // --- 【診斷日誌 1】 ---
+    console.log("--- 開始渲染冠軍殿堂 ---");
+    console.log("當前出戰怪獸 (playerMonster):", playerMonster);
+    console.log("當前玩家ID (playerId):", playerId);
+    
     championsData.forEach((monster, index) => {
         if (monster && monster.owner_id === playerId) {
             playerChampionRank = index + 1;
         }
     });
 
+    // --- 【診斷日誌 2】 ---
+    console.log("計算後的玩家冠軍排名 (playerChampionRank):", playerChampionRank);
+
+
     championsData.forEach((monster, index) => {
         const rank = index + 1;
+
+        // --- 【診斷日誌 3】 ---
+        console.log(`--- 正在渲染 Rank ${rank} ---`);
+
         const slot = container.querySelector(`.champion-slot[data-rank="${rank}"]`);
         if (!slot) return;
 
         const avatarEl = slot.querySelector(`#champion-avatar-${rank}`);
         const nameEl = slot.querySelector(`#champion-name-${rank}`);
         const buttonEl = slot.querySelector(`#champion-challenge-btn-${rank}`);
-        const reignDurationEl = slot.querySelector(`#champion-reign-duration-${rank}`);
+        
+        if (!avatarEl || !nameEl || !buttonEl) return;
 
-        if (!avatarEl || !nameEl || !buttonEl || !reignDurationEl) return;
-
-        // 清空舊內容
         avatarEl.innerHTML = '';
-        reignDurationEl.style.display = 'none'; // 預設隱藏
         slot.classList.remove('occupied');
 
-        // 移除舊的監聽器以防重複綁定
         const newButtonEl = buttonEl.cloneNode(true);
         buttonEl.parentNode.replaceChild(newButtonEl, buttonEl);
 
         if (monster) {
-            // --- 如果名次已被佔領 ---
             slot.classList.add('occupied');
-
-            // 1. 設置頭像
             const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
             if (imagePath) {
@@ -60,29 +65,12 @@ function renderChampionSlots(championsData) {
                  avatarEl.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
             }
 
-            // 2. 設置名稱
             const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
             nameEl.textContent = displayName;
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
             nameEl.className = `champion-name text-rarity-${rarityKey}`;
 
-            // 3. 設置在位時間
-            if (monster.occupiedTimestamp) {
-                const occupiedDate = new Date(monster.occupiedTimestamp * 1000);
-                const nowDate = new Date();
-
-                occupiedDate.setHours(0, 0, 0, 0);
-                nowDate.setHours(0, 0, 0, 0);
-
-                const diffTime = Math.abs(nowDate - occupiedDate);
-                const daysInReign = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                reignDurationEl.textContent = `在位 ${daysInReign} 天`;
-                reignDurationEl.style.display = 'block'; // 顯示旗幟
-            }
-
-            // 4. 設置按鈕邏輯
             if (monster.owner_id === playerId) {
                 newButtonEl.textContent = "你的席位";
                 newButtonEl.disabled = true;
@@ -108,15 +96,17 @@ function renderChampionSlots(championsData) {
             }
 
         } else {
-            // --- 如果名次是空的 ---
             avatarEl.innerHTML = `<span class="champion-placeholder-text">虛位以待</span>`;
             
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
             nameEl.textContent = rankNames[rank];
             nameEl.className = 'champion-name';
             
-            // --- 核心修改處 ---
             const canOccupy = playerMonster && playerChampionRank === 0 && rank === 4;
+            
+            // --- 【診斷日誌 4】 ---
+            console.log(`Rank ${rank} 為空位。canOccupy 判斷結果:`, canOccupy);
+
             newButtonEl.textContent = "佔領";
             newButtonEl.disabled = !canOccupy;
             newButtonEl.className = `champion-challenge-btn button ${canOccupy ? 'success' : 'secondary'} text-xs`;
