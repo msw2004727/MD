@@ -15,7 +15,6 @@ function moveDnaToCombinationSlot(draggedDnaObject, sourceSlotIndexIfFromCombina
         return;
     }
     
-    // 修改：從新的 gameState.playerData 中讀取組合槽
     const combinationSlots = gameState.playerData?.dnaCombinationSlots;
     if (!combinationSlots) {
         console.error("moveDnaToCombinationSlot: 玩家資料中的組合槽未定義。");
@@ -75,7 +74,6 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
              currentOwnedDna[sourceInfo.originalInventoryIndex] = null;
         }
     } else if (sourceInfo.type === 'combination') {
-        // 修改：從新的 gameState.playerData 中清空組合槽
         if (gameState.playerData?.dnaCombinationSlots) {
             gameState.playerData.dnaCombinationSlots[sourceInfo.id] = null;
         }
@@ -559,12 +557,11 @@ async function handleDeployMonsterClick(monsterId) {
     }
     
     if (newMonsterToDeploy.hp < newMonsterToDeploy.initial_max_hp * 0.25) {
-        showFeedbackModal('無法出戰', '瀕死狀態下無法出戰，請先治療您的怪獸。');
+        showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
         return;
     }
 
     const currentSelectedId = gameState.selectedMonsterId;
-    // 如果點擊的怪獸已經是出戰狀態，則不執行任何操作
     if (currentSelectedId === monsterId) {
         return;
     }
@@ -589,31 +586,31 @@ async function handleDeployMonsterClick(monsterId) {
         }
     };
     
-    // 檢查舊的出戰怪獸是否在冠軍殿堂
     if (currentSelectedId) {
         showFeedbackModal('檢查中...', '正在確認冠軍席位...', true);
         try {
             const championsData = await getChampionsLeaderboard();
             hideModal('feedback-modal');
             
-            const isCurrentChampion = championsData.some(champ => champ && champ.monsterId === currentSelectedId);
+            // 【邏輯修正】檢查怪獸ID時，使用 champ.id 而非 champ.monsterId
+            const isCurrentChampion = championsData.some(champ => champ && champ.id === currentSelectedId);
 
             if (isCurrentChampion) {
                 showConfirmationModal(
                     '確認更換出戰',
                     '您目前出戰的怪獸正位於冠軍殿堂中。更換出戰怪獸將會自動放棄目前的冠軍席位。您確定要更換嗎？',
-                    proceedWithDeployment, // 如果確認，則執行部署
+                    proceedWithDeployment, 
                     { confirmButtonClass: 'danger', confirmButtonText: '確定更換' }
                 );
             } else {
-                await proceedWithDeployment(); // 如果不是冠軍，直接部署
+                await proceedWithDeployment(); 
             }
         } catch (error) {
             hideModal('feedback-modal');
             showFeedbackModal('錯誤', '檢查冠軍席位時發生錯誤，請稍後再試。');
         }
     } else {
-        await proceedWithDeployment(); // 如果之前沒有選擇怪獸，直接部署
+        await proceedWithDeployment(); 
     }
 }
 
