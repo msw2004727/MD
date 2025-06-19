@@ -2,7 +2,106 @@
 // 負責渲染「冠軍殿堂」區塊的 UI
 
 /**
- * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位，並實作挑戰按鈕的資格判斷邏輯。
+ * 【新增】處理挑戰冠軍或佔領席位的點擊事件。
+ * 此函式從 game-interaction-handlers.js 移入，以解決載入順序問題。
+ * @param {Event} event - 點擊事件。
+ * @param {number} rankToChallenge - 欲挑戰或佔領的排名 (1-4)。
+ * @param {object | null} opponentMonster - 該席位的怪獸物件，如果為空位則為 null。
+ */
+async function handleChampionChallengeClick(event, rankToChallenge, opponentMonster) {
+    if (event) event.stopPropagation();
+
+    const playerMonster = getSelectedMonster();
+    if (!playerMonster) {
+        showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
+        return;
+    }
+    if (playerMonster.farmStatus?.isTraining) {
+        showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
+        return;
+    }
+    if (playerMonster.hp < playerMonster.initial_max_hp * 0.25) {
+        showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
+        return;
+    }
+
+    let finalOpponent;
+    let confirmationTitle;
+    let confirmationMessage;
+
+    if (opponentMonster) {
+        // --- 挑戰現有冠軍 ---
+        finalOpponent = opponentMonster;
+        confirmationTitle = `挑戰第 ${rankToChallenge} 名`;
+        confirmationMessage = `您確定要讓 ${playerMonster.nickname} 挑戰 ${finalOpponent.nickname} 的冠軍席位嗎？`;
+    } else {
+        // --- 佔領空位，挑戰守門員NPC ---
+        confirmationTitle = `佔領第 ${rankToChallenge} 名`;
+        confirmationMessage = `您確定要挑戰守門員，以佔領第 ${rankToChallenge} 名的席位嗎？`;
+        // 創建一個基礎的守門員NPC
+        finalOpponent = {
+            id: `npc_guardian_${rankToChallenge}`,
+            nickname: `第 ${rankToChallenge} 名守門員`,
+            isNPC: true,
+            rarity: "稀有",
+            elements: ["混"],
+            initial_max_hp: 150 + (4 - rankToChallenge) * 50,
+            hp: 150 + (4 - rankToChallenge) * 50,
+            initial_max_mp: 50 + (4 - rankToChallenge) * 20,
+            mp: 50 + (4 - rankToChallenge) * 20,
+            attack: 30 + (4 - rankToChallenge) * 10,
+            defense: 30 + (4 - rankToChallenge) * 10,
+            speed: 30 + (4 - rankToChallenge) * 5,
+            crit: 10,
+            skills: [
+                { name: "揮指", power: 0, mp_cost: 10, type: "混", skill_category: "其他", level: 5 },
+                { name: "泰山壓頂", power: 65, mp_cost: 13, type: "無", skill_category: "物理", level: 5 }
+            ],
+            personality: { name: "冷静的" },
+            score: 200 + (4 - rankToChallenge) * 50
+        };
+    }
+
+    gameState.battleTargetMonster = finalOpponent;
+
+    showConfirmationModal(
+        confirmationTitle,
+        confirmationMessage,
+        async () => {
+            try {
+                showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
+                
+                const { battle_result: battleResult } = await simulateBattle({
+                    player_monster_data: playerMonster,
+                    opponent_monster_data: finalOpponent,
+                    opponent_owner_id: finalOpponent.owner_id || null, 
+                    opponent_owner_nickname: finalOpponent.owner_nickname || "冠軍守護者",
+                    is_champion_challenge: true,
+                    challenged_rank: rankToChallenge
+                });
+
+                await refreshPlayerData(); 
+                
+                // 【修改】直接呼叫 handleMonsterLeaderboardClick 來刷新整個排行榜，確保冠軍資料同步
+                if (typeof handleMonsterLeaderboardClick === 'function') {
+                    await handleMonsterLeaderboardClick();
+                }
+                
+                showBattleLogModal(battleResult);
+                hideModal('feedback-modal');
+
+            } catch (battleError) {
+                showFeedbackModal('戰鬥失敗', `模擬冠軍戰鬥時發生錯誤: ${battleError.message}`);
+                console.error("模擬冠軍戰鬥錯誤:", battleError);
+                await refreshPlayerData(); 
+            }
+        },
+        { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
+    );
+}
+
+/**
+ * 根據真實的冠軍數據，渲染冠軍殿堂的四個欄位。
  * @param {Array<object|null>} championsData - 從後端獲取的、包含四個冠軍槽位怪獸資料的陣列。
  */
 function renderChampionSlots(championsData) {
@@ -14,9 +113,8 @@ function renderChampionSlots(championsData) {
 
     const playerMonster = getSelectedMonster();
     const playerId = gameState.playerId;
-    let playerChampionRank = 0; // 0 表示玩家不是冠軍成員
+    let playerChampionRank = 0; 
 
-    // 找出玩家自己是否在冠軍殿堂中，以及排名為何
     championsData.forEach((monster, index) => {
         if (monster && monster.owner_id === playerId) {
             playerChampionRank = index + 1;
@@ -28,63 +126,60 @@ function renderChampionSlots(championsData) {
         const slot = container.querySelector(`.champion-slot[data-rank="${rank}"]`);
         if (!slot) return;
 
-        const avatarEl = slot.querySelector(`#champion-avatar-${rank}`);
-        const nameEl = slot.querySelector(`#champion-name-${rank}`);
-        const buttonEl = slot.querySelector(`#champion-challenge-btn-${rank}`);
-        const reignDurationEl = slot.querySelector(`#champion-reign-duration-${rank}`);
+        slot.innerHTML = ''; 
 
-        if (!avatarEl || !nameEl || !buttonEl || !reignDurationEl) return;
+        const avatarContainer = document.createElement('div');
+        avatarContainer.className = 'champion-avatar-container';
+        if (rank === 1) {
+            avatarContainer.innerHTML = '<span class="champion-crown">👑</span>';
+        }
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'champion-avatar';
+        avatarContainer.appendChild(avatarDiv);
 
-        // 清空舊內容
-        avatarEl.innerHTML = '';
-        reignDurationEl.style.display = 'none'; // 預設隱藏
-        slot.classList.remove('occupied');
+        const identityContainer = document.createElement('div');
+        identityContainer.className = 'champion-identity-container';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'champion-name';
+        const reignDiv = document.createElement('div');
+        reignDiv.className = 'champion-reign-duration';
+        identityContainer.appendChild(nameSpan);
+        identityContainer.appendChild(reignDiv);
 
-        // 移除舊的監聽器以防重複綁定
-        const newButtonEl = buttonEl.cloneNode(true);
-        buttonEl.parentNode.replaceChild(newButtonEl, buttonEl);
+        const buttonEl = document.createElement('button');
+        buttonEl.className = 'champion-challenge-btn button secondary text-xs';
 
         if (monster) {
-            // --- 如果名次已被佔領 ---
             slot.classList.add('occupied');
-
-            // 1. 設置頭像
             const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
             if (imagePath) {
                 const img = document.createElement('img');
                 img.src = imagePath;
                 img.alt = monster.nickname || '怪獸頭像';
-                avatarEl.appendChild(img);
+                avatarDiv.appendChild(img);
             } else {
-                 avatarEl.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
+                 avatarDiv.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
             }
 
-            // 2. 設置名稱
             const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
-            nameEl.textContent = displayName;
+            nameSpan.textContent = displayName;
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-            nameEl.className = `champion-name text-rarity-${rarityKey}`;
+            nameSpan.classList.add(`text-rarity-${rarityKey}`);
 
-            // 3. 設置在位時間
             if (monster.occupiedTimestamp) {
                 const nowInSeconds = Math.floor(Date.now() / 1000);
                 const occupiedTimestamp = monster.occupiedTimestamp;
                 const durationInSeconds = nowInSeconds - occupiedTimestamp;
-                
-                // 86400 秒 = 1 天
                 const daysInReign = Math.floor(durationInSeconds / 86400);
-
-                reignDurationEl.textContent = `在位 ${daysInReign} 天`;
-                reignDurationEl.style.display = 'block'; // 顯示旗幟
+                reignDiv.textContent = `在位 ${daysInReign} 天`;
+                reignDiv.style.display = 'block';
             }
 
-            // 4. 設置按鈕邏輯
             if (monster.owner_id === playerId) {
-                newButtonEl.textContent = "你的席位";
-                newButtonEl.disabled = true;
-                newButtonEl.className = 'champion-challenge-btn button secondary text-xs';
+                buttonEl.textContent = "你的席位";
+                buttonEl.disabled = true;
             } else {
                 let canChallenge = false;
                 if (playerMonster) {
@@ -95,34 +190,32 @@ function renderChampionSlots(championsData) {
                     }
                 }
                 
-                newButtonEl.textContent = "挑戰";
-                newButtonEl.disabled = !canChallenge;
-                newButtonEl.className = `champion-challenge-btn button ${canChallenge ? 'primary' : 'secondary'} text-xs`;
+                buttonEl.textContent = "挑戰";
+                buttonEl.disabled = !canChallenge;
+                if(canChallenge) buttonEl.classList.replace('secondary', 'primary');
+
                 if (canChallenge) {
-                    newButtonEl.addEventListener('click', (e) => {
-                        handleChampionChallengeClick(e, rank, monster);
-                    });
+                    buttonEl.addEventListener('click', (e) => handleChampionChallengeClick(e, rank, monster));
                 }
             }
-
         } else {
-            // --- 如果名次是空的 ---
-            avatarEl.innerHTML = `<span class="champion-placeholder-text">虛位以待</span>`;
-            
+            avatarDiv.innerHTML = `<span class="champion-placeholder-text">虛位以待</span>`;
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
-            nameEl.textContent = rankNames[rank];
-            nameEl.className = 'champion-name';
+            nameSpan.textContent = rankNames[rank];
             
-            const canOccupy = playerMonster && playerChampionRank === 0;
-            newButtonEl.textContent = "佔領";
-            newButtonEl.disabled = !canOccupy;
-            newButtonEl.className = `champion-challenge-btn button ${canOccupy ? 'success' : 'secondary'} text-xs`;
+            // 【邏輯修正】只有非冠軍玩家才能佔領第四名空位
+            const canOccupy = playerMonster && playerChampionRank === 0 && rank === 4;
+            buttonEl.textContent = "佔領";
+            buttonEl.disabled = !canOccupy;
+            if(canOccupy) buttonEl.classList.replace('secondary', 'success');
 
             if (canOccupy) {
-                 newButtonEl.addEventListener('click', (e) => {
-                    handleChampionChallengeClick(e, rank, null);
-                });
+                 buttonEl.addEventListener('click', (e) => handleChampionChallengeClick(e, rank, null));
             }
         }
+        
+        slot.appendChild(avatarContainer);
+        slot.appendChild(identityContainer);
+        slot.appendChild(buttonEl);
     });
 }
