@@ -106,7 +106,7 @@ function renderDNACombinationSlots() {
     });
     
     if(DOMElements.combineButton) {
-        DOMElements.combineButton.disabled = combinationSlots.filter(s => s !== null).length < 2;
+        DOMElements.combineButton.disabled = combinationSlots.filter(s => s !== null).length < 5;
     }
 }
 
