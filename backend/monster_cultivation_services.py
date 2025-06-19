@@ -360,7 +360,7 @@ def replace_monster_skill_service(
 
     monster_to_update: Optional[Monster] = None
     monster_idx = -1
-    for idx, m in enumerate(player_data["farmedMonsters"]):
+    for idx, m in enumerate(player_data.get("farmedMonsters", [])):
         if m.get("id") == monster_id:
             monster_to_update = m
             monster_idx = idx
@@ -409,9 +409,9 @@ def replace_monster_skill_service(
     monster_to_update["skills"] = current_skills
     player_data["farmedMonsters"][monster_idx] = monster_to_update
 
-    if save_player_data_service(user_id, player_data):
+    if save_player_data_service(player_id, player_data):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
         return player_data
     else:
-        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {user_id} 資料失敗。")
+        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {player_id} 資料失敗。")
         return None
