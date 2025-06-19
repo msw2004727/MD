@@ -332,8 +332,8 @@ def combine_dna_api_route():
                 routes_logger.info(f"新怪獸已加入玩家 {user_id} 的農場並儲存。")
                 return jsonify(new_monster_object), 201
             else:
-                routes_logger.warning(f"警告：新怪獸已生成，但儲存玩家 {user_id} 資料失敗。")
-                return jsonify(new_monster_object), 201
+                routes_logger.error(f"儲存新怪獸至玩家 {user_id} 的農場時失敗。")
+                return jsonify({"error": "怪獸已生成，但存檔失敗，請稍後再試。"}), 500
         else:
             routes_logger.info(f"玩家 {user_id} 的農場已滿，新怪獸 {new_monster_object.get('nickname', '未知')} 未加入。")
             return jsonify({**new_monster_object, "farm_full_warning": "農場已滿，怪獸未自動加入農場。"}), 200
