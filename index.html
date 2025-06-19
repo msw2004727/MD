@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.3.2'; // 例如從 '1.0.0' 改為 '1.0.1'
+        const gameVersion = '0.2.9'; // 例如從 '1.0.0' 改為 '1.0.1'
 
         const cssFiles = [
             'css/theme.css',
@@ -217,7 +217,7 @@
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🛠️ 建商尚未進駐，敬請期待！</p>
                 </div>
                 <div id="guild-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️ 港口尚未開放，敬請期待！</p>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️ 冒險島尚未開放，敬請期待！</p>
                 </div>
 
                 </div>
@@ -251,36 +251,44 @@
                 <h4 class="champions-section-title">冠軍殿堂</h4>
                 <div class="champions-grid" id="champions-grid-container">
                     <div class="champion-slot" data-rank="1">
+                        <span class="champion-crown">👑</span>
                         <div class="champion-avatar-container">
-                            <span class="champion-crown">👑</span>
                             <div class="champion-avatar" id="champion-avatar-1"></div>
+                        </div>
+                        <div class="champion-identity-container">
+                            <span class="champion-name" id="champion-name-1">冠軍</span>
                             <div class="champion-reign-duration" id="champion-reign-duration-1"></div>
                         </div>
-                        <span class="champion-name" id="champion-name-1">冠軍</span>
                         <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-1" disabled>挑戰</button>
                     </div>
                     <div class="champion-slot" data-rank="2">
                         <div class="champion-avatar-container">
                             <div class="champion-avatar" id="champion-avatar-2"></div>
+                        </div>
+                        <div class="champion-identity-container">
+                            <span class="champion-name" id="champion-name-2">亞軍</span>
                             <div class="champion-reign-duration" id="champion-reign-duration-2"></div>
                         </div>
-                        <span class="champion-name" id="champion-name-2">亞軍</span>
                         <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-2" disabled>挑戰</button>
                     </div>
                     <div class="champion-slot" data-rank="3">
                         <div class="champion-avatar-container">
                             <div class="champion-avatar" id="champion-avatar-3"></div>
+                        </div>
+                        <div class="champion-identity-container">
+                            <span class="champion-name" id="champion-name-3">季軍</span>
                             <div class="champion-reign-duration" id="champion-reign-duration-3"></div>
                         </div>
-                        <span class="champion-name" id="champion-name-3">季軍</span>
                         <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-3" disabled>挑戰</button>
                     </div>
                     <div class="champion-slot" data-rank="4">
                         <div class="champion-avatar-container">
                             <div class="champion-avatar" id="champion-avatar-4"></div>
+                        </div>
+                        <div class="champion-identity-container">
+                            <span class="champion-name" id="champion-name-4">殿軍</span>
                             <div class="champion-reign-duration" id="champion-reign-duration-4"></div>
                         </div>
-                        <span class="champion-name" id="champion-name-4">殿軍</span>
                         <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-4" disabled>挑戰</button>
                     </div>
                 </div>
