@@ -69,17 +69,14 @@ function renderChampionSlots(championsData) {
 
             // 3. 設置在位時間
             if (monster.occupiedTimestamp) {
-                // --- 核心修改處 START ---
                 const occupiedDate = new Date(monster.occupiedTimestamp * 1000);
                 const nowDate = new Date();
 
-                // 將時間都設定為當天的午夜來計算日曆天差異
                 occupiedDate.setHours(0, 0, 0, 0);
                 nowDate.setHours(0, 0, 0, 0);
 
                 const diffTime = Math.abs(nowDate - occupiedDate);
                 const daysInReign = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                // --- 核心修改處 END ---
 
                 reignDurationEl.textContent = `在位 ${daysInReign} 天`;
                 reignDurationEl.style.display = 'block'; // 顯示旗幟
@@ -118,7 +115,8 @@ function renderChampionSlots(championsData) {
             nameEl.textContent = rankNames[rank];
             nameEl.className = 'champion-name';
             
-            const canOccupy = playerMonster && playerChampionRank === 0;
+            // --- 核心修改處 ---
+            const canOccupy = playerMonster && playerChampionRank === 0 && rank === 4;
             newButtonEl.textContent = "佔領";
             newButtonEl.disabled = !canOccupy;
             newButtonEl.className = `champion-challenge-btn button ${canOccupy ? 'success' : 'secondary'} text-xs`;
