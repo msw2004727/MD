@@ -110,9 +110,9 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         else:
             monster_combination_services_logger.warning(f"在組合槽的 DNA 物件中找不到有效的 'baseId' 或 'id'，已跳過。DNA 物件: {dna_obj}")
     
-    if len(combined_dnas_data) < 2:
-        monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量不足 (剩下 {len(combined_dnas_data)} 個)，無法組合。")
-        return {"success": False, "error": "有效的 DNA 數量不足，無法組合。"}
+    if len(combined_dnas_data) < 5:
+        monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量為 {len(combined_dnas_data)} 個，不足 5 個，無法組合。")
+        return {"success": False, "error": "有效的 DNA 數量不足 5 個，無法組合。"}
     # ----- BUG 修正邏輯 END -----
 
     gmt8 = timezone(timedelta(hours=8))
