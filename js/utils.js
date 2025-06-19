@@ -3,7 +3,7 @@
 
 /**
  * 根據怪獸的資料和遊戲設定，獲取其正確的屬性代表名（短名稱）。
- * 優先順序：自訂名稱 > 預設屬性暱稱 > 主要元素名稱。
+ * 優先順序：自訂名稱 > 儲存的預設名稱 > 主要元素名稱。
  * @param {object} monster - 怪獸物件。
  * @param {object} gameConfigs - 全局遊戲設定檔。
  * @returns {string} 怪獸的屬性代表名。
@@ -16,16 +16,12 @@ function getMonsterDisplayName(monster, gameConfigs) {
         return monster.custom_element_nickname;
     }
 
-    // 2. 如果沒有自訂名稱，則從遊戲設定中找預設暱稱
-    const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-    const monsterRarity = monster.rarity || '普通';
-    
-    const nicknamesByElement = gameConfigs?.element_nicknames?.[primaryElement];
-    if (nicknamesByElement && nicknamesByElement[monsterRarity] && nicknamesByElement[monsterRarity].length > 0) {
-        // 使用該屬性該稀有度的第一個預設名稱
-        return nicknamesByElement[monsterRarity][0];
+    // 2. 其次，直接使用怪獸誕生時被賦予的屬性代表名
+    if (monster.element_nickname_part) {
+        return monster.element_nickname_part;
     }
 
-    // 3. 如果連預設暱稱都沒有，則直接使用主要元素名稱作為後備
+    // 3. 如果以上都沒有（為了相容舊資料），則根據元素名稱做為最終後備
+    const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
     return primaryElement;
 }
