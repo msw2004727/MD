@@ -120,7 +120,7 @@ def complete_cultivation_service(
 ) -> Optional[Dict[str, Any]]:
     """完成怪獸修煉，計算經驗、潛在新技能、數值成長和物品拾獲。"""
     monster_cultivation_services_logger.info(f"--- [Cultivation Service] Received request for monster_id: {monster_id}")
-    player_data, _ = get_player_data_service(player_id, None, game_configs) 
+    player_data, _ = get_player_data_service(user_id, None, game_configs) 
     if not player_data or not player_data.get("farmedMonsters"):
         monster_cultivation_services_logger.error(f"完成修煉失敗：找不到玩家 {player_id} 或其無怪獸。")
         return {"success": False, "error": "找不到玩家資料或農場無怪獸。", "status_code": 404}
@@ -199,10 +199,7 @@ def complete_cultivation_service(
         for skill in current_skills:
             if skill.get("level", 1) >= max_skill_lvl: continue
             
-            # ----- BUG 修正邏輯 START -----
-            # 將秒數加成從 /10 調整為 /60，大幅降低時長帶來的經驗加成
             exp_gained = int((random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / 60)) * diminishing_multiplier)
-            # ----- BUG 修正邏輯 END -----
 
             if exp_gained > 0:
                 skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
@@ -332,7 +329,7 @@ def complete_cultivation_service(
                                    
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
-    if save_player_data_service(player_id, player_data):
+    if save_player_data_service(user_id, player_data):
         return {
             "success": True,
             "updated_monster": monster_to_update,
@@ -342,7 +339,7 @@ def complete_cultivation_service(
             "items_obtained": items_obtained 
         }
     else:
-        monster_cultivation_services_logger.error(f"完成修煉後儲存玩家 {player_id} 資料失敗。")
+        monster_cultivation_services_logger.error(f"完成修煉後儲存玩家 {user_id} 資料失敗。")
         return {"success": False, "error": "完成修煉後儲存資料失敗。", "status_code": 500}
 
 
@@ -387,6 +384,7 @@ def replace_monster_skill_service(
         "skill_category": new_skill_template_data.get("skill_category", "其他"),
         "current_exp": 0,
         "exp_to_next_level": calculate_exp_to_next_level(1, game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100)),
+        "is_active": True, # 新增：確保領悟的新技能預設為開啟
         "effect": new_skill_template_data.get("effect"),
         "stat": new_skill_template_data.get("stat"),
         "amount": new_skill_template_data.get("amount"),
@@ -409,9 +407,9 @@ def replace_monster_skill_service(
     monster_to_update["skills"] = current_skills
     player_data["farmedMonsters"][monster_idx] = monster_to_update
 
-    if save_player_data_service(player_id, player_data):
+    if save_player_data_service(user_id, player_data):
         monster_cultivation_services_logger.info(f"怪獸 {monster_id} 的技能已在服務層更新（等待路由層儲存）。")
         return player_data
     else:
-        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {player_id} 資料失敗。")
+        monster_cultivation_services_logger.error(f"更新怪獸技能後儲存玩家 {user_id} 資料失敗。")
         return None
