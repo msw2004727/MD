@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.3.7'; // 例如從 '1.0.0' 改為 '1.0.1'
+        const gameVersion = '0.3.4'; // 例如從 '1.0.0' 改為 '1.0.1'
 
         const cssFiles = [
             'css/theme.css',
@@ -208,8 +208,14 @@
                 </div>
 
                 <div id="medical-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🚑 正在招募醫護人員中，敬請期待！</p>
-                </div>
+                    <div id="medical-station-table-wrapper" style="overflow-x: auto; padding-bottom: 5px;">
+                        <div id="medical-station-headers" class="farm-header-grid mt-2">
+                            </div>
+                        <div id="medical-station-list">
+                            <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">將怪獸帶到此處進行治療與強化。</p>
+                        </div>
+                    </div>
+                    </div>
                 
                 <div id="training-ground-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練場器材進駐中，敬請期待！</p>
@@ -519,7 +525,7 @@
         (function() {
             // 這個版本號是實現強制更新的關鍵。
             // 每次更新遊戲檔案後，只需要修改這個變數的值 (例如 '1.0.1')
-            const gameVersion = '0.3.7'; 
+            const gameVersion = '0.3.4'; 
 
             const jsFiles = [
                 'js/firebase-config.js',
