@@ -21,7 +21,9 @@ from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
 from .battle_services import simulate_battle_full
-from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service 
+# --- 核心修改處 START ---
+from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service, handle_skill_toggle_request_service
+# --- 核心修改處 END ---
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
@@ -407,7 +409,7 @@ def simulate_battle_api_route():
 
     if battle_result.get("battle_end"):
         routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
-        updated_player_data, newly_awarded_titles = process_battle_results(
+        player_data, newly_awarded_titles = process_battle_results(
             player_id=user_id,
             opponent_id=opponent_owner_id_req,
             player_data=player_data,
@@ -686,7 +688,6 @@ def get_friends_statuses_route():
     statuses = get_friends_statuses_service(friend_ids)
     return jsonify({"success": True, "statuses": statuses}), 200
 
-# 【新增】處理身體互動的路由
 @md_bp.route('/monster/<monster_id>/interact', methods=['POST'])
 def interact_with_monster_route(monster_id: str):
     user_id, _, error_response = _get_authenticated_user_id()
@@ -702,7 +703,6 @@ def interact_with_monster_route(monster_id: str):
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法進行互動。"}), 500
     
-    # 呼叫新的互動服務
     service_result = generate_monster_interaction_response_service(
         player_id=user_id,
         monster_id=monster_id,
@@ -716,8 +716,44 @@ def interact_with_monster_route(monster_id: str):
     ai_reply = service_result.get("ai_reply")
     updated_player_data = service_result.get("updated_player_data")
 
-    # 儲存可能更新的玩家資料（例如，互動可能影響好感度等）
     if not save_player_data_service(user_id, updated_player_data):
         routes_logger.warning(f"警告：互動回應已生成，但儲存玩家 {user_id} 的資料失敗。")
     
     return jsonify({"success": True, "reply": ai_reply}), 200
+
+# --- 核心修改處 START ---
+@md_bp.route('/monster/<monster_id>/toggle-skill', methods=['POST'])
+def toggle_skill_route(monster_id: str):
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    skill_name = data.get('skill_name')
+    target_state = data.get('target_state')
+
+    if not skill_name or not isinstance(skill_name, str) or target_state is None or not isinstance(target_state, bool):
+        return jsonify({"error": "請求中必須包含 'skill_name' (字串) 和 'target_state' (布林值)。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    
+    service_result = handle_skill_toggle_request_service(
+        player_id=user_id,
+        monster_id=monster_id,
+        skill_name=skill_name,
+        target_state=target_state,
+        game_configs=game_configs
+    )
+
+    if not service_result or not service_result.get("success"):
+        return jsonify({"error": service_result.get("error", "處理技能切換請求時發生內部錯誤。")}), 500
+
+    # 如果怪獸同意，則儲存更新後的玩家資料
+    if service_result.get("agreed"):
+        updated_player_data = service_result.get("updated_player_data")
+        if not save_player_data_service(user_id, updated_player_data):
+            # 即使儲存失敗，也回傳成功，讓前端可以更新UI，避免體驗不一致
+            routes_logger.error(f"警告：技能切換協商成功，但儲存玩家 {user_id} 的資料失敗。")
+
+    return jsonify(service_result), 200
+# --- 核心修改處 END ---
