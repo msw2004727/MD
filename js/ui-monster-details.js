@@ -18,12 +18,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
     const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    // --- 核心修改處 START ---
-    // 使用新的共用函式來取代原本重複的邏輯
     const editableNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
-    // --- 核心修改處 END ---
-
-    // 【修改】修正檢查怪獸是否為玩家自己的邏輯
+    
     const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
@@ -42,30 +38,26 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const detailsBody = DOMElements.monsterDetailsTabContent;
 
-    // ----- BUG 修正邏輯 START -----
     let titleBuffs = {};
     let ownerStats = null;
 
-    // 1. 檢查怪獸是否屬於當前登入的玩家
     if (gameState.playerData && gameState.playerData.farmedMonsters.some(m => m.id === monster.id)) {
         ownerStats = gameState.playerData.playerStats;
     } 
-    // 2. 如果不屬於，則檢查是否屬於當前正在查看的另一位玩家
     else if (gameState.viewedPlayerData && gameState.viewedPlayerData.farmedMonsters.some(m => m.id === monster.id)) {
         ownerStats = gameState.viewedPlayerData.playerStats;
     }
 
-    // 3. 如果找到了擁有者，則從該擁有者的資料中獲取稱號加成
     if (ownerStats) {
         const equippedId = ownerStats.equipped_title_id;
         if (equippedId && ownerStats.titles) {
-            const equippedTitle = ownerStats.titles.find(t => t.id === equippedId);
-            if (equippedTitle && equippedTitle.buffs) {
-                titleBuffs = equippedTitle.buffs;
+            const allTitlesConfig = gameConfigs.titles || [];
+            const equippedTitleDetails = allTitlesConfig.find(t => t.id === equippedId);
+            if (equippedTitleDetails && equippedTitleDetails.buffs) {
+                titleBuffs = equippedTitleDetails.buffs;
             }
         }
     }
-    // ----- BUG 修正邏輯 END -----
 
     let resistancesHtml = '<p class="text-sm">無特殊抗性/弱點</p>';
     if (monster.resistances && Object.keys(monster.resistances).length > 0) {
@@ -84,6 +76,19 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
+            // --- 核心修改處 START ---
+            const isActive = skill.is_active !== false; // 如果 is_active 不存在或為 true，則視為開啟
+            const lightColor = isActive ? 'var(--success-color)' : 'var(--text-secondary)';
+            const lightShadow = isActive ? `0 0 5px ${lightColor}` : 'none';
+
+            // 燈號的 HTML
+            const skillStatusLight = `
+                <span class="skill-status-light" title="${isActive ? '技能已開啟' : '技能已關閉'}" 
+                      style="width: 10px; height: 10px; border-radius: 50%; background-color: ${lightColor}; box-shadow: ${lightShadow}; flex-shrink: 0;">
+                </span>
+            `;
+            // --- 核心修改處 END ---
+
             const description = skill.description || skill.story || '暫無描述。';
             const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
             const expBarHtml = `
@@ -117,11 +122,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const skillRarityKey = rarityMap[skillRarity] || 'common';
             const skillRarityClass = `text-rarity-${skillRarityKey}`;
 
+            // --- 核心修改處 START ---
+            // 將燈號加入到技能名稱的容器中
             const skillNameAndBadgeHtml = `
                 <div class="skill-name-container">
+                    ${skillStatusLight}
                     <a href="#" class="skill-name-link ${skillRarityClass}" data-skill-name="${skill.name}" style="text-decoration: none;">${skill.name} (Lv.${level})</a>
                     ${attributeBadgeHtml}
                 </div>`;
+            // --- 核心修改處 END ---
             
             let milestonesHtml = '';
             let skillTemplate = null;
@@ -243,7 +252,9 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const getTitleBuffHtml = (statName) => {
         const buff = titleBuffs[statName] || 0;
         if (buff > 0) {
-            return ` <span style="color: var(--danger-color); font-size: 0.9em; margin-left: 4px;">+${buff}</span>`;
+            const buffPercent = buff * 100;
+            const displayValue = Number.isInteger(buffPercent) ? buffPercent : buffPercent.toFixed(1);
+            return ` <span style="color: var(--rarity-legendary-text); font-size: 0.9em; margin-left: 4px;">+${displayValue}%</span>`;
         }
         return '';
     };
