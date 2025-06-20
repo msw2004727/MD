@@ -168,8 +168,6 @@ function handleCultivationStart() {
     const container = DOMElements.cultivationSetupModal;
     if (!container) return;
 
-    // 為避免重複綁定，先移除舊的監聽器 (如果存在)
-    // 這一步是防禦性程式設計，但目前結構下，只會被初始化一次
     const newContainer = container.cloneNode(true);
     container.parentNode.replaceChild(newContainer, container);
     DOMElements.cultivationSetupModal = newContainer;
@@ -195,7 +193,6 @@ function handleCultivationStart() {
         
         const maxDuration = (gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600) * 1000;
 
-        // 更新 monster state
         if (!monster.farmStatus) {
             monster.farmStatus = {};
         }
@@ -205,21 +202,17 @@ function handleCultivationStart() {
         monster.farmStatus.trainingLocation = location;
 
         hideModal('cultivation-setup-modal');
-        // 修改點：呼叫 showFeedbackModal 時，不再傳遞 message 字串，而是傳遞一個包含怪獸物件的特殊物件
         showFeedbackModal('修煉開始！', '', false, { type: 'cultivation_start', monster: monster });
         
-        // 重新渲染農場列表以更新狀態
         if(typeof renderMonsterFarm === 'function') {
             renderMonsterFarm();
         }
 
-        // 儲存更新後的玩家資料
         try {
             await savePlayerData(gameState.playerId, gameState.playerData);
             console.log(`Cultivation started for monster ${monsterId} and data saved.`);
         } catch (error) {
             console.error('Failed to save player data after starting cultivation:', error);
-            // 還原狀態
             monster.farmStatus.isTraining = false;
             monster.farmStatus.trainingStartTime = null;
             monster.farmStatus.trainingDuration = null;
@@ -252,7 +245,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         return;
     }
     
-    // 【新增】檢查瀕死狀態
     if (playerMonster.hp < playerMonster.initial_max_hp * 0.25) {
         showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
         return;
@@ -314,12 +306,17 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                         opponent_owner_nickname: ownerNickname
                     });
 
+                    hideModal('feedback-modal');
+
+                    // --- 【核心修改】---
+                    if (battleResult && typeof checkAndShowNewTitleModal === 'function') {
+                        checkAndShowNewTitleModal(battleResult);
+                    }
+                    
                     await refreshPlayerData(); 
                     updateMonsterSnapshot(getSelectedMonster()); 
 
                     showBattleLogModal(battleResult);
-
-                    hideModal('feedback-modal');
 
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
