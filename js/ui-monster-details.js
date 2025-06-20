@@ -1,5 +1,11 @@
 // js/ui-monster-details.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
+
+// --- 核心修改處 START ---
+// 新增一個旗標，確保事件監聽器只會被附加一次
+let isMonsterDetailsListenerAttached = false;
+// --- 核心修改處 END ---
+
 function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
         console.error("Monster info modal elements not found in DOMElements.");
@@ -76,11 +82,10 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            const isActive = skill.is_active !== false;
+            const isActive = skill.is_active !== false; 
             const lightColor = isActive ? 'var(--success-color)' : 'var(--text-secondary)';
             const lightShadow = isActive ? `0 0 5px ${lightColor}` : 'none';
 
-            // 核心修改處：讓燈號變成可點擊的按鈕
             const skillStatusLight = `
                 <button class="skill-status-toggle" data-skill-name="${skill.name}" title="${isActive ? '點此請求關閉技能' : '點此請求開啟技能'}"
                       style="width: 12px; height: 12px; border-radius: 50%; background-color: ${lightColor}; box-shadow: ${lightShadow}; flex-shrink: 0; border: 1px solid var(--border-color); cursor: pointer; padding: 0;">
@@ -352,120 +357,121 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     }
 
     // --- 核心修改處 START ---
-    // 使用事件委派來處理所有技能開關的點擊
-    detailsBody.addEventListener('click', async (event) => {
-        const toggleButton = event.target.closest('.skill-status-toggle');
-        if (!toggleButton) return;
+    // 使用旗標確保監聽器只被附加一次
+    if (!isMonsterDetailsListenerAttached) {
+        DOMElements.monsterInfoModal.addEventListener('click', async (event) => {
+            const toggleButton = event.target.closest('.skill-status-toggle');
+            if (toggleButton) {
+                const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
+                const skillName = toggleButton.dataset.skillName;
+                if (!monsterId || !skillName) return;
 
-        const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
-        const skillName = toggleButton.dataset.skillName;
+                const currentMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                const currentSkill = currentMonster?.skills.find(s => s.name === skillName);
+                if (!currentSkill) return;
 
-        const currentMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-        const currentSkill = currentMonster?.skills.find(s => s.name === skillName);
-        if (!currentSkill) return;
+                const currentState = currentSkill.is_active !== false;
+                const targetState = !currentState;
+                const actionText = targetState ? '開啟' : '關閉';
 
-        const currentState = currentSkill.is_active !== false;
-        const targetState = !currentState;
-        const actionText = targetState ? '開啟' : '關閉';
-
-        try {
-            // 切換到聊天分頁，並顯示請求訊息
-            const chatTabButton = document.querySelector('.tab-button[data-tab-target="monster-chat-tab"]');
-            if (chatTabButton) {
-                switchTabContent('monster-chat-tab', chatTabButton, 'monster-info-modal');
-                renderChatMessage(`（你請求${actionText}技能「${skillName}」）`, 'user');
-                renderChatMessage(`（${monster.nickname}正在考慮你的請求...）`, 'assistant-thinking');
-            }
-            
-            // 呼叫後端 API 進行協商
-            const result = await toggleSkillActiveState(monsterId, skillName, targetState);
-            
-            // 移除 "正在考慮" 的訊息
-            const thinkingBubble = chatElements.logArea.querySelector('.role-assistant-thinking');
-            if (thinkingBubble) thinkingBubble.remove();
-
-            if (result && result.success) {
-                // 無論怪獸是否同意，都顯示牠的回應
-                renderChatMessage(result.ai_reply, 'assistant');
-
-                if (result.agreed) {
-                    // 如果同意，刷新玩家資料並重新渲染整個彈窗以更新燈號
-                    await refreshPlayerData();
-                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-                    if (updatedMonster) {
-                        updateMonsterInfoModal(updatedMonster, gameConfigs);
-                        // 重新切換回詳細資訊頁籤，讓玩家看到燈號變化
-                        const detailsTabButton = document.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
-                        if (detailsTabButton) {
-                           setTimeout(() => switchTabContent('monster-details-tab', detailsTabButton, 'monster-info-modal'), 500);
+                try {
+                    const chatTabButton = document.querySelector('#monster-info-tabs .tab-button[data-tab-target="monster-chat-tab"]');
+                    if (chatTabButton && typeof switchTabContent === 'function') {
+                        switchTabContent('monster-chat-tab', chatTabButton, 'monster-info-modal');
+                        // 確保聊天UI已準備好
+                        if (typeof setupChatTab === 'function' && typeof renderChatMessage === 'function') {
+                            setupChatTab(currentMonster); // 確保聊天紀錄是最新的
+                            renderChatMessage(`（你請求${actionText}技能「${skillName}」）`, 'user');
+                            renderChatMessage(`（${currentMonster.nickname}正在考慮你的請求...）`, 'assistant-thinking');
                         }
                     }
-                }
-            } else {
-                throw new Error(result.error || "與怪獸溝通失敗。");
-            }
-        } catch (error) {
-            console.error("切換技能狀態失敗:", error);
-            showFeedbackModal("錯誤", `與怪獸溝通時發生錯誤：${error.message}`);
-        }
-    });
-    // --- 核心修改處 END ---
+                    
+                    const result = await toggleSkillActiveState(monsterId, skillName, targetState);
+                    
+                    const thinkingBubble = document.querySelector('#chat-log-area .role-assistant-thinking');
+                    if (thinkingBubble) thinkingBubble.remove();
 
-    const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
-    const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
-    const editBtn = DOMElements.monsterInfoModalHeader.querySelector('#edit-monster-nickname-btn');
-    const confirmBtn = DOMElements.monsterInfoModalHeader.querySelector('#confirm-nickname-change-btn');
-    const cancelBtn = DOMElements.monsterInfoModalHeader.querySelector('#cancel-nickname-change-btn');
-    const nicknameInput = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-input');
-
-    if (editBtn) {
-        editBtn.addEventListener('click', () => {
-            if (displayContainer) displayContainer.style.display = 'none';
-            if (editContainer) editContainer.style.display = 'flex';
-        });
-    }
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            if (displayContainer) displayContainer.style.display = 'flex';
-            if (editContainer) editContainer.style.display = 'none';
-        });
-    }
-
-    if (confirmBtn && nicknameInput) {
-        confirmBtn.addEventListener('click', async () => {
-            const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
-            const newNickname = nicknameInput.value.trim();
-            const maxLen = nicknameInput.maxLength || 5;
-
-            if (newNickname.length > maxLen) {
-                showFeedbackModal('錯誤', `暱稱不能超過 ${maxLen} 個字。`);
-                return;
-            }
-            
-            confirmBtn.disabled = true;
-            showFeedbackModal('更新中...', '正在更新怪獸的屬性代表名...', true);
-
-            try {
-                const result = await updateMonsterCustomNickname(monsterId, newNickname);
-                if (result && result.success) {
-                    await refreshPlayerData(); 
-                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
-                    if (updatedMonster) {
-                        updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
+                    if (result && result.success) {
+                        renderChatMessage(result.ai_reply, 'assistant');
+                        if (result.agreed) {
+                            await refreshPlayerData();
+                            const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                            if (updatedMonster) {
+                                updateMonsterInfoModal(updatedMonster, gameConfigs);
+                                const detailsTabButton = document.querySelector('#monster-info-tabs .tab-button[data-tab-target="monster-details-tab"]');
+                                if (detailsTabButton) {
+                                   setTimeout(() => switchTabContent('monster-details-tab', detailsTabButton, 'monster-info-modal'), 100);
+                                }
+                            }
+                        }
+                    } else {
+                        throw new Error(result.error || "與怪獸溝通失敗。");
                     }
-                    hideModal('feedback-modal');
-                    showFeedbackModal('成功', '怪獸屬性代表名已更新！');
-                } else {
-                    throw new Error(result.error || '更新失敗');
+                } catch (error) {
+                    console.error("切換技能狀態失敗:", error);
+                    const thinkingBubble = document.querySelector('#chat-log-area .role-assistant-thinking');
+                    if (thinkingBubble) thinkingBubble.remove();
+                    showFeedbackModal("錯誤", `與怪獸溝通時發生錯誤：${error.message}`);
                 }
-            } catch (error) {
-                hideModal('feedback-modal');
-                showFeedbackModal('錯誤', `更新暱稱失敗：${error.message}`);
-                confirmBtn.disabled = false;
+            }
+
+            const editBtn = event.target.closest('#edit-monster-nickname-btn');
+            if (editBtn) {
+                const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
+                const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
+                if (displayContainer) displayContainer.style.display = 'none';
+                if (editContainer) editContainer.style.display = 'flex';
+            }
+
+            const cancelBtn = event.target.closest('#cancel-nickname-change-btn');
+            if (cancelBtn) {
+                const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
+                const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
                 if (displayContainer) displayContainer.style.display = 'flex';
                 if (editContainer) editContainer.style.display = 'none';
             }
+
+            const confirmBtn = event.target.closest('#confirm-nickname-change-btn');
+            if (confirmBtn) {
+                const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
+                const nicknameInput = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-input');
+                const newNickname = nicknameInput.value.trim();
+                const maxLen = nicknameInput.maxLength || 5;
+
+                if (newNickname.length > maxLen) {
+                    showFeedbackModal('錯誤', `暱稱不能超過 ${maxLen} 個字。`);
+                    return;
+                }
+                
+                confirmBtn.disabled = true;
+                showFeedbackModal('更新中...', '正在更新怪獸的屬性代表名...', true);
+
+                try {
+                    const result = await updateMonsterCustomNickname(monsterId, newNickname);
+                    if (result && result.success) {
+                        await refreshPlayerData(); 
+                        const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                        if (updatedMonster) {
+                            updateMonsterInfoModal(updatedMonster, gameState.gameConfigs);
+                        }
+                        hideModal('feedback-modal');
+                        showFeedbackModal('成功', '怪獸屬性代表名已更新！');
+                    } else {
+                        throw new Error(result.error || '更新失敗');
+                    }
+                } catch (error) {
+                    hideModal('feedback-modal');
+                    showFeedbackModal('錯誤', `更新暱稱失敗：${error.message}`);
+                    const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
+                    const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
+                    if (displayContainer) displayContainer.style.display = 'flex';
+                    if (editContainer) editContainer.style.display = 'none';
+                } finally {
+                     confirmBtn.disabled = false;
+                }
+            }
         });
+        isMonsterDetailsListenerAttached = true;
     }
+    // --- 核心修改處 END ---
 }
