@@ -137,8 +137,6 @@ async function handleItemClick(event) {
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
-            // ---【修改】---
-            // showFeedbackModal('刪除成功', `DNA「${dnaObject.name}」已被成功銷毀。`);
         });
         return; 
     }
@@ -252,8 +250,6 @@ async function handleDrop(event) {
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
-            // ---【修改】---
-            // showFeedbackModal('刪除成功', `DNA「${dnaNameToDelete}」已被成功銷毀。`);
         });
     } else if (dropTargetElement.classList.contains('dna-slot')) {
         if (draggedSourceType === 'temporaryBackpack') {
@@ -296,8 +292,10 @@ async function handleDrop(event) {
                 return;
             }
             gameState.temporaryBackpack[draggedSourceIndex] = null;
-             dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-             dnaDataToMove.baseId = dnaDataToMove.baseId || dnaDataToMove.id;
+             // --- 【修改】修正 ID 指派的邏輯順序 ---
+             const templateId = dnaDataToMove.id; // 先保存模板ID (例如 'dna_dark_l01')
+             dnaDataToMove.baseId = templateId;    // 將模板ID正確地存入 baseId
+             dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`; // 再生成新的、唯一的實例ID
         }
         
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
