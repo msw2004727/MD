@@ -76,18 +76,16 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     const maxSkills = gameConfigs?.value_settings?.max_monster_skills || 3;
     if (monster.skills && monster.skills.length > 0) {
         skillsHtml = monster.skills.map(skill => {
-            // --- 核心修改處 START ---
-            const isActive = skill.is_active !== false; // 如果 is_active 不存在或為 true，則視為開啟
+            const isActive = skill.is_active !== false;
             const lightColor = isActive ? 'var(--success-color)' : 'var(--text-secondary)';
             const lightShadow = isActive ? `0 0 5px ${lightColor}` : 'none';
 
-            // 燈號的 HTML
+            // 核心修改處：讓燈號變成可點擊的按鈕
             const skillStatusLight = `
-                <span class="skill-status-light" title="${isActive ? '技能已開啟' : '技能已關閉'}" 
-                      style="width: 10px; height: 10px; border-radius: 50%; background-color: ${lightColor}; box-shadow: ${lightShadow}; flex-shrink: 0;">
-                </span>
+                <button class="skill-status-toggle" data-skill-name="${skill.name}" title="${isActive ? '點此請求關閉技能' : '點此請求開啟技能'}"
+                      style="width: 12px; height: 12px; border-radius: 50%; background-color: ${lightColor}; box-shadow: ${lightShadow}; flex-shrink: 0; border: 1px solid var(--border-color); cursor: pointer; padding: 0;">
+                </button>
             `;
-            // --- 核心修改處 END ---
 
             const description = skill.description || skill.story || '暫無描述。';
             const expPercentage = skill.exp_to_next_level > 0 ? (skill.current_exp / skill.exp_to_next_level) * 100 : 0;
@@ -122,15 +120,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
             const skillRarityKey = rarityMap[skillRarity] || 'common';
             const skillRarityClass = `text-rarity-${skillRarityKey}`;
 
-            // --- 核心修改處 START ---
-            // 將燈號加入到技能名稱的容器中
             const skillNameAndBadgeHtml = `
                 <div class="skill-name-container">
-                    ${skillStatusLight}
+                    ${isOwnMonster ? skillStatusLight : ''}
                     <a href="#" class="skill-name-link ${skillRarityClass}" data-skill-name="${skill.name}" style="text-decoration: none;">${skill.name} (Lv.${level})</a>
                     ${attributeBadgeHtml}
                 </div>`;
-            // --- 核心修改處 END ---
             
             let milestonesHtml = '';
             let skillTemplate = null;
@@ -356,6 +351,65 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         }
     }
 
+    // --- 核心修改處 START ---
+    // 使用事件委派來處理所有技能開關的點擊
+    detailsBody.addEventListener('click', async (event) => {
+        const toggleButton = event.target.closest('.skill-status-toggle');
+        if (!toggleButton) return;
+
+        const monsterId = DOMElements.monsterInfoModalHeader.dataset.monsterId;
+        const skillName = toggleButton.dataset.skillName;
+
+        const currentMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+        const currentSkill = currentMonster?.skills.find(s => s.name === skillName);
+        if (!currentSkill) return;
+
+        const currentState = currentSkill.is_active !== false;
+        const targetState = !currentState;
+        const actionText = targetState ? '開啟' : '關閉';
+
+        try {
+            // 切換到聊天分頁，並顯示請求訊息
+            const chatTabButton = document.querySelector('.tab-button[data-tab-target="monster-chat-tab"]');
+            if (chatTabButton) {
+                switchTabContent('monster-chat-tab', chatTabButton, 'monster-info-modal');
+                renderChatMessage(`（你請求${actionText}技能「${skillName}」）`, 'user');
+                renderChatMessage(`（${monster.nickname}正在考慮你的請求...）`, 'assistant-thinking');
+            }
+            
+            // 呼叫後端 API 進行協商
+            const result = await toggleSkillActiveState(monsterId, skillName, targetState);
+            
+            // 移除 "正在考慮" 的訊息
+            const thinkingBubble = chatElements.logArea.querySelector('.role-assistant-thinking');
+            if (thinkingBubble) thinkingBubble.remove();
+
+            if (result && result.success) {
+                // 無論怪獸是否同意，都顯示牠的回應
+                renderChatMessage(result.ai_reply, 'assistant');
+
+                if (result.agreed) {
+                    // 如果同意，刷新玩家資料並重新渲染整個彈窗以更新燈號
+                    await refreshPlayerData();
+                    const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
+                    if (updatedMonster) {
+                        updateMonsterInfoModal(updatedMonster, gameConfigs);
+                        // 重新切換回詳細資訊頁籤，讓玩家看到燈號變化
+                        const detailsTabButton = document.querySelector('.tab-button[data-tab-target="monster-details-tab"]');
+                        if (detailsTabButton) {
+                           setTimeout(() => switchTabContent('monster-details-tab', detailsTabButton, 'monster-info-modal'), 500);
+                        }
+                    }
+                }
+            } else {
+                throw new Error(result.error || "與怪獸溝通失敗。");
+            }
+        } catch (error) {
+            console.error("切換技能狀態失敗:", error);
+            showFeedbackModal("錯誤", `與怪獸溝通時發生錯誤：${error.message}`);
+        }
+    });
+    // --- 核心修改處 END ---
 
     const displayContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-display-container');
     const editContainer = DOMElements.monsterInfoModalHeader.querySelector('#monster-nickname-edit-container');
