@@ -1,0 +1,432 @@
+[
+  {
+    "name": "撞擊",
+    "description": "用身體猛力撞擊對手。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 5,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 35,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。"
+      },
+      "10": {
+        "description": "有20%機率降低對手防禦。"
+      }
+    }
+  },
+  {
+    "name": "嚎叫",
+    "description": "發出威嚇的嚎叫，降低對手攻擊力。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "attack",
+        "amount": -8,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果變為降低對手全體攻擊力。"
+      },
+      "10": {
+        "description": "同時有10%機率使對手陷入「麻痺」狀態。"
+      }
+    }
+  },
+  {
+    "name": "電光一閃",
+    "description": "以迅雷不及掩耳的速度攻擊，優先度+1。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 6,
+    "priority": 1,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 40,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至50。"
+      },
+      "10": {
+        "description": "若擊倒對手，可再行動一次。"
+      }
+    }
+  },
+  {
+    "name": "搖尾巴",
+    "description": "搖晃尾巴示威，降低對手防禦力。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "defense",
+        "amount": -8,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果變為降低對手全體防禦力。"
+      },
+      "10": {
+        "description": "同時有10%機率使對手速度下降。"
+      }
+    }
+  },
+  {
+    "name": "抓",
+    "description": "用銳利的爪子抓傷對手。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 38,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升12點。"
+      },
+      "10": {
+        "description": "爆擊率提升10%。"
+      }
+    }
+  },
+  {
+    "name": "集氣",
+    "description": "集中精神，提升爆擊率。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "crit",
+        "amount": 15,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "爆擊率提升幅度更大。"
+      },
+      "10": {
+        "description": "使用後，下一次攻擊必定爆擊。"
+      }
+    }
+  },
+  {
+    "name": "頭錘",
+    "description": "用頭部猛撞，有20%機率使對手退縮。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 50,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "flinch",
+        "chance": 0.2,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。"
+      },
+      "10": {
+        "description": "退縮機率提升至35%。"
+      }
+    }
+  },
+  {
+    "name": "憤怒",
+    "description": "若在使用此技能前受到攻擊，則自身攻擊力提升。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "rage",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊力提升幅度更大。"
+      },
+      "10": {
+        "description": "成功提升攻擊力時，回復少量HP。"
+      }
+    }
+  },
+  {
+    "name": "泰山壓頂",
+    "description": "以沉重的身體壓制對手，30%機率使對手「麻痺」。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 65,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "paralysis",
+        "chance": 0.3,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。"
+      },
+      "10": {
+        "description": "「麻痺」機率提升至50%。"
+      }
+    }
+  },
+  {
+    "name": "必殺門牙",
+    "description": "用巨大的門牙啃咬，無視對方防禦提升。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "ignore_defense_buffs",
+        "power": 70,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升20點。"
+      },
+      "10": {
+        "description": "此技能爆擊率提升25%。"
+      }
+    }
+  },
+  {
+    "name": "睡覺",
+    "description": "沉睡2回合，完全回復HP和所有異常狀態。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 5,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "rest",
+        "duration": 2,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "睡眠時間縮短為1回合。"
+      },
+      "10": {
+        "description": "睡醒時，自身所有能力都獲得提升。"
+      }
+    }
+  },
+  {
+    "name": "三角攻擊",
+    "description": "釋放神秘的三角能量，各有20%機率造成「燒傷」、「麻痺」或「冰凍」。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "特殊",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "tri_attack",
+        "chance": 0.2,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升20點。"
+      },
+      "10": {
+        "description": "觸發異常狀態的機率各自提升至30%。"
+      }
+    }
+  },
+  {
+    "name": "捨身衝撞",
+    "description": "賭上一切的猛烈衝撞，自身會受到30%的反傷。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 80,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "recoil",
+        "recoil_factor": 0.3,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至95。"
+      },
+      "10": {
+        "description": "反傷比例降低至20%。"
+      }
+    }
+  },
+  {
+    "name": "最終手段",
+    "description": "只有在所有其他技能都使用過後，才能使用的最終絕招。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 25,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "last_resort",
+        "power": 100,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至120。"
+      },
+      "10": {
+        "description": "使用此技能無需滿足前置條件，但一場戰鬥只能用一次。"
+      }
+    }
+  },
+  {
+    "name": "接棒",
+    "description": "交換夥伴的同時，將自身的能力變化傳遞給上場的夥伴。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 20,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "baton_pass",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "交換上場的夥伴同時回復少量HP。"
+      },
+      "10": {
+        "description": "可傳遞的增益效果不會被降低。"
+      }
+    }
+  },
+  {
+    "name": "巨聲",
+    "description": "發出巨大的噪音攻擊，可穿透對手的替身。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 70,
+        "target": "opponent_all"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至85。"
+      },
+      "10": {
+        "description": "有20%機率使對手陷入「混亂」狀態。"
+      }
+    }
+  }
+]
