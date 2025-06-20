@@ -320,5 +320,22 @@ async function interactWithMonster(monsterId, action) {
     });
 }
 
+/**
+ * 【新增】請求切換技能的開關狀態
+ * @param {string} monsterId 怪獸的 ID
+ * @param {string} skillName 技能的名稱
+ * @param {boolean} targetState 想要的狀態 (true 為開啟, false 為關閉)
+ * @returns {Promise<object>} 包含怪獸是否同意及 AI 回應的物件
+ */
+async function toggleSkillActiveState(monsterId, skillName, targetState) {
+    return fetchAPI(`/monster/${monsterId}/toggle-skill`, {
+        method: 'POST',
+        body: JSON.stringify({
+            skill_name: skillName,
+            target_state: targetState
+        }),
+    });
+}
+
 
 console.log("API client module loaded.");
