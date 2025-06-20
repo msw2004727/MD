@@ -4,21 +4,18 @@
 import os
 import sys
 import logging
+# --- 核心修改處 START ---
+# 從 logging.handlers 導入 RotatingFileHandler
 from logging.handlers import RotatingFileHandler
-# ----- BUG 修正邏輯 START -----
-# 導入 datetime 和 timezone 模組來處理時區轉換
+# --- 核心修改處 END ---
 from datetime import datetime, timezone, timedelta
-# ----- BUG 修正邏輯 END -----
 
 def setup_logging():
     """
     設定全域的日誌系統，包含主控台輸出和 HTML 檔案輸出。
     """
-    # ----- BUG 修正邏輯 START -----
-    # 建立一個代表 UTC+8 (台灣/亞洲/台北) 的時區物件
     CST = timezone(timedelta(hours=8))
 
-    # 自定義 Formatter，讓時間轉換為 UTC+8
     class CstFormatter(logging.Formatter):
         def converter(self, timestamp):
             dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
@@ -32,11 +29,8 @@ def setup_logging():
                 s = dt.isoformat(timespec='milliseconds')
             return s
 
-    # 使用新的 Formatter 來設定日誌格式
     log_formatter = CstFormatter('%(asctime)s - %(message)s', '%Y-%m-%d %H:%M:%S')
-    # ----- BUG 修正邏輯 END -----
 
-    # 1. 設定根日誌記錄器
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     
@@ -47,16 +41,23 @@ def setup_logging():
     console_handler.setFormatter(log_formatter)
     root_logger.addHandler(console_handler)
 
-    # 2. 設定專門寫入 HTML 檔案的日誌記錄器
     log_dir = os.path.join(os.path.dirname(__file__), 'logs')
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
     log_file_path = os.path.join(log_dir, 'game_log.html')
-    file_handler = logging.FileHandler(log_file_path, mode='a', encoding='utf-8')
 
-    # 自定義 HTML 格式化器
-    class HtmlFormatter(CstFormatter): # 繼承我們新的 CstFormatter
+    # --- 核心修改處 START ---
+    # 使用 RotatingFileHandler，設定每個檔案最大為 5MB，保留 3 個備份檔
+    file_handler = RotatingFileHandler(
+        log_file_path, 
+        maxBytes=5*1024*1024, # 5 MB
+        backupCount=3, 
+        encoding='utf-8'
+    )
+    # --- 核心修改處 END ---
+
+    class HtmlFormatter(CstFormatter):
         def format(self, record):
             level_to_ch = {
                 'DEBUG': ('除錯', '#888'),
@@ -82,7 +83,9 @@ def setup_logging():
     file_handler.setFormatter(html_formatter)
     root_logger.addHandler(file_handler)
     
-    if not os.path.exists(log_file_path) or os.path.getsize(log_file_path) < 100:
+    # 檢查檔案是否為空，若是則寫入 HTML 頭部
+    # 這個邏輯對於 RotatingFileHandler 創建新檔案時同樣適用
+    if not os.path.exists(log_file_path) or os.path.getsize(log_file_path) == 0:
         with open(log_file_path, 'w', encoding='utf-8') as f:
             f.write("""<!DOCTYPE html>
 <html lang="zh-TW">
@@ -93,7 +96,9 @@ def setup_logging():
     <style>
         body { font-family: 'Courier New', Courier, monospace; background-color: #1a1a1a; color: #f0f0f0; margin: 0; padding: 10px; }
         body { display: flex; flex-direction: column-reverse; }
-        .log-entry { margin-bottom: 5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        /* --- 核心修改處 START --- */
+        .log-entry { margin-bottom: 5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 0.9em; }
+        /* --- 核心修改處 END --- */
         .timestamp { color: #666; }
         .levelname { font-weight: bold; }
         h1 { color: #3498db; border-bottom: 1px solid #3498db; padding-bottom: 5px; }
