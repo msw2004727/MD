@@ -62,6 +62,22 @@ def absorb_defeated_monster_service(
     player_data: PlayerGameData
 ) -> Optional[Dict[str, Any]]:
     """處理勝利怪獸吸收被擊敗怪獸的邏輯。"""
+
+    # --- 功能開關 ---
+    # 若要暫時關閉此功能，直接讓函式在此處返回即可。
+    # 未來若要重新開啟，只要將下面的 return 區塊整個刪除或註解掉。
+    return {
+        "success": True,
+        "message": "吸收功能已停用。",
+        "extracted_dna_templates": [],
+        "stat_gains": {},
+        "updated_winning_monster": next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == winning_monster_id), None),
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA")
+    }
+    # --- 功能開關結束 ---
+
+    """
+    # --- 以下為原始程式碼，已暫時停用 ---
     if not MD_firebase_config.db:
         monster_absorption_services_logger.error("Firestore 資料庫未初始化 (absorb_defeated_monster_service 內部)。")
         return {"success": False, "error": "Firestore 資料庫未初始化。"}
@@ -138,38 +154,43 @@ def absorb_defeated_monster_service(
     player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
 
     current_owned_dna = player_data.get("playerOwnedDNA", [])
-    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12) # type: ignore
+    max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_ABSORPTION["value_settings"]).get("max_inventory_slots", 12) # type: ignore
 
     for dna_template in extracted_dna_templates:
-        # 尋找主庫存中的空位
-        free_slot_index = -1
-        for i, dna_item in enumerate(current_owned_dna):
-            if dna_item is None:
-                free_slot_index = i
-                break
-        
-        # 實例化 DNA
         instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{random.randint(0, 9999)}"
         owned_dna_item: PlayerOwnedDNA = {**dna_template, "id": instance_id, "baseId": dna_template["id"]} # type: ignore
-        
-        # --- 核心修改：重新實作放入背包的邏輯 ---
+
+        # 修改點：找到第一個空位來放置新的 DNA
+        free_slot_index = -1
+        for i, dna_item in enumerate(current_owned_dna):
+            if dna_item is None: # 找到第一個 None 槽位
+                free_slot_index = i
+                break
+
         if free_slot_index != -1 and free_slot_index < max_inventory_slots:
             current_owned_dna[free_slot_index] = owned_dna_item
-            monster_absorption_services_logger.info(f"DNA '{owned_dna_item.get('name')}' 已放入主庫存。")
         else:
-            # 如果主庫存已滿，則放入臨時背包 (採用 FIFO 規則)
-            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
-            temp_backpack = player_data.get("temporaryBackpack", [])
-            
-            # 如果臨時背包已滿或更滿，則移除最舊的一個
-            if len(temp_backpack) >= max_temp_backpack_slots:
-                removed_item = temp_backpack.pop(0)
-                monster_absorption_services_logger.warning(f"玩家 {player_id} 的臨時背包已滿，最舊的物品 '{removed_item.get('data',{}).get('name')}' 已被擠掉。")
-            
-            # 加入新的物品
-            temp_backpack.append({"type": "dna", "data": owned_dna_item})
-            player_data["temporaryBackpack"] = temp_backpack
-            monster_absorption_services_logger.info(f"玩家 {player_id} 的主庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            # 如果主庫存已滿，嘗試放入臨時背包
+            max_temp_backpack_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_ABSORPTION["value_settings"]).get("max_temp_backpack_slots", 9) # type: ignore
+            temp_backpack = player_data.get("temporaryBackpack", []) # 獲取臨時背包
+
+            free_temp_slot_index = -1
+            for i in range(max_temp_backpack_slots):
+                if i >= len(temp_backpack) or temp_backpack[i] is None: # Check if slot exists or is None
+                    free_temp_slot_index = i
+                    break
+
+            if free_temp_slot_index != -1:
+                # Extend temporary backpack if needed
+                while len(temp_backpack) <= free_temp_slot_index:
+                    temp_backpack.append(None)
+                temp_backpack[free_temp_slot_index] = {"type": "dna", "data": owned_dna_item} # Wrap as temp item
+                player_data["temporaryBackpack"] = temp_backpack # Update temporary backpack in player_data
+                monster_absorption_services_logger.info(f"玩家 {player_id} 的 DNA 庫存已滿，DNA '{owned_dna_item.get('name')}' 已放入臨時背包。")
+            else:
+                monster_absorption_services_logger.warning(f"玩家 {player_id} 的 DNA 庫存和臨時背包都已滿，DNA '{owned_dna_item.get('name')}' 已被丟棄。")
+                pass # DNA 被丟棄
+
 
     player_data["playerOwnedDNA"] = current_owned_dna
 
@@ -183,11 +204,14 @@ def absorb_defeated_monster_service(
         player_data["farmedMonsters"][winning_monster_idx] = winning_monster # type: ignore
 
 
+    # 注意：此服務現在不直接儲存 player_data，儲存操作已移至路由層
+    # 因此，返回的 updated_winning_monster 和 updated_player_owned_dna 是基於傳入的 player_data 修改後的版本
     return {
         "success": True,
         "message": f"{winning_monster.get('nickname')} 成功吸收了 {defeated_monster_snapshot.get('nickname')} 的力量！",
         "extracted_dna_templates": extracted_dna_templates,
         "stat_gains": stat_gains,
-        "updated_winning_monster": winning_monster,
-        "updated_player_owned_dna": player_data.get("playerOwnedDNA")
+        "updated_winning_monster": winning_monster, # 這是修改後的怪獸物件
+        "updated_player_owned_dna": player_data.get("playerOwnedDNA") # 這是修改後的玩家DNA列表
     }
+    """
