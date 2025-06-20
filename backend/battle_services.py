@@ -66,15 +66,9 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
         "initial_max_mp": monster.get("initial_max_mp", 0) + gains.get("mp", 0) + title_buffs.get("mp", 0),
     }
 
-    # 應用暫時的百分比修正
-    attack_mod = monster.get("temp_attack_multiplier", 1.0)
-    defense_mod = monster.get("temp_defense_multiplier", 1.0)
-    speed_mod = monster.get("temp_speed_multiplier", 1.0)
-
-    # 應用暫時的固定值修正
-    final_attack = (base_stats["attack"] * attack_mod) + monster.get("temp_attack_modifier", 0)
-    final_defense = (base_stats["defense"] * defense_mod) + monster.get("temp_defense_modifier", 0)
-    final_speed = (base_stats["speed"] * speed_mod) + monster.get("temp_speed_modifier", 0)
+    final_attack = (base_stats["attack"] * monster.get("temp_attack_multiplier", 1.0)) + monster.get("temp_attack_modifier", 0)
+    final_defense = (base_stats["defense"] * monster.get("temp_defense_multiplier", 1.0)) + monster.get("temp_defense_modifier", 0)
+    final_speed = (base_stats["speed"] * monster.get("temp_speed_multiplier", 1.0)) + monster.get("temp_speed_modifier", 0)
     final_crit = base_stats["crit"] + monster.get("temp_crit_modifier", 0)
 
     stats = {
@@ -101,19 +95,45 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
                         stats[stat] += value
     return stats
 
+# --- 【修改】修正後的函式 ---
+def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConfigs) -> List[Skill]:
+    """從遊戲設定中查找完整的技能資料，並返回怪獸當前MP足夠使用的技能列表。"""
+    available_skills: List[Skill] = []
+    all_skills_db = game_configs.get("skills", {})
+    
+    for skill_stub in monster.get("skills", []):
+        skill_name = skill_stub.get("name")
+        if not skill_name:
+            continue
 
-def _get_active_skills(monster: Monster, current_mp: int) -> List[Skill]:
-    active_skills = []
-    for skill in monster.get("skills", []):
-        effective_skill = get_effective_skill_with_level(skill, skill.get("level", 1))
+        # 從所有屬性的技能池中查找技能模板
+        skill_template = None
+        for element_skills in all_skills_db.values():
+            found = next((s for s in element_skills if s.get("name") == skill_name), None)
+            if found:
+                skill_template = found
+                break
+        
+        if not skill_template:
+            battle_logger.warning(f"怪獸 {monster.get('nickname')} 的技能 '{skill_name}' 在遊戲設定中找不到範本。")
+            continue
+            
+        # 將範本與怪獸自身的技能資料(主要是等級)合併
+        full_skill_data = copy.deepcopy(skill_template)
+        full_skill_data.update(skill_stub)
+        
+        effective_skill = get_effective_skill_with_level(full_skill_data, full_skill_data.get("level", 1))
+        
         mp_cost = effective_skill.get("mp_cost", 0)
         if current_mp >= mp_cost:
-            active_skills.append(skill)
-    return active_skills
+            available_skills.append(full_skill_data)
+            
+    return available_skills
 
 def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfigs, player_data: Optional[PlayerGameData]) -> Skill:
     attacker_current_stats = _get_monster_current_stats(attacker, player_data, game_configs)
-    all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"])
+    # 【修改】呼叫時傳入 game_configs
+    all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"], game_configs)
 
     sensible_skills = []
     for skill in all_mp_available_skills:
@@ -147,7 +167,6 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     return BASIC_ATTACK
 
 def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effects: List[SkillEffect], game_configs: GameConfigs, action_details: Dict, log_parts: List[str]):
-    """處理單個技能中定義的多個效果"""
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
@@ -209,14 +228,15 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                 amounts = [effect["amount"]] if isinstance(effect["amount"], (int, float)) else effect["amount"]
                 
                 for stat_zh, amount in zip(stats_to_change_zh, amounts):
-                    stat_en = stat_map.get(stat_zh, stat_zh)
+                    stat_en = stat_map.get(stat_zh, stat_zh.lower()) # fallback to lowercase
                     
+                    modifier_key_mult = f"temp_{stat_en}_multiplier"
+                    modifier_key_add = f"temp_{stat_en}_modifier"
+
                     if is_multiplier:
-                        modifier_key = f"temp_{stat_en}_multiplier"
-                        effect_target_monster[modifier_key] = effect_target_monster.get(modifier_key, 1.0) * (1 + amount)
+                        effect_target_monster[modifier_key_mult] = effect_target_monster.get(modifier_key_mult, 1.0) * (1 + amount)
                     else:
-                        modifier_key = f"temp_{stat_en}_modifier"
-                        effect_target_monster[modifier_key] = effect_target_monster.get(modifier_key, 0) + amount
+                        effect_target_monster[modifier_key_add] = effect_target_monster.get(modifier_key_add, 0) + amount
                 
                 if effect.get("log_success"):
                     amount_str = f"{abs(amounts[0]*100):.0f}%" if is_multiplier else str(abs(amounts[0]))
@@ -224,7 +244,8 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                         performer=performer['nickname'], 
                         target=target['nickname'],
                         stat=stats_to_change_zh[0],
-                        amount=amount_str
+                        amount=amount_str,
+                        duration=effect.get("duration", 0)
                     )
                     log_parts.append(f" {formatted_log}")
 
@@ -239,7 +260,6 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                     log_parts.append(f" {performer['nickname']}也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
             else:
                 log_parts.append(f" 發動了未知的特殊效果「{special_id}」！")
-
 
 def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> Tuple[bool, List[str]]:
     log_messages: List[str] = []
@@ -305,15 +325,21 @@ def simulate_battle_full(
 
         turn_log = [f"--- 回合 {turn_num} 開始 ---"]
         
-        player_conditions_json = json.dumps(player_monster.get("healthConditions", []), ensure_ascii=False)
-        opponent_conditions_json = json.dumps(opponent_monster.get("healthConditions", []), ensure_ascii=False)
-        turn_log.append(f"PlayerConditions:{player_conditions_json}")
-        turn_log.append(f"OpponentConditions:{opponent_conditions_json}")
+        player_status_text = "良好"
+        if player_monster.get("healthConditions"):
+            player_status_text = ", ".join([c.get('name', '未知') for c in player_monster["healthConditions"]])
+        opponent_status_text = "良好"
+        if opponent_monster.get("healthConditions"):
+            opponent_status_text = ", ".join([c.get('name', '未知') for c in opponent_monster["healthConditions"]])
 
+        turn_log.append(f"PlayerName:{player_monster['nickname']}")
         turn_log.append(f"PlayerHP:{player_monster['current_hp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_hp']}")
         turn_log.append(f"PlayerMP:{player_monster['current_mp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_mp']}")
+        turn_log.append(f"PlayerStatus:{player_status_text}")
+        turn_log.append(f"OpponentName:{opponent_monster['nickname']}")
         turn_log.append(f"OpponentHP:{opponent_monster['current_hp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_hp']}")
         turn_log.append(f"OpponentMP:{opponent_monster['current_mp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_mp']}")
+        turn_log.append(f"OpponentStatus:{opponent_status_text}")
         
         player_skip, p_logs = _process_turn_start_effects(player_monster, game_configs)
         turn_log.extend(p_logs)
@@ -339,12 +365,12 @@ def simulate_battle_full(
             effective_skill = get_effective_skill_with_level(chosen_skill_template, chosen_skill_template.get("level", 1))
 
             performer["current_mp"] -= effective_skill.get("mp_cost", 0)
-            log_parts = [f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"]
+            log_parts = [f"- **{performer['nickname']}** 使用了 **{effective_skill['name']}**！"]
             action_details = {"performer_data": performer_pd, "target_data": target_pd}
 
             accuracy = effective_skill.get("accuracy", 95)
             if accuracy != "auto" and random.randint(1, 100) > accuracy:
-                log_parts.append(f" 但是攻擊被 {target['nickname']} 閃過了！")
+                log_parts.append(f" 但是攻擊被 **{target['nickname']}** 閃過了！")
             else:
                 is_crit = random.randint(1, 100) <= _get_monster_current_stats(performer, performer_pd, game_configs)["crit"]
                 action_details["is_crit"] = is_crit
@@ -362,7 +388,7 @@ def simulate_battle_full(
         winner_id, loser_id = opponent_monster["id"], player_monster["id"]
     elif opponent_monster["current_hp"] <= 0 and player_monster["current_hp"] > 0:
         winner_id, loser_id = player_monster["id"], opponent_monster["id"]
-    else: # Draw or both fainted
+    else:
         winner_id, loser_id = "平手", "平手"
 
     all_raw_log_messages.append("--- 戰鬥結束 ---")
