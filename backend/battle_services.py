@@ -202,12 +202,20 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     defender_current_stats = _get_monster_current_stats(target, target_player_data)
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_BATTLE["value_settings"])
     
-    hit_roll = random.randint(1, 100)
-    final_accuracy = value_settings.get("base_accuracy", 80) + attacker_current_stats.get("accuracy", 0) - defender_current_stats.get("evasion", 0)
-    
-    if hit_roll > effective_skill.get('accuracy', 100) or hit_roll > final_accuracy:
+    # --- 核心修改處 START ---
+    # 修正命中判定邏輯，使其能處理 "auto"
+    skill_accuracy = effective_skill.get('accuracy', 100)
+    is_miss = False
+    if skill_accuracy != "auto":
+        hit_roll = random.randint(1, 100)
+        final_accuracy = value_settings.get("base_accuracy", 80) + attacker_current_stats.get("accuracy", 0) - defender_current_stats.get("evasion", 0)
+        if hit_roll > skill_accuracy or hit_roll > final_accuracy:
+            is_miss = True
+
+    if is_miss:
         action_details.update({"is_miss": True, "damage_dealt": 0, "log_message": f"- {performer['nickname']} 的 **{effective_skill['name']}** 被 {target['nickname']} 閃過了！"})
         return action_details
+    # --- 核心修改處 END ---
     
     action_details["is_miss"] = False
     is_crit = random.randint(1, 100) <= (attacker_current_stats["crit"] + effective_skill.get("crit_chance_modifier", 0))
@@ -265,7 +273,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 is_percentage_list = [False] * len(stats_to_change)
 
             for i, (stat, amount) in enumerate(zip(stats_to_change, amounts)):
-                # --- 核心修改處 START ---
                 is_percentage = is_percentage_list[i] if isinstance(is_percentage_list, list) and i < len(is_percentage_list) else False
                 
                 target_player_data_for_stats = target_player_data if "opponent" in effect_target_str else performer_player_data
@@ -287,9 +294,9 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 translated_stat = stat_translation.get(stat, stat.upper())
                 change_text = '提升' if final_amount > 0 else '下降'
                 
-                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！ (從 {pre_change_stat_value} 變為 {post_change_stat_value})")
+                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！(從 {pre_change_stat_value} 變為 {post_change_stat_value})")
                 action_details[f"{stat}_changed_to"] = post_change_stat_value
-                # --- 核心修改處 END ---
+
 
         elif effect_type == "heal":
             amount_to_restore = 0
@@ -320,26 +327,21 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         elif effect_type == "special":
             special_id = effect.get("special_logic_id")
             if special_id == "power_trick":
-                # --- 核心修改處 START ---
-                # 獲取交換前的當前數值用於日誌
                 stats_before_swap = _get_monster_current_stats(performer, performer_player_data)
                 pre_swap_attack = math.floor(stats_before_swap['attack'])
                 pre_swap_defense = math.floor(stats_before_swap['defense'])
 
-                # 這是最穩定的交換方式：直接在戰鬥用的怪獸物件副本上交換基礎數值
                 original_base_attack = performer.get("attack", 0)
                 original_base_defense = performer.get("defense", 0)
                 performer["attack"] = original_base_defense
                 performer["defense"] = original_base_attack
                 
-                # 重新獲取交換後的數值，這樣會自動計入其他加成
                 stats_after_swap = _get_monster_current_stats(performer, performer_player_data)
                 post_swap_attack = math.floor(stats_after_swap['attack'])
                 post_swap_defense = math.floor(stats_after_swap['defense'])
 
                 log_parts.append(f" {performer['nickname']} 的力量被扭曲了！(攻擊: {pre_swap_attack} ↔ {post_swap_attack}, 防禦: {pre_swap_defense} ↔ {post_swap_defense})")
                 action_details["stat_changes"] = {"attack": post_swap_attack, "defense": post_swap_defense}
-                # --- 核心修改處 END ---
             else:
                 log_parts.append(f" {performer['nickname']} 使用了神秘的力量！")
         
