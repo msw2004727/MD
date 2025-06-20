@@ -163,7 +163,8 @@
     border-radius: 4px;
     border: 1px solid var(--border-color);
     white-space: nowrap;
-    display: none;
+    display: inline-block;
+    margin-left: 0.5rem;
 }
 
 
