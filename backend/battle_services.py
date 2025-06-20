@@ -184,7 +184,15 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 
     return BASIC_ATTACK
 
-def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs, performer_player_data: Optional[PlayerGameData], target_player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
+def _apply_skill_effect(
+    performer: Monster, 
+    target: Monster, 
+    skill: Skill, 
+    game_configs: GameConfigs, 
+    performer_player_data: Optional[PlayerGameData], 
+    target_player_data: Optional[PlayerGameData],
+    last_skill_used: Dict[str, Skill]
+) -> Dict[str, Any]:
     stat_translation = {
         "hp": "HP", "mp": "MP", "attack": "攻擊", "defense": "防禦",
         "speed": "速度", "crit": "爆擊", "accuracy": "命中", "evasion": "閃避",
@@ -202,8 +210,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     defender_current_stats = _get_monster_current_stats(target, target_player_data)
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_BATTLE["value_settings"])
     
-    # --- 核心修改處 START ---
-    # 修正命中判定邏輯，使其能處理 "auto"
     skill_accuracy = effective_skill.get('accuracy', 100)
     is_miss = False
     if skill_accuracy != "auto":
@@ -215,7 +221,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     if is_miss:
         action_details.update({"is_miss": True, "damage_dealt": 0, "log_message": f"- {performer['nickname']} 的 **{effective_skill['name']}** 被 {target['nickname']} 閃過了！"})
         return action_details
-    # --- 核心修改處 END ---
     
     action_details["is_miss"] = False
     is_crit = random.randint(1, 100) <= (attacker_current_stats["crit"] + effective_skill.get("crit_chance_modifier", 0))
@@ -297,7 +302,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！(從 {pre_change_stat_value} 變為 {post_change_stat_value})")
                 action_details[f"{stat}_changed_to"] = post_change_stat_value
 
-
         elif effect_type == "heal":
             amount_to_restore = 0
             if effect.get("heal_percentage_of_max_hp"):
@@ -342,6 +346,21 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
                 log_parts.append(f" {performer['nickname']} 的力量被扭曲了！(攻擊: {pre_swap_attack} ↔ {post_swap_attack}, 防禦: {pre_swap_defense} ↔ {post_swap_defense})")
                 action_details["stat_changes"] = {"attack": post_swap_attack, "defense": post_swap_defense}
+            
+            elif special_id == "mimic":
+                copied_skill = last_skill_used.get(target["id"])
+                if copied_skill and copied_skill.get("name") != "模仿":
+                    log_parts.append(f" {performer['nickname']} 複製了對手的「**{copied_skill.get('name')}**」！")
+                    # 遞迴呼叫來執行複製的技能
+                    copied_action_result = _apply_skill_effect(
+                        performer, target, copied_skill, game_configs, performer_player_data, target_player_data, last_skill_used
+                    )
+                    # 合併日誌和效果
+                    log_parts.append(copied_action_result.get("log_message", "").lstrip("- "))
+                    action_details.update(copied_action_result)
+                else:
+                    log_parts.append(f" 但是失敗了！")
+
             else:
                 log_parts.append(f" {performer['nickname']} 使用了神秘的力量！")
         
@@ -412,6 +431,7 @@ def simulate_battle_full(
     all_turn_actions: List[BattleAction] = []
     max_turns = game_configs.get("value_settings", {}).get("max_battle_turns", 30)
     first_striker_name = ""
+    last_skill_used: Dict[str, Skill] = {} # 新增：追蹤上一回合技能
 
     gmt8 = timezone(timedelta(hours=8))
 
@@ -465,7 +485,15 @@ def simulate_battle_full(
             
             chosen_skill = _choose_action(current_actor, target_actor, game_configs, actor_player_data)
             
-            action_result = _apply_skill_effect(current_actor, target_actor, chosen_skill, game_configs, actor_player_data, target_player_data)
+            action_result = _apply_skill_effect(
+                current_actor, target_actor, chosen_skill, game_configs, 
+                actor_player_data, target_player_data, last_skill_used
+            )
+            
+            # 記錄使用的技能（非模仿）
+            if chosen_skill.get("name") != "模仿":
+                last_skill_used[current_actor['id']] = chosen_skill
+
             turn_raw_log_messages.append(action_result["log_message"])
             
             is_player_turn = current_actor["id"] == player_monster["id"]
