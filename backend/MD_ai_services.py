@@ -8,6 +8,7 @@ import logging
 import time
 from typing import Dict, Any, List, Optional # 用於類型提示
 import random 
+import re # 匯入正規表達式模組
 
 # 從專案的其他模組導入必要的模型
 from .MD_models import Monster, PlayerGameData, ChatHistoryEntry, GameConfigs
@@ -493,8 +494,6 @@ def generate_battle_report_content(
     else:
         prompt_intro = f"一場激烈的怪獸對戰剛剛以「平手」告終。"
 
-    # ----- BUG 修正邏輯 START -----
-    # 新的指令，要求 AI 提供 JSON 格式的回應
     summary_prompt = f"""
 {prompt_intro}
 請根據這場戰鬥的幾個關鍵亮點：「{highlights_str}」，完成以下任務：
@@ -507,7 +506,6 @@ def generate_battle_report_content(
   "tags": ["#範例標籤一", "#範例標籤二"]
 }}
 """
-    # ----- BUG 修正邏輯 END -----
 
     payload = {
         "model": DEEPSEEK_MODEL,
@@ -534,21 +532,39 @@ def generate_battle_report_content(
         if (response_json.get("choices") and response_json["choices"][0].get("message")):
             content_str = response_json["choices"][0]["message"].get("content", "{}").strip()
             
+            # --- 核心修改處 START ---
+            cleaned_json_str = content_str
             # 清理可能的 markdown 標記
-            if content_str.startswith("```json"):
-                content_str = content_str[7:]
-            if content_str.endswith("```"):
-                content_str = content_str[:-3]
-            content_str = content_str.strip()
+            if cleaned_json_str.startswith("```json"):
+                cleaned_json_str = cleaned_json_str[7:]
+            if cleaned_json_str.endswith("```"):
+                cleaned_json_str = cleaned_json_str[:-3]
+            cleaned_json_str = cleaned_json_str.strip()
 
             try:
-                parsed_content = json.loads(content_str)
+                parsed_content = json.loads(cleaned_json_str)
                 ai_summary = parsed_content.get("summary", DEFAULT_BATTLE_REPORT_CONTENT["battle_summary"])
                 ai_tags = parsed_content.get("tags", [])
                 ai_logger.info(f"成功為戰鬥生成 AI 總結與標籤。")
             except json.JSONDecodeError:
-                ai_logger.error(f"解析戰報AI回應的JSON失敗。將整個回應作為總結。原始字串: {content_str}")
-                ai_summary = content_str # 如果JSON解析失敗，退回原始行為
+                ai_logger.error(f"解析戰報AI回應的JSON失敗。將嘗試手動提取。原始字串: {content_str}")
+                # 手動提取的後備方案
+                summary_match = re.search(r'"summary"\s*:\s*"(.*?)"', content_str, re.DOTALL)
+                if summary_match:
+                    ai_summary = summary_match.group(1)
+                    ai_logger.info("成功手動提取戰報總結。")
+                else:
+                    # 如果連手動提取都失敗，就直接使用整個字串，但移除可能的程式碼標記
+                    ai_summary = cleaned_json_str
+                # 手動提取標籤
+                tags_match = re.search(r'"tags"\s*:\s*(\[.*?\])', content_str, re.DOTALL)
+                if tags_match:
+                    try:
+                        ai_tags = json.loads(tags_match.group(1))
+                        ai_logger.info("成功手動提取標籤。")
+                    except json.JSONDecodeError:
+                        ai_tags = [] # 如果標籤部分也損毀，就放棄
+            # --- 核心修改處 END ---
                 
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
