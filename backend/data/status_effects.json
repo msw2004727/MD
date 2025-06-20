@@ -1,0 +1,79 @@
+[
+  {
+    "id": "confusion",
+    "name": "混亂",
+    "description": "陷入混亂的怪獸在行動時，有50%的機率會攻擊自己。",
+    "duration_turns": "2-4",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "paralysis",
+    "name": "麻痺",
+    "description": "陷入麻痺的怪獸速度會大幅下降，且每回合有30%的機率無法行動。",
+    "duration_turns": "2",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "burn",
+    "name": "燒傷",
+    "description": "陷入燒傷的怪獸每回合會損失生命值，且攻擊力會下降。",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "freeze",
+    "name": "冰凍",
+    "description": "陷入冰凍的怪獸將無法行動。受到火屬性攻擊時會解除，但傷害會加倍。",
+    "duration_turns": "1",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "poison",
+    "name": "中毒",
+    "description": "陷入中毒的怪獸每回合會損失固定數值的生命值。",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "badly_poisoned",
+    "name": "強力中毒",
+    "description": "陷入強力中毒的怪獸每回合損失的生命值會持續增加。",
+    "duration_turns": "直到戰鬥結束或被治癒",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "badly_burned",
+    "name": "強力燒傷",
+    "description": "陷入強力燒傷的怪獸每回合會損失大量生命值，且攻擊力大幅下降，此狀態無法被常規方法解除。",
+    "duration_turns": "直到戰鬥結束",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "sound_blocked",
+    "name": "封鎖聲音",
+    "description": "陷入此狀態的怪獸將暫時無法使用任何聲音類別的技能。",
+    "duration_turns": "2",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "blind",
+    "name": "失明",
+    "description": "陷入失明的怪獸，其技能命中率會顯著下降。",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "sleep",
+    "name": "睡眠",
+    "description": "陷入睡眠的怪獸將無法行動，直到被攻擊或數回合後自動醒來。",
+    "duration_turns": "1-3",
+    "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "insomnia",
+    "name": "不眠",
+    "description": "陷入不眠狀態的怪獸將免疫任何「睡眠」效果。",
+    "duration_turns": "直到戰鬥結束",
+    "real_time_effect": "僅限戰鬥中"
+  }
+]
