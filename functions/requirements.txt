@@ -1,0 +1,6 @@
+Flask
+firebase-admin
+Flask-CORS
+pytest
+firebase-functions
+requests
