@@ -7,14 +7,25 @@ MD/
 │   │   ├── element_nicknames.json        # 各元素在不同稀有度下的預設暱稱庫
 │   │   ├── newbie_guide.json             # 新手指南的內容，顯示在遊戲內的說明彈窗
 │   │   ├── personalities.csv             # 怪獸的個性、描述及對應的技能使用偏好
-│   │   ├── skills.json                   # 所有技能的詳細資料，包括威力、效果和升級里程碑
+│   │   ├── skills/                       # 存放各屬性技能詳細資料的資料夾
+│   │   │   ├── dark.json                 # 「暗」屬性所有技能的詳細資料
+│   │   │   ├── earth.json                # 「土」屬性所有技能的詳細資料
+│   │   │   ├── fire.json                 # 「火」屬性所有技能的詳細資料
+│   │   │   ├── gold.json                 # 「金」屬性所有技能的詳細資料
+│   │   │   ├── light.json                # 「光」屬性所有技能的詳細資料
+│   │   │   ├── mix.json                  # 「混」屬性所有技能的詳細資料
+│   │   │   ├── none.json                 # 「無」屬性所有技能的詳細資料
+│   │   │   ├── poison.json               # 「毒」屬性所有技能的詳細資料
+│   │   │   ├── water.json                # 「水」屬性所有技能的詳細資料
+│   │   │   └── wind.json                 # 「風」屬性所有技能的詳細資料
+│   │   ├── status_effects.json           # 定義如中毒、麻痺等所有戰鬥狀態效果
 │   │   └── titles.json                   # 玩家可獲得的所有稱號及其解鎖條件與加成
 │   ├── tests/                            # 後端邏輯的自動化測試腳本
 │   │   ├── test_battle_simulation.py     # 測試戰鬥模擬的核心邏輯
 │   │   ├── test_monster_combination.py   # 測試怪獸合成服務的邏輯
 │   │   ├── test_monster_cultivation.py   # 測試怪獸修煉及成長的邏輯
 │   │   └── test_post_battle_services.py  # 測試戰後結算服務的邏輯
-│   ├── api_key.txt                       # 存放 DeepSeek AI 服務的 API 金鑰
+│   ├── api_key.txt                       # 存放 AI 服務的 API 金鑰
 │   ├── battle_services.py                # 處理核心戰鬥模擬的邏輯
 │   ├── champion_routes.py                # 定義與冠軍殿堂相關的API路由 (讀取、挑戰)
 │   ├── champion_services.py              # 提供讀取和更新冠軍殿堂資料的服務
@@ -33,11 +44,10 @@ MD/
 │   ├── requirements.txt                  # 列出後端所需的 Python 套件
 │   ├── serviceAccountKey.json            # Firebase 服務帳戶的憑證金鑰
 │   ├── utils_services.py                 # 存放可共用的輔助函式，如暱稱生成、經驗值計算等
-│   ├── MD_ai_services.py                 # 串接 DeepSeek AI 模型，為遊戲生成各種文字內容
+│   ├── MD_ai_services.py                 # 串接 AI 模型，為遊戲生成各種文字內容
 │   ├── MD_config_services.py             # 從 Firestore 資料庫載入遊戲核心設定
 │   ├── MD_firebase_config.py             # 設定並提供全域的 Firebase 資料庫實例
-│   ├── MD_models.py                      # 定義遊戲中所有資料結構 (如怪獸、玩家、技能) 的型別
-│   └── MD_populate_gamedata.py           # 用於將 data/ 目錄中的設定檔一次性上傳到 Firestore 的腳本
+│   └── MD_models.py                      # 定義遊戲中所有資料結構 (如怪獸、玩家、技能) 的型別
 ├── css/                                  # 前端使用者介面 (UI) 的所有樣式表
 │   ├── buttons.css                     # 定義遊戲中各種按鈕的樣式
 │   ├── champions.css                   # 定義冠軍殿堂區塊的專屬樣式
@@ -45,7 +55,7 @@ MD/
 │   ├── layout.css                      # 定義遊戲主介面的整體佈局結構
 │   ├── modals.css                      # 定義所有彈出式視窗的樣式
 │   └── theme.css                       # 定義淺色與深色主題的顏色變數
-├── images/                               # 存放遊戲中使用的靜態圖片資源
+├── images/                               # (此為示意，實際圖片未上傳) 存放遊戲中使用的靜態圖片資源
 │   ├── BN001.png                         # 遊戲公告彈窗橫幅圖片
 │   ├── a001.png                          # 怪獸快照區塊的背景圖
 │   └── mb01.png                          # 怪獸身體的基礎輪廓圖
@@ -65,20 +75,22 @@ MD/
 │   ├── main.js                           # 前端主進入點，負責初始化遊戲、監聽認證狀態並載入初始資料
 │   ├── monster-part-assets.js            # 定義怪獸各身體部位對應的圖片路徑
 │   ├── ui.js                             # UI 渲染的核心檔案，負責初始化 DOM 元素和通用 UI 函數 (如彈窗)
+│   ├── ui-battle-modals.js               # 專門渲染戰鬥日誌彈窗內容的函式
 │   ├── ui-champions.js                   # 專門渲染冠軍殿堂 UI 的函式
 │   ├── ui-chat.js                        # 專門處理怪獸聊天視窗 UI 與互動的函式
 │   ├── ui-farm.js                        # 專門渲染怪獸農場列表的函式
 │   ├── ui-inventory.js                   # 專門渲染 DNA 組合槽、庫存與背包的函式
 │   ├── ui-leaderboard-modals.js          # 專門渲染排行榜彈窗內容的函式
-│   ├── ui-monster-modals.js              # 專門渲染怪獸詳細資訊彈窗的函式
+│   ├── ui-monster-details.js             # 專門渲染怪獸詳細資訊彈窗的函式
 │   ├── ui-notes.js                       # 處理怪獸備註功能的顯示與互動
-│   ├── ui-player-modals.js               # 專門渲染玩家資訊彈窗的函式
+│   ├── ui-player-modals.js               # 專門渲染玩家資訊與好友彈窗的函式
+│   ├── ui-result-modals.js               # 專門渲染養成或抽卡等「結果」彈窗的函式
 │   ├── ui-snapshot.js                    # 專門渲染主畫面頂部的怪獸快照區塊
 │   └── utils.js                          # 存放前端可共用的輔助函式
 ├── announcement.json                     # 定義遊戲公告彈窗的內容結構
 ├── assets.json                           # 定義遊戲中各種 UI 圖片（如橫幅、圖示）的路徑
 ├── chat_greetings.json                   # 存放怪獸初次見面時的問候語資料庫
 ├── firebase.json                         # Firebase Hosting 的部署設定檔
-├── github結構.txt                      # 您提供的專案結構參考檔案
+├── github結構.txt                        # 本檔案，用於說明專案結構
 ├── index.html                            # 遊戲的唯一 HTML 入口頁面
 └── ui_text.json                          # 存放遊戲介面中會用到的提示文字等內容
