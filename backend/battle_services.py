@@ -180,7 +180,8 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_configs: GameConfigs, performer_player_data: Optional[PlayerGameData], target_player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
     stat_translation = {
         "hp": "HP", "mp": "MP", "attack": "攻擊", "defense": "防禦",
-        "speed": "速度", "crit": "爆擊", "accuracy": "命中", "evasion": "閃避"
+        "speed": "速度", "crit": "爆擊", "accuracy": "命中", "evasion": "閃避",
+        "special_defense": "特防"
     }
 
     effective_skill = get_effective_skill_with_level(skill, skill.get("level", 1))
@@ -231,30 +232,57 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
         elif effect_type == "stat_change":
             stats_to_change = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
-            amounts = [effect["amount"]] if isinstance(effect["amount"], int) else effect["amount"]
+            amounts = [effect["amount"]] if isinstance(effect["amount"], (int, float)) else effect["amount"]
             
-            for stat, amount in zip(stats_to_change, amounts):
-                final_amount = amount
-                # --- 新增的百分比邏輯 START ---
-                if effect.get("amount_is_percentage"):
-                    base_stat_source = defender_current_stats if "opponent" in effect_target_str else attacker_current_stats
-                    base_value = base_stat_source.get(stat, 0)
-                    calculated_amount = int(base_value * (amount / 100.0))
-                    
-                    min_val = effect.get("min_value")
-                    if min_val is not None:
-                        final_amount = max(min_val, abs(calculated_amount)) * (-1 if amount < 0 else 1)
-                    else:
-                        final_amount = calculated_amount
-                # --- 新增的百分比邏輯 END ---
+            # ----- 核心修改處 START -----
+            # 判斷是否為百分比，並對應處理
+            is_percentage_list = effect.get("amount_is_percentage")
+            if isinstance(is_percentage_list, bool):
+                is_percentage_list = [is_percentage_list] * len(stats_to_change)
+            elif not isinstance(is_percentage_list, list):
+                is_percentage_list = [False] * len(stats_to_change)
+
+            for i, (stat, amount) in enumerate(zip(stats_to_change, amounts)):
+                is_percentage = is_percentage_list[i] if i < len(is_percentage_list) else False
+                
+                final_amount = 0
+                if is_percentage:
+                    # 如果是百分比，則基於怪獸的「基礎」數值計算
+                    base_stat_source = target if "opponent" in effect_target_str else performer
+                    base_value_key = f"initial_max_{stat}" if stat in ['hp', 'mp'] else stat
+                    base_value = base_stat_source.get(base_value_key, 1) # 避免除以零
+                    final_amount = int(base_value * amount)
+                else:
+                    # 否則，直接使用固定值
+                    final_amount = int(amount)
+                # ----- 核心修改處 END -----
 
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + final_amount
                 
                 translated_stat = stat_translation.get(stat, stat.upper())
                 change_text = '提升' if final_amount > 0 else '下降'
-                abs_amount = abs(final_amount)
-                
-                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了{abs_amount}點。")
+                abs_amount_str = f"{abs(amount)*100}%" if is_percentage else str(abs(final_amount))
+
+                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了。")
+
+        elif effect_type == "heal":
+            # ----- 核心修改處 START -----
+            amount_to_restore = 0
+            if effect.get("heal_percentage_of_max_hp"):
+                heal_percentage = effect.get("heal_percentage_of_max_hp", 0.0)
+                max_hp = _get_monster_current_stats(effect_target, performer_player_data if effect_target_str == "self" else target_player_data).get("initial_max_hp", 1)
+                amount_to_restore = int(max_hp * heal_percentage)
+            else:
+                amount_to_restore = effect.get("heal_amount", 0)
+
+            if amount_to_restore > 0:
+                old_hp = effect_target.get("current_hp", 0)
+                max_hp_val = _get_monster_current_stats(effect_target, performer_player_data if effect_target_str == "self" else target_player_data).get("initial_max_hp", old_hp)
+                effect_target["current_hp"] = min(max_hp_val, old_hp + amount_to_restore)
+                actual_healed = effect_target["current_hp"] - old_hp
+                action_details["damage_healed"] = actual_healed
+                log_parts.append(f" {effect_target['nickname']} 恢復了 <heal>{actual_healed}</heal> 點HP。")
+            # ----- 核心修改處 END -----
 
         elif effect_type == "apply_status":
             status_id = effect.get("status_id")
