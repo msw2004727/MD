@@ -39,7 +39,6 @@ function showBattleLogModal(battleResult) {
         '神話': 'var(--rarity-mythical-text)'
     };
 
-    // --- 核心修改處 START ---
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         if (!text) return '(內容為空)';
         let styledText = text;
@@ -72,12 +71,16 @@ function showBattleLogModal(battleResult) {
                 const skillRarityKey = skillInfo.rarity ? (rarityMap[skillInfo.rarity] || 'common') : 'common';
                 const skillColorClass = `text-rarity-${skillRarityKey}`;
                 
-                // 產生等級標籤的 HTML
-                const levelTag = skillInfo.level !== undefined ? `<span class="text-xs opacity-75 mr-1">Lv${skillInfo.level}</span>` : '';
+                // 【修改】預設等級為1，並產生等級標籤
+                const skillLevel = skillInfo.level || 1;
+                const levelTag = `<span class="text-xs opacity-75 mr-1">Lv${skillLevel}</span>`;
                 
-                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
-                // 將等級標籤和技能名稱組合起來
-                const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="font-weight: bold; text-decoration: none;">${levelTag}$1</a>`;
+                // 【修改】新的正規表達式，專門尋找被 ** 包圍的技能名稱
+                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
+
+                // 【修改】新的替換內容，包含等級標籤和粗體顯示
+                const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="text-decoration: none;">${levelTag}<strong>$1</strong></a>`;
+                
                 styledText = styledText.replace(regex, replacement);
             }
         });
@@ -87,7 +90,6 @@ function showBattleLogModal(battleResult) {
 
         return styledText;
     }
-    // --- 核心修改處 END ---
 
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
