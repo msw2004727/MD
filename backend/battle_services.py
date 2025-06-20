@@ -41,7 +41,7 @@ def _calculate_elemental_advantage(attacker_element: ElementTypes, defender_elem
         total_multiplier *= chart.get(attacker_element, {}).get(def_el, 1.0)
     return total_multiplier
 
-def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGameData]) -> Dict[str, Any]:
+def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGameData], game_configs: GameConfigs) -> Dict[str, Any]:
     gains = monster.get("cultivation_gains", {})
     title_buffs = {}
 
@@ -67,14 +67,13 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
     }
 
     if monster.get("healthConditions"):
+        all_conditions = game_configs.get("health_conditions", [])
         for condition in monster["healthConditions"]:
-            # 從 game_configs 查找狀態的完整定義
-            all_conditions = game_configs.get("health_conditions", [])
             condition_template = next((c for c in all_conditions if c.get("id") == condition.get("id")), None)
             if condition_template:
                 effects = condition_template.get("effects", {})
                 for stat, value in effects.items():
-                    if stat in stats and "per_turn" not in stat: # 只應用靜態的數值變化
+                    if stat in stats and "per_turn" not in stat:
                         stats[stat] += value
     return stats
 
@@ -88,7 +87,7 @@ def _get_active_skills(monster: Monster, current_mp: int) -> List[Skill]:
     return active_skills
 
 def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfigs, player_data: Optional[PlayerGameData]) -> Skill:
-    attacker_current_stats = _get_monster_current_stats(attacker, player_data)
+    attacker_current_stats = _get_monster_current_stats(attacker, player_data, game_configs)
     all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"])
 
     sensible_skills = []
@@ -162,8 +161,8 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     performer["current_mp"] = max(0, performer.get("current_mp", 0) - mp_cost)
     action_details["mp_used"] = mp_cost
 
-    attacker_current_stats = _get_monster_current_stats(performer, performer_player_data)
-    defender_current_stats = _get_monster_current_stats(target, target_player_data)
+    attacker_current_stats = _get_monster_current_stats(performer, performer_player_data, game_configs)
+    defender_current_stats = _get_monster_current_stats(target, target_player_data, game_configs)
     value_settings: ValueSettings = game_configs.get("value_settings", {})
     
     hit_roll = random.randint(1, 100)
@@ -191,8 +190,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
     if effective_skill.get("effect") and random.randint(1, 100) <= effective_skill.get("probability", 100):
         effect_type = effective_skill["effect"]
-        is_buff = "buff" in effect_type or "heal" in effect_type or (effective_skill.get("skill_category") == "輔助") or (effect_type == "stat_change" and isinstance(effective_skill.get("amount"), int) and effective_skill.get("amount", 0) > 0)
-        effect_target = performer if is_buff else target
+        effect_target = performer if effective_skill.get("target") == "self" else target
         
         if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
             stats_to_change = [effective_skill["stat"]] if isinstance(effective_skill["stat"], str) else effective_skill["stat"]
@@ -209,7 +207,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
             heal_amount = effective_skill["amount"]
-            max_hp = _get_monster_current_stats(effect_target, performer_player_data if is_buff else target_player_data)["initial_max_hp"]
+            max_hp = _get_monster_current_stats(effect_target, performer_player_data, game_configs)["initial_max_hp"]
             healed_hp = min(heal_amount, max_hp - effect_target.get("current_hp", 0))
             if healed_hp > 0:
                 effect_target["current_hp"] += healed_hp
@@ -218,7 +216,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
         elif effect_type == "leech" and "amount" in effective_skill and action_details.get("damage_dealt", 0) > 0:
             leech_amount = int(action_details["damage_dealt"] * (effective_skill["amount"] / 100))
-            max_hp = _get_monster_current_stats(performer, performer_player_data)["initial_max_hp"]
+            max_hp = _get_monster_current_stats(performer, performer_player_data, game_configs)["initial_max_hp"]
             healed_hp = min(leech_amount, max_hp - performer.get("current_hp", 0))
             if healed_hp > 0:
                 performer["current_hp"] += healed_hp
@@ -308,8 +306,8 @@ def simulate_battle_full(
     player_battle_stats = {"total_damage_dealt": 0, "crit_hits": 0, "successful_evasions": 0, "highest_single_hit": 0, "skills_used": 0, "total_healing": 0, "damage_tanked": 0, "status_applied": 0}
     opponent_battle_stats = {"total_damage_dealt": 0, "crit_hits": 0, "successful_evasions": 0, "highest_single_hit": 0, "skills_used": 0, "total_healing": 0, "damage_tanked": 0, "status_applied": 0}
     
-    player_initial_stats = _get_monster_current_stats(player_monster, player_data)
-    opponent_initial_stats = _get_monster_current_stats(opponent_monster, opponent_player_data)
+    player_initial_stats = _get_monster_current_stats(player_monster, player_data, game_configs)
+    opponent_initial_stats = _get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)
     
     player_monster["current_hp"] = player_initial_stats["hp"]
     player_monster["current_mp"] = player_initial_stats["mp"]
@@ -332,8 +330,8 @@ def simulate_battle_full(
 
         turn_raw_log_messages: List[str] = [f"--- 回合 {turn_num} 開始 ---"]
         
-        player_stats_at_turn_start = _get_monster_current_stats(player_monster, player_data)
-        opponent_stats_at_turn_start = _get_monster_current_stats(opponent_monster, opponent_player_data)
+        player_stats_at_turn_start = _get_monster_current_stats(player_monster, player_data, game_configs)
+        opponent_stats_at_turn_start = _get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)
 
         turn_raw_log_messages.append(f"PlayerName: {player_monster['nickname']}")
         turn_raw_log_messages.append(f"PlayerHP: {player_monster['current_hp']}/{player_stats_at_turn_start['initial_max_hp']}")
@@ -353,7 +351,7 @@ def simulate_battle_full(
             
         acting_order: List[Tuple[Monster, Optional[PlayerGameData], bool]] = sorted(
             [(player_monster, player_data, player_skip), (opponent_monster, opponent_player_data, opponent_skip)], 
-            key=lambda x: _get_monster_current_stats(x[0], x[1])["speed"], 
+            key=lambda x: _get_monster_current_stats(x[0], x[1], game_configs)["speed"], 
             reverse=True
         )
         
