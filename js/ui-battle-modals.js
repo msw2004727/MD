@@ -33,26 +33,24 @@ function showBattleLogModal(battleResult) {
         return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     }
     
-    const skillLevelColors = {
-        1: 'var(--text-secondary)', 2: 'var(--text-secondary)', 3: 'var(--text-primary)',
-        4: 'var(--text-primary)', 5: 'var(--accent-color)', 6: 'var(--accent-color)',
-        7: 'var(--success-color)', 8: 'var(--success-color)', 9: 'var(--rarity-legendary-text)',
-        10: 'var(--rarity-mythical-text)'
-    };
     const rarityColors = {
         '普通': 'var(--rarity-common-text)', '稀有': 'var(--rarity-rare-text)',
         '菁英': 'var(--rarity-elite-text)', '傳奇': 'var(--rarity-legendary-text)',
         '神話': 'var(--rarity-mythical-text)'
     };
 
+    // --- 核心修改處 START ---
     function applyDynamicStylingToBattleReport(text, playerMon, opponentMon) {
         if (!text) return '(內容為空)';
         let styledText = text;
 
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+
         const replaceName = (fullNickname, shortName, rarity) => {
-            const monColor = rarityColors[rarity] || 'var(--text-primary)';
+            const monRarityKey = rarity ? (rarityMap[rarity] || 'common') : 'common';
+            const monColorClass = `text-rarity-${monRarityKey}`;
             const searchRegex = new RegExp(fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
-            const replacement = `<span style="color: ${monColor}; font-weight: bold;">${shortName}</span>`;
+            const replacement = `<span class="${monColorClass}" style="font-weight: bold;">${shortName}</span>`;
             styledText = styledText.replace(searchRegex, replacement);
         };
 
@@ -67,12 +65,20 @@ function showBattleLogModal(battleResult) {
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
         if (opponentMon && opponentMon.skills) allSkills.push(...opponentMon.skills);
         const uniqueSkillNames = new Set(allSkills.map(s => s.name));
+        
         uniqueSkillNames.forEach(skillName => {
             const skillInfo = allSkills.find(s => s.name === skillName);
-            if (skillInfo && skillInfo.level !== undefined) {
-                const color = skillLevelColors[skillInfo.level] || skillLevelColors[1];
+            if (skillInfo) {
+                const skillRarityKey = skillInfo.rarity ? (rarityMap[skillInfo.rarity] || 'common') : 'common';
+                const skillColorClass = `text-rarity-${skillRarityKey}`;
+                
+                // 產生等級標籤的 HTML
+                const levelTag = skillInfo.level !== undefined ? `<span class="text-xs opacity-75 mr-1">Lv${skillInfo.level}</span>` : '';
+                
                 const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)(${skillName})(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
-                styledText = styledText.replace(regex, `<a href="#" class="skill-name-link" data-skill-name="${skillName}" style="color: ${color}; font-weight: bold; text-decoration: none;">$1</a>`);
+                // 將等級標籤和技能名稱組合起來
+                const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="font-weight: bold; text-decoration: none;">${levelTag}$1</a>`;
+                styledText = styledText.replace(regex, replacement);
             }
         });
 
@@ -81,6 +87,7 @@ function showBattleLogModal(battleResult) {
 
         return styledText;
     }
+    // --- 核心修改處 END ---
 
     const reportContainer = document.createElement('div');
     reportContainer.classList.add('battle-report-container');
@@ -182,14 +189,13 @@ function showBattleLogModal(battleResult) {
     });
     if (currentTurn) battleTurns.push(currentTurn);
 
-    // 幫助生成狀態標籤的函式
     const createStatusTagsHTML = (statusText) => {
         if (!statusText || statusText === '良好') {
             return `<span class="monster-status-tag" style="color: var(--success-color); border: 1px solid var(--success-color);">良好</span>`;
         }
         const statuses = statusText.split(',');
         return statuses.map(status => {
-            let statusColor = 'var(--danger-color)'; // Default for unknown
+            let statusColor = 'var(--danger-color)';
             switch(status.trim()) {
                 case '中毒': case '強力中毒': statusColor = 'var(--element-poison-text)'; break;
                 case '燒傷': statusColor = 'var(--element-fire-text)'; break;
