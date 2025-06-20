@@ -609,6 +609,7 @@ function showBattleLogModal(battleResult) {
         statusBlockDiv.className = 'turn-status-block';
 
         let statusHtml = '';
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const playerRarityKey = playerMonsterData.rarity ? (rarityMap[playerMonsterData.rarity] || 'common') : 'common';
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityMap[opponentMonsterData.rarity] || 'common') : 'common';
 
