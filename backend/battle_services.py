@@ -7,9 +7,7 @@ import math
 import copy
 import time
 from typing import List, Dict, Optional, Any, Tuple, Literal, Union
-# --- 核心修改處 START ---
 from datetime import datetime, timedelta, timezone
-# --- 核心修改處 END ---
 
 from .MD_models import (
     Monster, Skill, HealthCondition, ElementTypes, RarityDetail, GameConfigs,
@@ -17,8 +15,7 @@ from .MD_models import (
     PlayerGameData
 )
 from .MD_ai_services import generate_battle_report_content
-from .utils_services import get_effective_skill_with_level # 新增：導入新的共用函式
-
+from .utils_services import get_effective_skill_with_level
 
 battle_logger = logging.getLogger(__name__)
 
@@ -126,28 +123,27 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     sensible_skills = []
     for skill in all_mp_available_skills:
         skill_category = skill.get("skill_category")
-        skill_effect = skill.get("effect")
+        skill_effect_list = skill.get("effects", [])
+        
+        is_heal_skill = any(eff.get("type") == "heal" for eff in skill_effect_list)
+        is_buff_skill = any(eff.get("type") == "stat_change" and eff.get("amount", 0) > 0 for eff in skill_effect_list)
 
-        if skill_category == "輔助" and skill_effect in ["heal", "heal_large", "rest"]:
-            if attacker_current_stats["hp"] >= attacker_current_stats["initial_max_hp"]:
-                continue
+        if is_heal_skill and attacker_current_stats["hp"] >= attacker_current_stats["initial_max_hp"]:
+            continue
 
-        if skill_category == "輔助" and skill_effect == "stat_change":
-            amounts = skill.get("amount", [0])
-            if isinstance(amounts, int): amounts = [amounts]
-            is_a_buff = any(a > 0 for a in amounts)
-            
-            if is_a_buff:
-                stats_to_buff = skill.get("stat", [])
-                if isinstance(stats_to_buff, str): stats_to_buff = [stats_to_buff]
-                
-                already_buffed = False
-                for stat in stats_to_buff:
-                    if attacker.get(f"temp_{stat}_modifier", 0) > 0:
-                        already_buffed = True
-                        break
+        if is_buff_skill:
+            already_buffed = False
+            for eff in skill_effect_list:
+                if eff.get("type") == "stat_change" and eff.get("amount", 0) > 0:
+                    stats_to_buff = [eff["stat"]] if isinstance(eff["stat"], str) else eff["stat"]
+                    for stat in stats_to_buff:
+                        if attacker.get(f"temp_{stat}_modifier", 0) > 0:
+                            already_buffed = True
+                            break
                 if already_buffed:
-                    continue
+                    break
+            if already_buffed:
+                continue
 
         sensible_skills.append(skill)
 
@@ -166,7 +162,7 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
             if is_low_hp:
                 if skill_category == "輔助":
                     situational_multiplier = 3.0
-                elif skill_category == "變化" and skill.get("effect") == "stat_change" and any(a > 0 for a in ([skill.get("amount")] if isinstance(skill.get("amount"), int) else skill.get("amount", []))):
+                elif skill_category == "變化" and any(eff.get("type") == "stat_change" and eff.get("amount", 0) > 0 for eff in skill.get("effects",[])):
                     situational_multiplier = 2.0
                 elif skill_category in ["物理", "近戰", "遠程", "魔法", "特殊"]:
                     situational_multiplier = 0.5
@@ -201,70 +197,76 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     hit_roll = random.randint(1, 100)
     final_accuracy = value_settings.get("base_accuracy", 80) + attacker_current_stats.get("accuracy", 0) - defender_current_stats.get("evasion", 0)
     
-    if hit_roll > final_accuracy:
+    if hit_roll > effective_skill.get('accuracy', 100) or hit_roll > final_accuracy:
         action_details.update({"is_miss": True, "damage_dealt": 0, "log_message": f"- {performer['nickname']} 的 **{effective_skill['name']}** 被 {target['nickname']} 閃過了！"})
         return action_details
     
     action_details["is_miss"] = False
-    is_crit = random.randint(1, 100) <= (attacker_current_stats["crit"] + effective_skill.get("crit", 0))
+    is_crit = random.randint(1, 100) <= (attacker_current_stats["crit"] + effective_skill.get("crit_chance_modifier", 0))
     action_details["is_crit"] = is_crit
     
     log_parts = [f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"]
 
-    if effective_skill.get("power", 0) > 0:
-        element_multiplier = _calculate_elemental_advantage(effective_skill["type"], target.get("elements", []), game_configs)
-        raw_damage = max(1, (effective_skill["power"] + (attacker_current_stats["attack"] / 2) - (defender_current_stats["defense"] / 4)))
-        damage = int(raw_damage * element_multiplier * (value_settings.get("crit_multiplier", 1.5) if is_crit else 1))
-        
-        target["current_hp"] = max(0, target.get("current_hp", 0) - damage)
-        action_details["damage_dealt"] = damage
-        log_parts.append(f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。")
-        if is_crit: log_parts.append(" **是暴擊！**")
+    for effect in effective_skill.get("effects", []):
+        if random.random() > effect.get("chance", 1.0):
+            continue
 
-    if effective_skill.get("effect") and random.randint(1, 100) <= effective_skill.get("probability", 100):
-        effect_type = effective_skill["effect"]
-        is_buff = "buff" in effect_type or "heal" in effect_type or (effective_skill.get("skill_category") == "輔助") or (effect_type == "stat_change" and isinstance(effective_skill.get("amount"), int) and effective_skill.get("amount", 0) > 0)
-        effect_target = performer if is_buff else target
+        effect_type = effect.get("type")
+        effect_target_str = effect.get("target", "opponent_single")
         
-        if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
-            stats_to_change = [effective_skill["stat"]] if isinstance(effective_skill["stat"], str) else effective_skill["stat"]
-            amounts = [effective_skill["amount"]] if isinstance(effective_skill["amount"], int) else effective_skill["amount"]
+        effect_target = target
+        if effect_target_str == "self":
+            effect_target = performer
+
+        if effect_type == "damage":
+            power = effect.get("power", 0)
+            element_multiplier = _calculate_elemental_advantage(effective_skill.get("type", "無"), target.get("elements", []), game_configs)
+            raw_damage = max(1, (power + (attacker_current_stats["attack"] / 2) - (defender_current_stats["defense"] / 4)))
+            damage = int(raw_damage * element_multiplier * (value_settings.get("crit_multiplier", 1.5) if is_crit else 1))
+            
+            target["current_hp"] = max(0, target.get("current_hp", 0) - damage)
+            action_details["damage_dealt"] = damage
+            log_parts.append(f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。")
+            if is_crit: log_parts.append(" **是暴擊！**")
+
+        elif effect_type == "stat_change":
+            stats_to_change = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
+            amounts = [effect["amount"]] if isinstance(effect["amount"], int) else effect["amount"]
             
             for stat, amount in zip(stats_to_change, amounts):
-                effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + amount
+                final_amount = amount
+                # --- 新增的百分比邏輯 START ---
+                if effect.get("amount_is_percentage"):
+                    base_stat_source = defender_current_stats if "opponent" in effect_target_str else attacker_current_stats
+                    base_value = base_stat_source.get(stat, 0)
+                    calculated_amount = int(base_value * (amount / 100.0))
+                    
+                    min_val = effect.get("min_value")
+                    if min_val is not None:
+                        final_amount = max(min_val, abs(calculated_amount)) * (-1 if amount < 0 else 1)
+                    else:
+                        final_amount = calculated_amount
+                # --- 新增的百分比邏輯 END ---
+
+                effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + final_amount
                 
                 translated_stat = stat_translation.get(stat, stat.upper())
-                change_text = '提升' if amount > 0 else '下降'
-                abs_amount = abs(amount)
+                change_text = '提升' if final_amount > 0 else '下降'
+                abs_amount = abs(final_amount)
                 
                 log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了{abs_amount}點。")
 
-        elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
-            heal_amount = effective_skill["amount"]
-            max_hp = _get_monster_current_stats(effect_target, performer_player_data if is_buff else target_player_data)["initial_max_hp"]
-            healed_hp = min(heal_amount, max_hp - effect_target.get("current_hp", 0))
-            if healed_hp > 0:
-                effect_target["current_hp"] += healed_hp
-                action_details["damage_healed"] = healed_hp
-                log_parts.append(f" {effect_target['nickname']} 恢復了 <heal>{healed_hp}</heal> 點HP！")
-
-        elif effect_type == "leech" and "amount" in effective_skill and action_details.get("damage_dealt", 0) > 0:
-            leech_amount = int(action_details["damage_dealt"] * (effective_skill["amount"] / 100))
-            max_hp = _get_monster_current_stats(performer, performer_player_data)["initial_max_hp"]
-            healed_hp = min(leech_amount, max_hp - performer.get("current_hp", 0))
-            if healed_hp > 0:
-                performer["current_hp"] += healed_hp
-                action_details["damage_healed"] = healed_hp
-                log_parts.append(f" {performer['nickname']} 吸取了 <heal>{healed_hp}</heal> 點生命！")
-
-        elif effect_type == "status_change" and "status_id" in effective_skill:
-            status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == effective_skill["status_id"]), None)
-            if status_template and not any(cond.get("id") == status_template["id"] for cond in effect_target.get("healthConditions", [])):
-                new_status = {**status_template, "duration": effective_skill.get("duration", status_template.get("duration", 1))}
+        elif effect_type == "apply_status":
+            status_id = effect.get("status_id")
+            status_template = next((s for s in game_configs.get("health_conditions", []) if s["id"] == status_id), None)
+            if status_template and not any(cond.get("id") == status_id for cond in effect_target.get("healthConditions", [])):
+                new_status = {**status_template, "duration": effect.get("duration", status_template.get("duration", 1))}
                 effect_target.setdefault("healthConditions", []).append(new_status)
-                action_details["status_applied"] = status_template["id"]
+                action_details["status_applied"] = status_id
                 log_parts.append(f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！")
         
+        # ... 可以繼續擴展其他效果類型 ...
+
     action_details["log_message"] = "".join(log_parts)
     
     if target["current_hp"] == 0: 
