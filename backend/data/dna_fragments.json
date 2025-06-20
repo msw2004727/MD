@@ -4,15 +4,15 @@
     "name": "初階火種",
     "type": "火",
     "rarity": "普通",
-    "description": "微弱燃燒的火種。",
+    "description": "微弱燃燒的火種，蘊含著最基礎的火焰之力。",
     "hp": 45,
     "mp": 22,
-    "attack": 18,
+    "attack": 25,
     "defense": 6,
     "speed": 9,
     "crit": 4,
     "resistances": {
-      "火": 2
+      "火": 3
     }
   },
   {
@@ -20,16 +20,15 @@
     "name": "溫熱岩石",
     "type": "火",
     "rarity": "普通",
-    "description": "帶有餘溫的普通石頭。",
+    "description": "帶有餘溫的普通石頭，散發著微弱的熱量。",
     "hp": 50,
     "mp": 18,
-    "attack": 16,
+    "attack": 22,
     "defense": 10,
     "speed": 6,
     "crit": 3,
     "resistances": {
-      "火": 1,
-      "土": 1
+      "火": 3
     }
   },
   {
@@ -37,16 +36,15 @@
     "name": "焦黑木炭",
     "type": "火",
     "rarity": "普通",
-    "description": "燃燒後留下的木炭。",
+    "description": "燃燒後留下的木炭，依然保有火的能量。",
     "hp": 40,
     "mp": 20,
-    "attack": 20,
+    "attack": 28,
     "defense": 8,
     "speed": 7,
     "crit": 5,
     "resistances": {
-      "火": 3,
-      "木": -1
+      "火": 3
     }
   },
   {
@@ -54,16 +52,15 @@
     "name": "火花結晶",
     "type": "火",
     "rarity": "普通",
-    "description": "迸發的火花凝結成的結晶。",
+    "description": "迸發的火花瞬間凝結成的結晶體。",
     "hp": 38,
     "mp": 25,
-    "attack": 19,
+    "attack": 26,
     "defense": 5,
     "speed": 11,
     "crit": 6,
     "resistances": {
-      "火": 2,
-      "風": 1
+      "火": 3
     }
   },
   {
@@ -71,16 +68,15 @@
     "name": "硫磺粉末",
     "type": "火",
     "rarity": "普通",
-    "description": "帶有刺鼻氣味的黃色粉末。",
+    "description": "帶有刺鼻氣味的黃色粉末，易燃。",
     "hp": 42,
     "mp": 24,
-    "attack": 21,
+    "attack": 29,
     "defense": 7,
     "speed": 8,
     "crit": 4,
     "resistances": {
-      "火": 1,
-      "毒": 2
+      "火": 3
     }
   },
   {
@@ -88,7 +84,7 @@
     "name": "純淨水滴",
     "type": "水",
     "rarity": "普通",
-    "description": "純淨但普通的水滴。",
+    "description": "純淨但普通的水滴，富含生命基礎。",
     "hp": 55,
     "mp": 28,
     "attack": 12,
@@ -96,7 +92,7 @@
     "speed": 12,
     "crit": 3,
     "resistances": {
-      "水": 2
+      "水": 3
     }
   },
   {
@@ -104,7 +100,7 @@
     "name": "潮濕苔蘚",
     "type": "水",
     "rarity": "普通",
-    "description": "生長在水邊的濕滑苔蘚。",
+    "description": "生長在水邊的濕滑苔蘚，充滿水分。",
     "hp": 60,
     "mp": 25,
     "attack": 10,
@@ -112,8 +108,7 @@
     "speed": 9,
     "crit": 2,
     "resistances": {
-      "水": 1,
-      "木": 1
+      "水": 3
     }
   },
   {
@@ -121,7 +116,7 @@
     "name": "融化冰晶",
     "type": "水",
     "rarity": "普通",
-    "description": "正在融化的細小冰晶。",
+    "description": "正在融化的細小冰晶，釋放著寒氣。",
     "hp": 52,
     "mp": 30,
     "attack": 14,
@@ -129,8 +124,7 @@
     "speed": 13,
     "crit": 4,
     "resistances": {
-      "水": 3,
-      "火": -1
+      "水": 3
     }
   },
   {
@@ -138,7 +132,7 @@
     "name": "泡沫精華",
     "type": "水",
     "rarity": "普通",
-    "description": "輕盈的水泡沫中提取的精華。",
+    "description": "輕盈的水泡沫中提取的精華物質。",
     "hp": 48,
     "mp": 32,
     "attack": 11,
@@ -146,8 +140,7 @@
     "speed": 15,
     "crit": 5,
     "resistances": {
-      "水": 2,
-      "風": 1
+      "水": 3
     }
   },
   {
@@ -155,7 +148,7 @@
     "name": "河底淤泥",
     "type": "水",
     "rarity": "普通",
-    "description": "沉積在河底的軟泥。",
+    "description": "沉積在河底的軟泥，蘊含著微弱的生命力。",
     "hp": 65,
     "mp": 20,
     "attack": 9,
@@ -163,8 +156,7 @@
     "speed": 7,
     "crit": 1,
     "resistances": {
-      "水": 1,
-      "土": 2
+      "水": 3
     }
   },
   {
@@ -172,7 +164,7 @@
     "name": "嫩綠葉芽",
     "type": "木",
     "rarity": "普通",
-    "description": "充滿生機的普通葉芽。",
+    "description": "充滿生機的普通葉芽，代表著成長。",
     "hp": 60,
     "mp": 25,
     "attack": 10,
@@ -180,7 +172,7 @@
     "speed": 7,
     "crit": 2,
     "resistances": {
-      "木": 2
+      "木": 3
     }
   },
   {
@@ -188,7 +180,7 @@
     "name": "乾燥藤蔓",
     "type": "木",
     "rarity": "普通",
-    "description": "失去水分的堅韌藤蔓。",
+    "description": "失去水分的堅韌藤蔓，依然保有彈性。",
     "hp": 55,
     "mp": 20,
     "attack": 12,
@@ -196,8 +188,7 @@
     "speed": 11,
     "crit": 3,
     "resistances": {
-      "木": 1,
-      "火": -1
+      "木": 3
     }
   },
   {
@@ -205,7 +196,7 @@
     "name": "普通花粉",
     "type": "木",
     "rarity": "普通",
-    "description": "隨處可見的植物花粉。",
+    "description": "隨處可見的植物花粉，輕盈而細小。",
     "hp": 45,
     "mp": 28,
     "attack": 9,
@@ -213,8 +204,7 @@
     "speed": 14,
     "crit": 4,
     "resistances": {
-      "木": 1,
-      "風": 2
+      "木": 3
     }
   },
   {
@@ -222,7 +212,7 @@
     "name": "多汁漿果",
     "type": "木",
     "rarity": "普通",
-    "description": "一顆飽滿但味道普通的漿果。",
+    "description": "一顆飽滿但味道普通的漿果，富含水分。",
     "hp": 70,
     "mp": 30,
     "attack": 8,
@@ -230,8 +220,7 @@
     "speed": 5,
     "crit": 1,
     "resistances": {
-      "木": 2,
-      "水": 1
+      "木": 3
     }
   },
   {
@@ -239,7 +228,7 @@
     "name": "帶刺外殼",
     "type": "木",
     "rarity": "普通",
-    "description": "保護果實的普通尖刺外殼。",
+    "description": "保護果實的普通尖刺外殼，提供基礎防護。",
     "hp": 50,
     "mp": 18,
     "attack": 15,
@@ -247,8 +236,7 @@
     "speed": 6,
     "crit": 2,
     "resistances": {
-      "木": 3,
-      "金": -1
+      "木": 3
     }
   },
   {
@@ -256,15 +244,15 @@
     "name": "微光金屬",
     "type": "金",
     "rarity": "普通",
-    "description": "帶有微弱光澤的金屬片。",
+    "description": "帶有微弱光澤的金屬片，質地堅硬。",
     "hp": 50,
     "mp": 18,
     "attack": 15,
-    "defense": 20,
+    "defense": 25,
     "speed": 8,
     "crit": 3,
     "resistances": {
-      "金": 2
+      "金": 3
     }
   },
   {
@@ -272,16 +260,15 @@
     "name": "生鏽鐵片",
     "type": "金",
     "rarity": "普通",
-    "description": "被氧化的普通鐵片。",
+    "description": "被氧化的普通鐵片，脆弱但仍有金屬特性。",
     "hp": 48,
     "mp": 15,
     "attack": 17,
-    "defense": 18,
+    "defense": 22,
     "speed": 7,
     "crit": 4,
     "resistances": {
-      "金": 1,
-      "水": -1
+      "金": 3
     }
   },
   {
@@ -289,16 +276,15 @@
     "name": "導電銀線",
     "type": "金",
     "rarity": "普通",
-    "description": "能夠傳導微弱能量的銀線。",
+    "description": "能夠傳導微弱能量的銀線，質地柔軟。",
     "hp": 45,
     "mp": 24,
     "attack": 14,
-    "defense": 16,
+    "defense": 20,
     "speed": 13,
     "crit": 5,
     "resistances": {
-      "金": 1,
-      "風": 1
+      "金": 3
     }
   },
   {
@@ -306,16 +292,15 @@
     "name": "鈍化銅塊",
     "type": "金",
     "rarity": "普通",
-    "description": "失去光澤的銅塊。",
+    "description": "失去光澤的銅塊，但依然沉重。",
     "hp": 55,
     "mp": 16,
     "attack": 13,
-    "defense": 22,
+    "defense": 28,
     "speed": 6,
     "crit": 2,
     "resistances": {
-      "金": 3,
-      "火": -2
+      "金": 3
     }
   },
   {
@@ -323,16 +308,15 @@
     "name": "鉛質核心",
     "type": "金",
     "rarity": "普通",
-    "description": "沉重但質地柔軟的鉛核心。",
+    "description": "沉重但質地柔軟的鉛核心，防禦性佳。",
     "hp": 60,
     "mp": 12,
     "attack": 16,
-    "defense": 25,
+    "defense": 30,
     "speed": 4,
     "crit": 1,
     "resistances": {
-      "金": 2,
-      "土": 1
+      "金": 3
     }
   },
   {
@@ -340,15 +324,15 @@
     "name": "鬆軟泥土",
     "type": "土",
     "rarity": "普通",
-    "description": "普通的鬆軟泥土塊。",
+    "description": "普通的鬆軟泥土塊，富有生機。",
     "hp": 65,
     "mp": 20,
     "attack": 9,
-    "defense": 18,
+    "defense": 22,
     "speed": 5,
     "crit": 2,
     "resistances": {
-      "土": 2
+      "土": 3
     }
   },
   {
@@ -356,16 +340,15 @@
     "name": "風化砂礫",
     "type": "土",
     "rarity": "普通",
-    "description": "被風吹拂的細小砂礫。",
+    "description": "被風吹拂的細小砂礫，質地較輕。",
     "hp": 58,
     "mp": 18,
     "attack": 11,
-    "defense": 16,
+    "defense": 18,
     "speed": 10,
     "crit": 3,
     "resistances": {
-      "土": 1,
-      "風": 1
+      "土": 3
     }
   },
   {
@@ -373,16 +356,15 @@
     "name": "黏性黏土",
     "type": "土",
     "rarity": "普通",
-    "description": "濕潤且具有黏性的黏土。",
+    "description": "濕潤且具有黏性的黏土，可以塑造。",
     "hp": 70,
     "mp": 22,
     "attack": 8,
-    "defense": 19,
+    "defense": 25,
     "speed": 4,
     "crit": 1,
     "resistances": {
-      "土": 1,
-      "水": 2
+      "土": 3
     }
   },
   {
@@ -390,16 +372,15 @@
     "name": "普通石塊",
     "type": "土",
     "rarity": "普通",
-    "description": "路邊隨處可見的石頭。",
+    "description": "路邊隨處可見的石頭，堅固而沉重。",
     "hp": 62,
     "mp": 15,
     "attack": 12,
-    "defense": 22,
+    "defense": 28,
     "speed": 6,
     "crit": 2,
     "resistances": {
-      "土": 3,
-      "木": -1
+      "土": 3
     }
   },
   {
@@ -407,16 +388,15 @@
     "name": "礦石殘渣",
     "type": "土",
     "rarity": "普通",
-    "description": "提煉後剩下的礦石殘渣。",
+    "description": "提煉後剩下的礦石殘渣，混有雜質。",
     "hp": 55,
     "mp": 16,
     "attack": 14,
-    "defense": 20,
+    "defense": 24,
     "speed": 8,
     "crit": 3,
     "resistances": {
-      "土": 1,
-      "金": 1
+      "土": 3
     }
   },
   {
@@ -424,15 +404,15 @@
     "name": "微弱光塵",
     "type": "光",
     "rarity": "普通",
-    "description": "幾乎看不見的光粒子。",
+    "description": "幾乎看不見的光粒子，輕盈飄忽。",
     "hp": 50,
     "mp": 26,
     "attack": 14,
     "defense": 10,
-    "speed": 11,
+    "speed": 16,
     "crit": 5,
     "resistances": {
-      "光": 2
+      "光": 3
     }
   },
   {
@@ -440,16 +420,15 @@
     "name": "露珠折射",
     "type": "光",
     "rarity": "普通",
-    "description": "陽光穿過露珠的微弱光芒。",
+    "description": "陽光穿過露珠的微弱光芒，短暫而美麗。",
     "hp": 53,
     "mp": 28,
     "attack": 13,
     "defense": 11,
-    "speed": 12,
+    "speed": 17,
     "crit": 6,
     "resistances": {
-      "光": 1,
-      "水": 1
+      "光": 3
     }
   },
   {
@@ -457,16 +436,15 @@
     "name": "螢火蟲光",
     "type": "光",
     "rarity": "普通",
-    "description": "螢火蟲發出的生物光。",
+    "description": "螢火蟲發出的生物光，溫和不刺眼。",
     "hp": 48,
     "mp": 25,
     "attack": 15,
     "defense": 9,
-    "speed": 14,
+    "speed": 19,
     "crit": 7,
     "resistances": {
-      "光": 1,
-      "木": 1
+      "光": 3
     }
   },
   {
@@ -474,16 +452,15 @@
     "name": "月光碎片",
     "type": "光",
     "rarity": "普通",
-    "description": "溫和的月光凝結成的碎片。",
+    "description": "溫和的月光凝結成的碎片，帶有安寧的力量。",
     "hp": 55,
     "mp": 30,
     "attack": 12,
     "defense": 13,
-    "speed": 10,
+    "speed": 15,
     "crit": 4,
     "resistances": {
-      "光": 2,
-      "暗": -1
+      "光": 3
     }
   },
   {
@@ -491,12 +468,12 @@
     "name": "稜鏡殘角",
     "type": "光",
     "rarity": "普通",
-    "description": "能散射光線的普通稜鏡殘角。",
+    "description": "能散射光線的普通稜鏡殘角，結構精巧。",
     "hp": 46,
     "mp": 27,
     "attack": 16,
     "defense": 12,
-    "speed": 13,
+    "speed": 18,
     "crit": 8,
     "resistances": {
       "光": 3
@@ -507,15 +484,15 @@
     "name": "稀薄暗影",
     "type": "暗",
     "rarity": "普通",
-    "description": "一絲難以察覺的暗影。",
+    "description": "一絲難以察覺的暗影，擅長隱匿。",
     "hp": 48,
     "mp": 27,
-    "attack": 16,
+    "attack": 19,
     "defense": 8,
-    "speed": 10,
+    "speed": 13,
     "crit": 6,
     "resistances": {
-      "暗": 2
+      "暗": 3
     }
   },
   {
@@ -523,16 +500,15 @@
     "name": "夜幕殘片",
     "type": "暗",
     "rarity": "普通",
-    "description": "從深邃夜幕中剝離的碎片。",
+    "description": "從深邃夜幕中剝離的碎片，冰冷而深邃。",
     "hp": 50,
     "mp": 29,
-    "attack": 15,
+    "attack": 18,
     "defense": 9,
-    "speed": 11,
+    "speed": 14,
     "crit": 7,
     "resistances": {
-      "暗": 2,
-      "光": -1
+      "暗": 3
     }
   },
   {
@@ -540,16 +516,15 @@
     "name": "洞穴回音",
     "type": "暗",
     "rarity": "普通",
-    "description": "在黑暗洞穴中迴盪的無形之音。",
+    "description": "在黑暗洞穴中迴盪的無形之音，難以捉摸。",
     "hp": 45,
     "mp": 26,
-    "attack": 17,
+    "attack": 20,
     "defense": 7,
-    "speed": 13,
+    "speed": 16,
     "crit": 8,
     "resistances": {
-      "暗": 1,
-      "風": 1
+      "暗": 3
     }
   },
   {
@@ -557,16 +532,15 @@
     "name": "遺忘塵埃",
     "type": "暗",
     "rarity": "普通",
-    "description": "被時間遺忘的角落裡的塵埃。",
+    "description": "被時間遺忘的角落裡的塵埃，帶有哀怨。",
     "hp": 52,
     "mp": 24,
-    "attack": 14,
+    "attack": 17,
     "defense": 12,
-    "speed": 9,
+    "speed": 12,
     "crit": 5,
     "resistances": {
-      "暗": 1,
-      "土": 1
+      "暗": 3
     }
   },
   {
@@ -574,16 +548,15 @@
     "name": "墨色染料",
     "type": "暗",
     "rarity": "普通",
-    "description": "能將一切染黑的普通染料。",
+    "description": "能將一切染黑的普通染料，具有侵蝕性。",
     "hp": 47,
     "mp": 32,
-    "attack": 18,
+    "attack": 21,
     "defense": 6,
-    "speed": 12,
+    "speed": 15,
     "crit": 9,
     "resistances": {
-      "暗": 3,
-      "水": 1
+      "暗": 3
     }
   },
   {
@@ -591,15 +564,15 @@
     "name": "淡綠毒霧",
     "type": "毒",
     "rarity": "普通",
-    "description": "幾乎無害的稀薄毒霧。",
+    "description": "幾乎無害的稀薄毒霧，但聞久了會頭暈。",
     "hp": 46,
     "mp": 23,
-    "attack": 17,
+    "attack": 19,
     "defense": 7,
-    "speed": 9,
+    "speed": 12,
     "crit": 4,
     "resistances": {
-      "毒": 2
+      "毒": 3
     }
   },
   {
@@ -607,16 +580,15 @@
     "name": "腐敗菌絲",
     "type": "毒",
     "rarity": "普通",
-    "description": "在腐爛物上生長的菌絲。",
+    "description": "在腐爛物上生長的菌絲，分解著周圍的一切。",
     "hp": 50,
     "mp": 20,
-    "attack": 16,
+    "attack": 18,
     "defense": 9,
-    "speed": 8,
+    "speed": 11,
     "crit": 3,
     "resistances": {
-      "毒": 1,
-      "木": 1
+      "毒": 3
     }
   },
   {
@@ -624,16 +596,15 @@
     "name": "毒草汁液",
     "type": "毒",
     "rarity": "普通",
-    "description": "普通毒草中榨取的汁液。",
+    "description": "普通毒草中榨取的汁液，味道苦澀。",
     "hp": 44,
     "mp": 26,
-    "attack": 19,
+    "attack": 22,
     "defense": 6,
-    "speed": 10,
+    "speed": 13,
     "crit": 5,
     "resistances": {
-      "毒": 3,
-      "木": 1
+      "毒": 3
     }
   },
   {
@@ -641,16 +612,15 @@
     "name": "麻痺花粉",
     "type": "毒",
     "rarity": "普通",
-    "description": "能引起輕微麻痺感的花粉。",
+    "description": "能引起輕微麻痺感的花粉，隨風飄散。",
     "hp": 42,
     "mp": 25,
-    "attack": 15,
+    "attack": 17,
     "defense": 8,
-    "speed": 12,
+    "speed": 15,
     "crit": 6,
     "resistances": {
-      "毒": 1,
-      "風": 2
+      "毒": 3
     }
   },
   {
@@ -658,16 +628,15 @@
     "name": "污染之水",
     "type": "毒",
     "rarity": "普通",
-    "description": "被輕微污染的渾濁水源。",
+    "description": "被輕微污染的渾濁水源，散發異味。",
     "hp": 48,
     "mp": 22,
-    "attack": 18,
+    "attack": 20,
     "defense": 10,
-    "speed": 7,
+    "speed": 10,
     "crit": 4,
     "resistances": {
-      "毒": 1,
-      "水": 1
+      "毒": 3
     }
   },
   {
@@ -675,15 +644,15 @@
     "name": "輕柔微風",
     "type": "風",
     "rarity": "普通",
-    "description": "幾乎感覺不到的微風。",
+    "description": "幾乎感覺不到的微風，但能傳遞聲音。",
     "hp": 47,
     "mp": 24,
     "attack": 13,
     "defense": 9,
-    "speed": 15,
+    "speed": 22,
     "crit": 5,
     "resistances": {
-      "風": 2
+      "風": 3
     }
   },
   {
@@ -691,12 +660,12 @@
     "name": "飛舞羽毛",
     "type": "風",
     "rarity": "普通",
-    "description": "隨風飄蕩的普通羽毛。",
+    "description": "隨風飄蕩的普通羽毛，極其輕盈。",
     "hp": 45,
     "mp": 26,
     "attack": 12,
     "defense": 8,
-    "speed": 17,
+    "speed": 25,
     "crit": 6,
     "resistances": {
       "風": 3
@@ -707,16 +676,15 @@
     "name": "氣旋核心",
     "type": "風",
     "rarity": "普通",
-    "description": "微小氣旋中心的能量核心。",
+    "description": "微小氣旋中心的能量核心，很不穩定。",
     "hp": 49,
     "mp": 28,
     "attack": 14,
     "defense": 10,
-    "speed": 16,
+    "speed": 24,
     "crit": 7,
     "resistances": {
-      "風": 2,
-      "火": -1
+      "風": 3
     }
   },
   {
@@ -724,16 +692,15 @@
     "name": "蒲公英種",
     "type": "風",
     "rarity": "普通",
-    "description": "乘風而行的蒲公英種子。",
+    "description": "乘風而行的蒲公英種子，等待落地生根。",
     "hp": 52,
     "mp": 22,
     "attack": 10,
     "defense": 11,
-    "speed": 13,
+    "speed": 20,
     "crit": 4,
     "resistances": {
-      "風": 1,
-      "木": 1
+      "風": 3
     }
   },
   {
@@ -741,16 +708,15 @@
     "name": "聲波碎片",
     "type": "風",
     "rarity": "普通",
-    "description": "聲音傳播時留下的能量碎片。",
+    "description": "聲音傳播時留下的能量碎片，無形無質。",
     "hp": 46,
     "mp": 30,
     "attack": 15,
     "defense": 7,
-    "speed": 18,
+    "speed": 26,
     "crit": 8,
     "resistances": {
-      "風": 2,
-      "金": -1
+      "風": 3
     }
   },
   {
@@ -758,44 +724,179 @@
     "name": "混色黏液",
     "type": "混",
     "rarity": "普通",
-    "description": "顏色混雜的普通黏液。",
+    "description": "顏色混雜的普通黏液，性質不穩定。",
     "hp": 55,
     "mp": 25,
     "attack": 13,
     "defense": 13,
     "speed": 13,
     "crit": 3,
-    "resistances": {}
+    "resistances": {
+      "火": 1,
+      "水": 1
+    }
+  },
+  {
+    "id": "dna_mix_c02",
+    "name": "奇異晶體",
+    "type": "混",
+    "rarity": "普通",
+    "description": "結構不規則的晶體，折射出怪異的光。",
+    "hp": 45,
+    "mp": 30,
+    "attack": 20,
+    "defense": 10,
+    "speed": 10,
+    "crit": 10,
+    "resistances": {
+      "光": 1,
+      "暗": 1
+    }
+  },
+  {
+    "id": "dna_mix_c03",
+    "name": "悖論塵埃",
+    "type": "混",
+    "rarity": "普通",
+    "description": "同時存在又不存在的奇異塵埃。",
+    "hp": 60,
+    "mp": 15,
+    "attack": 15,
+    "defense": 15,
+    "speed": 15,
+    "crit": 5,
+    "resistances": {
+      "無": 2
+    }
+  },
+  {
+    "id": "dna_mix_c04",
+    "name": "共生菌群",
+    "type": "混",
+    "rarity": "普通",
+    "description": "兩種不同菌類纏繞共生的結構。",
+    "hp": 50,
+    "mp": 20,
+    "attack": 10,
+    "defense": 20,
+    "speed": 5,
+    "crit": 5,
+    "resistances": {
+      "木": 1,
+      "毒": 1
+    }
+  },
+  {
+    "id": "dna_mix_c05",
+    "name": "模糊影子",
+    "type": "混",
+    "rarity": "普通",
+    "description": "輪廓模糊不清的影子，似乎有多個重疊。",
+    "hp": 40,
+    "mp": 25,
+    "attack": 18,
+    "defense": 8,
+    "speed": 25,
+    "crit": 8,
+    "resistances": {
+      "暗": 1,
+      "風": 1
+    }
   },
   {
     "id": "dna_none_c01",
     "name": "中性細胞",
     "type": "無",
     "rarity": "普通",
-    "description": "基礎的生命核心。",
+    "description": "基礎的生命核心，沒有任何特化。",
     "hp": 50,
     "mp": 20,
-    "attack": 10,
-    "defense": 10,
-    "speed": 10,
+    "attack": 15,
+    "defense": 15,
+    "speed": 15,
     "crit": 3,
-    "resistances": {}
+    "resistances": {
+      "無": 2
+    }
+  },
+  {
+    "id": "dna_none_c02",
+    "name": "普通毛皮",
+    "type": "無",
+    "rarity": "普通",
+    "description": "沒有任何特殊之處的柔軟毛皮。",
+    "hp": 55,
+    "mp": 18,
+    "attack": 14,
+    "defense": 18,
+    "speed": 12,
+    "crit": 2,
+    "resistances": {
+      "無": 2
+    }
+  },
+  {
+    "id": "dna_none_c03",
+    "name": "平滑骨骼",
+    "type": "無",
+    "rarity": "普通",
+    "description": "標準尺寸的動物骨骼，結構均衡。",
+    "hp": 48,
+    "mp": 16,
+    "attack": 16,
+    "defense": 20,
+    "speed": 14,
+    "crit": 4,
+    "resistances": {
+      "無": 2
+    }
+  },
+  {
+    "id": "dna_none_c04",
+    "name": "均衡之血",
+    "type": "無",
+    "rarity": "普通",
+    "description": "蘊含著穩定能量的紅色血液。",
+    "hp": 52,
+    "mp": 22,
+    "attack": 17,
+    "defense": 16,
+    "speed": 16,
+    "crit": 5,
+    "resistances": {
+      "無": 2
+    }
+  },
+  {
+    "id": "dna_none_c05",
+    "name": "基礎肌肉",
+    "type": "無",
+    "rarity": "普通",
+    "description": "標準的肌肉纖維，提供基礎的力量。",
+    "hp": 49,
+    "mp": 19,
+    "attack": 18,
+    "defense": 17,
+    "speed": 17,
+    "crit": 4,
+    "resistances": {
+      "無": 2
+    }
   },
   {
     "id": "dna_fire_r01",
     "name": "熾熱餘燼",
     "type": "火",
     "rarity": "稀有",
-    "description": "尚有餘溫的熾熱灰燼。",
+    "description": "尚有餘溫的熾熱灰燼，隨時可能復燃。",
     "hp": 60,
     "mp": 30,
-    "attack": 25,
+    "attack": 35,
     "defense": 12,
     "speed": 15,
     "crit": 7,
     "resistances": {
-      "火": 5,
-      "水": -1
+      "火": 6
     }
   },
   {
@@ -803,16 +904,15 @@
     "name": "熔岩碎塊",
     "type": "火",
     "rarity": "稀有",
-    "description": "冷卻的熔岩，內部仍有熱量。",
+    "description": "冷卻的熔岩，內部仍有灼熱的能量。",
     "hp": 65,
     "mp": 25,
-    "attack": 22,
+    "attack": 32,
     "defense": 18,
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "火": 4,
-      "土": 2
+      "火": 6
     }
   },
   {
@@ -820,16 +920,15 @@
     "name": "烈焰之息",
     "type": "火",
     "rarity": "稀有",
-    "description": "火屬性生物呼出的一口氣。",
+    "description": "火屬性生物呼出的一口氣，凝結成實體。",
     "hp": 55,
     "mp": 35,
-    "attack": 28,
+    "attack": 38,
     "defense": 10,
     "speed": 18,
     "crit": 9,
     "resistances": {
-      "火": 6,
-      "風": -2
+      "火": 6
     }
   },
   {
@@ -840,13 +939,12 @@
     "description": "蘊含著爆炸能量的不穩定核心。",
     "hp": 50,
     "mp": 32,
-    "attack": 30,
+    "attack": 40,
     "defense": 8,
     "speed": 20,
     "crit": 10,
     "resistances": {
-      "火": 7,
-      "金": -3
+      "火": 6
     }
   },
   {
@@ -854,16 +952,15 @@
     "name": "炎魔之血",
     "type": "火",
     "rarity": "稀有",
-    "description": "傳說中炎魔流下的灼熱血液。",
+    "description": "傳說中炎魔流下的灼熱血液，充滿力量。",
     "hp": 70,
     "mp": 28,
-    "attack": 24,
+    "attack": 34,
     "defense": 15,
     "speed": 12,
     "crit": 6,
     "resistances": {
-      "火": 5,
-      "暗": 2
+      "火": 6
     }
   },
   {
@@ -871,7 +968,7 @@
     "name": "凝結水珠",
     "type": "水",
     "rarity": "稀有",
-    "description": "蘊含純淨能量的凝結水珠。",
+    "description": "蘊含純淨能量的凝結水珠，冰冷而穩定。",
     "hp": 70,
     "mp": 35,
     "attack": 18,
@@ -879,8 +976,7 @@
     "speed": 16,
     "crit": 6,
     "resistances": {
-      "水": 5,
-      "木": -1
+      "水": 6
     }
   },
   {
@@ -896,8 +992,7 @@
     "speed": 20,
     "crit": 7,
     "resistances": {
-      "水": 4,
-      "風": 2
+      "水": 6
     }
   },
   {
@@ -905,7 +1000,7 @@
     "name": "冰川碎片",
     "type": "水",
     "rarity": "稀有",
-    "description": "從萬年冰川上剝落的碎片。",
+    "description": "從萬年冰川上剝落的碎片，散發著亙古的寒意。",
     "hp": 75,
     "mp": 30,
     "attack": 20,
@@ -913,8 +1008,7 @@
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "水": 6,
-      "火": -2
+      "水": 6
     }
   },
   {
@@ -922,7 +1016,7 @@
     "name": "聖泉之水",
     "type": "水",
     "rarity": "稀有",
-    "description": "具有治癒能力的聖泉泉水。",
+    "description": "具有治癒能力的聖泉泉水，充滿生命氣息。",
     "hp": 85,
     "mp": 45,
     "attack": 12,
@@ -930,8 +1024,7 @@
     "speed": 12,
     "crit": 4,
     "resistances": {
-      "水": 5,
-      "光": 2
+      "水": 6
     }
   },
   {
@@ -939,7 +1032,7 @@
     "name": "水母觸手",
     "type": "水",
     "rarity": "稀有",
-    "description": "帶有麻痺毒素的水母觸手。",
+    "description": "帶有麻痺毒素的水母觸手，柔軟而危險。",
     "hp": 60,
     "mp": 38,
     "attack": 22,
@@ -947,8 +1040,7 @@
     "speed": 18,
     "crit": 8,
     "resistances": {
-      "水": 4,
-      "毒": 3
+      "水": 6
     }
   },
   {
@@ -956,16 +1048,15 @@
     "name": "硬化樹皮",
     "type": "木",
     "rarity": "稀有",
-    "description": "經過硬化的堅韌樹皮。",
+    "description": "經過硬化的堅韌樹皮，提供優良的物理防護。",
     "hp": 75,
     "mp": 32,
     "attack": 15,
-    "defense": 22,
+    "defense": 28,
     "speed": 10,
     "crit": 4,
     "resistances": {
-      "木": 5,
-      "金": -1
+      "木": 6
     }
   },
   {
@@ -973,16 +1064,15 @@
     "name": "生命花蜜",
     "type": "木",
     "rarity": "稀有",
-    "description": "能激發生命力的神奇花蜜。",
+    "description": "能激發生命力的神奇花蜜，香甜濃郁。",
     "hp": 80,
     "mp": 40,
     "attack": 12,
-    "defense": 18,
+    "defense": 22,
     "speed": 12,
     "crit": 3,
     "resistances": {
-      "木": 4,
-      "光": 2
+      "木": 6
     }
   },
   {
@@ -990,16 +1080,15 @@
     "name": "食人花瓣",
     "type": "木",
     "rarity": "稀有",
-    "description": "巨大食人花的帶毒花瓣。",
+    "description": "巨大食人花的帶毒花瓣，色彩鮮豔而致命。",
     "hp": 68,
     "mp": 35,
     "attack": 20,
-    "defense": 16,
+    "defense": 20,
     "speed": 14,
     "crit": 7,
     "resistances": {
-      "木": 4,
-      "毒": 3
+      "木": 6
     }
   },
   {
@@ -1007,16 +1096,15 @@
     "name": "千年樹根",
     "type": "木",
     "rarity": "稀有",
-    "description": "吸收了大地精華的古老樹根。",
+    "description": "吸收了大地精華的古老樹根，盤根錯節。",
     "hp": 90,
     "mp": 28,
     "attack": 14,
-    "defense": 25,
+    "defense": 30,
     "speed": 8,
     "crit": 2,
     "resistances": {
-      "木": 6,
-      "土": 2
+      "木": 6
     }
   },
   {
@@ -1024,16 +1112,15 @@
     "name": "風語之葉",
     "type": "木",
     "rarity": "稀有",
-    "description": "能夠傳遞風之訊息的葉片。",
+    "description": "能夠傳遞風之訊息的葉片，薄如蟬翼。",
     "hp": 65,
     "mp": 38,
     "attack": 16,
-    "defense": 15,
+    "defense": 18,
     "speed": 22,
     "crit": 8,
     "resistances": {
-      "木": 4,
-      "風": 3
+      "木": 6
     }
   },
   {
@@ -1041,16 +1128,15 @@
     "name": "磁力礦石",
     "type": "金",
     "rarity": "稀有",
-    "description": "帶有天然磁力的稀有礦石。",
+    "description": "帶有天然磁力的稀有礦石，能吸引金屬。",
     "hp": 65,
     "mp": 22,
     "attack": 20,
-    "defense": 28,
+    "defense": 35,
     "speed": 12,
     "crit": 5,
     "resistances": {
-      "金": 5,
-      "土": -1
+      "金": 6
     }
   },
   {
@@ -1062,12 +1148,11 @@
     "hp": 60,
     "mp": 20,
     "attack": 28,
-    "defense": 24,
+    "defense": 30,
     "speed": 15,
     "crit": 8,
     "resistances": {
-      "金": 4,
-      "無": 2
+      "金": 6
     }
   },
   {
@@ -1075,16 +1160,15 @@
     "name": "記憶合金",
     "type": "金",
     "rarity": "稀有",
-    "description": "能夠記憶形狀的神奇合金。",
+    "description": "能夠記憶形狀的神奇合金，可塑性極強。",
     "hp": 70,
     "mp": 25,
     "attack": 18,
-    "defense": 30,
+    "defense": 38,
     "speed": 10,
     "crit": 4,
     "resistances": {
-      "金": 6,
-      "火": -2
+      "金": 6
     }
   },
   {
@@ -1092,16 +1176,15 @@
     "name": "秘銀纖維",
     "type": "金",
     "rarity": "稀有",
-    "description": "極其輕盈且堅韌的秘銀纖維。",
+    "description": "極其輕盈且堅韌的秘銀纖維，魔法抗性高。",
     "hp": 62,
     "mp": 28,
     "attack": 22,
-    "defense": 26,
+    "defense": 32,
     "speed": 20,
     "crit": 7,
     "resistances": {
-      "金": 5,
-      "風": 2
+      "金": 6
     }
   },
   {
@@ -1109,16 +1192,15 @@
     "name": "光能水晶",
     "type": "金",
     "rarity": "稀有",
-    "description": "能儲存和釋放光能的水晶。",
+    "description": "能儲存和釋放光能的水晶，是優秀的能量導體。",
     "hp": 68,
     "mp": 35,
     "attack": 19,
-    "defense": 25,
+    "defense": 31,
     "speed": 14,
     "crit": 6,
     "resistances": {
-      "金": 4,
-      "光": 3
+      "金": 6
     }
   },
   {
@@ -1126,15 +1208,15 @@
     "name": "堅硬岩片",
     "type": "土",
     "rarity": "稀有",
-    "description": "較為堅固的岩石碎片。",
+    "description": "較為堅固的岩石碎片，是很好的防禦材料。",
     "hp": 85,
     "mp": 15,
     "attack": 8,
-    "defense": 28,
+    "defense": 35,
     "speed": 6,
     "crit": 3,
     "resistances": {
-      "土": 5
+      "土": 6
     }
   },
   {
@@ -1142,16 +1224,15 @@
     "name": "化石龍骨",
     "type": "土",
     "rarity": "稀有",
-    "description": "古代龍類的化石骨骼。",
+    "description": "古代龍類的化石骨骼，蘊含著龍之力。",
     "hp": 80,
     "mp": 20,
     "attack": 15,
-    "defense": 25,
+    "defense": 32,
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "土": 4,
-      "暗": 2
+      "土": 6
     }
   },
   {
@@ -1159,16 +1240,15 @@
     "name": "地脈結晶",
     "type": "土",
     "rarity": "稀有",
-    "description": "大地能量流動匯聚成的結晶。",
+    "description": "大地能量流動匯聚成的結晶，穩定而強大。",
     "hp": 90,
     "mp": 25,
     "attack": 10,
-    "defense": 30,
+    "defense": 38,
     "speed": 5,
     "crit": 2,
     "resistances": {
-      "土": 6,
-      "水": -2
+      "土": 6
     }
   },
   {
@@ -1176,16 +1256,15 @@
     "name": "流沙核心",
     "type": "土",
     "rarity": "稀有",
-    "description": "流沙中心的能量核心。",
+    "description": "流沙中心的能量核心，能製造陷阱。",
     "hp": 75,
     "mp": 22,
     "attack": 12,
-    "defense": 26,
+    "defense": 33,
     "speed": 14,
     "crit": 4,
     "resistances": {
-      "土": 4,
-      "風": 2
+      "土": 6
     }
   },
   {
@@ -1193,16 +1272,15 @@
     "name": "黑曜石塊",
     "type": "土",
     "rarity": "稀有",
-    "description": "火山玻璃形成的堅硬黑曜石。",
+    "description": "火山玻璃形成的堅硬黑曜石，邊緣鋒利。",
     "hp": 82,
     "mp": 18,
     "attack": 18,
-    "defense": 28,
+    "defense": 36,
     "speed": 8,
     "crit": 6,
     "resistances": {
-      "土": 5,
-      "火": 2
+      "土": 6
     }
   },
   {
@@ -1210,16 +1288,15 @@
     "name": "純淨光束",
     "type": "光",
     "rarity": "稀有",
-    "description": "被凝聚成實體的純淨光束。",
+    "description": "被凝聚成實體的純淨光束，能驅散黑暗。",
     "hp": 65,
     "mp": 38,
     "attack": 20,
     "defense": 15,
-    "speed": 18,
+    "speed": 28,
     "crit": 9,
     "resistances": {
-      "光": 5,
-      "暗": -2
+      "光": 6
     }
   },
   {
@@ -1227,16 +1304,15 @@
     "name": "天使羽毛",
     "type": "光",
     "rarity": "稀有",
-    "description": "傳說中天使遺落的羽毛。",
+    "description": "傳說中天使遺落的羽毛，輕盈而神聖。",
     "hp": 70,
     "mp": 42,
     "attack": 18,
     "defense": 18,
-    "speed": 20,
+    "speed": 30,
     "crit": 7,
     "resistances": {
-      "光": 4,
-      "風": 2
+      "光": 6
     }
   },
   {
@@ -1244,16 +1320,15 @@
     "name": "星塵聚集",
     "type": "光",
     "rarity": "稀有",
-    "description": "宇宙星塵的閃耀聚集體。",
+    "description": "宇宙星塵的閃耀聚集體，充滿未知能量。",
     "hp": 62,
     "mp": 40,
     "attack": 22,
     "defense": 14,
-    "speed": 22,
+    "speed": 32,
     "crit": 10,
     "resistances": {
-      "光": 6,
-      "無": 1
+      "光": 6
     }
   },
   {
@@ -1261,16 +1336,15 @@
     "name": "祝福寶石",
     "type": "光",
     "rarity": "稀有",
-    "description": "蘊含著祝福力量的寶石。",
+    "description": "蘊含著祝福力量的寶石，能守護持有者。",
     "hp": 80,
     "mp": 35,
     "attack": 15,
     "defense": 22,
-    "speed": 15,
+    "speed": 25,
     "crit": 5,
     "resistances": {
-      "光": 5,
-      "土": 2
+      "光": 6
     }
   },
   {
@@ -1278,16 +1352,15 @@
     "name": "日珥能量",
     "type": "光",
     "rarity": "稀有",
-    "description": "從太陽日珥中捕獲的能量。",
+    "description": "從太陽日珥中捕獲的能量，熾熱而耀眼。",
     "hp": 68,
     "mp": 36,
     "attack": 25,
     "defense": 16,
-    "speed": 19,
+    "speed": 29,
     "crit": 8,
     "resistances": {
-      "光": 4,
-      "火": 3
+      "光": 6
     }
   },
   {
@@ -1295,16 +1368,15 @@
     "name": "凝固暗影",
     "type": "暗",
     "rarity": "稀有",
-    "description": "被實體化的黑暗陰影。",
+    "description": "被實體化的黑暗陰影，能隱藏於黑暗。",
     "hp": 62,
     "mp": 39,
-    "attack": 24,
+    "attack": 28,
     "defense": 12,
-    "speed": 17,
+    "speed": 22,
     "crit": 9,
     "resistances": {
-      "暗": 5,
-      "光": -2
+      "暗": 6
     }
   },
   {
@@ -1312,16 +1384,15 @@
     "name": "惡魔之眼",
     "type": "暗",
     "rarity": "稀有",
-    "description": "據說能看穿一切的惡魔眼睛。",
+    "description": "據說能看穿一切的惡魔眼睛，令人不安。",
     "hp": 58,
     "mp": 45,
-    "attack": 28,
+    "attack": 32,
     "defense": 10,
-    "speed": 19,
+    "speed": 24,
     "crit": 11,
     "resistances": {
-      "暗": 6,
-      "混": 1
+      "暗": 6
     }
   },
   {
@@ -1329,16 +1400,15 @@
     "name": "虛空碎片",
     "type": "暗",
     "rarity": "稀有",
-    "description": "來自虛空維度的神秘碎片。",
+    "description": "來自虛空維度的神秘碎片，扭曲光線。",
     "hp": 60,
     "mp": 42,
-    "attack": 26,
+    "attack": 30,
     "defense": 11,
-    "speed": 21,
+    "speed": 26,
     "crit": 10,
     "resistances": {
-      "暗": 7,
-      "金": -2
+      "暗": 6
     }
   },
   {
@@ -1346,16 +1416,15 @@
     "name": "詛咒遺物",
     "type": "暗",
     "rarity": "稀有",
-    "description": "帶有古老詛咒的不祥遺物。",
+    "description": "帶有古老詛咒的不祥遺物，散發著怨念。",
     "hp": 68,
     "mp": 36,
-    "attack": 22,
+    "attack": 26,
     "defense": 18,
-    "speed": 15,
+    "speed": 18,
     "crit": 7,
     "resistances": {
-      "暗": 5,
-      "毒": 2
+      "暗": 6
     }
   },
   {
@@ -1363,16 +1432,15 @@
     "name": "月蝕精華",
     "type": "暗",
     "rarity": "稀有",
-    "description": "在月蝕時收集的黑暗精華。",
+    "description": "在月蝕時收集的黑暗精華，力量詭異。",
     "hp": 65,
     "mp": 38,
-    "attack": 25,
+    "attack": 29,
     "defense": 14,
-    "speed": 18,
+    "speed": 23,
     "crit": 8,
     "resistances": {
-      "暗": 5,
-      "水": 2
+      "暗": 6
     }
   },
   {
@@ -1380,15 +1448,15 @@
     "name": "弱效毒液",
     "type": "毒",
     "rarity": "稀有",
-    "description": "帶有些許毒性的液體。",
+    "description": "帶有些許毒性的液體，但足以致命。",
     "hp": 50,
     "mp": 24,
-    "attack": 20,
+    "attack": 25,
     "defense": 8,
-    "speed": 14,
+    "speed": 18,
     "crit": 6,
     "resistances": {
-      "毒": 5
+      "毒": 6
     }
   },
   {
@@ -1399,13 +1467,12 @@
     "description": "毒蛇脫落的含有劇毒的牙齒。",
     "hp": 55,
     "mp": 28,
-    "attack": 28,
+    "attack": 32,
     "defense": 10,
-    "speed": 16,
+    "speed": 20,
     "crit": 8,
     "resistances": {
-      "毒": 6,
-      "金": -2
+      "毒": 6
     }
   },
   {
@@ -1413,16 +1480,15 @@
     "name": "毒氣腺體",
     "type": "毒",
     "rarity": "稀有",
-    "description": "能分泌毒氣的生物腺體。",
+    "description": "能分泌致命毒氣的生物腺體。",
     "hp": 60,
     "mp": 32,
-    "attack": 25,
+    "attack": 28,
     "defense": 12,
-    "speed": 15,
+    "speed": 19,
     "crit": 7,
     "resistances": {
-      "毒": 7,
-      "風": -2
+      "毒": 6
     }
   },
   {
@@ -1433,13 +1499,12 @@
     "description": "能夠傳播疾病的危險孢子。",
     "hp": 65,
     "mp": 26,
-    "attack": 22,
+    "attack": 26,
     "defense": 14,
-    "speed": 13,
+    "speed": 17,
     "crit": 5,
     "resistances": {
-      "毒": 5,
-      "木": 2
+      "毒": 6
     }
   },
   {
@@ -1450,13 +1515,12 @@
     "description": "具有強烈腐蝕性的酸性黏液。",
     "hp": 58,
     "mp": 30,
-    "attack": 26,
+    "attack": 30,
     "defense": 15,
-    "speed": 14,
+    "speed": 18,
     "crit": 6,
     "resistances": {
-      "毒": 5,
-      "水": 1
+      "毒": 6
     }
   },
   {
@@ -1464,15 +1528,15 @@
     "name": "微風精華",
     "type": "風",
     "rarity": "稀有",
-    "description": "蘊含少量風之力的精華。",
+    "description": "蘊含少量風之力的精華，飄忽不定。",
     "hp": 58,
     "mp": 26,
     "attack": 16,
     "defense": 10,
-    "speed": 22,
+    "speed": 32,
     "crit": 8,
     "resistances": {
-      "風": 5
+      "風": 6
     }
   },
   {
@@ -1485,11 +1549,10 @@
     "mp": 35,
     "attack": 20,
     "defense": 14,
-    "speed": 28,
+    "speed": 38,
     "crit": 10,
     "resistances": {
-      "風": 6,
-      "土": -2
+      "風": 6
     }
   },
   {
@@ -1497,15 +1560,15 @@
     "name": "獅鷲之羽",
     "type": "風",
     "rarity": "稀有",
-    "description": "傳說生物獅鷲的輕盈羽毛。",
+    "description": "傳說生物獅鷲的輕盈羽毛，能御風而行。",
     "hp": 60,
     "mp": 30,
     "attack": 18,
     "defense": 12,
-    "speed": 30,
+    "speed": 40,
     "crit": 12,
     "resistances": {
-      "風": 7
+      "風": 6
     }
   },
   {
@@ -1518,11 +1581,10 @@
     "mp": 28,
     "attack": 22,
     "defense": 15,
-    "speed": 25,
+    "speed": 35,
     "crit": 9,
     "resistances": {
-      "風": 5,
-      "金": -2
+      "風": 6
     }
   },
   {
@@ -1530,16 +1592,15 @@
     "name": "雷雲核心",
     "type": "風",
     "rarity": "稀有",
-    "description": "暴風雨中雷雲的能量核心。",
+    "description": "暴風雨中雷雲的能量核心，蘊含電能。",
     "hp": 65,
     "mp": 38,
     "attack": 24,
     "defense": 16,
-    "speed": 24,
+    "speed": 34,
     "crit": 8,
     "resistances": {
-      "風": 4,
-      "水": 3
+      "風": 6
     }
   },
   {
@@ -1547,44 +1608,180 @@
     "name": "混沌膠質",
     "type": "混",
     "rarity": "稀有",
-    "description": "隨時可能發生異變的化合物。",
+    "description": "隨時可能發生異變的化合物，充滿不確定性。",
     "hp": 70,
     "mp": 35,
     "attack": 20,
     "defense": 20,
     "speed": 20,
     "crit": 6,
-    "resistances": {}
+    "resistances": {
+      "火": 3,
+      "水": 3
+    }
+  },
+  {
+    "id": "dna_mix_r02",
+    "name": "鏡像碎片",
+    "type": "混",
+    "rarity": "稀有",
+    "description": "來自鏡中世界的碎片，能模仿周遭能量。",
+    "hp": 65,
+    "mp": 40,
+    "attack": 25,
+    "defense": 15,
+    "speed": 25,
+    "crit": 10,
+    "resistances": {
+      "光": 3,
+      "暗": 3
+    }
+  },
+  {
+    "id": "dna_mix_r03",
+    "name": "亂數據塊",
+    "type": "混",
+    "rarity": "稀有",
+    "description": "由錯誤數據構成的實體，行為無法預測。",
+    "hp": 60,
+    "mp": 30,
+    "attack": 30,
+    "defense": 30,
+    "speed": 10,
+    "crit": 5,
+    "resistances": {
+      "金": 3,
+      "無": 3
+    }
+  },
+  {
+    "id": "dna_mix_r04",
+    "name": "嫁接之根",
+    "type": "混",
+    "rarity": "稀有",
+    "description": "將兩種完全不同的植物嫁接後產生的變異根部。",
+    "hp": 80,
+    "mp": 25,
+    "attack": 15,
+    "defense": 25,
+    "speed": 5,
+    "crit": 5,
+    "resistances": {
+      "木": 3,
+      "土": 3
+    }
+  },
+  {
+    "id": "dna_mix_r05",
+    "name": "迷霧之核",
+    "type": "混",
+    "rarity": "稀有",
+    "description": "在濃霧中誕生的核心，能製造幻象。",
+    "hp": 55,
+    "mp": 45,
+    "attack": 20,
+    "defense": 10,
+    "speed": 35,
+    "crit": 8,
+    "resistances": {
+      "風": 3,
+      "水": 3
+    }
   },
   {
     "id": "dna_none_r01",
     "name": "進化元核",
     "type": "無",
     "rarity": "稀有",
-    "description": "具有高度適應性的細胞簇。",
+    "description": "具有高度適應性的細胞簇，潛力巨大。",
     "hp": 65,
     "mp": 28,
-    "attack": 18,
-    "defense": 18,
+    "attack": 22,
+    "defense": 22,
+    "speed": 22,
+    "crit": 5,
+    "resistances": {
+      "無": 5
+    }
+  },
+  {
+    "id": "dna_none_r02",
+    "name": "生命原湯",
+    "type": "無",
+    "rarity": "稀有",
+    "description": "蘊含著生命誕生可能性的原始湯汁。",
+    "hp": 75,
+    "mp": 35,
+    "attack": 20,
+    "defense": 20,
+    "speed": 15,
+    "crit": 4,
+    "resistances": {
+      "無": 5
+    }
+  },
+  {
+    "id": "dna_none_r03",
+    "name": "適應性強",
+    "type": "無",
+    "rarity": "稀有",
+    "description": "能夠快速適應環境的強力基因片段。",
+    "hp": 68,
+    "mp": 30,
+    "attack": 24,
+    "defense": 24,
+    "speed": 24,
+    "crit": 6,
+    "resistances": {
+      "無": 5
+    }
+  },
+  {
+    "id": "dna_none_r04",
+    "name": "空白石板",
+    "type": "無",
+    "rarity": "稀有",
+    "description": "可以刻上任何符文的石板，充滿可能性。",
+    "hp": 70,
+    "mp": 25,
+    "attack": 21,
+    "defense": 28,
     "speed": 18,
     "crit": 5,
-    "resistances": {}
+    "resistances": {
+      "無": 5
+    }
+  },
+  {
+    "id": "dna_none_r05",
+    "name": "純淨靈魂",
+    "type": "無",
+    "rarity": "稀有",
+    "description": "未受任何元素污染的純淨靈魂。",
+    "hp": 66,
+    "mp": 32,
+    "attack": 23,
+    "defense": 23,
+    "speed": 23,
+    "crit": 7,
+    "resistances": {
+      "無": 5
+    }
   },
   {
     "id": "dna_fire_e01",
     "name": "烈焰核心",
     "type": "火",
     "rarity": "菁英",
-    "description": "燃燒旺盛的火焰核心。",
+    "description": "燃燒旺盛的火焰核心，是強大火系怪獸的能量源。",
     "hp": 75,
     "mp": 40,
-    "attack": 35,
+    "attack": 45,
     "defense": 18,
     "speed": 25,
     "crit": 12,
     "resistances": {
-      "火": 8,
-      "水": -3
+      "火": 10
     }
   },
   {
@@ -1592,16 +1789,15 @@
     "name": "日冕殘焰",
     "type": "火",
     "rarity": "菁英",
-    "description": "太陽耀斑爆發時產生的能量碎片。",
+    "description": "太陽耀斑爆發時產生的能量碎片，溫度極高。",
     "hp": 70,
     "mp": 45,
-    "attack": 40,
+    "attack": 50,
     "defense": 15,
     "speed": 28,
     "crit": 14,
     "resistances": {
-      "火": 7,
-      "光": 3
+      "火": 10
     }
   },
   {
@@ -1612,13 +1808,12 @@
     "description": "傳說中鳳凰流下的，蘊含重生之力的淚滴。",
     "hp": 90,
     "mp": 50,
-    "attack": 30,
+    "attack": 40,
     "defense": 22,
     "speed": 20,
     "crit": 8,
     "resistances": {
-      "火": 9,
-      "暗": -4
+      "火": 10
     }
   },
   {
@@ -1626,16 +1821,15 @@
     "name": "獄火精粹",
     "type": "火",
     "rarity": "菁英",
-    "description": "來自地獄深淵的純粹火焰能量。",
+    "description": "來自地獄深淵的純粹火焰能量，極具破壞性。",
     "hp": 68,
     "mp": 42,
-    "attack": 42,
+    "attack": 52,
     "defense": 16,
     "speed": 26,
     "crit": 15,
     "resistances": {
-      "火": 8,
-      "暗": 4
+      "火": 10
     }
   },
   {
@@ -1646,13 +1840,12 @@
     "description": "寄宿在神兵利器中的鍛造之火的靈魂。",
     "hp": 80,
     "mp": 38,
-    "attack": 38,
+    "attack": 48,
     "defense": 28,
     "speed": 18,
     "crit": 10,
     "resistances": {
-      "火": 7,
-      "金": 4
+      "火": 10
     }
   },
   {
@@ -1668,8 +1861,7 @@
     "speed": 24,
     "crit": 10,
     "resistances": {
-      "水": 8,
-      "土": -3
+      "水": 10
     }
   },
   {
@@ -1677,7 +1869,7 @@
     "name": "絕對零度",
     "type": "水",
     "rarity": "菁英",
-    "description": "接近絕對零度的極寒冰核。",
+    "description": "接近絕對零度的極寒冰核，能凍結一切。",
     "hp": 80,
     "mp": 40,
     "attack": 25,
@@ -1685,8 +1877,7 @@
     "speed": 22,
     "crit": 8,
     "resistances": {
-      "水": 9,
-      "風": -4
+      "水": 10
     }
   },
   {
@@ -1694,7 +1885,7 @@
     "name": "海怪鱗片",
     "type": "水",
     "rarity": "菁英",
-    "description": "傳說海怪利維坦的堅硬鱗片。",
+    "description": "傳說海怪利維坦的堅硬鱗片，水流環繞。",
     "hp": 100,
     "mp": 35,
     "attack": 22,
@@ -1718,8 +1909,7 @@
     "speed": 16,
     "crit": 5,
     "resistances": {
-      "水": 8,
-      "光": 4
+      "水": 10
     }
   },
   {
@@ -1735,8 +1925,7 @@
     "speed": 26,
     "crit": 12,
     "resistances": {
-      "水": 7,
-      "暗": 4
+      "水": 10
     }
   },
   {
@@ -1744,16 +1933,15 @@
     "name": "世界樹芽",
     "type": "木",
     "rarity": "菁英",
-    "description": "傳說中世界樹長出的新芽。",
+    "description": "傳說中世界樹長出的新芽，蘊含龐大生命力。",
     "hp": 105,
     "mp": 45,
     "attack": 20,
-    "defense": 30,
+    "defense": 38,
     "speed": 15,
     "crit": 6,
     "resistances": {
-      "木": 8,
-      "火": -3
+      "木": 10
     }
   },
   {
@@ -1761,16 +1949,15 @@
     "name": "自然之心",
     "type": "木",
     "rarity": "菁英",
-    "description": "整個森林生命力的匯聚體。",
+    "description": "整個森林生命力的匯聚體，生生不息。",
     "hp": 120,
     "mp": 50,
     "attack": 18,
-    "defense": 35,
+    "defense": 42,
     "speed": 12,
     "crit": 5,
     "resistances": {
-      "木": 9,
-      "毒": -4
+      "木": 10
     }
   },
   {
@@ -1782,12 +1969,11 @@
     "hp": 95,
     "mp": 55,
     "attack": 22,
-    "defense": 28,
+    "defense": 35,
     "speed": 18,
     "crit": 8,
     "resistances": {
-      "木": 8,
-      "混": 3
+      "木": 10
     }
   },
   {
@@ -1799,12 +1985,11 @@
     "hp": 88,
     "mp": 48,
     "attack": 25,
-    "defense": 26,
+    "defense": 32,
     "speed": 24,
     "crit": 10,
     "resistances": {
-      "木": 7,
-      "光": 4
+      "木": 10
     }
   },
   {
@@ -1816,12 +2001,11 @@
     "hp": 90,
     "mp": 40,
     "attack": 28,
-    "defense": 32,
+    "defense": 40,
     "speed": 16,
     "crit": 7,
     "resistances": {
-      "木": 8,
-      "金": -3
+      "木": 10
     }
   },
   {
@@ -1829,16 +2013,15 @@
     "name": "精煉金塊",
     "type": "金",
     "rarity": "菁英",
-    "description": "經過提煉的純淨金屬塊。",
+    "description": "經過提煉的純淨金屬塊，幾乎沒有雜質。",
     "hp": 65,
     "mp": 28,
     "attack": 22,
-    "defense": 30,
+    "defense": 40,
     "speed": 12,
     "crit": 6,
     "resistances": {
-      "金": 8,
-      "火": -3
+      "金": 10
     }
   },
   {
@@ -1850,11 +2033,11 @@
     "hp": 75,
     "mp": 32,
     "attack": 25,
-    "defense": 40,
+    "defense": 50,
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "金": 9
+      "金": 10
     }
   },
   {
@@ -1862,16 +2045,15 @@
     "name": "雷擊之鐵",
     "type": "金",
     "rarity": "菁英",
-    "description": "被閃電擊中後產生異變的鐵塊。",
+    "description": "被閃電擊中後產生異變的鐵塊，蘊含電能。",
     "hp": 70,
     "mp": 30,
     "attack": 30,
-    "defense": 32,
+    "defense": 42,
     "speed": 22,
     "crit": 10,
     "resistances": {
-      "金": 8,
-      "風": 3
+      "金": 10
     }
   },
   {
@@ -1879,16 +2061,15 @@
     "name": "機械核心",
     "type": "金",
     "rarity": "菁英",
-    "description": "古代機械造物的能量核心。",
+    "description": "古代機械造物的能量核心，運轉不息。",
     "hp": 80,
     "mp": 40,
     "attack": 28,
-    "defense": 38,
+    "defense": 48,
     "speed": 15,
     "crit": 7,
     "resistances": {
-      "金": 10,
-      "水": -4
+      "金": 10
     }
   },
   {
@@ -1900,11 +2081,11 @@
     "hp": 90,
     "mp": 25,
     "attack": 20,
-    "defense": 45,
+    "defense": 55,
     "speed": 8,
     "crit": 4,
     "resistances": {
-      "金": 12
+      "金": 10
     }
   },
   {
@@ -1912,16 +2093,15 @@
     "name": "泰坦之心",
     "type": "土",
     "rarity": "菁英",
-    "description": "傳說中大地泰坦的心臟化石。",
+    "description": "傳說中大地泰坦的心臟化石，沉重而堅固。",
     "hp": 130,
     "mp": 20,
     "attack": 15,
-    "defense": 40,
+    "defense": 50,
     "speed": 5,
     "crit": 4,
     "resistances": {
-      "土": 10,
-      "風": -4
+      "土": 10
     }
   },
   {
@@ -1933,12 +2113,11 @@
     "hp": 110,
     "mp": 25,
     "attack": 18,
-    "defense": 45,
+    "defense": 55,
     "speed": 8,
     "crit": 3,
     "resistances": {
-      "土": 9,
-      "金": 3
+      "土": 10
     }
   },
   {
@@ -1946,16 +2125,15 @@
     "name": "地震之核",
     "type": "土",
     "rarity": "菁英",
-    "description": "引發地震的能量根源。",
+    "description": "引發地震的能量根源，蘊含著大地的怒火。",
     "hp": 100,
     "mp": 30,
     "attack": 25,
-    "defense": 38,
+    "defense": 48,
     "speed": 10,
     "crit": 6,
     "resistances": {
-      "土": 8,
-      "無": 2
+      "土": 10
     }
   },
   {
@@ -1963,16 +2141,15 @@
     "name": "石化之眼",
     "type": "土",
     "rarity": "菁英",
-    "description": "能將萬物石化的魔眼。",
+    "description": "能將萬物石化的魔眼，直視者將化為石頭。",
     "hp": 95,
     "mp": 35,
     "attack": 20,
-    "defense": 35,
+    "defense": 45,
     "speed": 12,
     "crit": 5,
     "resistances": {
-      "土": 8,
-      "暗": 3
+      "土": 10
     }
   },
   {
@@ -1980,16 +2157,15 @@
     "name": "活化山脈",
     "type": "土",
     "rarity": "菁英",
-    "description": "擁有自我意識的山脈的一部分。",
+    "description": "擁有自我意識的山脈的一部分，能隨意改變地形。",
     "hp": 150,
     "mp": 15,
     "attack": 12,
-    "defense": 50,
+    "defense": 60,
     "speed": 4,
     "crit": 2,
     "resistances": {
-      "土": 12,
-      "木": -5
+      "土": 10
     }
   },
   {
@@ -1997,15 +2173,15 @@
     "name": "光芒碎片",
     "type": "光",
     "rarity": "菁英",
-    "description": "閃耀著純淨光芒的結晶碎片。",
+    "description": "閃耀著純淨光芒的結晶碎片，能淨化邪惡。",
     "hp": 68,
-    "mp": 30,
+    "mp": 40,
     "attack": 20,
     "defense": 14,
-    "speed": 15,
+    "speed": 25,
     "crit": 7,
     "resistances": {
-      "光": 8
+      "光": 10
     }
   },
   {
@@ -2013,16 +2189,15 @@
     "name": "創世之光",
     "type": "光",
     "rarity": "菁英",
-    "description": "世界誕生之初的第一道光。",
+    "description": "世界誕生之初的第一道光，擁有無限可能。",
     "hp": 80,
     "mp": 50,
     "attack": 28,
     "defense": 22,
-    "speed": 25,
+    "speed": 35,
     "crit": 12,
     "resistances": {
-      "光": 10,
-      "暗": -5
+      "光": 10
     }
   },
   {
@@ -2030,16 +2205,15 @@
     "name": "神聖符文",
     "type": "光",
     "rarity": "菁英",
-    "description": "刻有神聖文字的古代符文石。",
+    "description": "刻有神聖文字的古代符文石，能引發奇蹟。",
     "hp": 85,
     "mp": 55,
     "attack": 25,
     "defense": 25,
-    "speed": 22,
+    "speed": 32,
     "crit": 10,
     "resistances": {
-      "光": 9,
-      "混": 2
+      "光": 10
     }
   },
   {
@@ -2047,16 +2221,15 @@
     "name": "靈魂結晶",
     "type": "光",
     "rarity": "菁英",
-    "description": "純淨靈魂凝結而成的結晶體。",
+    "description": "純淨靈魂凝結而成的結晶體，能安撫心靈。",
     "hp": 90,
     "mp": 60,
     "attack": 20,
     "defense": 28,
-    "speed": 20,
+    "speed": 30,
     "crit": 8,
     "resistances": {
-      "光": 8,
-      "無": 3
+      "光": 10
     }
   },
   {
@@ -2064,16 +2237,15 @@
     "name": "奇蹟之種",
     "type": "光",
     "rarity": "菁英",
-    "description": "能引發奇蹟的神秘種子。",
+    "description": "能引發奇蹟的神秘種子，充滿希望。",
     "hp": 100,
     "mp": 45,
     "attack": 22,
     "defense": 30,
-    "speed": 18,
+    "speed": 28,
     "crit": 7,
     "resistances": {
-      "光": 8,
-      "木": 4
+      "光": 10
     }
   },
   {
@@ -2081,15 +2253,15 @@
     "name": "暗影殘片",
     "type": "暗",
     "rarity": "菁英",
-    "description": "凝聚了部分暗影力量的碎片。",
+    "description": "凝聚了部分暗影力量的碎片，極具侵蝕性。",
     "hp": 48,
     "mp": 38,
-    "attack": 28,
+    "attack": 32,
     "defense": 7,
-    "speed": 12,
+    "speed": 22,
     "crit": 9,
     "resistances": {
-      "暗": 8
+      "暗": 10
     }
   },
   {
@@ -2097,16 +2269,15 @@
     "name": "終焉之影",
     "type": "暗",
     "rarity": "菁英",
-    "description": "預示著終結的純粹黑暗。",
+    "description": "預示著終結的純粹黑暗，吞噬一切。",
     "hp": 75,
     "mp": 48,
-    "attack": 40,
+    "attack": 50,
     "defense": 18,
-    "speed": 28,
+    "speed": 38,
     "crit": 14,
     "resistances": {
-      "暗": 10,
-      "光": -5
+      "暗": 10
     }
   },
   {
@@ -2117,13 +2288,12 @@
     "description": "來自深淵，能扭曲現實的魔石。",
     "hp": 80,
     "mp": 52,
-    "attack": 38,
+    "attack": 48,
     "defense": 20,
-    "speed": 25,
+    "speed": 35,
     "crit": 12,
     "resistances": {
-      "暗": 9,
-      "混": 2
+      "暗": 10
     }
   },
   {
@@ -2131,16 +2301,15 @@
     "name": "恐懼化身",
     "type": "暗",
     "rarity": "菁英",
-    "description": "由純粹的恐懼情感匯聚而成。",
+    "description": "由純粹的恐懼情感匯聚而成，散播絕望。",
     "hp": 70,
     "mp": 58,
-    "attack": 35,
+    "attack": 45,
     "defense": 16,
-    "speed": 30,
+    "speed": 40,
     "crit": 15,
     "resistances": {
-      "暗": 8,
-      "無": 3
+      "暗": 10
     }
   },
   {
@@ -2151,13 +2320,12 @@
     "description": "傳說中噬魂者的牙齒，能吸取靈魂能量。",
     "hp": 82,
     "mp": 45,
-    "attack": 42,
+    "attack": 52,
     "defense": 22,
-    "speed": 24,
+    "speed": 34,
     "crit": 11,
     "resistances": {
-      "暗": 8,
-      "毒": 4
+      "暗": 10
     }
   },
   {
@@ -2165,16 +2333,15 @@
     "name": "萬毒之源",
     "type": "毒",
     "rarity": "菁英",
-    "description": "世界上所有毒素的源頭。",
+    "description": "世界上所有毒素的源頭，劇毒無比。",
     "hp": 70,
     "mp": 45,
-    "attack": 38,
+    "attack": 48,
     "defense": 15,
-    "speed": 24,
+    "speed": 34,
     "crit": 10,
     "resistances": {
-      "毒": 10,
-      "金": -4
+      "毒": 10
     }
   },
   {
@@ -2185,13 +2352,12 @@
     "description": "神話中梅杜莎的頭髮，帶有石化劇毒。",
     "hp": 75,
     "mp": 42,
-    "attack": 35,
+    "attack": 45,
     "defense": 20,
-    "speed": 22,
+    "speed": 32,
     "crit": 8,
     "resistances": {
-      "毒": 9,
-      "土": 3
+      "毒": 10
     }
   },
   {
@@ -2202,13 +2368,12 @@
     "description": "能瞬間麻痺神經的強烈毒素原液。",
     "hp": 68,
     "mp": 50,
-    "attack": 40,
+    "attack": 50,
     "defense": 12,
-    "speed": 28,
+    "speed": 38,
     "crit": 12,
     "resistances": {
-      "毒": 8,
-      "風": -3
+      "毒": 10
     }
   },
   {
@@ -2219,13 +2384,12 @@
     "description": "不斷釋放出有害射線的能量核心。",
     "hp": 80,
     "mp": 38,
-    "attack": 32,
+    "attack": 42,
     "defense": 25,
-    "speed": 18,
+    "speed": 28,
     "crit": 7,
     "resistances": {
-      "毒": 12,
-      "光": -5
+      "毒": 10
     }
   },
   {
@@ -2236,13 +2400,12 @@
     "description": "使其周圍一切生命凋零的詭異花朵。",
     "hp": 85,
     "mp": 40,
-    "attack": 30,
+    "attack": 40,
     "defense": 22,
-    "speed": 20,
+    "speed": 30,
     "crit": 6,
     "resistances": {
-      "毒": 8,
-      "木": 4
+      "毒": 10
     }
   },
   {
@@ -2255,11 +2418,10 @@
     "mp": 48,
     "attack": 28,
     "defense": 20,
-    "speed": 35,
+    "speed": 45,
     "crit": 14,
     "resistances": {
-      "風": 10,
-      "土": -4
+      "風": 10
     }
   },
   {
@@ -2272,10 +2434,10 @@
     "mp": 55,
     "attack": 25,
     "defense": 22,
-    "speed": 38,
+    "speed": 48,
     "crit": 12,
     "resistances": {
-      "風": 9
+      "風": 10
     }
   },
   {
@@ -2288,11 +2450,10 @@
     "mp": 45,
     "attack": 32,
     "defense": 18,
-    "speed": 42,
+    "speed": 52,
     "crit": 15,
     "resistances": {
-      "風": 8,
-      "金": -3
+      "風": 10
     }
   },
   {
@@ -2305,11 +2466,10 @@
     "mp": 58,
     "attack": 26,
     "defense": 24,
-    "speed": 36,
+    "speed": 46,
     "crit": 11,
     "resistances": {
-      "風": 8,
-      "混": 3
+      "風": 10
     }
   },
   {
@@ -2322,10 +2482,10 @@
     "mp": 52,
     "attack": 38,
     "defense": 16,
-    "speed": 40,
+    "speed": 50,
     "crit": 18,
     "resistances": {
-      "風": 12
+      "風": 10
     }
   },
   {
@@ -2333,45 +2493,183 @@
     "name": "賢者之石",
     "type": "混",
     "rarity": "菁英",
-    "description": "傳說中的賢者之石的微小碎片。",
+    "description": "傳說中賢者之石的微小碎片，蘊含萬物之力。",
     "hp": 85,
     "mp": 55,
     "attack": 30,
     "defense": 30,
     "speed": 30,
     "crit": 10,
-    "resistances": {}
+    "resistances": {
+      "火": 5,
+      "水": 5,
+      "木": 5
+    }
+  },
+  {
+    "id": "dna_mix_e02",
+    "name": "次元裂隙",
+    "type": "混",
+    "rarity": "菁英",
+    "description": "連接不同次元的裂隙，能量極不穩定。",
+    "hp": 70,
+    "mp": 60,
+    "attack": 40,
+    "defense": 20,
+    "speed": 40,
+    "crit": 15,
+    "resistances": {
+      "光": 5,
+      "暗": 5,
+      "風": 5
+    }
+  },
+  {
+    "id": "dna_mix_e03",
+    "name": "潘朵拉盒",
+    "type": "混",
+    "rarity": "菁英",
+    "description": "封印著世間所有災厄與希望的盒子碎片。",
+    "hp": 100,
+    "mp": 50,
+    "attack": 25,
+    "defense": 40,
+    "speed": 20,
+    "crit": 5,
+    "resistances": {
+      "毒": 5,
+      "暗": 5,
+      "土": 5
+    }
+  },
+  {
+    "id": "dna_mix_e04",
+    "name": "萬花筒核",
+    "type": "混",
+    "rarity": "菁英",
+    "description": "千變萬化的核心，每次觀察都有不同形態。",
+    "hp": 80,
+    "mp": 50,
+    "attack": 35,
+    "defense": 25,
+    "speed": 35,
+    "crit": 12,
+    "resistances": {
+      "光": 5,
+      "水": 5,
+      "風": 5
+    }
+  },
+  {
+    "id": "dna_mix_e05",
+    "name": "概率奇點",
+    "type": "混",
+    "rarity": "菁英",
+    "description": "所有可能性的匯集點，結果完全隨機。",
+    "hp": 75,
+    "mp": 55,
+    "attack": 30,
+    "defense": 30,
+    "speed": 30,
+    "crit": 20,
+    "resistances": {
+      "無": 10
+    }
   },
   {
     "id": "dna_none_e01",
     "name": "完美細胞",
     "type": "無",
     "rarity": "菁英",
-    "description": "具有無限可能性的完美細胞。",
+    "description": "具有無限可能性的完美細胞，能適應任何環境。",
     "hp": 80,
     "mp": 40,
-    "attack": 25,
-    "defense": 25,
-    "speed": 25,
+    "attack": 30,
+    "defense": 30,
+    "speed": 30,
     "crit": 8,
-    "resistances": {}
+    "resistances": {
+      "無": 8
+    }
+  },
+  {
+    "id": "dna_none_e02",
+    "name": "始祖之血",
+    "type": "無",
+    "rarity": "菁英",
+    "description": "來自萬物始祖的血液，蘊含所有屬性的可能性。",
+    "hp": 90,
+    "mp": 45,
+    "attack": 28,
+    "defense": 28,
+    "speed": 28,
+    "crit": 7,
+    "resistances": {
+      "無": 8
+    }
+  },
+  {
+    "id": "dna_none_e03",
+    "name": "存在之證",
+    "type": "無",
+    "rarity": "菁英",
+    "description": "證明自身存在的純粹能量，無形無質。",
+    "hp": 85,
+    "mp": 50,
+    "attack": 32,
+    "defense": 32,
+    "speed": 32,
+    "crit": 10,
+    "resistances": {
+      "無": 8
+    }
+  },
+  {
+    "id": "dna_none_e04",
+    "name": "空白畫布",
+    "type": "無",
+    "rarity": "菁英",
+    "description": "可以描繪出任何未來的空白畫布，潛力無限。",
+    "hp": 82,
+    "mp": 48,
+    "attack": 29,
+    "defense": 29,
+    "speed": 29,
+    "crit": 9,
+    "resistances": {
+      "無": 8
+    }
+  },
+  {
+    "id": "dna_none_e05",
+    "name": "根源之力",
+    "type": "無",
+    "rarity": "菁英",
+    "description": "來自世界根源的純粹力量，均衡而強大。",
+    "hp": 88,
+    "mp": 42,
+    "attack": 31,
+    "defense": 31,
+    "speed": 31,
+    "crit": 8,
+    "resistances": {
+      "無": 8
+    }
   },
   {
     "id": "dna_fire_l01",
     "name": "恆星碎片",
     "type": "火",
     "rarity": "傳奇",
-    "description": "來自恆星核心的碎片，永恆燃燒。",
+    "description": "來自恆星核心的碎片，永恆燃燒，光芒萬丈。",
     "hp": 90,
     "mp": 60,
-    "attack": 50,
+    "attack": 60,
     "defense": 28,
     "speed": 35,
     "crit": 18,
     "resistances": {
-      "火": 15,
-      "水": -8,
-      "光": 5
+      "火": 15
     }
   },
   {
@@ -2379,16 +2677,15 @@
     "name": "紅蓮業火",
     "type": "火",
     "rarity": "傳奇",
-    "description": "足以燃盡一切的紅蓮業火。",
+    "description": "足以燃盡一切罪惡的紅蓮業火，威力無窮。",
     "hp": 85,
     "mp": 55,
-    "attack": 55,
+    "attack": 65,
     "defense": 25,
     "speed": 38,
     "crit": 20,
     "resistances": {
-      "火": 14,
-      "暗": 6
+      "火": 15
     }
   },
   {
@@ -2396,16 +2693,15 @@
     "name": "火神心跳",
     "type": "火",
     "rarity": "傳奇",
-    "description": "古代火神伊格尼斯心臟的餘響。",
+    "description": "古代火神伊格尼斯心臟的餘響，充滿爆發力。",
     "hp": 110,
     "mp": 50,
-    "attack": 45,
+    "attack": 55,
     "defense": 35,
     "speed": 30,
     "crit": 15,
     "resistances": {
-      "火": 16,
-      "土": 4
+      "火": 15
     }
   },
   {
@@ -2416,14 +2712,12 @@
     "description": "終結一個時代的火山爆發所留下的灰燼。",
     "hp": 100,
     "mp": 65,
-    "attack": 48,
+    "attack": 58,
     "defense": 30,
     "speed": 32,
     "crit": 16,
     "resistances": {
-      "火": 13,
-      "毒": 7,
-      "風": -7
+      "火": 15
     }
   },
   {
@@ -2431,17 +2725,15 @@
     "name": "龍息結晶",
     "type": "火",
     "rarity": "傳奇",
-    "description": "傳說巨龍的吐息凝結成的結晶。",
+    "description": "傳說巨龍的吐息凝結成的結晶，灼熱致命。",
     "hp": 95,
     "mp": 58,
-    "attack": 52,
+    "attack": 62,
     "defense": 32,
     "speed": 34,
     "crit": 17,
     "resistances": {
-      "火": 15,
-      "金": 5,
-      "水": -8
+      "火": 15
     }
   },
   {
@@ -2449,16 +2741,15 @@
     "name": "深海之源",
     "type": "水",
     "rarity": "傳奇",
-    "description": "來自海洋深處的強大水能結晶。",
-    "hp": 80,
-    "mp": 45,
-    "attack": 22,
-    "defense": 28,
-    "speed": 25,
+    "description": "來自海洋最深處的強大水能結晶，純淨無比。",
+    "hp": 100,
+    "mp": 70,
+    "attack": 40,
+    "defense": 45,
+    "speed": 30,
     "crit": 8,
     "resistances": {
-      "水": 12,
-      "火": -5
+      "水": 15
     }
   },
   {
@@ -2466,7 +2757,7 @@
     "name": "海神之戟",
     "type": "水",
     "rarity": "傳奇",
-    "description": "傳說海神波賽頓武器的碎片。",
+    "description": "傳說海神波賽頓武器的碎片，能引發海嘯。",
     "hp": 100,
     "mp": 65,
     "attack": 48,
@@ -2474,9 +2765,7 @@
     "speed": 32,
     "crit": 16,
     "resistances": {
-      "水": 15,
-      "金": 5,
-      "木": -8
+      "水": 15
     }
   },
   {
@@ -2484,16 +2773,15 @@
     "name": "永凍之魂",
     "type": "水",
     "rarity": "傳奇",
-    "description": "蘊含著永恆凍土靈魂的冰晶。",
+    "description": "蘊含著永恆凍土靈魂的冰晶，萬年不化。",
     "hp": 90,
     "mp": 60,
     "attack": 45,
-    "defense": 40,
+    "defense": 50,
     "speed": 28,
     "crit": 14,
     "resistances": {
-      "水": 16,
-      "風": -7
+      "水": 15
     }
   },
   {
@@ -2505,12 +2793,11 @@
     "hp": 120,
     "mp": 70,
     "attack": 40,
-    "defense": 38,
+    "defense": 48,
     "speed": 25,
     "crit": 12,
     "resistances": {
-      "水": 14,
-      "混": 6
+      "水": 15
     }
   },
   {
@@ -2522,13 +2809,11 @@
     "hp": 105,
     "mp": 75,
     "attack": 42,
-    "defense": 32,
+    "defense": 42,
     "speed": 30,
     "crit": 15,
     "resistances": {
-      "水": 15,
-      "光": 5,
-      "毒": -8
+      "水": 15
     }
   },
   {
@@ -2536,17 +2821,15 @@
     "name": "世界樹葉",
     "type": "木",
     "rarity": "傳奇",
-    "description": "生命之樹伊格德拉修的葉片。",
+    "description": "生命之樹伊格德拉修的葉片，蘊含世界之力。",
     "hp": 125,
     "mp": 60,
     "attack": 30,
-    "defense": 45,
+    "defense": 55,
     "speed": 25,
     "crit": 10,
     "resistances": {
-      "木": 15,
-      "光": 6,
-      "火": -8
+      "木": 15
     }
   },
   {
@@ -2554,17 +2837,15 @@
     "name": "蓋亞祝福",
     "type": "木",
     "rarity": "傳奇",
-    "description": "大地母神蓋亞對生命的祝福。",
+    "description": "大地母神蓋亞對生命的祝福，生生不息。",
     "hp": 140,
     "mp": 55,
     "attack": 28,
-    "defense": 50,
+    "defense": 60,
     "speed": 20,
     "crit": 8,
     "resistances": {
-      "木": 16,
-      "土": 5,
-      "金": -8
+      "木": 15
     }
   },
   {
@@ -2572,16 +2853,15 @@
     "name": "賢者之魂",
     "type": "木",
     "rarity": "傳奇",
-    "description": "古代森林賢者的靈魂結晶。",
+    "description": "古代森林賢者的靈魂結晶，充滿智慧。",
     "hp": 110,
     "mp": 70,
     "attack": 35,
-    "defense": 40,
+    "defense": 50,
     "speed": 30,
     "crit": 12,
     "resistances": {
-      "木": 14,
-      "混": 7
+      "木": 15
     }
   },
   {
@@ -2593,13 +2873,11 @@
     "hp": 150,
     "mp": 65,
     "attack": 25,
-    "defense": 42,
+    "defense": 52,
     "speed": 22,
     "crit": 7,
     "resistances": {
-      "木": 15,
-      "水": 6,
-      "暗": -8
+      "木": 15
     }
   },
   {
@@ -2611,13 +2889,11 @@
     "hp": 115,
     "mp": 62,
     "attack": 40,
-    "defense": 38,
+    "defense": 48,
     "speed": 28,
     "crit": 14,
     "resistances": {
-      "木": 13,
-      "毒": 8,
-      "火": -7
+      "木": 15
     }
   },
   {
@@ -2625,16 +2901,15 @@
     "name": "不朽金屬",
     "type": "金",
     "rarity": "傳奇",
-    "description": "極其堅硬且帶有神秘力量的金屬。",
-    "hp": 70,
-    "mp": 20,
-    "attack": 25,
-    "defense": 35,
+    "description": "極其堅硬且帶有神秘力量的金屬，永不磨損。",
+    "hp": 90,
+    "mp": 40,
+    "attack": 45,
+    "defense": 65,
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "金": 12,
-      "土": 5
+      "金": 15
     }
   },
   {
@@ -2642,17 +2917,15 @@
     "name": "工神鍛錘",
     "type": "金",
     "rarity": "傳奇",
-    "description": "工匠之神赫淮斯托斯的神錘碎片。",
+    "description": "工匠之神赫淮斯托斯的神錘碎片，無物不摧。",
     "hp": 100,
     "mp": 40,
     "attack": 50,
-    "defense": 55,
+    "defense": 65,
     "speed": 20,
     "crit": 12,
     "resistances": {
-      "金": 15,
-      "火": 6,
-      "水": -8
+      "金": 15
     }
   },
   {
@@ -2660,17 +2933,15 @@
     "name": "聖槍之尖",
     "type": "金",
     "rarity": "傳奇",
-    "description": "傳說中刺穿神祇的聖槍之尖。",
+    "description": "傳說中刺穿神祇的聖槍之尖，鋒利無比。",
     "hp": 90,
     "mp": 45,
     "attack": 60,
-    "defense": 45,
+    "defense": 55,
     "speed": 28,
     "crit": 20,
     "resistances": {
-      "金": 14,
-      "光": 7,
-      "暗": -7
+      "金": 15
     }
   },
   {
@@ -2682,11 +2953,11 @@
     "hp": 130,
     "mp": 50,
     "attack": 30,
-    "defense": 65,
+    "defense": 75,
     "speed": 15,
     "crit": 8,
     "resistances": {
-      "金": 18
+      "金": 15
     }
   },
   {
@@ -2698,12 +2969,11 @@
     "hp": 110,
     "mp": 60,
     "attack": 48,
-    "defense": 50,
+    "defense": 60,
     "speed": 25,
     "crit": 15,
     "resistances": {
-      "金": 16,
-      "混": -8
+      "金": 15
     }
   },
   {
@@ -2711,16 +2981,15 @@
     "name": "大地龍脈",
     "type": "土",
     "rarity": "傳奇",
-    "description": "蘊含大地龍脈力量的稀有結晶。",
-    "hp": 100,
+    "description": "蘊含大地龍脈力量的稀有結晶，穩如泰山。",
+    "hp": 140,
     "mp": 25,
     "attack": 18,
-    "defense": 40,
+    "defense": 60,
     "speed": 8,
     "crit": 4,
     "resistances": {
-      "土": 12,
-      "風": -5
+      "土": 15
     }
   },
   {
@@ -2732,13 +3001,11 @@
     "hp": 160,
     "mp": 40,
     "attack": 45,
-    "defense": 60,
+    "defense": 70,
     "speed": 15,
     "crit": 10,
     "resistances": {
-      "土": 18,
-      "無": 10,
-      "風": -10
+      "土": 15
     }
   },
   {
@@ -2746,17 +3013,15 @@
     "name": "引力之核",
     "type": "土",
     "rarity": "傳奇",
-    "description": "控制萬有引力的神秘核心。",
+    "description": "控制萬有引力的神秘核心，萬物難逃。",
     "hp": 130,
     "mp": 50,
     "attack": 40,
-    "defense": 55,
+    "defense": 65,
     "speed": 18,
     "crit": 8,
     "resistances": {
-      "土": 16,
-      "混": 8,
-      "光": -8
+      "土": 15
     }
   },
   {
@@ -2768,12 +3033,11 @@
     "hp": 140,
     "mp": 60,
     "attack": 35,
-    "defense": 58,
+    "defense": 68,
     "speed": 12,
     "crit": 6,
     "resistances": {
-      "土": 17,
-      "金": -8
+      "土": 15
     }
   },
   {
@@ -2785,13 +3049,11 @@
     "hp": 180,
     "mp": 45,
     "attack": 30,
-    "defense": 62,
+    "defense": 72,
     "speed": 10,
     "crit": 5,
     "resistances": {
-      "土": 20,
-      "金": 10,
-      "木": -12
+      "土": 15
     }
   },
   {
@@ -2799,17 +3061,15 @@
     "name": "拉之翼",
     "type": "光",
     "rarity": "傳奇",
-    "description": "太陽神拉的羽翼，照耀萬物。",
+    "description": "太陽神拉的羽翼，照耀萬物，驅散一切陰霾。",
     "hp": 100,
     "mp": 70,
     "attack": 45,
     "defense": 35,
-    "speed": 40,
+    "speed": 50,
     "crit": 18,
     "resistances": {
-      "光": 15,
-      "火": 6,
-      "暗": -10
+      "光": 15
     }
   },
   {
@@ -2817,16 +3077,15 @@
     "name": "天堂之鑰",
     "type": "光",
     "rarity": "傳奇",
-    "description": "能開啟天堂之門的神秘鑰匙。",
+    "description": "能開啟天堂之門的神秘鑰匙，蘊含神聖之力。",
     "hp": 110,
     "mp": 80,
     "attack": 40,
     "defense": 40,
-    "speed": 35,
+    "speed": 45,
     "crit": 15,
     "resistances": {
-      "光": 16,
-      "無": 8
+      "光": 15
     }
   },
   {
@@ -2839,11 +3098,10 @@
     "mp": 75,
     "attack": 35,
     "defense": 42,
-    "speed": 30,
+    "speed": 40,
     "crit": 12,
     "resistances": {
-      "光": 18,
-      "水": 7
+      "光": 15
     }
   },
   {
@@ -2851,17 +3109,15 @@
     "name": "拂曉之星",
     "type": "光",
     "rarity": "傳奇",
-    "description": "在拂曉時最亮的那顆星的星核。",
+    "description": "在拂曉時最亮的那顆星的星核，帶來希望。",
     "hp": 95,
     "mp": 65,
     "attack": 50,
     "defense": 30,
-    "speed": 45,
+    "speed": 55,
     "crit": 20,
     "resistances": {
-      "光": 14,
-      "風": 7,
-      "土": -7
+      "光": 15
     }
   },
   {
@@ -2874,11 +3130,10 @@
     "mp": 85,
     "attack": 42,
     "defense": 38,
-    "speed": 32,
+    "speed": 42,
     "crit": 14,
     "resistances": {
-      "光": 17,
-      "混": 8
+      "光": 15
     }
   },
   {
@@ -2886,17 +3141,15 @@
     "name": "墮天之羽",
     "type": "暗",
     "rarity": "傳奇",
-    "description": "墮天使路西法遺落的黑色羽毛。",
+    "description": "墮天使路西法遺落的黑色羽毛，充滿傲慢。",
     "hp": 95,
     "mp": 68,
-    "attack": 52,
+    "attack": 58,
     "defense": 30,
     "speed": 42,
     "crit": 18,
     "resistances": {
-      "暗": 15,
-      "火": 6,
-      "光": -10
+      "暗": 15
     }
   },
   {
@@ -2907,14 +3160,12 @@
     "description": "封印著世間所有災厄的潘朵拉之盒的鎖。",
     "hp": 115,
     "mp": 60,
-    "attack": 48,
+    "attack": 52,
     "defense": 40,
     "speed": 32,
     "crit": 15,
     "resistances": {
-      "暗": 16,
-      "混": 8,
-      "無": -8
+      "暗": 15
     }
   },
   {
@@ -2925,13 +3176,12 @@
     "description": "來自冥界，能洗去一切記憶的河水。",
     "hp": 100,
     "mp": 75,
-    "attack": 45,
+    "attack": 50,
     "defense": 35,
     "speed": 38,
     "crit": 16,
     "resistances": {
-      "暗": 17,
-      "水": 7
+      "暗": 15
     }
   },
   {
@@ -2942,14 +3192,12 @@
     "description": "舊日支配者克蘇魯的觸鬚，蘊含瘋狂之力。",
     "hp": 120,
     "mp": 65,
-    "attack": 50,
+    "attack": 55,
     "defense": 38,
     "speed": 28,
     "crit": 14,
     "resistances": {
-      "暗": 18,
-      "毒": 8,
-      "光": -12
+      "暗": 15
     }
   },
   {
@@ -2960,13 +3208,12 @@
     "description": "將一切吞噬並化為虛無的奇點。",
     "hp": 80,
     "mp": 80,
-    "attack": 58,
+    "attack": 62,
     "defense": 25,
     "speed": 45,
     "crit": 22,
     "resistances": {
-      "暗": 20,
-      "金": -10
+      "暗": 15
     }
   },
   {
@@ -2977,14 +3224,12 @@
     "description": "傳說中能吞象的巨蛇巴蛇的毒液。",
     "hp": 90,
     "mp": 60,
-    "attack": 50,
+    "attack": 55,
     "defense": 28,
     "speed": 35,
     "crit": 15,
     "resistances": {
-      "毒": 15,
-      "木": 6,
-      "金": -8
+      "毒": 15
     }
   },
   {
@@ -2995,13 +3240,12 @@
     "description": "九頭蛇許德拉的血液，既是劇毒也能再生。",
     "hp": 110,
     "mp": 55,
-    "attack": 48,
+    "attack": 52,
     "defense": 32,
     "speed": 30,
     "crit": 12,
     "resistances": {
-      "毒": 16,
-      "水": 7
+      "毒": 15
     }
   },
   {
@@ -3009,17 +3253,15 @@
     "name": "寂靜死劑",
     "type": "毒",
     "rarity": "傳奇",
-    "description": "讓春天沉寂的禁忌農藥。",
+    "description": "讓春天沉寂的禁忌農藥，無聲的殺手。",
     "hp": 85,
     "mp": 65,
-    "attack": 52,
+    "attack": 58,
     "defense": 25,
     "speed": 38,
     "crit": 18,
     "resistances": {
-      "毒": 17,
-      "土": 5,
-      "光": -10
+      "毒": 15
     }
   },
   {
@@ -3030,14 +3272,12 @@
     "description": "諸神黃昏中魔狼芬里爾的腐蝕性唾液。",
     "hp": 100,
     "mp": 58,
-    "attack": 55,
+    "attack": 60,
     "defense": 30,
     "speed": 34,
     "crit": 16,
     "resistances": {
-      "毒": 18,
-      "暗": 8,
-      "金": -10
+      "毒": 15
     }
   },
   {
@@ -3048,13 +3288,12 @@
     "description": "傳播瘟疫的君王的嘆息，化為實體。",
     "hp": 95,
     "mp": 70,
-    "attack": 46,
+    "attack": 50,
     "defense": 28,
     "speed": 40,
     "crit": 14,
     "resistances": {
-      "毒": 20,
-      "風": 7
+      "毒": 15
     }
   },
   {
@@ -3067,12 +3306,10 @@
     "mp": 70,
     "attack": 40,
     "defense": 30,
-    "speed": 50,
+    "speed": 60,
     "crit": 18,
     "resistances": {
-      "風": 15,
-      "水": 6,
-      "土": -8
+      "風": 15
     }
   },
   {
@@ -3080,16 +3317,15 @@
     "name": "天狗羽扇",
     "type": "風",
     "rarity": "傳奇",
-    "description": "日本傳說中天狗的羽扇，能掀起狂風。",
+    "description": "日本傳說中天狗的羽扇，能掀起毀滅狂風。",
     "hp": 95,
     "mp": 65,
     "attack": 42,
     "defense": 32,
-    "speed": 52,
+    "speed": 62,
     "crit": 16,
     "resistances": {
-      "風": 16,
-      "木": 7
+      "風": 15
     }
   },
   {
@@ -3102,12 +3338,10 @@
     "mp": 75,
     "attack": 48,
     "defense": 28,
-    "speed": 55,
+    "speed": 65,
     "crit": 20,
     "resistances": {
-      "風": 17,
-      "光": 8,
-      "金": -10
+      "風": 15
     }
   },
   {
@@ -3120,12 +3354,10 @@
     "mp": 80,
     "attack": 45,
     "defense": 35,
-    "speed": 48,
+    "speed": 58,
     "crit": 15,
     "resistances": {
-      "風": 18,
-      "混": 8,
-      "無": -8
+      "風": 15
     }
   },
   {
@@ -3138,11 +3370,10 @@
     "mp": 72,
     "attack": 46,
     "defense": 38,
-    "speed": 58,
+    "speed": 68,
     "crit": 17,
     "resistances": {
-      "風": 20,
-      "金": 7
+      "風": 15
     }
   },
   {
@@ -3157,28 +3388,170 @@
     "defense": 45,
     "speed": 45,
     "crit": 15,
-    "resistances": {}
+    "resistances": {
+      "光": 8,
+      "暗": 8
+    }
+  },
+  {
+    "id": "dna_mix_l02",
+    "name": "量子糾纏",
+    "type": "混",
+    "rarity": "傳奇",
+    "description": "兩個糾纏態的粒子，無論相隔多遠都能瞬間感應。",
+    "hp": 90,
+    "mp": 70,
+    "attack": 50,
+    "defense": 40,
+    "speed": 60,
+    "crit": 12,
+    "resistances": {
+      "風": 8,
+      "金": 8
+    }
+  },
+  {
+    "id": "dna_mix_l03",
+    "name": "四象之玉",
+    "type": "混",
+    "rarity": "傳奇",
+    "description": "蘊含著青龍、白虎、朱雀、玄武四象之力的寶玉。",
+    "hp": 120,
+    "mp": 60,
+    "attack": 40,
+    "defense": 50,
+    "speed": 20,
+    "crit": 10,
+    "resistances": {
+      "火": 8,
+      "水": 8,
+      "木": 8,
+      "金": 8
+    }
+  },
+  {
+    "id": "dna_mix_l04",
+    "name": "哲人之思",
+    "type": "混",
+    "rarity": "傳奇",
+    "description": "古代哲學家對世界本源思考的結晶。",
+    "hp": 110,
+    "mp": 90,
+    "attack": 30,
+    "defense": 40,
+    "speed": 35,
+    "crit": 10,
+    "resistances": {
+      "光": 8,
+      "無": 8
+    }
+  },
+  {
+    "id": "dna_mix_l05",
+    "name": "神話殘響",
+    "type": "混",
+    "rarity": "傳奇",
+    "description": "諸神黃昏後，殘留在世間的眾神力量迴響。",
+    "hp": 105,
+    "mp": 75,
+    "attack": 48,
+    "defense": 42,
+    "speed": 40,
+    "crit": 18,
+    "resistances": {
+      "火": 4,
+      "水": 4,
+      "木": 4,
+      "金": 4,
+      "土": 4
+    }
   },
   {
     "id": "dna_none_l01",
     "name": "蓋亞意識",
     "type": "無",
     "rarity": "傳奇",
-    "description": "行星地球本身的意識體。",
+    "description": "行星地球本身的意識體，擁有無限的潛能。",
     "hp": 150,
     "mp": 50,
     "attack": 40,
     "defense": 40,
     "speed": 40,
     "crit": 10,
-    "resistances": {}
+    "resistances": {
+      "無": 12
+    }
+  },
+  {
+    "id": "dna_none_l02",
+    "name": "初始基因",
+    "type": "無",
+    "rarity": "傳奇",
+    "description": "所有生命的共同祖先，蘊含著一切演化的可能性。",
+    "hp": 120,
+    "mp": 60,
+    "attack": 45,
+    "defense": 45,
+    "speed": 45,
+    "crit": 12,
+    "resistances": {
+      "無": 12
+    }
+  },
+  {
+    "id": "dna_none_l03",
+    "name": "虛無之核",
+    "type": "無",
+    "rarity": "傳奇",
+    "description": "在存在與不存在之間搖擺的奇異核心。",
+    "hp": 110,
+    "mp": 70,
+    "attack": 50,
+    "defense": 50,
+    "speed": 50,
+    "crit": 15,
+    "resistances": {
+      "無": 12
+    }
+  },
+  {
+    "id": "dna_none_l04",
+    "name": "無限可能",
+    "type": "無",
+    "rarity": "傳奇",
+    "description": "代表著無限可能性的概念結晶。",
+    "hp": 130,
+    "mp": 65,
+    "attack": 48,
+    "defense": 48,
+    "speed": 48,
+    "crit": 14,
+    "resistances": {
+      "無": 12
+    }
+  },
+  {
+    "id": "dna_none_l05",
+    "name": "阿薩托斯",
+    "type": "無",
+    "rarity": "傳奇",
+    "description": "來自外神的夢境碎片，不可名狀，不可理解。",
+    "hp": 125,
+    "mp": 75,
+    "attack": 52,
+    "defense": 52,
+    "speed": 52,
+    "crit": 18,
+    "resistances": {
+      "無": 12
+    }
   },
   {
     "id": "dna_fire_m01",
     "name": "創世奇點",
     "type": "火",
     "rarity": "神話",
-    "description": "宇宙誕生之初的那個無限熱的奇點。",
+    "description": "宇宙誕生之初的那個無限熱的奇點，萬物之始。",
     "hp": 120,
     "mp": 80,
     "attack": 70,
@@ -3186,10 +3559,71 @@
     "speed": 55,
     "crit": 25,
     "resistances": {
-      "火": 25,
-      "光": 10,
-      "暗": 10,
-      "水": -15
+      "火": 25
+    }
+  },
+  {
+    "id": "dna_fire_m02",
+    "name": "金烏化身",
+    "type": "火",
+    "rarity": "神話",
+    "description": "古代神話中太陽的化身，三足金烏的羽毛。",
+    "hp": 110,
+    "mp": 85,
+    "attack": 75,
+    "defense": 40,
+    "speed": 60,
+    "crit": 28,
+    "resistances": {
+      "火": 25
+    }
+  },
+  {
+    "id": "dna_fire_m03",
+    "name": "原初之焰",
+    "type": "火",
+    "rarity": "神話",
+    "description": "普羅米修斯盜取的天界火種，文明的起源。",
+    "hp": 130,
+    "mp": 75,
+    "attack": 68,
+    "defense": 50,
+    "speed": 50,
+    "crit": 22,
+    "resistances": {
+      "火": 25
+    }
+  },
+  {
+    "id": "dna_fire_m04",
+    "name": "祝融之魂",
+    "type": "火",
+    "rarity": "神話",
+    "description": "東方火神祝融的靈魂碎片，執掌世間之火。",
+    "hp": 125,
+    "mp": 82,
+    "attack": 72,
+    "defense": 48,
+    "speed": 52,
+    "crit": 24,
+    "resistances": {
+      "火": 25
+    }
+  },
+  {
+    "id": "dna_fire_m05",
+    "name": "龍之怒火",
+    "type": "火",
+    "rarity": "神話",
+    "description": "滅世紅龍的怒火，足以將世界化為灰燼。",
+    "hp": 115,
+    "mp": 78,
+    "attack": 80,
+    "defense": 42,
+    "speed": 58,
+    "crit": 30,
+    "resistances": {
+      "火": 25
     }
   },
   {
@@ -3197,7 +3631,7 @@
     "name": "初始之海",
     "type": "水",
     "rarity": "神話",
-    "description": "生命誕生之前的原始海洋。",
+    "description": "生命誕生之前的原始海洋，萬物之母。",
     "hp": 150,
     "mp": 100,
     "attack": 50,
@@ -3205,10 +3639,71 @@
     "speed": 40,
     "crit": 20,
     "resistances": {
-      "水": 25,
-      "木": 10,
-      "土": 10,
-      "火": -15
+      "水": 25
+    }
+  },
+  {
+    "id": "dna_water_m02",
+    "name": "共工之魂",
+    "type": "水",
+    "rarity": "神話",
+    "description": "東方水神共工的靈魂碎片，能引發滔天洪水。",
+    "hp": 140,
+    "mp": 90,
+    "attack": 60,
+    "defense": 55,
+    "speed": 45,
+    "crit": 22,
+    "resistances": {
+      "水": 25
+    }
+  },
+  {
+    "id": "dna_water_m03",
+    "name": "海皇權杖",
+    "type": "水",
+    "rarity": "神話",
+    "description": "海皇波賽頓的三叉戟，擁有支配海洋的力量。",
+    "hp": 130,
+    "mp": 95,
+    "attack": 65,
+    "defense": 58,
+    "speed": 48,
+    "crit": 24,
+    "resistances": {
+      "水": 25
+    }
+  },
+  {
+    "id": "dna_water_m04",
+    "name": "冰神之心",
+    "type": "水",
+    "rarity": "神話",
+    "description": "遠古冰霜巨人的心臟，萬物皆可凍結。",
+    "hp": 145,
+    "mp": 85,
+    "attack": 55,
+    "defense": 70,
+    "speed": 35,
+    "crit": 18,
+    "resistances": {
+      "水": 25
+    }
+  },
+  {
+    "id": "dna_water_m05",
+    "name": "潮汐龍珠",
+    "type": "水",
+    "rarity": "神話",
+    "description": "掌控潮汐與風暴的龍神的龍珠。",
+    "hp": 135,
+    "mp": 105,
+    "attack": 58,
+    "defense": 52,
+    "speed": 50,
+    "crit": 25,
+    "resistances": {
+      "水": 25
     }
   },
   {
@@ -3216,18 +3711,79 @@
     "name": "生命螺旋",
     "type": "木",
     "rarity": "神話",
-    "description": "所有生命基因演化的終極形態。",
+    "description": "所有生命基因演化的終極形態，生生不息。",
     "hp": 160,
     "mp": 90,
     "attack": 45,
-    "defense": 65,
+    "defense": 75,
     "speed": 35,
     "crit": 18,
     "resistances": {
-      "木": 25,
-      "光": 10,
-      "水": 10,
-      "金": -15
+      "木": 25
+    }
+  },
+  {
+    "id": "dna_wood_m02",
+    "name": "創界神樹",
+    "type": "木",
+    "rarity": "神話",
+    "description": "支撐整個世界的創界樹的一片樹葉。",
+    "hp": 180,
+    "mp": 80,
+    "attack": 40,
+    "defense": 80,
+    "speed": 30,
+    "crit": 15,
+    "resistances": {
+      "木": 25
+    }
+  },
+  {
+    "id": "dna_wood_m03",
+    "name": "句芒之魂",
+    "type": "木",
+    "rarity": "神話",
+    "description": "東方春神句芒的靈魂，萬物復甦的象徵。",
+    "hp": 150,
+    "mp": 100,
+    "attack": 50,
+    "defense": 65,
+    "speed": 40,
+    "crit": 20,
+    "resistances": {
+      "木": 25
+    }
+  },
+  {
+    "id": "dna_wood_m04",
+    "name": "森林泰坦",
+    "type": "木",
+    "rarity": "神話",
+    "description": "由整片森林的意識匯聚而成的巨大泰坦。",
+    "hp": 170,
+    "mp": 85,
+    "attack": 48,
+    "defense": 78,
+    "speed": 32,
+    "crit": 17,
+    "resistances": {
+      "木": 25
+    }
+  },
+  {
+    "id": "dna_wood_m05",
+    "name": "雅典娜盾",
+    "type": "木",
+    "rarity": "神話",
+    "description": "智慧女神雅典娜的埃癸斯之盾的碎片。",
+    "hp": 145,
+    "mp": 95,
+    "attack": 55,
+    "defense": 72,
+    "speed": 38,
+    "crit": 19,
+    "resistances": {
+      "木": 25
     }
   },
   {
@@ -3239,14 +3795,75 @@
     "hp": 130,
     "mp": 70,
     "attack": 60,
-    "defense": 75,
+    "defense": 85,
     "speed": 30,
     "crit": 15,
     "resistances": {
-      "金": 25,
-      "土": 10,
-      "風": 10,
-      "火": -15
+      "金": 25
+    }
+  },
+  {
+    "id": "dna_gold_m02",
+    "name": "創世機神",
+    "type": "金",
+    "rarity": "神話",
+    "description": "創造了所有機械生命的遠古機神的零件。",
+    "hp": 140,
+    "mp": 80,
+    "attack": 65,
+    "defense": 80,
+    "speed": 35,
+    "crit": 18,
+    "resistances": {
+      "金": 25
+    }
+  },
+  {
+    "id": "dna_gold_m03",
+    "name": "赫菲斯托",
+    "type": "金",
+    "rarity": "神話",
+    "description": "奧林帕斯工匠之神的意志結晶。",
+    "hp": 125,
+    "mp": 75,
+    "attack": 70,
+    "defense": 78,
+    "speed": 32,
+    "crit": 16,
+    "resistances": {
+      "金": 25
+    }
+  },
+  {
+    "id": "dna_gold_m04",
+    "name": "絕對防禦",
+    "type": "金",
+    "rarity": "神話",
+    "description": "無法被任何力量擊破的絕對防禦概念。",
+    "hp": 160,
+    "mp": 60,
+    "attack": 50,
+    "defense": 100,
+    "speed": 20,
+    "crit": 10,
+    "resistances": {
+      "金": 25
+    }
+  },
+  {
+    "id": "dna_gold_m05",
+    "name": "兵主蚩尤",
+    "type": "金",
+    "rarity": "神話",
+    "description": "上古戰爭之神的兵器碎片，充滿鬥氣。",
+    "hp": 135,
+    "mp": 65,
+    "attack": 75,
+    "defense": 70,
+    "speed": 40,
+    "crit": 20,
+    "resistances": {
+      "金": 25
     }
   },
   {
@@ -3258,14 +3875,75 @@
     "hp": 200,
     "mp": 60,
     "attack": 40,
-    "defense": 85,
+    "defense": 95,
     "speed": 20,
     "crit": 10,
     "resistances": {
-      "土": 30,
-      "金": 12,
-      "木": 12,
-      "風": -20
+      "土": 25
+    }
+  },
+  {
+    "id": "dna_earth_m02",
+    "name": "盤古之脊",
+    "type": "土",
+    "rarity": "神話",
+    "description": "開天闢地的巨人盤古的脊柱化石，支撐天地。",
+    "hp": 180,
+    "mp": 70,
+    "attack": 50,
+    "defense": 90,
+    "speed": 25,
+    "crit": 12,
+    "resistances": {
+      "土": 25
+    }
+  },
+  {
+    "id": "dna_earth_m03",
+    "name": "蓋亞本體",
+    "type": "土",
+    "rarity": "神話",
+    "description": "大地母神蓋亞的意志，世界的基石。",
+    "hp": 220,
+    "mp": 50,
+    "attack": 35,
+    "defense": 100,
+    "speed": 15,
+    "crit": 8,
+    "resistances": {
+      "土": 25
+    }
+  },
+  {
+    "id": "dna_earth_m04",
+    "name": "后土之魂",
+    "type": "土",
+    "rarity": "神話",
+    "description": "掌管陰陽、生育萬物的大地之母的靈魂。",
+    "hp": 170,
+    "mp": 80,
+    "attack": 45,
+    "defense": 85,
+    "speed": 22,
+    "crit": 14,
+    "resistances": {
+      "土": 25
+    }
+  },
+  {
+    "id": "dna_earth_m05",
+    "name": "鎮元大仙",
+    "type": "土",
+    "rarity": "神話",
+    "description": "與世同君的地仙之祖，萬壽山的主人。",
+    "hp": 190,
+    "mp": 75,
+    "attack": 42,
+    "defense": 92,
+    "speed": 18,
+    "crit": 11,
+    "resistances": {
+      "土": 25
     }
   },
   {
@@ -3273,18 +3951,79 @@
     "name": "神之初息",
     "type": "光",
     "rarity": "神話",
-    "description": "「要有光」，於是便有了光。",
+    "description": "「要有光」，於是便有了光。世界最初的光。",
     "hp": 130,
     "mp": 110,
     "attack": 65,
     "defense": 50,
-    "speed": 60,
+    "speed": 70,
     "crit": 28,
     "resistances": {
-      "光": 30,
-      "火": 12,
-      "風": 12,
-      "暗": -25
+      "光": 25
+    }
+  },
+  {
+    "id": "dna_light_m02",
+    "name": "天照大神",
+    "type": "光",
+    "rarity": "神話",
+    "description": "高天原的統治者，日本神話中的太陽女神。",
+    "hp": 140,
+    "mp": 100,
+    "attack": 60,
+    "defense": 55,
+    "speed": 65,
+    "crit": 25,
+    "resistances": {
+      "光": 25
+    }
+  },
+  {
+    "id": "dna_light_m03",
+    "name": "光之主宰",
+    "type": "光",
+    "rarity": "神話",
+    "description": "支配宇宙所有光線的至高存在。",
+    "hp": 125,
+    "mp": 120,
+    "attack": 70,
+    "defense": 48,
+    "speed": 75,
+    "crit": 30,
+    "resistances": {
+      "光": 25
+    }
+  },
+  {
+    "id": "dna_light_m04",
+    "name": "拉的翼神",
+    "type": "光",
+    "rarity": "神話",
+    "description": "埃及太陽神的終極形態，神聖的翼神龍。",
+    "hp": 135,
+    "mp": 105,
+    "attack": 68,
+    "defense": 52,
+    "speed": 68,
+    "crit": 26,
+    "resistances": {
+      "光": 25
+    }
+  },
+  {
+    "id": "dna_light_m05",
+    "name": "熾天使長",
+    "type": "光",
+    "rarity": "神話",
+    "description": "最高階天使，在神之右翼燃燒的火焰。",
+    "hp": 120,
+    "mp": 115,
+    "attack": 72,
+    "defense": 45,
+    "speed": 72,
+    "crit": 29,
+    "resistances": {
+      "光": 25
     }
   },
   {
@@ -3292,18 +4031,79 @@
     "name": "末日號角",
     "type": "暗",
     "rarity": "神話",
-    "description": "吹響諸神黃昏的末日號角。",
+    "description": "吹響諸神黃昏的末日號角，宣告終結的來臨。",
     "hp": 125,
     "mp": 95,
     "attack": 75,
     "defense": 40,
-    "speed": 65,
+    "speed": 70,
     "crit": 30,
     "resistances": {
-      "暗": 30,
-      "毒": 12,
-      "火": 12,
-      "光": -25
+      "暗": 25
+    }
+  },
+  {
+    "id": "dna_dark_m02",
+    "name": "虛空主宰",
+    "type": "暗",
+    "rarity": "神話",
+    "description": "支配所有虛無與黑暗的絕對主宰。",
+    "hp": 135,
+    "mp": 100,
+    "attack": 70,
+    "defense": 45,
+    "speed": 68,
+    "crit": 28,
+    "resistances": {
+      "暗": 25
+    }
+  },
+  {
+    "id": "dna_dark_m03",
+    "name": "克蘇魯夢",
+    "type": "暗",
+    "rarity": "神話",
+    "description": "在拉萊耶中沉睡的舊日支配者的夢境。",
+    "hp": 140,
+    "mp": 90,
+    "attack": 68,
+    "defense": 50,
+    "speed": 60,
+    "crit": 25,
+    "resistances": {
+      "暗": 25
+    }
+  },
+  {
+    "id": "dna_dark_m04",
+    "name": "撒旦之契",
+    "type": "暗",
+    "rarity": "神話",
+    "description": "與地獄君王撒旦簽訂的契約，賦予無盡魔力。",
+    "hp": 120,
+    "mp": 110,
+    "attack": 78,
+    "defense": 38,
+    "speed": 72,
+    "crit": 32,
+    "resistances": {
+      "暗": 25
+    }
+  },
+  {
+    "id": "dna_dark_m05",
+    "name": "夜之女神",
+    "type": "暗",
+    "rarity": "神話",
+    "description": "希臘神話中原始的黑夜女神倪克斯的化身。",
+    "hp": 130,
+    "mp": 105,
+    "attack": 72,
+    "defense": 42,
+    "speed": 69,
+    "crit": 29,
+    "resistances": {
+      "暗": 25
     }
   },
   {
@@ -3316,13 +4116,74 @@
     "mp": 85,
     "attack": 80,
     "defense": 42,
-    "speed": 58,
+    "speed": 68,
     "crit": 26,
     "resistances": {
-      "毒": 30,
-      "暗": 12,
-      "木": 12,
-      "金": -20
+      "毒": 25
+    }
+  },
+  {
+    "id": "dna_poison_m02",
+    "name": "疫病君主",
+    "type": "毒",
+    "rarity": "神話",
+    "description": "天啟四騎士中帶來瘟疫的騎士的印記。",
+    "hp": 120,
+    "mp": 90,
+    "attack": 75,
+    "defense": 45,
+    "speed": 65,
+    "crit": 24,
+    "resistances": {
+      "毒": 25
+    }
+  },
+  {
+    "id": "dna_poison_m03",
+    "name": "萬毒之祖",
+    "type": "毒",
+    "rarity": "神話",
+    "description": "神農氏嚐百草後，體內萬千劇毒的集合體。",
+    "hp": 130,
+    "mp": 80,
+    "attack": 70,
+    "defense": 50,
+    "speed": 60,
+    "crit": 22,
+    "resistances": {
+      "毒": 25
+    }
+  },
+  {
+    "id": "dna_poison_m04",
+    "name": "泰坦巨蟒",
+    "type": "毒",
+    "rarity": "神話",
+    "description": "史前巨蟒泰坦的毒牙，能輕易毒殺恐龍。",
+    "hp": 140,
+    "mp": 75,
+    "attack": 78,
+    "defense": 48,
+    "speed": 55,
+    "crit": 20,
+    "resistances": {
+      "毒": 25
+    }
+  },
+  {
+    "id": "dna_poison_m05",
+    "name": "腐蝕之神",
+    "type": "毒",
+    "rarity": "神話",
+    "description": "將萬物還原為基本粒子的腐蝕法則化身。",
+    "hp": 100,
+    "mp": 95,
+    "attack": 85,
+    "defense": 38,
+    "speed": 72,
+    "crit": 28,
+    "resistances": {
+      "毒": 25
     }
   },
   {
@@ -3335,13 +4196,74 @@
     "mp": 105,
     "attack": 55,
     "defense": 48,
-    "speed": 80,
+    "speed": 90,
     "crit": 24,
     "resistances": {
-      "風": 30,
-      "光": 12,
-      "暗": 12,
-      "土": -20
+      "風": 25
+    }
+  },
+  {
+    "id": "dna_wind_m02",
+    "name": "雷神之鎚",
+    "type": "風",
+    "rarity": "神話",
+    "description": "雷神索爾的神鎚妙爾尼爾的碎片，帶有風暴之力。",
+    "hp": 125,
+    "mp": 95,
+    "attack": 65,
+    "defense": 55,
+    "speed": 80,
+    "crit": 22,
+    "resistances": {
+      "風": 25
+    }
+  },
+  {
+    "id": "dna_wind_m03",
+    "name": "迦樓羅王",
+    "type": "風",
+    "rarity": "神話",
+    "description": "佛教天龍八部之一，以龍為食的神鳥之王。",
+    "hp": 110,
+    "mp": 100,
+    "attack": 70,
+    "defense": 50,
+    "speed": 85,
+    "crit": 28,
+    "resistances": {
+      "風": 25
+    }
+  },
+  {
+    "id": "dna_wind_m04",
+    "name": "自由之翼",
+    "type": "風",
+    "rarity": "神話",
+    "description": "代表著絕對自由意志，不受任何拘束。",
+    "hp": 120,
+    "mp": 110,
+    "attack": 60,
+    "defense": 45,
+    "speed": 95,
+    "crit": 26,
+    "resistances": {
+      "風": 25
+    }
+  },
+  {
+    "id": "dna_wind_m05",
+    "name": "應龍之魂",
+    "type": "風",
+    "rarity": "神話",
+    "description": "中國神話中有翼的創世龍神的靈魂。",
+    "hp": 130,
+    "mp": 98,
+    "attack": 62,
+    "defense": 58,
+    "speed": 82,
+    "crit": 23,
+    "resistances": {
+      "風": 25
     }
   },
   {
@@ -3349,16 +4271,87 @@
     "name": "混沌原核",
     "type": "混",
     "rarity": "神話",
-    "description": "來自世界誕生之初的混沌能量核心。",
-    "hp": 110,
-    "mp": 70,
-    "attack": 35,
-    "defense": 35,
-    "speed": 35,
-    "crit": 12,
+    "description": "來自世界誕生之初的混沌能量核心，萬物之始。",
+    "hp": 140,
+    "mp": 100,
+    "attack": 60,
+    "defense": 60,
+    "speed": 60,
+    "crit": 20,
     "resistances": {
-      "毒": 10,
-      "風": 10
+      "光": 10,
+      "暗": 10
+    }
+  },
+  {
+    "id": "dna_mix_m02",
+    "name": "萬物歸一",
+    "type": "混",
+    "rarity": "神話",
+    "description": "宇宙終點的狀態，所有物質與能量都合而為一。",
+    "hp": 150,
+    "mp": 90,
+    "attack": 55,
+    "defense": 65,
+    "speed": 55,
+    "crit": 18,
+    "resistances": {
+      "無": 20
+    }
+  },
+  {
+    "id": "dna_mix_m03",
+    "name": "無名之霧",
+    "type": "混",
+    "rarity": "神話",
+    "description": "舊日支配者的化身，沒有固定形態的恐怖存在。",
+    "hp": 130,
+    "mp": 110,
+    "attack": 65,
+    "defense": 50,
+    "speed": 65,
+    "crit": 25,
+    "resistances": {
+      "風": 10,
+      "毒": 10
+    }
+  },
+  {
+    "id": "dna_mix_m04",
+    "name": "唯一真神",
+    "type": "混",
+    "rarity": "神話",
+    "description": "超越所有概念與法則的至高存在。",
+    "hp": 120,
+    "mp": 120,
+    "attack": 70,
+    "defense": 70,
+    "speed": 70,
+    "crit": 30,
+    "resistances": {
+      "火": 5,
+      "水": 5,
+      "木": 5,
+      "金": 5,
+      "土": 5
+    }
+  },
+  {
+    "id": "dna_mix_m05",
+    "name": "拉普拉斯",
+    "type": "混",
+    "rarity": "神話",
+    "description": "知曉宇宙中所有粒子位置與動量的惡魔。",
+    "hp": 110,
+    "mp": 130,
+    "attack": 68,
+    "defense": 55,
+    "speed": 75,
+    "crit": 28,
+    "resistances": {
+      "光": 8,
+      "暗": 8,
+      "金": 8
     }
   },
   {
@@ -3369,12 +4362,76 @@
     "description": "在觀測之前，處於所有可能性的疊加態。",
     "hp": 140,
     "mp": 90,
-    "attack": 60,
-    "defense": 60,
-    "speed": 60,
+    "attack": 65,
+    "defense": 65,
+    "speed": 65,
     "crit": 22,
     "resistances": {
-      "混": 20
+      "無": 20
+    }
+  },
+  {
+    "id": "dna_none_m02",
+    "name": "阿爾宙斯",
+    "type": "無",
+    "rarity": "神話",
+    "description": "據說創造了整個世界的創世神。",
+    "hp": 150,
+    "mp": 100,
+    "attack": 70,
+    "defense": 70,
+    "speed": 70,
+    "crit": 25,
+    "resistances": {
+      "無": 20
+    }
+  },
+  {
+    "id": "dna_none_m03",
+    "name": "存在本身",
+    "type": "無",
+    "rarity": "神話",
+    "description": "超越所有定義與概念的存在。",
+    "hp": 130,
+    "mp": 110,
+    "attack": 75,
+    "defense": 75,
+    "speed": 75,
+    "crit": 28,
+    "resistances": {
+      "無": 20
+    }
+  },
+  {
+    "id": "dna_none_m04",
+    "name": "超越者",
+    "type": "無",
+    "rarity": "神話",
+    "description": "來自更高維度的存在，遊戲規則對其無效。",
+    "hp": 135,
+    "mp": 105,
+    "attack": 72,
+    "defense": 72,
+    "speed": 72,
+    "crit": 26,
+    "resistances": {
+      "無": 20
+    }
+  },
+  {
+    "id": "dna_none_m05",
+    "name": "上帝粒子",
+    "type": "無",
+    "rarity": "神話",
+    "description": "賦予萬物質量的希格斯玻色子。",
+    "hp": 125,
+    "mp": 115,
+    "attack": 78,
+    "defense": 78,
+    "speed": 78,
+    "crit": 30,
+    "resistances": {
+      "無": 20
     }
   },
   {
