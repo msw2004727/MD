@@ -89,6 +89,7 @@ class Skill(TypedDict):
     level: NotRequired[int]
     current_exp: NotRequired[int]
     exp_to_next_level: NotRequired[int]
+    is_active: NotRequired[bool] # 新增：技能開關狀態
     # 舊版相容性欄位
     story: NotRequired[str]
     power: NotRequired[int]
@@ -378,6 +379,7 @@ class GameConfigs(TypedDict):
     elemental_advantage_chart: NotRequired[Dict[ElementTypes, Dict[ElementTypes, float]]] 
     cultivation_stories: NotRequired[Dict[str, Any]]
     champion_guardians: NotRequired[Dict[str, Any]]
+    battle_highlights: NotRequired[Dict[str, Any]]
 
 if __name__ == '__main__':
     print("MD_models.py 已執行。TypedDict 定義可用。")
