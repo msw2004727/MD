@@ -186,6 +186,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         for skill in new_monster_instance.get("skills", []):
             skill["current_exp"] = 0
             skill["exp_to_next_level"] = calculate_exp_to_next_level(skill.get("level", 1), game_configs.get("cultivation_config", {}).get("skill_exp_base_multiplier", 100))
+            skill["is_active"] = True # 新增：確保舊配方的技能也是開啟狀態
         new_monster_instance["hp"] = new_monster_instance.get("initial_max_hp", 1)
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
@@ -234,6 +235,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
                 new_skill = get_effective_skill_with_level(template, initial_level)
                 new_skill['current_exp'] = 0
                 new_skill['exp_to_next_level'] = calculate_exp_to_next_level(initial_level, cultivation_cfg.get("skill_exp_base_multiplier", 100))
+                new_skill['is_active'] = True # 新增：確保新技能預設為開啟
                 generated_skills.append(new_skill)
 
         if not generated_skills:
@@ -247,6 +249,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
                 new_skill = get_effective_skill_with_level(default_skill_template, initial_level)
                 new_skill['current_exp'] = 0
                 new_skill['exp_to_next_level'] = calculate_exp_to_next_level(initial_level, cultivation_cfg.get("skill_exp_base_multiplier", 100))
+                new_skill['is_active'] = True # 新增：確保新技能預設為開啟
                 generated_skills.append(new_skill)
             else:
                 monster_combination_services_logger.error("連預設的'無'屬性技能都找不到，怪獸將沒有技能！")
