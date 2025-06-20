@@ -29,7 +29,8 @@
             { "text": "冠軍殿堂開放挑戰", "color": "success" },
             { "text": "錢幣系統", "color": "success" },
             { "text": "合成規則調整", "color": "success" },
-            { "text": "元素抗性計算調整", "color": "success" }
+            { "text": "元素抗性計算調整", "color": "success" },
+            { "text": "第一階段技能優化", "color": "success" }
           ]
         },
         {
@@ -42,6 +43,7 @@
             { "text": "醫療站", "color": "accent" },
             { "text": "冒險島", "color": "accent" },
             { "text": "怪獸族譜", "color": "accent" }
+          
           ]
         }
       ]
