@@ -9,7 +9,7 @@ import time
 import math
 
 # 從專案的其他模組導入必要的模型
-from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry
+from .MD_models import PlayerGameData, Monster, GameConfigs, ChatHistoryEntry, Skill
 from .player_services import get_player_data_service
 # --- 核心修改處 START ---
 # 從共用函式庫導入感情值計算工具
@@ -64,10 +64,7 @@ def generate_monster_interaction_response_service(
     interaction_stats["touch_count"] = interaction_stats.get("touch_count", 0) + 1
 
     if action_type in ['pat', 'kiss']:
-        # --- 核心修改處 START ---
-        # 改為呼叫共用的函式
         update_bond_with_diminishing_returns(interaction_stats, "touch", 5)
-        # --- 核心修改處 END ---
     elif action_type == 'punch':
         current_bond = interaction_stats.get("bond_points", 0)
         interaction_stats["bond_points"] = max(-100, current_bond - 10)
@@ -164,10 +161,7 @@ def generate_monster_chat_response_service(
     interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
     interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
     
-    # --- 核心修改處 START ---
-    # 改為呼叫共用的函式
     update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
-    # --- 核心修改處 END ---
 
     chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
 
@@ -197,6 +191,109 @@ def generate_monster_chat_response_service(
     
     chat_logger.info(f"成功為怪獸 {monster_id} 生成聊天回應。")
     return result
+
+# --- 核心修改處 START ---
+def handle_skill_toggle_request_service(
+    player_id: str,
+    monster_id: str,
+    skill_name: str,
+    target_state: bool,
+    game_configs: GameConfigs
+) -> Optional[Dict[str, Any]]:
+    """
+    處理切換技能開關的請求，根據好感度和個性決定怪獸是否同意。
+    """
+    player_data, _ = get_player_data_service(player_id, None, game_configs)
+    if not player_data:
+        return {"success": False, "error": "找不到玩家資料。"}
+
+    monster = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
+    if not monster:
+        return {"success": False, "error": "找不到指定的怪獸。"}
+
+    skill_to_toggle = next((s for s in monster.get("skills", []) if s.get("name") == skill_name), None)
+    if not skill_to_toggle:
+        return {"success": False, "error": "找不到指定的技能。"}
+
+    # --- 同意機率計算 ---
+    interaction_stats = monster.get("interaction_stats", {})
+    bond_points = interaction_stats.get("bond_points", 0)
+    
+    # 基礎同意率 60%
+    base_agreement_chance = 0.60
+    
+    # 好感度加成/懲罰：每5點好感度增/減1%機率
+    bond_modifier = (bond_points / 5) / 100
+    
+    # 個性加成/懲罰
+    personality_modifier = 0.0
+    personality = monster.get("personality", {}).get("name", "標準的")
+    personality_map = {
+        "忠誠的": 0.30, "溫和的": 0.20, "可靠的": 0.15,
+        "膽小的": 0.10, "懶散的": -0.10, "頑固的": -0.20,
+        "急躁的": -0.25, "傲慢的": -0.40, "暴躁的": -0.50
+    }
+    personality_modifier = personality_map.get(personality, 0.0)
+
+    final_chance = base_agreement_chance + bond_modifier + personality_modifier
+    final_chance = max(0.05, min(0.98, final_chance)) # 確保機率在 5% 到 98% 之間
+
+    agreed = random.random() < final_chance
+    
+    action_text = "開啟" if target_state else "關閉"
+    request_text = f"你的主人「{player_data.get('nickname', '訓練師')}」想請求你「{action_text}」你的技能「{skill_name}」。"
+    
+    if agreed:
+        # 如果同意，更新技能狀態
+        skill_to_toggle['is_active'] = target_state
+        decision_text = "你思考了一下，決定同意主人的請求。"
+    else:
+        decision_text = "你思考了一下，決定拒絕主人的請求。"
+
+    # --- AI 回應生成 ---
+    system_prompt = f"""
+你現在將扮演一隻名為「{monster.get('element_nickname_part') or monster.get('nickname', '怪獸')}」的怪獸。
+你的核心準則是：完全沉浸在你的角色中，用「我」作為第一人稱來回應。
+你的個性是「{personality}」，這意味著：{monster.get('personality', {}).get('description', '你很普通')}。
+你的回應必須簡短、口語化、並且絕對符合你的個性。
+"""
+    user_prompt = f"""
+--- 情境 ---
+{request_text}
+{decision_text}
+---
+現在，請以符合你個性的口吻，對這件事發表一句你的看法或回應。
+我:
+"""
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+        "temperature": 0.9, "max_tokens": 80,
+    }
+    headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
+
+    try:
+        response = requests.post(DEEPSEEK_API_URL, json=payload, headers=headers, timeout=20)
+        response.raise_for_status()
+        response_json = response.json()
+        ai_reply = response_json["choices"][0]["message"].get("content", "...")
+    except Exception as e:
+        ai_logger.error(f"為技能切換生成AI回應時出錯: {e}")
+        ai_reply = "..." if agreed else "我不想！"
+
+    # 將此次互動記錄到聊天歷史
+    user_log = f"（你請求{action_text}技能「{skill_name}」）"
+    monster.setdefault("chatHistory", []).append({"role": "user", "content": user_log})
+    monster["chatHistory"].append({"role": "assistant", "content": ai_reply})
+    monster["chatHistory"] = monster["chatHistory"][-CHAT_HISTORY_LIMIT:]
+    
+    return {
+        "success": True,
+        "agreed": agreed,
+        "ai_reply": ai_reply,
+        "updated_player_data": player_data
+    }
+# --- 核心修改處 END ---
 
 
 def get_ai_chat_completion(
