@@ -38,6 +38,44 @@ BASIC_ATTACK: Skill = {
     ]
 }
 
+# --- 【新增】產生戰鬥亮點的輔助函式 ---
+def _extract_battle_highlights(raw_log: List[str], player_nickname: str, opponent_nickname: str) -> List[str]:
+    """從原始戰鬥日誌中提取關鍵事件作為亮點。"""
+    highlights = []
+    
+    # 關鍵字和對應的亮點描述
+    keyword_map = {
+        "是會心一擊！": "打出了一次決定性的會心一擊！",
+        "效果絕佳！": "巧妙利用屬性克制，造成了巨大傷害！",
+        "閃過了！": "一次關鍵的閃避，扭轉了局勢！",
+        "中毒了！": "成功使對手陷入中毒狀態，持續消耗其體力。",
+        "陷入了麻痺！": "關鍵時刻讓對手陷入麻痺，爭取到寶貴的回合！",
+        "陷入了混亂！": "擾亂了對手的行動，使其自相殘殺！",
+        "睡著了！": "成功催眠對手，使其無法動彈！",
+        "凍結了！": "用極寒的攻擊將對手完全凍結！",
+        "燒傷！": "用灼熱的攻擊持續削弱對手！",
+        "能力大幅提升": "看準時機大幅強化了自身能力！",
+        "能力大幅下降": "成功大幅削弱了對手的能力！"
+    }
+
+    # 為了避免重複，記錄已經添加過的亮點類型
+    added_highlights = set()
+
+    for log_line in raw_log:
+        for keyword, description in keyword_map.items():
+            if keyword in log_line and description not in added_highlights:
+                highlights.append(description)
+                added_highlights.add(description)
+                # 找到一個就跳出內層迴圈，處理下一行日誌
+                break
+
+    # 如果沒有任何關鍵字匹配，則提供一個通用亮點
+    if not highlights:
+        highlights.append("雙方進行了一場激烈的攻防戰。")
+        
+    return highlights[:5] # 最多返回5個亮點
+
+
 def _calculate_elemental_advantage(attacker_element: ElementTypes, defender_elements: List[ElementTypes], game_configs: GameConfigs) -> float:
     chart = game_configs.get("elemental_advantage_chart", {})
     total_multiplier = 1.0
@@ -97,7 +135,6 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
 
 
 def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConfigs) -> List[Skill]:
-    """從遊戲設定中查找完整的技能資料，並返回怪獸當前MP足夠使用的技能列表。"""
     available_skills: List[Skill] = []
     all_skills_db = game_configs.get("skills", {})
     
@@ -164,7 +201,6 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     return BASIC_ATTACK
 
 def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effects: List[SkillEffect], game_configs: GameConfigs, action_details: Dict, log_parts: List[str]):
-    """處理單個技能中定義的多個效果"""
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
@@ -175,13 +211,11 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             attacker_stats = _get_monster_current_stats(performer, performer_pd, game_configs)
             defender_stats = _get_monster_current_stats(target, target_pd, game_configs)
             
-            # --- 【修改】處理 ignore_defense_buffs ---
             special_logic_id = next((e.get("special_logic_id") for e in skill.get("effects", []) if "special_logic_id" in e), None)
             
-            # 如果技能效果是無視防禦提升，則使用目標的基礎防禦
             if special_logic_id == "ignore_defense_buffs":
                 defense_stat = max(1, target.get("defense", 1))
-                log_parts.append(f" 攻擊無視了 {target['nickname']} 的防禦提升！")
+                log_parts.append(f" 攻擊無視了 **{target['nickname']}** 的防禦提升！")
             else:
                 defense_stat = max(1, defender_stats.get("defense", 1))
 
@@ -264,7 +298,6 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                     performer["current_hp"] = max(0, performer.get("current_hp", 0) - recoil_damage)
                     log_parts.append(f" **{performer['nickname']}**也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
             elif special_id == "ignore_defense_buffs":
-                # 邏輯已移至傷害計算部分，此處僅作日誌記錄（如果需要的話），但為避免重複，暫時留空。
                 pass
             else:
                 log_parts.append(f" 發動了未知的特殊效果「{special_id}」！")
@@ -405,7 +438,8 @@ def simulate_battle_full(
     player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
     opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
-    # --- 【新增】呼叫AI服務來生成戰報 ---
+    # --- 【修改】呼叫亮點產生函式並將結果放入 final_battle_result ---
+    battle_highlights = _extract_battle_highlights(all_raw_log_messages, player_monster['nickname'], opponent_monster['nickname'])
     ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
 
     final_battle_result: BattleResult = {
@@ -413,10 +447,10 @@ def simulate_battle_full(
         "player_monster_final_hp": player_monster["current_hp"], "player_monster_final_mp": player_monster["current_mp"],
         "player_monster_final_skills": player_monster.get("skills", []), "player_monster_final_resume": player_monster.get("resume", {"wins": 0, "losses": 0}),
         "player_activity_log": player_activity_log, "opponent_activity_log": opponent_activity_log,
-        "battle_highlights": [], # 這個欄位目前由AI生成，暫時留空
-        "log_entries": [], # 這個欄位看起來已廢棄，留空
+        "battle_highlights": battle_highlights,
+        "log_entries": [],
         "battle_end": True,
-        "ai_battle_report_content": ai_report # 將AI生成的內容填入
+        "ai_battle_report_content": ai_report
     }
     
     return final_battle_result
