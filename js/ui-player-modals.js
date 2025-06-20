@@ -76,15 +76,30 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     
     const isOwnProfile = (playerData.uid && playerData.uid === gameState.playerId) || (!playerData.uid && nickname === gameState.playerNickname);
 
+    // --- 核心修改處 START ---
     if (ownedTitles.length > 0) {
-        titlesHtml = ownedTitles.map(title => {
-            const isEquipped = title.id === equippedTitleId;
+        const allTitlesConfig = gameConfigs.titles || []; // 獲取所有稱號的設定檔
+        
+        titlesHtml = ownedTitles.map(ownedTitle => {
+            // 用玩家擁有的稱號ID，去設定檔中找出完整的稱號資料
+            const titleDetails = allTitlesConfig.find(t => t.id === ownedTitle.id);
+
+            // 如果因為某些原因找不到對應的稱號資料，則顯示一個後備訊息，避免 undefined
+            if (!titleDetails) {
+                return `
+                    <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                        <p style="color: var(--danger-color);">未知稱號 (ID: ${ownedTitle.id || 'N/A'})</p>
+                    </div>
+                `;
+            }
+
+            const isEquipped = titleDetails.id === equippedTitleId;
             
             let buttonHtml = ''; 
             if (isOwnProfile) {
                 buttonHtml = isEquipped
                     ? `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`
-                    : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${title.id}" style="min-width: 80px;">裝備</button>`;
+                    : `<button class="button primary text-xs py-1 px-2 equip-title-btn" data-title-id="${titleDetails.id}" style="min-width: 80px;">裝備</button>`;
             } else {
                 if (isEquipped) {
                     buttonHtml = `<span class="button success text-xs py-1 px-2" style="cursor: default; min-width: 80px; text-align: center;">✔️ 已裝備</span>`;
@@ -93,7 +108,8 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
 
             let buffsHtml = '';
-            if (title.buffs && Object.keys(title.buffs).length > 0) {
+            // 使用從設定檔中找到的完整資料來顯示 Buff
+            if (titleDetails.buffs && Object.keys(titleDetails.buffs).length > 0) {
                 const statDisplayName = {
                     hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
                     cultivation_item_find_chance: '修煉物品發現機率', cultivation_exp_gain: '修煉經驗提升',
@@ -105,7 +121,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                     earth_resistance: '土系抗性', light_resistance: '光系抗性', dark_resistance: '暗系抗性'
                 };
                 buffsHtml = '<div class="title-buffs" style="font-size: 0.85em; color: var(--success-color); margin-top: 5px;">效果：';
-                buffsHtml += Object.entries(title.buffs).map(([stat, value]) => {
+                buffsHtml += Object.entries(titleDetails.buffs).map(([stat, value]) => {
                     const name = statDisplayName[stat] || stat;
                     const displayValue = (value > 0 && value < 1) ? `+${value * 100}%` : `+${value}`;
                     return `${name} ${displayValue}`;
@@ -116,15 +132,16 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             return `
                 <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <span style="font-weight: bold; font-size: 1.1em; color: ${isEquipped ? 'gold' : 'var(--text-primary)'};">${title.name}</span>
+                        <span style="font-weight: bold; font-size: 1.1em; color: ${isEquipped ? 'gold' : 'var(--text-primary)'};">${titleDetails.name}</span>
                         ${buttonHtml}
                     </div>
-                    <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${title.description || ''}</p>
+                    <p style="font-size: 0.9em; color: var(--text-secondary); margin: 0;">${titleDetails.description || ''}</p>
                     ${buffsHtml}
                 </div>
             `;
         }).join('');
     }
+    // --- 核心修改處 END ---
 
     let achievementsHtml = '<p>尚無成就</p>';
     if (stats.achievements && stats.achievements.length > 0) {
@@ -205,7 +222,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  const totalGames = resume.wins + resume.losses;
                  const winRate = totalGames > 0 ? ((resume.wins / totalGames) * 100).toFixed(1) + '%' : 'N/A';
                  
-                 // --- 核心修改處 ---
                  const playerTitle = m.player_title_part;
                  const monsterAchievement = m.achievement_part;
                  const elementNickname = getMonsterDisplayName(m, gameState.gameConfigs);
@@ -222,7 +238,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                  } else {
                      nameHtml = `<span class="text-rarity-${rarityKey}">${m.nickname || '名稱錯誤'}</span>`;
                  }
-                 // --- 修改結束 ---
 
                  return `
                     <div class="player-monster-row">
@@ -250,7 +265,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 </div>
             `;
             
-            // 更新表頭排序指示箭頭
             container.querySelectorAll('.sortable-header').forEach(header => {
                 header.classList.remove('asc', 'desc');
                 if (header.dataset.sortKey === sortConfig.key) {
@@ -259,10 +273,8 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             });
         };
         
-        // 初始渲染
         renderPlayerMonstersTable();
 
-        // 綁定點擊事件
         container.addEventListener('click', (e) => {
             const header = e.target.closest('.sortable-header');
             if (!header) return;
@@ -272,7 +284,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 sortConfig.order = sortConfig.order === 'desc' ? 'asc' : 'desc';
             } else {
                 sortConfig.key = newKey;
-                sortConfig.order = 'desc'; // 切換欄位時預設降序
+                sortConfig.order = 'desc'; 
             }
             renderPlayerMonstersTable();
         });
