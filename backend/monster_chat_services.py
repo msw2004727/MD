@@ -41,8 +41,6 @@ def _get_bond_level_tone_instruction(bond_points: int) -> str:
     else:  # bond_points >= 76
         return "你和主人的關係非常親密，充滿了信任感和熱情。你會稱呼玩家為『摯友』或『夥伴』，並在回答中充滿依賴感。"
 
-# --- 核心修改處 START ---
-# 重寫整個 handle_skill_toggle_request_service 函式
 def handle_skill_toggle_request_service(
     player_id: str,
     monster_id: str,
@@ -65,7 +63,6 @@ def handle_skill_toggle_request_service(
     if not skill_to_toggle:
         return {"success": False, "error": "找不到指定的技能。"}
 
-    # --- 準備給 AI 的情境檔案 ---
     interaction_stats = monster.get("interaction_stats", {})
     bond_points = interaction_stats.get("bond_points", 0)
     bond_description = _get_bond_level_tone_instruction(bond_points)
@@ -98,9 +95,9 @@ def handle_skill_toggle_request_service(
     payload = {
         "model": DEEPSEEK_MODEL,
         "messages": [{"role": "system", "content": system_prompt}],
-        "temperature": 1.0, # 提高溫度讓 AI 的決定更多樣化
+        "temperature": 1.0, 
         "max_tokens": 150,
-        "response_format": {"type": "json_object"} # 要求 AI 直接輸出 JSON
+        "response_format": {"type": "json_object"} 
     }
     headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}", "Content-Type": "application/json"}
 
@@ -117,17 +114,13 @@ def handle_skill_toggle_request_service(
 
     except Exception as e:
         ai_logger.error(f"為技能切換請求生成AI決策時出錯: {e}")
-        # 如果AI出錯，提供一個簡單的後備邏輯
         agreed = random.random() < 0.5 
         ai_reply = "好的..." if agreed else "我不要！"
 
-    # 如果同意，則實際更新遊戲資料
     if agreed:
         skill_to_toggle['is_active'] = target_state
-        # 因為同意了，稍微增加一點好感度
         update_bond_with_diminishing_returns(interaction_stats, "negotiation", 1)
 
-    # 將此次互動記錄到聊天歷史
     user_log = f"（你請求{action_text}技能「{skill_name}」）"
     monster.setdefault("chatHistory", []).append({"role": "user", "content": user_log})
     monster["chatHistory"].append({"role": "assistant", "content": ai_reply})
@@ -139,7 +132,6 @@ def handle_skill_toggle_request_service(
         "ai_reply": ai_reply,
         "updated_player_data": player_data
     }
-# --- 核心修改處 END ---
 
 def generate_monster_interaction_response_service(
     player_id: str,
@@ -238,6 +230,61 @@ def generate_monster_interaction_response_service(
         chat_logger.error(f"生成互動回應時發生錯誤: {e}", exc_info=True)
         return None
 
+# --- 核心修改處 START ---
+# 將這個被遺漏的函式加回來
+def generate_monster_chat_response_service(
+    player_id: str,
+    monster_id: str,
+    player_message: str,
+    game_configs: GameConfigs
+) -> Optional[Dict[str, Any]]:
+    """
+    生成怪獸的聊天回應，並管理其對話歷史。
+    """
+    player_data, _ = get_player_data_service(player_id, None, game_configs)
+    if not player_data:
+        chat_logger.error(f"無法獲取玩家 {player_id} 的資料。")
+        return None
+
+    monster_to_chat = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
+    if not monster_to_chat:
+        chat_logger.error(f"在玩家 {player_id} 的農場中找不到怪獸 {monster_id}。")
+        return None
+
+    interaction_stats = monster_to_chat.setdefault("interaction_stats", {})
+    interaction_stats["chat_count"] = interaction_stats.get("chat_count", 0) + 1
+    
+    update_bond_with_diminishing_returns(interaction_stats, "chat", 2)
+
+    chat_history: List[ChatHistoryEntry] = monster_to_chat.get("chatHistory", [])
+
+    ai_reply_text = get_ai_chat_completion(
+        monster_data=monster_to_chat,
+        player_data=player_data,
+        chat_history=chat_history,
+        player_message=player_message
+    )
+
+    if not ai_reply_text:
+        chat_logger.error(f"AI 服務未能為怪獸 {monster_id} 生成回應。")
+        return None
+
+    chat_history.append({"role": "user", "content": player_message})
+    chat_history.append({"role": "assistant", "content": ai_reply_text})
+
+    if len(chat_history) > CHAT_HISTORY_LIMIT:
+        chat_history = chat_history[-CHAT_HISTORY_LIMIT:]
+
+    monster_to_chat["chatHistory"] = chat_history
+
+    result = {
+        "ai_reply": ai_reply_text,
+        "updated_player_data": player_data
+    }
+    
+    chat_logger.info(f"成功為怪獸 {monster_id} 生成聊天回應。")
+    return result
+# --- 核心修改處 END ---
 
 def get_ai_chat_completion(
     monster_data: Monster,
