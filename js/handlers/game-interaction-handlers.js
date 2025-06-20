@@ -306,17 +306,21 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                         opponent_owner_nickname: ownerNickname
                     });
 
-                    hideModal('feedback-modal');
+                    // --- 核心修改處 START ---
+                    // 先處理所有需要等待的資料更新
+                    const hasNewTitle = (battleResult && battleResult.newly_awarded_titles && battleResult.newly_awarded_titles.length > 0);
+                    await refreshPlayerData(); 
+                    updateMonsterSnapshot(getSelectedMonster());
 
-                    // --- 【核心修改】---
-                    if (battleResult && typeof checkAndShowNewTitleModal === 'function') {
+                    // 資料處理完畢後，才進行無縫的彈窗切換
+                    hideModal('feedback-modal');
+                    showBattleLogModal(battleResult);
+
+                    // 在戰報顯示後，如果確認有新稱號，再彈出稱號提示
+                    if (hasNewTitle && typeof checkAndShowNewTitleModal === 'function') {
                         checkAndShowNewTitleModal(battleResult);
                     }
-                    
-                    await refreshPlayerData(); 
-                    updateMonsterSnapshot(getSelectedMonster()); 
-
-                    showBattleLogModal(battleResult);
+                    // --- 核心修改處 END ---
 
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
