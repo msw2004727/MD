@@ -154,7 +154,9 @@ def index():
 def view_logs():
     """提供一個網頁來查看即時日誌。"""
     log_directory = os.path.join(os.path.dirname(__file__), 'logs')
-    app_logger.info("請求查看日誌頁面...")
+    # --- 核心修改處 START ---
+    # app_logger.info("請求查看日誌頁面...") # 將此行移除或註解
+    # --- 核心修改處 END ---
     return send_from_directory(log_directory, 'game_log.html')
 
 
