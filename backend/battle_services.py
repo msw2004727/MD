@@ -151,7 +151,7 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 
         sensible_skills.append(skill)
 
-    if sensible_skills and random.random() <= 0.85:
+    if sensible_skills and random.random() <= 0.50:
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
         
         # --- 核心修改處 START ---
