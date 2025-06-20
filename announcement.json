@@ -17,6 +17,7 @@
         {
           "title": "目前0.3.0v已實裝功能：",
           "items": [
+            { "text": "與怪獸協商關閉技能", "color": "success" },
             { "text": "DNA合成", "color": "success" },
             { "text": "修煉系統 (養成)", "color": "success" },
             { "text": "排行榜挑戰", "color": "success" },
