@@ -1,10 +1,8 @@
 // js/ui-monster-details.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
-// --- 核心修改處 START ---
 // 新增一個旗標，確保事件監聽器只會被附加一次
 let isMonsterDetailsListenerAttached = false;
-// --- 核心修改處 END ---
 
 function updateMonsterInfoModal(monster, gameConfigs) {
     if (!DOMElements.monsterInfoModalHeader || !DOMElements.monsterDetailsTabContent || !DOMElements.monsterActivityLogsContainer) {
@@ -356,8 +354,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         }
     }
 
-    // --- 核心修改處 START ---
-    // 使用旗標確保監聽器只被附加一次
     if (!isMonsterDetailsListenerAttached) {
         DOMElements.monsterInfoModal.addEventListener('click', async (event) => {
             const toggleButton = event.target.closest('.skill-status-toggle');
@@ -378,9 +374,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                     const chatTabButton = document.querySelector('#monster-info-tabs .tab-button[data-tab-target="monster-chat-tab"]');
                     if (chatTabButton && typeof switchTabContent === 'function') {
                         switchTabContent('monster-chat-tab', chatTabButton, 'monster-info-modal');
-                        // 確保聊天UI已準備好
                         if (typeof setupChatTab === 'function' && typeof renderChatMessage === 'function') {
-                            setupChatTab(currentMonster); // 確保聊天紀錄是最新的
+                            setupChatTab(currentMonster); 
                             renderChatMessage(`（你請求${actionText}技能「${skillName}」）`, 'user');
                             renderChatMessage(`（${currentMonster.nickname}正在考慮你的請求...）`, 'assistant-thinking');
                         }
@@ -397,11 +392,8 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                             await refreshPlayerData();
                             const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                             if (updatedMonster) {
+                                // 核心修改處：只更新內容，不自動切換分頁
                                 updateMonsterInfoModal(updatedMonster, gameConfigs);
-                                const detailsTabButton = document.querySelector('#monster-info-tabs .tab-button[data-tab-target="monster-details-tab"]');
-                                if (detailsTabButton) {
-                                   setTimeout(() => switchTabContent('monster-details-tab', detailsTabButton, 'monster-info-modal'), 100);
-                                }
                             }
                         }
                     } else {
@@ -473,5 +465,4 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         });
         isMonsterDetailsListenerAttached = true;
     }
-    // --- 核心修改處 END ---
 }
