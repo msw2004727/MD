@@ -141,7 +141,10 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             
             power = effect.get("power", 0)
             attack_stat = attacker_stats.get("attack", 1)
-            defense_stat = defender_stats.get("defense", 1)
+            # ----- BUG 修正邏輯 START -----
+            # 確保防禦力最低為 1，避免除以零的錯誤
+            defense_stat = max(1, defender_stats.get("defense", 1))
+            # ----- BUG 修正邏輯 END -----
             element_multiplier = _calculate_elemental_advantage(skill["type"], target.get("elements", []), game_configs)
 
             raw_damage = max(1, (power * (attack_stat / defense_stat) * 0.5) + (attack_stat * 0.1))
@@ -189,6 +192,23 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                      effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + amount
                 if effect.get("log_success"):
                     log_parts.append(f" {effect['log_success'].format(performer=performer['nickname'], target=target['nickname'])}")
+        
+        # ----- 新增 START -----
+        # 新增對 "special" 類型效果的處理
+        elif effect.get("type") == "special":
+            special_id = effect.get("special_logic_id")
+            if special_id == "recoil":
+                recoil_factor = effect.get("recoil_factor", 0.25)
+                damage_dealt = action_details.get("damage_dealt", 0)
+                recoil_damage = int(damage_dealt * recoil_factor)
+                if recoil_damage > 0:
+                    performer["current_hp"] = max(0, performer.get("current_hp", 0) - recoil_damage)
+                    log_parts.append(f" {performer['nickname']}也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
+            # 可以在此處用 elif 新增更多 special_id 的處理邏輯
+            else:
+                log_parts.append(f" 發動了未知的特殊效果「{special_id}」！")
+        # ----- 新增 END -----
+
 
 def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> Tuple[bool, List[str]]:
     log_messages: List[str] = []
@@ -251,13 +271,10 @@ def simulate_battle_full(
 
         turn_log = [f"--- 回合 {turn_num} 開始 ---"]
         
-        # ----- 新增 START -----
-        # 在回合開始時，記錄雙方當前的狀態
         player_conditions_json = json.dumps(player_monster.get("healthConditions", []), ensure_ascii=False)
         opponent_conditions_json = json.dumps(opponent_monster.get("healthConditions", []), ensure_ascii=False)
         turn_log.append(f"PlayerConditions:{player_conditions_json}")
         turn_log.append(f"OpponentConditions:{opponent_conditions_json}")
-        # ----- 新增 END -----
 
         turn_log.append(f"PlayerHP:{player_monster['current_hp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_hp']}")
         turn_log.append(f"PlayerMP:{player_monster['current_mp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_mp']}")
