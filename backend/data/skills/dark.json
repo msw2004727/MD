@@ -18,15 +18,7 @@
     "level_milestones": {
       "5": {
         "description": "爆擊率提升15%。",
-        "add_effects": [
-          {
-            "type": "stat_change",
-            "stat": "爆擊",
-            "amount": 15,
-            "target": "self",
-            "log_success": "{performer}的眼神變得銳利，{stat}提升了{amount}點！"
-          }
-        ]
+        "add_crit": 15
       },
       "10": {
         "description": "攻擊時有20%機率吸取少量生命。",
@@ -141,13 +133,34 @@
         "add_power": 10
       },
       "10": {
-        "description": "若在第一回合使用，威力加倍。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "first_turn_boost"
-          }
-        ]
+        "description": "若在第一回合使用，威力加倍。"
+      }
+    }
+  },
+  {
+    "name": "追打",
+    "description": "如果對手在本回合進行交換，威力會加倍。",
+    "type": "暗",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "pursuit",
+        "power": 35,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至45。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "對交換中的對手100%造成爆擊。"
       }
     }
   },
@@ -190,6 +203,63 @@
     }
   },
   {
+    "name": "圍攻",
+    "description": "呼喚隊友進行圍攻，隊伍中每有一位成員就攻擊一次。",
+    "type": "暗",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "beat_up",
+        "power": 15,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每次攻擊的威力提升至18。",
+        "add_power": 3
+      },
+      "10": {
+        "description": "參與圍攻的隊友越多，爆擊率越高。"
+      }
+    }
+  },
+  {
+    "name": "偷盜",
+    "description": "攻擊的同時，若對手持有道具，則將其偷來。",
+    "type": "暗",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 40,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "thief"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至50。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "即使自身已持有道具，也能成功偷盜。"
+      }
+    }
+  },
+  {
     "name": "噬魂",
     "description": "吸取對手的生命力，回復造成傷害30%的HP。",
     "type": "暗",
@@ -213,13 +283,7 @@
         "leech_percentage_add": 15
       },
       "10": {
-        "description": "若此招擊倒對手，則自身完全回復HP。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "drain_ko_full_heal"
-          }
-        ]
+        "description": "若此招擊倒對手，則自身完全回復HP。"
       }
     }
   },
@@ -259,6 +323,32 @@
             "log_success": "在暗影中，{performer}的攻擊將更為致命！"
           }
         ]
+      }
+    }
+  },
+  {
+    "name": "惡意追擊",
+    "description": "釋放追蹤敵人的黑暗能量，無視對手的閃避提升。",
+    "type": "暗",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 11,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 50,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "對光屬性敵人造成額外傷害。"
       }
     }
   },
@@ -339,6 +429,33 @@
     }
   },
   {
+    "name": "懲罰",
+    "description": "懲罰因能力提升而驕傲的對手，對手提升的能力越多，威力越大。",
+    "type": "暗",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "punishment",
+        "power": 50,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "基礎威力提升至60。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "此技能對有增益效果的對手100%命中。"
+      }
+    }
+  },
+  {
     "name": "地獄突刺",
     "description": "猛烈突刺，使對手在2回合內無法使用聲音類技能。",
     "type": "暗",
@@ -374,135 +491,6 @@
     }
   },
   {
-    "name": "圍攻",
-    "description": "呼喚隊友進行圍攻，隊伍中每有一位成員就攻擊一次。",
-    "type": "暗",
-    "rarity": "普通",
-    "skill_category": "物理",
-    "mp_cost": 10,
-    "priority": 0,
-    "accuracy": 100,
-    "effects": [
-      {
-        "type": "special",
-        "special_logic_id": "beat_up",
-        "power": 15,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "每次攻擊的威力提升至18。",
-        "add_power": 3
-      },
-      "10": {
-        "description": "參與圍攻的隊友越多，爆擊率越高。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "beat_up_crit_boost"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "name": "偷盜",
-    "description": "攻擊的同時，若對手持有道具，則將其偷來。",
-    "type": "暗",
-    "rarity": "普通",
-    "skill_category": "近戰",
-    "mp_cost": 8,
-    "priority": 0,
-    "accuracy": 100,
-    "effects": [
-      {
-        "type": "damage",
-        "power": 40,
-        "target": "opponent_single"
-      },
-      {
-        "type": "special",
-        "special_logic_id": "thief",
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "威力提升至50。",
-        "add_power": 10
-      },
-      "10": {
-        "description": "即使自身已持有道具，也能成功偷盜。"
-      }
-    }
-  },
-  {
-    "name": "惡意追擊",
-    "description": "釋放追蹤敵人的黑暗能量，無視對手的閃避提升。",
-    "type": "暗",
-    "rarity": "稀有",
-    "skill_category": "遠程",
-    "mp_cost": 11,
-    "priority": 0,
-    "accuracy": "auto",
-    "effects": [
-      {
-        "type": "damage",
-        "power": 50,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "威力提升15點。",
-        "add_power": 15
-      },
-      "10": {
-        "description": "對光屬性敵人造成額外傷害。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "bonus_damage_vs_light"
-          }
-        ]
-      }
-    }
-  },
-  {
-    "name": "懲罰",
-    "description": "懲罰因能力提升而驕傲的對手，對手提升的能力越多，威力越大。",
-    "type": "暗",
-    "rarity": "稀有",
-    "skill_category": "物理",
-    "mp_cost": 12,
-    "priority": 0,
-    "accuracy": 100,
-    "effects": [
-      {
-        "type": "special",
-        "special_logic_id": "punishment",
-        "power": 50,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "基礎威力提升至60。",
-        "add_power": 10
-      },
-      "10": {
-        "description": "此技能對有增益效果的對手100%命中。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "punishment_auto_hit"
-          }
-        ]
-      }
-    }
-  },
-  {
     "name": "欺詐",
     "description": "利用對手的力量進行攻擊，傷害計算使用對手的攻擊力。",
     "type": "暗",
@@ -521,24 +509,10 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "傷害計算時，額外附加自身10%的攻擊力。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "foul_play_self_atk_bonus",
-            "amount": 0.1
-          }
-        ]
+        "description": "傷害計算時，額外附加自身10%的攻擊力。"
       },
       "10": {
-        "description": "100%偷取對手一個增益效果。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "steal_buff",
-            "chance": 1
-          }
-        ]
+        "description": "100%偷取對手一個增益效果。"
       }
     }
   }
