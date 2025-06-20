@@ -320,17 +320,10 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "可設置兩層陷阱，第二層會額外扣除HP。",
-        "layers": 2
+        "description": "可設置兩層陷阱，第二層會額外扣除HP。"
       },
       "10": {
-        "description": "踩到陷阱的怪獸同時會被降低速度。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "toxic_spikes_speed_drop"
-          }
-        ]
+        "description": "踩到陷阱的怪獸同時會被降低速度。"
       }
     }
   },
@@ -357,13 +350,43 @@
         "crit_chance_modifier_add": 15
       },
       "10": {
-        "description": "爆擊時100%使對手陷入強力中毒。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "poison_on_crit"
-          }
-        ]
+        "description": "爆擊時100%使對手陷入強力中毒。"
+      }
+    }
+  },
+  {
+    "name": "生化裝甲",
+    "description": "覆蓋生化裝甲，大幅提升防禦力，並免疫中毒狀態。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "防禦",
+        "amount": 0.4,
+        "is_multiplier": true,
+        "duration": 5,
+        "target": "self",
+        "log_success": "{performer}覆蓋上生化裝甲，{stat}大幅提升了{amount}%！"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "status_immunity",
+        "status_to_block": "poison",
+        "duration": 5,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "裝甲狀態下，每回合回復少量HP。"
+      },
+      "10": {
+        "description": "裝甲破碎時，會對攻擊者造成傷害並使其「中毒」。"
       }
     }
   },
@@ -540,13 +563,7 @@
         "add_power": 10
       },
       "10": {
-        "description": "被鎖鏈綑綁的敵人，每回合速度會下降。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "speed_drop_on_badly_poisoned"
-          }
-        ]
+        "description": "被鎖鏈綑綁的敵人，每回合速度會下降。"
       }
     }
   }
