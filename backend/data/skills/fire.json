@@ -393,8 +393,7 @@
         "amount_add": -0.1
       },
       "10": {
-        "description": "效果變為持續3回合，每回合降低防禦力。",
-        "duration_set": 3
+        "description": "效果變為持續3回合，每回合降低防禦力。"
       }
     }
   },
