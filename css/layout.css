@@ -134,28 +134,20 @@
 /* ====== Monster Farm Layout Grid ======= */
 /* ======================================= */
 
-#farm-table-wrapper {
+#farm-table-wrapper, #medical-station-table-wrapper {
     overflow-x: auto;
     padding-bottom: 5px;
 }
 
-#farmed-monsters-list {
+#farmed-monsters-list, #medical-station-list {
     padding-bottom: 5px;
-}
-
-.farm-header-grid {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--text-secondary);
-    padding-bottom: 0.5rem;
-    text-align: center;
-    border-bottom: 2px solid var(--accent-color);
 }
 
 .farm-header-grid, .farm-monster-item {
     display: grid;
-    /* 【修改】調整欄位寬度以符合新需求 */
-    grid-template-columns: 30px 80px minmax(280px, 1fr) 70px 145px 140px;
+    /* --- 核心修改處 START --- */
+    grid-template-columns: 30px 80px minmax(280px, 1fr) 70px 145px 220px;
+    /* --- 核心修改處 END --- */
     gap: 0.75rem;
     padding: 0.5rem;
     align-items: center;
@@ -190,7 +182,6 @@
 
 /* Auth screen layout */
 #auth-screen {
-    /* 保持原有的佈局屬性 */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -199,29 +190,22 @@
     min-height: 100vh;
     padding: 20px;
     box-sizing: border-box;
-
-    /* 新增：設定相對定位以控制偽元素的層級 */
     position: relative;
-    z-index: 1; /* 確保內容在偽元素之上 */
-    overflow: hidden; /* 避免偽元素超出邊界 */
+    z-index: 1; 
+    overflow: hidden; 
 }
 
-/* 新增：使用 ::before 偽元素來專門設定背景圖層 */
 #auth-screen::before {
     content: '';
-    position: fixed; /* 固定定位，使其填滿整個視窗 */
+    position: fixed; 
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    
-    /* 【修改】降低深色濾鏡的不透明度，讓背景圖更明顯 */
     background-image: linear-gradient(rgba(18, 18, 18, 0.4), rgba(18, 18, 18, 0.6)), url('https://github.com/msw2004727/MD/blob/main/images/001.png?raw=true');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    
-    /* 將這個偽元素放在 #auth-screen 內容的後面 */
     z-index: -1; 
 }
 
