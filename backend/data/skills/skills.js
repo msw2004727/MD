@@ -23,8 +23,9 @@
             "type": "apply_status",
             "status_id": "burn",
             "chance": 0.2,
+            "duration": 2,
             "target": "opponent_single",
-            "log_success": "{target}的身上燃起了火焰！"
+            "log_success": "灼熱的拳風點燃了{target}，使其陷入燒傷！"
           }
         ]
       },
@@ -55,9 +56,9 @@
         "description": "變為連續發射2次火星彈，每次威力獨立計算。",
         "add_effects": [
           {
-            "type": "damage",
-            "power": 25,
-            "target": "opponent_single"
+            "type": "special",
+            "special_logic_id": "multi_hit",
+            "hits": 2
           }
         ]
       },
@@ -88,7 +89,19 @@
         "description": "施加的「燒傷」狀態每回合傷害增加50%。"
       },
       "10": {
-        "description": "技能威力提升10點，並有15%機率使對手魔防下降。"
+        "description": "技能威力提升10點，並有15%機率使對手魔防下降。",
+        "add_power": 10,
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "特防",
+            "amount": -0.1,
+            "is_multiplier": true,
+            "chance": 0.15,
+            "target": "opponent_single",
+            "log_success": "火焰的高溫使{target}的{stat}下降了{amount}%！"
+          }
+        ]
       }
     }
   },
@@ -104,43 +117,32 @@
     "effects": [
       {
         "type": "stat_change",
+        "stat": "攻擊",
+        "amount": 0.15,
+        "is_multiplier": true,
+        "duration": 4,
         "target": "self",
-        "stat": "attack",
-        "amount": 5,
-        "log_success": "{performer}的身體變暖，攻擊力提升了！"
+        "log_success": "{performer}的身體變暖，{stat}提升了{amount}%，持續{duration}回合！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "效果變為「攻擊力與防禦力同時小幅提升」。"
+        "description": "效果變為「攻擊力與防禦力同時小幅提升」。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": 0.15,
+            "is_multiplier": true,
+            "duration": 4,
+            "target": "self",
+            "log_success": "同時{stat}也提升了{amount}%！"
+          }
+        ]
       },
       "10": {
-        "description": "效果持續時間延長2回合。"
-      }
-    }
-  },
-  {
-    "name": "熱砂踢",
-    "description": "踢起灼熱的沙土攻擊對手。",
-    "type": "火",
-    "rarity": "普通",
-    "skill_category": "物理",
-    "mp_cost": 5,
-    "priority": 0,
-    "accuracy": 90,
-    "effects": [
-      {
-        "type": "damage",
-        "power": 28,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "4": {
-        "description": "揚起的沙塵有40%機率降低對手命中率。"
-      },
-      "8": {
-        "description": "威力提升10點，爆擊率提升10%。"
+        "description": "效果持續時間延長2回合。",
+        "duration_add": 2
       }
     }
   },
@@ -163,16 +165,19 @@
         "type": "apply_status",
         "status_id": "burn",
         "chance": 0.9,
+        "duration": 3,
         "target": "opponent_single",
         "log_success": "{target}的身上燃起了火焰！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "狀態命中率提升至100%。"
+        "description": "狀態命中率提升至100%。",
+        "accuracy_set": 100
       },
       "10": {
-        "description": "額外造成20點固定火焰傷害。"
+        "description": "額外造成20點固定火焰傷害。",
+        "add_power": 20
       }
     }
   },
@@ -188,50 +193,31 @@
     "effects": [
       {
         "type": "stat_change",
+        "stat": "攻擊",
+        "amount": -0.15,
+        "is_multiplier": true,
         "target": "opponent_single",
-        "stat": "attack",
-        "amount": -5,
-        "log_success": "在{performer}的威嚇下，{target}的攻擊力下降了！"
+        "log_success": "在{performer}的威嚇下，{target}的{stat}下降了{amount}%！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "效果提升為「有90%機率降低對手攻擊力(-8)」。"
+        "description": "效果提升為「有90%機率降低對手攻擊力」。",
+        "add_accuracy": 5,
+        "amount_add": -0.05
       },
       "10": {
-        "description": "同時有30%機率讓對手陷入「麻痺」狀態1回合。"
-      }
-    }
-  },
-  {
-    "name": "靜電火花",
-    "description": "有30%機率讓對手陷入「麻痺」狀態。",
-    "type": "火",
-    "rarity": "普通",
-    "skill_category": "其他",
-    "mp_cost": 6,
-    "priority": 0,
-    "accuracy": 100,
-    "effects": [
-      {
-        "type": "damage",
-        "power": 20,
-        "target": "opponent_single"
-      },
-      {
-        "type": "apply_status",
-        "status_id": "paralysis",
-        "chance": 0.3,
-        "target": "opponent_single",
-        "log_success": "{target}被靜電火花麻痺了！"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "「麻痺」機率提升至50%。"
-      },
-      "10": {
-        "description": "威力提升15點。"
+        "description": "同時有30%機率讓對手陷入「麻痺」狀態1回合。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "paralysis",
+            "chance": 0.3,
+            "duration": 1,
+            "target": "opponent_single",
+            "log_success": "{target}因恐懼而動彈不得，陷入了麻痺！"
+          }
+        ]
       }
     }
   },
@@ -253,35 +239,22 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "衝撞時產生爆炸，有30%機率使對手陷入「燒傷」狀態。"
+        "description": "衝撞時產生爆炸，有30%機率使對手陷入「燒傷」狀態。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "burn",
+            "chance": 0.3,
+            "duration": 3,
+            "target": "opponent_single",
+            "log_success": "爆炸的熱浪灼傷了{target}！"
+          }
+        ]
       },
       "10": {
-        "description": "威力永久提升20點，無視對手部分防禦。"
-      }
-    }
-  },
-  {
-    "name": "追蹤火球",
-    "description": "投擲會追蹤對手的火球。",
-    "type": "火",
-    "rarity": "稀有",
-    "skill_category": "遠程",
-    "mp_cost": 11,
-    "priority": 0,
-    "accuracy": "auto",
-    "effects": [
-      {
-        "type": "damage",
-        "power": 45,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "火球變得更大，威力提升15點。"
-      },
-      "10": {
-        "description": "擊中後有50%機率降低對手的速度。"
+        "description": "威力永久提升20點，無視對手部分防禦。",
+        "add_power": 20,
+        "armor_pierce_percentage": 0.2
       }
     }
   },
@@ -303,10 +276,23 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "爆炸範圍擴大，有20%機率使對手攻擊力下降。"
+        "description": "爆炸範圍擴大，有20%機率使對手攻擊力下降。",
+        "target_set": "opponent_all",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "攻擊",
+            "amount": -0.1,
+            "is_multiplier": true,
+            "chance": 0.2,
+            "target": "opponent_single",
+            "log_success": "爆炸的衝擊波削弱了{target}的{stat}！"
+          }
+        ]
       },
       "10": {
-        "description": "技能威力永久提升25點。"
+        "description": "技能威力永久提升25點。",
+        "add_power": 25
       }
     }
   },
@@ -322,15 +308,20 @@
     "effects": [
       {
         "type": "stat_change",
-        "target": "self",
         "stat": [
-          "attack",
-          "crit"
+          "攻擊",
+          "爆擊"
         ],
         "amount": [
-          10,
-          5
+          0.2,
+          15
         ],
+        "is_multiplier": [
+          true,
+          false
+        ],
+        "duration": 5,
+        "target": "self",
         "log_success": "{performer}沐浴在烈日祝福中，力量湧現！"
       }
     ],
@@ -340,31 +331,6 @@
       },
       "10": {
         "description": "祝福期間，自身對「冰凍」狀態免疫。"
-      }
-    }
-  },
-  {
-    "name": "火山踢",
-    "description": "如同火山爆發般的強力踢擊。",
-    "type": "火",
-    "rarity": "稀有",
-    "skill_category": "物理",
-    "mp_cost": 11,
-    "priority": 0,
-    "accuracy": 95,
-    "effects": [
-      {
-        "type": "damage",
-        "power": 50,
-        "target": "opponent_single"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "30%機率使對手的防禦力下降。"
-      },
-      "10": {
-        "description": "威力永久提升15點，並附加「燒傷」效果。"
       }
     }
   },
@@ -387,6 +353,7 @@
         "type": "apply_status",
         "status_id": "badly_burned",
         "chance": 1,
+        "duration": 99,
         "target": "opponent_single",
         "log_success": "{target}被永不熄滅的煉獄之火纏上了！"
       }
@@ -412,19 +379,22 @@
     "effects": [
       {
         "type": "stat_change",
+        "stat": "防禦",
+        "amount": -0.25,
+        "is_multiplier": true,
         "target": "opponent_single",
-        "stat": "defense",
-        "amount": -10,
-        "chance": 0.9,
-        "log_success": "{target}的防具被高溫熔化，防禦力大幅下降！"
+        "log_success": "{target}的防具被高溫熔化，{stat}大幅下降了{amount}%！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "效果提升為「100%機率大幅降低防禦力(-12)」。"
+        "description": "命中率提升為100%，防禦降低效果增強。",
+        "accuracy_set": 100,
+        "amount_add": -0.1
       },
       "10": {
-        "description": "效果變為持續3回合，每回合降低防禦力。"
+        "description": "效果變為持續3回合，每回合降低防禦力。",
+        "duration_set": 3
       }
     }
   },
