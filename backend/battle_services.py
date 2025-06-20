@@ -17,6 +17,7 @@ from .MD_models import (
 from .MD_ai_services import generate_battle_report_content
 from .utils_services import get_effective_skill_with_level
 
+
 battle_logger = logging.getLogger(__name__)
 
 BASIC_ATTACK: Skill = {
@@ -99,7 +100,10 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     for skill in all_mp_available_skills:
         sensible_skills.append(skill)
 
-    if sensible_skills and random.random() <= 0.95:  # 提高使用技能的機率
+    # ----- BUG 修正邏輯 START -----
+    # 將機率從 0.95 調整為 0.50，使選擇使用技能的機率變為 50%
+    if sensible_skills and random.random() <= 0.50:
+    # ----- BUG 修正邏輯 END -----
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
         hp_percentage = attacker_current_stats["hp"] / attacker_current_stats["initial_max_hp"] if attacker_current_stats["initial_max_hp"] > 0 else 0
         is_low_hp = hp_percentage < 0.4
@@ -109,11 +113,14 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
             skill_category = skill.get("skill_category", "其他")
             base_weight = personality_prefs.get(skill_category, 1.0)
             
-            situational_multiplier = 1.0
+            # 修正後的 AI 判斷邏輯
+            situational_multiplier = 1.0 # 預設權重為 1
             if is_low_hp:
-                if skill_category == "輔助": situational_multiplier = 3.0
-                elif skill_category == "變化": situational_multiplier = 2.0
-                else: situational_multiplier = 0.5
+                # 血量低時，優先考慮使用輔助技能（例如治療或防禦）
+                if skill_category == "輔助":
+                    situational_multiplier = 2.5
+                elif skill_category == "變化":
+                    situational_multiplier = 1.5
             
             final_weight = int(base_weight * situational_multiplier * 10)
             weighted_skills.extend([skill] * final_weight)
