@@ -459,6 +459,35 @@
     }
   },
   {
+    "name": "變硬",
+    "description": "使身體變硬，提升自身的防禦力。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "防禦",
+        "amount": 8,
+        "is_multiplier": false,
+        "target": "self",
+        "log_success": "{performer}讓身體變硬了，防禦力提升了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "防禦力提升效果增加。",
+        "amount_add": 6
+      },
+      "10": {
+        "description": "使用後，下一次受到的物理傷害減半。"
+      }
+    }
+  },
+  {
     "name": "巨聲",
     "description": "發出巨大的噪音攻擊，可穿透對手的替身。",
     "type": "無",
