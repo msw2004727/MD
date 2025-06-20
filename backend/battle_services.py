@@ -180,6 +180,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
     
     log_parts = [f"- {performer['nickname']} 使用了 **{effective_skill['name']}**！"]
 
+    # 處理傷害效果
     if effective_skill.get("power", 0) > 0:
         element_multiplier = _calculate_elemental_advantage(effective_skill["type"], target.get("elements", []), game_configs)
         raw_damage = max(1, (effective_skill["power"] + (attacker_current_stats["attack"] / 2) - (defender_current_stats["defense"] / 4)))
@@ -190,8 +191,11 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         log_parts.append(f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。")
         if is_crit: log_parts.append(" **是暴擊！**")
 
+    # 處理非傷害性的附加效果
     if effective_skill.get("effect") and random.randint(1, 100) <= effective_skill.get("probability", 100):
         effect_type = effective_skill["effect"]
+        
+        # 簡化目標判斷邏輯
         effect_target = performer if effective_skill.get("target") == "self" else target
         
         if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
@@ -209,7 +213,7 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
             heal_amount = effective_skill["amount"]
-            max_hp = _get_monster_current_stats(effect_target, performer_player_data, game_configs)["initial_max_hp"]
+            max_hp = _get_monster_current_stats(effect_target, performer_player_data if effect_target['id'] == performer['id'] else target_player_data, game_configs)["initial_max_hp"]
             healed_hp = min(heal_amount, max_hp - effect_target.get("current_hp", 0))
             if healed_hp > 0:
                 effect_target["current_hp"] += healed_hp
@@ -248,6 +252,10 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 action_details["status_applied"] = status_template["id"]
                 log_parts.append(f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！")
         
+        elif effect_type == "suppress_personality":
+            # 這裡可以添加消除特性的邏輯，目前先只產生日誌
+            log_parts.append(f" {target['nickname']} 的個性被胃液消除了！")
+            
     action_details["log_message"] = "".join(log_parts)
     
     if target["current_hp"] == 0: 
