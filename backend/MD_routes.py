@@ -21,10 +21,6 @@ from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
 from .battle_services import simulate_battle_full
-# ----- BUG 修正邏輯 START -----
-# 導入 AI 戰報生成服務
-from .MD_ai_services import generate_battle_report_content
-# ----- BUG 修正邏輯 END -----
 from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service 
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
@@ -426,18 +422,6 @@ def simulate_battle_api_route():
         
         if newly_awarded_titles:
             battle_result["newly_awarded_titles"] = newly_awarded_titles
-
-        # ----- BUG 修正邏輯 START -----
-        # 呼叫 AI 服務生成戰報內容
-        ai_content = generate_battle_report_content(
-            player_monster=player_monster_data_req,
-            opponent_monster=opponent_monster_data_req,
-            battle_result=battle_result,
-            full_raw_battle_log=battle_result.get("raw_full_log", [])
-        )
-        # 將生成的內容填入 battle_result
-        battle_result["ai_battle_report_content"] = ai_content
-        # ----- BUG 修正邏輯 END -----
     
     return jsonify({"success": True, "battle_result": battle_result}), 200
 

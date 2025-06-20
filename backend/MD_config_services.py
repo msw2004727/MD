@@ -36,7 +36,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "Titles": ("titles", "player_titles"),
             "MonsterAchievementsList": ("monster_achievements_list", "achievements"),
             "ElementNicknames": ("element_nicknames", "nicknames"),
-            "StatusEffects": ("health_conditions", "effects_list"),
+            "HealthConditions": ("health_conditions", "conditions_list"),
             "NewbieGuide": ("newbie_guide", "guide_entries"),
             "NPCMonsters": ("npc_monsters", "monsters"),
             "NamingConstraints": ("naming_constraints", None),

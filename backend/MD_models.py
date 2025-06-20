@@ -11,7 +11,6 @@ ElementTypes = Literal[
 RarityNames = Literal["普通", "稀有", "菁英", "傳奇", "神話"]
 SkillCategory = Literal["近戰", "遠程", "魔法", "輔助", "物理", "特殊", "變化", "其他"] # 技能類別
 BattleLogStyle = Literal["嚴肅", "幽默", "武俠", "科幻", "驚悚", "獵奇"] # 戰鬥日誌風格
-TargetType = Literal["self", "opponent_single", "team_allies", "opponent_all"] # 新增：技能目標類型
 
 # --- 【新增】註記與聊天項目結構 ---
 class NoteEntry(TypedDict):
@@ -53,66 +52,50 @@ class RarityDetail(TypedDict):
     value_factor: NotRequired[int]
 
 
-# --- 全面重構後的技能結構 ---
-
-class SkillEffect(TypedDict):
-    """單一技能效果的定義"""
-    type: Literal["damage", "apply_status", "stat_change", "heal", "leech", "special"]
-    target: NotRequired[TargetType]
-    
-    # Damage 相關
-    power: NotRequired[int]
-    
-    # apply_status 相關
-    status_id: NotRequired[str]
-    chance: NotRequired[float] # 機率 (0.0 to 1.0)
-    
-    # stat_change 相關
+class SkillEffectDetails(TypedDict):
+    """技能特殊效果詳情模型"""
+    effect_type: NotRequired[Literal[
+        "buff", "debuff", "dot", "leech", "stun", "heal", "heal_large",
+        "accuracy_debuff", "special_defense_buff", "all_stats_debuff",
+        "all_stats_buff", "poison", "strong_poison", "aoe_dot",
+        "team_speed_buff", "recoil", "self_ko", "confusion", "status_change",
+        "stat_change", "damage_modifier"
+    ]]
     stat: NotRequired[Union[str, List[str]]]
     amount: NotRequired[Union[int, List[int]]]
-    
-    # heal / leech 相關
-    heal_amount: NotRequired[int]
-    leech_percentage: NotRequired[int]
-    
-    # special 相關
-    special_logic_id: NotRequired[str] # e.g., "suppress_personality", "power_swap"
-    
-    # 效果日誌
-    log_success: NotRequired[str]
-    log_fail: NotRequired[str]
+    duration: NotRequired[int]
+    damage_per_turn: NotRequired[int]
+    chance: NotRequired[int]
+    target: NotRequired[Literal["self", "enemy_single", "enemy_all", "team_single", "team_all"]]
+    recoil_factor: NotRequired[float]
+    status_id: NotRequired[str] # for status_change effect
 
-class SkillPhase(TypedDict):
-    """多回合技能的單一階段定義"""
-    turn: int
-    effects: List[SkillEffect]
-    log: NotRequired[str]
 
 class Skill(TypedDict):
-    """重構後的技能模型"""
+    """技能模型 (用於 GameConfigs 中的技能定義以及 Monster 實例中的技能)"""
     name: str
-    description: str
+    power: int
+    crit: int
+    probability: int
+    story: NotRequired[str] # 招式敘述，用於戰鬥履歷
+    description: NotRequired[str] # 備用敘述欄位
     type: ElementTypes
-    rarity: RarityNames
-    mp_cost: int
-    skill_category: SkillCategory
-
-    priority: NotRequired[int]
-    accuracy: NotRequired[Union[int, Literal["auto"]]]
-    
-    effects: NotRequired[List[SkillEffect]]
-    phases: NotRequired[List[SkillPhase]]
-    
-    # 舊有欄位，部分保留用於兼容或未來擴充
-    power: NotRequired[int]
-    crit: NotRequired[int]
-    probability: NotRequired[int]
+    rarity: NotRequired[RarityNames]
+    baseLevel: int
+    mp_cost: NotRequired[int]
+    skill_category: NotRequired[SkillCategory]
     level: NotRequired[int]
     current_exp: NotRequired[int]
     exp_to_next_level: NotRequired[int]
-    baseLevel: NotRequired[int]
-    level_milestones: NotRequired[Dict[str, Any]]
-
+    effect: NotRequired[str] # 效果的簡要標識
+    # 以下為更詳細的效果參數，用於實現輔助性、恢復性、同歸於盡性等
+    stat: NotRequired[Union[str, List[str]]] # 影響的數值
+    amount: NotRequired[Union[int, List[int]]] # 影響的量
+    duration: NotRequired[int] # 持續回合
+    damage: NotRequired[int] # 額外傷害或治療量 (非 DoT)
+    recoilDamage: NotRequired[float] # 反傷比例
+    hit_chance: NotRequired[int] # 技能命中率 (0-100)，預設為 100
+    effect_target: NotRequired[Literal["self", "opponent"]] # 效果目標，例如提升自身屬性或削弱對方
 
 class Personality(TypedDict):
     """怪獸個性模型"""
@@ -136,16 +119,12 @@ class HealthCondition(TypedDict):
     id: str
     name: str
     description: str
+    effects: HealthConditionEffect
+    duration: NotRequired[int]
     icon: NotRequired[str]
-    effects: NotRequired[HealthConditionEffect]
-    duration_turns: NotRequired[str]
-    real_time_effect: NotRequired[str]
-    chance_to_skip_turn: NotRequired[float]
-    confusion_chance: NotRequired[float]
-    elemental_vulnerability: NotRequired[Dict[ElementTypes, float]]
-    blocks_all_actions: NotRequired[bool]
-    blocks_skill_category: NotRequired[str]
-    immunities: NotRequired[List[str]]
+    chance_to_skip_turn: NotRequired[float] # 觸發跳過回合的機率 (0.0-1.0)
+    confusion_chance: NotRequired[float] # 觸發混亂自傷的機率 (0.0-1.0)
+    elemental_vulnerability: NotRequired[Dict[ElementTypes, float]] # 對某些元素的易傷倍率
 
 
 class NewbieGuideEntry(TypedDict):
@@ -179,21 +158,21 @@ class CultivationConfig(TypedDict):
 class ValueSettings(TypedDict):
     element_value_factors: Dict[ElementTypes, float]
     dna_recharge_conversion_factor: float
-    max_farm_slots: NotRequired[int] 
-    max_monster_skills: NotRequired[int]
-    max_battle_turns: NotRequired[int]
+    max_farm_slots: NotRequired[int] # 新增農場上限
+    max_monster_skills: NotRequired[int] # 新增怪獸最大技能數
+    max_battle_turns: NotRequired[int] # 新增戰鬥最大回合數
     max_inventory_slots: NotRequired[int]
     max_temp_backpack_slots: NotRequired[int]
     max_cultivation_time_seconds: NotRequired[int]
     starting_gold: NotRequired[int]
-    base_accuracy: NotRequired[int]
-    base_evasion: NotRequired[int]
-    accuracy_per_speed: NotRequired[float]
-    evasion_per_speed: NotRequired[float]
-    crit_multiplier: NotRequired[float]
+    base_accuracy: NotRequired[int] # 基礎命中率，例如 80 (%)
+    base_evasion: NotRequired[int] # 基礎閃避率，例如 5 (%)
+    accuracy_per_speed: NotRequired[float] # 速度對命中率的影響，例如每點速度影響 0.1% 命中
+    evasion_per_speed: NotRequired[float] # 速度對閃避率的影響，例如每點速度影響 0.05% 閃避
+    crit_multiplier: NotRequired[float] # 暴擊傷害倍率，例如 1.5
 
 
-class NamingConstraints(TypedDict): 
+class NamingConstraints(TypedDict): # 新增：命名限制設定
     max_player_title_len: int
     max_monster_achievement_len: int
     max_element_nickname_len: int
@@ -202,6 +181,7 @@ class NamingConstraints(TypedDict):
 
 # --- 玩家及怪獸資料模型 ---
 
+# --- 新增：怪獸互動統計資料模型 ---
 class MonsterInteractionStats(TypedDict):
     chat_count: NotRequired[int]
     cultivation_count: NotRequired[int]
@@ -231,7 +211,7 @@ class MonsterFarmStatus(TypedDict):
     isTraining: bool
     boosts: NotRequired[Dict[str, int]]
     timerId: NotRequired[Optional[int]]
-    trainingLocation: NotRequired[Optional[str]]
+    trainingLocation: NotRequired[Optional[str]] # 新增訓練地點
 
 
 class MonsterActivityLogEntry(TypedDict):
@@ -254,15 +234,15 @@ class Monster(TypedDict):
     """怪獸實例模型"""
     id: str
     nickname: str
-    player_title_part: NotRequired[str]
-    achievement_part: NotRequired[str]
-    element_nickname_part: NotRequired[str]
+    player_title_part: NotRequired[str]      # 新增
+    achievement_part: NotRequired[str]       # 新增
+    element_nickname_part: NotRequired[str]  # 新增
     elements: List[ElementTypes]
     elementComposition: Dict[ElementTypes, float]
     hp: int
     mp: int
-    current_hp: NotRequired[int]
-    current_mp: NotRequired[int]
+    current_hp: NotRequired[int] # 新增：戰鬥中的當前 HP
+    current_mp: NotRequired[int] # 新增：戰鬥中的當前 MP
     initial_max_hp: int
     initial_max_mp: int
     attack: int
@@ -283,17 +263,18 @@ class Monster(TypedDict):
     monsterMedals: NotRequired[int]
     farmStatus: MonsterFarmStatus
     activityLog: NotRequired[List[MonsterActivityLogEntry]]
-    healthConditions: NotRequired[List[HealthCondition]]
+    healthConditions: NotRequired[List[HealthCondition]] # 戰鬥中的即時狀態
     resistances: Dict[ElementTypes, int]
     score: NotRequired[int]
     isNPC: NotRequired[bool]
     baseId: NotRequired[str]
     resume: NotRequired[MonsterResume]
     constituent_dna_ids: NotRequired[List[str]]
-    cultivation_gains: NotRequired[Dict[str, int]]
-    monsterNotes: NotRequired[List[NoteEntry]]
-    chatHistory: NotRequired[List[ChatHistoryEntry]]
-    interaction_stats: NotRequired[MonsterInteractionStats]
+    cultivation_gains: NotRequired[Dict[str, int]] # 新增：用於儲存修煉獲得的額外數值
+    monsterNotes: NotRequired[List[NoteEntry]] # 【新增】怪獸的專屬註記
+    chatHistory: NotRequired[List[ChatHistoryEntry]] # 【新增】怪獸的聊天歷史
+    interaction_stats: NotRequired[MonsterInteractionStats] # 【新增】互動統計資料
+    # 戰鬥相關動態數值 (非持久化，僅用於戰鬥模擬)
     temp_attack_modifier: NotRequired[int]
     temp_defense_modifier: NotRequired[int]
     temp_speed_modifier: NotRequired[int]
@@ -313,17 +294,19 @@ class PlayerStats(TypedDict):
     medals: int
     nickname: str
     equipped_title_id: NotRequired[Optional[str]]
+    
+    # 【新增】用於追蹤稱號條件的欄位
     current_win_streak: NotRequired[int]
     current_loss_streak: NotRequired[int]
     highest_win_streak: NotRequired[int]
     completed_cultivations: NotRequired[int]
     disassembled_monsters: NotRequired[int]
-    discovered_recipes: NotRequired[List[str]]
+    discovered_recipes: NotRequired[List[str]] # 儲存已發現的配方組合鍵
     highest_rarity_created: NotRequired[RarityNames]
-    status_applied_counts: NotRequired[Dict[str, int]]
+    status_applied_counts: NotRequired[Dict[str, int]] # e.g., {"poisoned": 50, "paralyzed": 20}
     leech_skill_uses: NotRequired[int]
     flawless_victories: NotRequired[int]
-    special_victories: NotRequired[Dict[str, int]]
+    special_victories: NotRequired[Dict[str, int]] # e.g., {"win_without_damage_skills": 5}
 
 
 class PlayerOwnedDNA(DNAFragment):
@@ -338,12 +321,16 @@ class PlayerGameData(TypedDict):
     selectedMonsterId: NotRequired[Optional[str]]
     lastSeen: NotRequired[int]
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
-    friends: NotRequired[List[Any]]
-    playerNotes: NotRequired[List[NoteEntry]]
+    friends: NotRequired[List[Any]] # 確保 friends 欄位存在
+    playerNotes: NotRequired[List[NoteEntry]] # 【新增】玩家的通用註記
 
 
+# --- 新增的組合配方模型 (MonsterRecipes) ---
 class MonsterRecipe(TypedDict):
-    """組合配方模型"""
+    """
+    用於存儲已發現的 DNA 組合配方及其產生的標準怪獸數據。
+    每個文檔的 ID 應為 combinationKey。
+    """
     combinationKey: str 
     resultingMonsterData: Monster 
     creationTimestamp: int
@@ -358,12 +345,12 @@ class BattleAction(TypedDict):
     skill_name: str
     damage_dealt: NotRequired[int]
     damage_healed: NotRequired[int]
-    status_applied: NotRequired[str]
+    status_applied: NotRequired[str] # 狀態ID
     status_removed: NotRequired[str]
     stat_changes: NotRequired[Dict[str, int]]
     is_crit: NotRequired[bool]
     is_miss: NotRequired[bool]
-    log_message: str
+    log_message: str # 簡要的文字描述
 
 
 class BattleLogEntry(TypedDict):
@@ -374,11 +361,11 @@ class BattleLogEntry(TypedDict):
     opponent_monster_hp: int
     opponent_monster_mp: int
     actions: List[BattleAction]
-    raw_log_messages: List[str]
-    styled_log_message: str
-    winner_id: NotRequired[str]
-    loser_id: NotRequired[str]
-    battle_end: NotRequired[bool]
+    raw_log_messages: List[str] # 原始日誌信息，供 AI 判斷和美化
+    styled_log_message: str # AI 生成的風格化日誌文本
+    winner_id: NotRequired[str] # 如果本回合結束戰鬥，則標記勝利者
+    loser_id: NotRequired[str] # 如果本回合結束戰鬥，則標記失敗者
+    battle_end: NotRequired[bool] # 標記戰鬥是否結束
 
 
 class BattleResult(TypedDict):
@@ -399,17 +386,21 @@ class BattleResult(TypedDict):
     absorption_details: NotRequired[Dict[str, Any]]
 
 
-# --- 冠軍殿堂相關模型 ---
+# --- 新增：冠軍殿堂相關模型 ---
 class ChampionSlot(TypedDict):
-    """代表冠軍殿堂中的一個席位"""
+    """
+    代表冠軍殿堂中的一個席位。
+    """
     monsterId: str
     ownerId: str
-    monsterNickname: NotRequired[str]
-    ownerNickname: NotRequired[str]
-    occupiedTimestamp: int
+    monsterNickname: NotRequired[str] # 方便前端顯示
+    ownerNickname: NotRequired[str]   # 方便前端顯示
+    occupiedTimestamp: int          # 佔領該席位的時間戳
 
 class ChampionsData(TypedDict):
-    """代表 Firestore 中 'MD_SystemData/Champions' 文件的結構"""
+    """
+    代表存儲在 Firestore 中 'MD_SystemData/Champions' 文件的結構。
+    """
     rank1: Optional[ChampionSlot]
     rank2: Optional[ChampionSlot]
     rank3: Optional[ChampionSlot]
@@ -419,12 +410,15 @@ class ChampionsData(TypedDict):
 # --- 完整的遊戲設定檔模型 ---
 
 class GameConfigs(TypedDict):
-    """代表由 MD_config_services.load_all_game_configs_from_firestore() 載入的完整遊戲設定結構"""
+    """
+    代表由 MD_config_services.load_all_game_configs_from_firestore() 載入的
+    完整遊戲設定結構，也是前端所期望的格式。
+    """
     dna_fragments: List[DNAFragment]
     rarities: Dict[str, RarityDetail]
     skills: Dict[ElementTypes, List[Skill]] 
     personalities: List[Personality]
-    titles: List[Dict[str, Any]]
+    titles: List[Dict[str, Any]] # 之前是 List[str]，現在是完整的物件列表
     monster_achievements_list: NotRequired[List[str]] 
     element_nicknames: NotRequired[Dict[ElementTypes, str]]
     naming_constraints: NotRequired[NamingConstraints] 
@@ -435,8 +429,6 @@ class GameConfigs(TypedDict):
     absorption_config: NotRequired[AbsorptionConfig]
     cultivation_config: NotRequired[CultivationConfig]
     elemental_advantage_chart: NotRequired[Dict[ElementTypes, Dict[ElementTypes, float]]] 
-    cultivation_stories: NotRequired[Dict[str, Any]]
-    champion_guardians: NotRequired[Dict[str, Any]]
 
 
 if __name__ == '__main__':

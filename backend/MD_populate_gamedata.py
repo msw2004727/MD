@@ -198,21 +198,6 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 ChampionGuardians 資料失敗: {e}")
 
-    # --- 載入狀態效果資料 (從 status_effects.json) ---
-    try:
-        status_effects_path = os.path.join(data_dir, 'status_effects.json')
-        with open(status_effects_path, 'r', encoding='utf-8') as f:
-            status_effects_data = json.load(f)
-        script_logger.info(f"成功從 {status_effects_path} 載入 {len(status_effects_data)} 個狀態效果資料。")
-        db_client.collection('MD_GameConfigs').document('StatusEffects').set({'effects_list': status_effects_data})
-        script_logger.info("成功將 status_effects.json 的內容寫入 Firestore 的 StatusEffects 文件。")
-    except FileNotFoundError:
-        script_logger.error(f"錯誤: 找不到狀態效果設定檔 {status_effects_path}。請確認檔案已建立。")
-        return
-    except Exception as e:
-        script_logger.error(f"處理 StatusEffects 資料失敗: {e}")
-        return
-        
     # --- 寫入其他設定 ---
     
     # DNA 稀有度資料 (Rarities)
@@ -268,6 +253,18 @@ def populate_game_configs():
         "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
     }
     db_client.collection('MD_GameConfigs').document('NamingConstraints').set(naming_constraints_data)
+
+    # 健康狀況資料 (HealthConditions)
+    health_conditions_data = [
+        {"id": "poisoned", "name": "中毒", "description": "持續受到毒素傷害，每回合損失HP。", "effects": {"hp_per_turn": -8}, "duration": 3, "icon": "🤢"},
+        {"id": "paralyzed", "name": "麻痺", "description": "速度大幅下降，有較高機率無法行動。", "effects": {"speed": -20}, "duration": 2, "icon": "⚡", "chance_to_skip_turn": 0.3 },
+        {"id": "burned", "name": "燒傷", "description": "持續受到灼燒傷害，攻擊力顯著下降。", "effects": {"hp_per_turn": -5, "attack": -10}, "duration": 3, "icon": "🔥"},
+        {"id": "confused", "name": "混亂", "description": "行動時有50%機率攻擊自己或隨機目標。", "effects": {}, "duration": 2, "icon": "😵", "confusion_chance": 0.5},
+        {"id": "energized", "name": "精力充沛", "description": "狀態絕佳！所有能力微幅提升。", "effects": {"attack": 5, "defense": 5, "speed": 5, "crit": 3}, "duration": 3, "icon": "💪"},
+        {"id": "weakened", "name": "虛弱", "description": "所有主要戰鬥數值大幅下降。", "effects": {"attack": -12, "defense": -12, "speed": -8, "crit": -5}, "duration": 2, "icon": "😩"},
+        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "🧊", "elemental_vulnerability": {"火": 2.0} }
+    ]
+    db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
 
     # 新手指南資料 (NewbieGuide)
     try:
