@@ -151,32 +151,28 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 
         sensible_skills.append(skill)
 
-    if sensible_skills and random.random() <= 0.85:
+    if sensible_skills and random.random() <= 0.50:
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
         
-        # --- 核心修改處 START ---
-        # 檢查是否處於低血量狀態
         hp_percentage = attacker_current_stats["hp"] / attacker_current_stats["initial_max_hp"] if attacker_current_stats["initial_max_hp"] > 0 else 0
-        is_low_hp = hp_percentage < 0.4  # 低血量閾值設為40%
+        is_low_hp = hp_percentage < 0.4
 
         weighted_skills = []
         for skill in sensible_skills:
             skill_category = skill.get("skill_category", "其他")
             base_weight = personality_prefs.get(skill_category, 1.0)
             
-            # 生存本能：如果血量低，動態調整權重
             situational_multiplier = 1.0
             if is_low_hp:
-                if skill_category == "輔助":  # 治療或防禦性Buff
-                    situational_multiplier = 3.0  # 大幅提高使用意願
-                elif skill_category == "變化" and skill.get("effect") == "stat_change" and any(a > 0 for a in ([skill.get("amount")] if isinstance(skill.get("amount"), int) else skill.get("amount", []))): # 防禦性變化技能
-                    situational_multiplier = 2.0  # 提高使用意願
-                elif skill_category in ["物理", "近戰", "遠程", "魔法", "特殊"]: # 攻擊性技能
-                    situational_multiplier = 0.5  # 降低攻擊意願
+                if skill_category == "輔助":
+                    situational_multiplier = 3.0
+                elif skill_category == "變化" and skill.get("effect") == "stat_change" and any(a > 0 for a in ([skill.get("amount")] if isinstance(skill.get("amount"), int) else skill.get("amount", []))):
+                    situational_multiplier = 2.0
+                elif skill_category in ["物理", "近戰", "遠程", "魔法", "特殊"]:
+                    situational_multiplier = 0.5
             
             final_weight = int(base_weight * situational_multiplier * 10)
             weighted_skills.extend([skill] * final_weight)
-        # --- 核心修改處 END ---
         
         if weighted_skills:
             return random.choice(weighted_skills)
@@ -230,7 +226,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         is_buff = "buff" in effect_type or "heal" in effect_type or (effective_skill.get("skill_category") == "輔助") or (effect_type == "stat_change" and isinstance(effective_skill.get("amount"), int) and effective_skill.get("amount", 0) > 0)
         effect_target = performer if is_buff else target
         
-        # --- 核心修改處 START ---
         if effect_type == "stat_change" and "stat" in effective_skill and "amount" in effective_skill:
             stats_to_change = [effective_skill["stat"]] if isinstance(effective_skill["stat"], str) else effective_skill["stat"]
             amounts = [effective_skill["amount"]] if isinstance(effective_skill["amount"], int) else effective_skill["amount"]
@@ -243,7 +238,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 abs_amount = abs(amount)
                 
                 log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了{abs_amount}點。")
-        # --- 核心修改處 END ---
 
         elif effect_type in ["heal", "heal_large"] and "amount" in effective_skill:
             heal_amount = effective_skill["amount"]
@@ -350,7 +344,6 @@ def simulate_battle_full(
         player_stats_at_turn_start = _get_monster_current_stats(player_monster, player_data)
         opponent_stats_at_turn_start = _get_monster_current_stats(opponent_monster, opponent_player_data)
 
-        # 寫入狀態資訊
         player_status_list = [cond.get("name", "未知") for cond in player_monster.get("healthConditions", [])]
         opponent_status_list = [cond.get("name", "未知") for cond in opponent_monster.get("healthConditions", [])]
         
