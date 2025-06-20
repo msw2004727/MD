@@ -53,13 +53,15 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
             if equipped_title and equipped_title.get("buffs"):
                 title_buffs = equipped_title.get("buffs", {})
 
+    total_crit = monster.get("crit", 0) + gains.get("crit", 0) + title_buffs.get("crit", 0) + monster.get("temp_crit_modifier", 0)
+
     stats = {
         "hp": monster.get("current_hp", monster.get("hp", 0)),
         "mp": monster.get("current_mp", monster.get("mp", 0)),
         "attack": monster.get("attack", 0) + gains.get("attack", 0) + title_buffs.get("attack", 0) + monster.get("temp_attack_modifier", 0),
         "defense": monster.get("defense", 0) + gains.get("defense", 0) + title_buffs.get("defense", 0) + monster.get("temp_defense_modifier", 0),
         "speed": monster.get("speed", 0) + gains.get("speed", 0) + title_buffs.get("speed", 0) + monster.get("temp_speed_modifier", 0),
-        "crit": monster.get("crit", 0) + gains.get("crit", 0) + title_buffs.get("crit", 0) + monster.get("temp_crit_modifier", 0),
+        "crit": min(total_crit, 50),
         "initial_max_hp": monster.get("initial_max_hp", 0) + gains.get("hp", 0) + title_buffs.get("hp", 0),
         "initial_max_mp": monster.get("initial_max_mp", 0) + gains.get("mp", 0) + title_buffs.get("mp", 0),
         "accuracy": monster.get("temp_accuracy_modifier", 0),
