@@ -43,7 +43,6 @@ async function loadAndDisplayAnnouncement() {
         if (titleElement && contentContainer) {
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
             
-            // ----- BUG 修正邏輯 START -----
             let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
 
             (announcementData.contentBlocks || []).forEach(block => {
@@ -79,7 +78,6 @@ async function loadAndDisplayAnnouncement() {
             contentHtml += `<p style="text-align: right; margin-top: 20px; color: var(--rarity-legendary-text); font-weight: bold;">${announcementData.closing || '遊戲團隊 敬上'}</p>`;
             
             contentContainer.innerHTML = contentHtml;
-            // ----- BUG 修正邏輯 END -----
 
             if (typeof updateAnnouncementPlayerName === 'function') {
                 updateAnnouncementPlayerName(gameState.playerNickname);
@@ -150,11 +148,9 @@ async function initializeGame() {
             DOMElements.maxCultivationTimeText.textContent = configs.value_settings.max_cultivation_time_seconds || 3600;
         }
         
-        // --- 新增：在遊戲初始化時更新貨幣顯示 ---
         if (typeof updatePlayerCurrencyDisplay === 'function') {
             updatePlayerCurrencyDisplay(gameState.playerData.playerStats.gold || 0);
         }
-        // --- 修改結束 ---
 
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
         if (typeof renderDNACombinationSlots === 'function') renderDNACombinationSlots();
@@ -175,24 +171,9 @@ async function initializeGame() {
         
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
-        if (playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
-            const newTitle = playerData.newly_awarded_titles[0]; 
-            if (typeof showFeedbackModal === 'function') {
-                showFeedbackModal(
-                    '榮譽加身！',
-                    '', 
-                    false,
-                    null,
-                    [{ text: '開啟我的冒險！', class: 'success' }],
-                    {
-                        type: 'title',
-                        name: newTitle.name,
-                        description: newTitle.description,
-                        buffs: newTitle.buffs,
-                        bannerUrl: gameState.assetPaths.images.modals.titleAward
-                    }
-                );
-            }
+        // --- 【修改】呼叫新的專用函式來處理彈窗 ---
+        if (typeof checkAndShowNewTitleModal === 'function') {
+            checkAndShowNewTitleModal(playerData);
         }
 
     } catch (error) {
