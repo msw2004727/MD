@@ -230,7 +230,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             power = effect.get("power", 0)
             element_multiplier = _calculate_elemental_advantage(effective_skill.get("type", "無"), target.get("elements", []), game_configs)
             
-            # --- 核心修改處 START ---
             vulnerability_multiplier = 1.0
             status_to_remove_after_hit = None
             
@@ -254,7 +253,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             if status_to_remove_after_hit:
                 target["healthConditions"] = [cond for cond in target["healthConditions"] if cond.get("id") != status_to_remove_after_hit]
                 log_parts.append(f" {target['nickname']}的**冰凍**狀態因受到攻擊而解除了！")
-            # --- 核心修改處 END ---
 
         elif effect_type == "stat_change":
             stats_to_change = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
@@ -269,6 +267,11 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             for i, (stat, amount) in enumerate(zip(stats_to_change, amounts)):
                 is_percentage = is_percentage_list[i] if i < len(is_percentage_list) else False
                 
+                # --- 核心修改處 START ---
+                # 獲取改變前的數值
+                target_player_data_for_stats = target_player_data if "opponent" in effect_target_str else performer_player_data
+                pre_change_stat_value = math.floor(_get_monster_current_stats(effect_target, target_player_data_for_stats).get(stat, 0))
+
                 final_amount = 0
                 if is_percentage:
                     base_stat_source = target if "opponent" in effect_target_str else performer
@@ -278,13 +281,19 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 else:
                     final_amount = int(amount)
 
+                # 應用改變
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + final_amount
+                
+                # 獲取改變後的數值
+                post_change_stat_value = math.floor(_get_monster_current_stats(effect_target, target_player_data_for_stats).get(stat, 0))
                 
                 translated_stat = stat_translation.get(stat, stat.upper())
                 change_text = '提升' if final_amount > 0 else '下降'
-                abs_amount_str = f"{abs(amount)*100}%" if is_percentage else str(abs(final_amount))
+                
+                # 產生新的日誌訊息
+                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！(從 {pre_change_stat_value} 變為 {post_change_stat_value})")
+                # --- 核心修改處 END ---
 
-                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了。")
 
         elif effect_type == "heal":
             amount_to_restore = 0
@@ -311,6 +320,29 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 effect_target.setdefault("healthConditions", []).append(new_status)
                 action_details["status_applied"] = status_id
                 log_parts.append(f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！")
+        
+        elif effect_type == "special":
+            special_id = effect.get("special_logic_id")
+            if special_id == "power_trick":
+                pre_swap_attack = attacker_current_stats.get("attack", 0)
+                pre_swap_defense = attacker_current_stats.get("defense", 0)
+
+                original_attack = performer.get("attack", 0)
+                original_defense = performer.get("defense", 0)
+                
+                attack_diff = original_defense - original_attack
+                defense_diff = original_attack - original_defense
+                
+                performer["temp_attack_modifier"] = performer.get("temp_attack_modifier", 0) + attack_diff
+                performer["temp_defense_modifier"] = performer.get("temp_defense_modifier", 0) + defense_diff
+
+                post_swap_attack = pre_swap_attack + attack_diff
+                post_swap_defense = pre_swap_defense + defense_diff
+
+                log_parts.append(f" {performer['nickname']} 的力量被扭曲了！(攻擊: {math.floor(pre_swap_attack)} ↔ {math.floor(post_swap_attack)}, 防禦: {math.floor(pre_swap_defense)} ↔ {math.floor(post_swap_defense)})")
+                action_details["stat_changes"] = {"attack": post_swap_attack, "defense": post_swap_defense}
+            else:
+                log_parts.append(f" {performer['nickname']} 使用了神秘的力量！")
         
     action_details["log_message"] = "".join(log_parts)
     
