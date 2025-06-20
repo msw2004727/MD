@@ -499,44 +499,40 @@ function showBattleLogModal(battleResult) {
         if (existingBanner) existingBanner.remove();
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
-    
-    // ----- 核心修改 START -----
-    const renderMonsterStats = (monster, displayName, isPlayer, conditions) => {
+
+    const renderMonsterStats = (monster, displayName, isPlayer) => {
         if (!monster) return '<div>對手資料錯誤</div>';
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
-
-        const allStatusTemplates = gameState.gameConfigs?.health_conditions || [];
-        const statusTagsHtml = (conditions || []).map(cond => {
-            const template = allStatusTemplates.find(t => t.id === cond.id);
-            const icon = template?.icon || '❓';
-            const duration = cond.duration < 99 ? cond.duration : '∞';
-            return `<div class="status-tag" title="${template?.name || '未知狀態'}"><span class="status-icon">${icon}</span><span class="status-duration">${duration}</span></div>`;
-        }).join('');
-
+        const winRate = monster.resume && (monster.resume.wins + monster.resume.losses > 0)
+            ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
+            : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        const nameAndTagsHtml = `
-            <div class="monster-name-and-tags">
-                <span class="monster-name">${prefix}${displayName}</span>
-                <div class="status-tags-container">${statusTagsHtml}</div>
-            </div>`;
+        const nicknameSpan = `<span class="monster-name">${prefix}${displayName}</span>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
-                ${nameAndTagsHtml}
+                ${nicknameSpan}
                 <p class="monster-personality">個性: ${personalityName}</p>
+                <div class="stats-grid">
+                    <span>HP: ${monster.initial_max_hp}</span>
+                    <span>攻擊: ${monster.attack}</span>
+                    <span>防禦: ${monster.defense}</span>
+                    <span>速度: ${monster.speed}</span>
+                    <span>爆擊: ${monster.crit}%</span>
+                    <span>勝率: ${winRate}%</span>
+                </div>
             </div>
         `;
     };
-    // ----- 核心修改 END -----
 
     reportContainer.innerHTML += `
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-vs-container">
-                <div class="player-side-card">${renderMonsterStats(playerMonsterData, playerDisplayName, true, [])}</div>
-                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false, [])}</div>
+                <div class="player-side-card">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
+                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
             </div>
         </div>
     `;
@@ -559,38 +555,28 @@ function showBattleLogModal(battleResult) {
     
     const rawLog = battleResult.raw_full_log || [];
     const battleTurns = [];
-    let currentTurn = { header: "戰前準備", playerStatus: {}, opponentStatus: {}, actions: [], playerConditions: [], opponentConditions: [] };
+    let currentTurn = null;
 
     rawLog.forEach(line => {
         if (line.startsWith('--- 回合')) {
             if (currentTurn) battleTurns.push(currentTurn);
-            currentTurn = { header: line, playerStatus: {}, opponentStatus: {}, actions: [], playerConditions: [], opponentConditions: [] };
+            currentTurn = { header: line, playerStatus: {}, opponentStatus: {}, actions: [] };
         } else if (line.startsWith('PlayerHP:')) {
             const [current, max] = line.split(':')[1].split('/');
-            currentTurn.playerStatus.hp = { current: parseInt(current), max: parseInt(max) };
+            if (currentTurn) currentTurn.playerStatus.hp = { current: parseInt(current), max: parseInt(max) };
         } else if (line.startsWith('PlayerMP:')) {
             const [current, max] = line.split(':')[1].split('/');
-            currentTurn.playerStatus.mp = { current: parseInt(current), max: parseInt(max) };
+            if (currentTurn) currentTurn.playerStatus.mp = { current: parseInt(current), max: parseInt(max) };
         } else if (line.startsWith('OpponentHP:')) {
             const [current, max] = line.split(':')[1].split('/');
-            currentTurn.opponentStatus.hp = { current: parseInt(current), max: parseInt(max) };
+            if (currentTurn) currentTurn.opponentStatus.hp = { current: parseInt(current), max: parseInt(max) };
         } else if (line.startsWith('OpponentMP:')) {
             const [current, max] = line.split(':')[1].split('/');
-            currentTurn.opponentStatus.mp = { current: parseInt(current), max: parseInt(max) };
-        // ----- 核心修改 START -----
-        } else if (line.startsWith('PlayerConditions:')) {
-            try {
-                currentTurn.playerConditions = JSON.parse(line.substring('PlayerConditions:'.length));
-            } catch (e) { console.error("解析玩家狀態失敗:", e); }
-        } else if (line.startsWith('OpponentConditions:')) {
-            try {
-                currentTurn.opponentConditions = JSON.parse(line.substring('OpponentConditions:'.length));
-            } catch (e) { console.error("解析對手狀態失敗:", e); }
-        // ----- 核心修改 END -----
+            if (currentTurn) currentTurn.opponentStatus.mp = { current: parseInt(current), max: parseInt(max) };
         } else if (line.startsWith('- ')) {
-            currentTurn.actions.push(line.substring(2));
-        } else if (!line.startsWith('--- 戰鬥結束 ---')) {
-            currentTurn.actions.push(line);
+            if (currentTurn) currentTurn.actions.push(line.substring(2));
+        } else if (!line.startsWith('--- 戰鬥結束 ---') && !line.startsWith('PlayerName:') && !line.startsWith('OpponentName:')) {
+            if (currentTurn) currentTurn.actions.push(line);
         }
     });
     if (currentTurn) battleTurns.push(currentTurn);
@@ -609,20 +595,18 @@ function showBattleLogModal(battleResult) {
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common') : 'common';
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
-            statusHtml += renderMonsterStats(playerMonsterData, playerDisplayName, true, turn.playerConditions);
             statusHtml += `
+                <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerDisplayName}</div>
                 ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.playerStatus.mp.current, turn.playerStatus.mp.max, 'var(--accent-color)')}
             `;
         }
         if (turn.opponentStatus.hp && turn.opponentStatus.mp) {
-            statusHtml += `<div class="mt-4">`;
-            statusHtml += renderMonsterStats(opponentMonsterData, opponentDisplayName, false, turn.opponentConditions);
-            statusHtml += `
+             statusHtml += `
+                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">🛡️ ${opponentDisplayName}</div>
                 ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.opponentStatus.mp.current, turn.opponentStatus.mp.max, 'var(--accent-color)')}
              `;
-            statusHtml += `</div>`;
         }
         statusBlockDiv.innerHTML = statusHtml;
         battleDescriptionContentDiv.appendChild(statusBlockDiv);
