@@ -46,6 +46,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "ElementalAdvantageChart": ("elemental_advantage_chart", None),
             "CultivationStories": ("cultivation_stories", "story_library"),
             "ChampionGuardians": ("champion_guardians", "guardians"),
+            "BattleHighlights": ("battle_highlights", None), # 新增：讀取戰鬥亮點設定
         }
 
         for doc_name, (config_key, field_name) in doc_map.items():
