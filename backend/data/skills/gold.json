@@ -1,0 +1,435 @@
+[
+  {
+    "name": "金屬爪",
+    "description": "用金屬化的爪子進行攻擊。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 32,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊時有20%機率提升自身防禦力。"
+      },
+      "10": {
+        "description": "威力提升13點。"
+      }
+    }
+  },
+  {
+    "name": "鐵頭功",
+    "description": "用鋼鐵般堅硬的頭部撞擊對手。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 58,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "30%機率使對手退縮，無法行動一回合。"
+      },
+      "10": {
+        "description": "威力提升17點，無視對手部分防禦。"
+      }
+    }
+  },
+  {
+    "name": "磁力炸彈",
+    "description": "投擲帶有磁力的炸彈。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "遠程",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 28,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "對金屬性對手傷害加倍。"
+      },
+      "10": {
+        "description": "威力提升12點，有20%機率降低對手防禦。"
+      }
+    }
+  },
+  {
+    "name": "加農光炮",
+    "description": "發射出高能量的金屬光炮。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "20%機率降低對手特防。"
+      },
+      "10": {
+        "description": "威力提升20點。"
+      }
+    }
+  },
+  {
+    "name": "金屬音",
+    "description": "發出刺耳金屬音，有90%機率大幅降低對手特防。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "stat_change",
+        "target": "opponent_single",
+        "stat": "special_defense",
+        "amount": -15,
+        "chance": 0.9,
+        "log_success": "{target}聽到了刺耳的金屬音，精神力下降了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升至100%。"
+      },
+      "10": {
+        "description": "同時對對手造成少量固定傷害。"
+      }
+    }
+  },
+  {
+    "name": "流星拳",
+    "description": "如流星般快速地連續出拳。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 85,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "multi_hit",
+        "power": 20,
+        "min_hits": 2,
+        "max_hits": 5,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數固定為3次。"
+      },
+      "10": {
+        "description": "每次攻擊的威力提升5點。"
+      }
+    }
+  },
+  {
+    "name": "鐵壁",
+    "description": "大幅提升自身的防禦力(+15)。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "target": "self",
+        "stat": "defense",
+        "amount": 15,
+        "log_success": "{performer}的身體變得如鋼鐵般堅硬！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果提升為「防禦力巨幅提升(+20)」。"
+      },
+      "10": {
+        "description": "使用後，下一回合受到的物理傷害減半。"
+      }
+    }
+  },
+  {
+    "name": "換擋",
+    "description": "提升自身的攻擊力(+8)與速度(+8)。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "target": "self",
+        "stat": [
+          "attack",
+          "speed"
+        ],
+        "amount": [
+          8,
+          8
+        ],
+        "log_success": "{performer}進行了換擋，變得更快更強了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊力與速度提升效果增加至(+12)。"
+      },
+      "10": {
+        "description": "使用後清除自身所有負面狀態。"
+      }
+    }
+  },
+  {
+    "name": "鋼翼",
+    "description": "用鋼鐵化的翅膀進行攻擊。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 30,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "有20%機率提升自身防禦。"
+      },
+      "10": {
+        "description": "威力提升15點，速度提升5點。"
+      }
+    }
+  },
+  {
+    "name": "重磅衝撞",
+    "description": "用沉重的身體猛烈衝撞，自身會受到20%的反傷。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 65,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "recoil",
+        "recoil_factor": 0.2,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "反傷比例降低至10%。"
+      },
+      "10": {
+        "description": "威力提升25點。"
+      }
+    }
+  },
+  {
+    "name": "陀螺球",
+    "description": "自身速度越慢，威力越大。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "特殊",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "gyro_ball",
+        "power": 25,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "傷害計算公式中的速度差權重增加。"
+      },
+      "10": {
+        "description": "若自身速度為全場最慢，此技能威力加倍。"
+      }
+    }
+  },
+  {
+    "name": "金屬爆炸",
+    "description": "自身瀕死時，將受到的最後一次傷害加倍奉還。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "特殊",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "metal_burst",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "反射傷害提升為2倍。"
+      },
+      "10": {
+        "description": "使用後若成功擊倒對手，自身不會陷入瀕死。"
+      }
+    }
+  },
+  {
+    "name": "破甲",
+    "description": "降低自身的防禦(-10)，但大幅提升攻擊(+15)。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "target": "self",
+        "stat": [
+          "defense",
+          "attack"
+        ],
+        "amount": [
+          -10,
+          15
+        ],
+        "log_success": "{performer}卸下了部分裝甲，攻擊力大幅提升！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊提升效果增加至(+20)。"
+      },
+      "10": {
+        "description": "額外提升爆擊率15%。"
+      }
+    }
+  },
+  {
+    "name": "王者之盾",
+    "description": "防禦對手攻擊，並降低接觸到自己的對手的攻擊力。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 16,
+    "priority": 4,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "kings_shield",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "防禦成功時，回復自身少量HP。"
+      },
+      "10": {
+        "description": "可抵擋部分穿透性技能。"
+      }
+    }
+  },
+  {
+    "name": "重力場",
+    "description": "5回合內，所有怪獸無法浮空或飛起。",
+    "type": "金",
+    "rarity": "普通",
+    "skill_category": "其他",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "gravity",
+        "duration": 5,
+        "target": "all",
+        "log_success": "場上的重力變強了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "場地持續時間延長至7回合。"
+      },
+      "10": {
+        "description": "重力場存在時，所有技能命中率提升。"
+      }
+    }
+  },
+  {
+    "name": "鏡面鎧甲",
+    "description": "將對手降低自身能力的招式效果反彈回去。",
+    "type": "金",
+    "rarity": "稀有",
+    "skill_category": "其他",
+    "mp_cost": 17,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "mirror_armor",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "反彈成功時，對手會受到少量傷害。"
+      },
+      "10": {
+        "description": "可反彈部分異常狀態效果。"
+      }
+    }
+  }
+]
