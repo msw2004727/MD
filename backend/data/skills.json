@@ -107,7 +107,8 @@
           "type": "stat_change",
           "target": "self",
           "stat": "attack",
-          "amount": 5,
+          "amount": 0.15,
+          "amount_is_percentage": true,
           "log_success": "{performer}的身體變暖，攻擊力提升了！"
         }
       ],
@@ -191,13 +192,14 @@
           "type": "stat_change",
           "target": "opponent_single",
           "stat": "attack",
-          "amount": -5,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "log_success": "在{performer}的威嚇下，{target}的攻擊力下降了！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「有90%機率降低對手攻擊力(-8)」。"
+          "description": "效果提升為「有90%機率降低對手攻擊力(-20%)」。"
         },
         "10": {
           "description": "同時有30%機率讓對手陷入「麻痺」狀態1回合。"
@@ -329,8 +331,12 @@
             "crit"
           ],
           "amount": [
-            10,
-            5
+            0.2,
+            10
+          ],
+          "amount_is_percentage": [
+            true,
+            false
           ],
           "log_success": "{performer}沐浴在烈日祝福中，力量湧現！"
         }
@@ -415,14 +421,15 @@
           "type": "stat_change",
           "target": "opponent_single",
           "stat": "defense",
-          "amount": -10,
+          "amount": -0.2,
+          "amount_is_percentage": true,
           "chance": 0.9,
           "log_success": "{target}的防具被高溫熔化，防禦力大幅下降！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「100%機率大幅降低防禦力(-12)」。"
+          "description": "效果提升為「100%機率大幅降低防禦力(-25%)」。"
         },
         "10": {
           "description": "效果變為持續3回合，每回合降低防禦力。"
@@ -643,7 +650,7 @@
     },
     {
       "name": "生命水滴",
-      "description": "恢復自身50點生命值。",
+      "description": "恢復自身最大生命值25%的HP。",
       "type": "水",
       "rarity": "稀有",
       "skill_category": "輔助",
@@ -653,14 +660,14 @@
       "effects": [
         {
           "type": "heal",
-          "heal_amount": 50,
+          "heal_percentage_of_max_hp": 0.25,
           "target": "self",
           "log_success": "{performer}被生命水滴治癒了！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "治療量提升至70點。"
+          "description": "治療量提升至最大生命值的35%。"
         },
         "10": {
           "description": "如果自身HP全滿，則改為治療我方另一位夥伴。"
@@ -777,7 +784,7 @@
     },
     {
       "name": "變圓",
-      "description": "縮成一團，提升自身的防禦力(+8)。",
+      "description": "縮成一團，提升自身的防禦力(+20%)。",
       "type": "水",
       "rarity": "普通",
       "skill_category": "變化",
@@ -789,13 +796,14 @@
           "type": "stat_change",
           "target": "self",
           "stat": "defense",
-          "amount": 8,
+          "amount": 0.2,
+          "amount_is_percentage": true,
           "log_success": "{performer}縮成了一團，防禦力提升了！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「防禦力大幅提升(+12)」。"
+          "description": "效果提升為「防禦力大幅提升(+30%)」。"
         },
         "10": {
           "description": "在變圓狀態下，受到的物理傷害減半。"
@@ -935,7 +943,7 @@
         {
           "type": "leech",
           "power": 50,
-          "leech_percentage": 25,
+          "leech_percentage": 0.25,
           "target": "opponent_single",
           "log_success": "{performer}吸取了{target}的生命力！"
         }
@@ -1032,7 +1040,7 @@
         {
           "type": "leech",
           "power": 30,
-          "leech_percentage": 15,
+          "leech_percentage": 0.15,
           "target": "opponent_single"
         }
       ],
@@ -1058,7 +1066,7 @@
         {
           "type": "leech",
           "power": 55,
-          "leech_percentage": 30,
+          "leech_percentage": 0.3,
           "target": "opponent_single"
         }
       ],
@@ -1085,7 +1093,8 @@
           "type": "stat_change",
           "target": "self",
           "stat": "attack",
-          "amount": 5,
+          "amount": 0.15,
+          "amount_is_percentage": true,
           "log_success": "{performer}開始生長，攻擊力提升！"
         }
       ],
@@ -1220,7 +1229,7 @@
         {
           "type": "leech",
           "power": 70,
-          "leech_percentage": 50,
+          "leech_percentage": 0.5,
           "target": "opponent_single"
         }
       ],
@@ -1337,7 +1346,8 @@
         }
       }
     }
-  ],
+  ]
+  {
   "金": [
     {
       "name": "金屬爪",
@@ -1357,7 +1367,17 @@
       ],
       "level_milestones": {
         "5": {
-          "description": "攻擊時有20%機率提升自身防禦力。"
+          "description": "攻擊時有20%機率提升自身防禦力。",
+          "add_effects": [
+            {
+              "type": "stat_change",
+              "target": "self",
+              "stat": "defense",
+              "amount": 0.1,
+              "amount_is_percentage": true,
+              "chance": 0.2
+            }
+          ]
         },
         "10": {
           "description": "威力提升13點。"
@@ -1453,7 +1473,8 @@
           "type": "stat_change",
           "target": "opponent_single",
           "stat": "special_defense",
-          "amount": -15,
+          "amount": -0.25,
+          "amount_is_percentage": true,
           "chance": 0.9,
           "log_success": "{target}聽到了刺耳的金屬音，精神力下降了！"
         }
@@ -1497,7 +1518,7 @@
     },
     {
       "name": "鐵壁",
-      "description": "大幅提升自身的防禦力(+15)。",
+      "description": "大幅提升自身的防禦力(+25%)。",
       "type": "金",
       "rarity": "普通",
       "skill_category": "輔助",
@@ -1509,13 +1530,14 @@
           "type": "stat_change",
           "target": "self",
           "stat": "defense",
-          "amount": 15,
+          "amount": 0.25,
+          "amount_is_percentage": true,
           "log_success": "{performer}的身體變得如鋼鐵般堅硬！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「防禦力巨幅提升(+20)」。"
+          "description": "效果提升為「防禦力巨幅提升(+35%)」。"
         },
         "10": {
           "description": "使用後，下一回合受到的物理傷害減半。"
@@ -1524,7 +1546,7 @@
     },
     {
       "name": "換擋",
-      "description": "提升自身的攻擊力(+8)與速度(+8)。",
+      "description": "提升自身的攻擊力(+15%)與速度(+15%)。",
       "type": "金",
       "rarity": "稀有",
       "skill_category": "輔助",
@@ -1540,15 +1562,16 @@
             "speed"
           ],
           "amount": [
-            8,
-            8
+            0.15,
+            0.15
           ],
+          "amount_is_percentage": true,
           "log_success": "{performer}進行了換擋，變得更快更強了！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "攻擊力與速度提升效果增加至(+12)。"
+          "description": "攻擊力與速度提升效果增加至(+20%)。"
         },
         "10": {
           "description": "使用後清除自身所有負面狀態。"
@@ -1664,7 +1687,7 @@
     },
     {
       "name": "破甲",
-      "description": "降低自身的防禦(-10)，但大幅提升攻擊(+15)。",
+      "description": "降低自身的防禦(-20%)，但大幅提升攻擊(+25%)。",
       "type": "金",
       "rarity": "普通",
       "skill_category": "變化",
@@ -1680,15 +1703,16 @@
             "attack"
           ],
           "amount": [
-            -10,
-            15
+            -0.2,
+            0.25
           ],
+          "amount_is_percentage": true,
           "log_success": "{performer}卸下了部分裝甲，攻擊力大幅提升！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "攻擊提升效果增加至(+20)。"
+          "description": "攻擊提升效果增加至(+30%)。"
         },
         "10": {
           "description": "額外提升爆擊率15%。"
@@ -1826,7 +1850,7 @@
     },
     {
       "name": "泥巴射擊",
-      "description": "投擲泥塊攻擊並有95%機率降低對手速度(-5)。",
+      "description": "投擲泥塊攻擊並有95%機率降低對手速度(-15%)。",
       "type": "土",
       "rarity": "普通",
       "skill_category": "遠程",
@@ -1842,7 +1866,8 @@
         {
           "type": "stat_change",
           "stat": "speed",
-          "amount": -5,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "chance": 0.95,
           "target": "opponent_single",
           "log_success": "{target}被泥巴射中，速度下降了！"
@@ -1850,7 +1875,7 @@
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「100%降低對手速度(-8)」。"
+          "description": "效果提升為「100%降低對手速度(-20%)」。"
         },
         "10": {
           "description": "同時降低對手命中率。"
@@ -1936,7 +1961,7 @@
     },
     {
       "name": "變硬",
-      "description": "使身體變硬，提升自身的防禦力(+10)。",
+      "description": "使身體變硬，提升自身的防禦力(+20%)。",
       "type": "土",
       "rarity": "普通",
       "skill_category": "輔助",
@@ -1947,14 +1972,15 @@
         {
           "type": "stat_change",
           "stat": "defense",
-          "amount": 10,
+          "amount": 0.2,
+          "amount_is_percentage": true,
           "target": "self",
           "log_success": "{performer}的身體變硬了！"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「防禦力大幅提升(+15)」。"
+          "description": "效果提升為「防禦力大幅提升(+30%)」。"
         },
         "10": {
           "description": "使用後，下一次受到的物理攻擊傷害減少25%。"
@@ -2216,7 +2242,7 @@
   "光": [
     {
       "name": "閃光",
-      "description": "發出強光，有80%機率降低對手命中率(-10)。",
+      "description": "發出強光，有80%機率降低對手命中率(-15%)。",
       "type": "光",
       "rarity": "普通",
       "skill_category": "變化",
@@ -2227,7 +2253,8 @@
         {
           "type": "stat_change",
           "stat": "accuracy",
-          "amount": -10,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "chance": 1,
           "target": "opponent_single",
           "log_success": "強光讓{target}的眼睛睜不開！"
@@ -2235,7 +2262,7 @@
       ],
       "level_milestones": {
         "5": {
-          "description": "效果提升為「100%降低對手命中率(-12)」。"
+          "description": "效果提升為「100%降低對手命中率(-20%)」。"
         },
         "10": {
           "description": "同時有20%機率使對手陷入「混亂」狀態。"
@@ -2382,7 +2409,7 @@
     },
     {
       "name": "治癒波動",
-      "description": "釋放治癒波動，恢復目標40點生命值。",
+      "description": "釋放治癒波動，恢復目標最大生命值20%的HP。",
       "type": "光",
       "rarity": "普通",
       "skill_category": "輔助",
@@ -2392,13 +2419,13 @@
       "effects": [
         {
           "type": "heal",
-          "heal_amount": 40,
+          "heal_percentage_of_max_hp": 0.2,
           "target": "self"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "治療量提升至60點。"
+          "description": "治療量提升至最大生命值的30%。"
         },
         "10": {
           "description": "同時清除目標所有異常狀態。"
@@ -2507,7 +2534,8 @@
         }
       }
     }
-  ],
+  ]
+  {
   "暗": [
     {
       "name": "暗影爪",
@@ -2536,7 +2564,7 @@
     },
     {
       "name": "驚嚇",
-      "description": "發出恐怖的氣息，有90%機率降低對手攻擊力(-8)。",
+      "description": "發出恐怖的氣息，有90%機率降低對手攻擊力(-15%)。",
       "type": "暗",
       "rarity": "普通",
       "skill_category": "變化",
@@ -2547,14 +2575,15 @@
         {
           "type": "stat_change",
           "stat": "attack",
-          "amount": -8,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "chance": 1,
           "target": "opponent_single"
         }
       ],
       "level_milestones": {
         "5": {
-          "description": "同時降低對手的防禦力(-5)。"
+          "description": "同時降低對手的防禦力(-10%)。"
         },
         "10": {
           "description": "有25%機率使對手陷入「麻痺」狀態1回合。"
@@ -2651,7 +2680,8 @@
         {
           "type": "stat_change",
           "stat": "special_defense",
-          "amount": -15,
+          "amount": -0.2,
+          "amount_is_percentage": true,
           "target": "opponent_single"
         }
       ],
@@ -2733,7 +2763,7 @@
         {
           "type": "leech",
           "power": 55,
-          "leech_percentage": 30,
+          "leech_percentage": 0.3,
           "target": "opponent_single"
         }
       ],
@@ -2816,7 +2846,8 @@
         {
           "type": "stat_change",
           "stat": "special_defense",
-          "amount": -10,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "chance": 0.3,
           "target": "opponent_single"
         }
@@ -2843,7 +2874,8 @@
         {
           "type": "stat_change",
           "stat": "special_attack",
-          "amount": 25,
+          "amount": 0.3,
+          "amount_is_percentage": true,
           "target": "self"
         }
       ],
@@ -3019,7 +3051,8 @@
         {
           "type": "stat_change",
           "stat": "defense",
-          "amount": -10,
+          "amount": -0.2,
+          "amount_is_percentage": true,
           "chance": 0.2,
           "target": "opponent_single",
           "log_success": "{target}的防禦被溶解液腐蝕了！"
@@ -3110,9 +3143,14 @@
             "accuracy"
           ],
           "amount": [
-            10,
-            10,
+            0.1,
+            0.1,
             10
+          ],
+          "amount_is_percentage": [
+            true,
+            true,
+            false
           ],
           "target": "self",
           "log_success": "{performer}盤蜷起來，集中了精神！"
@@ -3243,7 +3281,8 @@
         {
           "type": "stat_change",
           "stat": "defense",
-          "amount": 25,
+          "amount": 0.35,
+          "amount_is_percentage": true,
           "target": "self"
         }
       ],
@@ -3423,7 +3462,7 @@
     },
     {
       "name": "高速移動",
-      "description": "集中精神，大幅提升自身速度。",
+      "description": "集中精神，大幅提升自身速度(+30%)。",
       "type": "風",
       "rarity": "普通",
       "skill_category": "輔助",
@@ -3434,7 +3473,8 @@
         {
           "type": "stat_change",
           "stat": "speed",
-          "amount": 20,
+          "amount": 0.3,
+          "amount_is_percentage": true,
           "target": "self"
         }
       ],
@@ -3705,7 +3745,8 @@
         {
           "type": "stat_change",
           "stat": "attack",
-          "amount": -20,
+          "amount": -0.3,
+          "amount_is_percentage": true,
           "target": "opponent_single"
         }
       ],
@@ -3866,7 +3907,8 @@
         {
           "type": "stat_change",
           "stat": "attack",
-          "amount": -8,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "target": "opponent_single"
         }
       ],
@@ -3917,7 +3959,8 @@
         {
           "type": "stat_change",
           "stat": "defense",
-          "amount": -8,
+          "amount": -0.15,
+          "amount_is_percentage": true,
           "target": "opponent_single"
         }
       ],
