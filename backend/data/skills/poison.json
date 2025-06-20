@@ -19,15 +19,24 @@
         "status_id": "poison",
         "chance": 0.3,
         "target": "opponent_single",
-        "log_success": "{target}中毒了！"
+        "log_success": "{target}被毒針刺中，中毒了！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "中毒機率提升至50%。"
+        "description": "中毒機率提升至50%。",
+        "chance_add": 0.2
       },
       "10": {
-        "description": "威力提升10點，可攻擊2次。"
+        "description": "威力提升10點，可攻擊2次。",
+        "add_power": 10,
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "multi_hit",
+            "hits": 2
+          }
+        ]
       }
     }
   },
@@ -51,10 +60,19 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "命中率提升。"
+        "description": "命中率提升。",
+        "add_accuracy": 10
       },
       "10": {
-        "description": "毒霧持續3回合，進入場地的敵人也會中毒。"
+        "description": "毒霧持續3回合，進入場地的敵人也會中毒。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "field_effect",
+            "field_id": "toxic_fog",
+            "duration": 3
+          }
+        ]
       }
     }
   },
@@ -75,19 +93,22 @@
       },
       {
         "type": "stat_change",
-        "stat": "defense",
-        "amount": -10,
+        "stat": "防禦",
+        "amount": -0.15,
+        "is_multiplier": true,
         "chance": 0.2,
         "target": "opponent_single",
-        "log_success": "{target}的防禦被溶解液腐蝕了！"
+        "log_success": "{target}的防禦被溶解液腐蝕，{stat}下降了{amount}%！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升10點。"
+        "description": "威力提升10點。",
+        "add_power": 10
       },
       "10": {
-        "description": "降低防禦的機率提升至40%。"
+        "description": "降低防禦的機率提升至40%。",
+        "chance_add": 0.2
       }
     }
   },
@@ -111,15 +132,17 @@
         "status_id": "badly_poisoned",
         "chance": 0.35,
         "target": "opponent_single",
-        "log_success": "{target}中了劇毒！"
+        "log_success": "{target}被毒牙咬中，中了劇毒！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "造成強力中毒的機率提升至50%。"
+        "description": "造成強力中毒的機率提升至50%。",
+        "chance_add": 0.15
       },
       "10": {
-        "description": "威力提升15點。"
+        "description": "威力提升15點。",
+        "add_power": 15
       }
     }
   },
@@ -142,10 +165,17 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升至55。"
+        "description": "威力提升至55。",
+        "add_power": 5
       },
       "10": {
-        "description": "對中毒的敵人必定爆擊。"
+        "description": "對中毒的敵人必定爆擊。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "crit_on_poisoned"
+          }
+        ]
       }
     }
   },
@@ -162,9 +192,9 @@
       {
         "type": "stat_change",
         "stat": [
-          "attack",
-          "defense",
-          "accuracy"
+          "攻擊",
+          "防禦",
+          "命中"
         ],
         "amount": [
           10,
@@ -172,15 +202,24 @@
           10
         ],
         "target": "self",
-        "log_success": "{performer}盤蜷起來，集中了精神！"
+        "log_success": "{performer}盤蜷起來，集中了精神！攻擊、防禦、命中提升！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "提升的數值增加。"
+        "description": "提升的數值增加。",
+        "amount_add": 5
       },
       "10": {
-        "description": "使用後，下一次攻擊的威力提升20%。"
+        "description": "使用後，下一次攻擊的威力提升20%。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "next_attack_boost",
+            "power_multiplier": 1.2,
+            "duration": 1
+          }
+        ]
       }
     }
   },
@@ -203,10 +242,26 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "使用後，自身閃避率提升。"
+        "description": "使用後，自身閃避率提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "閃避",
+            "amount": 10,
+            "target": "self",
+            "log_success": "{performer}的身影變得模糊！"
+          }
+        ]
       },
       "10": {
-        "description": "同時對對手造成少量傷害。"
+        "description": "同時對對手造成少量傷害。",
+        "add_effects": [
+          {
+            "type": "damage",
+            "power": 20,
+            "target": "opponent_single"
+          }
+        ]
       }
     }
   },
@@ -229,10 +284,21 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "效果持續3回合。"
+        "description": "效果持續3回合。",
+        "duration_set": 3
       },
       "10": {
-        "description": "使用後，對手的防禦力下降。"
+        "description": "使用後，對手的防禦力下降。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": -0.1,
+            "is_multiplier": true,
+            "target": "opponent_single",
+            "log_success": "{target}的防禦被胃液腐蝕，下降了{amount}%！"
+          }
+        ]
       }
     }
   },
@@ -254,10 +320,17 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "可設置兩層陷阱，第二層會額外扣除HP。"
+        "description": "可設置兩層陷阱，第二層會額外扣除HP。",
+        "layers": 2
       },
       "10": {
-        "description": "踩到陷阱的怪獸同時會被降低速度。"
+        "description": "踩到陷阱的怪獸同時會被降低速度。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "toxic_spikes_speed_drop"
+          }
+        ]
       }
     }
   },
@@ -280,36 +353,17 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "爆擊率再次提升。"
+        "description": "爆擊率再次提升。",
+        "crit_chance_modifier_add": 15
       },
       "10": {
-        "description": "爆擊時100%使對手陷入強力中毒。"
-      }
-    }
-  },
-  {
-    "name": "生化裝甲",
-    "description": "覆蓋生化裝甲，大幅提升防禦力，並免疫中毒狀態。",
-    "type": "毒",
-    "rarity": "稀有",
-    "skill_category": "輔助",
-    "mp_cost": 14,
-    "priority": 0,
-    "accuracy": "auto",
-    "effects": [
-      {
-        "type": "stat_change",
-        "stat": "defense",
-        "amount": 25,
-        "target": "self"
-      }
-    ],
-    "level_milestones": {
-      "5": {
-        "description": "裝甲狀態下，每回合回復少量HP。"
-      },
-      "10": {
-        "description": "裝甲破碎時，會對攻擊者造成傷害並使其「中毒」。"
+        "description": "爆擊時100%使對手陷入強力中毒。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "poison_on_crit"
+          }
+        ]
       }
     }
   },
@@ -332,15 +386,24 @@
         "type": "apply_status",
         "status_id": "poison",
         "chance": 0.4,
-        "target": "opponent_single"
+        "target": "opponent_single",
+        "log_success": "{target}被污泥炸彈擊中，中毒了！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升15點。"
+        "description": "威力提升15點。",
+        "add_power": 15
       },
       "10": {
-        "description": "爆炸會濺射到鄰近目標，造成一半傷害。"
+        "description": "爆炸會濺射到鄰近目標，造成一半傷害。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "splash_damage",
+            "splash_factor": 0.5
+          }
+        ]
       }
     }
   },
@@ -362,10 +425,20 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "命中率提升。"
+        "description": "命中率提升。",
+        "add_accuracy": 15
       },
       "10": {
-        "description": "擊中時30%機率使對手「中毒」。"
+        "description": "擊中時30%機率使對手「中毒」。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "poison",
+            "chance": 0.3,
+            "target": "opponent_single",
+            "log_success": "垃圾中的毒素滲入了{target}體內！"
+          }
+        ]
       }
     }
   },
@@ -383,15 +456,33 @@
         "type": "special",
         "special_logic_id": "soak",
         "soak_type": "毒",
-        "target": "opponent_single"
+        "target": "opponent_single",
+        "log_success": "{target}被毒液浸泡，變成了毒屬性！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "變化屬性的同時，偷取對手少量HP。"
+        "description": "變化屬性的同時，偷取對手少量HP。",
+        "add_effects": [
+          {
+            "type": "leech",
+            "power": 15,
+            "leech_percentage": 100,
+            "target": "opponent_single"
+          }
+        ]
       },
       "10": {
-        "description": "使用後，自身特攻提升。"
+        "description": "使用後，自身特攻提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "特攻",
+            "amount": 0.2,
+            "is_multiplier": true,
+            "target": "self"
+          }
+        ]
       }
     }
   },
@@ -439,15 +530,23 @@
         "type": "apply_status",
         "status_id": "badly_poisoned",
         "chance": 1,
-        "target": "opponent_single"
+        "target": "opponent_single",
+        "log_success": "{target}被劇毒鎖鏈緊緊纏繞！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升10點。"
+        "description": "威力提升10點。",
+        "add_power": 10
       },
       "10": {
-        "description": "被鎖鏈綑綁的敵人，每回合速度會下降。"
+        "description": "被鎖鏈綑綁的敵人，每回合速度會下降。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "speed_drop_on_badly_poisoned"
+          }
+        ]
       }
     }
   }
