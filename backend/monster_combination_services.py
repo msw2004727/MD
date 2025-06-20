@@ -4,7 +4,7 @@
 import random
 import time
 import logging
-from typing import List, Dict, Optional, Union, Tuple, Literal, Any
+from typing import List, Dict, Optional, Union, Tuple, Any
 from collections import Counter
 import copy # 用於深拷貝怪獸數據
 
@@ -27,7 +27,7 @@ from .utils_services import generate_monster_full_nickname, calculate_exp_to_nex
 
 monster_combination_services_logger = logging.getLogger(__name__)
 
-# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入 GameConfigs) ---
+# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入) ---
 DEFAULT_GAME_CONFIGS_FOR_COMBINATION: GameConfigs = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
@@ -132,12 +132,11 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
     combined_dnas_data: List[DNAFragment] = []
     constituent_dna_template_ids: List[str] = []
 
-    # ----- BUG 修正邏輯 START -----
-    # 使用更安全的列表推導式來過濾無效的 DNA 物件
     valid_dna_objects = [dna for dna in dna_objects_from_request if dna and isinstance(dna, dict)]
     
     for dna_obj in valid_dna_objects:
-        template_id = dna_obj.get("baseId") or dna_obj.get("id")
+        # 【修改】只使用 `baseId` 來查找模板，不再備援使用 `id`
+        template_id = dna_obj.get("baseId")
         
         if template_id and isinstance(template_id, str):
             dna_template = next((f for f in game_configs.get("dna_fragments", []) if f.get("id") == template_id), None)
@@ -147,12 +146,13 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             else:
                  monster_combination_services_logger.warning(f"在組合槽中發現一個ID為 '{template_id}' 的DNA，但在遊戲設定中找不到對應的模板資料，已跳過。")
         else:
-            monster_combination_services_logger.warning(f"在組合槽的 DNA 物件中找不到有效的 'baseId' 或 'id'，已跳過。DNA 物件: {dna_obj}")
+            # 【修改】提供更精確的日誌訊息
+            monster_combination_services_logger.warning(f"在組合槽的 DNA 物件中找不到有效的 'baseId'，已跳過。DNA 物件: {dna_obj}")
     
+    # 遊戲規則要求必須放滿5個DNA
     if len(combined_dnas_data) < 5:
         monster_combination_services_logger.error(f"經過濾後，有效的 DNA 數量為 {len(combined_dnas_data)} 個，不足 5 個，無法組合。")
         return {"success": False, "error": "有效的 DNA 數量不足 5 個，無法組合。"}
-    # ----- BUG 修正邏輯 END -----
 
     gmt8 = timezone(timedelta(hours=8))
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
@@ -314,16 +314,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "interaction_stats": default_interaction_stats,
         }
         
-        # 移除
-        # base_resistances = Counter()
-        # for dna_frag in combined_dnas_data:
-        #     base_resistances.update(dna_frag.get("resistances", {}))
-        # resistance_bonus = monster_rarity_data.get("resistanceBonus", 0)
-        # for el in elements_present:
-        #     base_resistances[el] = base_resistances.get(el, 0) + resistance_bonus
-        # standard_monster_data["resistances"] = dict(base_resistances)
-        
-        # 新增
         initial_resistances = Counter()
         for dna_frag in combined_dnas_data:
             initial_resistances.update(dna_frag.get("resistances", {}))
