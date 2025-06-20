@@ -265,10 +265,9 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 is_percentage_list = [False] * len(stats_to_change)
 
             for i, (stat, amount) in enumerate(zip(stats_to_change, amounts)):
-                is_percentage = is_percentage_list[i] if i < len(is_percentage_list) else False
-                
                 # --- 核心修改處 START ---
-                # 獲取改變前的數值
+                is_percentage = is_percentage_list[i] if isinstance(is_percentage_list, list) and i < len(is_percentage_list) else False
+                
                 target_player_data_for_stats = target_player_data if "opponent" in effect_target_str else performer_player_data
                 pre_change_stat_value = math.floor(_get_monster_current_stats(effect_target, target_player_data_for_stats).get(stat, 0))
 
@@ -281,19 +280,16 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 else:
                     final_amount = int(amount)
 
-                # 應用改變
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + final_amount
                 
-                # 獲取改變後的數值
                 post_change_stat_value = math.floor(_get_monster_current_stats(effect_target, target_player_data_for_stats).get(stat, 0))
                 
                 translated_stat = stat_translation.get(stat, stat.upper())
                 change_text = '提升' if final_amount > 0 else '下降'
                 
-                # 產生新的日誌訊息
-                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！(從 {pre_change_stat_value} 變為 {post_change_stat_value})")
+                log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了！ (從 {pre_change_stat_value} 變為 {post_change_stat_value})")
+                action_details[f"{stat}_changed_to"] = post_change_stat_value
                 # --- 核心修改處 END ---
-
 
         elif effect_type == "heal":
             amount_to_restore = 0
@@ -324,23 +320,26 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         elif effect_type == "special":
             special_id = effect.get("special_logic_id")
             if special_id == "power_trick":
-                pre_swap_attack = attacker_current_stats.get("attack", 0)
-                pre_swap_defense = attacker_current_stats.get("defense", 0)
+                # --- 核心修改處 START ---
+                # 獲取交換前的當前數值用於日誌
+                stats_before_swap = _get_monster_current_stats(performer, performer_player_data)
+                pre_swap_attack = math.floor(stats_before_swap['attack'])
+                pre_swap_defense = math.floor(stats_before_swap['defense'])
 
-                original_attack = performer.get("attack", 0)
-                original_defense = performer.get("defense", 0)
+                # 這是最穩定的交換方式：直接在戰鬥用的怪獸物件副本上交換基礎數值
+                original_base_attack = performer.get("attack", 0)
+                original_base_defense = performer.get("defense", 0)
+                performer["attack"] = original_base_defense
+                performer["defense"] = original_base_attack
                 
-                attack_diff = original_defense - original_attack
-                defense_diff = original_attack - original_defense
-                
-                performer["temp_attack_modifier"] = performer.get("temp_attack_modifier", 0) + attack_diff
-                performer["temp_defense_modifier"] = performer.get("temp_defense_modifier", 0) + defense_diff
+                # 重新獲取交換後的數值，這樣會自動計入其他加成
+                stats_after_swap = _get_monster_current_stats(performer, performer_player_data)
+                post_swap_attack = math.floor(stats_after_swap['attack'])
+                post_swap_defense = math.floor(stats_after_swap['defense'])
 
-                post_swap_attack = pre_swap_attack + attack_diff
-                post_swap_defense = pre_swap_defense + defense_diff
-
-                log_parts.append(f" {performer['nickname']} 的力量被扭曲了！(攻擊: {math.floor(pre_swap_attack)} ↔ {math.floor(post_swap_attack)}, 防禦: {math.floor(pre_swap_defense)} ↔ {math.floor(post_swap_defense)})")
+                log_parts.append(f" {performer['nickname']} 的力量被扭曲了！(攻擊: {pre_swap_attack} ↔ {post_swap_attack}, 防禦: {pre_swap_defense} ↔ {post_swap_defense})")
                 action_details["stat_changes"] = {"attack": post_swap_attack, "defense": post_swap_defense}
+                # --- 核心修改處 END ---
             else:
                 log_parts.append(f" {performer['nickname']} 使用了神秘的力量！")
         
