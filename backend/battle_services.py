@@ -95,7 +95,7 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
                         stats[stat] += value
     return stats
 
-# --- 【修改】修正後的函式 ---
+
 def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConfigs) -> List[Skill]:
     """從遊戲設定中查找完整的技能資料，並返回怪獸當前MP足夠使用的技能列表。"""
     available_skills: List[Skill] = []
@@ -106,7 +106,6 @@ def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConf
         if not skill_name:
             continue
 
-        # 從所有屬性的技能池中查找技能模板
         skill_template = None
         for element_skills in all_skills_db.values():
             found = next((s for s in element_skills if s.get("name") == skill_name), None)
@@ -118,7 +117,6 @@ def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConf
             battle_logger.warning(f"怪獸 {monster.get('nickname')} 的技能 '{skill_name}' 在遊戲設定中找不到範本。")
             continue
             
-        # 將範本與怪獸自身的技能資料(主要是等級)合併
         full_skill_data = copy.deepcopy(skill_template)
         full_skill_data.update(skill_stub)
         
@@ -132,7 +130,6 @@ def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConf
 
 def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfigs, player_data: Optional[PlayerGameData]) -> Skill:
     attacker_current_stats = _get_monster_current_stats(attacker, player_data, game_configs)
-    # 【修改】呼叫時傳入 game_configs
     all_mp_available_skills = _get_active_skills(attacker, attacker_current_stats["mp"], game_configs)
 
     sensible_skills = []
@@ -167,6 +164,7 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     return BASIC_ATTACK
 
 def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effects: List[SkillEffect], game_configs: GameConfigs, action_details: Dict, log_parts: List[str]):
+    """處理單個技能中定義的多個效果"""
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
@@ -177,9 +175,18 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             attacker_stats = _get_monster_current_stats(performer, performer_pd, game_configs)
             defender_stats = _get_monster_current_stats(target, target_pd, game_configs)
             
+            # --- 【修改】處理 ignore_defense_buffs ---
+            special_logic_id = next((e.get("special_logic_id") for e in skill.get("effects", []) if "special_logic_id" in e), None)
+            
+            # 如果技能效果是無視防禦提升，則使用目標的基礎防禦
+            if special_logic_id == "ignore_defense_buffs":
+                defense_stat = max(1, target.get("defense", 1))
+                log_parts.append(f" 攻擊無視了 {target['nickname']} 的防禦提升！")
+            else:
+                defense_stat = max(1, defender_stats.get("defense", 1))
+
             power = effect.get("power", 0)
             attack_stat = attacker_stats.get("attack", 1)
-            defense_stat = max(1, defender_stats.get("defense", 1))
             element_multiplier = _calculate_elemental_advantage(skill["type"], target.get("elements", []), game_configs)
 
             raw_damage = max(1, (power * (attack_stat / defense_stat) * 0.5) + (attack_stat * 0.1))
@@ -195,7 +202,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             if element_multiplier > 1.0: advantage_text = " 效果絕佳！"
             elif element_multiplier < 1.0: advantage_text = " 效果不太好..."
 
-            log_parts.append(f"對 {target['nickname']} 造成了 <damage>{final_damage}</damage> 點傷害。{advantage_text}")
+            log_parts.append(f"對 **{target['nickname']}** 造成了 <damage>{final_damage}</damage> 點傷害。{advantage_text}")
 
         elif effect.get("type") == "apply_status":
             if random.random() <= effect.get("chance", 1.0):
@@ -208,10 +215,8 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                         min_t, max_t = map(int, duration_str.split('-'))
                         turn_duration = random.randint(min_t, max_t)
                     else:
-                        try:
-                            turn_duration = int(duration_str)
-                        except (ValueError, TypeError):
-                            turn_duration = 99
+                        try: turn_duration = int(duration_str)
+                        except (ValueError, TypeError): turn_duration = 99
                     
                     new_status = {"id": status_template["id"], "name": status_template["name"], "duration": turn_duration}
                     effect_target_monster.setdefault("healthConditions", []).append(new_status)
@@ -228,7 +233,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                 amounts = [effect["amount"]] if isinstance(effect["amount"], (int, float)) else effect["amount"]
                 
                 for stat_zh, amount in zip(stats_to_change_zh, amounts):
-                    stat_en = stat_map.get(stat_zh, stat_zh.lower()) # fallback to lowercase
+                    stat_en = stat_map.get(stat_zh, stat_zh.lower())
                     
                     modifier_key_mult = f"temp_{stat_en}_multiplier"
                     modifier_key_add = f"temp_{stat_en}_modifier"
@@ -257,7 +262,10 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                 recoil_damage = int(damage_dealt * recoil_factor)
                 if recoil_damage > 0:
                     performer["current_hp"] = max(0, performer.get("current_hp", 0) - recoil_damage)
-                    log_parts.append(f" {performer['nickname']}也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
+                    log_parts.append(f" **{performer['nickname']}**也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
+            elif special_id == "ignore_defense_buffs":
+                # 邏輯已移至傷害計算部分，此處僅作日誌記錄（如果需要的話），但為避免重複，暫時留空。
+                pass
             else:
                 log_parts.append(f" 發動了未知的特殊效果「{special_id}」！")
 
@@ -275,19 +283,19 @@ def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> 
 
         if condition_template.get("chance_to_skip_turn", 0) > 0 and random.random() < condition_template["chance_to_skip_turn"]:
             skip_turn = True
-            log_messages.append(f"- {monster['nickname']} 因**{condition_template['name']}**狀態而無法行動！")
+            log_messages.append(f"- **{monster['nickname']}** 因**{condition_template['name']}**狀態而無法行動！")
 
         effects = condition_template.get("effects", {})
         if effects.get("hp_per_turn", 0) != 0:
             hp_change = effects["hp_per_turn"]
             monster["current_hp"] = max(0, monster.get("current_hp", 0) + hp_change)
-            log_messages.append(f"- {monster['nickname']} 因**{condition_template['name']}**狀態{'損失' if hp_change < 0 else '恢復'}了 <damage>{abs(hp_change)}</damage> 點HP。")
+            log_messages.append(f"- **{monster['nickname']}** 因**{condition_template['name']}**狀態{'損失' if hp_change < 0 else '恢復'}了 <damage>{abs(hp_change)}</damage> 點HP。")
             
         if active_condition.get("duration", 99) > 1:
             active_condition["duration"] -= 1
             new_conditions.append(active_condition)
         else:
-            log_messages.append(f"- {monster['nickname']} 的**{condition_template['name']}**狀態解除了。")
+            log_messages.append(f"- **{monster['nickname']}** 的**{condition_template['name']}**狀態解除了。")
             
     monster["healthConditions"] = new_conditions
     return skip_turn, log_messages
@@ -326,20 +334,20 @@ def simulate_battle_full(
         turn_log = [f"--- 回合 {turn_num} 開始 ---"]
         
         player_status_text = "良好"
-        if player_monster.get("healthConditions"):
-            player_status_text = ", ".join([c.get('name', '未知') for c in player_monster["healthConditions"]])
+        if player_monster.get("healthConditions"): player_status_text = ", ".join([c.get('name', '未知') for c in player_monster["healthConditions"]])
         opponent_status_text = "良好"
-        if opponent_monster.get("healthConditions"):
-            opponent_status_text = ", ".join([c.get('name', '未知') for c in opponent_monster["healthConditions"]])
+        if opponent_monster.get("healthConditions"): opponent_status_text = ", ".join([c.get('name', '未知') for c in opponent_monster["healthConditions"]])
 
-        turn_log.append(f"PlayerName:{player_monster['nickname']}")
-        turn_log.append(f"PlayerHP:{player_monster['current_hp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_hp']}")
-        turn_log.append(f"PlayerMP:{player_monster['current_mp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_mp']}")
-        turn_log.append(f"PlayerStatus:{player_status_text}")
-        turn_log.append(f"OpponentName:{opponent_monster['nickname']}")
-        turn_log.append(f"OpponentHP:{opponent_monster['current_hp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_hp']}")
-        turn_log.append(f"OpponentMP:{opponent_monster['current_mp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_mp']}")
-        turn_log.append(f"OpponentStatus:{opponent_status_text}")
+        turn_log.extend([
+            f"PlayerName:{player_monster['nickname']}",
+            f"PlayerHP:{player_monster['current_hp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_hp']}",
+            f"PlayerMP:{player_monster['current_mp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_mp']}",
+            f"PlayerStatus:{player_status_text}",
+            f"OpponentName:{opponent_monster['nickname']}",
+            f"OpponentHP:{opponent_monster['current_hp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_hp']}",
+            f"OpponentMP:{opponent_monster['current_mp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_mp']}",
+            f"OpponentStatus:{opponent_status_text}"
+        ])
         
         player_skip, p_logs = _process_turn_start_effects(player_monster, game_configs)
         turn_log.extend(p_logs)
@@ -365,7 +373,7 @@ def simulate_battle_full(
             effective_skill = get_effective_skill_with_level(chosen_skill_template, chosen_skill_template.get("level", 1))
 
             performer["current_mp"] -= effective_skill.get("mp_cost", 0)
-            log_parts = [f"- **{performer['nickname']}** 使用了 **{effective_skill['name']}**！"]
+            log_parts = [f"- **{performer['nickname']}** 使用了 Lv{effective_skill.get('level', 1)} **{effective_skill['name']}**！"]
             action_details = {"performer_data": performer_pd, "target_data": target_pd}
 
             accuracy = effective_skill.get("accuracy", 95)
@@ -397,13 +405,18 @@ def simulate_battle_full(
     player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
     opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
+    # --- 【新增】呼叫AI服務來生成戰報 ---
+    ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
+
     final_battle_result: BattleResult = {
         "winner_id": winner_id, "loser_id": loser_id, "raw_full_log": all_raw_log_messages,
         "player_monster_final_hp": player_monster["current_hp"], "player_monster_final_mp": player_monster["current_mp"],
         "player_monster_final_skills": player_monster.get("skills", []), "player_monster_final_resume": player_monster.get("resume", {"wins": 0, "losses": 0}),
         "player_activity_log": player_activity_log, "opponent_activity_log": opponent_activity_log,
-        "battle_highlights": [], "log_entries": [], "battle_end": True,
-        "ai_battle_report_content": {}
+        "battle_highlights": [], # 這個欄位目前由AI生成，暫時留空
+        "log_entries": [], # 這個欄位看起來已廢棄，留空
+        "battle_end": True,
+        "ai_battle_report_content": ai_report # 將AI生成的內容填入
     }
     
     return final_battle_result
