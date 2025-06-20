@@ -89,7 +89,7 @@ class Skill(TypedDict):
     level: NotRequired[int]
     current_exp: NotRequired[int]
     exp_to_next_level: NotRequired[int]
-    is_active: NotRequired[bool] 
+    is_active: NotRequired[bool] # 新增：技能開關狀態
     # 舊版相容性欄位
     story: NotRequired[str]
     power: NotRequired[int]
@@ -308,7 +308,6 @@ class PlayerGameData(TypedDict):
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
     friends: NotRequired[List[Any]]
     playerNotes: NotRequired[List[NoteEntry]]
-    temporaryBackpack: NotRequired[List[Optional[Dict[str, Any]]]] # 新增：臨時背包
 
 class MonsterRecipe(TypedDict):
     combinationKey: str 
