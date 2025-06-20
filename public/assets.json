@@ -1,0 +1,80 @@
+{
+  "images": {
+    "snapshot": {
+      "comment": "主畫面頂部的怪獸快照區域",
+      "background": "https://github.com/msw2004727/MD/blob/main/images/a001.png?raw=true",
+      "bodySilhouette": "https://github.com/msw2004727/MD/blob/main/images/mb01.png?raw=true"
+    },
+    "placeholders": {
+      "comment": "動態生成的圖片，或圖片載入前的預設圖",
+      "monsterPartDefault": "https://placehold.co/120x90/4a5568/a0aec0?text=預覽&font=noto-sans-tc"
+    },
+    "modals": {
+      "comment": "各類彈出視窗中使用的橫幅 (Banner)",
+      "announcement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
+      "comment_zh_announcement": "遊戲公告彈窗",
+      "synthesisSuccess": "https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true",
+      "comment_zh_synthesisSuccess": "怪獸合成成功彈窗",
+      "trainingStart": "https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true",
+      "comment_zh_trainingStart": "開始修煉提示彈窗",
+      "trainingResults": "https://github.com/msw2004727/MD/blob/main/images/BN005.png?raw=true",
+      "comment_zh_trainingResults": "修煉成果結算彈窗",
+      "endTrainingEarly": "https://github.com/msw2004727/MD/blob/main/images/BN006.png?raw=true",
+      "comment_zh_endTrainingEarly": "確認是否要提早結束修煉的彈窗",
+      "titleAward": "https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true",
+      "comment_zh_titleAward": "恭喜獲得新稱號的彈窗",
+      "battleConfirmation": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+      "comment_zh_battleConfirmation": "確認是否出戰的彈窗",
+      "battleLogHeader": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+      "comment_zh_battleLogHeader": "戰鬥紀錄彈窗的頂部橫幅",
+      "dnaGuideBanner": "https://github.com/msw2004727/MD/blob/main/images/DNAbanner.png?raw=true",
+      "comment_zh_dnaGuideBanner": "DNA碎片說明的彈窗橫幅",
+      "loadingBanners": {
+        "comment": "所有讀取中狀態的獨立橫幅",
+        "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN009.png?raw=true",
+        "comment_zh_dnaDrawing": "DNA抽取中讀取彈窗",
+        "gameLoad": "",
+        "comment_zh_gameLoad": "遊戲載入中",
+        "login": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
+        "comment_zh_login": "登入中",
+        "register": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
+        "comment_zh_register": "註冊中",
+        "logout": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
+        "comment_zh_logout": "登出中",
+        "generic": "https://github.com/msw2004727/MD/blob/main/images/login.png?raw=true",
+        "comment_zh_generic": "通用的讀取中",
+        "processing": "",
+        "comment_zh_processing": "處理中",
+        "updating": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
+        "comment_zh_updating": "更新中",
+        "synthesis": "https://github.com/msw2004727/MD/blob/main/images/BN007.png?raw=true",
+        "comment_zh_synthesis": "怪獸合成中",
+        "calculating": "https://github.com/msw2004727/MD/blob/main/images/BN011.png?raw=true",
+        "comment_zh_calculating": "結算中",
+        "battlePrep": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+        "comment_zh_battlePrep": "準備戰鬥中",
+        "battling": "https://github.com/msw2004727/MD/blob/main/images/PK002.png?raw=true",
+        "comment_zh_battling": "戰鬥中",
+        "skillLearn": "",
+        "comment_zh_skillLearn": "學習技能中",
+        "monsterSwitching": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
+        "comment_zh_monsterSwitching": "更換出戰怪獸交接中"
+      }
+    },
+    "cultivation": {
+      "comment": "修煉地點選擇卡片",
+      "locationGaia": "https://github.com/msw2004727/MD/blob/main/images/ZL001.png?raw=true",
+      "locationSky": "https://github.com/msw2004727/MD/blob/main/images/ZL003.png?raw=true",
+      "locationCrystal": "https://github.com/msw2004727/MD/blob/main/images/ZL002.png?raw=true"
+    },
+    "logos": {
+      "comment": "Logo 或其他圖標",
+      "loadingIcon": "https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true"
+    },
+    "selectionBanners": {
+      "comment": "天梯選擇彈窗橫幅",
+      "monsterLeaderboard": "https://github.com/msw2004727/MD/blob/main/images/Ladder001.png?raw=true",
+      "playerLeaderboard": "https://github.com/msw2004727/MD/blob/main/images/Ladder002.png?raw=true"
+    }
+  }
+}
