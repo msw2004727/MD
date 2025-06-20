@@ -127,17 +127,42 @@ def populate_game_configs():
         script_logger.error(f"處理 DNAFragments 資料失敗: {e}")
         return
 
-    # --- 載入技能資料 ---
+    # --- 載入技能資料 (從拆分檔案) ---
     try:
-        skills_path = os.path.join(data_dir, 'skills.json')
-        with open(skills_path, 'r', encoding='utf-8') as f:
-            skill_database_data = json.load(f)
-        script_logger.info(f"成功從 {skills_path} 載入技能資料。")
+        skills_dir = os.path.join(data_dir, 'skills')
+        if not os.path.exists(skills_dir):
+            os.makedirs(skills_dir)
+            script_logger.warning(f"技能資料夾 'skills' 不存在，已自動建立於: {skills_dir}。請將技能檔案放入此處。")
+
+        skill_database_data = {}
+        element_map = {
+            "fire": "火", "water": "水", "wood": "木", "gold": "金", "earth": "土",
+            "light": "光", "dark": "暗", "poison": "毒", "wind": "風", "none": "無", "mix": "混"
+        }
+
+        for filename in os.listdir(skills_dir):
+            if filename.endswith('.json'):
+                element_en = filename[:-5] # 移除 .json
+                element_zh = element_map.get(element_en)
+                if not element_zh:
+                    script_logger.warning(f"跳過未知的技能檔名: {filename}")
+                    continue
+                
+                file_path = os.path.join(skills_dir, filename)
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    skills = json.load(f)
+                    skill_database_data[element_zh] = skills
+                    script_logger.info(f"成功載入 {element_zh} 屬性技能 ({len(skills)}個) 從 {filename}")
+
+        if not skill_database_data:
+             script_logger.warning("技能資料庫為空，可能是 'skills' 資料夾中沒有有效的 .json 檔案。")
+
         db_client.collection('MD_GameConfigs').document('Skills').set({'skill_database': skill_database_data})
-        script_logger.info("成功寫入 Skills 資料。")
+        script_logger.info("成功將組合後的技能資料寫入 Firestore 的 Skills 文件。")
     except Exception as e:
-        script_logger.error(f"處理 Skills 資料失敗: {e}")
+        script_logger.error(f"處理 Skills 資料夾失敗: {e}", exc_info=True)
         return
+
 
     # --- 載入個性資料 (從CSV) ---
     personalities_data = []
@@ -198,6 +223,21 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 ChampionGuardians 資料失敗: {e}")
 
+    # --- 載入狀態效果資料 (從 status_effects.json) ---
+    try:
+        status_effects_path = os.path.join(data_dir, 'status_effects.json')
+        with open(status_effects_path, 'r', encoding='utf-8') as f:
+            status_effects_data = json.load(f)
+        script_logger.info(f"成功從 {status_effects_path} 載入 {len(status_effects_data)} 個狀態效果資料。")
+        db_client.collection('MD_GameConfigs').document('StatusEffects').set({'effects_list': status_effects_data})
+        script_logger.info("成功將 status_effects.json 的內容寫入 Firestore 的 StatusEffects 文件。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到狀態效果設定檔 {status_effects_path}。請確認檔案已建立。")
+        return
+    except Exception as e:
+        script_logger.error(f"處理 StatusEffects 資料失敗: {e}")
+        return
+        
     # --- 寫入其他設定 ---
     
     # DNA 稀有度資料 (Rarities)
@@ -253,18 +293,6 @@ def populate_game_configs():
         "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
     }
     db_client.collection('MD_GameConfigs').document('NamingConstraints').set(naming_constraints_data)
-
-    # 健康狀況資料 (HealthConditions)
-    health_conditions_data = [
-        {"id": "poisoned", "name": "中毒", "description": "持續受到毒素傷害，每回合損失HP。", "effects": {"hp_per_turn": -8}, "duration": 3, "icon": "🤢"},
-        {"id": "paralyzed", "name": "麻痺", "description": "速度大幅下降，有較高機率無法行動。", "effects": {"speed": -20}, "duration": 2, "icon": "⚡", "chance_to_skip_turn": 0.3 },
-        {"id": "burned", "name": "燒傷", "description": "持續受到灼燒傷害，攻擊力顯著下降。", "effects": {"hp_per_turn": -5, "attack": -10}, "duration": 3, "icon": "🔥"},
-        {"id": "confused", "name": "混亂", "description": "行動時有50%機率攻擊自己或隨機目標。", "effects": {}, "duration": 2, "icon": "😵", "confusion_chance": 0.5},
-        {"id": "energized", "name": "精力充沛", "description": "狀態絕佳！所有能力微幅提升。", "effects": {"attack": 5, "defense": 5, "speed": 5, "crit": 3}, "duration": 3, "icon": "💪"},
-        {"id": "weakened", "name": "虛弱", "description": "所有主要戰鬥數值大幅下降。", "effects": {"attack": -12, "defense": -12, "speed": -8, "crit": -5}, "duration": 2, "icon": "😩"},
-        {"id": "frozen", "name": "冰凍", "description": "完全無法行動，但受到火系攻擊傷害加倍。", "effects": {}, "duration": 1, "icon": "🧊", "elemental_vulnerability": {"火": 2.0} }
-    ]
-    db_client.collection('MD_GameConfigs').document('HealthConditions').set({'conditions_list': health_conditions_data})
 
     # 新手指南資料 (NewbieGuide)
     try:
@@ -366,37 +394,42 @@ def populate_game_configs():
     _monster_achievements = monster_achievements_data
     _element_nicknames = element_nicknames_data
 
-    npc_monsters_data = [
-        {
-            "id": "npc_m_001", "nickname": "", "elements": ["火"], "elementComposition": {"火": 100.0},
-            "hp": 80, "mp": 30, "initial_max_hp": 80, "initial_max_mp": 30, "attack": 15, "defense": 10, "speed": 12, "crit": 5,
-            "skills": random.sample(skill_database_data["火"], min(len(skill_database_data["火"]), random.randint(1,2))) if skill_database_data.get("火") else [],
-            "rarity": "普通", "title": random.choice(_monster_achievements),
-            "custom_element_nickname": _element_nicknames.get("火", "火獸"), "description": "一隻活潑的火焰小蜥蜴，喜歡追逐火花。",
-            "personality": random.choice(personalities_data), "creationTime": int(time.time()),
-            "farmStatus": {}, "resistances": {"火": 3, "水": -2}, "score": random.randint(100, 150), "isNPC": True,
-            "resume": {"wins": 0, "losses": 0},
-            "constituent_dna_ids": [random.choice([d['id'] for d in dna_fragments_data if d['type'] == '火' and d['rarity'] == '普通'])]
-        },
-        {
-            "id": "npc_m_002", "nickname": "", "elements": ["木", "土"], "elementComposition": {"木": 70.0, "土": 30.0},
-            "hp": 120, "mp": 25, "initial_max_hp": 120, "initial_max_mp": 25, "attack": 10, "defense": 20, "speed": 8, "crit": 3,
-            # 【修正】修正此處的括號錯誤
-            "skills": random.sample(
-                skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", []),
-                min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))
-            ),
-            "rarity": "稀有", "title": random.choice(_monster_achievements),
-            "custom_element_nickname": _element_nicknames.get("木", "木靈"), "description": "堅毅的森林守衛者幼苗，擁有大地與森林的祝福。",
-            "personality": random.choice(personalities_data), "creationTime": int(time.time()),
-            "farmStatus": {}, "resistances": {"木": 5, "土": 5, "火": -3}, "score": random.randint(160, 220), "isNPC": True,
-            "resume": {"wins": 0, "losses": 0},
-            "constituent_dna_ids": [
-                random.choice([d['id'] for d in dna_fragments_data if d['type'] == '木' and d['rarity'] == '稀有']),
-                random.choice([d['id'] for d in dna_fragments_data if d['type'] == '土' and d['rarity'] == '普通'])
-            ]
-        }
-    ]
+    # 檢查 skill_database_data 是否為空，避免在空的字典上操作
+    if not skill_database_data:
+        script_logger.error("技能資料庫為空，無法為 NPC 生成技能。")
+        npc_monsters_data = [] # 如果沒有技能資料，則不創建 NPC
+    else:
+        npc_monsters_data = [
+            {
+                "id": "npc_m_001", "nickname": "", "elements": ["火"], "elementComposition": {"火": 100.0},
+                "hp": 80, "mp": 30, "initial_max_hp": 80, "initial_max_mp": 30, "attack": 15, "defense": 10, "speed": 12, "crit": 5,
+                "skills": random.sample(skill_database_data.get("火", []), min(len(skill_database_data.get("火", [])), random.randint(1,2))),
+                "rarity": "普通", "title": random.choice(_monster_achievements),
+                "custom_element_nickname": _element_nicknames.get("火", {}).get("普通", ["火獸"])[0], "description": "一隻活潑的火焰小蜥蜴，喜歡追逐火花。",
+                "personality": random.choice(personalities_data), "creationTime": int(time.time()),
+                "farmStatus": {}, "resistances": {"火": 3, "水": -2}, "score": random.randint(100, 150), "isNPC": True,
+                "resume": {"wins": 0, "losses": 0},
+                "constituent_dna_ids": [random.choice([d['id'] for d in dna_fragments_data if d['type'] == '火' and d['rarity'] == '普通'])] if any(d['type'] == '火' and d['rarity'] == '普通' for d in dna_fragments_data) else []
+            },
+            {
+                "id": "npc_m_002", "nickname": "", "elements": ["木", "土"], "elementComposition": {"木": 70.0, "土": 30.0},
+                "hp": 120, "mp": 25, "initial_max_hp": 120, "initial_max_mp": 25, "attack": 10, "defense": 20, "speed": 8, "crit": 3,
+                "skills": random.sample(
+                    skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", []),
+                    min(len(skill_database_data.get("木", []) + skill_database_data.get("土", []) + skill_database_data.get("無", [])), random.randint(2,3))
+                ),
+                "rarity": "稀有", "title": random.choice(_monster_achievements),
+                "custom_element_nickname": _element_nicknames.get("木", {}).get("稀有", ["木靈"])[0], "description": "堅毅的森林守衛者幼苗，擁有大地與森林的祝福。",
+                "personality": random.choice(personalities_data), "creationTime": int(time.time()),
+                "farmStatus": {}, "resistances": {"木": 5, "土": 5, "火": -3}, "score": random.randint(160, 220), "isNPC": True,
+                "resume": {"wins": 0, "losses": 0},
+                "constituent_dna_ids": [
+                    random.choice([d['id'] for d in dna_fragments_data if d['type'] == '木' and d['rarity'] == '稀有']),
+                    random.choice([d['id'] for d in dna_fragments_data if d['type'] == '土' and d['rarity'] == '普通'])
+                ] if any(d['type'] == '木' and d['rarity'] == '稀有' for d in dna_fragments_data) and any(d['type'] == '土' and d['rarity'] == '普通' for d in dna_fragments_data) else []
+            }
+        ]
+
     db_client.collection('MD_GameConfigs').document('NPCMonsters').set({'monsters': npc_monsters_data})
 
     script_logger.info("所有遊戲設定資料填充/更新完畢。")
