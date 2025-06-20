@@ -19,6 +19,8 @@ from .utils_services import get_effective_skill_with_level
 
 battle_logger = logging.getLogger(__name__)
 
+# --- 核心修改處 START ---
+# 補上 effects 陣列，讓系統知道這是一個傷害技能
 BASIC_ATTACK: Skill = {
     "name": "普通攻擊",
     "power": 15,
@@ -27,8 +29,16 @@ BASIC_ATTACK: Skill = {
     "type": "無",
     "mp_cost": 0,
     "skill_category": "物理",
-    "baseLevel": 1
+    "baseLevel": 1,
+    "effects": [
+        {
+            "type": "damage",
+            "power": 15,
+            "target": "opponent_single"
+        }
+    ]
 }
+# --- 核心修改處 END ---
 
 DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "dna_fragments": [],
@@ -234,8 +244,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
             stats_to_change = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
             amounts = [effect["amount"]] if isinstance(effect["amount"], (int, float)) else effect["amount"]
             
-            # ----- 核心修改處 START -----
-            # 判斷是否為百分比，並對應處理
             is_percentage_list = effect.get("amount_is_percentage")
             if isinstance(is_percentage_list, bool):
                 is_percentage_list = [is_percentage_list] * len(stats_to_change)
@@ -247,15 +255,12 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 
                 final_amount = 0
                 if is_percentage:
-                    # 如果是百分比，則基於怪獸的「基礎」數值計算
                     base_stat_source = target if "opponent" in effect_target_str else performer
                     base_value_key = f"initial_max_{stat}" if stat in ['hp', 'mp'] else stat
-                    base_value = base_stat_source.get(base_value_key, 1) # 避免除以零
+                    base_value = base_stat_source.get(base_value_key, 1) 
                     final_amount = int(base_value * amount)
                 else:
-                    # 否則，直接使用固定值
                     final_amount = int(amount)
-                # ----- 核心修改處 END -----
 
                 effect_target[f"temp_{stat}_modifier"] = effect_target.get(f"temp_{stat}_modifier", 0) + final_amount
                 
@@ -266,7 +271,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 log_parts.append(f" {effect_target['nickname']}的**{translated_stat}**{change_text}了。")
 
         elif effect_type == "heal":
-            # ----- 核心修改處 START -----
             amount_to_restore = 0
             if effect.get("heal_percentage_of_max_hp"):
                 heal_percentage = effect.get("heal_percentage_of_max_hp", 0.0)
@@ -282,7 +286,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 actual_healed = effect_target["current_hp"] - old_hp
                 action_details["damage_healed"] = actual_healed
                 log_parts.append(f" {effect_target['nickname']} 恢復了 <heal>{actual_healed}</heal> 點HP。")
-            # ----- 核心修改處 END -----
 
         elif effect_type == "apply_status":
             status_id = effect.get("status_id")
@@ -293,8 +296,6 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
                 action_details["status_applied"] = status_id
                 log_parts.append(f" {effect_target['nickname']} 陷入了**{status_template['name']}**狀態！")
         
-        # ... 可以繼續擴展其他效果類型 ...
-
     action_details["log_message"] = "".join(log_parts)
     
     if target["current_hp"] == 0: 
