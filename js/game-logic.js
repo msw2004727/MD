@@ -2,6 +2,31 @@
 
 // 注意：此檔案依賴 gameState, DOMElements, API client 函數, UI 更新函數等
 
+// --- 【新增】檢查並顯示新稱號的專用函式 ---
+function checkAndShowNewTitleModal(playerData) {
+    // 檢查後端回傳的資料中是否包含 newly_awarded_titles 欄位
+    if (playerData && playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
+        const newTitle = playerData.newly_awarded_titles[0]; // 暫時先只顯示第一個獲得的
+        if (typeof showFeedbackModal === 'function') {
+            showFeedbackModal(
+                '榮譽加身！',
+                '', 
+                false,
+                null,
+                [{ text: '開啟我的冒險！', class: 'success' }],
+                {
+                    type: 'title',
+                    name: newTitle.name,
+                    description: newTitle.description,
+                    buffs: newTitle.buffs,
+                    bannerUrl: gameState.assetPaths.images.modals.titleAward
+                }
+            );
+        }
+    }
+}
+
+
 /**
  * 將 DNA 移動到指定的組合槽，或在組合槽之間交換 DNA。
  * @param {object} draggedDnaObject - 被拖曳的 DNA 物件。
@@ -587,7 +612,6 @@ async function handleDeployMonsterClick(monsterId) {
     };
     
     if (currentSelectedId) {
-        // 【修改】更換提示文字
         showFeedbackModal('怪獸交接中...', '主人請稍候...🐾', true);
         try {
             const championsData = await getChampionsLeaderboard();
@@ -645,6 +669,12 @@ async function refreshPlayerData() {
             renderMonsterFarm();
             const currentSelectedMonster = getSelectedMonster() || getDefaultSelectedMonster();
             updateMonsterSnapshot(currentSelectedMonster);
+            
+            // --- 【新增】刷新資料後，檢查是否有新稱號要顯示 ---
+            if (typeof checkAndShowNewTitleModal === 'function') {
+                checkAndShowNewTitleModal(playerData);
+            }
+
             console.log("玩家資料已刷新並同步至 gameState。");
         } else {
             console.warn("refreshPlayerData: 從後端獲取的玩家數據為空或無效。");
