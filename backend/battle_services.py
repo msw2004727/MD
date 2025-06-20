@@ -38,13 +38,10 @@ BASIC_ATTACK: Skill = {
     ]
 }
 
-# --- 【修改】產生戰鬥亮點的輔助函式 ---
 def _extract_battle_highlights(raw_log: List[str], chosen_style: Dict[str, str]) -> List[str]:
     """從原始戰鬥日誌中提取關鍵事件作為亮點。"""
     highlights = []
     
-    # --- 核心修改：從傳入的 chosen_style 字典中獲取描述 ---
-    # 建立一個從日誌關鍵字到樣式庫key的映射
     keyword_to_event_map = {
         "是會心一擊！": "crit",
         "效果絕佳！": "super_effective",
@@ -59,25 +56,22 @@ def _extract_battle_highlights(raw_log: List[str], chosen_style: Dict[str, str])
         "能力大幅下降": "stat_down"
     }
 
-    # 為了避免重複，記錄已經添加過的亮點類型
     added_highlights = set()
 
     for log_line in raw_log:
         for keyword, event_key in keyword_to_event_map.items():
             if keyword in log_line:
-                # 使用事件key從選擇的風格中獲取描述
                 description = chosen_style.get(event_key)
                 if description and description not in added_highlights:
                     highlights.append(description)
                     added_highlights.add(description)
-                    break # 處理下一行日誌
+                    break 
 
-    # 如果沒有任何關鍵字匹配，則使用該風格的預設亮點
     if not highlights:
         default_highlight = chosen_style.get("default", "這是一場值得記錄的戰鬥。")
         highlights.append(default_highlight)
         
-    return highlights[:5] # 最多返回5個亮點
+    return highlights[:5]
 
 
 def _calculate_elemental_advantage(attacker_element: ElementTypes, defender_elements: List[ElementTypes], game_configs: GameConfigs) -> float:
@@ -164,8 +158,13 @@ def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConf
         effective_skill = get_effective_skill_with_level(full_skill_data, full_skill_data.get("level", 1))
         
         mp_cost = effective_skill.get("mp_cost", 0)
-        if current_mp >= mp_cost:
+
+        # --- 核心修改處 START ---
+        # 新增 is_active 狀態檢查，若該欄位不存在，則預設為 True (開啟)
+        is_skill_active = effective_skill.get('is_active', True)
+        if current_mp >= mp_cost and is_skill_active:
             available_skills.append(full_skill_data)
+        # --- 核心修改處 END ---
             
     return available_skills
 
@@ -204,7 +203,7 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
 
     return BASIC_ATTACK
 
-def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effects: List[SkillEffect], game_configs: GameConfigs, action_details: Dict, log_parts: List[str]):
+def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effects: List[SkillEffect], game_configs: GameConfigs, action_details: Dict, log_parts: List[str], battle_state: Dict[str, Any]):
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
@@ -265,7 +264,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
         elif effect.get("type") == "stat_change":
             if random.random() <= effect.get("chance", 1.0):
                 is_multiplier = effect.get("is_multiplier", False)
-                stat_map = {"攻擊":"attack", "防禦":"defense", "速度":"speed", "特攻":"special_attack", "特防":"special_defense", "爆擊":"crit"}
+                stat_map = {"攻擊":"attack", "防禦":"defense", "速度":"speed", "特攻":"special_attack", "特防":"special_defense", "爆擊":"crit", "命中": "accuracy"}
 
                 stats_to_change_zh = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
                 amounts = [effect["amount"]] if isinstance(effect["amount"], (int, float)) else effect["amount"]
@@ -301,6 +300,13 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                 if recoil_damage > 0:
                     performer["current_hp"] = max(0, performer.get("current_hp", 0) - recoil_damage)
                     log_parts.append(f" **{performer['nickname']}**也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
+            
+            elif special_id == "sandstorm":
+                duration = effect.get("duration", 5)
+                battle_state["weather"] = {"type": "sandstorm", "duration": duration}
+                if effect.get("log_success"):
+                    log_parts.append(f" {effect['log_success']}")
+            
             elif special_id == "ignore_defense_buffs":
                 pass
             else:
@@ -337,6 +343,30 @@ def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> 
     monster["healthConditions"] = new_conditions
     return skip_turn, log_messages
 
+def _process_end_of_turn_effects(battle_state: Dict[str, Any], player_monster: Monster, opponent_monster: Monster, log_parts: List[str]):
+    weather = battle_state.get("weather")
+    if not weather:
+        return
+
+    weather_type = weather.get("type")
+    
+    if weather_type == "sandstorm":
+        log_parts.append("- 猛烈的沙塵暴持續肆虐！")
+        for monster in [player_monster, opponent_monster]:
+            # 土、金屬性免疫沙塵暴
+            if "土" not in monster.get("elements", []) and "金" not in monster.get("elements", []):
+                damage = math.floor(monster.get("initial_max_hp", 100) / 16)
+                monster["current_hp"] = max(0, monster.get("current_hp", 0) - damage)
+                log_parts.append(f"- **{monster['nickname']}** 被沙塵暴捲入，受到了 <damage>{damage}</damage> 點傷害。")
+
+    # 減少天氣持續時間
+    if weather.get("duration", 0) > 0:
+        weather["duration"] -= 1
+        if weather["duration"] <= 0:
+            log_parts.append(f"- {weather_type} 停止了。")
+            battle_state["weather"] = None
+
+
 def simulate_battle_full(
     player_monster_data: Monster,
     opponent_monster_data: Monster,
@@ -347,17 +377,14 @@ def simulate_battle_full(
     player_monster = copy.deepcopy(player_monster_data)
     opponent_monster = copy.deepcopy(opponent_monster_data)
     
-    # --- 核心修改：在戰鬥開始時隨機選擇一種亮點風格 ---
     all_styles = game_configs.get("battle_highlights", {}).get("highlight_styles", {})
     if all_styles:
         chosen_style_name = random.choice(list(all_styles.keys()))
         chosen_style_dict = all_styles[chosen_style_name]
         battle_logger.info(f"本次戰鬥亮點風格已選定為: {chosen_style_name}")
     else:
-        # 如果沒有設定檔，提供一個後備方案
         chosen_style_dict = {"default": "一場激烈的戰鬥發生了。"}
         battle_logger.warning("在遊戲設定中找不到戰鬥亮點風格，將使用預設值。")
-    # --- 修改結束 ---
 
     for m in [player_monster, opponent_monster]:
         current_stats = _get_monster_current_stats(m, player_data if m['id'] == player_monster['id'] else opponent_player_data, game_configs)
@@ -373,6 +400,8 @@ def simulate_battle_full(
         m.setdefault("temp_attack_multiplier", 1.0)
         m.setdefault("temp_defense_multiplier", 1.0)
         m.setdefault("temp_speed_multiplier", 1.0)
+
+    battle_state: Dict[str, Any] = {"weather": None}
 
     all_raw_log_messages: List[str] = []
     gmt8 = timezone(timedelta(hours=8))
@@ -433,9 +462,11 @@ def simulate_battle_full(
                 action_details["is_crit"] = is_crit
                 if is_crit: log_parts.append(" **是會心一擊！**")
 
-                _apply_skill_effects(performer, target, effective_skill, effective_skill.get("effects", []), game_configs, action_details, log_parts)
+                _apply_skill_effects(performer, target, effective_skill, effective_skill.get("effects", []), game_configs, action_details, log_parts, battle_state)
 
             turn_log.append("".join(log_parts))
+        
+        _process_end_of_turn_effects(battle_state, player_monster, opponent_monster, turn_log)
 
         all_raw_log_messages.extend(turn_log)
 
@@ -454,7 +485,6 @@ def simulate_battle_full(
     player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
     opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
-    # --- 【修改】呼叫亮點產生函式時，傳入選中的風格字典 ---
     battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
     ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
 
