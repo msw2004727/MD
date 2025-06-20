@@ -38,25 +38,16 @@ BASIC_ATTACK: Skill = {
     ]
 }
 
-# --- 【新增】產生戰鬥亮點的輔助函式 ---
-def _extract_battle_highlights(raw_log: List[str], player_nickname: str, opponent_nickname: str) -> List[str]:
+# --- 【修改】產生戰鬥亮點的輔助函式 ---
+def _extract_battle_highlights(raw_log: List[str], player_nickname: str, opponent_nickname: str, game_configs: GameConfigs) -> List[str]:
     """從原始戰鬥日誌中提取關鍵事件作為亮點。"""
     highlights = []
     
-    # 關鍵字和對應的亮點描述
-    keyword_map = {
-        "是會心一擊！": "打出了一次決定性的會心一擊！",
-        "效果絕佳！": "巧妙利用屬性克制，造成了巨大傷害！",
-        "閃過了！": "一次關鍵的閃避，扭轉了局勢！",
-        "中毒了！": "成功使對手陷入中毒狀態，持續消耗其體力。",
-        "陷入了麻痺！": "關鍵時刻讓對手陷入麻痺，爭取到寶貴的回合！",
-        "陷入了混亂！": "擾亂了對手的行動，使其自相殘殺！",
-        "睡著了！": "成功催眠對手，使其無法動彈！",
-        "凍結了！": "用極寒的攻擊將對手完全凍結！",
-        "燒傷！": "用灼熱的攻擊持續削弱對手！",
-        "能力大幅提升": "看準時機大幅強化了自身能力！",
-        "能力大幅下降": "成功大幅削弱了對手的能力！"
-    }
+    # --- 核心修改：從 game_configs 讀取亮點描述 ---
+    highlights_config = game_configs.get("battle_highlights", {})
+    keyword_map = highlights_config.get("highlights_map", {})
+    default_highlight = highlights_config.get("default_highlight", "雙方進行了一場激烈的攻防戰。")
+    # --- 修改結束 ---
 
     # 為了避免重複，記錄已經添加過的亮點類型
     added_highlights = set()
@@ -71,7 +62,7 @@ def _extract_battle_highlights(raw_log: List[str], player_nickname: str, opponen
 
     # 如果沒有任何關鍵字匹配，則提供一個通用亮點
     if not highlights:
-        highlights.append("雙方進行了一場激烈的攻防戰。")
+        highlights.append(default_highlight)
         
     return highlights[:5] # 最多返回5個亮點
 
@@ -438,8 +429,8 @@ def simulate_battle_full(
     player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
     opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
-    # --- 【修改】呼叫亮點產生函式並將結果放入 final_battle_result ---
-    battle_highlights = _extract_battle_highlights(all_raw_log_messages, player_monster['nickname'], opponent_monster['nickname'])
+    # --- 【修改】呼叫亮點產生函式時，傳入 game_configs ---
+    battle_highlights = _extract_battle_highlights(all_raw_log_messages, player_monster['nickname'], opponent_monster['nickname'], game_configs)
     ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
 
     final_battle_result: BattleResult = {
