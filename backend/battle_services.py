@@ -326,13 +326,6 @@ def simulate_battle_full(
     player_initial_stats = _get_monster_current_stats(player_monster, player_data)
     opponent_initial_stats = _get_monster_current_stats(opponent_monster, opponent_player_data)
     
-    # 移除
-    # player_monster["current_hp"] = player_initial_stats["initial_max_hp"]
-    # player_monster["current_mp"] = player_initial_stats["initial_max_mp"]
-    # opponent_monster["current_hp"] = opponent_initial_stats["initial_max_hp"]
-    # opponent_monster["current_mp"] = opponent_initial_stats["initial_max_mp"]
-    
-    # 新增
     player_monster["current_hp"] = player_initial_stats["hp"]
     player_monster["current_mp"] = player_initial_stats["mp"]
     opponent_monster["current_hp"] = opponent_initial_stats["hp"]
@@ -346,10 +339,7 @@ def simulate_battle_full(
     max_turns = game_configs.get("value_settings", {}).get("max_battle_turns", 30)
     first_striker_name = ""
 
-    # --- 核心修改處 START ---
-    # 建立 GMT+8 的時區物件
     gmt8 = timezone(timedelta(hours=8))
-    # --- 核心修改處 END ---
 
     for turn_num in range(1, max_turns + 2):
         if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0:
@@ -360,6 +350,13 @@ def simulate_battle_full(
         player_stats_at_turn_start = _get_monster_current_stats(player_monster, player_data)
         opponent_stats_at_turn_start = _get_monster_current_stats(opponent_monster, opponent_player_data)
 
+        # 寫入狀態資訊
+        player_status_list = [cond.get("name", "未知") for cond in player_monster.get("healthConditions", [])]
+        opponent_status_list = [cond.get("name", "未知") for cond in opponent_monster.get("healthConditions", [])]
+        
+        turn_raw_log_messages.append(f"PlayerStatus: {', '.join(player_status_list) or '良好'}")
+        turn_raw_log_messages.append(f"OpponentStatus: {', '.join(opponent_status_list) or '良好'}")
+        
         turn_raw_log_messages.append(f"PlayerName: {player_monster['nickname']}")
         turn_raw_log_messages.append(f"PlayerHP: {player_monster['current_hp']}/{player_stats_at_turn_start['initial_max_hp']}")
         turn_raw_log_messages.append(f"PlayerMP: {player_monster['current_mp']}/{player_stats_at_turn_start['initial_max_mp']}")
@@ -455,8 +452,6 @@ def simulate_battle_full(
     challenger_display = f"「{challenger_name}」的「{challenger_monster_name}」"
     defender_display = f"「{defender_name}」的「{defender_monster_name}」"
 
-    # --- 核心修改處 START ---
-    # 使用 gmt8 時區物件來產生當前時間字串
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
 
     if winner_id == player_monster['id']: player_activity_log = {"time": now_gmt8_str, "message": f"挑戰 {defender_display}，您獲勝了！"}
@@ -469,7 +464,6 @@ def simulate_battle_full(
         opponent_activity_log = {"time": now_gmt8_str, "message": f"{challenger_display} 向您發起挑戰，防禦失敗！"}
     else:
         opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {challenger_display} 戰成平手。"}
-    # --- 核心修改處 END ---
 
 
     final_battle_result: BattleResult = {
