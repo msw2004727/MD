@@ -238,6 +238,20 @@ def populate_game_configs():
         script_logger.error(f"處理 StatusEffects 資料失敗: {e}")
         return
         
+    # --- 新增：載入戰鬥亮點資料 (從 battle_highlights.json) ---
+    try:
+        highlights_path = os.path.join(data_dir, 'battle_highlights.json')
+        with open(highlights_path, 'r', encoding='utf-8') as f:
+            highlights_data = json.load(f)
+        script_logger.info(f"成功從 {highlights_path} 載入戰鬥亮點資料。")
+        # 直接將整個 JSON 物件存入，包含 'highlights_map' 和 'default_highlight'
+        db_client.collection('MD_GameConfigs').document('BattleHighlights').set(highlights_data)
+        script_logger.info("成功將 battle_highlights.json 的內容寫入 Firestore 的 BattleHighlights 文件。")
+    except FileNotFoundError:
+        script_logger.error(f"錯誤: 找不到戰鬥亮點設定檔 {highlights_path}。")
+    except Exception as e:
+        script_logger.error(f"處理 BattleHighlights 資料失敗: {e}")
+
     # --- 寫入其他設定 ---
     
     # DNA 稀有度資料 (Rarities)
