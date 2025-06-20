@@ -19,8 +19,6 @@ from .utils_services import get_effective_skill_with_level
 
 battle_logger = logging.getLogger(__name__)
 
-# --- 核心修改處 START ---
-# 補上 effects 陣列，讓系統知道這是一個傷害技能
 BASIC_ATTACK: Skill = {
     "name": "普通攻擊",
     "power": 15,
@@ -38,7 +36,6 @@ BASIC_ATTACK: Skill = {
         }
     ]
 }
-# --- 核心修改處 END ---
 
 DEFAULT_GAME_CONFIGS_FOR_BATTLE: GameConfigs = {
     "dna_fragments": [],
@@ -232,13 +229,32 @@ def _apply_skill_effect(performer: Monster, target: Monster, skill: Skill, game_
         if effect_type == "damage":
             power = effect.get("power", 0)
             element_multiplier = _calculate_elemental_advantage(effective_skill.get("type", "無"), target.get("elements", []), game_configs)
+            
+            # --- 核心修改處 START ---
+            vulnerability_multiplier = 1.0
+            status_to_remove_after_hit = None
+            
+            if target.get("healthConditions"):
+                for condition in target["healthConditions"]:
+                    vulnerability_map = condition.get("elemental_vulnerability")
+                    if vulnerability_map and effective_skill.get("type") in vulnerability_map:
+                        vulnerability_multiplier = vulnerability_map[effective_skill.get("type")]
+                        log_parts.append(f" **{condition['name']}**狀態讓牠對**{effective_skill.get('type')}**屬性攻擊特別脆弱！")
+                        status_to_remove_after_hit = condition.get("id")
+                        break
+            
             raw_damage = max(1, (power + (attacker_current_stats["attack"] / 2) - (defender_current_stats["defense"] / 4)))
-            damage = int(raw_damage * element_multiplier * (value_settings.get("crit_multiplier", 1.5) if is_crit else 1))
+            damage = int(raw_damage * element_multiplier * vulnerability_multiplier * (value_settings.get("crit_multiplier", 1.5) if is_crit else 1))
             
             target["current_hp"] = max(0, target.get("current_hp", 0) - damage)
             action_details["damage_dealt"] = damage
             log_parts.append(f" 對 {target['nickname']} 造成了 <damage>{damage}</damage> 點傷害。")
             if is_crit: log_parts.append(" **是暴擊！**")
+
+            if status_to_remove_after_hit:
+                target["healthConditions"] = [cond for cond in target["healthConditions"] if cond.get("id") != status_to_remove_after_hit]
+                log_parts.append(f" {target['nickname']}的**冰凍**狀態因受到攻擊而解除了！")
+            # --- 核心修改處 END ---
 
         elif effect_type == "stat_change":
             stats_to_change = [effect["stat"]] if isinstance(effect["stat"], str) else effect["stat"]
