@@ -510,24 +510,8 @@ function showBattleLogModal(battleResult) {
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
         
-        // --- 新增：狀態標籤的邏輯 ---
-        let statusText = '良好';
-        let statusColor = 'var(--success-color)';
-        if (monster.healthConditions && monster.healthConditions.length > 0) {
-            statusText = monster.healthConditions[0].name;
-            switch(statusText) {
-                case '中毒': case '強力中毒': statusColor = 'var(--element-poison-text)'; break;
-                case '燒傷': statusColor = 'var(--element-fire-text)'; break;
-                case '麻痺': statusColor = 'var(--rarity-legendary-text)'; break;
-                case '冰凍': statusColor = 'var(--element-water-text)'; break;
-                case '混亂': statusColor = 'var(--element-mix-text)'; break;
-                default: statusColor = 'var(--danger-color)';
-            }
-        }
-        const statusTagHtml = `<span class="monster-status-tag" style="font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; line-height: 1; text-transform: uppercase; display: inline-block; margin-left: 0.5rem; color: ${statusColor}; border: 1px solid ${statusColor};">${statusText}</span>`;
-        // --- 新增結束 ---
-
-        const nicknameSpan = `<div class="monster-name-container"><span class="monster-name">${prefix}${displayName}</span>${statusTagHtml}</div>`;
+        // 移除頂部的狀態標籤
+        const nicknameSpan = `<div class="monster-name-container"><span class="monster-name">${prefix}${displayName}</span></div>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
@@ -591,6 +575,10 @@ function showBattleLogModal(battleResult) {
         } else if (line.startsWith('OpponentMP:')) {
             const [current, max] = line.split(':')[1].split('/');
             if (currentTurn) currentTurn.opponentStatus.mp = { current: parseInt(current), max: parseInt(max) };
+        } else if (line.startsWith('PlayerStatus:')) {
+            if (currentTurn) currentTurn.playerStatus.statusText = line.substring('PlayerStatus:'.length).trim();
+        } else if (line.startsWith('OpponentStatus:')) {
+            if (currentTurn) currentTurn.opponentStatus.statusText = line.substring('OpponentStatus:'.length).trim();
         } else if (line.startsWith('- ')) {
             if (currentTurn) currentTurn.actions.push(line.substring(2));
         } else if (!line.startsWith('--- 戰鬥結束 ---') && !line.startsWith('PlayerName:') && !line.startsWith('OpponentName:')) {
@@ -598,6 +586,26 @@ function showBattleLogModal(battleResult) {
         }
     });
     if (currentTurn) battleTurns.push(currentTurn);
+
+    // 幫助生成狀態標籤的函式
+    const createStatusTagsHTML = (statusText) => {
+        if (!statusText || statusText === '良好') {
+            return `<span class="monster-status-tag" style="color: var(--success-color); border: 1px solid var(--success-color);">良好</span>`;
+        }
+        const statuses = statusText.split(',');
+        return statuses.map(status => {
+            let statusColor = 'var(--danger-color)'; // Default for unknown
+            switch(status.trim()) {
+                case '中毒': case '強力中毒': statusColor = 'var(--element-poison-text)'; break;
+                case '燒傷': statusColor = 'var(--element-fire-text)'; break;
+                case '麻痺': statusColor = 'var(--rarity-legendary-text)'; break;
+                case '冰凍': statusColor = 'var(--element-water-text)'; break;
+                case '混亂': statusColor = 'var(--element-mix-text)'; break;
+            }
+            return `<span class="monster-status-tag" style="color: ${statusColor}; border: 1px solid ${statusColor};">${status}</span>`;
+        }).join(' ');
+    };
+
 
     battleTurns.forEach(turn => {
         const turnHeaderDiv = document.createElement('div');
@@ -614,15 +622,23 @@ function showBattleLogModal(battleResult) {
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityMap[opponentMonsterData.rarity] || 'common') : 'common';
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
+            const playerStatusTags = createStatusTagsHTML(turn.playerStatus.statusText);
             statusHtml += `
-                <div class="font-bold text-rarity-${playerRarityKey}">⚔️ ${playerDisplayName}</div>
+                <div class="font-bold text-rarity-${playerRarityKey} monster-name-container">
+                    <span>⚔️ ${playerDisplayName}</span>
+                    <div class="status-tags-wrapper">${playerStatusTags}</div>
+                </div>
                 ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.playerStatus.mp.current, turn.playerStatus.mp.max, 'var(--accent-color)')}
             `;
         }
         if (turn.opponentStatus.hp && turn.opponentStatus.mp) {
-             statusHtml += `
-                <div class="font-bold mt-2 text-rarity-${opponentRarityKey}">🛡️ ${opponentDisplayName}</div>
+            const opponentStatusTags = createStatusTagsHTML(turn.opponentStatus.statusText);
+            statusHtml += `
+                <div class="font-bold mt-2 text-rarity-${opponentRarityKey} monster-name-container">
+                    <span>🛡️ ${opponentDisplayName}</span>
+                    <div class="status-tags-wrapper">${opponentStatusTags}</div>
+                </div>
                 ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
                 ${createStatusBar('MP', turn.opponentStatus.mp.current, turn.opponentStatus.mp.max, 'var(--accent-color)')}
              `;
