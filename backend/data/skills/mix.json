@@ -63,15 +63,19 @@
         "type": "apply_status",
         "status_id": "confusion",
         "chance": 1,
-        "target": "opponent_single"
+        "duration": 3,
+        "target": "opponent_single",
+        "log_success": "{performer}發射奇特的光線，使{target}陷入了混亂！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "命中率提升至100%。"
+        "description": "命中率提升至100%。",
+        "accuracy_set": 100
       },
       "10": {
-        "description": "「混亂」狀態持續時間增加1回合。"
+        "description": "「混亂」狀態持續時間增加1回合。",
+        "duration_add": 1
       }
     }
   },
@@ -93,10 +97,24 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "交換後，攻擊力額外提升10點。"
+        "description": "交換後，攻擊力額外提升10點。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "攻擊",
+            "amount": 10
+          }
+        ]
       },
       "10": {
-        "description": "交換後，速度也獲得提升。"
+        "description": "交換後，速度也獲得提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "速度",
+            "amount": 20
+          }
+        ]
       }
     }
   },
@@ -119,15 +137,18 @@
         "type": "apply_status",
         "status_id": "confusion",
         "chance": 0.25,
-        "target": "opponent_single"
+        "target": "opponent_single",
+        "log_success": "幻象光迷惑了{target}，使其陷入混亂！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升10點。"
+        "description": "威力提升10點。",
+        "add_power": 10
       },
       "10": {
-        "description": "混亂機率提升至40%。"
+        "description": "混亂機率提升至40%。",
+        "chance_add": 0.15
       }
     }
   },
@@ -148,8 +169,7 @@
       },
       {
         "type": "special",
-        "special_logic_id": "secret_power",
-        "target": "opponent_single"
+        "special_logic_id": "secret_power"
       }
     ],
     "level_milestones": {
@@ -157,7 +177,8 @@
         "description": "追加效果的觸發率提升。"
       },
       "10": {
-        "description": "威力提升20點。"
+        "description": "威力提升20點。",
+        "add_power": 20
       }
     }
   },
@@ -174,17 +195,24 @@
       {
         "type": "special",
         "special_logic_id": "safeguard",
-        "status_to_block": "sleep",
+        "status_to_block": [
+          "sleep"
+        ],
         "duration": 5,
-        "target": "team_allies"
+        "target": "team_allies",
+        "log_success": "{performer}發出白噪音，保護了我方全體！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "持續時間延長至7回合。"
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
       },
       "10": {
-        "description": "同時防止「混亂」狀態。"
+        "description": "同時防止「混亂」狀態。",
+        "status_to_block_add": [
+          "confusion"
+        ]
       }
     }
   },
@@ -232,10 +260,17 @@
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升15點。"
+        "description": "威力提升15點。",
+        "add_power": 15
       },
       "10": {
-        "description": "攻擊時無視對手的防禦提升效果。"
+        "description": "攻擊時無視對手的防禦提升效果。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "ignore_defense_buffs"
+          }
+        ]
       }
     }
   },
@@ -281,13 +316,13 @@
       },
       {
         "type": "special",
-        "special_logic_id": "synchronoise",
-        "target": "opponent_single"
+        "special_logic_id": "synchronoise"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "威力提升15點。"
+        "description": "威力提升15點。",
+        "add_power": 15
       },
       "10": {
         "description": "100%使對手陷入相同狀態。"
@@ -333,15 +368,26 @@
         "type": "special",
         "special_logic_id": "trick_room",
         "duration": 5,
-        "target": "all"
+        "target": "all",
+        "log_success": "空間被扭曲了！速度的規則發生了逆轉！"
       }
     ],
     "level_milestones": {
       "5": {
-        "description": "持續時間延長至7回合。"
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
       },
       "10": {
-        "description": "空間展開時，我方全體防禦提升。"
+        "description": "空間展開時，我方全體防禦提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": 0.2,
+            "is_multiplier": true,
+            "target": "team_allies"
+          }
+        ]
       }
     }
   },
