@@ -1,0 +1,440 @@
+[
+  {
+    "name": "落石",
+    "description": "投擲小石塊攻擊對手。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 28,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點，有15%機率使對手退縮。"
+      },
+      "10": {
+        "description": "變為攻擊2次，但第二次威力減半。"
+      }
+    }
+  },
+  {
+    "name": "地震",
+    "description": "引發強烈地震攻擊地面上所有怪獸。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 65,
+        "target": "opponent_all"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。"
+      },
+      "10": {
+        "description": "對飛行或浮空怪獸也能造成一半傷害。"
+      }
+    }
+  },
+  {
+    "name": "泥巴射擊",
+    "description": "投擲泥塊攻擊並有95%機率降低對手速度(-5)。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "遠程",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 25,
+        "target": "opponent_single"
+      },
+      {
+        "type": "stat_change",
+        "stat": "speed",
+        "amount": -5,
+        "chance": 0.95,
+        "target": "opponent_single",
+        "log_success": "{target}被泥巴射中，速度下降了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果提升為「100%降低對手速度(-8)」。"
+      },
+      "10": {
+        "description": "同時降低對手命中率。"
+      }
+    }
+  },
+  {
+    "name": "大地之力",
+    "description": "從大地引出力量攻擊，有機會提升自身特防。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 55,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "提升自身特防的機率增加至30%。"
+      },
+      "10": {
+        "description": "威力提升15點。"
+      }
+    }
+  },
+  {
+    "name": "大地波動",
+    "description": "釋放穩重的大地波動。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 30,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊時提升自身防禦力。"
+      },
+      "10": {
+        "description": "威力提升20點。"
+      }
+    }
+  },
+  {
+    "name": "沙塵暴",
+    "description": "5回合內，所有非岩石、地面、鋼屬性的怪獸每回合受到傷害。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "sandstorm",
+        "duration": 5,
+        "target": "all",
+        "log_success": "沙塵暴開始肆虐！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續時間延長至7回合。"
+      },
+      "10": {
+        "description": "沙塵暴天氣下，岩石屬性怪獸特防提升。"
+      }
+    }
+  },
+  {
+    "name": "變硬",
+    "description": "使身體變硬，提升自身的防禦力(+10)。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "defense",
+        "amount": 10,
+        "target": "self",
+        "log_success": "{performer}的身體變硬了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果提升為「防禦力大幅提升(+15)」。"
+      },
+      "10": {
+        "description": "使用後，下一次受到的物理攻擊傷害減少25%。"
+      }
+    }
+  },
+  {
+    "name": "沙地獄",
+    "description": "將對手困在沙地獄中，4-5回合內持續造成傷害。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 85,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 15,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "sand_tomb",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每回合傷害增加。"
+      },
+      "10": {
+        "description": "被困住的對手無法交換。"
+      }
+    }
+  },
+  {
+    "name": "骨棒",
+    "description": "用骨棒敲擊對手。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 30,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "爆擊率提升10%。"
+      },
+      "10": {
+        "description": "威力提升15點。"
+      }
+    }
+  },
+  {
+    "name": "骨頭迴力鏢",
+    "description": "投擲會飛回來的骨頭迴力鏢，攻擊兩次。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "multi_hit",
+        "power": 25,
+        "min_hits": 2,
+        "max_hits": 2,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "第二次攻擊的威力提升。"
+      },
+      "10": {
+        "description": "每次攻擊都有10%機率使對手退縮。"
+      }
+    }
+  },
+  {
+    "name": "撒菱",
+    "description": "在對手腳下撒下菱角，交換上場的怪獸會受到傷害。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "特殊",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "spikes",
+        "target": "opponent_side"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "可疊加使用，最多2層，傷害增加。"
+      },
+      "10": {
+        "description": "踩到菱角的怪獸速度會下降。"
+      }
+    }
+  },
+  {
+    "name": "隱形岩",
+    "description": "在對手場地設置隱形岩，交換上場的怪獸會受到屬性加成的傷害。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "特殊",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "stealth_rock",
+        "target": "opponent_side"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "造成的傷害增加。"
+      },
+      "10": {
+        "description": "同時對場上所有敵人造成少量初始傷害。"
+      }
+    }
+  },
+  {
+    "name": "玩泥巴",
+    "description": "5回合內，電屬性技能的威力減半。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "mud_sport",
+        "duration": 5,
+        "target": "all"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果延長至7回合。"
+      },
+      "10": {
+        "description": "同時使水屬性技能威力也減半。"
+      }
+    }
+  },
+  {
+    "name": "詛咒",
+    "description": "降低自身速度，提升攻擊和防禦。鬼魂屬性使用時效果不同。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "curse",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊與防禦提升幅度更大。"
+      },
+      "10": {
+        "description": "速度下降的副作用減少。"
+      }
+    }
+  },
+  {
+    "name": "挖洞",
+    "description": "第一回合鑽入地下，第二回合攻擊。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "其他",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "phases": [
+      {
+        "turn": 1,
+        "effects": [
+          {
+            "type": "special",
+            "special_logic_id": "become_invulnerable",
+            "target": "self"
+          }
+        ],
+        "log": "{performer}鑽進了地下！"
+      },
+      {
+        "turn": 2,
+        "effects": [
+          {
+            "type": "damage",
+            "power": 35,
+            "target": "opponent_single"
+          }
+        ],
+        "log": "{performer}從地下發動了攻擊！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至50。"
+      },
+      "10": {
+        "description": "在地下時，免疫所有攻擊。"
+      }
+    }
+  },
+  {
+    "name": "地裂",
+    "description": "引發地裂，命中則直接擊倒對手。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "其他",
+    "mp_cost": 20,
+    "priority": 0,
+    "accuracy": 30,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "one_hit_ko",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率小幅提升。"
+      },
+      "10": {
+        "description": "若擊倒對手，回復自身最大HP的25%。"
+      }
+    }
+  }
+]
