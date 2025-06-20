@@ -151,14 +151,8 @@ function renderChampionSlots(championsData) {
         avatarDiv.className = 'champion-avatar';
         avatarContainer.appendChild(avatarDiv);
         
-        // --- 核心修改處 START ---
-        // 容器現在是 champion-identity-container
         const identityContainer = document.createElement('div');
         identityContainer.className = 'champion-identity-container';
-        // --- 核心修改處 END ---
-
-        const reignDiv = document.createElement('div');
-        reignDiv.className = 'champion-reign-duration';
 
         const buttonEl = document.createElement('button');
         buttonEl.className = 'champion-challenge-btn button secondary text-xs';
@@ -176,8 +170,6 @@ function renderChampionSlots(championsData) {
                  avatarDiv.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
             }
             
-            // --- 核心修改處 START ---
-            // 建立新的暱稱和怪獸名稱元素
             const ownerTag = document.createElement('span');
             ownerTag.className = 'champion-owner-tag';
             ownerTag.textContent = monster.owner_nickname || '未知玩家';
@@ -191,18 +183,23 @@ function renderChampionSlots(championsData) {
             monsterNameSpan.classList.add(`text-rarity-${rarityKey}`);
 
             identityContainer.appendChild(ownerTag);
-            identityContainer.appendChild(document.createTextNode(' 的 ')); // 加入 "的"
+            identityContainer.appendChild(document.createTextNode(' 的 '));
             identityContainer.appendChild(monsterNameSpan);
-            // --- 核心修改處 END ---
 
+            // --- 核心修改處 START ---
+            // 計算在位時間並直接加入到 identityContainer
             if (monster.occupiedTimestamp) {
                 const nowInSeconds = Math.floor(Date.now() / 1000);
                 const occupiedTimestamp = monster.occupiedTimestamp;
                 const durationInSeconds = nowInSeconds - occupiedTimestamp;
                 const daysInReign = Math.floor(durationInSeconds / 86400);
-                reignDiv.textContent = `在位 ${daysInReign} 天`;
-                reignDiv.style.display = 'block';
+                
+                const reignSpan = document.createElement('span');
+                reignSpan.className = 'champion-reign-duration';
+                reignSpan.textContent = `(在位 ${daysInReign} 天)`;
+                identityContainer.appendChild(reignSpan);
             }
+            // --- 核心修改處 END ---
 
             if (monster.owner_id === playerId) {
                 buttonEl.textContent = "你的席位";
@@ -254,7 +251,6 @@ function renderChampionSlots(championsData) {
         
         slot.appendChild(avatarContainer);
         slot.appendChild(identityContainer);
-        // slot.appendChild(reignDiv); // reignDiv 已被移除，因為它現在是 identityContainer 的一部分
         slot.appendChild(buttonEl);
     });
 }
