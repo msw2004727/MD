@@ -635,14 +635,12 @@
     }
   },
   {
-    "id": "title_052",
-    "name": "自食其果",
-    "description": "親手創造的傑作，如今成了自己最強大的敵人。",
-    "condition": {
-      "type": "lose_to_own_creation"
-    },
-    "buffs": {
-      "defense": 8
+    "id": "title_bug_master",
+  "name": "抓BUG大師",
+  "description": "授予為遊戲世界找出重大錯誤並做出貢獻的英雄。",
+  "condition": {
+    "type": "manual",
+    "value": 1
     }
   }
 ]
