@@ -100,10 +100,7 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
     for skill in all_mp_available_skills:
         sensible_skills.append(skill)
 
-    # ----- BUG 修正邏輯 START -----
-    # 將機率從 0.95 調整為 0.50，使選擇使用技能的機率變為 50%
     if sensible_skills and random.random() <= 0.50:
-    # ----- BUG 修正邏輯 END -----
         personality_prefs = attacker.get("personality", {}).get("skill_preferences", {})
         hp_percentage = attacker_current_stats["hp"] / attacker_current_stats["initial_max_hp"] if attacker_current_stats["initial_max_hp"] > 0 else 0
         is_low_hp = hp_percentage < 0.4
@@ -113,10 +110,8 @@ def _choose_action(attacker: Monster, defender: Monster, game_configs: GameConfi
             skill_category = skill.get("skill_category", "其他")
             base_weight = personality_prefs.get(skill_category, 1.0)
             
-            # 修正後的 AI 判斷邏輯
-            situational_multiplier = 1.0 # 預設權重為 1
+            situational_multiplier = 1.0
             if is_low_hp:
-                # 血量低時，優先考慮使用輔助技能（例如治療或防禦）
                 if skill_category == "輔助":
                     situational_multiplier = 2.5
                 elif skill_category == "變化":
@@ -144,7 +139,6 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             attacker_stats = _get_monster_current_stats(performer, performer_pd, game_configs)
             defender_stats = _get_monster_current_stats(target, target_pd, game_configs)
             
-            # 傷害公式
             power = effect.get("power", 0)
             attack_stat = attacker_stats.get("attack", 1)
             defense_stat = defender_stats.get("defense", 1)
@@ -256,6 +250,15 @@ def simulate_battle_full(
         if player_monster["current_hp"] <= 0 or opponent_monster["current_hp"] <= 0: break
 
         turn_log = [f"--- 回合 {turn_num} 開始 ---"]
+        
+        # ----- 新增 START -----
+        # 在回合開始時，記錄雙方當前的狀態
+        player_conditions_json = json.dumps(player_monster.get("healthConditions", []), ensure_ascii=False)
+        opponent_conditions_json = json.dumps(opponent_monster.get("healthConditions", []), ensure_ascii=False)
+        turn_log.append(f"PlayerConditions:{player_conditions_json}")
+        turn_log.append(f"OpponentConditions:{opponent_conditions_json}")
+        # ----- 新增 END -----
+
         turn_log.append(f"PlayerHP:{player_monster['current_hp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_hp']}")
         turn_log.append(f"PlayerMP:{player_monster['current_mp']}/{_get_monster_current_stats(player_monster, player_data, game_configs)['initial_max_mp']}")
         turn_log.append(f"OpponentHP:{opponent_monster['current_hp']}/{_get_monster_current_stats(opponent_monster, opponent_player_data, game_configs)['initial_max_hp']}")
