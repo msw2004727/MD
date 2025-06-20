@@ -75,5 +75,26 @@
     "description": "陷入不眠狀態的怪獸將免疫任何「睡眠」效果。",
     "duration_turns": "直到戰鬥結束",
     "real_time_effect": "僅限戰鬥中"
+  },
+  {
+    "id": "lucky_blessing",
+    "name": "幸運祝福",
+    "description": "受到祝福的怪獸，在接下來的一段時間內，進行修煉或探索時更容易發現稀有事物。",
+    "duration_turns": "不適用於戰鬥",
+    "real_time_effect": "戰鬥外持續60分鐘"
+  },
+  {
+    "id": "fatigue",
+    "name": "過度疲勞",
+    "description": "過於疲勞的怪獸，所有能力值暫時微量下降。需要好好休息才能恢復。",
+    "duration_turns": "不適用於戰鬥",
+    "real_time_effect": "戰鬥外持續180分鐘"
+  },
+  {
+    "id": "petrified",
+    "name": "石化",
+    "description": "被石化的怪獸將無法進行任何活動，包括戰鬥、修煉。需要特殊的藥劑才能解除。",
+    "duration_turns": "永久（戰鬥中無法行動）",
+    "real_time_effect": "永久（需要治療）"
   }
 ]
