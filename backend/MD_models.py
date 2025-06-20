@@ -125,6 +125,8 @@ class HealthCondition(TypedDict):
     chance_to_skip_turn: NotRequired[float] # 觸發跳過回合的機率 (0.0-1.0)
     confusion_chance: NotRequired[float] # 觸發混亂自傷的機率 (0.0-1.0)
     elemental_vulnerability: NotRequired[Dict[ElementTypes, float]] # 對某些元素的易傷倍率
+    duration_turns: NotRequired[str]
+    real_time_effect: NotRequired[str]
 
 
 class NewbieGuideEntry(TypedDict):
