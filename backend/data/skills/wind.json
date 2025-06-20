@@ -61,13 +61,7 @@
         "amount_add": 0.2
       },
       "10": {
-        "description": "使用後，下一回合的攻擊必定先手。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "next_move_priority_boost"
-          }
-        ]
+        "description": "使用後，下一回合的攻擊必定先手。"
       }
     }
   },
@@ -123,15 +117,7 @@
         "duration_add": 2
       },
       "10": {
-        "description": "順風期間，我方全體閃避率微幅提升。",
-        "add_effects": [
-          {
-            "type": "stat_change",
-            "stat": "閃避",
-            "amount": 10,
-            "target": "team_allies"
-          }
-        ]
+        "description": "順風期間，我方全體閃避率微幅提升。"
       }
     }
   },
@@ -157,13 +143,7 @@
         "add_power": 15
       },
       "10": {
-        "description": "可攻擊到使用「潛水」等技能的對手。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "hit_invulnerable"
-          }
-        ]
+        "description": "可攻擊到使用「潛水」等技能的對手。"
       }
     }
   },
@@ -220,6 +200,125 @@
     }
   },
   {
+    "name": "起風",
+    "description": "掀起微風，若對手在空中，威力加倍。",
+    "type": "風",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "twister",
+        "power": 30,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "使用後自身速度提升。"
+      }
+    }
+  },
+  {
+    "name": "龍捲風",
+    "description": "產生龍捲風席捲對手，25%機率使對手退縮。",
+    "type": "風",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 55,
+        "target": "opponent_all"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "flinch",
+        "chance": 0.25,
+        "target": "opponent_all",
+        "log_success": "龍捲風的風壓讓對手退縮了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "對飛行中的敵人傷害加倍。"
+      }
+    }
+  },
+  {
+    "name": "暴風",
+    "description": "掀起猛烈的暴風雨攻擊，30%機率使對手「混亂」。",
+    "type": "風",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 70,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 70,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "confusion",
+        "chance": 0.3,
+        "target": "opponent_single",
+        "log_success": "猛烈的暴風讓{target}陷入了混亂！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "「混亂」機率提升至50%。",
+        "chance_add": 0.2
+      },
+      "10": {
+        "description": "在「雨天」天氣下，此技能必定命中。"
+      }
+    }
+  },
+  {
+    "name": "燕返",
+    "description": "以電光石火的速度突襲，此技能必定命中。",
+    "type": "風",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 50,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至65。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "使用後，自身速度提升。"
+      }
+    }
+  },
+  {
     "name": "羽毛舞",
     "description": "灑下大量羽毛，大幅降低對手的攻擊力。",
     "type": "風",
@@ -258,6 +357,31 @@
     }
   },
   {
+    "name": "清除之風",
+    "description": "吹散場上的陷阱、天氣和場地效果。",
+    "type": "風",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "defog",
+        "target": "all"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "同時對對手造成少量傷害。"
+      },
+      "10": {
+        "description": "使用後，我方全體異常狀態解除。"
+      }
+    }
+  },
+  {
     "name": "熱風",
     "description": "吹出灼熱的氣息，有20%機率使對手「燒傷」。",
     "type": "風",
@@ -292,6 +416,33 @@
     }
   },
   {
+    "name": "特技",
+    "description": "自身未持有道具時，威力會加倍。",
+    "type": "風",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "acrobatics",
+        "power": 55,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至60。",
+        "add_power": 5
+      },
+      "10": {
+        "description": "未持有道具時，此技能優先度+1。"
+      }
+    }
+  },
+  {
     "name": "破空斬",
     "description": "以極快速度斬擊，爆擊率極高。",
     "type": "風",
@@ -314,13 +465,7 @@
         "crit_chance_modifier_add": 25
       },
       "10": {
-        "description": "若此招爆擊，則無視對手防禦。",
-        "add_effects": [
-          {
-            "type": "special",
-            "special_logic_id": "ignore_defense_on_crit"
-          }
-        ]
+        "description": "若此招爆擊，則無視對手防禦。"
       }
     }
   }
