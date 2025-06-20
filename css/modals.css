@@ -783,3 +783,23 @@ p.monster-score {
     left: 50%;
     transform: translate(-50%, -50%);
 }
+
+/* --- 新增：戰鬥報告中的狀態標籤樣式 --- */
+.monster-name-container {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center; /* 讓名字和標籤在卡片內水平置中 */
+}
+
+.monster-status-tag {
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    white-space: nowrap;
+    text-transform: uppercase;
+    display: inline-block;
+}
