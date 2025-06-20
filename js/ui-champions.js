@@ -29,29 +29,23 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
     let confirmationTitle;
     let confirmationMessage;
 
-    // 【修改】預先獲取玩家怪獸的顯示名稱
     const playerDisplayName = getMonsterDisplayName(playerMonster, gameState.gameConfigs);
 
     if (opponentMonster) {
-        // --- 挑戰現有冠軍 ---
         finalOpponent = opponentMonster;
         confirmationTitle = `挑戰第 ${rankToChallenge} 名`;
-        // 【修改】使用顯示名稱，並簡化文字
         const opponentDisplayName = getMonsterDisplayName(finalOpponent, gameState.gameConfigs);
         confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰 ${opponentDisplayName} 的席位嗎？`;
     } else {
-        // --- 佔領空位，挑戰守門員NPC ---
         confirmationTitle = `佔領第 ${rankToChallenge} 名`;
         confirmationMessage = `您確定要讓 ${playerDisplayName} 挑戰殿堂守護者，以佔領第 ${rankToChallenge} 名的席位嗎？`;
         
-        // 從遊戲設定檔讀取守門員資料
         const guardians = gameState.gameConfigs?.champion_guardians;
         const guardianData = guardians ? guardians[`rank${rankToChallenge}`] : null;
 
         if (guardianData) {
-            finalOpponent = { ...guardianData }; // 複製一份以防萬一
+            finalOpponent = { ...guardianData }; 
         } else {
-            // 後備的守門員資料
              finalOpponent = {
                 id: `npc_guardian_${rankToChallenge}`,
                 nickname: '殿堂守護者',
@@ -95,6 +89,15 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
                     challenged_rank: rankToChallenge
                 });
 
+                hideModal('feedback-modal');
+
+                // --- 【核心修改】---
+                // 在顯示戰報前，先檢查戰鬥結果中是否包含新稱號
+                if (battleResult && typeof checkAndShowNewTitleModal === 'function') {
+                    checkAndShowNewTitleModal(battleResult); // 直接將 battle_result 傳入
+                }
+
+                // 然後再刷新資料和顯示戰報
                 await refreshPlayerData(); 
                 
                 if (typeof handleMonsterLeaderboardClick === 'function') {
@@ -102,7 +105,6 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
                 }
                 
                 showBattleLogModal(battleResult);
-                hideModal('feedback-modal');
 
             } catch (battleError) {
                 showFeedbackModal('戰鬥失敗', `模擬冠軍戰鬥時發生錯誤: ${battleError.message}`);
@@ -186,8 +188,6 @@ function renderChampionSlots(championsData) {
             identityContainer.appendChild(document.createTextNode(' 的 '));
             identityContainer.appendChild(monsterNameSpan);
 
-            // --- 核心修改處 START ---
-            // 計算在位時間並直接加入到 identityContainer
             if (monster.occupiedTimestamp) {
                 const nowInSeconds = Math.floor(Date.now() / 1000);
                 const occupiedTimestamp = monster.occupiedTimestamp;
@@ -199,7 +199,6 @@ function renderChampionSlots(championsData) {
                 reignSpan.textContent = `(在位 ${daysInReign} 天)`;
                 identityContainer.appendChild(reignSpan);
             }
-            // --- 核心修改處 END ---
 
             if (monster.owner_id === playerId) {
                 buttonEl.textContent = "你的席位";
