@@ -509,7 +509,25 @@ function showBattleLogModal(battleResult) {
             ? ((monster.resume.wins / (monster.resume.wins + monster.resume.losses)) * 100).toFixed(1)
             : 'N/A';
         const prefix = isPlayer ? '⚔️ ' : '🛡️ ';
-        const nicknameSpan = `<span class="monster-name">${prefix}${displayName}</span>`;
+        
+        // --- 新增：狀態標籤的邏輯 ---
+        let statusText = '良好';
+        let statusColor = 'var(--success-color)';
+        if (monster.healthConditions && monster.healthConditions.length > 0) {
+            statusText = monster.healthConditions[0].name;
+            switch(statusText) {
+                case '中毒': case '強力中毒': statusColor = 'var(--element-poison-text)'; break;
+                case '燒傷': statusColor = 'var(--element-fire-text)'; break;
+                case '麻痺': statusColor = 'var(--rarity-legendary-text)'; break;
+                case '冰凍': statusColor = 'var(--element-water-text)'; break;
+                case '混亂': statusColor = 'var(--element-mix-text)'; break;
+                default: statusColor = 'var(--danger-color)';
+            }
+        }
+        const statusTagHtml = `<span class="monster-status-tag" style="font-size: 0.75rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; line-height: 1; text-transform: uppercase; display: inline-block; margin-left: 0.5rem; color: ${statusColor}; border: 1px solid ${statusColor};">${statusText}</span>`;
+        // --- 新增結束 ---
+
+        const nicknameSpan = `<div class="monster-name-container"><span class="monster-name">${prefix}${displayName}</span>${statusTagHtml}</div>`;
 
         return `
             <div class="monster-stats-card text-rarity-${rarityKey}">
@@ -591,8 +609,8 @@ function showBattleLogModal(battleResult) {
         statusBlockDiv.className = 'turn-status-block';
 
         let statusHtml = '';
-        const playerRarityKey = playerMonsterData.rarity ? (rarityColors[playerMonsterData.rarity] ? playerMonsterData.rarity.toLowerCase() : 'common') : 'common';
-        const opponentRarityKey = opponentMonsterData.rarity ? (rarityColors[opponentMonsterData.rarity] ? opponentMonsterData.rarity.toLowerCase() : 'common') : 'common';
+        const playerRarityKey = playerMonsterData.rarity ? (rarityMap[playerMonsterData.rarity] || 'common') : 'common';
+        const opponentRarityKey = opponentMonsterData.rarity ? (rarityMap[opponentMonsterData.rarity] || 'common') : 'common';
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             statusHtml += `
