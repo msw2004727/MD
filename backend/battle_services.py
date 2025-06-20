@@ -39,29 +39,42 @@ BASIC_ATTACK: Skill = {
 }
 
 # --- 【修改】產生戰鬥亮點的輔助函式 ---
-def _extract_battle_highlights(raw_log: List[str], player_nickname: str, opponent_nickname: str, game_configs: GameConfigs) -> List[str]:
+def _extract_battle_highlights(raw_log: List[str], chosen_style: Dict[str, str]) -> List[str]:
     """從原始戰鬥日誌中提取關鍵事件作為亮點。"""
     highlights = []
     
-    # --- 核心修改：從 game_configs 讀取亮點描述 ---
-    highlights_config = game_configs.get("battle_highlights", {})
-    keyword_map = highlights_config.get("highlights_map", {})
-    default_highlight = highlights_config.get("default_highlight", "雙方進行了一場激烈的攻防戰。")
-    # --- 修改結束 ---
+    # --- 核心修改：從傳入的 chosen_style 字典中獲取描述 ---
+    # 建立一個從日誌關鍵字到樣式庫key的映射
+    keyword_to_event_map = {
+        "是會心一擊！": "crit",
+        "效果絕佳！": "super_effective",
+        "閃過了！": "dodge",
+        "中毒了！": "poison",
+        "陷入了麻痺！": "paralysis",
+        "陷入了混亂！": "confusion",
+        "睡著了！": "sleep",
+        "凍結了！": "freeze",
+        "燒傷！": "burn",
+        "能力大幅提升": "stat_up",
+        "能力大幅下降": "stat_down"
+    }
 
     # 為了避免重複，記錄已經添加過的亮點類型
     added_highlights = set()
 
     for log_line in raw_log:
-        for keyword, description in keyword_map.items():
-            if keyword in log_line and description not in added_highlights:
-                highlights.append(description)
-                added_highlights.add(description)
-                # 找到一個就跳出內層迴圈，處理下一行日誌
-                break
+        for keyword, event_key in keyword_to_event_map.items():
+            if keyword in log_line:
+                # 使用事件key從選擇的風格中獲取描述
+                description = chosen_style.get(event_key)
+                if description and description not in added_highlights:
+                    highlights.append(description)
+                    added_highlights.add(description)
+                    break # 處理下一行日誌
 
-    # 如果沒有任何關鍵字匹配，則提供一個通用亮點
+    # 如果沒有任何關鍵字匹配，則使用該風格的預設亮點
     if not highlights:
+        default_highlight = chosen_style.get("default", "這是一場值得記錄的戰鬥。")
         highlights.append(default_highlight)
         
     return highlights[:5] # 最多返回5個亮點
@@ -334,6 +347,18 @@ def simulate_battle_full(
     player_monster = copy.deepcopy(player_monster_data)
     opponent_monster = copy.deepcopy(opponent_monster_data)
     
+    # --- 核心修改：在戰鬥開始時隨機選擇一種亮點風格 ---
+    all_styles = game_configs.get("battle_highlights", {}).get("highlight_styles", {})
+    if all_styles:
+        chosen_style_name = random.choice(list(all_styles.keys()))
+        chosen_style_dict = all_styles[chosen_style_name]
+        battle_logger.info(f"本次戰鬥亮點風格已選定為: {chosen_style_name}")
+    else:
+        # 如果沒有設定檔，提供一個後備方案
+        chosen_style_dict = {"default": "一場激烈的戰鬥發生了。"}
+        battle_logger.warning("在遊戲設定中找不到戰鬥亮點風格，將使用預設值。")
+    # --- 修改結束 ---
+
     for m in [player_monster, opponent_monster]:
         current_stats = _get_monster_current_stats(m, player_data if m['id'] == player_monster['id'] else opponent_player_data, game_configs)
         m["current_hp"] = current_stats["hp"]
@@ -429,8 +454,8 @@ def simulate_battle_full(
     player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
     opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
-    # --- 【修改】呼叫亮點產生函式時，傳入 game_configs ---
-    battle_highlights = _extract_battle_highlights(all_raw_log_messages, player_monster['nickname'], opponent_monster['nickname'], game_configs)
+    # --- 【修改】呼叫亮點產生函式時，傳入選中的風格字典 ---
+    battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
     ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
 
     final_battle_result: BattleResult = {
