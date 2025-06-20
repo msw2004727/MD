@@ -118,7 +118,7 @@ function renderMedicalStation() {
         colActions.innerHTML = `
             <button class="button success text-xs" onclick="handleHealClick('${monster.id}')" title="完全治癒怪獸的HP/MP與所有異常狀態">治療</button>
             <button class="button secondary text-xs" onclick="handleGeneModClick('${monster.id}')" style="margin-left: 5px;" title="未來功能：基因改造" disabled>基改</button>
-            <button class="button secondary text-xs" onclick="handleExtractionClick('${monster.id}')" style="margin-left: 5px;" title="未來功能：摘除器官/DNA">摘除</button>
+            <button class="button secondary text-xs" onclick="handleExtractionClick('${monster.id}')" style="margin-left: 5px;" title="未來功能：摘除器官/DNA" disabled>摘除</button>
             <button class="button secondary text-xs" onclick="handleInjectionClick('${monster.id}')" style="margin-left: 5px;" title="未來功能：注射藥劑" disabled>打針</button>
         `;
         
