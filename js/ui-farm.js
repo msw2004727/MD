@@ -82,21 +82,15 @@ function showMonsterInfoFromFarm(monsterId) {
 
 
 function renderMonsterFarm() {
-    // --- 【移除】舊的列表容器與表頭容器變數 ---
-    // const headersContainer = DOMElements.farmHeaders;
     const listContainer = DOMElements.farmedMonstersList;
 
-    // --- 【修改】只檢查卡片列表容器是否存在 ---
     if (!listContainer) {
         console.error("renderMonsterFarm Error: Farm container (#farmed-monsters-list) not found.");
         return;
     }
 
-    // --- 【移除】清除舊表頭的程式碼 ---
-    // headersContainer.innerHTML = '';
     listContainer.innerHTML = '';
     
-    // --- 【新增】將列表容器的 class 替換為卡片網格 class ---
     listContainer.className = 'farm-card-grid';
 
 
@@ -104,16 +98,10 @@ function renderMonsterFarm() {
 
     if (monsters.length === 0) {
         listContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">您的農場空空如也，快去組合新的怪獸吧！</p>`;
-        // --- 【新增】確保在沒有怪獸時，容器 class 也是正確的 ---
         listContainer.className = ''; 
         return;
     }
     
-    // --- 【移除】舊的列表排序邏輯 ---
-    // const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
-    // monsters.sort((a, b) => { ... });
-
-    // --- 【新增】為每隻怪獸渲染一張卡片 ---
     monsters.forEach((monster) => {
         const monsterCard = document.createElement('div');
         monsterCard.className = 'monster-card';
@@ -123,28 +111,26 @@ function renderMonsterFarm() {
             monsterCard.classList.add('deployed');
         }
 
-        // 獲取簡短屬姓名
         const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
 
-        // 建立頭像
         const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         let avatarHtml = `<div class="monster-card-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>`;
 
-        // 建立出戰按鈕
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
-        // 【新增】建立狀態顯示的邏輯
+        // 【修改】調整狀態顯示邏輯
         let statusHtml = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
+            // 使用兩個 div 來強制換行
             statusHtml = `
                 <div class="monster-card-status">
-                    <span style="color: var(--accent-color);">修煉中</span>
-                    <span class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}"></span>
+                    <div style="color: var(--accent-color);">修煉中</div>
+                    <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}"></div>
                 </div>
             `;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
@@ -153,7 +139,6 @@ function renderMonsterFarm() {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
         }
         
-        // 建立底部操作按鈕
         let actionsHTML = '';
         if (isDeployed) {
             actionsHTML = `
@@ -177,16 +162,17 @@ function renderMonsterFarm() {
             `;
         }
 
+        // 【修改】調整 statusHtml 的位置到最下面
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey} text-xs">${displayName}</div>
             <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
                 ${avatarHtml}
             </a>
             ${deployButtonHtml}
-            ${statusHtml}
             <div class="monster-card-actions">
                 ${actionsHTML}
             </div>
+            ${statusHtml} 
         `;
         
         listContainer.appendChild(monsterCard);
