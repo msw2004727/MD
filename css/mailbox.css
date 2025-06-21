@@ -1,0 +1,113 @@
+/* css/mailbox.css */
+/* 存放所有信箱系統相關的樣式 */
+
+/* 快照區塊上的信箱按鈕 */
+#snapshot-mail-btn {
+    position: relative; /* 為了讓小紅點可以定位 */
+}
+
+/* 新信件提示小紅點 */
+.notification-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--danger-color);
+    border-radius: 50%;
+    border: 2px solid var(--bg-panel);
+    box-shadow: 0 0 5px var(--danger-color);
+    display: none; /* 預設隱藏 */
+}
+
+/* 主信箱彈窗的列表容器 */
+#mailbox-list-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+/* 每一封信件的橫列樣式 */
+.mail-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto; /* 狀態燈 | 標題 | 刪除鈕 */
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.mail-item:hover {
+    background-color: var(--bg-slot);
+}
+
+/* 信件狀態燈 */
+.mail-status-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mail-status-light.read {
+    background-color: var(--text-secondary);
+}
+
+.mail-status-light.unread {
+    background-color: var(--success-color);
+    box-shadow: 0 0 6px var(--success-color);
+}
+
+/* 信件標題 */
+.mail-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 已讀信件的標題樣式 */
+.mail-item.read .mail-title {
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* 刪除按鈕 */
+.mail-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+.mail-delete-btn:hover {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+}
+
+/* 讀信彈窗的內容區域 */
+#mail-reader-body {
+    min-height: 200px;
+    line-height: 1.7;
+}
+
+#mail-reader-body .mail-content-text {
+    background-color: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+#mail-reader-body .friend-request-info {
+    text-align: center;
+    padding: 1rem;
+}
