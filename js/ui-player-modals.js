@@ -1,6 +1,60 @@
 // js/ui-player-modals.js
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
+// --- 核心修改處 START ---
+/**
+ * 開啟寄送信件的彈窗。
+ * @param {string} friendUid - 收件好友的 UID。
+ * @param {string} friendNickname - 收件好友的暱稱。
+ */
+function openSendMailModal(friendUid, friendNickname) {
+    // 使用現有的 confirmation-modal 來建立一個輸入表單
+    const mailFormHtml = `
+        <div style="text-align: left; font-size: 0.9rem;">
+            <p style="margin-bottom: 1rem;">正在寫信給：<strong style="color: var(--accent-color);">${friendNickname}</strong></p>
+            <div style="margin-bottom: 0.75rem;">
+                <label for="mail-title-input" class="block mb-1 font-semibold">標題：</label>
+                <input type="text" id="mail-title-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="輸入信件標題..." maxlength="30">
+            </div>
+            <div>
+                <label for="mail-content-input" class="block mb-1 font-semibold">內容：</label>
+                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="5" placeholder="輸入信件內容..." maxlength="200"></textarea>
+            </div>
+        </div>
+    `;
+
+    showConfirmationModal(
+        '撰寫信件',
+        mailFormHtml,
+        async () => {
+            const title = document.getElementById('mail-title-input').value.trim();
+            const content = document.getElementById('mail-content-input').value.trim();
+
+            if (!title || !content) {
+                showFeedbackModal('錯誤', '信件標題和內容不能為空。');
+                return;
+            }
+
+            showFeedbackModal('寄送中...', `正在將您的信件送往 ${friendNickname} 的信箱...`, true);
+            try {
+                // 呼叫我們在 api-client.js 中新增的函式
+                const result = await sendMail(friendUid, title, content);
+                if (result && result.success) {
+                    hideModal('feedback-modal');
+                    showFeedbackModal('成功', '信件已成功寄出！');
+                } else {
+                    throw new Error(result.error || '未知的錯誤');
+                }
+            } catch (error) {
+                hideModal('feedback-modal');
+                showFeedbackModal('寄送失敗', `無法寄送信件：${error.message}`);
+            }
+        },
+        { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
+    );
+}
+// --- 核心修改處 END ---
+
 async function handleAddFriend(friendUid, friendNickname) {
     if (!friendUid || !friendNickname) {
         console.error("handleAddFriend: 無效的參數。");
@@ -76,15 +130,12 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
     
     const isOwnProfile = (playerData.uid && playerData.uid === gameState.playerId) || (!playerData.uid && nickname === gameState.playerNickname);
 
-    // --- 核心修改處 START ---
     if (ownedTitles.length > 0) {
-        const allTitlesConfig = gameConfigs.titles || []; // 獲取所有稱號的設定檔
+        const allTitlesConfig = gameConfigs.titles || []; 
         
         titlesHtml = ownedTitles.map(ownedTitle => {
-            // 用玩家擁有的稱號ID，去設定檔中找出完整的稱號資料
             const titleDetails = allTitlesConfig.find(t => t.id === ownedTitle.id);
 
-            // 如果因為某些原因找不到對應的稱號資料，則顯示一個後備訊息，避免 undefined
             if (!titleDetails) {
                 return `
                     <div class="title-entry" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
@@ -108,7 +159,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
 
 
             let buffsHtml = '';
-            // 使用從設定檔中找到的完整資料來顯示 Buff
             if (titleDetails.buffs && Object.keys(titleDetails.buffs).length > 0) {
                 const statDisplayName = {
                     hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
@@ -141,7 +191,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             `;
         }).join('');
     }
-    // --- 核心修改處 END ---
 
     let achievementsHtml = '<p>尚無成就</p>';
     if (stats.achievements && stats.achievements.length > 0) {
@@ -184,15 +233,13 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
         <p class="creation-time-centered mt-3">上次存檔時間: ${new Date(playerData.lastSave * 1000).toLocaleString()}</p>
     `;
     
-    // 全新的怪獸列表渲染邏輯
     const monsters = playerData.farmedMonsters || [];
     const container = body.querySelector('#player-monsters-table-container');
     
     if (monsters.length > 0) {
-        let sortConfig = { key: 'score', order: 'desc' }; // 預設排序
+        let sortConfig = { key: 'score', order: 'desc' }; 
 
         const renderPlayerMonstersTable = () => {
-            // -- 排序邏輯 --
             monsters.sort((a, b) => {
                 let valA, valB;
                 if (sortConfig.key === 'win_rate') {
@@ -214,7 +261,6 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                 return sortConfig.order === 'asc' ? valA - valB : valB - valA;
             });
 
-            // -- 渲染邏輯 --
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const monsterRowsHtml = monsters.map(m => {
                  const rarityKey = m.rarity ? (rarityMap[m.rarity] || 'common') : 'common';
@@ -398,6 +444,7 @@ async function renderFriendsList() {
         console.error("無法獲取好友狀態:", error);
     }
     
+    // --- 核心修改處 START ---
     container.innerHTML = `
         <div class="friends-list-grid">
             ${friends.map(friend => {
@@ -416,11 +463,12 @@ async function renderFriendsList() {
                         </a>
                     </div>
                     <div class="friend-actions">
+                        <button class="button secondary text-xs" title="寄信" onclick="openSendMailModal('${friend.uid}', '${friend.nickname}')">✉️</button>
                         <button class="button secondary text-xs" title="送禮" disabled>🎁</button>
-                        <button class="button secondary text-xs" title="聊天" disabled>💬</button>
                     </div>
                 </div>
             `}).join('')}
         </div>
     `;
+    // --- 核心修改處 END ---
 }

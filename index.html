@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.3.9'; // 例如從 '1.0.0' 改為 '1.0.1'
+        const gameVersion = '0.3.9'; 
 
         const cssFiles = [
             'css/theme.css',
@@ -21,7 +21,8 @@
             'css/buttons.css',
             'css/components.css',
             'css/modals.css',
-            'css/champions.css'
+            'css/champions.css',
+            'css/mailbox.css'
         ];
         
         cssFiles.forEach(path => {
@@ -514,11 +515,48 @@
                 </div>
         </div>
     </div>
+
+    <div id="mailbox-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="mailbox-modal">&times;</span>
+            <div class="modal-header-container">
+                <h3 class="modal-header">📬 我的信箱</h3>
+                <button id="refresh-mailbox-btn" class="button secondary text-xs" title="刷新信箱">🔄</button>
+            </div>
+            <div class="modal-body" id="mailbox-list-container">
+                <p class="text-center text-sm text-[var(--text-secondary)] py-10">信箱空空如也...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-read-mails-btn" class="button danger text-sm">刪除已讀</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mail-reader-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="mail-reader-modal">&times;</span>
+            <h3 id="mail-reader-title" class="modal-header">信件標題</h3>
+            <div id="mail-reader-meta" class="text-sm text-secondary text-center my-2">
+                <span>寄件人: <strong id="mail-reader-sender">系統</strong></span> | 
+                <span>時間: <span id="mail-reader-timestamp"></span></span>
+            </div>
+            <div id="mail-reader-body" class="modal-body">
+                <div class="mail-content-text">
+                    </div>
+                <div id="mail-reader-attachments" class="mt-4" style="display: none;">
+                    <h5 class="details-section-title">附件</h5>
+                    <div id="mail-attachments-container" class="mt-2">
+                        </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" data-modal-id="mail-reader-modal">關閉</button>
+            </div>
+        </div>
+    </div>
     
     <script>
         (function() {
-            // 這個版本號是實現強制更新的關鍵。
-            // 每次更新遊戲檔案後，只需要修改這個變數的值 (例如 '1.0.1')
             const gameVersion = '0.3.9'; 
 
             const jsFiles = [
@@ -542,6 +580,9 @@
                 'js/ui-champions.js',
                 'js/ui-notes.js',
                 'js/ui-chat.js',
+                // --- 核心修改處 START ---
+                'js/ui-mailbox.js', // 新增對信箱UI腳本的引用
+                // --- 核心修改處 END ---
                 'js/handlers/ui-handlers.js',
                 'js/handlers/game-interaction-handlers.js',
                 'js/handlers/drag-drop-handlers.js',
@@ -549,7 +590,6 @@
                 'js/main.js'
             ];
 
-            // 使用 document.write 確保腳本按順序同步加載和解析
             jsFiles.forEach(path => {
                 document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
             });

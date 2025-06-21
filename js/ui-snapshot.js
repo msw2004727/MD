@@ -1,6 +1,15 @@
 // js/ui-snapshot.js
 // 這個檔案專門處理主畫面上方「怪獸快照」面板的渲染與更新。
 
+function updateMailNotificationDot() {
+    const dot = document.getElementById('mail-notification-dot');
+    if (!dot) return;
+
+    const hasUnread = gameState.playerData?.mailbox?.some(mail => !mail.is_read);
+    dot.style.display = hasUnread ? 'block' : 'none';
+}
+
+
 function getMonsterImagePathForSnapshot(primaryElement, rarity) {
     const colors = {
         '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
@@ -13,7 +22,6 @@ function getMonsterImagePathForSnapshot(primaryElement, rarity) {
 }
 
 function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
-    // 確保 monsterPartAssets 已載入
     if (typeof monsterPartAssets === 'undefined') {
         return null;
     }
@@ -23,15 +31,12 @@ function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
         return monsterPartAssets.globalDefault; 
     }
 
-    // 優先匹配精確的屬性+稀有度
     if (partData[dnaType] && partData[dnaType][dnaRarity]) {
         return partData[dnaType][dnaRarity];
     }
-    // 次之匹配屬性預設 (如果有的話)
     if (partData[dnaType] && partData[dnaType].default) {
         return partData[dnaType].default;
     }
-    // 再次之匹配部位預設
     if (partData.default) {
         return partData.default;
     }
@@ -77,7 +82,6 @@ function updateMonsterSnapshot(monster) {
         return;
     }
 
-    // --- 【修改】移除所有舊按鈕，以便重新定位和新增 ---
     const existingMonsterBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-monster-details-btn');
     if (existingMonsterBtn) existingMonsterBtn.remove();
     
@@ -87,12 +91,13 @@ function updateMonsterSnapshot(monster) {
     const existingGuideBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-guide-btn');
     if (existingGuideBtn) existingGuideBtn.remove();
     
-    // 移除舊的排行榜按鈕，並用新的 selection-modal-btn 取代
     const existingLeaderboardBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-combined-leaderboard-btn');
     if (existingLeaderboardBtn) existingLeaderboardBtn.remove();
     const existingSelectionBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-selection-modal-btn');
     if (existingSelectionBtn) existingSelectionBtn.remove();
-    // --- 【修改結束】 ---
+    const existingMailBtn = DOMElements.monsterSnapshotArea.querySelector('#snapshot-mail-btn');
+    if(existingMailBtn) existingMailBtn.remove();
+
 
     // 玩家資訊按鈕 (第2個)
     const playerBtn = document.createElement('button');
@@ -101,7 +106,7 @@ function updateMonsterSnapshot(monster) {
     playerBtn.innerHTML = '📑';
     playerBtn.classList.add('corner-button');
     playerBtn.style.position = 'absolute';
-    playerBtn.style.bottom = '44px'; // 向上移動一個位置
+    playerBtn.style.bottom = '44px'; 
     playerBtn.style.left = '8px';
     playerBtn.style.width = '32px';
     playerBtn.style.height = '32px';
@@ -115,6 +120,20 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(playerBtn);
 
+    const mailBtn = document.createElement('button');
+    mailBtn.id = 'snapshot-mail-btn';
+    mailBtn.title = '信箱';
+    mailBtn.innerHTML = '✉️<span id="mail-notification-dot" class="notification-dot"></span>';
+    mailBtn.classList.add('corner-button');
+    mailBtn.style.position = 'absolute';
+    mailBtn.style.bottom = '44px';
+    mailBtn.style.right = '8px';
+    mailBtn.style.width = '32px';
+    mailBtn.style.height = '32px';
+    mailBtn.style.fontSize = '0.9rem';
+    mailBtn.style.zIndex = '5';
+    DOMElements.monsterSnapshotArea.appendChild(mailBtn);
+
     // 新手上路按鈕 (第3個)
     const guideBtn = document.createElement('button');
     guideBtn.id = 'snapshot-guide-btn';
@@ -122,7 +141,7 @@ function updateMonsterSnapshot(monster) {
     guideBtn.innerHTML = '🔰';
     guideBtn.classList.add('corner-button');
     guideBtn.style.position = 'absolute';
-    guideBtn.style.bottom = '80px'; // 向上移動一個位置
+    guideBtn.style.bottom = '80px'; 
     guideBtn.style.left = '8px';
     guideBtn.style.width = '32px';
     guideBtn.style.height = '32px';
@@ -146,7 +165,7 @@ function updateMonsterSnapshot(monster) {
     selectionBtn.innerHTML = '🪜';
     selectionBtn.classList.add('corner-button');
     selectionBtn.style.position = 'absolute';
-    selectionBtn.style.bottom = '116px'; // 向上移動一個位置
+    selectionBtn.style.bottom = '116px'; 
     selectionBtn.style.left = '8px';
     selectionBtn.style.width = '32px';
     selectionBtn.style.height = '32px';
@@ -162,10 +181,7 @@ function updateMonsterSnapshot(monster) {
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        // --- 核心修改處 START ---
-        // 使用新的共用函式來取代原本重複的邏輯
         const elementNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
-        // --- 核心修改處 END ---
         
         const achievement = monster.title || '新秀';
         
@@ -268,7 +284,6 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
         gameState.selectedMonsterId = monster.id;
 
-        // 怪獸詳細資訊按鈕 (第1個)
         const monsterBtn = document.createElement('button');
         monsterBtn.id = 'snapshot-monster-details-btn';
         monsterBtn.title = '查看怪獸詳細資訊';
@@ -276,8 +291,8 @@ function updateMonsterSnapshot(monster) {
         
         monsterBtn.classList.add('corner-button');
         monsterBtn.style.position = 'absolute';
-        monsterBtn.style.bottom = '8px'; // 放在最下面
-        monsterBtn.style.left = '8px';   // 與其他按鈕對齊
+        monsterBtn.style.bottom = '8px'; 
+        monsterBtn.style.left = '8px';
         monsterBtn.style.width = '32px';
         monsterBtn.style.height = '32px';
         monsterBtn.style.fontSize = '0.9rem';
@@ -304,4 +319,11 @@ function updateMonsterSnapshot(monster) {
         DOMElements.monsterSnapshotArea.style.boxShadow = 'none';
         gameState.selectedMonsterId = null;
     }
+
+    // --- 核心修改處 START ---
+    // 確保在整個快照區塊被完整繪製後，才呼叫紅點更新函式
+    if (typeof updateMailNotificationDot === 'function') {
+        updateMailNotificationDot();
+    }
+    // --- 核心修改處 END ---
 }

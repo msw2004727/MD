@@ -3,22 +3,44 @@
 function initializeUIEventHandlers() {
     handleThemeSwitch();
     handleAuthForms();
-    // handleTopNavButtons(); // 已移除
     handleTabSwitching();
     handleModalCloseButtons(); 
     handleAnnouncementModalClose();
     handleBattleLogModalClose();
     handleNewbieGuideSearch();
     handleSelectionModalActions();
+    handleInventoryGuideModal();
     
     // --- 核心修改處 START ---
-    // 為新的 Banner 彈窗按鈕綁定事件
-    handleInventoryGuideModal();
+    // 使用事件委派來處理動態生成的信箱按鈕
+    if (DOMElements.monsterSnapshotArea) {
+        DOMElements.monsterSnapshotArea.addEventListener('click', async (event) => {
+            const mailBtn = event.target.closest('#snapshot-mail-btn');
+            if (mailBtn) {
+                // 這是點擊信箱按鈕後應執行的完整邏輯
+                showFeedbackModal('載入中...', '正在收取信件...', true);
+                try {
+                    await refreshPlayerData(); // 刷新以獲取最新的信箱資料
+                    // 呼叫在 ui-mailbox.js 中定義的函式來渲染列表
+                    if (typeof renderMailboxList === 'function') {
+                        renderMailboxList(gameState.playerData?.mailbox || []);
+                    }
+                    // 呼叫在 ui-snapshot.js 中定義的函式來更新紅點
+                    if (typeof updateMailNotificationDot === 'function') {
+                        updateMailNotificationDot();
+                    }
+                    hideModal('feedback-modal');
+                    showModal('mailbox-modal'); // 顯示信箱彈窗
+                } catch (error) {
+                    hideModal('feedback-modal');
+                    showFeedbackModal('錯誤', `無法開啟信箱：${error.message}`);
+                }
+            }
+        });
+    }
     // --- 核心修改處 END ---
 }
 
-// --- 核心修改處 START ---
-// 新增函式來處理 Banner 彈窗的開啟
 function handleInventoryGuideModal() {
     const openBtn = document.getElementById('inventory-guide-button');
     const bannerModal = document.getElementById('banner-modal');
@@ -26,23 +48,18 @@ function handleInventoryGuideModal() {
 
     if (openBtn && bannerModal) {
         openBtn.addEventListener('click', () => {
-            // 從遊戲狀態中讀取在 assets.json 設定好的圖片路徑
             const bannerUrl = gameState.assetPaths?.images?.modals?.dnaGuideBanner;
 
             if (bannerContent && bannerUrl) {
-                // 將彈窗內容設為包含該圖片的<img>標籤
                 bannerContent.innerHTML = `<img src="${bannerUrl}" alt="DNA碎片說明圖" style="max-width: 100%; height: auto; display: block; border-radius: 6px;">`;
             } else if (bannerContent) {
-                // 如果找不到圖片路徑，則顯示錯誤訊息
                 bannerContent.innerHTML = '<p>說明圖片載入失敗。</p>';
             }
             showModal('banner-modal');
         });
     }
 }
-// --- 核心修改處 END ---
 
-// 【新增】處理天梯-排行榜彈窗內的點擊事件
 function handleSelectionModalActions() {
     const selectionModal = document.getElementById('selection-modal');
     if (!selectionModal) return;
@@ -53,10 +70,10 @@ function handleSelectionModalActions() {
 
         if (monsterColumn) {
             hideModal('selection-modal');
-            handleMonsterLeaderboardClick(); // 呼叫現有的函式來打開怪獸排行榜
+            handleMonsterLeaderboardClick(); 
         } else if (playerColumn) {
             hideModal('selection-modal');
-            handlePlayerLeaderboardClick(); // 呼叫現有的函式來打開玩家排行榜
+            handlePlayerLeaderboardClick(); 
         }
     });
 }
@@ -131,22 +148,18 @@ async function handleMonsterLeaderboardClick() {
     try {
         showFeedbackModal('載入中...', '正在獲取排行榜...', true);
         
-        // 同時獲取冠軍殿堂和一般排行榜的資料
         const [championsData, leaderboardData] = await Promise.all([
             getChampionsLeaderboard(),
             getMonsterLeaderboard(20)
         ]);
         
-        // 【新增】將獲取到的冠軍資料存到 gameState 中
         gameState.champions = championsData || [null, null, null, null];
         gameState.monsterLeaderboard = leaderboardData || [];
         
-        // 呼叫渲染冠軍殿堂的函式
         if (typeof renderChampionSlots === 'function') {
             renderChampionSlots(gameState.champions);
         }
         
-        // 渲染一般排行榜
         updateLeaderboardTable('monster', gameState.monsterLeaderboard, 'monster-leaderboard-table-container'); 
         
         if (DOMElements.monsterLeaderboardElementTabs && DOMElements.monsterLeaderboardElementTabs.innerHTML.trim() === '') {

@@ -98,22 +98,23 @@ body.light-theme #cultivation-modal-close-x:hover {
     font-size: 1rem;
 }
 
-/* Restoring original spinner styles */
+/* --- 核心修改處 START --- */
 .loading-spinner {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 50px;
-    height: 50px;
-    margin-top: -25px; /* half of height */
-    margin-left: -25px; /* half of width */
-    border: 5px solid var(--border-color);
-    border-top: 5px solid var(--accent-color);
+    width: 28px; /* 從 50px 縮小 */
+    height: 28px; /* 從 50px 縮小 */
+    margin-top: -14px; /* 對應 height 的一半 */
+    margin-left: -14px; /* 對應 width 的一半 */
+    border: 3px solid var(--border-color); /* 從 5px 變細 */
+    border-top: 3px solid var(--accent-color); /* 從 5px 變細 */
     border-radius: 50%;
     animation: spin 1s linear infinite;
     z-index: 10;
-    display: none; /* Initially hidden, controlled by JS */
+    display: none;
 }
+/* --- 核心修改處 END --- */
 
 /* Hiding the breathing icon */
 #feedback-modal-breathing-icon {
@@ -389,7 +390,7 @@ p.monster-score {
 
 .monster-vs-grid {
     position: relative;
-    min-height: 160px; /* 調整高度以適應橫式卡片 */
+    min-height: 160px; 
     margin-top: 1rem;
 }
 
@@ -407,7 +408,7 @@ p.monster-score {
 .monster-vs-grid .player-side,
 .monster-vs-grid .opponent-side {
     position: absolute;
-    width: 55%; /* 讓卡片可以更寬 */
+    width: 55%; 
     box-sizing: border-box;
 }
 
@@ -428,7 +429,6 @@ p.monster-score {
     background-color: var(--bg-primary);
 }
 
-/* **核心修改點：新增橫式卡片樣式** */
 .monster-stats-card--horizontal {
     display: flex;
     flex-direction: row;
@@ -467,7 +467,6 @@ p.monster-score {
 .monster-stats-card--horizontal .stats-grid span {
     white-space: nowrap;
 }
-/* **核心修改結束** */
 
 .monster-stats-card .stats-grid {
     display: grid;
@@ -606,24 +605,21 @@ p.monster-score {
     color: var(--accent-color);
 }
 
-/* --- 核心修改處 START --- */
 #banner-modal {
-    z-index: 1040; /* 設定比其他大部分彈窗更高的層級 */
+    z-index: 1040;
 }
 
-/* Banner-Only Modal Styles */
 .modal-content.banner-only {
     padding: 0;
     background: none;
     border: none;
     box-shadow: none;
-    max-width: 600px; /* 您可以根據您的 Banner 寬度調整 */
-    overflow: visible; /* 允許關閉按鈕稍微超出範圍 */
+    max-width: 600px; 
+    overflow: visible;
 }
 
 .banner-placeholder {
     width: 100%;
-    /* 這裡可以設定一個長寬比，讓 Banner 區域保持比例 */
     aspect-ratio: 16 / 9; 
     background-color: var(--bg-slot);
     border: 2px dashed var(--border-color);
@@ -651,7 +647,6 @@ p.monster-score {
     padding: 0;
     line-height: 1;
 }
-/* --- 核心修改處 END --- */
 
 /* --- Chat Tab Styles --- */
 .chat-message-wrapper {
@@ -701,17 +696,16 @@ p.monster-score {
     font-style: italic;
 }
 
-/* --- 新增：公告彈窗排版樣式 --- */
 .announcement-columns-container {
     display: flex;
     gap: 1.5rem;
     margin: 1rem 0;
-    flex-wrap: wrap; /* 在螢幕較窄時，讓欄位自動換行 */
+    flex-wrap: wrap;
 }
 
 .announcement-column {
     flex: 1;
-    min-width: 180px; /* 每個欄位的最小寬度，防止被過度擠壓 */
+    min-width: 180px; 
     background-color: var(--bg-primary);
     padding: 0.75rem;
     border-radius: 6px;
@@ -749,15 +743,13 @@ p.monster-score {
     border: 1px solid var(--border-color);
 }
 
-/* 文字顏色輔助 class */
 .text-color-default { color: inherit; }
 .text-color-accent { color: var(--accent-color); }
 .text-color-success { color: var(--success-color); }
 .text-color-danger { color: var(--danger-color); }
 
-/* --- 新增：聊天頭像樣式 --- */
 .chat-message-wrapper.role-assistant {
-    gap: 0.75rem; /* 在頭像和對話泡泡之間增加間距 */
+    gap: 0.75rem;
 }
 
 .chat-avatar-container {
@@ -768,7 +760,7 @@ p.monster-score {
     border: 1px solid var(--border-color);
     overflow: hidden;
     position: relative;
-    flex-shrink: 0; /* 防止頭像在 flex 佈局中被壓縮 */
+    flex-shrink: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
@@ -784,13 +776,12 @@ p.monster-score {
     transform: translate(-50%, -50%);
 }
 
-/* --- 新增：戰鬥報告中的狀態標籤樣式 --- */
 .monster-name-container {
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
     flex-wrap: wrap;
-    justify-content: center; /* 讓名字和標籤在卡片內水平置中 */
+    justify-content: center;
 }
 
 .monster-status-tag {

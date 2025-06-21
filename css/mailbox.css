@@ -77,6 +77,7 @@
     font-weight: normal;
 }
 
+/* --- 核心修改處 START --- */
 /* 刪除按鈕 */
 .mail-delete-btn {
     background: none;
@@ -85,14 +86,17 @@
     font-size: 1.25rem;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: 50%;
+    border-radius: 4px; /* 將圓角改為方形，或可設為 50% 維持圓形點擊區 */
     line-height: 1;
+    transition: color 0.2s, background-color 0.2s; /* 增加平滑過渡效果 */
 }
 
 .mail-delete-btn:hover {
-    background-color: var(--danger-color);
-    color: var(--button-danger-text);
+    background-color: var(--bg-slot); /* 滑鼠移上時給予淡淡的背景提示 */
+    color: var(--danger-color); /* 將 'x' 的顏色變為危險紅色 */
 }
+/* --- 核心修改處 END --- */
+
 
 /* 讀信彈窗的內容區域 */
 #mail-reader-body {

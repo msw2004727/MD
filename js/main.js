@@ -139,6 +139,13 @@ async function initializeGame() {
             playerNickname: playerData.nickname || gameState.currentUser.displayName || "玩家"
         });
         console.log("Game configs, player data, asset paths, and chat greetings loaded and saved to gameState.");
+        
+        // --- 核心修改處 START ---
+        // 在玩家資料載入後，立即更新信箱紅點狀態
+        if(typeof updateMailNotificationDot === 'function') {
+            updateMailNotificationDot();
+        }
+        // --- 核心修改處 END ---
 
         if (typeof populateImageAssetSources === 'function') {
             populateImageAssetSources();
@@ -171,7 +178,6 @@ async function initializeGame() {
         
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
-        // --- 【修改】呼叫新的專用函式來處理彈窗 ---
         if (typeof checkAndShowNewTitleModal === 'function') {
             checkAndShowNewTitleModal(playerData);
         }
@@ -228,7 +234,8 @@ function attemptToInitializeApp() {
     const requiredFunctions = [
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
-        'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem'
+        'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
+        'initializeMailboxEventHandlers' // --- 核心修改處 START ---
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -246,6 +253,7 @@ function attemptToInitializeApp() {
         initializeMonsterEventHandlers();
         initializeNoteHandlers();
         initializeChatSystem();
+        initializeMailboxEventHandlers(); // --- 核心修改處 START ---
 
         setInterval(updateAllTimers, 1000);
 
@@ -265,3 +273,42 @@ document.addEventListener('DOMContentLoaded', attemptToInitializeApp);
 window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
 console.log("Main.js script loaded.");
+
+// --- 核心修改處 START ---
+(function() {
+    const gameVersion = '0.3.9'; 
+
+    const jsFiles = [
+        'js/firebase-config.js',
+        'js/config.js',
+        'js/game-state.js',
+        'js/api-client.js',
+        'js/auth.js',
+        'js/game-logic.js',
+        'js/utils.js',
+        'js/monster-part-assets.js',
+        'js/ui.js',
+        'js/ui-inventory.js',
+        'js/ui-snapshot.js',
+        'js/ui-farm.js',
+        'js/ui-player-modals.js',
+        'js/ui-monster-details.js',
+        'js/ui-battle-modals.js',
+        'js/ui-result-modals.js',
+        'js/ui-leaderboard-modals.js',
+        'js/ui-champions.js',
+        'js/ui-notes.js',
+        'js/ui-chat.js',
+        'js/ui-mailbox.js', // 新增對信箱UI腳本的引用
+        'js/handlers/ui-handlers.js',
+        'js/handlers/game-interaction-handlers.js',
+        'js/handlers/drag-drop-handlers.js',
+        'js/handlers/monster-handlers.js',
+        'js/main.js'
+    ];
+// --- 核心修改處 END ---
+
+    jsFiles.forEach(path => {
+        document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
+    });
+})();

@@ -307,6 +307,27 @@ async function getFriendsStatuses(friendIds) {
     });
 }
 
+// --- 核心修改處 START ---
+/**
+ * 寄送一封信件給另一位玩家
+ * @param {string} recipientId 收件人的 ID
+ * @param {string} title 信件標題
+ * @param {string} content 信件內容
+ * @returns {Promise<object>} 後端的回應
+ */
+async function sendMail(recipientId, title, content) {
+    return fetchAPI('/mailbox/send', {
+        method: 'POST',
+        body: JSON.stringify({
+            recipient_id: recipientId,
+            title: title,
+            content: content
+        }),
+    });
+}
+// --- 核心修改處 END ---
+
+
 /**
  * 【新增】與怪獸進行物理互動
  * @param {string} monsterId 怪獸的 ID
