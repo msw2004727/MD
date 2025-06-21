@@ -15,21 +15,18 @@ from firebase_admin import credentials, firestore
 import json
 import logging
 
-# ----- BUG 修正邏輯 START -----
-# 從新建立的日誌設定檔中導入設定函式
 from backend.logging_config import setup_logging
-# ----- BUG 修正邏輯 END -----
 
+# --- 【新增】導入信箱系統的藍圖 ---
 from backend.MD_routes import md_bp
-# 【新增】導入冠軍殿堂的藍圖
 from backend.champion_routes import champion_bp 
+from backend.mail_routes import mail_bp
+
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
 
-# ----- BUG 修正邏輯 START -----
 # 執行日誌設定
 setup_logging()
-# ----- BUG 修正邏輯 END -----
 
 # 現在，我們可以像平常一樣獲取日誌記錄器
 app_logger = logging.getLogger(__name__)
@@ -57,8 +54,8 @@ app_logger.info("CORS configured to allow origins: %s", allowed_origins)
 
 # 註冊藍圖
 app.register_blueprint(md_bp)
-# 【新增】註冊冠軍殿堂的藍圖
 app.register_blueprint(champion_bp) 
+app.register_blueprint(mail_bp) # 【新增】註冊信箱系統的藍圖
 
 # --- Firebase Admin SDK 初始化 ---
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
@@ -154,9 +151,6 @@ def index():
 def view_logs():
     """提供一個網頁來查看即時日誌。"""
     log_directory = os.path.join(os.path.dirname(__file__), 'logs')
-    # --- 核心修改處 START ---
-    # app_logger.info("請求查看日誌頁面...") # 將此行移除或註解
-    # --- 核心修改處 END ---
     return send_from_directory(log_directory, 'game_log.html')
 
 
