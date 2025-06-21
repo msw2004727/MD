@@ -15,8 +15,9 @@
       "type": "columns",
       "columns": [
         {
-          "title": "目前0.3.0v已實裝功能：",
+          "title": "目前0.3.9v已實裝功能：",
           "items": [
+            { "text": "優化農場顯示方式", "color": "success" },
             { "text": "與怪獸協商關閉技能", "color": "success" },
             { "text": "第一階段技能優化", "color": "success" },
             { "text": "元素抗性計算調整", "color": "success" },
