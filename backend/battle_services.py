@@ -159,12 +159,9 @@ def _get_active_skills(monster: Monster, current_mp: int, game_configs: GameConf
         
         mp_cost = effective_skill.get("mp_cost", 0)
 
-        # --- 核心修改處 START ---
-        # 新增 is_active 狀態檢查，若該欄位不存在，則預設為 True (開啟)
         is_skill_active = effective_skill.get('is_active', True)
         if current_mp >= mp_cost and is_skill_active:
             available_skills.append(full_skill_data)
-        # --- 核心修改處 END ---
             
     return available_skills
 
@@ -353,13 +350,11 @@ def _process_end_of_turn_effects(battle_state: Dict[str, Any], player_monster: M
     if weather_type == "sandstorm":
         log_parts.append("- 猛烈的沙塵暴持續肆虐！")
         for monster in [player_monster, opponent_monster]:
-            # 土、金屬性免疫沙塵暴
             if "土" not in monster.get("elements", []) and "金" not in monster.get("elements", []):
                 damage = math.floor(monster.get("initial_max_hp", 100) / 16)
                 monster["current_hp"] = max(0, monster.get("current_hp", 0) - damage)
                 log_parts.append(f"- **{monster['nickname']}** 被沙塵暴捲入，受到了 <damage>{damage}</damage> 點傷害。")
 
-    # 減少天氣持續時間
     if weather.get("duration", 0) > 0:
         weather["duration"] -= 1
         if weather["duration"] <= 0:
@@ -482,9 +477,25 @@ def simulate_battle_full(
     all_raw_log_messages.append("--- 戰鬥結束 ---")
 
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
-    player_activity_log = {"time": now_gmt8_str, "message": f"與 {opponent_monster.get('nickname')} 的戰鬥結束。"}
-    opponent_activity_log = {"time": now_gmt8_str, "message": f"與 {player_monster.get('nickname')} 的戰鬥結束。"}
     
+    # --- 核心修改處 START ---
+    player_monster_nickname = player_monster.get('nickname', '您的怪獸')
+    opponent_monster_nickname = opponent_monster.get('nickname', '對手')
+
+    if winner_id == player_monster['id']:
+        player_message = f"挑戰「{opponent_monster_nickname}」，您獲勝了！"
+        opponent_message = f"「{player_monster_nickname}」向您發起挑戰，防禦失敗！"
+    elif winner_id == opponent_monster['id']:
+        player_message = f"挑戰「{opponent_monster_nickname}」，您戰敗了。"
+        opponent_message = f"您擊敗了前來挑戰的「{player_monster_nickname}」！"
+    else: # Draw
+        player_message = f"與「{opponent_monster_nickname}」的對戰平手。"
+        opponent_message = f"與「{player_monster_nickname}」的對戰平手。"
+
+    player_activity_log = {"time": now_gmt8_str, "message": player_message}
+    opponent_activity_log = {"time": now_gmt8_str, "message": opponent_message}
+    # --- 核心修改處 END ---
+
     battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
     ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
 
