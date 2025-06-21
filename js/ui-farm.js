@@ -115,18 +115,32 @@ function renderMonsterFarm() {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
 
-        const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
+        // --- 【核心修改處 START】---
+        // 新增邏輯，以手動方式在前端查找正確的頭部DNA資訊
+        let headInfo = { type: '無', rarity: '普通' }; // 設定預設值
+        const constituentIds = monster.constituent_dna_ids || [];
+        
+        if (constituentIds.length > 0) {
+            const headDnaId = constituentIds[0]; // 頭部是第一個DNA
+            const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
+            const headDnaTemplate = allDnaTemplates.find(dna => dna.id === headDnaId);
+
+            if (headDnaTemplate) {
+                headInfo.type = headDnaTemplate.type || '無';
+                headInfo.rarity = headDnaTemplate.rarity || '普通';
+            }
+        }
+        // --- 【核心修改處 END】---
+
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         let avatarHtml = `<div class="monster-card-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>`;
 
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
-        // 【修改】調整狀態顯示邏輯
         let statusHtml = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
-            // 使用兩個 div 來強制換行
             statusHtml = `
                 <div class="monster-card-status">
                     <div style="color: var(--accent-color);">修煉中</div>
@@ -162,7 +176,6 @@ function renderMonsterFarm() {
             `;
         }
 
-        // 【修改】調整 statusHtml 的位置到最下面
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey} text-xs">${displayName}</div>
             <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
