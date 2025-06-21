@@ -1061,4 +1061,95 @@ body.light-theme .leaderboard-table tr:hover td {
   animation: head-breath 2s infinite alternate ease-in-out;
   transform-origin: center bottom; /* 讓縮放中心在底部中間，看起來更像在呼吸 */
 }
+
+/* --- 【新增】怪獸農場卡片式佈局樣式 --- */
+.farm-card-grid {
+    display: grid;
+    /* 響應式網格，最小寬度 110px，最大 1fr，自動填充 */
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.75rem;
+}
+
+.monster-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem; /* 內部元件的間距 */
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+.monster-card.deployed {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px -2px color-mix(in srgb, var(--accent-color) 60%, transparent);
+}
+
+.monster-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.monster-card-name {
+    font-size: 0.75rem; /* xs */
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.monster-card-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--bg-slot);
+    background-size: 150%;
+    background-position: center;
+    border: 2px solid var(--border-color);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+
+.monster-card-deploy-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: -12px; /* 讓按鈕稍微蓋在頭像上 */
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.monster-card-deploy-btn:hover {
+    transform: scale(1.1);
+}
+
+.monster-card-deploy-btn.deployed {
+    background-color: var(--button-success-bg);
+    color: var(--button-success-text);
+    cursor: not-allowed;
+}
+
+.monster-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.25rem;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.monster-card-actions .button {
+    padding: 5px; /* 縮小按鈕內距 */
+    font-size: 0.75rem; /* xs */
+    white-space: nowrap;
 }
