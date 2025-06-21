@@ -11,7 +11,6 @@ import random
 
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry
 from .utils_services import generate_monster_full_nickname
-# 【新增】導入冠軍殿堂的服務
 from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
@@ -67,7 +66,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "medals": 0,
         "nickname": nickname,
         "equipped_title_id": default_title_object["id"],
-        "gold": game_configs.get("value_settings", {}).get("starting_gold", 500), # 新增：給予初始金幣
+        "gold": game_configs.get("value_settings", {}).get("starting_gold", 500),
         "current_win_streak": 0,
         "current_loss_streak": 0,
         "highest_win_streak": 0,
@@ -111,6 +110,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "selectedMonsterId": None,
         "friends": [],
         "dnaCombinationSlots": [None] * 5,
+        "mailbox": [], # 新增：初始化信箱
+        "playerNotes": [] # 新增：初始化玩家備註
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -172,7 +173,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_stats = player_game_data_dict.get("playerStats", {})
             
-            # 新增：檢查並補上 gold 欄位
             if "gold" not in player_stats:
                 player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
                 needs_migration_save = True
@@ -266,6 +266,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
                 "friends": player_game_data_dict.get("friends", []),
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
+                "mailbox": player_game_data_dict.get("mailbox", []),
+                "playerNotes": player_game_data_dict.get("playerNotes", [])
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
                 player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
@@ -294,7 +296,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     
     db = firestore_db_instance
     
-    # 【新增】在儲存前，檢查是否更換了出戰怪獸
     try:
         current_data_doc = db.collection('users').document(player_id).collection('gameData').document('main').get()
         if current_data_doc.exists:
@@ -303,7 +304,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             new_selected_id = game_data.get("selectedMonsterId")
 
             if old_selected_id and old_selected_id != new_selected_id:
-                # 出戰怪獸被更換，檢查舊怪獸是否在冠軍殿堂
                 player_services_logger.info(f"玩家 {player_id} 更換出戰怪獸：從 {old_selected_id} 更換為 {new_selected_id}。檢查冠軍席位...")
                 champions_data = get_champions_data()
                 was_champion = False
@@ -311,17 +311,16 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
                     rank_key = f"rank{i}"
                     slot = champions_data.get(rank_key)
                     if slot and slot.get("monsterId") == old_selected_id:
-                        champions_data[rank_key] = None # 清空席位
+                        champions_data[rank_key] = None 
                         was_champion = True
                         player_services_logger.info(f"玩家 {player_id} 的舊出戰怪獸 {old_selected_id} 為第 {i} 名冠軍，已將其席位移除。")
                         break
                 
                 if was_champion:
-                    update_champions_document(champions_data) # 更新冠軍文件
+                    update_champions_document(champions_data) 
 
     except Exception as e:
         player_services_logger.error(f"儲存前檢查冠軍席位時發生錯誤: {e}", exc_info=True)
-        # 即使這裡出錯，也應繼續嘗試儲存玩家資料
     
     current_time_unix = int(time.time())
 
@@ -337,6 +336,9 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
             "playerNotes": game_data.get("playerNotes", []),
+            # --- 核心修改處 START ---
+            "mailbox": game_data.get("mailbox", []) 
+            # --- 核心修改處 END ---
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
