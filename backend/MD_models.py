@@ -21,6 +21,24 @@ class ChatHistoryEntry(TypedDict):
     role: Literal["user", "assistant"]
     content: str
 
+# --- 【新增】信箱系統資料模型 START ---
+class MailItem(TypedDict):
+    """
+    定義單一信件的資料結構。
+    """
+    id: str  # 信件的唯一ID
+    type: Literal["friend_request", "system_message", "reward"]  # 信件類型
+    title: str  # 信件標題
+    sender_id: NotRequired[Optional[str]]  # 寄件人ID (系統信件則無)
+    sender_name: NotRequired[Optional[str]]  # 寄件人暱稱
+    timestamp: int  # 發送時間的時間戳
+    is_read: bool  # 是否已讀
+    content: NotRequired[str] # 信件內容 (文字訊息)
+    payload: NotRequired[Dict[str, Any]] # 附加資料，如 { "item_type": "dna", "item_id": "dna_fire_c01", "amount": 1 }
+
+# --- 【新增】信箱系統資料模型 END ---
+
+
 # --- 設定檔模型 ---
 
 class DNAFragment(TypedDict):
@@ -46,7 +64,6 @@ class RarityDetail(TypedDict):
     resistanceBonus: int
     value_factor: NotRequired[int]
 
-# --- 【修改】修正命名與定義順序 ---
 class SkillEffect(TypedDict):
     """技能效果的統一模型"""
     type: NotRequired[Literal["damage", "leech", "apply_status", "stat_change", "special", "heal"]]
@@ -89,8 +106,7 @@ class Skill(TypedDict):
     level: NotRequired[int]
     current_exp: NotRequired[int]
     exp_to_next_level: NotRequired[int]
-    is_active: NotRequired[bool] # 新增：技能開關狀態
-    # 舊版相容性欄位
+    is_active: NotRequired[bool]
     story: NotRequired[str]
     power: NotRequired[int]
     crit: NotRequired[int]
@@ -308,6 +324,7 @@ class PlayerGameData(TypedDict):
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
     friends: NotRequired[List[Any]]
     playerNotes: NotRequired[List[NoteEntry]]
+    mailbox: NotRequired[List[MailItem]] # 【新增】信箱欄位
 
 class MonsterRecipe(TypedDict):
     combinationKey: str 
