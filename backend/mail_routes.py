@@ -6,7 +6,10 @@ from flask import Blueprint, jsonify, request
 
 # 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
-from .mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read
+# --- 核心修改處 START ---
+# 導入新建立的 send_mail_to_player_service 服務
+from .mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read, send_mail_to_player_service
+# --- 核心修改處 END ---
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 
 # 建立一個新的藍圖 (Blueprint) 來管理信箱的路由
@@ -78,8 +81,40 @@ def mark_as_read_route(mail_id: str):
     else:
         return jsonify({"error": "標記已讀後儲存資料失敗。"}), 500
 
-# 可以在此處預留未來功能的路由，例如 "寄信"
-# @mail_bp.route('/send', methods=['POST'])
-# def send_mail_route():
-#     # ... 待實現的寄信邏輯 ...
-#     pass
+# --- 核心修改處 START ---
+@mail_bp.route('/send', methods=['POST'])
+def send_mail_route():
+    """
+    處理玩家寄送一封新信件給另一位玩家。
+    """
+    # 驗證寄件人身份
+    sender_id, sender_nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    # 從請求中獲取寄信資訊
+    data = request.json
+    recipient_id = data.get('recipient_id')
+    title = data.get('title')
+    content = data.get('content')
+
+    # 驗證參數是否齊全
+    if not all([recipient_id, title, content]):
+        return jsonify({"error": "請求中缺少必要的欄位 (recipient_id, title, content)。"}), 400
+
+    # 呼叫服務層的寄信函式
+    success = send_mail_to_player_service(
+        sender_id=sender_id,
+        sender_nickname=sender_nickname,
+        recipient_id=recipient_id,
+        title=title,
+        content=content
+        # 未來可在此處傳入 payload 處理贈禮
+    )
+
+    if success:
+        return jsonify({"success": True, "message": "信件已成功寄出。"}), 200
+    else:
+        # 服務層內部會記錄詳細錯誤，這裡只返回通用失敗訊息
+        return jsonify({"error": "寄信失敗，可能是收件人不存在或伺服器內部錯誤。"}), 500
+# --- 核心修改處 END ---
