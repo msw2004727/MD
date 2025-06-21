@@ -177,7 +177,7 @@ function renderMonsterFarm() {
         }
 
         monsterCard.innerHTML = `
-            <div class="monster-card-name text-rarity-${rarityKey} text-xs">${displayName}</div>
+            <div class="monster-card-name text-rarity-${rarityKey} text-sm">${displayName}</div>
             <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
                 ${avatarHtml}
             </a>
