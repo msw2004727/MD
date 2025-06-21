@@ -115,13 +115,11 @@ function renderMonsterFarm() {
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
 
-        // --- 【核心修改處 START】---
-        // 新增邏輯，以手動方式在前端查找正確的頭部DNA資訊
-        let headInfo = { type: '無', rarity: '普通' }; // 設定預設值
+        let headInfo = { type: '無', rarity: '普通' }; 
         const constituentIds = monster.constituent_dna_ids || [];
         
         if (constituentIds.length > 0) {
-            const headDnaId = constituentIds[0]; // 頭部是第一個DNA
+            const headDnaId = constituentIds[0];
             const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
             const headDnaTemplate = allDnaTemplates.find(dna => dna.id === headDnaId);
 
@@ -130,7 +128,6 @@ function renderMonsterFarm() {
                 headInfo.rarity = headDnaTemplate.rarity || '普通';
             }
         }
-        // --- 【核心修改處 END】---
 
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         let avatarHtml = `<div class="monster-card-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>`;
@@ -153,31 +150,33 @@ function renderMonsterFarm() {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
         }
         
+        // --- 【核心修改處】---
+        // 調整按鈕順序
         let actionsHTML = '';
         if (isDeployed) {
             actionsHTML = `
-                <button class="button text-xs" disabled>修煉</button>
-                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button danger text-xs" disabled>放生</button>
+                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button primary text-xs" disabled>修煉</button>
             `;
         } else if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
             actionsHTML = `
-                <button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>
-                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button danger text-xs" disabled>放生</button>
+                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>
             `;
         } else {
             actionsHTML = `
-                <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
-                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>
+                <button class="button text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
 
         monsterCard.innerHTML = `
-            <div class="monster-card-name text-rarity-${rarityKey} text-sm">${displayName}</div>
+            <div class="monster-card-name text-rarity-${rarityKey} text-xs">${displayName}</div>
             <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
                 ${avatarHtml}
             </a>
