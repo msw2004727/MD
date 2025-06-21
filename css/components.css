@@ -1107,9 +1107,9 @@ body.light-theme .leaderboard-table tr:hover td {
     height: 60px; /* 【修改】從 80px 縮小為 60px */
     border-radius: 50%;
     background-color: var(--bg-slot);
-    background-size: 150%;
+    background-size: cover; /* 【修改】從 150% 改為 cover */
     background-position: center;
-    background-repeat: no-repeat; /* 【新增】修正圖片重複的問題 */
+    background-repeat: no-repeat;
     border: 2px solid var(--border-color);
     box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
     cursor: pointer;
@@ -1140,6 +1140,22 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--button-success-text);
     cursor: not-allowed;
 }
+
+/* 【新增】怪獸狀態樣式 */
+.monster-card-status {
+    font-size: 0.75rem; /* xs */
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: center;
+    min-height: 18px; /* 避免內容變化時跳動 */
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+}
+
 
 .monster-card-actions {
     display: grid;
