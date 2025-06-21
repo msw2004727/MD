@@ -131,62 +131,9 @@
 }
 
 /* ======================================= */
-/* ====== Monster Farm Layout Grid ======= */
+/* ====== 【移除】舊的怪獸農場樣式  ======= */
 /* ======================================= */
 
-#farm-table-wrapper {
-    overflow-x: auto;
-    padding-bottom: 5px;
-}
-
-#farmed-monsters-list {
-    padding-bottom: 5px;
-}
-
-.farm-header-grid {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--text-secondary);
-    padding-bottom: 0.5rem;
-    text-align: center;
-    border-bottom: 2px solid var(--accent-color);
-}
-
-.farm-header-grid, .farm-monster-item {
-    display: grid;
-    /* 【修改】調整欄位寬度以符合新需求 */
-    grid-template-columns: 30px 80px minmax(280px, 1fr) 70px 145px 140px;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
-    min-width: 800px; /* 增加最小寬度以容納所有欄位 */
-}
-
-/* Center align all header and column content by default */
-.farm-header-grid > div,
-.farm-monster-item > .farm-col {
-    text-align: center;
-    display: flex; /* Use flex to center content vertically and horizontally */
-    justify-content: center;
-    align-items: center;
-}
-
-
-/* Specifically align monster info column to the left */
-.farm-header-grid > div:nth-child(3),
-.farm-monster-item .farm-col-info {
-    text-align: left;
-    justify-self: start;
-    justify-content: flex-start; /* Align flex items to the start */
-    white-space: nowrap; /* 新增: 強制不換行 */
-    overflow: hidden; /* 新增: 隱藏超出範圍的內容 */
-    text-overflow: ellipsis; /* 新增: 超出範圍時顯示... */
-}
-
-.farm-monster-item:last-child { 
-    border-bottom: none; 
-}
 
 /* Auth screen layout */
 #auth-screen {
