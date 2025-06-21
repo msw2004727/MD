@@ -5,11 +5,11 @@
   "contentBlocks": [
     {
       "type": "paragraph",
-      "text": "感謝您參與怪獸異世界的冒險！遊戲目前仍在開發與測試階段，我們將持續努力帶來更多精彩內容與優化！"
+      "text": "感謝您參與怪獸異世界的養成冒險！遊戲目前仍在開發與測試階段，我們將持續努力帶來更多精彩內容與優化！"
     },
     {
       "type": "paragraph",
-      "text": "若有任何建議或遇到問題，歡迎隨時透過遊戲內回饋系統與我們聯繫。"
+      "text": "若有任何建議或遇到問題，歡迎隨時透過LINE聯繫。"
     },
     {
       "type": "columns",
@@ -17,6 +17,8 @@
         {
           "title": "目前0.3.9v已實裝功能：",
           "items": [
+            { "text": "站內信件", "color": "success" },
+            { "text": "基礎治療", "color": "success" },
             { "text": "優化農場顯示方式", "color": "success" },
             { "text": "與怪獸協商關閉技能", "color": "success" },
             { "text": "第一階段技能優化", "color": "success" },
