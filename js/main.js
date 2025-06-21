@@ -171,6 +171,7 @@ async function initializeGame() {
         
         if (typeof hideModal === 'function') hideModal('feedback-modal');
 
+        // --- 【修改】呼叫新的專用函式來處理彈窗 ---
         if (typeof checkAndShowNewTitleModal === 'function') {
             checkAndShowNewTitleModal(playerData);
         }
@@ -227,8 +228,7 @@ function attemptToInitializeApp() {
     const requiredFunctions = [
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
-        'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMedicalStationHandlers' // 核心修改處：新增
+        'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem'
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -246,7 +246,6 @@ function attemptToInitializeApp() {
         initializeMonsterEventHandlers();
         initializeNoteHandlers();
         initializeChatSystem();
-        initializeMedicalStationHandlers(); // 核心修改處：新增
 
         setInterval(updateAllTimers, 1000);
 

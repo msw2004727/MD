@@ -247,33 +247,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
-    // --- 核心修改處 START ---
     const getTitleBuffHtml = (statName) => {
         const buff = titleBuffs[statName] || 0;
         if (buff > 0) {
-            // 這些是百分比加成
-            const percentageStats = [
-                'cultivation_item_find_chance', 'cultivation_exp_gain',
-                'cultivation_time_reduction', 'score_gain_boost',
-                'elemental_damage_boost', 'poison_damage_boost',
-                'leech_skill_effect', 'dna_return_rate_on_disassemble'
-            ];
-            
-            let displayValue;
-            // 判斷是百分比還是固定值
-            if (percentageStats.includes(statName)) {
-                const buffPercent = buff * 100;
-                displayValue = `+${Number.isInteger(buffPercent) ? buffPercent : buffPercent.toFixed(1)}%`;
-            } else {
-                displayValue = `+${buff}`;
-            }
-            
-            // 使用紅色顯示
-            return ` <span style="color: var(--danger-color); font-weight: bold; font-size: 0.9em; margin-left: 4px;">${displayValue}</span>`;
+            const buffPercent = buff * 100;
+            const displayValue = Number.isInteger(buffPercent) ? buffPercent : buffPercent.toFixed(1);
+            return ` <span style="color: var(--rarity-legendary-text); font-size: 0.9em; margin-left: 4px;">+${displayValue}%</span>`;
         }
         return '';
     };
-    // --- 核心修改處 END ---
 
     const interactionStats = monster.interaction_stats || {};
     const battleCount = (monster.resume?.wins || 0) + (monster.resume?.losses || 0);
@@ -410,6 +392,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                             await refreshPlayerData();
                             const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                             if (updatedMonster) {
+                                // 核心修改處：只更新內容，不自動切換分頁
                                 updateMonsterInfoModal(updatedMonster, gameConfigs);
                             }
                         }
