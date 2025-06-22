@@ -155,6 +155,7 @@ function renderMonsterFarm() {
 
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
+        // --- 核心修改處 START ---
         let statusHtml = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
@@ -165,11 +166,14 @@ function renderMonsterFarm() {
                     <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}"></div>
                 </div>
             `;
+        } else if (isDeployed) {
+            statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
         } else if (monster.hp < monster.initial_max_hp * 0.25) {
             statusHtml = `<div class="monster-card-status" style="color: var(--danger-color);">瀕死</div>`;
         } else {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
         }
+        // --- 核心修改處 END ---
         
         let actionsHTML = '';
         if (isDeployed) {
