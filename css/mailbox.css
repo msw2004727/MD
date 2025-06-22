@@ -66,12 +66,9 @@
     font-size: 1rem;
     font-weight: 500;
     color: var(--text-primary);
-    /* --- 核心修改處 START --- */
-    /* 移除強制不換行，並加入自動換行規則 */
     white-space: normal;
     word-wrap: break-word;
     word-break: break-all;
-    /* --- 核心修改處 END --- */
 }
 
 /* 已讀信件的標題樣式 */
@@ -117,8 +114,6 @@
     padding: 1rem;
 }
 
-/* --- 核心修改處 START --- */
-/* 好友請求信件的特殊響應式樣式 */
 .mail-item.friend-request-item {
     display: grid;
     grid-template-columns: 20px 1fr; /* 狀態燈 | 主內容 */
@@ -137,5 +132,28 @@
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0; /* 防止按鈕被壓縮 */
+}
+
+/* --- 核心修改處 START --- */
+/* 為系統通知信件的關閉按鈕新增紅圈樣式 */
+#mail-reader-modal .modal-close.system-notification-close-btn {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 1px solid var(--danger-hover-dark);
+}
+#mail-reader-modal .modal-close.system-notification-close-btn:hover {
+    background-color: var(--danger-hover-dark);
+    color: var(--button-danger-text);
+}
+body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
+     background-color: var(--danger-hover-light);
 }
 /* --- 核心修改處 END --- */
