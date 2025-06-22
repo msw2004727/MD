@@ -40,7 +40,7 @@
         {
           "title": "接下來開發目標：",
           "items": [
-            { "text": "完善轉場圖片", "color": "accent" },
+            { "text": "持續完善圖片可愛風格", "color": "accent" },
             { "text": "技能與機率調整", "color": "accent" },
             { "text": "訓練場", "color": "accent" },
             { "text": "交易所", "color": "accent" },
@@ -54,7 +54,7 @@
     },
     {
       "type": "image",
-      "src": "https://github.com/msw2004727/MD/blob/main/images/DNAbanner.png?raw=true",
+      "src": "https://github.com/msw2004727/MD/blob/main/images/BN014.png?raw=true",
       "alt": "DNA 碎片說明圖"
     },
     {
