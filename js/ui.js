@@ -41,14 +41,12 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
                 renderFriendsList();
             }
         }
-        // --- 核心修改處 START ---
         // 新增：當切換到「冒險島」頁籤時，呼叫其UI初始化函式
         else if (targetTabId === 'guild-content') { // 'guild-content' 是冒險島頁籤的 ID
             if (typeof initializeAdventureUI === 'function') {
                 initializeAdventureUI();
             }
         }
-        // --- 核心修改處 END ---
     }
 }
 // =============================================================
@@ -180,7 +178,7 @@ function toggleElementDisplay(element, show, displayType = 'block') {
 
 function injectLoadingBarStyles() {
     const styleId = 'dynamic-loading-bar-styles';
-    if (document.getElementById(styleId)) return; // 如果樣式已存在，則不重複添加
+    if (document.getElementById(styleId)) return;
 
     const style = document.createElement('style');
     style.id = styleId;
