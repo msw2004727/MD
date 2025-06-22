@@ -27,7 +27,9 @@ class MailItem(TypedDict):
     定義單一信件的資料結構。
     """
     id: str  # 信件的唯一ID
+    # --- 核心修改處 START ---
     type: Literal["friend_request", "system_message", "reward"]  # 信件類型
+    # --- 核心修改處 END ---
     title: str  # 信件標題
     sender_id: NotRequired[Optional[str]]  # 寄件人ID (系統信件則無)
     sender_name: NotRequired[Optional[str]]  # 寄件人暱稱
