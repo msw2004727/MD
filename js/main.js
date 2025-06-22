@@ -244,7 +244,7 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers'
+        'initializeMailboxEventHandlers', 'initializeAdventureHandlers' // 新增：確認冒險島處理函式存在
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -263,6 +263,7 @@ function attemptToInitializeApp() {
         initializeNoteHandlers();
         initializeChatSystem();
         initializeMailboxEventHandlers();
+        initializeAdventureHandlers(); // 新增：呼叫冒險島事件處理器的初始化函式
 
         setInterval(updateAllTimers, 1000);
 
