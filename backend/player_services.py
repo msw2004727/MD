@@ -9,6 +9,12 @@ from firebase_admin import firestore
 from google.cloud.firestore_v1.field_path import FieldPath
 import random 
 
+# --- 核心修改處 START ---
+# 導入 math 模組和相關服務
+import math
+from .mail_services import add_mail_to_player
+# --- 核心修改處 END ---
+
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry
 from .utils_services import generate_monster_full_nickname
 from .champion_services import get_champions_data, update_champions_document
@@ -77,7 +83,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "status_applied_counts": {},
         "leech_skill_uses": 0,
         "flawless_victories": 0,
-        "special_victories": {}
+        "special_victories": {},
+        "last_champion_reward_timestamp": 0 # 新增：初始化獎勵時間戳
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
@@ -110,8 +117,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "selectedMonsterId": None,
         "friends": [],
         "dnaCombinationSlots": [None] * 5,
-        "mailbox": [], # 新增：初始化信箱
-        "playerNotes": [] # 新增：初始化玩家備註
+        "mailbox": [], 
+        "playerNotes": [] 
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -162,30 +169,67 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
         if game_data_doc.exists:
             player_game_data_dict = game_data_doc.to_dict()
-
-            if player_game_data_dict is None:
-                player_game_data_dict = {}
-                player_services_logger.warning(f"玩家 {player_id} 的遊戲資料文檔存在但為空，將其視為空物件處理。")
+            if player_game_data_dict is None: player_game_data_dict = {}
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
+            # --- 核心修改處 START：新增冠軍每日獎勵結算邏輯 ---
+            is_self_request = nickname_from_auth is not None
+            if is_self_request:
+                player_stats = player_game_data_dict.setdefault("playerStats", {})
+                
+                champions_data = get_champions_data()
+                player_rank = 0
+                champion_slot_info = None
+                for i in range(1, 5):
+                    slot_key = f"rank{i}"
+                    slot = champions_data.get(slot_key)
+                    if slot and slot.get("ownerId") == player_id:
+                        player_rank = i
+                        champion_slot_info = slot
+                        break
+                
+                if player_rank > 0 and champion_slot_info:
+                    last_reward_timestamp = player_stats.get("last_champion_reward_timestamp", 0)
+                    
+                    # 使用佔領時間戳作為獎勵計算的起始點
+                    occupied_timestamp = champion_slot_info.get("occupiedTimestamp", 0)
+                    start_time = max(last_reward_timestamp, occupied_timestamp)
+                    current_time = int(time.time())
+                    
+                    seconds_per_day = 86400
+                    days_to_reward = math.floor((current_time - start_time) / seconds_per_day)
+
+                    if days_to_reward > 0:
+                        reward_map = {1: 100, 2: 30, 3: 20, 4: 10}
+                        daily_reward = reward_map.get(player_rank, 0)
+                        total_gold_reward = days_to_reward * daily_reward
+                        
+                        if total_gold_reward > 0:
+                            player_stats["gold"] = player_stats.get("gold", 0) + total_gold_reward
+                            player_stats["last_champion_reward_timestamp"] = current_time
+                            
+                            mail_title = f"🏆 冠軍殿堂每日俸祿"
+                            mail_content = f"恭喜您！作為冠軍殿堂第 {player_rank} 名的榮譽成員，系統已為您發放過去 {days_to_reward} 天的俸祿，共計 {total_gold_reward} 🪙。已自動存入您的錢包。"
+                            mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
+                            add_mail_to_player(player_game_data_dict, mail_template)
+                            
+                            player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
+                            save_player_data_service(player_id, player_game_data_dict)
+            # --- 核心修改處 END ---
+
+            # 資料遷移邏輯...
             needs_migration_save = False
-            
             player_stats = player_game_data_dict.get("playerStats", {})
-            
             if "gold" not in player_stats:
                 player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
                 needs_migration_save = True
-                player_services_logger.info(f"為舊玩家 {player_id} 補上預設金幣欄位。")
-
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
                 all_titles_config = game_configs.get("titles", [])
                 new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
                 player_stats["titles"] = new_titles_list
                 needs_migration_save = True
-                player_services_logger.info(f"玩家 {player_id} 的稱號資料已從字串遷移至物件格式。")
-            
             if "equipped_title_id" not in player_stats:
                 current_titles_obj = player_stats.get("titles", [])
                 default_equip_id = None
@@ -200,8 +244,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 if default_equip_id:
                     player_stats["equipped_title_id"] = default_equip_id
                     needs_migration_save = True
-                    player_services_logger.info(f"為舊玩家 {player_id} 補上預設裝備稱號 ID: {default_equip_id}")
-
             farmed_monsters = player_game_data_dict.get("farmedMonsters", [])
             if farmed_monsters:
                 element_nicknames_map = game_configs.get("element_nicknames", {})
@@ -243,23 +285,19 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
             if needs_migration_save:
                 try:
-                    save_player_data_service(player_id, player_game_data_dict) # type: ignore
-                    player_services_logger.info(f"成功為玩家 {player_id} 執行一次性資料遷移並儲存。")
+                    save_player_data_service(player_id, player_game_data_dict)
                 except Exception as e:
                     player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
             
             loaded_dna = player_game_data_dict.get("playerOwnedDNA", [])
             max_inventory_slots = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]).get("max_inventory_slots", 12)
-            
-            if len(loaded_dna) < max_inventory_slots:
-                loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
-            elif len(loaded_dna) > max_inventory_slots:
-                loaded_dna = loaded_dna[:max_inventory_slots]
+            if len(loaded_dna) < max_inventory_slots: loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
+            elif len(loaded_dna) > max_inventory_slots: loaded_dna = loaded_dna[:max_inventory_slots]
 
             player_game_data: PlayerGameData = {
                 "playerOwnedDNA": loaded_dna,
                 "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                "playerStats": player_game_data_dict.get("playerStats", {}), # type: ignore
+                "playerStats": player_game_data_dict.get("playerStats", {}),
                 "nickname": authoritative_nickname,
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
@@ -269,15 +307,14 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "mailbox": player_game_data_dict.get("mailbox", []),
                 "playerNotes": player_game_data_dict.get("playerNotes", [])
             }
-            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname: # type: ignore
-                player_game_data["playerStats"]["nickname"] = authoritative_nickname # type: ignore
+            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname:
+                player_game_data["playerStats"]["nickname"] = authoritative_nickname
             return player_game_data, False
         
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
         if save_player_data_service(player_id, new_player_data):
-            player_services_logger.info(f"新玩家 {player_id} 的遊戲資料已成功初始化並儲存到 Firestore。")
             return new_player_data, True
         else:
             player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
@@ -336,9 +373,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
             "playerNotes": game_data.get("playerNotes", []),
-            # --- 核心修改處 START ---
             "mailbox": game_data.get("mailbox", []) 
-            # --- 核心修改處 END ---
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
