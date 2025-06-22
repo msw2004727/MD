@@ -21,9 +21,7 @@ from .monster_disassembly_services import disassemble_monster_service
 from .monster_cultivation_services import complete_cultivation_service, replace_monster_skill_service
 from .monster_absorption_services import absorb_defeated_monster_service
 from .battle_services import simulate_battle_full
-# --- 核心修改處 START ---
 from .monster_chat_services import generate_monster_chat_response_service, generate_monster_interaction_response_service, handle_skill_toggle_request_service
-# --- 核心修改處 END ---
 from .leaderboard_search_services import (
     get_player_leaderboard_service,
     search_players_service,
@@ -226,7 +224,7 @@ def add_note_route():
     data = request.json
     target_type = data.get('target_type')
     note_content = data.get('note_content')
-    monster_id = data.get('monster_id') # 可選
+    monster_id = data.get('monster_id') 
 
     if not target_type or not note_content:
         return jsonify({"error": "請求中缺少 'target_type' 或 'note_content'。"}), 400
@@ -266,7 +264,6 @@ def chat_with_monster_route(monster_id: str):
     if not game_configs:
         return jsonify({"error": "遊戲設定載入失敗，無法進行聊天。"}), 500
     
-    # 呼叫聊天服務
     service_result = generate_monster_chat_response_service(
         player_id=user_id,
         monster_id=monster_id,
@@ -277,14 +274,11 @@ def chat_with_monster_route(monster_id: str):
     if not service_result:
         return jsonify({"error": "生成聊天回應時發生內部錯誤。"}), 500
 
-    # 服務成功，獲取AI回覆和更新後的玩家資料
     ai_reply = service_result.get("ai_reply")
     updated_player_data = service_result.get("updated_player_data")
 
-    # 儲存更新後的玩家資料（包含了新的聊天紀錄）
     if not save_player_data_service(user_id, updated_player_data):
         routes_logger.warning(f"警告：聊天回應已生成，但儲存玩家 {user_id} 的聊天紀錄失敗。")
-        # 即使儲存失敗，我們仍然回傳 AI 回應，以確保前端體驗流暢
     
     return jsonify({"success": True, "reply": ai_reply}), 200
 
@@ -365,6 +359,43 @@ def search_players_api_route():
     results = search_players_service(nickname_query, limit)
     return jsonify({"players": results}), 200
 
+# --- 核心修改處 START ---
+@md_bp.route('/friends/remove', methods=['POST'])
+def remove_friend_route():
+    """從玩家的好友列表中移除一位好友。"""
+    user_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    friend_id_to_remove = data.get('friend_id')
+    if not friend_id_to_remove:
+        return jsonify({"error": "請求中未提供要移除的好友ID。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, None, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    friends_list = player_data.get("friends", [])
+    
+    initial_friend_count = len(friends_list)
+    # 使用列表推導式來過濾掉要刪除的好友，更為簡潔高效
+    updated_friends_list = [friend for friend in friends_list if friend.get("uid") != friend_id_to_remove]
+
+    if len(updated_friends_list) < initial_friend_count:
+        player_data["friends"] = updated_friends_list
+        routes_logger.info(f"玩家 {user_id} 準備從好友列表中移除 {friend_id_to_remove}。")
+        
+        # 儲存更新後的玩家資料
+        if save_player_data_service(user_id, player_data):
+            return jsonify({"success": True, "message": "好友已成功移除。"})
+        else:
+            return jsonify({"error": "移除好友後儲存失敗。"}), 500
+    else:
+        routes_logger.warning(f"玩家 {user_id} 嘗試移除好友 {friend_id_to_remove}，但在列表中找不到。")
+        return jsonify({"error": "在您的好友列表中找不到該玩家。"}), 404
+# --- 核心修改處 END ---
 
 @md_bp.route('/battle/simulate', methods=['POST'])
 def simulate_battle_api_route():
@@ -378,7 +409,6 @@ def simulate_battle_api_route():
     opponent_owner_id_req = data.get('opponent_owner_id')
     opponent_owner_nickname_req = data.get('opponent_owner_nickname')
 
-    # 新增：從請求中獲取冠軍挑戰的相關資訊
     is_champion_challenge = data.get('is_champion_challenge', False)
     challenged_rank = data.get('challenged_rank', None)
 
@@ -721,7 +751,6 @@ def interact_with_monster_route(monster_id: str):
     
     return jsonify({"success": True, "reply": ai_reply}), 200
 
-# --- 核心修改處 START ---
 @md_bp.route('/monster/<monster_id>/toggle-skill', methods=['POST'])
 def toggle_skill_route(monster_id: str):
     user_id, _, error_response = _get_authenticated_user_id()
@@ -748,12 +777,9 @@ def toggle_skill_route(monster_id: str):
     if not service_result or not service_result.get("success"):
         return jsonify({"error": service_result.get("error", "處理技能切換請求時發生內部錯誤。")}), 500
 
-    # 如果怪獸同意，則儲存更新後的玩家資料
     if service_result.get("agreed"):
         updated_player_data = service_result.get("updated_player_data")
         if not save_player_data_service(user_id, updated_player_data):
-            # 即使儲存失敗，也回傳成功，讓前端可以更新UI，避免體驗不一致
             routes_logger.error(f"警告：技能切換協商成功，但儲存玩家 {user_id} 的資料失敗。")
 
     return jsonify(service_result), 200
-# --- 核心修改處 END ---
