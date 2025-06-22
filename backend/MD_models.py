@@ -4,6 +4,11 @@
 
 from typing import List, Dict, Optional, TypedDict, NotRequired, Union, Literal, Tuple, Any
 
+# --- 核心修改處 START ---
+# 從我們新建的冒險島模型檔案中，導入 AdventureProgress 型別
+from .adventure_models import AdventureProgress
+# --- 核心修改處 END ---
+
 # --- 基本類型定義 ---
 ElementTypes = Literal[
     "火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"
@@ -286,7 +291,6 @@ class Monster(TypedDict):
     temp_defense_multiplier: NotRequired[float]
     temp_speed_multiplier: NotRequired[float]
 
-
 class PlayerStats(TypedDict):
     rank: Union[str, int]
     wins: int
@@ -309,9 +313,7 @@ class PlayerStats(TypedDict):
     leech_skill_uses: NotRequired[int]
     flawless_victories: NotRequired[int]
     special_victories: NotRequired[Dict[str, int]]
-    # --- 核心修改處 START ---
     last_champion_reward_timestamp: NotRequired[int]
-    # --- 核心修改處 END ---
 
 class PlayerOwnedDNA(DNAFragment):
     pass
@@ -328,6 +330,11 @@ class PlayerGameData(TypedDict):
     friends: NotRequired[List[Any]]
     playerNotes: NotRequired[List[NoteEntry]]
     mailbox: NotRequired[List[MailItem]]
+    # --- 核心修改處 START ---
+    # 在玩家資料結構中新增一個可選的冒險進度欄位
+    adventure_progress: NotRequired[AdventureProgress]
+    # --- 核心修改處 END ---
+
 
 class MonsterRecipe(TypedDict):
     combinationKey: str 
@@ -400,6 +407,8 @@ class GameConfigs(TypedDict):
     cultivation_stories: NotRequired[Dict[str, Any]]
     champion_guardians: NotRequired[Dict[str, Any]]
     battle_highlights: NotRequired[Dict[str, Any]]
+    # --- 新增: 冒險島的設定也應被包含在遊戲核心設定中 ---
+    adventure_islands: NotRequired[List[Any]] 
 
 if __name__ == '__main__':
     print("MD_models.py 已執行。TypedDict 定義可用。")
