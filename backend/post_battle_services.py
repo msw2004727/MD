@@ -82,10 +82,7 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
                     buff_parts.append(f"{name}{display_value}")
                 buffs_text = f" 稱號效果：{ '、'.join(buff_parts) }"
 
-            # --- 核心修改處 START ---
-            # 移除 \n\n，改用空格或直接拼接，讓文字自然流動
             mail_content = f"恭喜您！由於您的卓越表現，您已成功解鎖了新的稱號：「{title.get('name')}」。 描述：{title.get('description', '無')}{buffs_text}"
-            # --- 核心修改處 END ---
 
             mail_template = {
                 "type": "reward",
@@ -112,12 +109,13 @@ def process_battle_results(
     game_configs: GameConfigs,
     is_champion_challenge: bool = False,
     challenged_rank: Optional[int] = None
-) -> Tuple[PlayerGameData, List[Dict[str, Any]]]:
+) -> Dict[str, Any]: # --- 核心修改處 1：修改回傳值的型別提示 ---
     """
     處理戰鬥結束後的所有數據更新，包含冠軍殿堂邏輯。
-    返回更新後的玩家數據和新獲得的稱號列表。
+    返回一個包含更新後數據的字典。
     """
     newly_awarded_titles: List[Dict[str, Any]] = []
+    updated_champions_data: Optional[Dict[str, Any]] = None # --- 核心修改處 2：初始化一個變數來存放更新後的冠軍資料 ---
     
     # 1. 更新勝利方和失敗方的玩家統計數據 (PlayerStats)
     player_stats = player_data.get("playerStats")
@@ -188,7 +186,6 @@ def process_battle_results(
             occupiedTimestamp=int(time.time())
         )
 
-        # 檢查勝利者是否已在殿堂中，如果是，清空其舊位置 (唯一席位原則)
         for i in range(1, 5):
             rank_key = f"rank{i}"
             slot = champions_data.get(rank_key)
@@ -203,7 +200,6 @@ def process_battle_results(
         champions_data[challenged_rank_key] = new_champion_slot
 
         if defeated_champion_slot:
-             # 如果是席位互換 (例如 #3 打贏 #2, #4 打贏 #3...)
             if challenged_rank < 4:
                 champions_data[f"rank{challenged_rank + 1}"] = defeated_champion_slot
                 post_battle_logger.info(f"席位交換：原第 {challenged_rank} 名的冠軍被移至第 {challenged_rank + 1} 名。")
@@ -211,6 +207,8 @@ def process_battle_results(
                 post_battle_logger.info(f"原第 4 名的冠軍已被踢出殿堂。")
         
         update_champions_document(champions_data)
+        updated_champions_data = champions_data # --- 核心修改處 3：儲存更新後的冠軍資料以便回傳 ---
+
 
     # 4. 執行勝利吸收邏輯 (如果勝利)
     if battle_result.get("winner_id") == player_monster_data['id']:
@@ -233,4 +231,9 @@ def process_battle_results(
     if opponent_id and opponent_player_data:
         save_player_data_service(opponent_id, opponent_player_data)
 
-    return player_data, newly_awarded_titles
+    # --- 核心修改處 4：修改回傳內容 ---
+    return {
+        "updated_player_data": player_data,
+        "newly_awarded_titles": newly_awarded_titles,
+        "updated_champions_data": updated_champions_data
+    }
