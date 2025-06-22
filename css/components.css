@@ -32,7 +32,7 @@
     padding: 8px;
     text-align: center;
     font-size: 0.8rem;
-    transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s, transform 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s, transform 0.2s; /* 新增 transform */
     position: relative;
     min-height: 60px;
     display: flex;
@@ -105,6 +105,7 @@ body.light-theme .inventory-delete-slot.drag-over {
     }
 }
 
+/* 核心修改：將所有懸停效果的規則統一，並且只對有 .occupied class 的元素生效 */
 .dna-item.occupied:hover,
 .dna-slot.occupied:hover,
 .temp-backpack-slot.occupied:hover {
@@ -209,17 +210,8 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color);
     color: var(--text-primary);
 }
-
-.tab-content {
-    display: none;
-    min-width: 0;
-}
-.tab-content.active {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
-}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 .leaderboard-table {
     width: 100%;
@@ -426,6 +418,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .snapshot-info-left { text-align: left; }
 .snapshot-info-right { text-align: right; }
 
+/* --- 核心修改處 START --- */
 #snapshot-main-content {
     position: absolute;
     top: 8px;
@@ -451,6 +444,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
+/* --- 核心修改處 END --- */
 
 #snapshot-evaluation {
     font-size: 0.875rem;
@@ -659,11 +653,14 @@ body.light-theme .leaderboard-table tr:hover td {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* --- 核心修改處 START --- */
 .dna-draw-result-item .dna-name {
     font-weight: bold;
     font-size: 1rem;
+    /* color: var(--text-primary); <-- 移除這行，讓稀有度顏色生效 */
     margin-bottom: 0.25rem;
 }
+/* --- 核心修改處 END --- */
 
 
 .dna-draw-result-item .dna-type {
@@ -830,10 +827,12 @@ body.light-theme .leaderboard-table tr:hover td {
     margin-top: auto;
 }
 
+/* --- 【新增】強制隱藏沒有圖片時的後備文字 --- */
 .monster-part-overlay .fallback-text {
     display: none !important;
 }
 
+/* --- 【新增】新版選擇彈窗樣式 --- */
 .selection-container {
     display: flex;
     flex-direction: column; /* 手機上預設為垂直堆疊 */
@@ -885,6 +884,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
 }
 
+/* 【新增】聊天互動按鈕樣式 */
 .chat-interact-btn {
     background: var(--button-secondary-bg);
     border: 1px solid var(--border-color);
@@ -909,6 +909,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: scale(0.95);
 }
 
+/* 【新增】怪獸互動 - 感情條樣式 */
 .bond-bar-container {
     width: 100%;
     margin-top: 1rem;
@@ -948,6 +949,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transition: left 0.5s ease-out;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
+/* --- 新增：排行榜頭像樣式 --- */
 .leaderboard-avatar-cell {
     width: 40px; /* 頭像欄位的寬度 */
     height: 40px; /* 頭像欄位的高度 */
@@ -977,6 +979,7 @@ body.light-theme .leaderboard-table tr:hover td {
     transform: translate(-50%, -50%); /* 確保圖片絕對置中 */
 }
 
+/* --- 新增：確認出戰彈窗的狀態條 --- */
 .confirm-stat-bar-container {
     display: flex;
     flex-direction: column;
@@ -1009,6 +1012,7 @@ body.light-theme .leaderboard-table tr:hover td {
     background-color: var(--accent-color);
 }
 
+/* --- 玩家貨幣面板樣式 (已修改) --- */
 .player-currency-panel {
     display: flex;
     align-items: center;
@@ -1040,6 +1044,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-family: 'Inter', monospace;
 }
 
+/* --- 新增：怪獸快照頭部呼吸動畫 --- */
 @keyframes head-breath {
   0% {
     transform: scale(1);
@@ -1057,8 +1062,10 @@ body.light-theme .leaderboard-table tr:hover td {
   transform-origin: center bottom; /* 讓縮放中心在底部中間，看起來更像在呼吸 */
 }
 
+/* --- 【新增與修改】怪獸農場卡片式佈局樣式 --- */
 .farm-card-grid {
     display: grid;
+    /* 響應式網格，最小寬度 110px，最大 1fr，自動填充 */
     grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 0.75rem;
 }
@@ -1134,6 +1141,7 @@ body.light-theme .leaderboard-table tr:hover td {
     cursor: not-allowed;
 }
 
+/* 【新增】怪獸狀態樣式 */
 .monster-card-status {
     font-size: 0.75rem; /* xs */
     color: var(--text-secondary);
@@ -1163,6 +1171,8 @@ body.light-theme .leaderboard-table tr:hover td {
     white-space: nowrap;
 }
 
+/* --- 核心修改處 START --- */
+/* 好友列表中，移除好友按鈕的懸停效果 */
 .friend-actions .remove-friend-btn:hover {
     background-color: var(--danger-color);
     color: var(--button-danger-text);
@@ -1172,3 +1182,4 @@ body.light-theme .leaderboard-table tr:hover td {
 body.light-theme .friend-actions .remove-friend-btn:hover {
     border-color: var(--danger-hover-light);
 }
+/* --- 核心修改處 END --- */

@@ -1,7 +1,7 @@
 // js/ui.js
-console.log("DEBUG: ui.js starting to load and define functions.");
+console.log("DEBUG: ui.js starting to load and define functions."); // Add this line
 
-// 注意：此檔案依賴 gameState (來自 js/game-state.js) 和其他輔助函數
+// 注意：此檔案會依賴 gameState (來自 js/game-state.js) 和其他輔助函數
 // 這個檔案現在是UI系統的核心，負責主畫面渲染和通用彈窗的顯示/隱藏。
 
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
@@ -35,14 +35,10 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
     if (targetContent) {
         targetContent.classList.add('active');
 
+        // Friends list rendering is now handled within its own module/event
         if (targetTabId === 'friends-list-content') {
             if (typeof renderFriendsList === 'function') {
                 renderFriendsList();
-            }
-        }
-        else if (targetTabId === 'guild-content') {
-            if (typeof initializeAdventureUI === 'function') {
-                initializeAdventureUI();
             }
         }
     }
@@ -163,7 +159,6 @@ function initializeDOMElements() {
         snapshotHpFill: document.getElementById('snapshot-hp-fill'),
         snapshotMpFill: document.getElementById('snapshot-mp-fill'),
     };
-    
     console.log("DOMElements initialized in ui.js");
 }
 
@@ -177,7 +172,7 @@ function toggleElementDisplay(element, show, displayType = 'block') {
 
 function injectLoadingBarStyles() {
     const styleId = 'dynamic-loading-bar-styles';
-    if (document.getElementById(styleId)) return;
+    if (document.getElementById(styleId)) return; // 如果樣式已存在，則不重複添加
 
     const style = document.createElement('style');
     style.id = styleId;
@@ -365,6 +360,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
+    // --- 核心修改處 START ---
     const loadingTitleMap = {
         '遊戲載入中': 'gameLoad',
         '登入中': 'login',
@@ -380,8 +376,9 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         '載入中': 'generic',
         '處理中': 'processing',
         '更新中': 'updating',
-        '治療中...': 'healing',
+        '治療中...': 'healing', // 新增 '治療中...' 的對應鍵
     };
+    // --- 核心修改處 END ---
 
     let loadingKey = null;
     if (isLoading) {
