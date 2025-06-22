@@ -252,6 +252,19 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 BattleHighlights 資料失敗: {e}")
 
+    # --- 新增：載入冒險島資料 ---
+    try:
+        islands_path = os.path.join(data_dir, 'adventure_islands.json')
+        with open(islands_path, 'r', encoding='utf-8') as f:
+            islands_data = json.load(f)
+        script_logger.info(f"成功從 {islands_path} 載入冒險島資料。")
+        db_client.collection('MD_GameConfigs').document('AdventureIslands').set({'islands': islands_data})
+        script_logger.info("成功寫入 AdventureIslands 資料。")
+    except FileNotFoundError:
+        script_logger.warning(f"提示: 找不到冒險島設定檔 {islands_path}，將跳過此項。")
+    except Exception as e:
+        script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
+
     # --- 寫入其他設定 ---
     
     # DNA 稀有度資料 (Rarities)
