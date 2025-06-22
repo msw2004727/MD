@@ -1,26 +1,75 @@
 [
   {
-    "id": "island_001",
+    "islandId": "beginner_island_01",
     "name": "初始之島",
-    "background_image_url": "images/islands/island_001_bg.png",
-    "facilities": [
-      {
-        "id": "facility_001",
-        "name": "新手森林",
-        "description": "充滿溫和生物的森林，適合新手訓練師首次挑戰。",
-        "cost": 50,
-        "min_exploration_level": 1,
-        "boss_id": "forest_guardian",
-        "loot_table_id": "loot_forest_common"
+    "description": "一切冒險開始的地方，充滿了基礎的挑戰與機遇。",
+    "layout": "3x3",
+    "backgrounds": {
+      "wide": "https://github.com/msw2004727/MD/blob/main/images/islands005.png?raw=true",
+      "narrow": "https://github.com/msw2004727/MD/blob/main/images/islands004.png?raw=true"
+    },
+    "nodes": [
+      { 
+        "coords": "(0,0)", 
+        "type": "start", 
+        "name": "起始營地",
+        "description": "安全的出發點，可以在此整備隊伍。"
       },
-      {
-        "id": "facility_002",
-        "name": "廢棄礦坑",
-        "description": "傳聞深處埋藏著稀有礦石，但也被危險的岩石系怪獸盤據。",
-        "cost": 150,
-        "min_exploration_level": 10,
-        "boss_id": "mine_golem",
-        "loot_table_id": "loot_mine_rare"
+      { 
+        "coords": "(0,1)", 
+        "type": "combat",
+        "name": "草原遭遇戰",
+        "description": "似乎有什麼東西在草叢裡移動...",
+        "level_range": [1, 5] 
+      },
+      { 
+        "coords": "(0,2)", 
+        "type": "treasure", 
+        "name": "閃光的石頭",
+        "description": "一塊石頭底下似乎埋藏著什麼好東西。",
+        "rewards": ["dna_common_pack_1"]
+      },
+      { 
+        "coords": "(1,0)", 
+        "type": "combat",
+        "name": "森林邊緣",
+        "description": "森林的入口處，時常有迷路的怪獸出沒。",
+        "level_range": [3, 7] 
+      },
+      { 
+        "coords": "(1,1)", 
+        "type": "fountain", 
+        "name": "寧靜之泉",
+        "description": "喝下泉水似乎能治癒傷口。",
+        "effect": "heal_hp_20_percent"
+      },
+      { 
+        "coords": "(1,2)", 
+        "type": "elite", 
+        "name": "精英挑戰",
+        "description": "一個強大的身影擋住了去路！",
+        "level_range": [8, 10]
+      },
+      { 
+        "coords": "(2,0)", 
+        "type": "merchant",
+        "name": "神秘商人",
+        "description": "一位神秘的商人，似乎有稀有的貨物。",
+        "items": ["dna_rare_pack_1"]
+      },
+      { 
+        "coords": "(2,1)", 
+        "type": "combat", 
+        "name": "洞穴入口",
+        "description": "黑暗的洞穴中傳來了奇怪的聲響。",
+        "level_range": [5, 9]
+      },
+      { 
+        "coords": "(2,2)", 
+        "type": "boss", 
+        "name": "島嶼主宰",
+        "description": "這座島的統治者現身了！",
+        "boss_id": "boss_island_01"
       }
     ]
   }
