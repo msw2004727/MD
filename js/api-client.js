@@ -124,7 +124,7 @@ async function combineDNA(dnaObjects) {
  */
 async function drawFreeDNA() {
     return fetchAPI('/dna/draw-free', {
-        method: 'POST', // 使用 POST 請求，即使沒有 body，通常抽獎等改變資源狀態的操作會用 POST
+        method: 'POST', 
     });
 }
 
@@ -134,13 +134,13 @@ async function drawFreeDNA() {
  * @param {object} battleRequestData - 包含 player_monster_data 和 opponent_monster_data 的物件
  * @returns {Promise<object>} 戰鬥結果，包含 AI 生成的戰報內容
  */
-async function simulateBattle(battleRequestData) { // 修正：現在只接收一個參數
+async function simulateBattle(battleRequestData) { 
     if (!battleRequestData || !battleRequestData.player_monster_data || !battleRequestData.opponent_monster_data) {
         throw new Error("simulateBattle 函數需要一個包含 player_monster_data 和 opponent_monster_data 的物件。");
     }
     return fetchAPI('/battle/simulate', {
         method: 'POST',
-        body: JSON.stringify(battleRequestData), // 修正：直接將傳入的物件字串化作為 body
+        body: JSON.stringify(battleRequestData), 
     });
 }
 
@@ -263,7 +263,7 @@ async function getMonsterLeaderboard(topN = 10) {
 }
 
 /**
- * 【新增】獲取冠軍殿堂排行榜
+ * 獲取冠軍殿堂排行榜
  * @returns {Promise<Array<object>>} 冠軍殿堂怪獸列表 (固定4個位置)
  */
 async function getChampionsLeaderboard() {
@@ -307,7 +307,6 @@ async function getFriendsStatuses(friendIds) {
     });
 }
 
-// --- 核心修改處 START ---
 /**
  * 寄送一封信件給另一位玩家
  * @param {string} recipientId 收件人的 ID
@@ -325,11 +324,9 @@ async function sendMail(recipientId, title, content) {
         }),
     });
 }
-// --- 核心修改處 END ---
-
 
 /**
- * 【新增】與怪獸進行物理互動
+ * 與怪獸進行物理互動
  * @param {string} monsterId 怪獸的 ID
  * @param {'punch' | 'pat' | 'kiss'} action 互動的類型
  * @returns {Promise<object>} 包含 AI 回應的物件
@@ -341,8 +338,9 @@ async function interactWithMonster(monsterId, action) {
     });
 }
 
+
 /**
- * 【新增】請求切換技能的開關狀態
+ * 請求切換技能的開關狀態
  * @param {string} monsterId 怪獸的 ID
  * @param {string} skillName 技能的名稱
  * @param {boolean} targetState 想要的狀態 (true 為開啟, false 為關閉)
@@ -357,6 +355,20 @@ async function toggleSkillActiveState(monsterId, skillName, targetState) {
         }),
     });
 }
+
+// --- 核心修改處 START ---
+/**
+ * 從好友列表中移除一位好友
+ * @param {string} friendId 要移除的好友 ID
+ * @returns {Promise<object>} 後端的回應
+ */
+async function removeFriend(friendId) {
+    return fetchAPI('/friends/remove', {
+        method: 'POST',
+        body: JSON.stringify({ friend_id: friendId }),
+    });
+}
+// --- 核心修改處 END ---
 
 
 console.log("API client module loaded.");

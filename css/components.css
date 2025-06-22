@@ -1170,3 +1170,16 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.75rem; /* xs */
     white-space: nowrap;
 }
+
+/* --- 核心修改處 START --- */
+/* 好友列表中，移除好友按鈕的懸停效果 */
+.friend-actions .remove-friend-btn:hover {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+    border-color: var(--danger-hover-dark);
+}
+
+body.light-theme .friend-actions .remove-friend-btn:hover {
+    border-color: var(--danger-hover-light);
+}
+/* --- 核心修改處 END --- */
