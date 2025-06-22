@@ -3,25 +3,35 @@
 
 /* 當冒險島頁籤處於活動狀態時，進行特殊佈局設定 */
 #guild-content.active {
-    position: relative; /* 讓子元素可以使用絕對定位 */
-    padding: 0; /* 移除 panel 預設的內部間距，讓地圖可以填滿 */
-    overflow: hidden; /* 確保內容不會超出邊界 */
+    /* * 核心修正：
+     * 1. 繼承 .tab-content.active 的核心佈局屬性 (display: flex, flex-grow: 1)，
+     * 確保此頁籤能像其他頁籤一樣填滿剩餘空間。
+     * 2. 保留 position: relative 以便定位子元素。
+     * 3. 移除 padding 讓地圖可以填滿。
+    */
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    position: relative; 
+    padding: 0; 
+    overflow: hidden; 
 }
 
-/* 冒險島地圖的容器，改用絕對定位來填滿父層(#guild-content) */
+/* 冒險島地圖的容器 - 不再使用絕對定位 */
 .adventure-island-container {
-    position: absolute;
-    top: 0;
-    left: 0;
+    /* 移除 position: absolute; */
+    flex-grow: 1; /* 讓地圖容器填滿父層(#guild-content)的剩餘空間 */
     width: 100%;
-    height: 100%;
+    height: 100%; /* 高度現在由 flex-grow 自動控制 */
     background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands001.png?raw=true');
     background-size: cover;
     background-position: center;
     overflow: auto; /* 當網格大於畫面時，允許滾動 */
+    position: relative; /* 讓 grid-overlay 可以相對於它定位 */
 }
 
-/* 覆蓋在地圖上的網格容器 */
+/* 覆蓋在地圖上的網格容器 - 保持絕對定位，但現在是相對於 .adventure-island-container */
 .adventure-grid-overlay {
     position: absolute;
     top: 0;
