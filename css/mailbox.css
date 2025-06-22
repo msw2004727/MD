@@ -30,7 +30,7 @@
 /* 每一封信件的橫列樣式 */
 .mail-item {
     display: grid;
-    grid-template-columns: 20px 1fr auto; /* 狀態燈 | 標題 | 刪除鈕 */
+    grid-template-columns: 20px 1fr auto; /* 狀態燈 | 標題區塊 | 動作按鈕 */
     gap: 1rem;
     align-items: center;
     padding: 0.75rem;
@@ -66,9 +66,12 @@
     font-size: 1rem;
     font-weight: 500;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* --- 核心修改處 START --- */
+    /* 移除強制不換行，並加入自動換行規則 */
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-all;
+    /* --- 核心修改處 END --- */
 }
 
 /* 已讀信件的標題樣式 */
@@ -77,7 +80,6 @@
     font-weight: normal;
 }
 
-/* --- 核心修改處 START --- */
 /* 刪除按鈕 */
 .mail-delete-btn {
     background: none;
@@ -86,16 +88,15 @@
     font-size: 1.25rem;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: 4px; /* 將圓角改為方形，或可設為 50% 維持圓形點擊區 */
+    border-radius: 4px;
     line-height: 1;
-    transition: color 0.2s, background-color 0.2s; /* 增加平滑過渡效果 */
+    transition: color 0.2s, background-color 0.2s;
 }
 
 .mail-delete-btn:hover {
-    background-color: var(--bg-slot); /* 滑鼠移上時給予淡淡的背景提示 */
-    color: var(--danger-color); /* 將 'x' 的顏色變為危險紅色 */
+    background-color: var(--bg-slot);
+    color: var(--danger-color);
 }
-/* --- 核心修改處 END --- */
 
 
 /* 讀信彈窗的內容區域 */
@@ -115,3 +116,26 @@
     text-align: center;
     padding: 1rem;
 }
+
+/* --- 核心修改處 START --- */
+/* 好友請求信件的特殊響應式樣式 */
+.mail-item.friend-request-item {
+    display: grid;
+    grid-template-columns: 20px 1fr; /* 狀態燈 | 主內容 */
+    align-items: center;
+    gap: 1rem;
+}
+.friend-request-item .mail-content-wrapper {
+    display: flex;
+    flex-wrap: wrap; /* 允許內容換行 */
+    justify-content: space-between; /* 兩端對齊 */
+    align-items: center;
+    gap: 0.75rem 1rem; /* 垂直和水平間距 */
+    width: 100%;
+}
+.friend-request-item .friend-request-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0; /* 防止按鈕被壓縮 */
+}
+/* --- 核心修改處 END --- */
