@@ -1,25 +1,24 @@
 /* css/adventure.css */
 /* 存放所有「冒險島」相關的專屬CSS樣式 */
 
-/* 冒險島頁籤的內容主容器 */
-#guild-content {
-    padding: 0;
-    overflow: hidden; /* 確保背景圖不會超出邊界 */
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+/* 當冒險島頁籤處於活動狀態時，進行特殊佈局設定 */
+#guild-content.active {
+    position: relative; /* 讓子元素可以使用絕對定位 */
+    padding: 0; /* 移除 panel 預設的內部間距，讓地圖可以填滿 */
+    overflow: hidden; /* 確保內容不會超出邊界 */
 }
 
-/* 冒險島地圖的容器，設定為相對定位以容納絕對定位的網格 */
+/* 冒險島地圖的容器，改用絕對定位來填滿父層(#guild-content) */
 .adventure-island-container {
-    flex-grow: 1; /* 讓地圖容器填滿可用空間 */
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands001.png?raw=true');
     background-size: cover;
     background-position: center;
-    border-radius: 6px;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    overflow: auto; /* 如果內容超出，允許滾動 */
+    overflow: auto; /* 當網格大於畫面時，允許滾動 */
 }
 
 /* 覆蓋在地圖上的網格容器 */
@@ -34,6 +33,7 @@
     grid-template-rows: repeat(5, 1fr);
     gap: 4px; /* 格子之間的微小間距 */
     padding: 4px;
+    box-sizing: border-box; /* 確保 padding 不會影響總寬高 */
     min-width: 600px; /* 設定最小寬度以保持格子比例 */
     min-height: 400px; /* 設定最小高度 */
 }
