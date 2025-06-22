@@ -16,10 +16,7 @@ from .MD_models import (
 )
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
-# --- 核心修改處 START ---
-# 從共用函式庫導入感情值計算工具
 from .utils_services import update_bond_with_diminishing_returns
-# --- 核心修改處 END ---
 
 
 monster_healing_services_logger = logging.getLogger(__name__)
@@ -60,9 +57,6 @@ def calculate_dna_value(dna_instance: PlayerOwnedDNA, game_configs: GameConfigs)
         monster_healing_services_logger.error("Firestore 資料庫未初始化 (calculate_dna_value 內部)。")
         return 0
     
-    # db = MD_firebase_config.db # 不再需要，因為 db 已經在 module level 設置
-    # 此處 db 僅用於語義化日誌，實際操作不依賴它
-
     if not dna_instance: return 0
     base_rarity_value = 0
     rarities_config: Dict[str, RarityDetail] = game_configs.get("rarities", DEFAULT_GAME_CONFIGS_FOR_HEALING["rarities"]) # type: ignore
@@ -95,16 +89,29 @@ def heal_monster_service(
     game_configs: GameConfigs,
     player_data: PlayerGameData
 ) -> Optional[PlayerGameData]:
-    """治療怪獸。"""
+    """治療怪獸，並扣除相應費用。"""
     if not MD_firebase_config.db:
         monster_healing_services_logger.error("Firestore 資料庫未初始化 (heal_monster_service 內部)。")
         return None
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+    db = MD_firebase_config.db
 
     if not player_data or not player_data.get("farmedMonsters"):
         monster_healing_services_logger.error(f"治療失敗：找不到玩家 {player_id} 或其無怪獸。")
         return None
+
+    # --- 核心修改處 START ---
+    # 定義治療費用
+    HEAL_COST = 10
+    player_stats = player_data.get("playerStats", {})
+    current_gold = player_stats.get("gold", 0)
+
+    # 檢查金幣是否足夠
+    if current_gold < HEAL_COST:
+        monster_healing_services_logger.warning(f"玩家 {player_id} 金幣不足 ({current_gold})，無法支付治療費用 ({HEAL_COST})。")
+        # 返回 None 表示操作因故失敗
+        return None
+    # --- 核心修改處 END ---
 
     monster_to_heal: Optional[Monster] = None
     monster_index = -1
@@ -134,21 +141,26 @@ def heal_monster_service(
 
     if healed:
         # --- 核心修改處 START ---
+        # 扣除費用
+        player_stats["gold"] = current_gold - HEAL_COST
+        player_data["playerStats"] = player_stats
+        monster_healing_services_logger.info(f"已扣除玩家 {player_id} {HEAL_COST} 金幣，剩餘 {player_stats['gold']}。")
+        # --- 核心修改處 END ---
+
         interaction_stats = monster_to_heal.setdefault("interaction_stats", {})
         interaction_stats["heal_count"] = interaction_stats.get("heal_count", 0) + 1
         
-        # 改為呼叫共用的函式
         point_change = update_bond_with_diminishing_returns(interaction_stats, "heal", 1)
 
         if point_change > 0:
             monster_healing_services_logger.info(f"治療成功，感情值增加 {point_change} 點，目前為 {interaction_stats.get('bond_points', 0)}。")
-        # --- 核心修改處 END ---
         
         player_data["farmedMonsters"][monster_index] = monster_to_heal # type: ignore
         monster_healing_services_logger.info(f"怪獸 {monster_id} 治療成功（等待路由層儲存）。")
         return player_data
     else:
         monster_healing_services_logger.info(f"怪獸 {monster_id} 無需治療或治療類型無效。")
+        # 如果沒有實際治療，則不扣款，直接返回原始數據
         return player_data
 
 def recharge_monster_with_dna_service(
@@ -164,7 +176,7 @@ def recharge_monster_with_dna_service(
         monster_healing_services_logger.error("Firestore 資料庫未初始化 (recharge_monster_with_dna_service 內部)。")
         return None
     
-    db = MD_firebase_config.db # 將局部變數 db 指向已初始化的實例
+    db = MD_firebase_config.db
 
     if not player_data or not player_data.get("farmedMonsters") or not player_data.get("playerOwnedDNA"):
         monster_healing_services_logger.error(f"充能失敗：找不到玩家 {player_id} 或其無怪獸/DNA庫。")
@@ -181,7 +193,7 @@ def recharge_monster_with_dna_service(
     dna_to_consume: Optional[PlayerOwnedDNA] = None
     dna_index = -1
     for idx, dna in enumerate(player_data["playerOwnedDNA"]):
-        if dna and dna.get("id") == dna_instance_id_to_consume: # 檢查 dna 是否為 None
+        if dna and dna.get("id") == dna_instance_id_to_consume: 
             dna_to_consume = dna
             dna_index = idx
             break
@@ -195,9 +207,9 @@ def recharge_monster_with_dna_service(
 
     if dna_element not in monster_elements:
         monster_healing_services_logger.warning(f"充能失敗：DNA屬性 ({dna_element}) 與怪獸屬性 ({monster_elements}) 不符。")
-        return player_data # 返回原始數據，不進行充能
+        return player_data 
 
-    dna_value = calculate_dna_value(dna_to_consume, game_configs) # 使用模組內部的輔助函數
+    dna_value = calculate_dna_value(dna_to_consume, game_configs)
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_HEALING["value_settings"]) # type: ignore
     conversion_factor = value_settings.get("dna_recharge_conversion_factor", 0.1)
     amount_to_restore = int(dna_value * conversion_factor)
@@ -219,11 +231,10 @@ def recharge_monster_with_dna_service(
         monster_healing_services_logger.info(f"怪獸 {monster_id} 的 {recharge_target} 已恢復至 {new_val}。")
     else:
         monster_healing_services_logger.info(f"怪獸 {monster_id} 的 {recharge_target} 已滿或無變化。")
-        return player_data # 返回原始數據，不進行充能
+        return player_data
 
-    # 修改點：將被消耗的 DNA 槽位設置為 None
-    import random # 確保這裡也導入 random
-    import time # 確保這裡也導入 time
+    import random
+    import time
     player_data["playerOwnedDNA"][dna_index] = None
     player_data["farmedMonsters"][monster_index] = monster_to_recharge # type: ignore
 
