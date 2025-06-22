@@ -41,6 +41,14 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
                 renderFriendsList();
             }
         }
+        // --- 核心修改處 START ---
+        // 新增：當切換到「冒險島」頁籤時，呼叫其UI初始化函式
+        else if (targetTabId === 'guild-content') { // 'guild-content' 是冒險島頁籤的 ID
+            if (typeof initializeAdventureUI === 'function') {
+                initializeAdventureUI();
+            }
+        }
+        // --- 核心修改處 END ---
     }
 }
 // =============================================================
@@ -360,7 +368,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    // --- 核心修改處 START ---
     const loadingTitleMap = {
         '遊戲載入中': 'gameLoad',
         '登入中': 'login',
@@ -376,9 +383,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         '載入中': 'generic',
         '處理中': 'processing',
         '更新中': 'updating',
-        '治療中...': 'healing', // 新增 '治療中...' 的對應鍵
+        '治療中...': 'healing',
     };
-    // --- 核心修改處 END ---
 
     let loadingKey = null;
     if (isLoading) {
