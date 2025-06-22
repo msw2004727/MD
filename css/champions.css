@@ -22,16 +22,19 @@
 }
 
 /* --- 核心修改處 START --- */
-/* 新增：每日獎勵資訊欄容器 */
+/* 每日獎勵資訊欄容器 - 新增最大寬度並置中 */
 .champion-rewards-container {
     padding: 0.75rem;
     margin-bottom: 1.5rem; /* 與下方冠軍網格的間距 */
     border: 1px dashed var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-slot);
+    max-width: 450px; /* 設定最大寬度 */
+    margin-left: auto;   /* 自動左外距 */
+    margin-right: auto;  /* 自動右外距，實現置中 */
 }
 
-/* 新增：獎勵資訊欄標題 */
+/* 獎勵資訊欄標題 */
 .rewards-title {
     text-align: center;
     font-size: 0.9rem;
@@ -41,43 +44,38 @@
     letter-spacing: 1px;
 }
 
-/* 新增：獎勵網格佈局 */
+/* 獎勵網格佈局 - 從 grid 改為 flex */
 .rewards-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 手機上預設兩欄 */
-    gap: 0.5rem;
+    display: flex;
+    flex-wrap: wrap; /* 允許項目在空間不足時換行 */
+    justify-content: space-around; /* 讓項目在容器內均勻分佈 */
+    align-items: center;
+    gap: 0.5rem 1rem;
 }
 
-/* 在較寬的螢幕上變為四欄 */
-@media (min-width: 500px) {
-    .rewards-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* 新增：單個獎勵項目 */
+/* 單個獎勵項目 */
 .reward-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
+    flex-basis: 80px; /* 提供一個基礎寬度，讓排版更穩定 */
 }
+/* --- 核心修改處 END --- */
 
-/* 新增：獎勵名次文字 */
+/* 獎勵名次文字 */
 .reward-rank {
     font-size: 0.8rem;
     color: var(--text-primary);
 }
 
-/* 新增：獎勵金額文字 */
+/* 獎勵金額文字 */
 .reward-value {
     font-size: 1rem;
     font-weight: bold;
     color: var(--rarity-legendary-text); /* 使用金色來突顯獎勵 */
 }
-/* --- 核心修改處 END --- */
-
 
 /* 放置四個名次的網格容器 */
 .champions-grid {
