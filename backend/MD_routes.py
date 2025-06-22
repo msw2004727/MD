@@ -14,10 +14,7 @@ from typing import List, Dict, Any, Tuple
 from flask_cors import cross_origin
 
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
-# --- 核心修改處 START ---
-# 導入所有好友相關的服務
 from .friend_services import send_friend_request_service, respond_to_friend_request_service, remove_friend_service
-# --- 核心修改處 END ---
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
 from .monster_healing_services import heal_monster_service, recharge_monster_with_dna_service
@@ -235,7 +232,6 @@ def send_friend_request_route():
     if sender_id == recipient_id:
         return jsonify({"error": "無法將自己加為好友。"}), 400
 
-    # 呼叫新的服務函式
     success = send_friend_request_service(
         sender_id=sender_id,
         sender_nickname=sender_nickname,
@@ -416,8 +412,6 @@ def search_players_api_route():
     results = search_players_service(nickname_query, limit)
     return jsonify({"players": results}), 200
 
-# --- 核心修改處 START ---
-# 修改 /friends/remove 路由，讓它呼叫新的雙向刪除服務
 @md_bp.route('/friends/remove', methods=['POST'])
 def remove_friend_route():
     """從玩家的好友列表中雙向移除一位好友。"""
@@ -430,14 +424,12 @@ def remove_friend_route():
     if not friend_to_remove_id:
         return jsonify({"error": "請求中未提供要移除的好友ID。"}), 400
 
-    # 呼叫新的雙向移除服務
     success = remove_friend_service(remover_id, friend_to_remove_id)
 
     if success:
         return jsonify({"success": True, "message": "好友已成功移除。"})
     else:
         return jsonify({"error": "移除好友時發生錯誤。"}), 500
-# --- 核心修改處 END ---
 
 @md_bp.route('/battle/simulate', methods=['POST'])
 def simulate_battle_api_route():
@@ -481,7 +473,10 @@ def simulate_battle_api_route():
 
     if battle_result.get("battle_end"):
         routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
-        player_data, newly_awarded_titles = process_battle_results(
+        
+        # --- 核心修改處 START ---
+        # 1. 將回傳結果從元組改為接收一個字典
+        post_battle_data = process_battle_results(
             player_id=user_id,
             opponent_id=opponent_owner_id_req,
             player_data=player_data,
@@ -494,9 +489,24 @@ def simulate_battle_api_route():
             challenged_rank=challenged_rank
         )
         
+        # 2. 從字典中提取需要的資料
+        updated_player_data = post_battle_data.get("updated_player_data")
+        newly_awarded_titles = post_battle_data.get("newly_awarded_titles")
+        updated_champions_data = post_battle_data.get("updated_champions_data")
+        
         if newly_awarded_titles:
             battle_result["newly_awarded_titles"] = newly_awarded_titles
+        
+        # 3. 將所有需要的資料打包到最終的API回應中
+        return jsonify({
+            "success": True, 
+            "battle_result": battle_result,
+            "updated_player_data": updated_player_data,
+            "updated_champions_data": updated_champions_data
+        }), 200
+        # --- 核心修改處 END ---
     
+    # 如果戰鬥未結束（理論上不應該發生在 full_simulate），返回當前結果
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
 
