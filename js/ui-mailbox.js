@@ -23,6 +23,42 @@ function initializeMailboxDOMElements() {
 
 // --- 核心修改處 START ---
 /**
+ * 新增函式：動態注入信箱專用的CSS樣式，確保響應式佈局。
+ * 這樣做可以避免修改CSS檔案，將相關邏輯集中在此處。
+ */
+function injectMailboxStyles() {
+    const styleId = 'dynamic-mailbox-styles';
+    // 如果樣式已存在，則不重複注入
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+        .mail-item.friend-request-item {
+            display: grid;
+            grid-template-columns: 20px 1fr; /* 狀態燈 | 主內容 */
+            align-items: center;
+            gap: 1rem;
+        }
+        .friend-request-item .mail-content-wrapper {
+            display: flex;
+            flex-wrap: wrap; /* 允許內容換行 */
+            justify-content: space-between; /* 兩端對齊 */
+            align-items: center;
+            gap: 0.5rem 1rem; /* 垂直和水平間距 */
+            width: 100%;
+        }
+        .friend-request-item .friend-request-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0; /* 防止按鈕被壓縮 */
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+
+/**
  * 處理對好友請求的回應 (同意或拒絕)
  * @param {string} mailId - 信件的 ID
  * @param {'accept' | 'decline'} action - 玩家的操作
@@ -65,46 +101,45 @@ function renderMailboxList(mails) {
         return;
     }
 
-    // 按時間戳降序排序
     mails.sort((a, b) => b.timestamp - a.timestamp);
 
     // --- 核心修改處 START ---
-    // 修改 grid-template-columns 以適應新的按鈕佈局
+    // 修改HTML結構以支援新的CSS樣式
     container.innerHTML = mails.map(mail => {
         const mailDate = new Date(mail.timestamp * 1000).toLocaleString();
         const statusClass = mail.is_read ? 'read' : 'unread';
         const senderName = mail.sender_name || '系統訊息';
-        const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
-
-        let mailContentHtml;
-        let mailItemClass = `mail-item ${statusClass}`;
 
         if (mail.type === 'friend_request') {
             // 好友請求信件的特殊佈局
-            mailItemClass += ' friend-request'; // 添加特殊class以便CSS調整
-            mailContentHtml = `
-                <div class="mail-title-container">
-                    <p class="mail-title">${mail.title}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
-                </div>
-                <div class="friend-request-actions" style="display: flex; gap: 0.5rem; align-items: center;">
-                    <button class="button success text-xs accept-friend-btn" data-mail-id="${mail.id}">同意</button>
-                    <button class="button secondary text-xs decline-friend-btn" data-mail-id="${mail.id}">拒絕</button>
+            return `
+                <div class="mail-item ${statusClass} friend-request-item" data-mail-id="${mail.id}">
+                    <div class="mail-status-light ${statusClass}"></div>
+                    <div class="mail-content-wrapper">
+                        <div class="mail-title-container">
+                            <p class="mail-title">${mail.title}</p>
+                            <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
+                        </div>
+                        <div class="friend-request-actions">
+                            <button class="button success text-xs accept-friend-btn" data-mail-id="${mail.id}">同意</button>
+                            <button class="button secondary text-xs decline-friend-btn" data-mail-id="${mail.id}">拒絕</button>
+                        </div>
+                    </div>
                 </div>
             `;
         } else {
             // 普通信件的佈局
-            mailItemClass += ' mail-item-clickable'; // 讓普通信件可以點擊
-            mailContentHtml = `
-                <div class="mail-title-container">
-                    <p class="mail-title">${mail.title}</p>
-                    <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
+            return `
+                <div class="mail-item ${statusClass} mail-item-clickable" data-mail-id="${mail.id}">
+                    <div class="mail-status-light ${statusClass}"></div>
+                    <div class="mail-title-container">
+                        <p class="mail-title">${mail.title}</p>
+                        <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
+                    </div>
+                    <button class="mail-delete-btn" title="刪除信件" data-mail-id="${mail.id}">&times;</button>
                 </div>
-                <button class="mail-delete-btn" title="刪除信件" data-mail-id="${mail.id}">&times;</button>
             `;
         }
-        
-        return `<div class="${mailItemClass}" data-mail-id="${mail.id}">${mailStatusLight}${mailContentHtml}</div>`;
     }).join('');
     // --- 核心修改處 END ---
 }
@@ -197,6 +232,10 @@ async function handleDeleteMail(mailId, event) {
  */
 function initializeMailboxEventHandlers() {
     initializeMailboxDOMElements();
+    // --- 核心修改處 START ---
+    // 在初始化時注入我們需要的CSS樣式
+    injectMailboxStyles();
+    // --- 核心修改處 END ---
     
     // 刷新按鈕
     if (mailboxDOMElements.refreshMailboxBtn) {
@@ -241,8 +280,6 @@ function initializeMailboxEventHandlers() {
         };
     }
     
-    // --- 核心修改處 START ---
-    // 為信箱列表容器和讀信視窗設定事件委派
     function setupMailboxEventListeners(container) {
         if (!container) return;
         
@@ -267,8 +304,7 @@ function initializeMailboxEventHandlers() {
     }
 
     setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
-    setupMailboxEventListeners(mailboxDOMElements.mailReaderModal); // 讀信器內的按鈕也需要監聽
-    // --- 核心修改處 END ---
+    setupMailboxEventListeners(mailboxDOMElements.mailReaderModal);
 
     // 讀信視窗的關閉按鈕
     if (mailboxDOMElements.mailReaderCloseBtn) {
