@@ -15,10 +15,10 @@
       "type": "columns",
       "columns": [
         {
-          "title": "目前0.3.9v已實裝功能：",
+          "title": "目前0.3.9v已實裝內容：",
           "items": [
-            { "text": "站內信件", "color": "success" },
-            { "text": "基礎治療", "color": "success" },
+            { "text": "站內信件功能完善", "color": "success" },
+            { "text": "基礎治療功能", "color": "success" },
             { "text": "優化農場顯示方式", "color": "success" },
             { "text": "與怪獸協商關閉技能", "color": "success" },
             { "text": "第一階段技能優化", "color": "success" },
