@@ -5,6 +5,9 @@ console.log("DEBUG: ui.js starting to load and define functions."); // Add this 
 // 這個檔案現在是UI系統的核心，負責主畫面渲染和通用彈窗的顯示/隱藏。
 
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
+// --- 核心修改處 START ---
+let progressInterval = null; // 用於存放進度條的計時器ID
+// --- 核心修改處 END ---
 
 // ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
@@ -169,24 +172,83 @@ function toggleElementDisplay(element, show, displayType = 'block') {
     }
 }
 
+// --- 核心修改處 START ---
+/**
+ * 動態注入進度條所需的 CSS 樣式。
+ * 這麼做可以確保樣式存在，且不需修改CSS檔案。
+ */
+function injectLoadingBarStyles() {
+    const styleId = 'dynamic-loading-bar-styles';
+    if (document.getElementById(styleId)) return; // 如果樣式已存在，則不重複添加
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+        .progress-container {
+            width: 80%;
+            height: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-primary);
+            padding: 2px;
+            margin: 1rem auto 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            background-color: var(--accent-color);
+            transition: width 0.4s ease-in-out;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+/**
+ * 管理進度條的動畫。
+ * @param {boolean} start - true 為啟動動畫，false 為停止。
+ */
+function manageProgressBar(start = false) {
+    // 停止之前可能存在的計時器
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+
+    const bar = document.getElementById("feedback-progress-bar");
+    if (!bar) return;
+
+    if (start) {
+        let percent = 0;
+        bar.style.width = "0%";
+        // 設定一個新的計時器來更新進度條
+        progressInterval = setInterval(() => {
+            if (percent >= 100) {
+                // 當進度條滿了之後，可以選擇重置或停在100%
+                percent = 0; // 這裡我們讓它循環播放
+            }
+            // 模擬一個不均勻的載入進度
+            percent += Math.random() * 5 + 2; 
+            bar.style.width = Math.min(percent, 100) + "%";
+        }, 400); // 每0.4秒更新一次
+    }
+}
+// --- 核心修改處 END ---
+
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        // --- 核心修改處 START: 將重設邏輯移至此處 ---
-        // 使用 setTimeout 確保重設操作在瀏覽器渲染 modal 後執行
         setTimeout(() => {
-            // 1. 重置所有可滾動內容區域的捲軸到頂部
             const scrollableBodies = modal.querySelectorAll('.modal-body, .tab-content, #newbie-guide-content-area, #monster-activity-logs, #player-monsters-table-container, #battle-log-area');
             scrollableBodies.forEach(body => {
                 body.scrollTop = 0;
             });
 
-            // 2. 如果彈窗內有頁籤(tabs)，則自動切回第一個頁籤
             const tabButtonsContainer = modal.querySelector('.tab-buttons');
             if (tabButtonsContainer) {
                 const firstTabButton = tabButtonsContainer.querySelector('.tab-button');
                 if (firstTabButton && typeof switchTabContent === 'function') {
-                    // 如果第一個分頁不是 active, 才執行切換
                     if (!firstTabButton.classList.contains('active')) {
                         const firstTabTargetId = firstTabButton.dataset.tabTarget;
                         switchTabContent(firstTabTargetId, firstTabButton, modalId);
@@ -194,7 +256,6 @@ function showModal(modalId) {
                 }
             }
         }, 0);
-        // --- 核心修改處 END ---
         
         modal.style.display = 'flex';
         gameState.activeModalId = modalId;
@@ -209,12 +270,17 @@ function hideModal(modalId) {
             gameState.activeModalId = null;
         }
         
-        // 清除通用回饋視窗的計時器
-        if (modalId === 'feedback-modal' && gameState.feedbackHintInterval) {
-            clearInterval(gameState.feedbackHintInterval);
-            gameState.feedbackHintInterval = null;
+        // --- 核心修改處 START ---
+        // 關閉 feedback-modal 時，也停止進度條動畫
+        if (modalId === 'feedback-modal') {
+            if (gameState.feedbackHintInterval) {
+                clearInterval(gameState.feedbackHintInterval);
+                gameState.feedbackHintInterval = null;
+            }
+            manageProgressBar(false); // 停止進度條
         }
-        // 清除修煉成果視窗的計時器
+        // --- 核心修改處 END ---
+        
         if (modalId === 'training-results-modal' && gameState.trainingHintInterval) {
             clearInterval(gameState.trainingHintInterval);
             gameState.trainingHintInterval = null;
@@ -249,13 +315,23 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
     }
 
     DOMElements.feedbackModalMessage.innerHTML = '';
-    toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading, 'block');
+    
+    // --- 核心修改處 START ---
+    // 移除舊的 loading-spinner 顯示邏輯，因為將由進度條取代
+    // toggleElementDisplay(DOMElements.feedbackModalSpinner, isLoading, 'block');
+    // --- 核心修改處 END ---
 
     if (DOMElements.feedbackMonsterDetails) {
         DOMElements.feedbackMonsterDetails.innerHTML = '';
         toggleElementDisplay(DOMElements.feedbackMonsterDetails, false);
     }
     const modalBody = DOMElements.feedbackModal.querySelector('#feedback-modal-body-content');
+    
+    // --- 核心修改處 START ---
+    // 清除舊的進度條和提示，並停止計時器
+    const existingProgressBar = modalBody.querySelector('.progress-container');
+    if (existingProgressBar) existingProgressBar.remove();
+    // --- 核心修改處 END ---
 
     const existingBanner = modalBody.querySelector('.feedback-banner');
     if (existingBanner) existingBanner.remove();
@@ -268,15 +344,26 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
 
     DOMElements.feedbackModalTitle.textContent = title;
 
-    // Helper function to add banners and hints
     const addBannerAndHints = (bannerUrl, altText) => {
-        if (!bannerUrl) return; // Do not add banner if URL is missing
+        if (!bannerUrl) return; 
         const bannerContainer = document.createElement('div');
         bannerContainer.className = 'feedback-banner';
         bannerContainer.style.textAlign = 'center';
         bannerContainer.style.marginBottom = '15px';
         bannerContainer.innerHTML = `<img src="${bannerUrl}" alt="${altText}" style="max-width: 100%; border-radius: 6px;">`;
         modalBody.prepend(bannerContainer);
+
+        // --- 核心修改處 START ---
+        // 在橫幅下方加入進度條的HTML結構
+        const progressBarHtml = `
+            <div class="progress-container">
+              <div class="progress-bar" id="feedback-progress-bar"></div>
+            </div>
+        `;
+        bannerContainer.insertAdjacentHTML('afterend', progressBarHtml);
+        // 啟動進度條動畫
+        manageProgressBar(true);
+        // --- 核心修改處 END ---
 
         const hintsContainer = document.createElement('div');
         hintsContainer.className = 'loading-hints-container';
@@ -289,7 +376,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         hintsContainer.style.fontStyle = 'italic';
         hintsContainer.style.color = 'var(--text-secondary)';
         hintsContainer.innerHTML = `<p id="loading-hints-carousel">正在讀取提示...</p>`;
-        DOMElements.feedbackModalMessage.insertAdjacentElement('afterend', hintsContainer);
+        // 將提示區塊加在進度條後面
+        modalBody.querySelector('.progress-container').insertAdjacentElement('afterend', hintsContainer);
         
         const hintElement = document.getElementById('loading-hints-carousel');
         const hintsArray = gameState.uiTextContent?.training_hints || [];
@@ -331,6 +419,13 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     }
     
+    // --- 核心修改處 START ---
+    // 注入進度條CSS樣式（如果尚未注入）
+    if(isLoading) {
+        injectLoadingBarStyles();
+    }
+    // --- 核心修改處 END ---
+
     const loadingBanners = gameState.assetPaths?.images?.modals?.loadingBanners || {};
     const genericLoadingBanner = loadingBanners.generic || '';
 
@@ -496,29 +591,8 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
         if (playerMonster && opponentMonster) {
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             
-            // --- 核心修改處 ---
-            const getCorrectDisplayName = (monster) => {
-                const primaryElement = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
-                let displayName = monster.custom_element_nickname;
-                if (!displayName) {
-                    const nicknamesByElement = gameState.gameConfigs?.element_nicknames?.[primaryElement];
-                    if (nicknamesByElement && typeof nicknamesByElement === 'object') {
-                        const namesByRarity = nicknamesByElement[monster.rarity];
-                        if (namesByRarity && namesByRarity.length > 0) {
-                            displayName = namesByRarity[0];
-                        } else {
-                            displayName = primaryElement;
-                        }
-                    } else {
-                        displayName = primaryElement;
-                    }
-                }
-                return displayName;
-            };
-
-            const playerDisplayName = getCorrectDisplayName(playerMonster);
-            const opponentDisplayName = getCorrectDisplayName(opponentMonster);
-            // --- 修改結束 ---
+            const playerDisplayName = getMonsterDisplayName(playerMonster, gameState.gameConfigs);
+            const opponentDisplayName = getMonsterDisplayName(opponentMonster, gameState.gameConfigs);
 
             const playerRarityKey = playerMonster.rarity ? (rarityMap[playerMonster.rarity] || 'common') : 'common';
             const opponentRarityKey = opponentMonster.rarity ? (rarityMap[opponentMonster.rarity] || 'common') : 'common';
