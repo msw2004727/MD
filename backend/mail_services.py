@@ -9,10 +9,7 @@ from typing import Optional, List, Dict, Any
 # 從專案的其他模組導入
 from . import MD_firebase_config
 from .MD_models import PlayerGameData, MailItem
-# --- 核心修改處 START ---
-# 導入儲存服務，以便在寄信後更新收件人的資料
 from .player_services import save_player_data_service
-# --- 核心修改處 END ---
 
 # 設定日誌記錄器
 mail_logger = logging.getLogger(__name__)
@@ -59,14 +56,17 @@ def add_mail_to_player(player_data: PlayerGameData, mail_item_template: Dict[str
     return player_data
 
 
-# --- 核心修改處 START ---
 def send_mail_to_player_service(
     sender_id: str,
     sender_nickname: str,
     recipient_id: str,
     title: str,
     content: str,
-    payload: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None,
+    # --- 核心修改處 START ---
+    # 新增 mail_type 參數，並給予預設值以確保舊功能不受影響
+    mail_type: str = "system_message"
+    # --- 核心修改處 END ---
 ) -> bool:
     """
     處理一個玩家向另一個玩家發送信件的邏輯。
@@ -78,6 +78,7 @@ def send_mail_to_player_service(
         title: 信件標題。
         content: 信件內容。
         payload: 附加的禮物資料 (可選)。
+        mail_type: 信件類型 (可選，預設為 'system_message')。
 
     Returns:
         如果信件成功發送並儲存，則返回 True，否則返回 False。
@@ -104,7 +105,10 @@ def send_mail_to_player_service(
 
         # 2. 建立信件範本
         mail_template = {
-            "type": "system_message",  # 暫時使用 system_message 類型，未來可擴充為 player_mail
+            # --- 核心修改處 START ---
+            # 使用傳入的 mail_type 參數，而不是寫死的 "system_message"
+            "type": mail_type,
+            # --- 核心修改處 END ---
             "title": title,
             "content": content,
             "sender_id": sender_id,
@@ -130,7 +134,6 @@ def send_mail_to_player_service(
     except Exception as e:
         mail_logger.error(f"寄送信件過程中發生未知錯誤: {e}", exc_info=True)
         return False
-# --- 核心修改處 END ---
 
 
 def delete_mail_from_player(player_data: PlayerGameData, mail_id: str) -> Optional[PlayerGameData]:
