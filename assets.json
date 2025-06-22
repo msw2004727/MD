@@ -11,8 +11,8 @@
     },
     "modals": {
       "comment": "各類彈出視窗中使用的橫幅 (Banner)",
-      "announcement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
-      "comment_zh_announcement": "遊戲公告彈窗",
+      "officialAnnouncement": "https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true",
+      "comment_zh_officialAnnouncement": "遊戲官方公告彈窗",
       "synthesisSuccess": "https://github.com/msw2004727/MD/blob/main/images/BN002.png?raw=true",
       "comment_zh_synthesisSuccess": "怪獸合成成功彈窗",
       "trainingStart": "https://github.com/msw2004727/MD/blob/main/images/BN004.png?raw=true",
