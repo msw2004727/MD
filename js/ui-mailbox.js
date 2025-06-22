@@ -21,9 +21,12 @@ function initializeMailboxDOMElements() {
     };
 }
 
+/**
+ * 新增函式：動態注入信箱專用的CSS樣式，確保響應式佈局。
+ */
 function injectMailboxStyles() {
     const styleId = 'dynamic-mailbox-styles';
-    if (document.getElementById(styleId)) return;
+    if (document.getElementById(styleId)) return; 
 
     const style = document.createElement('style');
     style.id = styleId;
@@ -47,6 +50,29 @@ function injectMailboxStyles() {
             gap: 0.5rem;
             flex-shrink: 0;
         }
+        /* --- 核心修改處 START --- */
+        /* 為系統通知信件的關閉按鈕新增紅圈樣式 */
+        #mail-reader-modal .modal-close.system-notification-close-btn {
+            background-color: var(--danger-color);
+            color: var(--button-danger-text);
+            width: 28px;
+            height: 28px;
+            font-size: 1.2rem;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            padding: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid var(--danger-hover-dark);
+        }
+        #mail-reader-modal .modal-close.system-notification-close-btn:hover {
+            background-color: var(--danger-hover-dark);
+            color: var(--button-danger-text);
+        }
+        body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
+             background-color: var(--danger-hover-light);
+        }
+        /* --- 核心修改處 END --- */
     `;
     document.head.appendChild(style);
 }
@@ -129,10 +155,6 @@ function renderMailboxList(mails) {
 }
 
 
-/**
- * 開啟單一信件的閱讀器
- * @param {string} mailId - 要開啟的信件 ID
- */
 async function openMailReader(mailId) {
     const mail = gameState.playerData?.mailbox?.find(m => m.id === mailId);
     if (!mail) {
@@ -140,21 +162,39 @@ async function openMailReader(mailId) {
         return;
     }
 
+    const senderName = mail.sender_name || '系統通知';
     mailboxDOMElements.mailReaderTitle.textContent = mail.title;
-    mailboxDOMElements.mailReaderSender.textContent = mail.sender_name || '系統';
-    mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
-    mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\n/g, '<br>');
-
+    
     // --- 核心修改處 START ---
-    // 動態決定底部按鈕是「回覆」還是「關閉」
+    // 1. 處理寄件人名稱顏色
+    if (senderName === '系統通知') {
+        mailboxDOMElements.mailReaderSender.innerHTML = `<strong style="color: gold;">${senderName}</strong>`;
+    } else {
+        mailboxDOMElements.mailReaderSender.textContent = senderName;
+    }
+    
+    // 2. 處理信件內容中的換行符
+    mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ');
+    // --- 核心修改處 END ---
+
+    mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
+
     const footer = mailboxDOMElements.mailReaderModal.querySelector('.modal-footer');
     if (footer) {
-        // 如果信件有寄件人ID (表示是玩家寄的)，且不是好友請求信，則顯示「回覆」按鈕
         if (mail.sender_id && mail.type !== 'friend_request') {
             footer.innerHTML = `<button class="button primary reply-mail-btn" data-sender-id="${mail.sender_id}" data-sender-name="${mail.sender_name}">回覆寄件人</button>`;
         } else {
-            // 系統信件或好友請求信件，則顯示「關閉」按鈕
             footer.innerHTML = `<button class="button secondary modal-close" data-modal-id="mail-reader-modal">關閉</button>`;
+        }
+    }
+
+    // --- 核心修改處 START ---
+    // 3. 處理右上角關閉按鈕的樣式
+    const closeButton = mailboxDOMElements.mailReaderModal.querySelector('.modal-close');
+    if (closeButton) {
+        closeButton.classList.remove('system-notification-close-btn'); // 先移除，避免重複
+        if (senderName === '系統通知' || mail.type === 'reward') {
+            closeButton.classList.add('system-notification-close-btn');
         }
     }
     // --- 核心修改處 END ---
@@ -199,9 +239,6 @@ async function handleDeleteMail(mailId, event) {
     );
 }
 
-/**
- * 初始化信箱系統的所有事件監聽器
- */
 function initializeMailboxEventHandlers() {
     initializeMailboxDOMElements();
     injectMailboxStyles();
@@ -247,10 +284,10 @@ function initializeMailboxEventHandlers() {
         };
     }
     
-    // --- 核心修改處 START ---
-    // 修改：將讀信視窗的事件監聽獨立出來
-    if (mailboxDOMElements.mailListContainer) {
-        mailboxDOMElements.mailListContainer.addEventListener('click', (event) => {
+    function setupMailboxEventListeners(container) {
+        if (!container) return;
+        
+        container.addEventListener('click', (event) => {
             const mailItem = event.target.closest('.mail-item-clickable');
             const deleteBtn = event.target.closest('.mail-delete-btn');
             const acceptBtn = event.target.closest('.accept-friend-btn');
@@ -270,7 +307,7 @@ function initializeMailboxEventHandlers() {
         });
     }
 
-    // 為讀信視窗新增獨立的事件監聽器
+    setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
     if (mailboxDOMElements.mailReaderModal) {
         mailboxDOMElements.mailReaderModal.addEventListener('click', (event) => {
             const replyBtn = event.target.closest('.reply-mail-btn');
@@ -280,8 +317,8 @@ function initializeMailboxEventHandlers() {
                 const senderId = replyBtn.dataset.senderId;
                 const senderName = replyBtn.dataset.senderName;
                 if (senderId && senderName && typeof openSendMailModal === 'function') {
-                    hideModal('mail-reader-modal'); // 先關閉讀信視窗
-                    openSendMailModal(senderId, senderName); // 再開啟寫信視窗
+                    hideModal('mail-reader-modal'); 
+                    openSendMailModal(senderId, senderName); 
                 }
             } else if (closeBtn) {
                 const modalId = closeBtn.dataset.modalId || closeBtn.closest('.modal')?.id;
@@ -291,5 +328,4 @@ function initializeMailboxEventHandlers() {
             }
         });
     }
-    // --- 核心修改處 END ---
 }
