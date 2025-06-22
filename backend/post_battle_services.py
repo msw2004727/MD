@@ -8,11 +8,8 @@ from typing import Dict, Any, List, Optional, Tuple
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs, ChampionSlot
 from .player_services import save_player_data_service
 from .monster_absorption_services import absorb_defeated_monster_service
-# --- 核心修改處 START ---
-# 導入冠軍殿堂服務 和 新增的信箱服務
 from .champion_services import get_champions_data, update_champions_document
 from .mail_services import add_mail_to_player
-# --- 核心修改處 END ---
 
 post_battle_logger = logging.getLogger(__name__)
 
@@ -69,8 +66,6 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
             newly_awarded_titles.append(title)
             post_battle_logger.info(f"玩家 {player_data.get('nickname')} 達成條件，授予新稱號: {title.get('name')}")
             
-            # --- 核心修改處 START ---
-            # 當授予稱號時，建立一封通知信件
             mail_title = f"🏆 榮譽加身！獲得新稱號：{title.get('name')}"
             
             buffs_text = ""
@@ -85,9 +80,12 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
                     name = stat_name_map.get(stat, stat)
                     display_value = f"+{value * 100}%" if 0 < value < 1 else f"+{value}"
                     buff_parts.append(f"{name}{display_value}")
-                buffs_text = f"\\n\\n稱號效果：{ '、'.join(buff_parts) }"
+                buffs_text = f" 稱號效果：{ '、'.join(buff_parts) }"
 
-            mail_content = f"恭喜您！\\n\\n由於您的卓越表現，您已成功解鎖了新的稱號：「{title.get('name')}」。\\n\\n描述：{title.get('description', '無')}{buffs_text}"
+            # --- 核心修改處 START ---
+            # 移除 \n\n，改用空格或直接拼接，讓文字自然流動
+            mail_content = f"恭喜您！由於您的卓越表現，您已成功解鎖了新的稱號：「{title.get('name')}」。 描述：{title.get('description', '無')}{buffs_text}"
+            # --- 核心修改處 END ---
 
             mail_template = {
                 "type": "reward",
@@ -96,9 +94,7 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
                 "sender_name": "系統通知",
                 "payload": {"reward_type": "title", "title_data": title}
             }
-            # 將信件直接加入到玩家資料中
             add_mail_to_player(player_data, mail_template)
-            # --- 核心修改處 END ---
 
     if newly_awarded_titles:
         player_data["playerStats"] = player_stats
