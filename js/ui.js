@@ -738,5 +738,3 @@ function updatePlayerCurrencyDisplay(amount) {
         amountElement.textContent = numAmount.toLocaleString('en-US');
     }
 }
-
-}
