@@ -15,8 +15,8 @@ from flask_cors import cross_origin
 
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
 # --- 核心修改處 START ---
-# 從 friend_services.py 導入發送和回應好友請求的服務
-from .friend_services import send_friend_request_service, respond_to_friend_request_service
+# 導入所有好友相關的服務
+from .friend_services import send_friend_request_service, respond_to_friend_request_service, remove_friend_service
 # --- 核心修改處 END ---
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -247,7 +247,6 @@ def send_friend_request_route():
     else:
         return jsonify({"error": "發送好友請求失敗，可能是收件人不存在或伺服器錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @md_bp.route('/friends/response', methods=['POST'])
 def respond_to_friend_request_route():
     """接收前端對好友請求的回應 (同意/拒絕)。"""
@@ -272,8 +271,7 @@ def respond_to_friend_request_route():
         return jsonify({"success": True, "message": "已成功回應好友請求。"}), 200
     else:
         return jsonify({"error": "處理好友請求回應時發生錯誤。"}), 500
-# --- 核心修改處 END ---
-
+        
 @md_bp.route('/notes', methods=['POST'])
 def add_note_route():
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
@@ -418,41 +416,28 @@ def search_players_api_route():
     results = search_players_service(nickname_query, limit)
     return jsonify({"players": results}), 200
 
+# --- 核心修改處 START ---
+# 修改 /friends/remove 路由，讓它呼叫新的雙向刪除服務
 @md_bp.route('/friends/remove', methods=['POST'])
 def remove_friend_route():
-    """從玩家的好友列表中移除一位好友。"""
-    user_id, _, error_response = _get_authenticated_user_id()
+    """從玩家的好友列表中雙向移除一位好友。"""
+    remover_id, _, error_response = _get_authenticated_user_id()
     if error_response:
         return error_response
 
     data = request.json
-    friend_id_to_remove = data.get('friend_id')
-    if not friend_id_to_remove:
+    friend_to_remove_id = data.get('friend_id')
+    if not friend_to_remove_id:
         return jsonify({"error": "請求中未提供要移除的好友ID。"}), 400
 
-    game_configs = _get_game_configs_data_from_app_context()
-    player_data, _ = get_player_data_service(user_id, None, game_configs)
-    if not player_data:
-        return jsonify({"error": "找不到玩家資料。"}), 404
+    # 呼叫新的雙向移除服務
+    success = remove_friend_service(remover_id, friend_to_remove_id)
 
-    friends_list = player_data.get("friends", [])
-    
-    initial_friend_count = len(friends_list)
-    # 使用列表推導式來過濾掉要刪除的好友，更為簡潔高效
-    updated_friends_list = [friend for friend in friends_list if friend.get("uid") != friend_id_to_remove]
-
-    if len(updated_friends_list) < initial_friend_count:
-        player_data["friends"] = updated_friends_list
-        routes_logger.info(f"玩家 {user_id} 準備從好友列表中移除 {friend_id_to_remove}。")
-        
-        # 儲存更新後的玩家資料
-        if save_player_data_service(user_id, player_data):
-            return jsonify({"success": True, "message": "好友已成功移除。"})
-        else:
-            return jsonify({"error": "移除好友後儲存失敗。"}), 500
+    if success:
+        return jsonify({"success": True, "message": "好友已成功移除。"})
     else:
-        routes_logger.warning(f"玩家 {user_id} 嘗試移除好友 {friend_id_to_remove}，但在列表中找不到。")
-        return jsonify({"error": "在您的好友列表中找不到該玩家。"}), 404
+        return jsonify({"error": "移除好友時發生錯誤。"}), 500
+# --- 核心修改處 END ---
 
 @md_bp.route('/battle/simulate', methods=['POST'])
 def simulate_battle_api_route():
