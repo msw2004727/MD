@@ -58,7 +58,9 @@
         "skillLearn": "",
         "comment_zh_skillLearn": "學習技能中",
         "monsterSwitching": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
-        "comment_zh_monsterSwitching": "更換出戰怪獸交接中"
+        "comment_zh_monsterSwitching": "更換出戰怪獸交接中",
+        "healing": "https://github.com/msw2004727/MD/blob/main/images/BN016.png?raw=true",
+        "comment_zh_healing": "治療中讀取彈窗"
       }
     },
     "cultivation": {
