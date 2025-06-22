@@ -321,7 +321,6 @@ async function sendFriendRequest(recipientId) {
     });
 }
 
-// --- 核心修改處 START ---
 /**
  * 回應好友請求
  * @param {string} mailId 好友請求信件的 ID
@@ -337,7 +336,6 @@ async function respondToFriendRequest(mailId, action) {
         }),
     });
 }
-// --- 核心修改處 END ---
 
 /**
  * 寄送一封信件給另一位玩家

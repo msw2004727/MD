@@ -1,50 +1,38 @@
 // js/ui-player-modals.js
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
-function openSendMailModal(friendUid, friendNickname) {
-    const mailFormHtml = `
-        <div style="text-align: left; font-size: 0.9rem;">
-            <p style="margin-bottom: 1rem;">正在寫信給：<strong style="color: var(--accent-color);">${friendNickname}</strong></p>
-            <div style="margin-bottom: 0.75rem;">
-                <label for="mail-title-input" class="block mb-1 font-semibold">標題：</label>
-                <input type="text" id="mail-title-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="輸入信件標題..." maxlength="30">
-            </div>
-            <div>
-                <label for="mail-content-input" class="block mb-1 font-semibold">內容：</label>
-                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="5" placeholder="輸入信件內容..." maxlength="200"></textarea>
-            </div>
-        </div>
-    `;
+// --- 核心修改處 START ---
+/**
+ * 處理點擊「發送請求」按鈕的邏輯
+ * @param {string} recipientId - 接收請求的玩家 ID
+ * @param {HTMLElement} buttonElement - 被點擊的按鈕元素
+ */
+async function handleSendFriendRequest(recipientId, buttonElement) {
+    if (!recipientId || !buttonElement) return;
 
-    showConfirmationModal(
-        '撰寫信件',
-        mailFormHtml,
-        async () => {
-            const title = document.getElementById('mail-title-input').value.trim();
-            const content = document.getElementById('mail-content-input').value.trim();
+    // 禁用按鈕並顯示處理中狀態，防止重複點擊
+    buttonElement.disabled = true;
+    buttonElement.textContent = '處理中...';
 
-            if (!title || !content) {
-                showFeedbackModal('錯誤', '信件標題和內容不能為空。');
-                return;
-            }
-
-            showFeedbackModal('寄送中...', `正在將您的信件送往 ${friendNickname} 的信箱...`, true);
-            try {
-                const result = await sendMail(friendUid, title, content);
-                if (result && result.success) {
-                    hideModal('feedback-modal');
-                    showFeedbackModal('成功', '信件已成功寄出！');
-                } else {
-                    throw new Error(result.error || '未知的錯誤');
-                }
-            } catch (error) {
-                hideModal('feedback-modal');
-                showFeedbackModal('寄送失敗', `無法寄送信件：${error.message}`);
-            }
-        },
-        { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
-    );
+    try {
+        const result = await sendFriendRequest(recipientId);
+        if (result && result.success) {
+            // 成功發送後，更新按鈕狀態為「已發送」
+            buttonElement.textContent = '已發送';
+            showFeedbackModal('成功', '好友請求已成功發送！');
+        } else {
+            // 如果後端返回失敗，則拋出錯誤
+            throw new Error(result.error || '未知的錯誤');
+        }
+    } catch (error) {
+        // 捕獲錯誤，顯示失敗訊息，並恢復按鈕狀態
+        showFeedbackModal('發送失敗', `無法發送好友請求：${error.message}`);
+        buttonElement.disabled = false;
+        buttonElement.textContent = '發送請求';
+    }
 }
+// --- 核心修改處 END ---
+
 
 async function handleAddFriend(friendUid, friendNickname) {
     if (!friendUid || !friendNickname) {
@@ -422,7 +410,10 @@ function updateFriendsSearchResults(players) {
         } else if (isFriend) {
             buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
         } else {
-            buttonHtml = `<button class="button primary text-xs" onclick="handleAddFriend('${player.uid}', '${player.nickname}')">加為好友</button>`;
+            // --- 核心修改處 START ---
+            // 修改按鈕文字，並將 onclick 事件改為呼叫新的 handleSendFriendRequest 函式
+            buttonHtml = `<button class="button primary text-xs" onclick="handleSendFriendRequest('${player.uid}', this)">發送請求</button>`;
+            // --- 核心修改處 END ---
         }
 
         return `

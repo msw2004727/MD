@@ -17,11 +17,40 @@ function initializeMailboxDOMElements() {
         mailReaderTimestamp: document.getElementById('mail-reader-timestamp'),
         mailReaderBody: document.getElementById('mail-reader-modal').querySelector('.mail-content-text'),
         mailReaderAttachmentsContainer: document.getElementById('mail-reader-attachments'),
-        // --- 核心修改處 START ---
         mailReaderCloseBtn: document.getElementById('mail-reader-modal').querySelector('.button[data-modal-id="mail-reader-modal"]')
-        // --- 核心修改處 END ---
     };
 }
+
+// --- 核心修改處 START ---
+/**
+ * 處理對好友請求的回應 (同意或拒絕)
+ * @param {string} mailId - 信件的 ID
+ * @param {'accept' | 'decline'} action - 玩家的操作
+ */
+async function handleFriendResponse(mailId, action) {
+    const actionText = action === 'accept' ? '同意' : '拒絕';
+    showFeedbackModal('處理中...', `正在發送您的「${actionText}」回覆...`, true);
+
+    try {
+        const result = await respondToFriendRequest(mailId, action);
+        if (result && result.success) {
+            await refreshPlayerData(); // 重新獲取玩家資料以更新好友列表和信箱
+            renderMailboxList(gameState.playerData.mailbox);
+            updateMailNotificationDot();
+            hideModal('feedback-modal');
+            
+            const successMessage = action === 'accept' ? '已成功將對方加為好友！' : '已拒絕好友請求。';
+            showFeedbackModal('成功', successMessage);
+        } else {
+            throw new Error(result.error || '未知的錯誤');
+        }
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('處理失敗', `無法處理您的回覆：${error.message}`);
+    }
+}
+// --- 核心修改處 END ---
+
 
 /**
  * 渲染信箱列表
@@ -36,24 +65,48 @@ function renderMailboxList(mails) {
         return;
     }
 
+    // 按時間戳降序排序
     mails.sort((a, b) => b.timestamp - a.timestamp);
 
+    // --- 核心修改處 START ---
+    // 修改 grid-template-columns 以適應新的按鈕佈局
     container.innerHTML = mails.map(mail => {
         const mailDate = new Date(mail.timestamp * 1000).toLocaleString();
         const statusClass = mail.is_read ? 'read' : 'unread';
         const senderName = mail.sender_name || '系統訊息';
+        const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
 
-        return `
-            <div class="mail-item ${statusClass}" data-mail-id="${mail.id}">
-                <div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>
+        let mailContentHtml;
+        let mailItemClass = `mail-item ${statusClass}`;
+
+        if (mail.type === 'friend_request') {
+            // 好友請求信件的特殊佈局
+            mailItemClass += ' friend-request'; // 添加特殊class以便CSS調整
+            mailContentHtml = `
+                <div class="mail-title-container">
+                    <p class="mail-title">${mail.title}</p>
+                    <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
+                </div>
+                <div class="friend-request-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="button success text-xs accept-friend-btn" data-mail-id="${mail.id}">同意</button>
+                    <button class="button secondary text-xs decline-friend-btn" data-mail-id="${mail.id}">拒絕</button>
+                </div>
+            `;
+        } else {
+            // 普通信件的佈局
+            mailItemClass += ' mail-item-clickable'; // 讓普通信件可以點擊
+            mailContentHtml = `
                 <div class="mail-title-container">
                     <p class="mail-title">${mail.title}</p>
                     <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
                 </div>
                 <button class="mail-delete-btn" title="刪除信件" data-mail-id="${mail.id}">&times;</button>
-            </div>
-        `;
+            `;
+        }
+        
+        return `<div class="${mailItemClass}" data-mail-id="${mail.id}">${mailStatusLight}${mailContentHtml}</div>`;
     }).join('');
+    // --- 核心修改處 END ---
 }
 
 
@@ -72,6 +125,27 @@ async function openMailReader(mailId) {
     mailboxDOMElements.mailReaderSender.textContent = mail.sender_name || '系統';
     mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
     mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\n/g, '<br>');
+
+    // 處理好友請求的特殊顯示
+    const friendRequestInfo = mailboxDOMElements.mailReaderBody.querySelector('.friend-request-info');
+    if(friendRequestInfo) friendRequestInfo.remove(); // 清除舊的
+
+    if (mail.type === 'friend_request') {
+        const senderId = mail.payload?.sender_id;
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'friend-request-info';
+        infoDiv.innerHTML = `
+            <div style="border-top: 1px dashed var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                <p class="text-center text-sm">這是一封好友請求信件。</p>
+                <div class="flex justify-center gap-4 mt-2">
+                    <button class="button success accept-friend-btn" data-mail-id="${mail.id}">✓ 同意</button>
+                    <button class="button danger decline-friend-btn" data-mail-id="${mail.id}">✗ 拒絕</button>
+                </div>
+            </div>
+        `;
+        mailboxDOMElements.mailReaderBody.appendChild(infoDiv);
+    }
+
 
     mailboxDOMElements.mailReaderAttachmentsContainer.style.display = 'none';
 
@@ -124,7 +198,6 @@ async function handleDeleteMail(mailId, event) {
 function initializeMailboxEventHandlers() {
     initializeMailboxDOMElements();
     
-    // --- 核心修改處 START ---
     // 刷新按鈕
     if (mailboxDOMElements.refreshMailboxBtn) {
         mailboxDOMElements.refreshMailboxBtn.onclick = async () => {
@@ -167,6 +240,35 @@ function initializeMailboxEventHandlers() {
             );
         };
     }
+    
+    // --- 核心修改處 START ---
+    // 為信箱列表容器和讀信視窗設定事件委派
+    function setupMailboxEventListeners(container) {
+        if (!container) return;
+        
+        container.addEventListener('click', (event) => {
+            const mailItem = event.target.closest('.mail-item-clickable');
+            const deleteBtn = event.target.closest('.mail-delete-btn');
+            const acceptBtn = event.target.closest('.accept-friend-btn');
+            const declineBtn = event.target.closest('.decline-friend-btn');
+
+            if (acceptBtn) {
+                event.stopPropagation();
+                handleFriendResponse(acceptBtn.dataset.mailId, 'accept');
+            } else if (declineBtn) {
+                event.stopPropagation();
+                handleFriendResponse(declineBtn.dataset.mailId, 'decline');
+            } else if (deleteBtn) {
+                handleDeleteMail(deleteBtn.dataset.mailId, event);
+            } else if (mailItem) {
+                openMailReader(mailItem.dataset.mailId);
+            }
+        });
+    }
+
+    setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
+    setupMailboxEventListeners(mailboxDOMElements.mailReaderModal); // 讀信器內的按鈕也需要監聽
+    // --- 核心修改處 END ---
 
     // 讀信視窗的關閉按鈕
     if (mailboxDOMElements.mailReaderCloseBtn) {
@@ -174,21 +276,4 @@ function initializeMailboxEventHandlers() {
             hideModal('mail-reader-modal');
         });
     }
-
-    // 為信箱列表容器設定事件委派
-    if (mailboxDOMElements.mailListContainer) {
-        mailboxDOMElements.mailListContainer.addEventListener('click', (event) => {
-            const mailItem = event.target.closest('.mail-item');
-            const deleteBtn = event.target.closest('.mail-delete-btn');
-
-            if (deleteBtn) {
-                const mailId = deleteBtn.dataset.mailId;
-                handleDeleteMail(mailId, event);
-            } else if (mailItem) {
-                const mailId = mailItem.dataset.mailId;
-                openMailReader(mailId);
-            }
-        });
-    }
-    // --- 核心修改處 END ---
 }
