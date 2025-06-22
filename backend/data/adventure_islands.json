@@ -1,0 +1,27 @@
+[
+  {
+    "id": "island_001",
+    "name": "初始之島",
+    "background_image_url": "images/islands/island_001_bg.png",
+    "facilities": [
+      {
+        "id": "facility_001",
+        "name": "新手森林",
+        "description": "充滿溫和生物的森林，適合新手訓練師首次挑戰。",
+        "cost": 50,
+        "min_exploration_level": 1,
+        "boss_id": "forest_guardian",
+        "loot_table_id": "loot_forest_common"
+      },
+      {
+        "id": "facility_002",
+        "name": "廢棄礦坑",
+        "description": "傳聞深處埋藏著稀有礦石，但也被危險的岩石系怪獸盤據。",
+        "cost": 150,
+        "min_exploration_level": 10,
+        "boss_id": "mine_golem",
+        "loot_table_id": "loot_mine_rare"
+      }
+    ]
+  }
+]
