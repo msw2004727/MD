@@ -34,13 +34,10 @@ def send_friend_request_service(
     friend_services_logger.info(f"玩家 {sender_nickname}({sender_id}) 準備向 {recipient_id} 發送好友請求。")
 
     # 定義好友請求信件的標準格式
-    # --- 核心修改處 START ---
-    # 將信件類型改為 'friend_request'，讓前端可以區分
     title = f"來自「{sender_nickname}」的好友請求"
     content = f"玩家「{sender_nickname}」想要將您加為好友。您可以在信箱中處理此請求。"
     
     # 建立 payload，這對於接收者回應請求至關重要
-    # 我們將寄件人的資訊放在 payload 中，這樣收件人回覆時才知道要回覆給誰
     payload = {
         "request_type": "friend_request",
         "sender_id": sender_id,
@@ -57,7 +54,6 @@ def send_friend_request_service(
         payload=payload,
         mail_type="friend_request" # 指定信件類型
     )
-    # --- 核心修改處 END ---
 
     if success:
         friend_services_logger.info(f"成功為玩家 {sender_id} 生成好友請求信件，並交由 mail_service 發送給 {recipient_id}。")
@@ -66,7 +62,7 @@ def send_friend_request_service(
 
     return success
 
-# --- 核心修改處 START ---
+
 def respond_to_friend_request_service(
     responder_id: str,
     mail_id: str,
@@ -99,7 +95,6 @@ def respond_to_friend_request_service(
     
     if not friend_request_mail:
         friend_services_logger.warning(f"回應好友請求：在玩家 {responder_id} 的信箱中找不到 ID 為 {mail_id} 的好友請求信，可能已被處理。")
-        # 即使信件找不到，也視為操作成功，避免前端卡住
         return True
         
     # 從信件的 payload 中獲取原始寄件人的資訊
@@ -147,4 +142,56 @@ def respond_to_friend_request_service(
         return False
     
     return True
+
+
+# --- 核心修改處 START ---
+def remove_friend_service(remover_id: str, friend_to_remove_id: str) -> bool:
+    """
+    雙向移除好友。
+    從移除者的好友列表中刪除對方，同時也從對方的好友列表中刪除自己。
+
+    Args:
+        remover_id: 執行移除操作的玩家ID。
+        friend_to_remove_id: 被移除的好友的ID。
+
+    Returns:
+        操作是否成功。
+    """
+    friend_services_logger.info(f"開始雙向移除好友流程：{remover_id} -> {friend_to_remove_id}")
+    
+    # 1. 獲取並更新移除者 (Player A) 的資料
+    remover_data, _ = get_player_data_service(remover_id, None, {})
+    if not remover_data or "friends" not in remover_data:
+        friend_services_logger.warning(f"玩家 {remover_id} 沒有好友列表或找不到資料，無法執行移除。")
+        return False
+
+    # 過濾掉要刪除的好友
+    initial_remover_friend_count = len(remover_data["friends"])
+    remover_data["friends"] = [f for f in remover_data["friends"] if f.get("uid") != friend_to_remove_id]
+    remover_made_change = len(remover_data["friends"]) < initial_remover_friend_count
+
+    # 2. 獲取並更新被移除者 (Player B) 的資料
+    friend_data, _ = get_player_data_service(friend_to_remove_id, None, {})
+    friend_made_change = False
+    if friend_data and "friends" in friend_data:
+        initial_friend_friend_count = len(friend_data["friends"])
+        # 從對方的好友列表中，過濾掉操作者自己
+        friend_data["friends"] = [f for f in friend_data["friends"] if f.get("uid") != remover_id]
+        friend_made_change = len(friend_data["friends"]) < initial_friend_friend_count
+
+    # 3. 儲存所有變更
+    try:
+        # 只有在列表確實發生變更時才儲存，避免不必要的寫入
+        if remover_made_change:
+            save_player_data_service(remover_id, remover_data)
+            friend_services_logger.info(f"已從玩家 {remover_id} 的好友列表中移除 {friend_to_remove_id}。")
+        
+        if friend_made_change:
+            save_player_data_service(friend_to_remove_id, friend_data)
+            friend_services_logger.info(f"已從玩家 {friend_to_remove_id} 的好友列表中移除 {remover_id}。")
+            
+        return True
+    except Exception as e:
+        friend_services_logger.error(f"在儲存雙向移除好友的資料時發生錯誤: {e}", exc_info=True)
+        return False
 # --- 核心修改處 END ---
