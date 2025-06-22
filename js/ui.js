@@ -7,39 +7,6 @@ console.log("DEBUG: ui.js starting to load and define functions.");
 let DOMElements = {}; // 在頂層聲明，但由 initializeDOMElements 初始化
 let progressInterval = null; // 用於存放進度條的計時器ID
 
-/**
- * 新增：動態注入修復冒險島版面所需的CSS樣式。
- * 這是為了解決CSS文件載入順序或選擇器權重可能引發的問題。
- */
-function injectAdventureStyles() {
-    const styleId = 'adventure-dynamic-styles';
-    // 如果樣式已經存在，就不重複注入
-    if (document.getElementById(styleId)) return;
-
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.innerHTML = `
-        /* 由 ui.js 動態注入，確保冒險島頁籤版面正確 */
-        #guild-content.active {
-            display: flex !important;
-            flex-direction: column !important;
-            flex-grow: 1 !important;
-            min-height: 0 !important;
-            position: relative !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-        }
-
-        /* 確保冒險島的地圖容器也能在 flex 佈局中伸展 */
-        .adventure-island-container {
-            flex-grow: 1;
-            position: relative; /* 為了讓網格能相對於它定位 */
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-
 // ====== 將 switchTabContent 函數聲明在頂層，確保其可見性 ======
 function switchTabContent(targetTabId, clickedButton, modalId = null) {
     let tabButtonsContainer, tabContentsContainer;
@@ -197,11 +164,6 @@ function initializeDOMElements() {
         snapshotMpFill: document.getElementById('snapshot-mp-fill'),
     };
     
-    // --- 核心修改處 START ---
-    // 在初始化 DOMElements 後，立刻注入我們需要的修正樣式
-    injectAdventureStyles();
-    // --- 核心修改處 END ---
-
     console.log("DOMElements initialized in ui.js");
 }
 
