@@ -8,10 +8,39 @@ function initializeGameInteractionEventHandlers() {
     // 綁定其他互動事件
     handleDnaDrawModal();
     handleFriendAndPlayerInteractions();
-    handleCultivationStart(); // 新增呼叫
-    
-    // 注意：原先在此處的其他函數（如 farm, leaderboard, nickname 等）已被移至更專門的 monster-handlers.js 中，此處不再需要呼叫。
+    handleCultivationStart();
+
+    // --- 核心修改處 START ---
+    // 為好友列表的刷新按鈕綁定正確的事件
+    const refreshBtn = document.getElementById('refresh-friends-list-btn');
+    if (refreshBtn) {
+        refreshBtn.onclick = null; // 清除在 HTML 中定義的舊的、不正確的 onclick 事件
+        refreshBtn.addEventListener('click', handleRefreshFriendsList);
+    }
+    // --- 核心修改處 END ---
 }
+
+
+// --- 核心修改處 START ---
+/**
+ * 新增函式：處理點擊刷新好友列表按鈕的邏輯。
+ */
+async function handleRefreshFriendsList() {
+    showFeedbackModal('刷新中...', '正在獲取最新的好友狀態...', true);
+    try {
+        await refreshPlayerData(); // 呼叫核心函式從後端獲取最新資料
+        // refreshPlayerData 執行完畢後，gameState 已是最新，此時再渲染列表
+        if(typeof renderFriendsList === 'function') {
+            await renderFriendsList(); 
+        }
+    } catch (error) {
+        console.error("刷新好友列表失敗:", error);
+        showFeedbackModal('錯誤', '刷新好友列表時發生錯誤。');
+    } finally {
+        hideModal('feedback-modal');
+    }
+}
+// --- core-modification-end ---
 
 
 // --- 核心遊戲流程事件處理 ---
@@ -168,6 +197,8 @@ function handleCultivationStart() {
     const container = DOMElements.cultivationSetupModal;
     if (!container) return;
 
+    // 為避免重複綁定，先移除舊的監聽器 (如果存在)
+    // 這一步是防禦性程式設計，但目前結構下，只會被初始化一次
     const newContainer = container.cloneNode(true);
     container.parentNode.replaceChild(newContainer, container);
     DOMElements.cultivationSetupModal = newContainer;
@@ -193,6 +224,7 @@ function handleCultivationStart() {
         
         const maxDuration = (gameState.gameConfigs?.value_settings?.max_cultivation_time_seconds || 3600) * 1000;
 
+        // 更新 monster state
         if (!monster.farmStatus) {
             monster.farmStatus = {};
         }
@@ -202,17 +234,21 @@ function handleCultivationStart() {
         monster.farmStatus.trainingLocation = location;
 
         hideModal('cultivation-setup-modal');
+        // 修改點：呼叫 showFeedbackModal 時，不再傳遞 message 字串，而是傳遞一個包含怪獸物件的特殊物件
         showFeedbackModal('修煉開始！', '', false, { type: 'cultivation_start', monster: monster });
         
+        // 重新渲染農場列表以更新狀態
         if(typeof renderMonsterFarm === 'function') {
             renderMonsterFarm();
         }
 
+        // 儲存更新後的玩家資料
         try {
             await savePlayerData(gameState.playerId, gameState.playerData);
             console.log(`Cultivation started for monster ${monsterId} and data saved.`);
         } catch (error) {
             console.error('Failed to save player data after starting cultivation:', error);
+            // 還原狀態
             monster.farmStatus.isTraining = false;
             monster.farmStatus.trainingStartTime = null;
             monster.farmStatus.trainingDuration = null;
@@ -245,6 +281,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         return;
     }
     
+    // 【新增】檢查瀕死狀態
     if (playerMonster.hp < playerMonster.initial_max_hp * 0.25) {
         showFeedbackModal('無法出戰', '瀕死狀態無法出戰，請先治療您的怪獸。');
         return;
