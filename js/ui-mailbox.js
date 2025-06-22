@@ -177,20 +177,17 @@ async function openMailReader(mailId) {
         if (mail.sender_id && mail.type !== 'friend_request') {
             footer.innerHTML = `<button class="button primary reply-mail-btn" data-sender-id="${mail.sender_id}" data-sender-name="${mail.sender_name}">回覆寄件人</button>`;
         } else {
-            // --- 核心修改處 START ---
-            // 移除 footer 按鈕的 modal-close class，並改用 onclick 事件來關閉
             footer.innerHTML = `<button class="button secondary" onclick="hideModal('mail-reader-modal')">關閉</button>`;
-            // --- 核心修改處 END ---
         }
     }
 
+    // --- 核心修改處 START ---
+    // 確保關閉按鈕一直都有紅圈樣式
     const closeButton = mailboxDOMElements.mailReaderModal.querySelector('.modal-close');
     if (closeButton) {
-        closeButton.classList.remove('system-notification-close-btn');
-        if (senderName === '系統通知' || mail.type === 'reward') {
-            closeButton.classList.add('system-notification-close-btn');
-        }
+        closeButton.classList.add('system-notification-close-btn');
     }
+    // --- 核心修改處 END ---
 
     mailboxDOMElements.mailReaderAttachmentsContainer.style.display = 'none';
 
