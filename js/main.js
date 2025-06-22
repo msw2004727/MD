@@ -44,16 +44,12 @@ async function loadAndDisplayAnnouncement() {
         if (titleElement && contentContainer && adBannerContainer) {
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
             
-            // --- 核心修改處 START ---
-            // 1. 移除舊的 data-asset-key 寫法
-            // 2. 直接從 gameState 讀取圖片路徑並設定 src
-            const bannerUrl = gameState.assetPaths?.images?.modals?.officialAnnouncement;
+            const bannerUrl = gameState.assetPaths?.images?.modals?.announcement;
             if (bannerUrl) {
                 adBannerContainer.innerHTML = `<img src="${bannerUrl}" alt="官方公告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">`;
             } else {
-                adBannerContainer.style.display = 'none'; // 如果沒有設定路徑，則隱藏橫幅
+                adBannerContainer.style.display = 'none';
             }
-            // --- 核心修改處 END ---
             
             let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
 
@@ -244,7 +240,7 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers'
+        'initializeMailboxEventHandlers', 'initializeAdventureHandlers'
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -263,6 +259,7 @@ function attemptToInitializeApp() {
         initializeNoteHandlers();
         initializeChatSystem();
         initializeMailboxEventHandlers();
+        initializeAdventureHandlers();
 
         setInterval(updateAllTimers, 1000);
 
@@ -283,39 +280,6 @@ window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
 console.log("Main.js script loaded.");
 
-(function() {
-    const gameVersion = '0.3.9'; 
-
-    const jsFiles = [
-        'js/firebase-config.js',
-        'js/config.js',
-        'js/game-state.js',
-        'js/api-client.js',
-        'js/auth.js',
-        'js/game-logic.js',
-        'js/utils.js',
-        'js/monster-part-assets.js',
-        'js/ui.js',
-        'js/ui-inventory.js',
-        'js/ui-snapshot.js',
-        'js/ui-farm.js',
-        'js/ui-player-modals.js',
-        'js/ui-monster-details.js',
-        'js/ui-battle-modals.js',
-        'js/ui-result-modals.js',
-        'js/ui-leaderboard-modals.js',
-        'js/ui-champions.js',
-        'js/ui-notes.js',
-        'js/ui-chat.js',
-        'js/ui-mailbox.js',
-        'js/handlers/ui-handlers.js',
-        'js/handlers/game-interaction-handlers.js',
-        'js/handlers/drag-drop-handlers.js',
-        'js/handlers/monster-handlers.js',
-        'js/main.js'
-    ];
-
-    jsFiles.forEach(path => {
-        document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
-    });
-})();
+// NOTE: The IIFE script loader from the original file is omitted here,
+// as the loading is now correctly handled by index.html.
+// This makes main.js cleaner and solely focused on application logic.

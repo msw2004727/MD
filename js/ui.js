@@ -35,12 +35,25 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
     if (targetContent) {
         targetContent.classList.add('active');
 
-        // Friends list rendering is now handled within its own module/event
+        // --- 核心修改處 START ---
+        // 根據切換的頁籤，觸發特定的UI渲染函式
         if (targetTabId === 'friends-list-content') {
             if (typeof renderFriendsList === 'function') {
                 renderFriendsList();
             }
+        } else if (targetTabId === 'guild-content') {
+            if (typeof initializeAdventureUI === 'function') {
+                console.log("Switching to Adventure Island, calling initializeAdventureUI...");
+                initializeAdventureUI();
+            } else {
+                console.error("initializeAdventureUI function not found!");
+            }
+        } else if (targetTabId === 'medical-content') {
+            if (typeof renderMedicalStation === 'function') {
+                renderMedicalStation();
+            }
         }
+        // --- 核心修改處 END ---
     }
 }
 // =============================================================
@@ -360,7 +373,6 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         }
     };
     
-    // --- 核心修改處 START ---
     const loadingTitleMap = {
         '遊戲載入中': 'gameLoad',
         '登入中': 'login',
@@ -376,9 +388,8 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
         '載入中': 'generic',
         '處理中': 'processing',
         '更新中': 'updating',
-        '治療中...': 'healing', // 新增 '治療中...' 的對應鍵
+        '治療中...': 'healing',
     };
-    // --- 核心修改處 END ---
 
     let loadingKey = null;
     if (isLoading) {
@@ -420,7 +431,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
                      cultivation_item_find_chance: '修煉物品發現率', cultivation_exp_gain: '修煉經驗提升',
                      cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
                      elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
-                     leech_skill_effect: '吸血效果提升', mp_regen_per_turn: 'MP每回合恢復',
+                     leech_skill_effect: '生命吸取效果', mp_regen_per_turn: 'MP每回合恢復',
                      dna_return_rate_on_disassemble: '分解DNA返還率', fire_resistance: '火系抗性',
                      water_resistance: '水系抗性', wood_resistance: '木系抗性', gold_resistance: '金系抗性',
                      earth_resistance: '土系抗性', light_resistance: '光系抗性', dark_resistance: '暗系抗性'

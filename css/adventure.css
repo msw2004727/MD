@@ -1,98 +1,78 @@
 /* css/adventure.css */
 /* 存放所有「冒險島」相關的專屬CSS樣式 */
 
-/* 當冒險島頁籤處於活動狀態時，進行特殊佈局設定 */
+/* 頁籤容器 */
 #guild-content.active {
-    /* * 核心修正：
-     * 1. 繼承 .tab-content.active 的核心佈局屬性 (display: flex, flex-grow: 1)，
-     * 確保此頁籤能像其他頁籤一樣填滿剩餘空間。
-     * 2. 保留 position: relative 以便定位子元素。
-     * 3. 移除 padding 讓地圖可以填滿。
-    */
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
-    position: relative; 
-    padding: 0; 
-    overflow: hidden; 
+    padding: 0.5rem;
+    box-sizing: border-box;
 }
 
-/* 冒險島地圖的容器 - 不再使用絕對定位 */
-.adventure-island-container {
-    /* 移除 position: absolute; */
-    flex-grow: 1; /* 讓地圖容器填滿父層(#guild-content)的剩餘空間 */
-    width: 100%;
-    /* 高度現在由 flex-grow 自動控制 */
-    background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands001.png?raw=true');
-    background-size: cover;
-    background-position: center;
-    overflow: auto; /* 當網格大於畫面時，允許滾動 */
-    position: relative; /* 讓 grid-overlay 可以相對於它定位 */
-}
-
-/* 覆蓋在地圖上的網格容器 - 保持絕對定位，但現在是相對於 .adventure-island-container */
-.adventure-grid-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
+/* 外層 Wrapper，用於將內容置中 */
+.adventure-wrapper {
     width: 100%;
     height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 內容區，維持固定的長寬比 */
+.adventure-content-area {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    
+    /* --- 網格佈局樣式 --- */
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    grid-template-rows: repeat(5, 1fr);
-    gap: 4px; /* 格子之間的微小間距 */
+    grid-template-columns: repeat(3, 1fr); /* 【修改】改為 3 欄 */
+    grid-template-rows: repeat(3, 1fr);    /* 【修改】改為 3 列 */
+    gap: 4px;
     padding: 4px;
-    box-sizing: border-box; /* 確保 padding 不會影響總寬高 */
-    min-width: 600px; /* 設定最小寬度以保持格子比例 */
-    min-height: 400px; /* 設定最小高度 */
+    box-sizing: border-box;
+
+    /* --- 背景圖設定 (手機優先) --- */
+    background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands004.png?raw=true');
+    aspect-ratio: 9 / 16; /* 窄版圖片的長寬比 */
+}
+
+/* 當螢幕寬度大於 768px 時 (例如平板或電腦) */
+@media (min-width: 768px) {
+    .adventure-content-area {
+        /* 自動切換為寬版圖片 */
+        background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands005.png?raw=true');
+        aspect-ratio: 16 / 9; /* 寬版圖片的長寬比 */
+    }
 }
 
 /* 單一的網格儲存格 */
 .adventure-grid-cell {
-    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border: 2px dashed rgba(255, 255, 255, 0.4); /* 【修改】使用更明顯的虛線 */
     border-radius: 8px;
     transition: background-color 0.3s, border-color 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 .adventure-grid-cell:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.8);
 }
 
-/* 格子內的探索按鈕 */
-.adventure-node-btn {
-    background-color: rgba(13, 17, 23, 0.6);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    font-size: 1.5rem; /* 圖示大小 */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-    transition: all 0.2s ease-in-out;
+/* 【新增】格子內的座標文字樣式 */
+.adventure-coordinate-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 5px black, 0 0 5px black; /* 加強文字陰影，使其在複雜背景上更清晰 */
+    pointer-events: none; /* 讓點擊可以穿透文字，直接點到格子本身 */
 }
-
-.adventure-node-btn:hover {
-    background-color: rgba(88, 166, 255, 0.8);
-    color: #ffffff;
-    transform: scale(1.1);
-    border-color: var(--accent-color);
-    box-shadow: 0 0 10px var(--accent-color);
-}
-
-/* 不同節點類型的圖示 */
-.adventure-node-btn.type-combat::before { content: '⚔️'; }
-.adventure-node-btn.type-elite::before { content: '💀'; }
-.adventure-node-btn.type-treasure::before { content: '💎'; }
-.adventure-node-btn.type-fountain::before { content: '💧'; }
-.adventure-node-btn.type-merchant::before { content: '💰'; }
-.adventure-node-btn.type-boss::before { content: '👑'; }
-.adventure-node-btn.type-start::before { content: '🏁'; }
