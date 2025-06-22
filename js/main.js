@@ -39,9 +39,21 @@ async function loadAndDisplayAnnouncement() {
 
         const titleElement = document.querySelector('#official-announcement-modal .modal-header');
         const contentContainer = document.getElementById('announcement-content');
+        const adBannerContainer = document.getElementById('announcement-ad-banner');
 
-        if (titleElement && contentContainer) {
+        if (titleElement && contentContainer && adBannerContainer) {
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
+            
+            // --- 核心修改處 START ---
+            // 1. 移除舊的 data-asset-key 寫法
+            // 2. 直接從 gameState 讀取圖片路徑並設定 src
+            const bannerUrl = gameState.assetPaths?.images?.modals?.officialAnnouncement;
+            if (bannerUrl) {
+                adBannerContainer.innerHTML = `<img src="${bannerUrl}" alt="官方公告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">`;
+            } else {
+                adBannerContainer.style.display = 'none'; // 如果沒有設定路徑，則隱藏橫幅
+            }
+            // --- 核心修改處 END ---
             
             let contentHtml = `<p>${announcementData.greeting || '親愛的'}<span id="announcement-player-name" class="font-bold text-[var(--accent-color)]">玩家</span>您好，</p>`;
 
@@ -140,12 +152,9 @@ async function initializeGame() {
         });
         console.log("Game configs, player data, asset paths, and chat greetings loaded and saved to gameState.");
         
-        // --- 核心修改處 START ---
-        // 在玩家資料載入後，立即更新信箱紅點狀態
         if(typeof updateMailNotificationDot === 'function') {
             updateMailNotificationDot();
         }
-        // --- 核心修改處 END ---
 
         if (typeof populateImageAssetSources === 'function') {
             populateImageAssetSources();
@@ -235,7 +244,7 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers' // --- 核心修改處 START ---
+        'initializeMailboxEventHandlers'
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -253,7 +262,7 @@ function attemptToInitializeApp() {
         initializeMonsterEventHandlers();
         initializeNoteHandlers();
         initializeChatSystem();
-        initializeMailboxEventHandlers(); // --- 核心修改處 START ---
+        initializeMailboxEventHandlers();
 
         setInterval(updateAllTimers, 1000);
 
@@ -274,7 +283,6 @@ window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
 console.log("Main.js script loaded.");
 
-// --- 核心修改處 START ---
 (function() {
     const gameVersion = '0.3.9'; 
 
@@ -299,14 +307,13 @@ console.log("Main.js script loaded.");
         'js/ui-champions.js',
         'js/ui-notes.js',
         'js/ui-chat.js',
-        'js/ui-mailbox.js', // 新增對信箱UI腳本的引用
+        'js/ui-mailbox.js',
         'js/handlers/ui-handlers.js',
         'js/handlers/game-interaction-handlers.js',
         'js/handlers/drag-drop-handlers.js',
         'js/handlers/monster-handlers.js',
         'js/main.js'
     ];
-// --- 核心修改處 END ---
 
     jsFiles.forEach(path => {
         document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
