@@ -50,8 +50,6 @@ function injectMailboxStyles() {
             gap: 0.5rem;
             flex-shrink: 0;
         }
-        /* --- 核心修改處 START --- */
-        /* 為系統通知信件的關閉按鈕新增紅圈樣式 */
         #mail-reader-modal .modal-close.system-notification-close-btn {
             background-color: var(--danger-color);
             color: var(--button-danger-text);
@@ -72,7 +70,6 @@ function injectMailboxStyles() {
         body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
              background-color: var(--danger-hover-light);
         }
-        /* --- 核心修改處 END --- */
     `;
     document.head.appendChild(style);
 }
@@ -165,17 +162,13 @@ async function openMailReader(mailId) {
     const senderName = mail.sender_name || '系統通知';
     mailboxDOMElements.mailReaderTitle.textContent = mail.title;
     
-    // --- 核心修改處 START ---
-    // 1. 處理寄件人名稱顏色
     if (senderName === '系統通知') {
         mailboxDOMElements.mailReaderSender.innerHTML = `<strong style="color: gold;">${senderName}</strong>`;
     } else {
         mailboxDOMElements.mailReaderSender.textContent = senderName;
     }
     
-    // 2. 處理信件內容中的換行符
     mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ');
-    // --- 核心修改處 END ---
 
     mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
 
@@ -184,20 +177,20 @@ async function openMailReader(mailId) {
         if (mail.sender_id && mail.type !== 'friend_request') {
             footer.innerHTML = `<button class="button primary reply-mail-btn" data-sender-id="${mail.sender_id}" data-sender-name="${mail.sender_name}">回覆寄件人</button>`;
         } else {
-            footer.innerHTML = `<button class="button secondary modal-close" data-modal-id="mail-reader-modal">關閉</button>`;
+            // --- 核心修改處 START ---
+            // 移除 footer 按鈕的 modal-close class，並改用 onclick 事件來關閉
+            footer.innerHTML = `<button class="button secondary" onclick="hideModal('mail-reader-modal')">關閉</button>`;
+            // --- 核心修改處 END ---
         }
     }
 
-    // --- 核心修改處 START ---
-    // 3. 處理右上角關閉按鈕的樣式
     const closeButton = mailboxDOMElements.mailReaderModal.querySelector('.modal-close');
     if (closeButton) {
-        closeButton.classList.remove('system-notification-close-btn'); // 先移除，避免重複
+        closeButton.classList.remove('system-notification-close-btn');
         if (senderName === '系統通知' || mail.type === 'reward') {
             closeButton.classList.add('system-notification-close-btn');
         }
     }
-    // --- 核心修改處 END ---
 
     mailboxDOMElements.mailReaderAttachmentsContainer.style.display = 'none';
 
