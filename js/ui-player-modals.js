@@ -1,38 +1,71 @@
 // js/ui-player-modals.js
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
-// --- 核心修改處 START ---
-/**
- * 處理點擊「發送請求」按鈕的邏輯
- * @param {string} recipientId - 接收請求的玩家 ID
- * @param {HTMLElement} buttonElement - 被點擊的按鈕元素
- */
+function openSendMailModal(friendUid, friendNickname) {
+    const mailFormHtml = `
+        <div style="text-align: left; font-size: 0.9rem;">
+            <p style="margin-bottom: 1rem;">正在寫信給：<strong style="color: var(--accent-color);">${friendNickname}</strong></p>
+            <div style="margin-bottom: 0.75rem;">
+                <label for="mail-title-input" class="block mb-1 font-semibold">標題：</label>
+                <input type="text" id="mail-title-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="輸入信件標題..." maxlength="30">
+            </div>
+            <div>
+                <label for="mail-content-input" class="block mb-1 font-semibold">內容：</label>
+                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="5" placeholder="輸入信件內容..." maxlength="200"></textarea>
+            </div>
+        </div>
+    `;
+
+    showConfirmationModal(
+        '撰寫信件',
+        mailFormHtml,
+        async () => {
+            const title = document.getElementById('mail-title-input').value.trim();
+            const content = document.getElementById('mail-content-input').value.trim();
+
+            if (!title || !content) {
+                showFeedbackModal('錯誤', '信件標題和內容不能為空。');
+                return;
+            }
+
+            showFeedbackModal('寄送中...', `正在將您的信件送往 ${friendNickname} 的信箱...`, true);
+            try {
+                const result = await sendMail(friendUid, title, content);
+                if (result && result.success) {
+                    hideModal('feedback-modal');
+                    showFeedbackModal('成功', '信件已成功寄出！');
+                } else {
+                    throw new Error(result.error || '未知的錯誤');
+                }
+            } catch (error) {
+                hideModal('feedback-modal');
+                showFeedbackModal('寄送失敗', `無法寄送信件：${error.message}`);
+            }
+        },
+        { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
+    );
+}
+
 async function handleSendFriendRequest(recipientId, buttonElement) {
     if (!recipientId || !buttonElement) return;
 
-    // 禁用按鈕並顯示處理中狀態，防止重複點擊
     buttonElement.disabled = true;
     buttonElement.textContent = '處理中...';
 
     try {
         const result = await sendFriendRequest(recipientId);
         if (result && result.success) {
-            // 成功發送後，更新按鈕狀態為「已發送」
             buttonElement.textContent = '已發送';
             showFeedbackModal('成功', '好友請求已成功發送！');
         } else {
-            // 如果後端返回失敗，則拋出錯誤
             throw new Error(result.error || '未知的錯誤');
         }
     } catch (error) {
-        // 捕獲錯誤，顯示失敗訊息，並恢復按鈕狀態
         showFeedbackModal('發送失敗', `無法發送好友請求：${error.message}`);
         buttonElement.disabled = false;
         buttonElement.textContent = '發送請求';
     }
 }
-// --- 核心修改處 END ---
-
 
 async function handleAddFriend(friendUid, friendNickname) {
     if (!friendUid || !friendNickname) {
@@ -64,7 +97,7 @@ async function handleAddFriend(friendUid, friendNickname) {
     }
     const searchResultsContainer = DOMElements.friendsSearchResultsArea;
     if (searchResultsContainer) {
-        const button = searchResultsContainer.querySelector(`button[onclick="handleAddFriend('${friendUid}', '${friendNickname}')"]`);
+        const button = searchResultsContainer.querySelector(`button[onclick*="'${friendUid}'"]`);
         if (button) {
             button.textContent = '已加入';
             button.disabled = true;
@@ -76,11 +109,11 @@ async function handleAddFriend(friendUid, friendNickname) {
         showFeedbackModal('成功', `已成功將「${friendNickname}」加入您的好友列表！`);
     } catch (error) {
         gameState.playerData.friends = gameState.playerData.friends.filter(f => f.uid !== friendUid);
-        renderFriendsList();
+        if(typeof renderFriendsList === 'function') renderFriendsList();
         if (searchResultsContainer) {
-           const button = searchResultsContainer.querySelector(`button[onclick="handleAddFriend('${friendUid}', '${friendNickname}')"]`);
+           const button = searchResultsContainer.querySelector(`button[onclick*="'${friendUid}'"]`);
             if (button) {
-                button.textContent = '加為好友';
+                button.textContent = '發送請求';
                 button.disabled = false;
             }
         }
@@ -410,10 +443,7 @@ function updateFriendsSearchResults(players) {
         } else if (isFriend) {
             buttonHtml = `<button class="button secondary text-xs" disabled>已是好友</button>`;
         } else {
-            // --- 核心修改處 START ---
-            // 修改按鈕文字，並將 onclick 事件改為呼叫新的 handleSendFriendRequest 函式
-            buttonHtml = `<button class="button primary text-xs" onclick="handleSendFriendRequest('${player.uid}', this)">發送請求</button>`;
-            // --- 核心修改處 END ---
+            buttonHtml = `<button class="button primary text-xs send-friend-request-btn" data-recipient-id="${player.uid}" data-recipient-nickname="${player.nickname}">發送請求</button>`;
         }
 
         return `
@@ -459,20 +489,65 @@ async function renderFriendsList() {
                 const nowInSeconds = Date.now() / 1000;
                 const isOnline = lastSeen && (nowInSeconds - lastSeen < 300); 
 
+                // --- 核心修改處 START ---
+                // 移除 onclick="..."，改用 class 和 data-* 屬性
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
                         <span class="online-status ${isOnline ? 'online' : 'offline'}"></span>
-                        <a href="#" class="friend-name-link" onclick="viewPlayerInfo('${friend.uid}'); return false;">
+                        <a href="#" class="friend-name-link" data-friend-uid="${friend.uid}">
                             ${displayName}
                         </a>
                     </div>
                     <div class="friend-actions">
-                        <button class="button secondary text-xs" title="寄信" onclick="openSendMailModal('${friend.uid}', '${friend.nickname}')">✉️</button>
-                        <button class="button secondary text-xs remove-friend-btn" title="移除好友" onclick="handleRemoveFriendClick('${friend.uid}', '${friend.nickname}')">❌</button>
-                        </div>
+                        <button class="button secondary text-xs send-mail-btn" title="寄信" data-friend-uid="${friend.uid}" data-friend-nickname="${displayName}">✉️</button>
+                        <button class="button secondary text-xs remove-friend-btn" title="移除好友" data-friend-uid="${friend.uid}" data-friend-nickname="${displayName}">❌</button>
+                    </div>
                 </div>
-            `}).join('')}
+            `
+            }).join('')}
         </div>
     `;
+    // --- 核心修改處 END ---
 }
+
+// --- 核心修改處 START ---
+// 新增一個函式，用於在檔案載入時設定事件監聽器
+function initializePlayerModalEventHandlers() {
+    const friendsListContainer = document.getElementById('friends-list-display-area');
+    if (friendsListContainer) {
+        friendsListContainer.addEventListener('click', (event) => {
+            const target = event.target;
+            const friendCard = target.closest('.friend-item-card');
+
+            if (!friendCard) return;
+
+            const nameLink = target.closest('.friend-name-link');
+            const sendBtn = target.closest('.send-mail-btn');
+            const removeBtn = target.closest('.remove-friend-btn');
+
+            if (nameLink) {
+                event.preventDefault();
+                viewPlayerInfo(nameLink.dataset.friendUid);
+            } else if (sendBtn) {
+                openSendMailModal(sendBtn.dataset.friendUid, sendBtn.dataset.friendNickname);
+            } else if (removeBtn) {
+                handleRemoveFriendClick(removeBtn.dataset.friendUid, removeBtn.dataset.friendNickname);
+            }
+        });
+    }
+
+    const searchResultsContainer = document.getElementById('friends-search-results-area');
+    if (searchResultsContainer) {
+        searchResultsContainer.addEventListener('click', (event) => {
+            const requestBtn = event.target.closest('.send-friend-request-btn');
+            if (requestBtn) {
+                handleSendFriendRequest(requestBtn.dataset.recipientId, requestBtn);
+            }
+        });
+    }
+}
+
+// 在檔案的最後，等待 DOM 載入完成後執行事件綁定
+document.addEventListener('DOMContentLoaded', initializePlayerModalEventHandlers);
+// --- 核心修改處 END ---
