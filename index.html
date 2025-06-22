@@ -150,12 +150,13 @@
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
                     <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪獸農場</button>
                     <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友列表</button>
+                    <button class="tab-button" data-tab-target="tournament-content">🥋 武道大會</button>
                     <button class="tab-button" data-tab-target="medical-content">🚑 醫療站</button>
                     <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> 
                     <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
-                    <button class="tab-button" data-tab-target="homestead-content">🛠️ 家園建設</button>
+                    <button class="tab-button" data-tab-target="homestead-content">🏰 秘密基地</button>
                     <button class="tab-button" data-tab-target="guild-content">🏝️ 冒險島</button>
-                </div>
+                    </div>
 
                 <div id="dna-inventory-content" class="tab-content active">
                     <div id="dna-combination-panel-wrapper" class="panel mb-4">
@@ -208,6 +209,9 @@
                     </div>
                 </div>
 
+                <div id="tournament-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🥋 武道大會正在激烈籌備中，敬請期待！</p>
+                </div>
                 <div id="medical-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🚑 正在招募醫護人員中，敬請期待！</p>
                 </div>
@@ -220,7 +224,7 @@
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易所搭建中，敬請期待！</p>
                 </div>
                 <div id="homestead-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🛠️ 建商尚未進駐，敬請期待！</p>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏰 秘密基地建設中，敬請期待！</p>
                 </div>
                 <div id="guild-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️ 港口尚未開放，敬請期待！</p>
@@ -580,9 +584,7 @@
                 'js/ui-champions.js',
                 'js/ui-notes.js',
                 'js/ui-chat.js',
-                // --- 核心修改處 START ---
-                'js/ui-mailbox.js', // 新增對信箱UI腳本的引用
-                // --- 核心修改處 END ---
+                'js/ui-mailbox.js',
                 'js/handlers/ui-handlers.js',
                 'js/handlers/game-interaction-handlers.js',
                 'js/handlers/drag-drop-handlers.js',

@@ -670,7 +670,16 @@ async function refreshPlayerData() {
             const currentSelectedMonster = getSelectedMonster() || getDefaultSelectedMonster();
             updateMonsterSnapshot(currentSelectedMonster);
             
-            // --- 【新增】刷新資料後，檢查是否有新稱號要顯示 ---
+            if (typeof updateMailNotificationDot === 'function') {
+                updateMailNotificationDot();
+            }
+            
+            // --- 核心修改處 START ---
+            if (typeof updatePlayerCurrencyDisplay === 'function') {
+                updatePlayerCurrencyDisplay(playerData.playerStats.gold || 0);
+            }
+            // --- 核心修改處 END ---
+
             if (typeof checkAndShowNewTitleModal === 'function') {
                 checkAndShowNewTitleModal(playerData);
             }

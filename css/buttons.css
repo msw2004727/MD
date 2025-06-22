@@ -146,6 +146,18 @@ button.warning-outline:hover, .button.warning-outline:hover {
     border-color: var(--warning-color);
 }
 
+/* --- 核心修改處 START --- */
+/* 新增的紫色動作按鈕樣式 */
+button.action, .button.action {
+    background-color: var(--rarity-mythical-text); /* 借用神話稀有度的紫色 */
+    color: #ffffff; /* 白色文字以確保對比度 */
+    border-bottom-color: color-mix(in srgb, var(--rarity-mythical-text) 70%, black);
+}
+button.action:hover, .button.action:hover {
+    background-color: color-mix(in srgb, var(--rarity-mythical-text) 85%, black);
+}
+/* --- 核心修改處 END --- */
+
 .action-button-main {
     height: 35px !important;
     padding: 0 15px !important;
@@ -256,7 +268,7 @@ button.warning-outline:hover, .button.warning-outline:hover {
 
 .leaderboard-table .button {
     white-space: nowrap;
-    padding: 4px 12px; /* Make button slightly smaller */
+    padding: 4px 12px;
 }
 
 #add-all-to-temp-backpack-btn {
@@ -280,14 +292,13 @@ button.warning-outline:hover, .button.warning-outline:hover {
     min-width: auto;
 }
 
-/* --- 核心修改處 START --- */
 .title-action-button {
     background-color: var(--button-secondary-bg);
     border: 1px solid var(--border-color);
-    border-radius: 50%; /* 圓形 */
+    border-radius: 50%; 
     width: 32px;
     height: 32px;
-    font-size: 1rem; /* 圖標大小 */
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -295,7 +306,6 @@ button.warning-outline:hover, .button.warning-outline:hover {
     padding: 0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     transition: background-color 0.2s, transform 0.1s;
-    /* 移除不必要的繼承樣式 */
     font-weight: normal;
     border-bottom: 1px solid var(--border-color);
 }
@@ -308,4 +318,3 @@ button.warning-outline:hover, .button.warning-outline:hover {
 .title-action-button:active {
     transform: translateY(0);
 }
-/* --- 核心修改處 END --- */
