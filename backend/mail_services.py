@@ -9,7 +9,10 @@ from typing import Optional, List, Dict, Any
 # 從專案的其他模組導入
 from . import MD_firebase_config
 from .MD_models import PlayerGameData, MailItem
-from .player_services import save_player_data_service
+# --- 核心修改處 START ---
+# 移除此處的全域導入，以打破循環依賴
+# from .player_services import save_player_data_service
+# --- 核心修改處 END ---
 
 # 設定日誌記錄器
 mail_logger = logging.getLogger(__name__)
@@ -63,10 +66,7 @@ def send_mail_to_player_service(
     title: str,
     content: str,
     payload: Optional[Dict[str, Any]] = None,
-    # --- 核心修改處 START ---
-    # 新增 mail_type 參數，並給予預設值以確保舊功能不受影響
     mail_type: str = "system_message"
-    # --- 核心修改處 END ---
 ) -> bool:
     """
     處理一個玩家向另一個玩家發送信件的邏輯。
@@ -83,6 +83,11 @@ def send_mail_to_player_service(
     Returns:
         如果信件成功發送並儲存，則返回 True，否則返回 False。
     """
+    # --- 核心修改處 START ---
+    # 將導入語句移至函式內部，在需要時才導入，以解決循環導入問題
+    from .player_services import save_player_data_service
+    # --- 核心修改處 END ---
+    
     db = MD_firebase_config.db
     if not db:
         mail_logger.error("Firestore 資料庫未初始化，無法發送信件。")
@@ -105,10 +110,7 @@ def send_mail_to_player_service(
 
         # 2. 建立信件範本
         mail_template = {
-            # --- 核心修改處 START ---
-            # 使用傳入的 mail_type 參數，而不是寫死的 "system_message"
             "type": mail_type,
-            # --- 核心修改處 END ---
             "title": title,
             "content": content,
             "sender_id": sender_id,
