@@ -14,6 +14,10 @@ from typing import List, Dict, Any, Tuple
 from flask_cors import cross_origin
 
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
+# --- 核心修改處 START ---
+# 從新的 friend_services.py 導入發送好友請求的服務
+from .friend_services import send_friend_request_service
+# --- 核心修改處 END ---
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
 from .monster_healing_services import heal_monster_service, recharge_monster_with_dna_service
@@ -214,6 +218,37 @@ def save_player_data_route(player_id: str):
         return jsonify({"success": True, "message": "玩家資料保存成功。"}), 200
     else:
         return jsonify({"success": False, "error": "玩家資料保存失敗。"}), 500
+
+# --- 核心修改處 START ---
+# 新增好友請求的 API 路由
+@md_bp.route('/friends/request', methods=['POST'])
+def send_friend_request_route():
+    """接收前端發送好友請求的請求。"""
+    sender_id, sender_nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    recipient_id = data.get('recipient_id')
+
+    if not recipient_id:
+        return jsonify({"error": "請求中未提供收件人ID (recipient_id)。"}), 400
+
+    if sender_id == recipient_id:
+        return jsonify({"error": "無法將自己加為好友。"}), 400
+
+    # 呼叫新的服務函式
+    success = send_friend_request_service(
+        sender_id=sender_id,
+        sender_nickname=sender_nickname,
+        recipient_id=recipient_id
+    )
+
+    if success:
+        return jsonify({"success": True, "message": "好友請求已發送。"}), 200
+    else:
+        return jsonify({"error": "發送好友請求失敗，可能是收件人不存在或伺服器錯誤。"}), 500
+# --- 核心修改處 END ---
 
 @md_bp.route('/notes', methods=['POST'])
 def add_note_route():
