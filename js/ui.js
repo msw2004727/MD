@@ -388,7 +388,7 @@ function showFeedbackModal(title, message, isLoading = false, monsterDetails = n
             gameState.feedbackHintInterval = setInterval(() => {
                 const randomIndex = Math.floor(Math.random() * hintsArray.length);
                 hintElement.textContent = `💡 ${hintsArray[randomIndex]}`;
-            }, 2000); 
+            }, 3500); 
         }
     };
     
