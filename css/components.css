@@ -210,8 +210,20 @@ body.light-theme .dna-panel-hint { color: #424a53; }
     background-color: var(--border-color);
     color: var(--text-primary);
 }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+
+/* --- 核心修改處 START --- */
+.tab-content { 
+    display: none; 
+    min-width: 0; /* 修正 flex item 在某些情況下的溢出問題 */
+}
+.tab-content.active { 
+    display: flex; /* 改為 flex */
+    flex-direction: column; /* 讓內部元素垂直排列 */
+    flex-grow: 1; /* 允許此容器填滿父容器的剩餘空間 */
+    min-height: 0; /* 在 flex 容器中，這允許子元素正確地滾動而不是撐開父容器 */
+}
+/* --- 核心修改處 END --- */
+
 
 .leaderboard-table {
     width: 100%;
