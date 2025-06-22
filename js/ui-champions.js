@@ -91,13 +91,10 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
 
                 hideModal('feedback-modal');
 
-                // --- 【核心修改】---
-                // 在顯示戰報前，先檢查戰鬥結果中是否包含新稱號
                 if (battleResult && typeof checkAndShowNewTitleModal === 'function') {
-                    checkAndShowNewTitleModal(battleResult); // 直接將 battle_result 傳入
+                    checkAndShowNewTitleModal(battleResult); 
                 }
 
-                // 然後再刷新資料和顯示戰報
                 await refreshPlayerData(); 
                 
                 if (typeof handleMonsterLeaderboardClick === 'function') {
@@ -121,11 +118,47 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
  * @param {Array<object|null>} championsData - 從後端獲取的、包含四個冠軍槽位怪獸資料的陣列。
  */
 function renderChampionSlots(championsData) {
+    const section = document.querySelector('.champions-section');
     const container = document.getElementById('champions-grid-container');
-    if (!container) {
-        console.error("冠軍殿堂的容器 'champions-grid-container' 未找到。");
+    if (!container || !section) {
+        console.error("冠軍殿堂的容器 'champions-grid-container' 或 'champions-section' 未找到。");
         return;
     }
+
+    // --- 核心修改處 START ---
+    // 移除舊的獎勵欄 (如果存在)，避免重複渲染
+    const existingRewards = section.querySelector('.champion-rewards-container');
+    if (existingRewards) {
+        existingRewards.remove();
+    }
+
+    // 建立獎勵資訊欄的 HTML
+    const rewardsContainer = document.createElement('div');
+    rewardsContainer.className = 'champion-rewards-container';
+    rewardsContainer.innerHTML = `
+        <h5 class="rewards-title">每日在位獎勵</h5>
+        <div class="rewards-grid">
+            <div class="reward-item">
+                <span class="reward-rank">冠軍</span>
+                <span class="reward-value">100 🪙</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-rank">亞軍</span>
+                <span class="reward-value">30 🪙</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-rank">季軍</span>
+                <span class="reward-value">20 🪙</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-rank">殿軍</span>
+                <span class="reward-value">10 🪙</span>
+            </div>
+        </div>
+    `;
+    // 將獎勵資訊欄插入到冠軍網格的前面
+    container.before(rewardsContainer);
+    // --- 核心修改處 END ---
 
     const playerMonster = getSelectedMonster();
     const playerId = gameState.playerId;
