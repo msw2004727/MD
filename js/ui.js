@@ -1,5 +1,5 @@
 // js/ui.js
-console.log("DEBUG: ui.js starting to load and define functions."); // Add this line
+console.log("DEBUG: ui.js starting to load and define functions.");
 
 // 注意：此檔案依賴 gameState (來自 js/game-state.js) 和其他輔助函數
 // 這個檔案現在是UI系統的核心，負責主畫面渲染和通用彈窗的顯示/隱藏。
@@ -30,31 +30,22 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
 
     tabContentsContainer.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
-        // --- 核心修改處 START ---
-        // 清除可能存在的內聯樣式，確保其他頁籤恢復正常
-        content.style.flexGrow = '';
-        content.style.display = '';
-        // --- 核心修改處 END ---
     });
     const targetContent = tabContentsContainer.querySelector(`#${targetTabId}`);
     if (targetContent) {
-        
-        // --- 核心修改處 START ---
-        // 對冒險島頁籤進行特殊處理，確保它能填滿空間
-        if (targetTabId === 'guild-content') {
-            targetContent.style.display = 'block'; // 使用 block 讓 position: relative 生效
-            targetContent.style.flexGrow = '1'; // 確保它能填滿父容器的剩餘空間
-            if (typeof initializeAdventureUI === 'function') {
-                initializeAdventureUI();
-            }
-        } else {
-            // 對於其他頁籤，使用 active class
-            targetContent.classList.add('active');
-        }
+        targetContent.classList.add('active');
 
+        // Friends list rendering is now handled within its own module/event
         if (targetTabId === 'friends-list-content') {
             if (typeof renderFriendsList === 'function') {
                 renderFriendsList();
+            }
+        }
+        // --- 核心修改處 START ---
+        // 新增：當切換到「冒險島」頁籤時，呼叫其UI初始化函式
+        else if (targetTabId === 'guild-content') { // 'guild-content' 是冒險島頁籤的 ID
+            if (typeof initializeAdventureUI === 'function') {
+                initializeAdventureUI();
             }
         }
         // --- 核心修改處 END ---
