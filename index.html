@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.4.1'; 
+        const gameVersion = '0.4.0.1'; 
 
         const cssFiles = [
             'css/theme.css',
@@ -538,6 +538,7 @@
 
     <div id="mail-reader-modal" class="modal">
         <div class="modal-content">
+            <span class="modal-close system-notification-close-btn" data-modal-id="mail-reader-modal">&times;</span>
             <h3 id="mail-reader-title" class="modal-header">信件標題</h3>
             <div id="mail-reader-meta" class="text-sm text-secondary text-center my-2">
                 <span>寄件人: <strong id="mail-reader-sender">系統</strong></span> | 
@@ -560,7 +561,7 @@
     
     <script>
         (function() {
-            const gameVersion = '0.4.1'; 
+            const gameVersion = '0.4.0.1'; 
 
             const jsFiles = [
                 'js/firebase-config.js',
