@@ -27,9 +27,7 @@ class MailItem(TypedDict):
     定義單一信件的資料結構。
     """
     id: str  # 信件的唯一ID
-    # --- 核心修改處 START ---
     type: Literal["friend_request", "system_message", "reward"]  # 信件類型
-    # --- 核心修改處 END ---
     title: str  # 信件標題
     sender_id: NotRequired[Optional[str]]  # 寄件人ID (系統信件則無)
     sender_name: NotRequired[Optional[str]]  # 寄件人暱稱
@@ -311,6 +309,9 @@ class PlayerStats(TypedDict):
     leech_skill_uses: NotRequired[int]
     flawless_victories: NotRequired[int]
     special_victories: NotRequired[Dict[str, int]]
+    # --- 核心修改處 START ---
+    last_champion_reward_timestamp: NotRequired[int]
+    # --- 核心修改處 END ---
 
 class PlayerOwnedDNA(DNAFragment):
     pass
@@ -326,7 +327,7 @@ class PlayerGameData(TypedDict):
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
     friends: NotRequired[List[Any]]
     playerNotes: NotRequired[List[NoteEntry]]
-    mailbox: NotRequired[List[MailItem]] # 【新增】信箱欄位
+    mailbox: NotRequired[List[MailItem]]
 
 class MonsterRecipe(TypedDict):
     combinationKey: str 
