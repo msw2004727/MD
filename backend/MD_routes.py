@@ -15,8 +15,8 @@ from flask_cors import cross_origin
 
 from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
 # --- 核心修改處 START ---
-# 從新的 friend_services.py 導入發送好友請求的服務
-from .friend_services import send_friend_request_service
+# 從 friend_services.py 導入發送和回應好友請求的服務
+from .friend_services import send_friend_request_service, respond_to_friend_request_service
 # --- 核心修改處 END ---
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -219,8 +219,6 @@ def save_player_data_route(player_id: str):
     else:
         return jsonify({"success": False, "error": "玩家資料保存失敗。"}), 500
 
-# --- 核心修改處 START ---
-# 新增好友請求的 API 路由
 @md_bp.route('/friends/request', methods=['POST'])
 def send_friend_request_route():
     """接收前端發送好友請求的請求。"""
@@ -248,6 +246,32 @@ def send_friend_request_route():
         return jsonify({"success": True, "message": "好友請求已發送。"}), 200
     else:
         return jsonify({"error": "發送好友請求失敗，可能是收件人不存在或伺服器錯誤。"}), 500
+
+# --- 核心修改處 START ---
+@md_bp.route('/friends/response', methods=['POST'])
+def respond_to_friend_request_route():
+    """接收前端對好友請求的回應 (同意/拒絕)。"""
+    responder_id, _, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    mail_id = data.get('mail_id')
+    action = data.get('action') # 'accept' or 'decline'
+
+    if not mail_id or action not in ['accept', 'decline']:
+        return jsonify({"error": "請求中缺少 'mail_id' 或 'action' 參數不正確。"}), 400
+
+    success = respond_to_friend_request_service(
+        responder_id=responder_id,
+        mail_id=mail_id,
+        action=action
+    )
+
+    if success:
+        return jsonify({"success": True, "message": "已成功回應好友請求。"}), 200
+    else:
+        return jsonify({"error": "處理好友請求回應時發生錯誤。"}), 500
 # --- 核心修改處 END ---
 
 @md_bp.route('/notes', methods=['POST'])
@@ -394,7 +418,6 @@ def search_players_api_route():
     results = search_players_service(nickname_query, limit)
     return jsonify({"players": results}), 200
 
-# --- 核心修改處 START ---
 @md_bp.route('/friends/remove', methods=['POST'])
 def remove_friend_route():
     """從玩家的好友列表中移除一位好友。"""
@@ -430,7 +453,6 @@ def remove_friend_route():
     else:
         routes_logger.warning(f"玩家 {user_id} 嘗試移除好友 {friend_id_to_remove}，但在列表中找不到。")
         return jsonify({"error": "在您的好友列表中找不到該玩家。"}), 404
-# --- 核心修改處 END ---
 
 @md_bp.route('/battle/simulate', methods=['POST'])
 def simulate_battle_api_route():
