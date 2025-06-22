@@ -23,7 +23,7 @@
     /* 移除 position: absolute; */
     flex-grow: 1; /* 讓地圖容器填滿父層(#guild-content)的剩餘空間 */
     width: 100%;
-    height: 100%; /* 高度現在由 flex-grow 自動控制 */
+    /* 高度現在由 flex-grow 自動控制 (已移除 height: 100%) */
     background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands001.png?raw=true');
     background-size: cover;
     background-position: center;
