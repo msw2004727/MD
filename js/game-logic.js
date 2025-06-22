@@ -2,29 +2,14 @@
 
 // 注意：此檔案依賴 gameState, DOMElements, API client 函數, UI 更新函數等
 
-// --- 【新增】檢查並顯示新稱號的專用函式 ---
+// --- 核心修改處 START ---
+// 修改 checkAndShowNewTitleModal 函式
 function checkAndShowNewTitleModal(playerData) {
-    // 檢查後端回傳的資料中是否包含 newly_awarded_titles 欄位
-    if (playerData && playerData.newly_awarded_titles && playerData.newly_awarded_titles.length > 0) {
-        const newTitle = playerData.newly_awarded_titles[0]; // 暫時先只顯示第一個獲得的
-        if (typeof showFeedbackModal === 'function') {
-            showFeedbackModal(
-                '榮譽加身！',
-                '', 
-                false,
-                null,
-                [{ text: '開啟我的冒險！', class: 'success' }],
-                {
-                    type: 'title',
-                    name: newTitle.name,
-                    description: newTitle.description,
-                    buffs: newTitle.buffs,
-                    bannerUrl: gameState.assetPaths.images.modals.titleAward
-                }
-            );
-        }
-    }
+    // 此彈窗功能已由信箱系統取代，故清空此函式內容，不再彈出視窗。
+    // 保留空函式是為了避免在其他地方（如 main.js 或 game-interaction-handlers.js）呼叫此函式時產生 "is not defined" 錯誤。
+    console.log("checkAndShowNewTitleModal 函數已觸發，但功能已被信箱通知取代，將不顯示彈窗。");
 }
+// --- 核心修改處 END ---
 
 
 /**
@@ -674,11 +659,9 @@ async function refreshPlayerData() {
                 updateMailNotificationDot();
             }
             
-            // --- 核心修改處 START ---
             if (typeof updatePlayerCurrencyDisplay === 'function') {
                 updatePlayerCurrencyDisplay(playerData.playerStats.gold || 0);
             }
-            // --- 核心修改處 END ---
 
             if (typeof checkAndShowNewTitleModal === 'function') {
                 checkAndShowNewTitleModal(playerData);
