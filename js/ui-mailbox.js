@@ -21,14 +21,8 @@ function initializeMailboxDOMElements() {
     };
 }
 
-// --- 核心修改處 START ---
-/**
- * 新增函式：動態注入信箱專用的CSS樣式，確保響應式佈局。
- * 這樣做可以避免修改CSS檔案，將相關邏輯集中在此處。
- */
 function injectMailboxStyles() {
     const styleId = 'dynamic-mailbox-styles';
-    // 如果樣式已存在，則不重複注入
     if (document.getElementById(styleId)) return;
 
     const style = document.createElement('style');
@@ -36,33 +30,28 @@ function injectMailboxStyles() {
     style.innerHTML = `
         .mail-item.friend-request-item {
             display: grid;
-            grid-template-columns: 20px 1fr; /* 狀態燈 | 主內容 */
+            grid-template-columns: 20px 1fr;
             align-items: center;
             gap: 1rem;
         }
         .friend-request-item .mail-content-wrapper {
             display: flex;
-            flex-wrap: wrap; /* 允許內容換行 */
-            justify-content: space-between; /* 兩端對齊 */
+            flex-wrap: wrap;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem 1rem; /* 垂直和水平間距 */
+            gap: 0.75rem 1rem;
             width: 100%;
         }
         .friend-request-item .friend-request-actions {
             display: flex;
             gap: 0.5rem;
-            flex-shrink: 0; /* 防止按鈕被壓縮 */
+            flex-shrink: 0;
         }
     `;
     document.head.appendChild(style);
 }
 
 
-/**
- * 處理對好友請求的回應 (同意或拒絕)
- * @param {string} mailId - 信件的 ID
- * @param {'accept' | 'decline'} action - 玩家的操作
- */
 async function handleFriendResponse(mailId, action) {
     const actionText = action === 'accept' ? '同意' : '拒絕';
     showFeedbackModal('處理中...', `正在發送您的「${actionText}」回覆...`, true);
@@ -70,7 +59,7 @@ async function handleFriendResponse(mailId, action) {
     try {
         const result = await respondToFriendRequest(mailId, action);
         if (result && result.success) {
-            await refreshPlayerData(); // 重新獲取玩家資料以更新好友列表和信箱
+            await refreshPlayerData(); 
             renderMailboxList(gameState.playerData.mailbox);
             updateMailNotificationDot();
             hideModal('feedback-modal');
@@ -85,13 +74,8 @@ async function handleFriendResponse(mailId, action) {
         showFeedbackModal('處理失敗', `無法處理您的回覆：${error.message}`);
     }
 }
-// --- 核心修改處 END ---
 
 
-/**
- * 渲染信箱列表
- * @param {Array<object>} mails - 從後端獲取的信件物件陣列
- */
 function renderMailboxList(mails) {
     const container = mailboxDOMElements.mailListContainer;
     if (!container) return;
@@ -103,18 +87,19 @@ function renderMailboxList(mails) {
 
     mails.sort((a, b) => b.timestamp - a.timestamp);
 
-    // --- 核心修改處 START ---
-    // 修改HTML結構以支援新的CSS樣式
     container.innerHTML = mails.map(mail => {
         const mailDate = new Date(mail.timestamp * 1000).toLocaleString();
         const statusClass = mail.is_read ? 'read' : 'unread';
         const senderName = mail.sender_name || '系統訊息';
+        const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
+
+        let mailItemClass = `mail-item ${statusClass}`;
 
         if (mail.type === 'friend_request') {
-            // 好友請求信件的特殊佈局
+            mailItemClass += ' friend-request-item';
             return `
-                <div class="mail-item ${statusClass} friend-request-item" data-mail-id="${mail.id}">
-                    <div class="mail-status-light ${statusClass}"></div>
+                <div class="${mailItemClass}" data-mail-id="${mail.id}">
+                    ${mailStatusLight}
                     <div class="mail-content-wrapper">
                         <div class="mail-title-container">
                             <p class="mail-title">${mail.title}</p>
@@ -128,10 +113,10 @@ function renderMailboxList(mails) {
                 </div>
             `;
         } else {
-            // 普通信件的佈局
+            mailItemClass += ' mail-item-clickable'; 
             return `
-                <div class="mail-item ${statusClass} mail-item-clickable" data-mail-id="${mail.id}">
-                    <div class="mail-status-light ${statusClass}"></div>
+                <div class="${mailItemClass}" data-mail-id="${mail.id}">
+                    ${mailStatusLight}
                     <div class="mail-title-container">
                         <p class="mail-title">${mail.title}</p>
                         <p class="text-xs text-[var(--text-secondary)]">寄件人: ${senderName} | ${mailDate}</p>
@@ -141,7 +126,6 @@ function renderMailboxList(mails) {
             `;
         }
     }).join('');
-    // --- 核心修改處 END ---
 }
 
 
@@ -161,26 +145,19 @@ async function openMailReader(mailId) {
     mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
     mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\n/g, '<br>');
 
-    // 處理好友請求的特殊顯示
-    const friendRequestInfo = mailboxDOMElements.mailReaderBody.querySelector('.friend-request-info');
-    if(friendRequestInfo) friendRequestInfo.remove(); // 清除舊的
-
-    if (mail.type === 'friend_request') {
-        const senderId = mail.payload?.sender_id;
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'friend-request-info';
-        infoDiv.innerHTML = `
-            <div style="border-top: 1px dashed var(--border-color); margin-top: 1rem; padding-top: 1rem;">
-                <p class="text-center text-sm">這是一封好友請求信件。</p>
-                <div class="flex justify-center gap-4 mt-2">
-                    <button class="button success accept-friend-btn" data-mail-id="${mail.id}">✓ 同意</button>
-                    <button class="button danger decline-friend-btn" data-mail-id="${mail.id}">✗ 拒絕</button>
-                </div>
-            </div>
-        `;
-        mailboxDOMElements.mailReaderBody.appendChild(infoDiv);
+    // --- 核心修改處 START ---
+    // 動態決定底部按鈕是「回覆」還是「關閉」
+    const footer = mailboxDOMElements.mailReaderModal.querySelector('.modal-footer');
+    if (footer) {
+        // 如果信件有寄件人ID (表示是玩家寄的)，且不是好友請求信，則顯示「回覆」按鈕
+        if (mail.sender_id && mail.type !== 'friend_request') {
+            footer.innerHTML = `<button class="button primary reply-mail-btn" data-sender-id="${mail.sender_id}" data-sender-name="${mail.sender_name}">回覆寄件人</button>`;
+        } else {
+            // 系統信件或好友請求信件，則顯示「關閉」按鈕
+            footer.innerHTML = `<button class="button secondary modal-close" data-modal-id="mail-reader-modal">關閉</button>`;
+        }
     }
-
+    // --- 核心修改處 END ---
 
     mailboxDOMElements.mailReaderAttachmentsContainer.style.display = 'none';
 
@@ -198,11 +175,6 @@ async function openMailReader(mailId) {
     }
 }
 
-/**
- * 處理刪除信件的請求
- * @param {string} mailId - 要刪除的信件 ID
- * @param {Event} event - 點擊事件
- */
 async function handleDeleteMail(mailId, event) {
     event.stopPropagation(); 
 
@@ -232,12 +204,8 @@ async function handleDeleteMail(mailId, event) {
  */
 function initializeMailboxEventHandlers() {
     initializeMailboxDOMElements();
-    // --- 核心修改處 START ---
-    // 在初始化時注入我們需要的CSS樣式
     injectMailboxStyles();
-    // --- 核心修改處 END ---
     
-    // 刷新按鈕
     if (mailboxDOMElements.refreshMailboxBtn) {
         mailboxDOMElements.refreshMailboxBtn.onclick = async () => {
             showFeedbackModal('刷新中...', '正在重新收取信件...', true);
@@ -248,7 +216,6 @@ function initializeMailboxEventHandlers() {
         };
     }
 
-    // 刪除已讀按鈕
     if (mailboxDOMElements.deleteReadMailsBtn) {
         mailboxDOMElements.deleteReadMailsBtn.onclick = async () => {
             const readMails = gameState.playerData?.mailbox?.filter(m => m.is_read) || [];
@@ -280,10 +247,10 @@ function initializeMailboxEventHandlers() {
         };
     }
     
-    function setupMailboxEventListeners(container) {
-        if (!container) return;
-        
-        container.addEventListener('click', (event) => {
+    // --- 核心修改處 START ---
+    // 修改：將讀信視窗的事件監聽獨立出來
+    if (mailboxDOMElements.mailListContainer) {
+        mailboxDOMElements.mailListContainer.addEventListener('click', (event) => {
             const mailItem = event.target.closest('.mail-item-clickable');
             const deleteBtn = event.target.closest('.mail-delete-btn');
             const acceptBtn = event.target.closest('.accept-friend-btn');
@@ -303,13 +270,26 @@ function initializeMailboxEventHandlers() {
         });
     }
 
-    setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
-    setupMailboxEventListeners(mailboxDOMElements.mailReaderModal);
+    // 為讀信視窗新增獨立的事件監聽器
+    if (mailboxDOMElements.mailReaderModal) {
+        mailboxDOMElements.mailReaderModal.addEventListener('click', (event) => {
+            const replyBtn = event.target.closest('.reply-mail-btn');
+            const closeBtn = event.target.closest('.modal-close');
 
-    // 讀信視窗的關閉按鈕
-    if (mailboxDOMElements.mailReaderCloseBtn) {
-        mailboxDOMElements.mailReaderCloseBtn.addEventListener('click', () => {
-            hideModal('mail-reader-modal');
+            if (replyBtn) {
+                const senderId = replyBtn.dataset.senderId;
+                const senderName = replyBtn.dataset.senderName;
+                if (senderId && senderName && typeof openSendMailModal === 'function') {
+                    hideModal('mail-reader-modal'); // 先關閉讀信視窗
+                    openSendMailModal(senderId, senderName); // 再開啟寫信視窗
+                }
+            } else if (closeBtn) {
+                const modalId = closeBtn.dataset.modalId || closeBtn.closest('.modal')?.id;
+                if (modalId) {
+                    hideModal(modalId);
+                }
+            }
         });
     }
+    // --- 核心修改處 END ---
 }
