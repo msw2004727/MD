@@ -40,8 +40,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "在追捕過程中，{monster_name}不小心被樹根絆倒，摔了一跤。 [損失：隊伍隨機單體HP -5] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -5 }]
+            "story_fragment": "在追捕過程中，{monster_name}不小心被樹根絆倒，摔了一跤。 [損失：隊伍隨機單體HP -500] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -500 }]
           }
         ]
       }
@@ -59,8 +59,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 80,
-            "story_fragment": "清涼的溪水洗去了隊伍的疲憊，大家感到精神煥發！ [獲得：隊伍全員HP +20]💧",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 20 }]
+            "story_fragment": "清涼的溪水洗去了隊伍的疲憊，大家感到精神煥發！ [獲得：隊伍全員HP +200]💧",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 200 }]
           },
           {
             "type": "neutral", "weight": 20,
@@ -88,8 +88,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "在尋找時，一隻螃蟹夾了{monster_name}的腳一下！ [損失：隊伍隨機單體HP -10] 🦀",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
+            "story_fragment": "在尋找時，一隻螃蟹夾了{monster_name}的腳一下！ [損失：隊伍隨機單體HP -100] 🦀",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -100 }]
           }
         ]
       }
@@ -117,8 +117,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "哎呀！果實有毒！{monster_name}吃完後肚子痛了起來。 [損失：選擇者HP -20] 🤢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "member_who_chose", "amount": -20 }]
+            "story_fragment": "哎呀！果實有毒！{monster_name}吃完後肚子痛了起來。 [損失：選擇者HP -200] 🤢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "member_who_chose", "amount": -200 }]
           }
         ]
       },
@@ -209,8 +209,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "火勢有點失控，{monster_name}被燻得灰頭土臉。 [損失：隊伍隨機單體HP -10] 🥵",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
+            "story_fragment": "火勢有點失控，{monster_name}被燻得灰頭土臉。 [損失：隊伍隨機單體HP -100] 🥵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -100 }]
           }
         ]
       },
@@ -225,13 +225,13 @@
           },
           {
             "type": "neutral", "weight": 70,
-            "story_fragment": "隊伍中力量最強的怪獸費了九牛二虎之力才清開道路，消耗了不少體力。 [損失：最強者HP -10] 😥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest", "amount": -10 }]
+            "story_fragment": "隊伍中力量最強的怪獸費了九牛二虎之力才清開道路，消耗了不少體力。 [損失：最強者HP -100] 😥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest", "amount": -100 }]
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "藤蔓上的尖刺劃傷了大家。 [損失：隊伍全員HP -5] 🩸",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -5 }]
+            "story_fragment": "藤蔓上的尖刺劃傷了大家。 [損失：隊伍全員HP -50] 🩸",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
           }
         ]
       }
@@ -276,8 +276,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "松鼠被激怒了，呼朋引伴從樹上丟下大量果子砸你們！ [損失：隊伍全員HP -10] 🌰",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
+            "story_fragment": "松鼠被激怒了，呼朋引伴從樹上丟下大量果子砸你們！ [損失：隊伍全員HP -100] 🌰",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
           }
         ]
       }
@@ -385,8 +385,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 70,
-            "story_fragment": "樹精很高興，它搖晃樹枝，掉下一些新鮮的漿果給你們吃，恢復了隊伍的體力。 [獲得：隊伍全員HP +25] 🍓",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 25 }]
+            "story_fragment": "樹精很高興，它搖晃樹枝，掉下一些新鮮的漿果給你們吃，恢復了隊伍的體力。 [獲得：隊伍全員HP +250] 🍓",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 250 }]
           },
           {
             "type": "neutral", "weight": 30,
@@ -412,8 +412,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "你們的敵意惹惱了樹精，它用藤蔓抽打了你們一下才離開。 [損失：隊伍隨機單體HP -15] 😠",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -15 }]
+            "story_fragment": "你們的敵意惹惱了樹精，它用藤蔓抽打了你們一下才離開。 [損失：隊伍隨機單體HP -150] 😠",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -150 }]
           }
         ]
       }
@@ -455,8 +455,8 @@
           },
           {
             "type": "neutral", "weight": 40,
-            "story_fragment": "你們和捕蠅草纏鬥了一番，最終它縮回了地下。 [損失：隊伍全員HP -10] ⚔️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
+            "story_fragment": "你們和捕蠅草纏鬥了一番，最終它縮回了地下。 [損失：隊伍全員HP -100] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
           },
           {
             "type": "negative", "weight": 40,
