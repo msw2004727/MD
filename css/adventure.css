@@ -207,7 +207,6 @@
     position: relative;
 }
 
-/* --- 核心修改處 START --- */
 /* 地圖節點容器的樣式 */
 #adventure-map-nodes-container {
     display: grid;
@@ -216,7 +215,9 @@
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 1; /* 確保節點層在背景之上 */
+    /* --- 核心修改處 START --- */
+    z-index: 2; /* 將節點(格子)圖層移到上方，確保能被點擊 */
+    /* --- 核心修改處 END --- */
     pointer-events: none; /* 預設讓整個容器都穿透點擊 */
 }
 
@@ -225,10 +226,11 @@
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 2; /* 確保畫布在節點之上，這樣線條才能被看見 */
+    /* --- 核心修改處 START --- */
+    z-index: 1; /* 將畫布圖層移到下方，作為背景繪製路徑 */
+    /* --- 核心修改處 END --- */
     pointer-events: none; /* 讓滑鼠點擊可以穿透畫布，點到下方的節點 */
 }
-/* --- 核心修改處 END --- */
 
 
 /* 單一地圖節點的通用樣式 */
@@ -242,7 +244,6 @@
     transition: transform 0.2s;
 }
 
-/* --- 核心修改處 START --- */
 /* 為可點擊的節點新增手形游標並恢復點擊事件 */
 .map-node.clickable {
     cursor: pointer;
@@ -251,7 +252,6 @@
 .map-node.clickable:hover {
     transform: scale(1.2);
 }
-/* --- 核心修改處 END --- */
 
 
 /* 玩家圖示 */
