@@ -11,6 +11,7 @@ from .adventure_services import start_expedition_service, get_all_islands_servic
 # --- 核心修改處 START ---
 # 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
 from .battle_services import simulate_battle_full
+from .post_battle_services import process_battle_results # 導入戰後結算服務
 # --- 核心修改處 END ---
 
 
@@ -83,8 +84,6 @@ def start_adventure_route():
         return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
 
 
-# --- 核心修改處 START ---
-# 新增一個API端點，用於中途放棄遠征
 @adventure_bp.route('/abandon', methods=['POST'])
 def abandon_adventure_route():
     """
@@ -114,7 +113,6 @@ def abandon_adventure_route():
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
         return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
-# --- 核心修改處 END ---
 
 
 @adventure_bp.route('/progress', methods=['GET'])
@@ -223,12 +221,9 @@ def resolve_choice_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
         
-    # --- 核心修改處 START ---
-    # 擴充此處邏輯以應對 BOSS 戰
     progress = player_data.get("adventure_progress", {})
     current_event = progress.get("current_event", {})
     
-    # 判斷是否為 BOSS 戰事件
     if current_event.get("event_type") == "boss_encounter":
         boss_data = current_event.get("boss_data")
         if not boss_data:
@@ -243,26 +238,37 @@ def resolve_choice_route():
         if not player_monster:
             return jsonify({"error": "找不到您的遠征隊長資料。"}), 404
 
-        # 執行戰鬥模擬
         battle_result = simulate_battle_full(player_monster, boss_data, game_configs, player_data)
         
-        # 處理戰鬥結果
+        post_battle_data = process_battle_results(
+            player_id=user_id, opponent_id=None,
+            player_data=player_data, opponent_player_data=None,
+            player_monster_data=player_monster, opponent_monster_data=boss_data,
+            battle_result=battle_result, game_configs=game_configs,
+            is_champion_challenge=False, challenged_rank=None
+        )
+
+        player_data = post_battle_data.get("updated_player_data")
+
         if battle_result.get("winner_id") == captain_id:
-            # 戰勝BOSS，推進到下一層
             floor_completion_result = complete_floor_service(player_data)
-            player_data["adventure_progress"] = floor_completion_result.get("updated_progress")
             
+            # --- 核心修改處 START ---
+            # 正確地將完整的玩家資料結構賦值回去
+            player_data = floor_completion_result.get("updated_player_data", player_data)
+            # --- 核心修改處 END ---
+
             if save_player_data_service(user_id, player_data):
                 return jsonify({
                     "success": True,
                     "event_outcome": "boss_win",
                     "battle_result": battle_result,
-                    "message": floor_completion_result.get("message")
+                    "message": floor_completion_result.get("message"),
+                    "updated_progress": player_data.get("adventure_progress")
                 }), 200
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
         else:
-            # 戰敗，結束遠征
             progress["is_active"] = False
             player_data["adventure_progress"] = progress
             if save_player_data_service(user_id, player_data):
@@ -270,13 +276,13 @@ def resolve_choice_route():
                     "success": True,
                     "event_outcome": "boss_loss",
                     "battle_result": battle_result,
-                    "message": "遠征失敗，您的隊伍已被擊敗。"
+                    "message": "遠征失敗，您的隊伍已被擊敗。",
+                    "updated_progress": player_data.get("adventure_progress")
                 }), 200
             else:
                 return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
 
     else:
-        # 處理一般事件的選擇
         service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
         
         if not service_result.get("success"):
@@ -294,4 +300,3 @@ def resolve_choice_route():
             }), 200
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
-    # --- 核心修改處 END ---
