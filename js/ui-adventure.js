@@ -8,31 +8,50 @@
  */
 function initializeAdventureMapHandlers() {
     const nodesContainer = document.getElementById('adventure-map-nodes-container');
-    if (!nodesContainer) return;
-
-    // 為避免重複綁定，先移除可能存在的舊監聽器
-    // 這次我們不使用 cloneNode，而是直接管理事件監聽
-    if (nodesContainer.dataset.listenerAttached === 'true') {
-        return; // 如果已經綁定過，就直接返回
+    if (!nodesContainer) {
+        console.error("【偵錯】找不到地圖節點容器 'adventure-map-nodes-container'，監聽器無法附加。");
+        return;
     }
 
+    if (nodesContainer.dataset.listenerAttached === 'true') {
+        console.log("【偵錯】地圖點擊監聽器已經附加，不再重複執行。");
+        return; 
+    }
+
+    console.log("【偵錯】步驟 1: 成功找到節點容器，即將附加地圖點擊監聽器...");
     nodesContainer.addEventListener('click', (event) => {
+        console.log("【偵錯】步驟 2: 地圖被點擊！事件已觸發。");
+
         const clickedNodeElement = event.target.closest('.map-node.clickable');
-        if (!clickedNodeElement) return;
+        if (!clickedNodeElement) {
+            console.log("【偵錯】點擊的不是一個可互動的節點 (沒有 .clickable class)，操作中止。");
+            return;
+        }
+        console.log("【偵錯】步驟 3: 確認點擊到可互動節點:", clickedNodeElement);
 
         const nodeId = clickedNodeElement.dataset.nodeId;
-        if (!nodeId) return;
+        if (!nodeId) {
+            console.log("【偵錯】錯誤：點擊的節點上找不到 'data-node-id'。");
+            return;
+        }
         
         const adventureProgress = gameState.playerData?.adventure_progress;
-        if (!adventureProgress) return;
+        if (!adventureProgress) {
+            console.log("【偵錯】錯誤：在 gameState 中找不到冒險進度 'adventure_progress'。");
+            return;
+        }
         
         const targetNode = adventureProgress.map_data.nodes.find(n => n.id === nodeId);
         if (targetNode) {
+            console.log("【偵錯】步驟 4: 已找到目標節點資料，準備呼叫 handleMapNodeClick 函式。", targetNode);
             handleMapNodeClick(targetNode);
+        } else {
+            console.log("【偵錯】錯誤：在地圖資料中找不到 ID 為 " + nodeId + " 的節點。");
         }
     });
 
-    nodesContainer.dataset.listenerAttached = 'true'; // 標記已綁定
+    nodesContainer.dataset.listenerAttached = 'true'; 
+    console.log("【偵錯】步驟 1.1: 地圖點擊監聽器附加完成。");
 }
 
 /**
@@ -40,45 +59,53 @@ function initializeAdventureMapHandlers() {
  * @param {Array<object>} path - 由 A* 演算法回傳的節點陣列。
  */
 function drawPathOnCanvas(path) {
+    console.log("【偵錯】步驟 7: drawPathOnCanvas 函式被呼叫。收到的路徑長度為:", path.length);
     const canvas = document.getElementById('adventure-map-canvas');
-    if (!canvas || !canvas.getContext) return;
+    if (!canvas || !canvas.getContext) {
+        console.error("【偵錯】錯誤：找不到 canvas 或其 context。");
+        return;
+    }
 
     const ctx = canvas.getContext('2d');
-    const GRID_SIZE = 30; // 必須與 renderAdventureMap 中使用的格子大小一致
+    const GRID_SIZE = 30;
 
-    // 清除舊的路徑
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log("【偵錯】步驟 7.1: Canvas 已清空。");
 
     if (!path || path.length < 2) {
-        return; // 路徑太短，無需繪製
+        console.log("【偵錯】路徑無效或太短，不進行繪製。");
+        return; 
     }
 
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 223, 186, 0.8)'; // 淡金色的路徑
+    ctx.strokeStyle = 'rgba(255, 223, 186, 0.8)';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
     ctx.shadowBlur = 5;
 
-    // 從路徑的起點開始
     const startX = path[0].position.x * GRID_SIZE + GRID_SIZE / 2;
     const startY = path[0].position.y * GRID_SIZE + GRID_SIZE / 2;
     ctx.moveTo(startX, startY);
+    console.log(`【偵錯】步驟 7.2: 路徑起點設定於 (${startX}, ${startY})`);
 
-    // 連接到路徑上的每一個點
     for (let i = 1; i < path.length; i++) {
         const x = path[i].position.x * GRID_SIZE + GRID_SIZE / 2;
         const y = path[i].position.y * GRID_SIZE + GRID_SIZE / 2;
         ctx.lineTo(x, y);
     }
 
-    ctx.stroke(); // 繪製路徑
+    ctx.stroke(); 
+    console.log("【偵錯】步驟 7.3: 路徑繪製完成！");
 }
 
 
 // A* 路徑尋找演算法的實現。
 function findAStarPath(nodes, startNode, goalNode) {
+    console.log("【偵錯】步驟 6: 進入 findAStarPath 尋路函式。");
+    console.log("【偵錯】起點:", startNode.id, "終點:", goalNode.id);
+
     const grid = [];
     const width = 30;
     const height = 30;
@@ -118,6 +145,7 @@ function findAStarPath(nodes, startNode, goalNode) {
                 path.push(temp);
                 temp = cameFrom.get(temp.id);
             }
+            console.log("【偵錯】步驟 6.1: 成功找到路徑！長度為:", path.length);
             return path.reverse();
         }
 
@@ -154,6 +182,7 @@ function findAStarPath(nodes, startNode, goalNode) {
         }
     }
 
+    console.log("【偵錯】步驟 6.1 (失敗): 尋路演算法執行完畢，但未找到通往目標的路徑。");
     return [];
 }
 
@@ -166,28 +195,25 @@ function handleMapNodeClick(node) {
     const adventureProgress = gameState.playerData?.adventure_progress;
     if (!adventureProgress || !adventureProgress.is_active) return;
     
+    console.log("【偵錯】步驟 5: 進入 handleMapNodeClick 函式。");
     const allNodes = adventureProgress.map_data.nodes;
     const currentNode = allNodes.find(n => n.id === adventureProgress.current_node_id);
 
     if (!currentNode) {
         showFeedbackModal('錯誤', '找不到玩家目前的位置資訊。');
+        console.error("【偵錯】錯誤：在 handleMapNodeClick 中找不到 currentNode。");
         return;
     }
     
     if (currentNode.id === node.id) {
-        drawPathOnCanvas([]); // 點擊自身，清除路徑
+        drawPathOnCanvas([]); 
+        console.log("【偵錯】點擊了當前所在位置，清除路徑。");
         return;
     }
 
     const path = findAStarPath(allNodes, currentNode, node);
 
     drawPathOnCanvas(path);
-
-    if (path.length > 0) {
-        console.log("找到的路徑:", path.map(p => p.id));
-    } else {
-        console.log(`找不到通往 (${node.position.x}, ${node.position.y}) 的路徑。`);
-    }
 }
 
 
