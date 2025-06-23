@@ -5,6 +5,8 @@ import logging
 import random
 import time
 from typing import List, Dict, Optional, Any
+import os
+import json
 
 # 導入遊戲核心及冒險島專用的資料模型
 from .MD_models import PlayerGameData, GameConfigs, Monster
@@ -12,6 +14,36 @@ from .adventure_models import AdventureProgress, MapData, MapNode
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
+
+# --- 新增：讀取所有島嶼資料的服務 ---
+def get_all_islands_service() -> List[Dict[str, Any]]:
+    """
+    從本地 JSON 檔案讀取所有冒險島的設定資料。
+    """
+    adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
+    try:
+        # 建立相對於目前檔案位置的路徑
+        data_file_path = os.path.join(os.path.dirname(__file__), 'data', 'adventure_islands.json')
+        
+        with open(data_file_path, 'r', encoding='utf-8') as f:
+            islands_data = json.load(f)
+        
+        if not isinstance(islands_data, list):
+            adventure_logger.error("adventure_islands.json 的根層級不是一個列表 (list)。")
+            return []
+            
+        adventure_logger.info(f"成功讀取到 {len(islands_data)} 個島嶼的資料。")
+        return islands_data
+
+    except FileNotFoundError:
+        adventure_logger.error(f"錯誤：找不到冒險島設定檔 'adventure_islands.json' 於路徑: {data_file_path}")
+        return []
+    except json.JSONDecodeError as e:
+        adventure_logger.error(f"解析 'adventure_islands.json' 時發生錯誤: {e}")
+        return []
+    except Exception as e:
+        adventure_logger.error(f"讀取冒險島資料時發生未知錯誤: {e}", exc_info=True)
+        return []
 
 # --- 地圖生成服務 (Map Generation Services) ---
 
