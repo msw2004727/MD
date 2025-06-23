@@ -8,10 +8,8 @@ from flask import Blueprint, jsonify, request
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
 from .adventure_services import start_expedition_service, get_all_islands_service, advance_floor_service, complete_floor_service, resolve_event_choice_service
-# --- 核心修改處 START ---
 # 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
 from .battle_services import simulate_battle_full
-# --- 核心修改處 END ---
 
 
 # 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
@@ -83,8 +81,6 @@ def start_adventure_route():
         return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
 
 
-# --- 核心修改處 START ---
-# 新增一個API端點，用於中途放棄遠征
 @adventure_bp.route('/abandon', methods=['POST'])
 def abandon_adventure_route():
     """
@@ -114,7 +110,6 @@ def abandon_adventure_route():
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
         return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
-# --- 核心修改處 END ---
 
 
 @adventure_bp.route('/progress', methods=['GET'])
@@ -165,10 +160,14 @@ def advance_route():
     
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 成功推進冒險進度並已儲存。")
+        # --- 核心修改處 START ---
+        # 確保在回傳的 JSON 中，除了 event_data，也一併回傳 updated_progress
         return jsonify({
             "success": True,
-            "event_data": event_data
+            "event_data": event_data,
+            "updated_progress": updated_progress
         }), 200
+        # --- 核心修改處 END ---
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 推進冒險進度後，儲存資料失敗。")
         return jsonify({"error": "推進成功但儲存進度失敗。"}), 500
@@ -223,8 +222,6 @@ def resolve_choice_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
         
-    # --- 核心修改處 START ---
-    # 擴充此處邏輯以應對 BOSS 戰
     progress = player_data.get("adventure_progress", {})
     current_event = progress.get("current_event", {})
     
@@ -257,7 +254,8 @@ def resolve_choice_route():
                     "success": True,
                     "event_outcome": "boss_win",
                     "battle_result": battle_result,
-                    "message": floor_completion_result.get("message")
+                    "message": floor_completion_result.get("message"),
+                    "updated_progress": player_data["adventure_progress"] # --- 新增回傳進度
                 }), 200
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
@@ -270,7 +268,8 @@ def resolve_choice_route():
                     "success": True,
                     "event_outcome": "boss_loss",
                     "battle_result": battle_result,
-                    "message": "遠征失敗，您的隊伍已被擊敗。"
+                    "message": "遠征失敗，您的隊伍已被擊敗。",
+                    "updated_progress": player_data["adventure_progress"] # --- 新增回傳進度
                 }), 200
             else:
                 return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
@@ -294,4 +293,3 @@ def resolve_choice_route():
             }), 200
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
-    # --- 核心修改處 END ---
