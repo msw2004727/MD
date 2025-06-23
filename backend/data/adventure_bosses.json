@@ -66,5 +66,467 @@
         ]
       }
     }
+  ],
+  "facility_fire_bosses": [
+    {
+      "id": "boss_fire_cerberus",
+      "nickname": "煉獄三頭犬",
+      "isNPC": true,
+      "description": "守護著地獄之門的兇猛魔犬，三個頭顱能同時噴射不同形態的火焰。",
+      "rarity": "稀有",
+      "elements": ["火", "暗"],
+      "initial_max_hp": 2800, "hp": 2800, "initial_max_mp": 1200, "mp": 1200,
+      "attack": 320, "defense": 250, "speed": 280, "crit": 18,
+      "personality": { "name": "暴躁的" }, "score": 1600,
+      "skills": [
+        { "name": "爆炎衝", "level": 8 },
+        { "name": "烈日祝福", "level": 7 },
+        { "name": "暗之波動", "level": 7 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "fire_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_fire_phoenix",
+      "nickname": "永燃不死鳥",
+      "isNPC": true,
+      "description": "在烈焰中重生的神鳥，每一次死亡都會讓它變得更強。",
+      "rarity": "菁英",
+      "elements": ["火", "光"],
+      "initial_max_hp": 4000, "hp": 4000, "initial_max_mp": 2000, "mp": 2000,
+      "attack": 400, "defense": 380, "speed": 350, "crit": 20,
+      "personality": { "name": "傲慢的" }, "score": 2100,
+      "skills": [
+        { "name": "大字爆", "level": 9 },
+        { "name": "煉獄之火", "level": 8 },
+        { "name": "神聖之劍", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "fire_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "fire_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_water_bosses": [
+    {
+      "id": "boss_water_kraken",
+      "nickname": "深淵海妖",
+      "isNPC": true,
+      "description": "潛伏於海溝深處的巨大生物，它的觸手能輕易掀起滔天巨浪。",
+      "rarity": "稀有",
+      "elements": ["水", "毒"],
+      "initial_max_hp": 3200, "hp": 3200, "initial_max_mp": 1500, "mp": 1500,
+      "attack": 260, "defense": 300, "speed": 240, "crit": 15,
+      "personality": { "name": "孤僻的" }, "score": 1550,
+      "skills": [
+        { "name": "深海衝擊", "level": 7 },
+        { "name": "污泥炸彈", "level": 8 },
+        { "name": "黑霧", "level": 7 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "water_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_water_leviathan",
+      "nickname": "利維坦",
+      "isNPC": true,
+      "description": "聖經中記載的傳奇海怪，其身軀如同島嶼，掌控著海洋的憤怒。",
+      "rarity": "菁英",
+      "elements": ["水", "暗"],
+      "initial_max_hp": 4500, "hp": 4500, "initial_max_mp": 1800, "mp": 1800,
+      "attack": 380, "defense": 420, "speed": 300, "crit": 18,
+      "personality": { "name": "頑固的" }, "score": 2200,
+      "skills": [
+        { "name": "寒冰光束", "level": 9 },
+        { "name": "泰山壓頂", "level": 9 },
+        { "name": "惡意追擊", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "water_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "water_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_wood_bosses": [
+    {
+      "id": "boss_wood_alraune",
+      "nickname": "妖花艾溫娜",
+      "isNPC": true,
+      "description": "由吸收月光與怨念而生的魔花，其花粉能迷惑心智。",
+      "rarity": "稀有",
+      "elements": ["木", "毒"],
+      "initial_max_hp": 2700, "hp": 2700, "initial_max_mp": 1600, "mp": 1600,
+      "attack": 280, "defense": 260, "speed": 300, "crit": 16,
+      "personality": { "name": "狡猾的" }, "score": 1650,
+      "skills": [
+        { "name": "億萬噸吸收", "level": 8 },
+        { "name": "催眠粉", "level": 8 },
+        { "name": "十字毒刃", "level": 7 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "wood_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_wood_ent",
+      "nickname": "古樹賢者",
+      "isNPC": true,
+      "description": "守護著森林之心數千年的古老樹人，擁有操控自然的力量。",
+      "rarity": "菁英",
+      "elements": ["木", "光"],
+      "initial_max_hp": 4200, "hp": 4200, "initial_max_mp": 2200, "mp": 2200,
+      "attack": 350, "defense": 450, "speed": 280, "crit": 15,
+      "personality": { "name": "可靠的" }, "score": 2150,
+      "skills": [
+        { "name": "木槌", "level": 9 },
+        { "name": "日光束", "level": 8 },
+        { "name": "扎根", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "wood_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "wood_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_gold_bosses": [
+    {
+      "id": "boss_gold_automaton",
+      "nickname": "古代機兵",
+      "isNPC": true,
+      "description": "被遺忘文明留下的自律型兵器，執行著最後的守衛命令。",
+      "rarity": "稀有",
+      "elements": ["金", "無"],
+      "initial_max_hp": 2500, "hp": 2500, "initial_max_mp": 1000, "mp": 1000,
+      "attack": 330, "defense": 350, "speed": 220, "crit": 17,
+      "personality": { "name": "頑固的" }, "score": 1700,
+      "skills": [
+        { "name": "鐵頭", "level": 8 },
+        { "name": "流星拳", "level": 7 },
+        { "name": "鐵壁", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "gold_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_gold_gargoyle",
+      "nickname": "聖殿石像鬼",
+      "isNPC": true,
+      "description": "白天是石像，夜晚則化為守護聖殿的惡魔，其皮膚堅不可摧。",
+      "rarity": "菁英",
+      "elements": ["金", "暗"],
+      "initial_max_hp": 3800, "hp": 3800, "initial_max_mp": 1500, "mp": 1500,
+      "attack": 420, "defense": 480, "speed": 310, "crit": 19,
+      "personality": { "name": "忠誠的" }, "score": 2300,
+      "skills": [
+        { "name": "重磅衝撞", "level": 9 },
+        { "name": "欺詐", "level": 8 },
+        { "name": "金屬音", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "gold_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "gold_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_earth_bosses": [
+    {
+      "id": "boss_earth_golem",
+      "nickname": "巨岩魔像",
+      "isNPC": true,
+      "description": "由山脈之心與古代魔法融合而成的巨大生命體，每一步都讓大地顫抖。",
+      "rarity": "稀有",
+      "elements": ["土", "無"],
+      "initial_max_hp": 3500, "hp": 3500, "initial_max_mp": 800, "mp": 800,
+      "attack": 280, "defense": 380, "speed": 180, "crit": 15,
+      "personality": { "name": "懶散的" }, "score": 1600,
+      "skills": [
+        { "name": "地震", "level": 8 },
+        { "name": "岩石封鎖", "level": 7 },
+        { "name": "硬化", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "earth_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_earth_basilisk",
+      "nickname": "石化蛇怪",
+      "isNPC": true,
+      "description": "其視線能將生物化為石頭的傳說魔物，鱗片如同鑽石般堅硬。",
+      "rarity": "菁英",
+      "elements": ["土", "毒"],
+      "initial_max_hp": 4000, "hp": 4000, "initial_max_mp": 1800, "mp": 1800,
+      "attack": 390, "defense": 440, "speed": 320, "crit": 21,
+      "personality": { "name": "冷静的" }, "score": 2250,
+      "skills": [
+        { "name": "尖石攻擊", "level": 9 },
+        { "name": "地裂", "level": 7 },
+        { "name": "劇毒陷阱", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "earth_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "earth_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_light_bosses": [
+    {
+      "id": "boss_light_angel",
+      "nickname": "審判天使",
+      "isNPC": true,
+      "description": "來自天界，執行神之意志的使者，其光芒不容直視。",
+      "rarity": "稀有",
+      "elements": ["光", "風"],
+      "initial_max_hp": 2900, "hp": 2900, "initial_max_mp": 1700, "mp": 1700,
+      "attack": 310, "defense": 270, "speed": 330, "crit": 20,
+      "personality": { "name": "誠實的" }, "score": 1750,
+      "skills": [
+        { "name": "神聖之劍", "level": 8 },
+        { "name": "燕返", "level": 7 },
+        { "name": "治癒波動", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "light_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_light_unicorn",
+      "nickname": "聖潔獨角獸",
+      "isNPC": true,
+      "description": "只會出現在心靈純潔者面前的聖獸，其角能淨化一切邪惡。",
+      "rarity": "菁英",
+      "elements": ["光", "木"],
+      "initial_max_hp": 4100, "hp": 4100, "initial_max_mp": 2400, "mp": 2400,
+      "attack": 360, "defense": 400, "speed": 400, "crit": 18,
+      "personality": { "name": "溫和的" }, "score": 2350,
+      "skills": [
+        { "name": "月亮之力", "level": 9 },
+        { "name": "光牆", "level": 8 },
+        { "name": "生命水滴", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "light_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "light_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_dark_bosses": [
+    {
+      "id": "boss_dark_vampire",
+      "nickname": "吸血鬼伯爵",
+      "isNPC": true,
+      "description": "潛伏於古堡中的優雅貴族，以吸取生命能量為生。",
+      "rarity": "稀有",
+      "elements": ["暗", "風"],
+      "initial_max_hp": 2700, "hp": 2700, "initial_max_mp": 1600, "mp": 1600,
+      "attack": 340, "defense": 240, "speed": 340, "crit": 22,
+      "personality": { "name": "優雅的" }, "score": 1800,
+      "skills": [
+        { "name": "噬魂", "level": 8 },
+        { "name": "暗之波動", "level": 7 },
+        { "name": "燕返", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "dark_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_dark_lich",
+      "nickname": "巫妖王",
+      "isNPC": true,
+      "description": "將自己靈魂束縛於法器中的不死法師，操控著亡者大軍。",
+      "rarity": "菁英",
+      "elements": ["暗", "毒"],
+      "initial_max_hp": 3700, "hp": 3700, "initial_max_mp": 2500, "mp": 2500,
+      "attack": 450, "defense": 360, "speed": 330, "crit": 20,
+      "personality": { "name": "傲慢的" }, "score": 2400,
+      "skills": [
+        { "name": "地獄突刺", "level": 9 },
+        { "name": "詭計", "level": 8 },
+        { "name": "劇毒鎖鏈", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "dark_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "dark_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_poison_bosses": [
+    {
+      "id": "boss_poison_hydra",
+      "nickname": "九頭蛇",
+      "isNPC": true,
+      "description": "每砍掉一個頭，就會長出兩個新的頭，其吐息帶有劇毒。",
+      "rarity": "稀有",
+      "elements": ["毒", "水"],
+      "initial_max_hp": 3400, "hp": 3400, "initial_max_mp": 1400, "mp": 1400,
+      "attack": 290, "defense": 290, "speed": 260, "crit": 16,
+      "personality": { "name": "憤怒的" }, "score": 1700,
+      "skills": [
+        { "name": "十字毒刃", "level": 7 },
+        { "name": "毒液浸泡", "level": 8 },
+        { "name": "攀瀑", "level": 7 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "poison_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_poison_manticore",
+      "nickname": "蠍尾獅",
+      "isNPC": true,
+      "description": "獅身、人面、蠍尾的傳說魔獸，尾刺的劇毒能瞬間致命。",
+      "rarity": "菁英",
+      "elements": ["毒", "火"],
+      "initial_max_hp": 3900, "hp": 3900, "initial_max_mp": 1900, "mp": 1900,
+      "attack": 440, "defense": 370, "speed": 380, "crit": 22,
+      "personality": { "name": "急躁的" }, "score": 2300,
+      "skills": [
+        { "name": "劇毒鎖鏈", "level": 9 },
+        { "name": "垃圾射擊", "level": 8 },
+        { "name": "烈焰之息", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "poison_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "poison_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_wind_bosses": [
+    {
+      "id": "boss_wind_griffin",
+      "nickname": "獅鷲獸",
+      "isNPC": true,
+      "description": "鷹頭獅身的空中霸主，以其風之魔法和利爪聞名。",
+      "rarity": "稀有",
+      "elements": ["風", "無"],
+      "initial_max_hp": 2800, "hp": 2800, "initial_max_mp": 1500, "mp": 1500,
+      "attack": 300, "defense": 260, "speed": 360, "crit": 21,
+      "personality": { "name": "勇敢的" }, "score": 1750,
+      "skills": [
+        { "name": "燕返", "level": 8 },
+        { "name": "暴風", "level": 7 },
+        { "name": "高速移動", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 200, "max": 300, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "wind_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_wind_djinn",
+      "nickname": "風之精靈王",
+      "isNPC": true,
+      "description": "由純粹的風元素構成的古代精靈王，能操控氣流與風暴。",
+      "rarity": "菁英",
+      "elements": ["風", "混"],
+      "initial_max_hp": 3800, "hp": 3800, "initial_max_mp": 2600, "mp": 2600,
+      "attack": 370, "defense": 380, "speed": 450, "crit": 20,
+      "personality": { "name": "善變的" }, "score": 2450,
+      "skills": [
+        { "name": "暴風", "level": 9 },
+        { "name": "順風", "level": 9 },
+        { "name": "破空斬", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 400, "max": 600, "chance": 1.0 }, { "type": "dna", "item_pool_id": "wind_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "wind_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_none_bosses": [
+    {
+      "id": "boss_none_doppelganger",
+      "nickname": "擬態者",
+      "isNPC": true,
+      "description": "沒有固定形態的生物，能模仿對手的樣貌與技能。",
+      "rarity": "稀有",
+      "elements": ["無", "混"],
+      "initial_max_hp": 3000, "hp": 3000, "initial_max_mp": 2000, "mp": 2000,
+      "attack": 280, "defense": 280, "speed": 280, "crit": 15,
+      "personality": { "name": "善變的" }, "score": 1800,
+      "skills": [
+        { "name": "泰山壓頂", "level": 8 },
+        { "name": "揮指", "level": 8 },
+        { "name": "模仿", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 250, "max": 350, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "none_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_none_slaking",
+      "nickname": "怠惰巨獸",
+      "isNPC": true,
+      "description": "擁有無與倫比的潛力，但大部分時間都在發懶。一旦認真起來，無人能擋。",
+      "rarity": "菁英",
+      "elements": ["無", "土"],
+      "initial_max_hp": 5000, "hp": 5000, "initial_max_mp": 1000, "mp": 1000,
+      "attack": 500, "defense": 450, "speed": 300, "crit": 20,
+      "personality": { "name": "懶散的" }, "score": 2500,
+      "skills": [
+        { "name": "捨身衝撞", "level": 9 },
+        { "name": "最終手段", "level": 8 },
+        { "name": "睡覺", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 450, "max": 650, "chance": 1.0 }, { "type": "dna", "item_pool_id": "none_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "none_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
+  ],
+  "facility_mix_bosses": [
+    {
+      "id": "boss_mix_chimera",
+      "nickname": "奇美拉",
+      "isNPC": true,
+      "description": "獅頭、羊身、蛇尾的合成獸，能同時使用多種元素的攻擊。",
+      "rarity": "稀有",
+      "elements": ["混", "火", "毒"],
+      "initial_max_hp": 3100, "hp": 3100, "initial_max_mp": 1400, "mp": 1400,
+      "attack": 310, "defense": 270, "speed": 290, "crit": 19,
+      "personality": { "name": "憤怒的" }, "score": 1850,
+      "skills": [
+        { "name": "三角攻擊", "level": 8 },
+        { "name": "火焰拳", "level": 8 },
+        { "name": "毒素牙", "level": 8 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 250, "max": 350, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "mix_rare", "quantity": 2, "chance": 0.8 } ]
+      }
+    },
+    {
+      "id": "boss_mix_chaos",
+      "nickname": "混沌化身",
+      "isNPC": true,
+      "description": "由純粹的混亂能量構成，其行為和能力都無法預測。",
+      "rarity": "菁英",
+      "elements": ["混"],
+      "initial_max_hp": 4000, "hp": 4000, "initial_max_mp": 2500, "mp": 2500,
+      "attack": 400, "defense": 400, "speed": 400, "crit": 22,
+      "personality": { "name": "善變的" }, "score": 2400,
+      "skills": [
+        { "name": "揮指", "level": 10 },
+        { "name": "騙術空間", "level": 8 },
+        { "name": "特性交換", "level": 9 }
+      ],
+      "loot_table": {
+        "guaranteed": [ { "type": "gold", "min": 450, "max": 650, "chance": 1.0 }, { "type": "dna", "item_pool_id": "mix_rare", "quantity": 1, "chance": 1.0 } ],
+        "random": [ { "type": "dna", "item_pool_id": "mix_elite", "quantity": 1, "chance": 0.2 } ]
+      }
+    }
   ]
 }
