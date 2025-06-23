@@ -1,0 +1,70 @@
+{
+  "facility_001": [
+    {
+      "id": "boss_forest_treant",
+      "nickname": "遠古樹人",
+      "isNPC": true,
+      "description": "沉睡在森林深處的古老守護者，被探險者的腳步聲所喚醒。其樹皮堅硬如鐵，藤蔓揮舞如鞭。",
+      "rarity": "菁英",
+      "elements": ["木", "土"],
+      "initial_max_hp": 800,
+      "hp": 800,
+      "initial_max_mp": 200,
+      "mp": 200,
+      "attack": 60,
+      "defense": 85,
+      "speed": 20,
+      "crit": 5,
+      "personality": { "name": "頑固的" },
+      "score": 1200,
+      "skills": [
+        { "name": "木槌", "level": 5 },
+        { "name": "扎根", "level": 5 },
+        { "name": "億萬噸吸收", "level": 3 }
+      ],
+      "loot_table": {
+        "guaranteed": [
+          { "type": "dna", "item_pool_id": "adventure_rare_dna", "quantity": 1 }
+        ],
+        "random": [
+          { "type": "gold", "min": 50, "max": 100, "chance": 1.0 },
+          { "type": "dna", "item_pool_id": "adventure_elite_dna", "quantity": 1, "chance": 0.1 }
+        ]
+      }
+    }
+  ],
+  "facility_002": [
+    {
+      "id": "boss_mine_golem",
+      "nickname": "寶石魔像",
+      "isNPC": true,
+      "description": "由礦坑深處的稀有礦石與魔法能量構成的自律魔像，對入侵其領域的生物毫不留情。",
+      "rarity": "菁英",
+      "elements": ["金", "土"],
+      "initial_max_hp": 650,
+      "hp": 650,
+      "initial_max_mp": 150,
+      "mp": 150,
+      "attack": 75,
+      "defense": 120,
+      "speed": 15,
+      "crit": 10,
+      "personality": { "name": "冷静的" },
+      "score": 1500,
+      "skills": [
+        { "name": "鐵壁", "level": 5 },
+        { "name": "重磅衝撞", "level": 4 },
+        { "name": "鏡光", "level": 5 }
+      ],
+      "loot_table": {
+        "guaranteed": [
+          { "type": "dna", "item_pool_id": "adventure_rare_gold_dna", "quantity": 1 }
+        ],
+        "random": [
+          { "type": "gold", "min": 80, "max": 150, "chance": 1.0 },
+          { "type": "dna", "item_pool_id": "adventure_elite_dna", "quantity": 1, "chance": 0.15 }
+        ]
+      }
+    }
+  ]
+}
