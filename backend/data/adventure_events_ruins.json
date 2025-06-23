@@ -21,8 +21,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "錯誤的順序觸發了防禦機關！牆壁中射出灼熱的射線！ [損失：隊伍全員HP -80] 🔥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -80 }]
+            "story_fragment": "錯誤的順序觸發了防禦機關！牆壁中射出灼熱的射線！ [損失：隊伍全員HP -800] 🔥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -800 }]
           }
         ]
       },
@@ -42,8 +42,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "在破解過程中，怪獸觸發了反制電流，受到了強烈的電擊！ [損失：防禦最高者HP -60] ⚡",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest_def", "amount": -60 }]
+            "story_fragment": "在破解過程中，怪獸觸發了反制電流，受到了強烈的電擊！ [損失：防禦最高者HP -600] ⚡",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest_def", "amount": -600 }]
           }
         ]
       }
@@ -66,13 +66,13 @@
           },
           {
             "type": "neutral", "weight": 30,
-            "story_fragment": "魔像非常堅固，在一番激戰後，它因為能量耗盡而停止了運作。 [損失：隊伍全員HP -50] ⚔️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
+            "story_fragment": "魔像非常堅固，在一番激戰後，它因為能量耗盡而停止了運作。 [損失：隊伍全員HP -500] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -500 }]
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "這具魔像比看起來的要強大得多！你們被它打得狼狽不堪。 [損失：隊伍全員HP -100] 😵",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
+            "story_fragment": "這具魔像比看起來的要強大得多！你們被它打得狼狽不堪。 [損失：隊伍全員HP -1000] 😵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -1000 }]
           }
         ]
       },
@@ -92,8 +92,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "你們的觸碰被視為敵意行為，魔像的核心能量發生了小規模爆炸！ [損失：隊伍全員HP -70] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -70 }]
+            "story_fragment": "你們的觸碰被視為敵意行為，魔像的核心能量發生了小規模爆炸！ [損失：隊伍全員HP -700] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -700 }]
           }
         ]
       }
@@ -142,8 +142,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "你們的打撈行為觸動了防禦機制，能量池發出衝擊波，將你們彈開。 [損失：隊伍全員HP -40] 🌊",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+            "story_fragment": "你們的打撈行為觸動了防禦機制，能量池發出衝擊波，將你們彈開。 [損失：隊伍全員HP -400] 🌊",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
           }
         ]
       }
@@ -236,8 +236,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "在尋找核心時，你們不小心踩錯了壓力板，觸發了落石陷阱！ [損失：隊伍全員HP -60] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -60 }]
+            "story_fragment": "在尋找核心時，你們不小心踩錯了壓力板，觸發了落石陷阱！ [損失：隊伍全員HP -600] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -600 }]
           }
         ]
       }
@@ -311,8 +311,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "你們觸碰武器時觸發了警報，房間的大門立刻關閉，你們費了很大力氣才逃出來。 [損失：隊伍全員HP -50] 🚨",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
+            "story_fragment": "你們觸碰武器時觸發了警報，房間的大門立刻關閉，你們費了很大力氣才逃出來。 [損失：隊伍全員HP -500] 🚨",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -500 }]
           }
         ]
       },
@@ -407,8 +407,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "錯誤的能量類型導致了過載！球體釋放出強力的衝擊波！ [損失：隊伍全員HP -80] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -80 }]
+            "story_fragment": "錯誤的能量類型導致了過載！球體釋放出強力的衝擊波！ [損失：隊伍全員HP -800] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -800 }]
           }
         ]
       },
@@ -453,8 +453,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "你們在裡面迷路了，還撞上了好幾次鏡子。 [損失：隊伍全員HP -40] 🤕",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+            "story_fragment": "你們在裡面迷路了，還撞上了好幾次鏡子。 [損失：隊伍全員HP -400] 🤕",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
           }
         ]
       },
@@ -474,8 +474,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "這裡的幻象太強了，連暗屬性怪獸都被迷惑，帶著你們撞上了牆。 [損失：隊伍全員HP -20] 🧱",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+            "story_fragment": "這裡的幻象太強了，連暗屬性怪獸都被迷惑，帶著你們撞上了牆。 [損失：隊伍全員HP -200] 🧱",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
           }
         ]
       }
