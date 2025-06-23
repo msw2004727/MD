@@ -105,8 +105,21 @@ function showTeamSelectionModal(facility) {
 
     // 綁定確認按鈕的事件
     confirmBtn.onclick = () => {
-        // 在這裡呼叫實際開始遠征的函式
-        startExpedition(facility.id, selectedMonsters);
+        // 從設施資料中找到對應的島嶼ID
+        const islandsData = gameState.gameConfigs.adventure_islands || [];
+        let islandId = null;
+        for (const island of islandsData) {
+            if (island.facilities && island.facilities.some(fac => fac.facilityId === facility.facilityId)) {
+                islandId = island.islandId;
+                break;
+            }
+        }
+        
+        if (islandId) {
+            startExpedition(islandId, facility.facilityId, selectedMonsters);
+        } else {
+            showFeedbackModal('錯誤', '無法確定設施所屬的島嶼。');
+        }
     };
 
     // 顯示彈窗
@@ -114,35 +127,54 @@ function showTeamSelectionModal(facility) {
 }
 
 /**
- * 處理開始遠征的邏輯（目前為預留）
+ * 處理開始遠征的邏輯，呼叫後端 API。
+ * @param {string} islandId - 島嶼ID
  * @param {string} facilityId - 設施ID
  * @param {Array<string>} teamMonsterIds - 被選中的怪獸ID列表
  */
-async function startExpedition(facilityId, teamMonsterIds) {
+async function startExpedition(islandId, facilityId, teamMonsterIds) {
     hideModal('expedition-team-selection-modal');
     showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
 
     try {
-        // TODO: 在下一階段，這裡將會呼叫後端的 /adventure/start API
-        // const result = await fetchAPI('/adventure/start', { ... });
-        
-        // 暫時顯示開發中訊息
-        setTimeout(() => {
+        // 呼叫 api-client.js 中的函式
+        const result = await startExpedition(islandId, facilityId, teamMonsterIds);
+
+        if (result && result.success) {
+            // 成功後刷新玩家資料，以獲取後端產生的 adventure_progress
+            await refreshPlayerData();
+            
             hideModal('feedback-modal');
-            showFeedbackModal('提示', '遠征隊伍已確認！後續的地圖與戰鬥功能正在全力開發中，敬請期待！');
-        }, 1500);
+            // 由於地圖介面尚未開發，先顯示成功提示
+            showFeedbackModal(
+                '遠征開始！',
+                '您的隊伍已成功出發！地圖探索功能即將開放，敬請期待。',
+                false,
+                null,
+                [{ text: '太棒了！', class: 'primary' }]
+            );
+            
+            // 遠征開始後，自動切回第一個頁籤
+            const firstTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button');
+            if(firstTabButton) {
+                switchTabContent(firstTabButton.dataset.tabTarget, firstTabButton);
+            }
+
+        } else {
+            // 處理後端回傳的邏輯錯誤
+            throw new Error(result.error || '未知的錯誤導致遠征無法開始。');
+        }
 
     } catch (error) {
+        // 處理 API 請求失敗或後端回傳的錯誤
         hideModal('feedback-modal');
-        showFeedbackModal('錯誤', `開始遠征失敗：${error.message}`);
+        showFeedbackModal('出發失敗', `無法開始遠征：${error.message}`);
     }
 }
 
 
 /**
  * 初始化冒險島UI的總入口函式。
- * 當玩家點擊「冒險島」頁籤時，這個函式會被觸發。
- * 現在它會從後端獲取資料來動態渲染。
  */
 async function initializeAdventureUI() {
     const adventureTabContent = document.getElementById('guild-content');
@@ -166,9 +198,7 @@ async function initializeAdventureUI() {
         const facilities = island.facilities || [];
         
         // 將島嶼資料存到 gameState 中，以便後續使用
-        if (!gameState.gameConfigs.adventure_islands) {
-            gameState.gameConfigs.adventure_islands = islandsData;
-        }
+        gameState.gameConfigs.adventure_islands = islandsData;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'adventure-wrapper';
