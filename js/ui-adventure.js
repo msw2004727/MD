@@ -79,8 +79,6 @@ function showTeamSelectionModal(facility, islandId) {
             }
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
-            // --- 核心修改處 START ---
-            // 移除了顯示等級的 <span> 元素
             card.innerHTML = `
                 <div class="monster-selection-card-header">
                     <span class="text-rarity-${(monster.rarity || 'common').toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
@@ -97,7 +95,6 @@ function showTeamSelectionModal(facility, islandId) {
                     </div>
                 </div>
             `;
-            // --- 核心修改處 END ---
 
             if (!isDisabled) {
                 card.addEventListener('click', () => {
@@ -172,6 +169,13 @@ function renderAdventureProgressUI(adventureProgress) {
         const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
         if (!originalMonster) return;
 
+        // --- 核心修改處 START ---
+        // 使用 getMonsterDisplayName 獲取簡化後的名稱
+        const displayName = getMonsterDisplayName(originalMonster, gameState.gameConfigs);
+        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+        const rarityKey = originalMonster.rarity ? (rarityMap[originalMonster.rarity] || 'common') : 'common';
+        // --- 核心修改處 END ---
+
         const headInfo = { type: '無', rarity: '普通' };
         const constituentIds = originalMonster.constituent_dna_ids || [];
         if (constituentIds.length > 0) {
@@ -190,11 +194,13 @@ function renderAdventureProgressUI(adventureProgress) {
         const switchCaptainBtn = !isCaptain ? 
             `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">👑</button>` : '';
 
+        // --- 核心修改處 START ---
+        // 將顯示的名稱從 member.nickname 改為 displayName
         teamStatusHtml += `
             <div class="team-member-card">
                 <div class="avatar" style="background-image: url('${imagePath}')"></div>
                 <div class="info">
-                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname} ${captainMedal}${switchCaptainBtn}</div>
+                    <div class="name text-rarity-${rarityKey}">${displayName} ${captainMedal}${switchCaptainBtn}</div>
                     <div class="status-bar-container" style="gap: 4px; margin-top: 2px;">
                         <div class="status-bar-background" style="height: 8px;">
                             <div class="status-bar-fill" style="width: ${(member.current_hp / originalMonster.initial_max_hp) * 100}%; background-color: var(--success-color);"></div>
@@ -204,6 +210,7 @@ function renderAdventureProgressUI(adventureProgress) {
                 </div>
             </div>
         `;
+        // --- 核心修改處 END ---
     });
     
     adventureTabContent.innerHTML = `
