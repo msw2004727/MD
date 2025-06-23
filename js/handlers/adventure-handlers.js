@@ -180,7 +180,16 @@ async function handleAdventureChoiceClick(buttonElement) {
                 }];
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
                 setTimeout(() => {
-                    showFeedbackModal('遠征失敗', '隊長被打到瀕死，隊員們趕緊將隊長扛回農場進行急救！', false, null, lossActions);
+                    // --- 核心修改處 START ---
+                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionEnd || '';
+                    const messageHtml = `
+                        <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
+                            <img src="${bannerUrl}" alt="遠征失敗橫幅" style="max-width: 100%; border-radius: 6px;">
+                        </div>
+                        <p>隊長被打到瀕死，隊員們趕緊將隊長扛回農場進行急救！</p>
+                    `;
+                    showFeedbackModal('遠征失敗', messageHtml, false, null, lossActions);
+                    // --- 核心修改處 END ---
                 }, 300);
             }
 
@@ -216,7 +225,16 @@ async function handleAbandonAdventure() {
                     await refreshPlayerData();
                     initializeAdventureUI();
                     hideModal('feedback-modal');
-                    showFeedbackModal('遠征結束', '您已成功返回農場。');
+                    // --- 核心修改處 START ---
+                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionEnd || '';
+                    const messageHtml = `
+                        <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
+                            <img src="${bannerUrl}" alt="遠征結束橫幅" style="max-width: 100%; border-radius: 6px;">
+                        </div>
+                        <p>您已成功返回農場。</p>
+                    `;
+                    showFeedbackModal('遠征結束', messageHtml);
+                    // --- 核心修改處 END ---
                 } else {
                     throw new Error(result?.error || '未知的錯誤');
                 }
@@ -236,8 +254,6 @@ function initializeAdventureHandlers() {
     const adventureContainer = DOMElements.guildContent;
 
     if (adventureContainer) {
-        // --- 核心修改處 START ---
-        // 將事件監聽器改為異步函式以支援 await
         adventureContainer.addEventListener('click', async (event) => {
             const challengeButton = event.target.closest('.challenge-facility-btn');
             const advanceButton = event.target.closest('#adventure-advance-btn');
@@ -254,7 +270,6 @@ function initializeAdventureHandlers() {
             } else if (abandonButton) {
                 await handleAbandonAdventure();
             } else if (switchCaptainButton) {
-                // 新增：處理切換隊長按鈕的點擊
                 const monsterIdToPromote = switchCaptainButton.dataset.monsterId;
                 if (!monsterIdToPromote) return;
 
@@ -264,29 +279,24 @@ function initializeAdventureHandlers() {
                 const team = adventureProgress.expedition_team;
                 const memberIndex = team.findIndex(member => member.monster_id === monsterIdToPromote);
 
-                if (memberIndex > 0) { // 確保不是點擊隊長自己
+                if (memberIndex > 0) { 
                     switchCaptainButton.disabled = true;
 
-                    // 重新排序隊伍陣列，將被點擊的成員移到最前面
                     const [memberToPromote] = team.splice(memberIndex, 1);
                     team.unshift(memberToPromote);
 
-                    // 重新渲染UI以立即反映變更
                     renderAdventureProgressUI(adventureProgress);
 
-                    // 儲存更新後的隊伍順序到後端
                     try {
                         await savePlayerData(gameState.playerId, gameState.playerData);
                         console.log(`遠征隊隊長已更換為 ${monsterIdToPromote} 並成功儲存。`);
                     } catch (error) {
                         console.error("儲存新隊長順序失敗:", error);
-                        // 可選：如果儲存失敗，可以在此處將隊伍順序還原並提示使用者
                         showFeedbackModal('錯誤', '更換隊長失敗，請稍後再試。');
                     }
                 }
             }
         });
-        // --- 核心修改處 END ---
         console.log("冒險島事件處理器已成功初始化。");
     } else {
         setTimeout(initializeAdventureHandlers, 100);
