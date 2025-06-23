@@ -1,21 +1,22 @@
 // js/ui-adventure.js
 // 專門負責渲染「冒險島」的所有UI。
 
-// --- 核心修改處 START ---
 /**
  * 初始化冒險地圖的事件監聽器。
  * 使用事件委派模式，只在父容器上設定一個監聽器。
+ * 這個函式現在應該只被呼叫一次。
  */
 function initializeAdventureMapHandlers() {
     const nodesContainer = document.getElementById('adventure-map-nodes-container');
     if (!nodesContainer) return;
 
-    // 為避免重複綁定，先移除舊的監聽器
-    // 透過複製節點並取代的方式來移除所有事件監聽
-    const newContainer = nodesContainer.cloneNode(true);
-    nodesContainer.parentNode.replaceChild(newContainer, nodesContainer);
+    // 為避免重複綁定，先移除可能存在的舊監聽器
+    // 這次我們不使用 cloneNode，而是直接管理事件監聽
+    if (nodesContainer.dataset.listenerAttached === 'true') {
+        return; // 如果已經綁定過，就直接返回
+    }
 
-    newContainer.addEventListener('click', (event) => {
+    nodesContainer.addEventListener('click', (event) => {
         const clickedNodeElement = event.target.closest('.map-node.clickable');
         if (!clickedNodeElement) return;
 
@@ -30,6 +31,8 @@ function initializeAdventureMapHandlers() {
             handleMapNodeClick(targetNode);
         }
     });
+
+    nodesContainer.dataset.listenerAttached = 'true'; // 標記已綁定
 }
 
 /**
@@ -186,7 +189,6 @@ function handleMapNodeClick(node) {
         console.log(`找不到通往 (${node.position.x}, ${node.position.y}) 的路徑。`);
     }
 }
-// --- 核心修改處 END ---
 
 
 /**
@@ -224,7 +226,6 @@ function renderAdventureMap(adventureProgress) {
     canvas.height = 30 * GRID_SIZE;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- 核心修改處：移除此處的 addEventListener ---
     nodes.forEach(node => {
         const nodeEl = document.createElement('div');
         nodeEl.className = 'map-node';
@@ -235,12 +236,10 @@ function renderAdventureMap(adventureProgress) {
         
         if (node.type !== 'obstacle') {
             nodeEl.classList.add('clickable');
-            // nodeEl.addEventListener('click', () => handleMapNodeClick(node)); // <- 已移除
         }
 
         nodesContainer.appendChild(nodeEl);
     });
-    // --- 核心修改處 END ---
     
     if(playerCurrentNode) {
         const playerToken = document.createElement('div');
@@ -250,10 +249,6 @@ function renderAdventureMap(adventureProgress) {
         playerToken.style.top = `${playerCurrentNode.position.y * GRID_SIZE}px`;
         nodesContainer.appendChild(playerToken);
     }
-
-    // --- 核心修改處：在渲染地圖後，初始化事件處理器 ---
-    initializeAdventureMapHandlers();
-    // --- 核心修改處 END ---
 
     showModal('adventure-map-modal');
 }
@@ -411,6 +406,9 @@ async function initializeAdventureUI() {
         return;
     }
     
+    // 初始化一次性的事件監聽器
+    initializeAdventureMapHandlers();
+
     const adventureProgress = gameState.playerData?.adventure_progress;
     if (adventureProgress && adventureProgress.is_active) {
         renderAdventureMap(adventureProgress);
