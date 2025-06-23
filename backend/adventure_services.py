@@ -8,11 +8,8 @@ from typing import List, Dict, Optional, Any, Tuple
 import os
 import json
 
-# --- 核心修改處 START ---
-# 將原本混合的導入，拆分為從各自正確的檔案導入
-from .MD_models import PlayerGameData, GameConfigs, Monster
-from .adventure_models import AdventureProgress, MapData, MapNode
-# --- 核心修改處 END ---
+# 導入遊戲核心及冒險島專用的資料模型
+from .MD_models import PlayerGameData, GameConfigs, Monster, AdventureProgress, MapData, MapNode
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
