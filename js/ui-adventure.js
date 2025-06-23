@@ -185,10 +185,8 @@ function renderAdventureProgressUI(adventureProgress) {
         const isCaptain = index === 0;
         const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
         
-        // --- 核心修改處 START ---
         const switchCaptainBtn = !isCaptain ? 
             `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">👑</button>` : '';
-        // --- 核心修改處 END ---
 
         teamStatusHtml += `
             <div class="team-member-card">
@@ -331,6 +329,8 @@ async function initializeAdventureUI() {
             facilities.forEach(facility => {
                 const card = document.createElement('div');
                 card.className = 'adventure-facility-card';
+                // --- 核心修改處 START ---
+                // 在 .facility-card-footer 中加入新的排行榜按鈕
                 card.innerHTML = `
                     <div class="facility-card-header">
                         <h4 class="facility-title">${facility.name || '未知設施'}</h4>
@@ -340,9 +340,11 @@ async function initializeAdventureUI() {
                         <p>${facility.description || '暫無描述。'}</p>
                     </div>
                     <div class="facility-card-footer">
+                        <button class="button secondary" style="width: 36px; height: 36px; border-radius: 50%; padding: 0; font-size: 1.2rem;" title="層數排行榜 (開發中)" disabled>🏆</button>
                         <button class="button primary challenge-facility-btn" data-facility-id="${facility.facilityId}">挑戰</button>
                     </div>
                 `;
+                // --- 核心修改處 END ---
                 facilityList.appendChild(card);
             });
         } else {
