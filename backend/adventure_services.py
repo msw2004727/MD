@@ -129,17 +129,56 @@ def start_expedition_service(
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家在地圖上推進一個進度的邏輯。
-    (此為後續步驟的核心函式，目前為預留)
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 請求推進樓層進度...")
-    # 待辦事項：
-    # 1. 增加 current_step。
-    # 2. 檢查是否到達樓層終點，若是則觸發BOSS戰。
-    # 3. 若否，則從 adventure_events.json 中隨機抽選一個事件。
-    # 4. 返回事件資料給前端。
     
-    # 預留的回應
-    return {"status": "pending_implementation", "message": "推進功能開發中。"}
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("is_active"):
+        return {"success": False, "error": "沒有正在進行的遠征。"}
+
+    # 將步數加一
+    progress["current_step"] += 1
+
+    # 檢查是否到達樓層終點
+    if progress["current_step"] >= progress["total_steps_in_floor"]:
+        adventure_logger.info(f"玩家已到達樓層終點 (第 {progress['current_floor']} 層)，觸發 BOSS 戰。")
+        # TODO: 未來在此處加入真正的 BOSS 戰邏輯
+        boss_event = {
+            "event_type": "boss_encounter",
+            "name": "強大的氣息！",
+            "description": f"你們走到了第 {progress['current_floor']} 層的盡頭，一個巨大的身影擋住了去路！一場惡戰在所難免！",
+            "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}]
+        }
+        return {"success": True, "event_data": boss_event, "updated_progress": progress}
+
+    # 如果未到終點，則抽選一個隨機事件
+    all_events = game_configs.get("adventure_events", [])
+    if not all_events:
+        adventure_logger.warning("在遊戲設定中找不到任何冒險事件 (adventure_events.json)，返回一個預設事件。")
+        default_event = {
+            "event_type": "generic",
+            "name": "前進",
+            "description": "你們繼續小心翼翼地前進，但似乎沒有發生任何特別的事。",
+            "choices": [{"choice_id": "CONTINUE", "text": "繼續探索"}]
+        }
+        return {"success": True, "event_data": default_event, "updated_progress": progress}
+
+    # 抽選事件
+    chosen_event = random.choice(all_events).copy()
+
+    # 格式化事件描述
+    team_members = progress.get("expedition_team", [])
+    if team_members:
+        random_monster_name = random.choice(team_members).get("nickname", "你的怪獸")
+        chosen_event["description"] = chosen_event.get("description_template", "").format(monster_name=random_monster_name)
+    
+    # 移除模板字串，避免傳到前端
+    chosen_event.pop("description_template", None)
+
+    adventure_logger.info(f"為玩家抽選到事件：{chosen_event.get('name')}")
+    
+    return {"success": True, "event_data": chosen_event, "updated_progress": progress}
+
 
 def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, game_configs: GameConfigs) -> Dict[str, Any]:
     """
