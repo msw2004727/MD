@@ -105,7 +105,7 @@ def start_expedition_service(
         "is_active": True, "island_id": island_id, "facility_id": facility_id,
         "start_timestamp": int(time.time()), "expedition_team": expedition_team_status,
         "current_floor": 1, "current_step": 0, "total_steps_in_floor": 5,
-        "story_fragments": [], "adventure_inventory": []
+        "story_fragments": [], "adventure_inventory": [], "current_event": None
     }
     player_data["adventure_progress"] = adventure_progress
     
@@ -114,131 +114,80 @@ def start_expedition_service(
 
 
 def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
-    """從指定的JSON檔案載入BOSS資料池。"""
     try:
         file_path = os.path.join(os.path.dirname(__file__), 'data', boss_pool_id)
         with open(file_path, 'r', encoding='utf-8') as f:
-            boss_data = json.load(f)
-        if isinstance(boss_data, list):
-            return boss_data
-        adventure_logger.error(f"BOSS檔案 {boss_pool_id} 格式錯誤，根層級不是列表。")
-        return []
-    except FileNotFoundError:
-        adventure_logger.error(f"找不到指定的BOSS檔案：{boss_pool_id}")
-        return []
-    except json.JSONDecodeError:
-        adventure_logger.error(f"解析BOSS檔案 {boss_pool_id} 時發生錯誤。")
+            return json.load(f)
+    except Exception:
         return []
 
-# --- 核心修改處 START ---
 def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]:
-    """根據設施ID，從對應的JSON檔案載入事件池。"""
-    # 建立設施ID與事件檔案名稱的對應關係
     event_file_map = {
         "facility_001": "adventure_events_forest.json",
         "facility_002": "adventure_events_mine.json",
         "facility_003": "adventure_events_cave.json",
         "facility_004": "adventure_events_ruins.json"
     }
-    
     event_file_name = event_file_map.get(facility_id)
-    if not event_file_name:
-        adventure_logger.warning(f"找不到設施ID '{facility_id}' 對應的事件檔案。")
-        return []
-
+    if not event_file_name: return []
     try:
         file_path = os.path.join(os.path.dirname(__file__), 'data', event_file_name)
         with open(file_path, 'r', encoding='utf-8') as f:
-            events_data = json.load(f)
-        if isinstance(events_data, list):
-            return events_data
-        adventure_logger.error(f"事件檔案 {event_file_name} 格式錯誤，根層級不是列表。")
-        return []
-    except FileNotFoundError:
-        adventure_logger.error(f"找不到指定的事件檔案：{event_file_name}")
-        return []
-    except json.JSONDecodeError:
-        adventure_logger.error(f"解析事件檔案 {event_file_name} 時發生錯誤。")
+            return json.load(f)
+    except Exception:
         return []
 
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
-    """
-    處理玩家在地圖上推進一個進度的邏輯。
-    """
-    adventure_logger.info(f"玩家 {player_data.get('nickname')} 請求推進樓層進度...")
-    
     progress = player_data.get("adventure_progress")
     if not progress or not progress.get("is_active"):
         return {"success": False, "error": "沒有正在進行的遠征。"}
 
     progress["current_step"] += 1
-
     current_facility_id = progress.get("facility_id")
+    event_data = None
 
-    # 檢查是否到達樓層終點
     if progress["current_step"] >= progress["total_steps_in_floor"]:
         current_floor = progress.get("current_floor", 1)
-        adventure_logger.info(f"玩家已到達樓層終點 (第 {current_floor} 層)，觸發 BOSS 戰。")
-        
         all_islands = game_configs.get("adventure_islands", [])
-        facility_data = None
-        for island in all_islands:
-            facility_data = next((fac for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
-            if facility_data:
-                break
-        
-        if not facility_data or not facility_data.get("boss_pool_id"):
-            return {"success": False, "error": "無法確定當前設施的BOSS。"}
-            
-        boss_pool = _load_boss_pool(facility_data["boss_pool_id"])
-        if not boss_pool:
-            return {"success": False, "error": "無法載入BOSS資料。"}
-            
-        base_boss = random.choice(boss_pool).copy()
-        
-        if current_floor > 1:
-            growth_factor = 1.1 ** (current_floor - 1)
-            base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
-            stats_to_grow = ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']
-            for stat in stats_to_grow:
-                if stat in base_boss:
-                    base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
-            base_boss['score'] = math.ceil(base_boss.get('score', 600) * growth_factor)
+        facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
+        if facility_data and facility_data.get("boss_pool_id"):
+            boss_pool = _load_boss_pool(facility_data["boss_pool_id"])
+            if boss_pool:
+                base_boss = random.choice(boss_pool).copy()
+                if current_floor > 1:
+                    growth_factor = 1.1 ** (current_floor - 1)
+                    base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
+                    for stat in ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']:
+                        if stat in base_boss: base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
+                    base_boss['score'] = math.ceil(base_boss.get('score', 600) * growth_factor)
+                
+                event_data = {
+                    "event_type": "boss_encounter", "name": f"強大的氣息！遭遇 {base_boss.get('nickname')}！",
+                    "description": base_boss.get("description", "一個巨大的身影擋住了去路！"),
+                    "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}], "boss_data": base_boss
+                }
+    else:
+        all_events = _load_event_pool(current_facility_id)
+        if all_events:
+            chosen_event = random.choice(all_events).copy()
+            team_members = progress.get("expedition_team", [])
+            if team_members:
+                random_monster_name = random.choice(team_members).get("nickname", "你的怪獸")
+                chosen_event["description"] = chosen_event.get("description_template", "").format(monster_name=random_monster_name)
+            chosen_event.pop("description_template", None)
+            event_data = chosen_event
 
-        adventure_logger.info(f"已生成BOSS：{base_boss['nickname']}，樓層：{current_floor}")
-
-        boss_event = {
-            "event_type": "boss_encounter",
-            "name": f"強大的氣息！遭遇 {base_boss.get('nickname')}！",
-            "description": base_boss.get("description", "一個巨大的身影擋住了去路！一場惡戰在所難免！"),
-            "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}],
-            "boss_data": base_boss
-        }
-        return {"success": True, "event_data": boss_event, "updated_progress": progress}
-
-    # 如果未到終點，則從對應的事件池抽選一個隨機事件
-    all_events = _load_event_pool(current_facility_id)
-    if not all_events:
-        adventure_logger.warning(f"設施 {current_facility_id} 的事件池為空，返回一個預設事件。")
-        default_event = {
+    if not event_data:
+        event_data = {
             "event_type": "generic", "name": "前進",
             "description": "你們繼續小心翼翼地前進，但似乎沒有發生任何特別的事。",
             "choices": [{"choice_id": "CONTINUE", "text": "繼續探索"}]
         }
-        return {"success": True, "event_data": default_event, "updated_progress": progress}
 
-    chosen_event = random.choice(all_events).copy()
-    team_members = progress.get("expedition_team", [])
-    if team_members:
-        random_monster_name = random.choice(team_members).get("nickname", "你的怪獸")
-        chosen_event["description"] = chosen_event.get("description_template", "").format(monster_name=random_monster_name)
-    
-    chosen_event.pop("description_template", None)
-    adventure_logger.info(f"為玩家抽選到事件：{chosen_event.get('name')}")
-    
-    return {"success": True, "event_data": chosen_event, "updated_progress": progress}
-# --- 核心修改處 END ---
+    progress["current_event"] = event_data
+    return {"success": True, "event_data": event_data, "updated_progress": progress}
 
+# --- 核心修改處 START ---
 def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     """
     處理玩家通關一層並晉級的邏輯。
@@ -255,6 +204,7 @@ def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     
     progress["current_floor"] += 1
     progress["current_step"] = 0
+    progress["current_event"] = None # 清空當前事件，準備下一層
     
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 已通關第 {current_floor} 層，獲得 {gold_reward} 金幣，並前進到第 {progress['current_floor']} 層。")
     
@@ -269,4 +219,71 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     處理玩家對事件做出的選擇，並返回結果。
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: {choice_id}...")
-    return {"status": "pending_implementation", "message": "事件處理功能開發中。"}
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("is_active"):
+        return {"success": False, "error": "沒有正在進行的遠征。"}
+    
+    current_event = progress.get("current_event")
+    if not current_event:
+        return {"success": False, "error": "當前沒有需要回應的事件。"}
+
+    # 查找玩家做出的選擇
+    chosen_outcome = None
+    for choice in current_event.get("choices", []):
+        if choice.get("choice_id") == choice_id:
+            outcomes = choice.get("outcomes", [])
+            if not outcomes: break
+            
+            # 根據權重隨機一個結果
+            outcome_pool = [o for o in outcomes if o.get("weight", 0) > 0]
+            if not outcome_pool: break
+            
+            weights = [o["weight"] for o in outcome_pool]
+            chosen_outcome = random.choices(outcome_pool, weights=weights, k=1)[0]
+            break
+            
+    if not chosen_outcome:
+        return {"success": False, "error": "無效的選擇或事件格式錯誤。"}
+
+    # 處理結果中的效果
+    outcome_story = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
+    for effect in chosen_outcome.get("effects", []):
+        effect_type = effect.get("effect")
+        target_type = effect.get("target")
+        
+        if effect_type == "change_resource":
+            resource = effect.get("resource")
+            amount = effect.get("amount", 0)
+            if resource == "gold":
+                player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
+            elif resource in ["hp", "mp"]:
+                team = progress.get("expedition_team", [])
+                targets_to_affect = []
+                if target_type == "team_all":
+                    targets_to_affect = team
+                elif target_type == "team_random_one" and team:
+                    targets_to_affect = [random.choice(team)]
+
+                for member in targets_to_affect:
+                    key = f"current_{resource}"
+                    # 找到完整怪獸資料以獲取max值
+                    full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
+                    if full_monster:
+                        max_value = full_monster.get(f"initial_max_{resource}", member.get(key, 0))
+                        member[key] = min(max_value, member.get(key, 0) + amount)
+                        member[key] = max(0, member[key])
+        
+        elif effect_type == "give_item":
+            pool_id = effect.get("item_pool_id", "")
+            quantity = effect.get("quantity", 1)
+            dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
+            if dna_pool:
+                for _ in range(quantity):
+                    item = random.choice(dna_pool)
+                    progress.get("adventure_inventory", []).append(item)
+    
+    # 清理當前事件，準備下一步
+    progress["current_event"] = None
+
+    return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
+# --- 核心修改處 END ---
