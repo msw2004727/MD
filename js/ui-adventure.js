@@ -26,7 +26,7 @@ function showTeamSelectionModal(facility) {
 
     monsterListContainer.innerHTML = '';
     let selectedMonsters = [];
-    confirmBtn.disabled = true; // 按鈕在初始時應為禁用狀態
+    confirmBtn.disabled = true; 
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
@@ -90,7 +90,6 @@ function showTeamSelectionModal(facility) {
                             showFeedbackModal('提示', '最多只能選擇3隻怪獸參加遠征。');
                         }
                     }
-                    // 【修改】直接更新按鈕的 disabled 狀態
                     confirmBtn.disabled = selectedMonsters.length === 0;
                 });
             }
@@ -98,8 +97,6 @@ function showTeamSelectionModal(facility) {
         });
     }
 
-    // 【修改】移除 cloneNode，直接為按鈕綁定 onclick 事件
-    // 每次打開彈窗時，這個 onclick 都會被重新賦值，確保使用的是最新的 selectedMonsters 數據
     confirmBtn.onclick = () => {
         const islandsData = gameState.gameConfigs.adventure_islands || [];
         let islandId = null;
@@ -122,16 +119,94 @@ function showTeamSelectionModal(facility) {
 
 
 /**
- * 渲染遠征進行中的主畫面。
- * (此為下一階段的預留函式)
+ * 【新增】渲染遠征進行中的主畫面。
  * @param {object} adventureProgress - 包含當前進度的物件。
  */
 function renderAdventureProgressUI(adventureProgress) {
-    console.log("TODO: 渲染遠征進度UI", adventureProgress);
-    hideAllModals(); // 隱藏所有彈窗
-    // 在這裡加入渲染進度條、事件描述、選項按鈕的程式碼
+    hideAllModals(); 
     const adventureTabContent = document.getElementById('guild-content');
-    adventureTabContent.innerHTML = `<p class="text-center text-lg text-[var(--text-secondary)] py-10">遠征開始！(UI開發中...)</p>`;
+    if (!adventureTabContent) return;
+
+    const facilityData = gameState.gameConfigs?.adventure_islands?.[0]?.facilities?.find(f => f.facilityId === adventureProgress.facility_id);
+    const facilityName = facilityData?.name || '未知的區域';
+
+    // 1. 建立進度條
+    let progressBarHtml = '';
+    for (let i = 0; i < adventureProgress.total_steps_in_floor; i++) {
+        let stepClass = 'progress-step';
+        if (i < adventureProgress.current_step) {
+            stepClass += ' completed';
+        } else if (i === adventureProgress.current_step) {
+            stepClass += ' current';
+        }
+        progressBarHtml += `<div class="${stepClass}" title="第 ${i + 1} 步"></div>`;
+    }
+
+    // 2. 建立隊伍狀態
+    let teamStatusHtml = '';
+    adventureProgress.expedition_team.forEach(member => {
+        const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
+        if (!originalMonster) return;
+
+        const headInfo = { type: '無', rarity: '普通' };
+        const constituentIds = originalMonster.constituent_dna_ids || [];
+        if (constituentIds.length > 0) {
+            const headDnaId = constituentIds[0];
+            const headDnaTemplate = gameState.gameConfigs.dna_fragments.find(dna => dna.id === headDnaId);
+            if (headDnaTemplate) {
+                headInfo.type = headDnaTemplate.type || '無';
+                headInfo.rarity = headDnaTemplate.rarity || '普通';
+            }
+        }
+        const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+        
+        teamStatusHtml += `
+            <div class="team-member-card">
+                <div class="avatar" style="background-image: url('${imagePath}')"></div>
+                <div class="info">
+                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname}</div>
+                    <div class="status-bar-container" style="gap: 4px; margin-top: 2px;">
+                        <div class="status-bar-background" style="height: 8px;">
+                            <div class="status-bar-fill" style="width: ${(member.current_hp / originalMonster.initial_max_hp) * 100}%; background-color: var(--success-color);"></div>
+                        </div>
+                        <span class="status-bar-value" style="font-size: 0.7rem;">${member.current_hp}/${originalMonster.initial_max_hp}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // 3. 組合完整UI
+    adventureTabContent.innerHTML = `
+        <div class="adventure-progress-container">
+            <header class="adventure-progress-header">
+                <h3>${facilityName} - 第 ${adventureProgress.current_floor} 層</h3>
+            </header>
+            
+            <div class="adventure-progress-bar-container">
+                ${progressBarHtml}
+            </div>
+
+            <div class="adventure-main-content">
+                <aside class="adventure-team-status-panel">
+                    <h4 class="details-section-title" style="margin-bottom: 0.5rem; text-align: center;">遠征隊</h4>
+                    ${teamStatusHtml}
+                </aside>
+
+                <main id="adventure-event-panel" class="adventure-event-panel">
+                    <div id="adventure-event-description" class="event-description">
+                        <p>遠征隊已準備就緒，前方的道路充滿了未知...</p>
+                    </div>
+                    <div id="adventure-event-choices" class="event-choices">
+                        </div>
+                </main>
+            </div>
+
+            <footer class="adventure-actions">
+                <button id="adventure-advance-btn" class="button primary">繼續前進</button>
+            </footer>
+        </div>
+    `;
 }
 
 
@@ -142,6 +217,12 @@ async function initializeAdventureUI() {
     const adventureTabContent = document.getElementById('guild-content');
     if (!adventureTabContent) {
         console.error("冒險島的內容容器 'guild-content' 未找到。");
+        return;
+    }
+    
+    const adventureProgress = gameState.playerData?.adventure_progress;
+    if (adventureProgress && adventureProgress.is_active) {
+        renderAdventureProgressUI(adventureProgress);
         return;
     }
     
@@ -156,7 +237,6 @@ async function initializeAdventureUI() {
             return;
         }
 
-        // 暫時只處理第一個島嶼
         const island = islandsData[0];
         const facilities = island.facilities || [];
         
