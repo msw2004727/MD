@@ -46,7 +46,8 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "ElementalAdvantageChart": ("elemental_advantage_chart", None),
             "CultivationStories": ("cultivation_stories", "story_library"),
             "ChampionGuardians": ("champion_guardians", "guardians"),
-            "BattleHighlights": ("battle_highlights", None), # 新增：讀取戰鬥亮點設定
+            "BattleHighlights": ("battle_highlights", None),
+            "AdventureIslands": ("adventure_islands", "islands")
         }
 
         for doc_name, (config_key, field_name) in doc_map.items():
@@ -55,11 +56,15 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             if doc.exists:
                 data = doc.to_dict()
                 if field_name and data:
-                    configs[config_key] = data.get(field_name, {})
+                    # --- 核心修改處 START ---
+                    # 檢查 config_key 是否應該是列表類型，以提供正確的預設值
+                    is_list_type = any(s in config_key for s in ['list', 'fragments', 'personalities', 'guide', 'conditions', 'islands'])
+                    default_value = [] if is_list_type else {}
+                    configs[config_key] = data.get(field_name, default_value)
+                    # --- 核心修改處 END ---
                 elif data:
                     configs[config_key] = data
             else:
-                # 如果是技能設定且資料庫中不存在，嘗試從本地檔案回退
                 if doc_name == "Skills":
                     config_logger.warning(f"在 Firestore 中找不到設定文檔：'{doc_name}'，嘗試從本地檔案回退。")
                     data_dir = os.path.join(os.path.dirname(__file__), 'data')
@@ -85,7 +90,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
                         configs[config_key] = {}
                         config_logger.error(f"Firestore 和本地 'skills' 資料夾均找不到技能資料。")
                 else:
-                    is_list_type = any(s in config_key for s in ['list', 'fragments', 'personalities', 'guide', 'conditions'])
+                    is_list_type = any(s in config_key for s in ['list', 'fragments', 'personalities', 'guide', 'conditions', 'islands'])
                     configs[config_key] = [] if is_list_type else {}
                     config_logger.warning(f"在 Firestore 中找不到設定文檔：'{doc_name}'，已使用預設空值。")
         
