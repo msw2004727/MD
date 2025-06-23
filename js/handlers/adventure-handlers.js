@@ -15,7 +15,6 @@ function handleFacilityChallengeClick(event) {
         return;
     }
 
-    // 從 gameState 中找到對應的設施資料
     const islandsData = gameState.gameConfigs.adventure_islands || [];
     let facilityData = null;
 
@@ -36,10 +35,46 @@ function handleFacilityChallengeClick(event) {
 }
 
 /**
+ * 處理開始遠征的邏輯，呼叫後端 API。
+ * @param {string} islandId - 島嶼ID
+ * @param {string} facilityId - 設施ID
+ * @param {Array<string>} teamMonsterIds - 被選中的怪獸ID列表
+ */
+async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
+    hideModal('expedition-team-selection-modal');
+    showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
+
+    try {
+        const result = await startExpedition(islandId, facilityId, teamMonsterIds);
+
+        if (result && result.success) {
+            // 更新本地的 adventure_progress 狀態
+            if (gameState.playerData) {
+                gameState.playerData.adventure_progress = result.adventure_progress;
+            }
+            // 重新整理一次玩家資料，確保金幣等狀態同步
+            await refreshPlayerData();
+
+            hideModal('feedback-modal');
+            
+            // 呼叫 UI 函式渲染遠征畫面
+            renderAdventureProgressUI(result.adventure_progress);
+
+        } else {
+            throw new Error(result?.error || '未知的錯誤導致遠征無法開始。');
+        }
+
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('出發失敗', `無法開始遠征：${error.message}`);
+    }
+}
+
+
+/**
  * 初始化冒險島所有功能的事件監聽器。
  */
 function initializeAdventureHandlers() {
-    // 從 ui.js 中獲取冒險島的主容器
     const adventureContainer = DOMElements.guildContent;
 
     if (adventureContainer) {
