@@ -198,7 +198,6 @@ async function handleAbandonAdventure() {
         { confirmButtonClass: 'danger', confirmButtonText: '確定放棄' }
     );
 }
-
 // --- 核心修改處 END ---
 
 /**
