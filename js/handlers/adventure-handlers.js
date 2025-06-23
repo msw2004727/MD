@@ -113,8 +113,6 @@ async function handleAdvanceClick() {
     }
 }
 
-
-// --- 核心修改處 START ---
 /**
  * 處理玩家對冒險事件做出選擇後的邏輯
  * @param {HTMLElement} buttonElement - 被點擊的選項按鈕
@@ -128,24 +126,32 @@ async function handleAdventureChoiceClick(buttonElement) {
         return;
     }
 
-    // 專門處理 BOSS 戰事件
     if (eventData.event_type === 'boss_encounter') {
         const bossData = eventData.boss_data;
         if (!bossData) {
             showFeedbackModal('錯誤', 'BOSS資料遺失，無法開始戰鬥。');
             return;
         }
-
-        // 注意：這裡假設玩家用主出戰怪獸挑戰，而非遠征隊成員
-        const playerMonster = getSelectedMonster();
-        if (!playerMonster) {
-            showFeedbackModal('錯誤', '請先設定一隻出戰怪獸以挑戰BOSS！');
+        
+        // --- 核心修改處 START ---
+        // 從遠征隊伍中找出隊長（第一位成員）
+        const expeditionTeam = gameState.playerData?.adventure_progress?.expedition_team;
+        if (!expeditionTeam || expeditionTeam.length === 0) {
+            showFeedbackModal('錯誤', '您的遠征隊伍中沒有怪獸，無法挑戰BOSS！');
             return;
         }
+        const captainInfo = expeditionTeam[0];
+        const playerMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainInfo.monster_id);
+
+        if (!playerMonster) {
+            showFeedbackModal('錯誤', '找不到您的遠征隊長資料，無法開始戰鬥！');
+            return;
+        }
+        // --- 核心修改處 END ---
         
         showConfirmationModal(
             `挑戰 ${bossData.nickname}`,
-            `您確定要讓 ${playerMonster.nickname} 挑戰 ${bossData.nickname} 嗎？`,
+            `您確定要讓隊長 ${playerMonster.nickname} 挑戰 ${bossData.nickname} 嗎？`,
             async () => {
                 try {
                     showFeedbackModal('戰鬥中...', '正在與樓層BOSS激烈交鋒...', true);
@@ -158,15 +164,18 @@ async function handleAdventureChoiceClick(buttonElement) {
                     });
                     
                     const battleResult = response.battle_result;
+                    
+                    // 戰鬥結束後，無論勝敗，先更新一次玩家資料以同步HP/MP等狀態
+                    await refreshPlayerData();
                     showBattleLogModal(battleResult);
                     
-                    // 檢查戰鬥結果
                     if (battleResult.winner_id === playerMonster.id) {
                         // 勝利
                         showFeedbackModal('通關結算中...', '正在前往下一層...', true);
                         const advanceResult = await completeAdventureFloor();
                         if (advanceResult.success) {
-                            await refreshPlayerData();
+                            // 再次刷新資料以獲取通關獎勵
+                            await refreshPlayerData(); 
                             gameState.playerData.adventure_progress = advanceResult.new_progress;
                             renderAdventureProgressUI(advanceResult.new_progress);
                         }
@@ -177,7 +186,7 @@ async function handleAdventureChoiceClick(buttonElement) {
                         }
                         await savePlayerData(gameState.playerId, gameState.playerData);
                         await refreshPlayerData();
-                        initializeAdventureUI(); // 重新渲染冒險島主介面
+                        initializeAdventureUI();
                         showFeedbackModal('遠征失敗', '您的隊伍已被擊敗，本次遠征結束。');
                     }
                     
@@ -221,4 +230,3 @@ function initializeAdventureHandlers() {
         setTimeout(initializeAdventureHandlers, 100);
     }
 }
-// --- 核心修改處 END ---
