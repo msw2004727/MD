@@ -6,7 +6,6 @@
     display: flex;
     padding: 0.5rem;
     box-sizing: border-box;
-    /* 新增：讓內容可以垂直滾動 */
     overflow-y: auto; 
 }
 
@@ -16,40 +15,34 @@
     height: 100%;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* 改為從頂部對齊 */
+    align-items: flex-start; 
 }
 
-/* 內容區，維持固定的長寬比並放置背景圖 */
+/* 內容區，放置背景圖 */
 .adventure-content-area {
     width: 100%;
     max-width: 100%;
     height: 100%;
-    background-size: cover; /* 背景圖覆蓋整個區域 */
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 8px;
     overflow: hidden; 
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    padding: 1rem; /* 為內容增加內邊距 */
+    padding: 1rem;
     box-sizing: border-box;
-
-    /* 手機優先，使用窄版背景圖 */
     background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands004.png?raw=true');
 }
 
-/* 當螢幕寬度大於 768px 時 (例如平板或電腦) */
 @media (min-width: 768px) {
     .adventure-content-area {
-        /* 自動切換為寬版背景圖 */
         background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands005.png?raw=true');
     }
 }
 
-
-/* --- 新增：設施列表與卡片樣式 --- */
-
+/* 設施列表與卡片樣式 */
 .adventure-island-container {
-    background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent); /* 半透明背景，突顯內容 */
+    background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent);
     border-radius: 8px;
     padding: 1rem;
     max-width: 600px;
@@ -67,204 +60,153 @@
     padding-bottom: 0.75rem;
 }
 
-.adventure-facility-list {
+.adventure-facility-list { display: flex; flex-direction: column; gap: 1rem; }
+.adventure-facility-card { display: flex; flex-direction: column; background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; transition: transform 0.2s, box-shadow 0.2s; }
+.adventure-facility-card:hover { transform: translateY(-4px); box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
+.facility-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--border-color); }
+.facility-title { font-size: 1.2rem; font-weight: 600; color: var(--accent-color); }
+.facility-cost { font-size: 1rem; font-weight: bold; color: var(--rarity-legendary-text); }
+.facility-card-body p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+.facility-card-footer { margin-top: auto; text-align: right; }
+.challenge-facility-btn { padding: 8px 20px; }
+
+/* 隊伍選擇彈窗樣式 */
+#team-selection-monster-list .monster-selection-card { display: flex; flex-direction: column; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 8px; background-color: var(--bg-primary); cursor: pointer; transition: all 0.2s ease-in-out; }
+#team-selection-monster-list .monster-selection-card:hover { border-color: var(--accent-color); transform: translateY(-3px); }
+#team-selection-monster-list .monster-selection-card.selected { border-color: var(--success-color); box-shadow: 0 0 10px -2px var(--success-color); }
+#team-selection-monster-list .monster-selection-card.disabled { opacity: 0.5; cursor: not-allowed; background-color: var(--bg-slot); }
+.monster-selection-card-header { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: bold; }
+.monster-selection-card-body { display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0; }
+.monster-selection-avatar { width: 50px; height: 50px; border-radius: 50%; background-color: var(--bg-slot); background-size: cover; background-position: center; border: 1px solid var(--border-color); flex-shrink: 0; }
+.monster-selection-stats { font-size: 0.8rem; text-align: left; color: var(--text-secondary); flex-grow: 1; }
+.monster-selection-stats span { display: inline-block; margin-right: 0.75rem; }
+
+
+/* --- 【新增】遠征進度 UI 樣式 --- */
+.adventure-progress-container {
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    padding: 0.5rem;
 }
 
-.adventure-facility-card {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--bg-panel);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.adventure-facility-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-}
-
-.facility-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
+.adventure-progress-header {
+    text-align: center;
     padding-bottom: 0.5rem;
-    border-bottom: 1px dashed var(--border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
-.facility-title {
-    font-size: 1.2rem;
+.adventure-progress-header h3 {
+    font-size: 1.25rem;
     font-weight: 600;
     color: var(--accent-color);
 }
 
-.facility-cost {
-    font-size: 1rem;
-    font-weight: bold;
-    color: var(--rarity-legendary-text); /* 使用金色突顯費用 */
+.adventure-progress-bar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: var(--bg-primary);
+    padding: 0.5rem;
+    border-radius: 8px;
 }
 
-.facility-card-body p {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 1rem;
+.progress-step {
+    flex: 1;
+    height: 12px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: background-color 0.3s;
 }
 
-.facility-card-footer {
-    margin-top: auto; /* 將此區塊推至卡片底部 */
-    text-align: right;
+.progress-step.completed {
+    background-color: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
 }
 
-.challenge-facility-btn {
-    padding: 8px 20px;
+.progress-step.current {
+    background-color: var(--rarity-legendary-text);
+    box-shadow: 0 0 8px var(--rarity-legendary-text);
+    transform: scale(1.1);
 }
 
-/* --- 新增：遠征隊伍選擇彈窗樣式 --- */
-#team-selection-monster-list .monster-selection-card {
+.adventure-main-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .adventure-main-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+.adventure-team-status-panel {
     display: flex;
     flex-direction: column;
-    padding: 0.75rem;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    gap: 0.75rem;
     background-color: var(--bg-primary);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
-#team-selection-monster-list .monster-selection-card:hover {
-    border-color: var(--accent-color);
-    transform: translateY(-3px);
-}
-
-#team-selection-monster-list .monster-selection-card.selected {
-    border-color: var(--success-color);
-    box-shadow: 0 0 10px -2px var(--success-color);
-}
-
-#team-selection-monster-list .monster-selection-card.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: var(--bg-slot);
-}
-
-.monster-selection-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-
-.monster-selection-card-body {
+.team-member-card {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background-color: var(--bg-slot);
+    border-radius: 6px;
 }
 
-.monster-selection-avatar {
-    width: 50px;
-    height: 50px;
+.team-member-card .avatar {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background-color: var(--bg-slot);
     background-size: cover;
     background-position: center;
-    border: 1px solid var(--border-color);
     flex-shrink: 0;
+    border: 1px solid var(--border-color);
 }
 
-.monster-selection-stats {
-    font-size: 0.8rem;
-    text-align: left;
-    color: var(--text-secondary);
+.team-member-card .info {
     flex-grow: 1;
 }
 
-.monster-selection-stats span {
-    display: inline-block;
-    margin-right: 0.75rem;
+.team-member-card .name {
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
-/* --- 新增：冒險地圖彈窗樣式 --- */
-#adventure-map-modal .modal-content {
-    background-color: #0c1a1e; /* 深邃的藍黑色背景，模擬夜空或深海 */
-    background-image: radial-gradient(circle at top left, rgba(110, 240, 219, 0.1), transparent 40%),
-                      radial-gradient(circle at bottom right, rgba(88, 166, 255, 0.1), transparent 50%);
-}
-
-#adventure-map-body {
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 30px 30px; /* 格子大小 */
-    overflow: auto; /* 允許地圖滾動 */
-    position: relative;
-}
-
-/* 地圖節點容器的樣式 */
-#adventure-map-nodes-container {
-    display: grid;
-    grid-template-columns: repeat(30, 30px); /* 30x30 的網格 */
-    grid-template-rows: repeat(30, 30px);
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2; /* 確保節點(格子)圖層在上方 */
-}
-
-/* Canvas 的樣式 */
-#adventure-map-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1; /* 確保畫布圖層在下方 */
-    pointer-events: none; 
-}
-
-
-/* 單一地圖節點的通用樣式 */
-.map-node {
-    width: 30px;
-    height: 30px;
+.adventure-event-panel {
+    background-color: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem; /* Emoji 大小 */
-    transition: transform 0.2s;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 250px;
 }
 
-/* 為可點擊的節點新增手形游標並恢復點擊事件 */
-.map-node.clickable {
-    cursor: pointer;
-    pointer-events: auto; /* 只讓可點擊的節點恢復接收事件的能力 */
-}
-.map-node.clickable:hover {
-    transform: scale(1.2);
+.event-description {
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
 }
 
-
-/* 玩家圖示 */
-.player-token {
-    width: 28px;
-    height: 28px;
-    background-color: var(--accent-color);
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 10px 2px var(--accent-color);
-    position: absolute;
-    z-index: 10;
-    transition: all 0.3s ease-in-out;
+.event-choices {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: white;
-    pointer-events: none; /* 玩家圖示自身不應阻擋點擊 */
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.adventure-actions {
+    margin-top: 1rem;
+    text-align: center;
 }
