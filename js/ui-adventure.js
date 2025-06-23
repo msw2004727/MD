@@ -261,7 +261,7 @@ async function initializeAdventureUI() {
     }
     
     // 如果沒有在遠征，則顯示島嶼選擇列表
-    adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">正在從遠方島嶼獲取情報...</p>';
+    adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">正在從遠方島嶼獲取情报...</p>';
 
     try {
         const islandsData = await getAdventureIslandsData();
