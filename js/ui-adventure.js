@@ -185,11 +185,16 @@ function renderAdventureProgressUI(adventureProgress) {
         const isCaptain = index === 0;
         const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
         
+        // --- 核心修改處 START ---
+        const switchCaptainBtn = !isCaptain ? 
+            `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">👑</button>` : '';
+        // --- 核心修改處 END ---
+
         teamStatusHtml += `
             <div class="team-member-card">
                 <div class="avatar" style="background-image: url('${imagePath}')"></div>
                 <div class="info">
-                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname} ${captainMedal}</div>
+                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname} ${captainMedal}${switchCaptainBtn}</div>
                     <div class="status-bar-container" style="gap: 4px; margin-top: 2px;">
                         <div class="status-bar-background" style="height: 8px;">
                             <div class="status-bar-fill" style="width: ${(member.current_hp / originalMonster.initial_max_hp) * 100}%; background-color: var(--success-color);"></div>
@@ -236,34 +241,26 @@ function renderAdventureProgressUI(adventureProgress) {
     const choicesEl = document.getElementById('adventure-event-choices');
     const descriptionEl = document.getElementById('adventure-event-description');
     
-    // --- 核心修改處 START ---
-    // 不再讀取全域的 gameState.currentAdventureEvent，而是直接使用傳入的參數 adventureProgress
     const currentEvent = adventureProgress.current_event;
     
-    // 優先使用我們在 handler 中為了顯示事件結果而臨時加入的 story_override
     const descriptionText = adventureProgress.story_override || currentEvent?.description;
 
     if (descriptionText) {
         descriptionEl.innerHTML = `<p>${descriptionText}</p>`;
     }
 
-    // 根據是否有事件和選項，來決定顯示「選項按鈕」還是「繼續前進」按鈕
     if (currentEvent && currentEvent.choices && currentEvent.choices.length > 0) {
-        // 如果有事件選項，就渲染選項按鈕，並隱藏「繼續前進」
         choicesEl.innerHTML = currentEvent.choices.map(choice => 
             `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
         ).join('');
         if (advanceBtn) advanceBtn.style.display = 'none';
     } else {
-        // 如果沒有事件（例如事件剛解決，或還沒推進），則顯示「繼續前進」按鈕
-        // 並且只有在描述區為空時，才填入預設文字
         if (descriptionEl.innerHTML.trim() === '') {
             descriptionEl.innerHTML = `<p>你們已準備好，可以繼續前進了。</p>`;
         }
         choicesEl.innerHTML = '';
         if (advanceBtn) advanceBtn.style.display = 'block';
     }
-    // --- 核心修改處 END ---
 }
 
 
