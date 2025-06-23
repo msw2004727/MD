@@ -1,22 +1,134 @@
 // js/ui-adventure.js
 // 專門負責渲染「冒險島」的所有UI。
 
+// --- 核心修改處 START ---
+// 新增 A* 路徑尋找演算法
 /**
- * 【新增】處理地圖節點點擊事件的預留函式。
- * @param {object} node - 被點擊的節點物件。
+ * A* (A-Star) 路徑尋找演算法的實現。
+ * @param {Array<object>} nodes - 地圖上所有節點的陣列。
+ * @param {object} startNode - 起點節點。
+ * @param {object} goalNode - 終點節點。
+ * @returns {Array<object>} - 從起點到終點的路徑節點陣列，若無路徑則為空陣列。
+ */
+function findAStarPath(nodes, startNode, goalNode) {
+    // 將節點列表轉換為更容易查找的 2D 網格
+    const grid = [];
+    nodes.forEach(node => {
+        if (!grid[node.position.y]) {
+            grid[node.position.y] = [];
+        }
+        grid[node.position.y][node.position.x] = node;
+    });
+
+    // A* 演算法的輔助函式：計算兩點間的曼哈頓距離（Heuristic）
+    function heuristic(a, b) {
+        return Math.abs(a.position.x - b.position.x) + Math.abs(a.position.y - b.position.y);
+    }
+
+    const openSet = [startNode]; // 待評估的節點
+    const cameFrom = new Map(); // 記錄路徑
+
+    const gScore = new Map(); // 從起點到當前節點的實際成本
+    gScore.set(startNode.id, 0);
+
+    const fScore = new Map(); // gScore + heuristic，預估總成本
+    fScore.set(startNode.id, heuristic(startNode, goalNode));
+
+    while (openSet.length > 0) {
+        // 在 openSet 中找到 fScore 最低的節點
+        let current = openSet[0];
+        for (let i = 1; i < openSet.length; i++) {
+            if (fScore.get(openSet[i].id) < fScore.get(current.id)) {
+                current = openSet[i];
+            }
+        }
+
+        // 如果已到達終點，則重構並返回路徑
+        if (current.id === goalNode.id) {
+            const path = [];
+            let temp = current;
+            while (temp) {
+                path.push(temp);
+                temp = cameFrom.get(temp.id);
+            }
+            return path.reverse();
+        }
+
+        // 將 current 從 openSet 移出
+        const index = openSet.indexOf(current);
+        openSet.splice(index, 1);
+
+        // 獲取鄰居節點
+        const neighbors = [];
+        const { x, y } = current.position;
+        const potentialNeighbors = [
+            grid[y]?.[x - 1], grid[y]?.[x + 1],
+            grid[y - 1]?.[x], grid[y + 1]?.[x]
+        ];
+
+        potentialNeighbors.forEach(neighbor => {
+            // 必須是有效節點且不是障礙物
+            if (neighbor && neighbor.type !== 'obstacle') {
+                neighbors.push(neighbor);
+            }
+        });
+
+        // 遍歷鄰居
+        for (const neighbor of neighbors) {
+            const tentativeGScore = gScore.get(current.id) + 1; // 假設每步成本為 1
+
+            if (tentativeGScore < (gScore.get(neighbor.id) || Infinity)) {
+                cameFrom.set(neighbor.id, current);
+                gScore.set(neighbor.id, tentativeGScore);
+                fScore.set(neighbor.id, tentativeGScore + heuristic(neighbor, goalNode));
+                
+                if (!openSet.some(node => node.id === neighbor.id)) {
+                    openSet.push(neighbor);
+                }
+            }
+        }
+    }
+
+    // 如果 openSet 為空仍未找到路徑，則返回空陣列
+    return [];
+}
+
+
+/**
+ * 處理地圖節點點擊事件。
+ * @param {object} node - 被點擊的目標節點物件。
  */
 function handleMapNodeClick(node) {
-    console.log("Clicked on node:", node);
-    // TODO:
-    // 1. 檢查此節點是否與玩家當前位置相鄰。
-    // 2. 如果不相鄰，則計算路徑。
-    // 3. 在 Canvas 上繪製路徑預覽。
-    // 4. 彈出確認視窗，顯示消耗資源。
-    // 5. 確認後，呼叫後端 /move API。
+    const adventureProgress = gameState.playerData?.adventure_progress;
+    if (!adventureProgress || !adventureProgress.is_active) return;
+    
+    // 找到目前的玩家節點
+    const allNodes = adventureProgress.map_data.nodes;
+    const currentNode = allNodes.find(n => n.id === adventureProgress.current_node_id);
 
-    // 目前僅顯示一個簡單的提示
-    showFeedbackModal('移動確認', `你確定要移動到座標 (${node.position.x}, ${node.position.y}) 嗎？<br><br>（路徑規劃與資源消耗功能開發中）`);
+    if (!currentNode) {
+        showFeedbackModal('錯誤', '找不到玩家目前的位置資訊。');
+        return;
+    }
+
+    // 使用 A* 演算法尋找路徑
+    const path = findAStarPath(allNodes, currentNode, node);
+
+    if (path.length > 0) {
+        // 找到了路徑，顯示路徑長度
+        const pathCost = path.length - 1; // 路徑長度為邊的數量
+        showFeedbackModal(
+            '路徑規劃',
+            `從 (${currentNode.position.x}, ${currentNode.position.y}) 到達 (${node.position.x}, ${node.position.y}) 需要 ${pathCost} 步。<br><br>（路徑繪製與資源消耗功能開發中）`
+        );
+        // 後續步驟：在這裡呼叫繪製路徑的函式
+        console.log("找到的路徑:", path.map(p => p.id));
+    } else {
+        // 沒找到路徑
+        showFeedbackModal('無法移動', `找不到通往 (${node.position.x}, ${node.position.y}) 的路徑。`);
+    }
 }
+// --- 核心修改處 END ---
 
 
 /**
@@ -65,13 +177,11 @@ function renderAdventureMap(adventureProgress) {
         nodeEl.style.gridRowStart = node.position.y + 1;
         nodeEl.dataset.nodeId = node.id;
         
-        // --- 核心修改處 START ---
         // 只為非障礙物節點添加點擊事件
         if (node.type !== 'obstacle') {
             nodeEl.classList.add('clickable'); // 添加一個 class 以便 CSS 可以設定滑鼠指標樣式
             nodeEl.addEventListener('click', () => handleMapNodeClick(node));
         }
-        // --- 核心修改處 END ---
 
         nodesContainer.appendChild(nodeEl);
     });
