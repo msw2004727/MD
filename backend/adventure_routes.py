@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 # 從專案的其他模組導入
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
-from .adventure_services import start_expedition_service, move_on_adventure_map_service, handle_node_event_service, get_all_islands_service
+from .adventure_services import start_expedition_service, get_all_islands_service #
 
 # 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
 adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure')
