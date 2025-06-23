@@ -29,6 +29,32 @@ function showTeamSelectionModal(facility, islandId) {
     let selectedMonsters = [];
     confirmBtn.disabled = true; 
 
+    // --- 核心修改處 START ---
+    /**
+     * 更新隊長勳章的顯示。
+     */
+    function updateCaptainMedal() {
+        // 移除所有現存的勳章
+        monsterListContainer.querySelectorAll('.captain-medal').forEach(medal => medal.remove());
+
+        if (selectedMonsters.length > 0) {
+            const captainId = selectedMonsters[0];
+            const captainCard = monsterListContainer.querySelector(`.monster-selection-card[data-monster-id="${captainId}"]`);
+            if (captainCard) {
+                const header = captainCard.querySelector('.monster-selection-card-header');
+                if (header) {
+                    const medalEl = document.createElement('span');
+                    medalEl.className = 'captain-medal';
+                    medalEl.textContent = '🎖️';
+                    medalEl.title = '遠征隊隊長';
+                    // 將勳章加到標題列的尾端
+                    header.appendChild(medalEl);
+                }
+            }
+        }
+    }
+    // --- 核心修改處 END ---
+
     const monsters = gameState.playerData?.farmedMonsters || [];
 
     if (monsters.length === 0) {
@@ -80,17 +106,32 @@ function showTeamSelectionModal(facility, islandId) {
             if (!isDisabled) {
                 card.addEventListener('click', () => {
                     const monsterId = card.dataset.monsterId;
-                    if (selectedMonsters.includes(monsterId)) {
-                        selectedMonsters = selectedMonsters.filter(id => id !== monsterId);
+                    const selectedIndex = selectedMonsters.indexOf(monsterId);
+
+                    if (selectedIndex > -1) {
+                        // 如果怪獸已被選中，則取消選擇
+                        selectedMonsters.splice(selectedIndex, 1);
                         card.classList.remove('selected');
                     } else {
+                        // 如果怪獸未被選中
                         if (selectedMonsters.length < 3) {
                             selectedMonsters.push(monsterId);
                             card.classList.add('selected');
                         } else {
-                            showFeedbackModal('提示', '最多只能選擇3隻怪獸參加遠征。');
+                            // --- 核心修改處：處理超選第四隻的邏輯 ---
+                            // 移除第一隻（前任隊長），並加入新的這一隻
+                            const deselectedId = selectedMonsters.shift(); 
+                            const deselectedCard = monsterListContainer.querySelector(`.monster-selection-card[data-monster-id="${deselectedId}"]`);
+                            if (deselectedCard) {
+                                deselectedCard.classList.remove('selected');
+                            }
+                            selectedMonsters.push(monsterId);
+                            card.classList.add('selected');
                         }
                     }
+                    
+                    // --- 核心修改處：每次選擇變動後，都更新隊長勳章 ---
+                    updateCaptainMedal();
                     confirmBtn.disabled = selectedMonsters.length === 0;
                 });
             }
@@ -119,7 +160,6 @@ function renderAdventureProgressUI(adventureProgress) {
     const adventureTabContent = document.getElementById('guild-content');
     if (!adventureTabContent) return;
 
-    // --- 核心修改處 START ---
     const facilityData = gameState.gameConfigs?.adventure_islands
         .flatMap(island => island.facilities)
         .find(f => f.facilityId === adventureProgress.facility_id);
@@ -199,7 +239,6 @@ function renderAdventureProgressUI(adventureProgress) {
         </div>
     `;
 
-    // 渲染後，根據當前事件狀態決定顯示/隱藏「繼續前進」或「選項」
     const advanceBtn = document.getElementById('adventure-advance-btn');
     const choicesEl = document.getElementById('adventure-event-choices');
     const descriptionEl = document.getElementById('adventure-event-description');
@@ -207,7 +246,6 @@ function renderAdventureProgressUI(adventureProgress) {
     const currentEvent = gameState.currentAdventureEvent;
 
     if (currentEvent && currentEvent.choices && currentEvent.choices.length > 0) {
-        // 如果有事件和選項，顯示它們並隱藏「繼續前進」
         if (descriptionEl) descriptionEl.innerHTML = `<p>${currentEvent.description || '前方一片迷霧...'}</p>`;
         if (choicesEl) {
             choicesEl.innerHTML = currentEvent.choices.map(choice => 
@@ -216,12 +254,10 @@ function renderAdventureProgressUI(adventureProgress) {
         }
         if (advanceBtn) advanceBtn.style.display = 'none';
     } else {
-        // 如果沒有事件，清空選項並顯示「繼續前進」
         if (descriptionEl) descriptionEl.innerHTML = `<p>你們已準備好，可以繼續前進了。</p>`;
         if (choicesEl) choicesEl.innerHTML = '';
         if (advanceBtn) advanceBtn.style.display = 'block';
     }
-    // --- 核心修改處 END ---
 }
 
 
