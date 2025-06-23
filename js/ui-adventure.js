@@ -2,7 +2,25 @@
 // 專門負責渲染「冒險島」的所有UI。
 
 /**
- * 根據後端傳來的地圖資料，渲染冒Amour地圖。
+ * 【新增】處理地圖節點點擊事件的預留函式。
+ * @param {object} node - 被點擊的節點物件。
+ */
+function handleMapNodeClick(node) {
+    console.log("Clicked on node:", node);
+    // TODO:
+    // 1. 檢查此節點是否與玩家當前位置相鄰。
+    // 2. 如果不相鄰，則計算路徑。
+    // 3. 在 Canvas 上繪製路徑預覽。
+    // 4. 彈出確認視窗，顯示消耗資源。
+    // 5. 確認後，呼叫後端 /move API。
+
+    // 目前僅顯示一個簡單的提示
+    showFeedbackModal('移動確認', `你確定要移動到座標 (${node.position.x}, ${node.position.y}) 嗎？<br><br>（路徑規劃與資源消耗功能開發中）`);
+}
+
+
+/**
+ * 根據後端傳來的地圖資料，渲染冒險地圖。
  * @param {object} adventureProgress - 包含地圖資料的完整冒險進度物件。
  */
 function renderAdventureMap(adventureProgress) {
@@ -45,6 +63,16 @@ function renderAdventureMap(adventureProgress) {
         nodeEl.textContent = node.display_char;
         nodeEl.style.gridColumnStart = node.position.x + 1;
         nodeEl.style.gridRowStart = node.position.y + 1;
+        nodeEl.dataset.nodeId = node.id;
+        
+        // --- 核心修改處 START ---
+        // 只為非障礙物節點添加點擊事件
+        if (node.type !== 'obstacle') {
+            nodeEl.classList.add('clickable'); // 添加一個 class 以便 CSS 可以設定滑鼠指標樣式
+            nodeEl.addEventListener('click', () => handleMapNodeClick(node));
+        }
+        // --- 核心修改處 END ---
+
         nodesContainer.appendChild(nodeEl);
     });
 
