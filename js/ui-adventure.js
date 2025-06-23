@@ -50,9 +50,11 @@ function drawPathOnCanvas(path) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (!path || path.length < 2) {
+        console.log("DEBUG: 路徑為空或太短，不進行繪製。");
         return; // 路徑太短，無需繪製
     }
 
+    console.log("DEBUG: 開始在 Canvas 上繪製路徑...");
     ctx.beginPath();
     ctx.strokeStyle = 'rgba(255, 223, 186, 0.8)'; // 淡金色的路徑
     ctx.lineWidth = 4;
@@ -74,6 +76,7 @@ function drawPathOnCanvas(path) {
     }
 
     ctx.stroke(); // 繪製路徑
+    console.log("DEBUG: 路徑繪製完成。");
 }
 
 
@@ -163,23 +166,36 @@ function findAStarPath(nodes, startNode, goalNode) {
  * @param {object} node - 被點擊的目標節點物件。
  */
 function handleMapNodeClick(node) {
+    // --- 核心修改處 START：加入詳細的日誌 ---
+    console.log("--- handleMapNodeClick triggered ---");
     const adventureProgress = gameState.playerData?.adventure_progress;
-    if (!adventureProgress || !adventureProgress.is_active) return;
-    
+
+    if (!adventureProgress) {
+        console.error("DEBUG: adventure_progress is missing from gameState.playerData!");
+        return;
+    }
+    console.log("DEBUG: Found adventure_progress:", JSON.parse(JSON.stringify(adventureProgress)));
+
     const allNodes = adventureProgress.map_data.nodes;
     const currentNode = allNodes.find(n => n.id === adventureProgress.current_node_id);
 
     if (!currentNode) {
+        console.error("DEBUG: Cannot find currentNode with ID:", adventureProgress.current_node_id);
         showFeedbackModal('錯誤', '找不到玩家目前的位置資訊。');
         return;
     }
+    console.log("DEBUG: Start node:", currentNode);
+    console.log("DEBUG: Goal node:", node);
+    // --- 核心修改處 END ---
     
     if (currentNode.id === node.id) {
         drawPathOnCanvas([]); // 點擊自身，清除路徑
         return;
     }
 
+    console.log("DEBUG: Calling findAStarPath...");
     const path = findAStarPath(allNodes, currentNode, node);
+    console.log("DEBUG: Path returned from A*:", path);
 
     drawPathOnCanvas(path);
 
@@ -196,10 +212,8 @@ function handleMapNodeClick(node) {
  * @param {object} adventureProgress - 包含地圖資料的完整冒險進度物件。
  */
 function renderAdventureMap(adventureProgress) {
-    // --- 核心修改處 START ---
     // 每次渲染地圖時，都確保監聽器已經被設定
     initializeAdventureMapHandlers();
-    // --- 核心修改處 END ---
 
     const modal = document.getElementById('adventure-map-modal');
     const nodesContainer = document.getElementById('adventure-map-nodes-container');
