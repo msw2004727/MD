@@ -14,7 +14,8 @@
         "description": "充滿了相對溫和的怪獸，是新手訓練師磨練技巧的最佳場所。",
         "cost": 10,
         "level_range": [1, 5],
-        "loot_table_id": "loot_forest_common"
+        "loot_table_id": "loot_forest_common",
+        "boss_pool_id": "bosses_novice_forest.json"
       },
       {
         "facilityId": "facility_002",
@@ -22,7 +23,8 @@
         "description": "黑暗的礦坑深處似乎潛藏著什麼，傳聞有稀有的金屬系與土系怪獸出沒。",
         "cost": 25,
         "level_range": [8, 15],
-        "loot_table_id": "loot_mine_rare"
+        "loot_table_id": "loot_mine_rare",
+        "boss_pool_id": "bosses_abandoned_mine.json"
       },
       {
         "facilityId": "facility_003",
@@ -30,7 +32,8 @@
         "description": "隨著潮水漲落而變化的洞穴，需要把握時機才能深入探索。這裡的水系怪獸十分強大。",
         "cost": 40,
         "level_range": [12, 20],
-        "loot_table_id": "loot_cave_rare"
+        "loot_table_id": "loot_cave_rare",
+        "boss_pool_id": "bosses_tidal_cave.json"
       },
       {
         "facilityId": "facility_004",
@@ -38,7 +41,8 @@
         "description": "被時間遺忘的神秘遺跡，據說守護者是混亂的古代兵器。",
         "cost": 100,
         "level_range": [25, 35],
-        "loot_table_id": "loot_ruin_elite"
+        "loot_table_id": "loot_ruin_elite",
+        "boss_pool_id": "bosses_ancient_ruins.json"
       }
     ]
   }
