@@ -1,7 +1,7 @@
 // js/ui-battle-modals.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
-function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData) {
+function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData, customFooterActions = null) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
@@ -43,25 +43,16 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
 
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
-        // --- 核心修改處 START ---
         const replaceName = (fullNickname, shortName, rarity) => {
             const monRarityKey = rarity ? (rarityMap[rarity] || 'common') : 'common';
             const monColorClass = `text-rarity-${monRarityKey}`;
             
-            // 將特殊字元進行轉義，以確保正規表達式能正常運作
             const escapedNickname = fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-            
-            // 建立一個新的正規表達式，它可以匹配 '**名稱**' 或 '名稱' 這兩種格式
-            // (?: ... ) 是一個非捕獲組，? 表示前面的組（也就是 **）出現 0 次或 1 次
             const searchRegex = new RegExp(`(?:\\*\\*)?${escapedNickname}(?:\\*\\*)?`, 'g');
-            
-            // 替換內容維持不變，就是帶有顏色和粗體的 span 標籤
             const replacement = `<span class="${monColorClass}" style="font-weight: bold;">${shortName}</span>`;
             
-            // 執行替換
             styledText = styledText.replace(searchRegex, replacement);
         };
-        // --- 核心修改處 END ---
 
         if (playerMon && playerMon.nickname) {
             replaceName(playerMon.nickname, playerDisplayName, playerMon.rarity);
@@ -327,6 +318,34 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
             toggleBtn.textContent = isExpanded ? `顯示更多...` : '收合列表';
         });
     }
+
+    // --- 核心修改處 START ---
+    // 根據是否傳入 customFooterActions 來決定顯示的按鈕
+    const footer = DOMElements.battleLogModal.querySelector('.modal-footer');
+    if (footer) {
+        footer.innerHTML = ''; // 清空舊按鈕
+        if (customFooterActions && customFooterActions.length > 0) {
+            customFooterActions.forEach(btnConfig => {
+                const button = document.createElement('button');
+                button.textContent = btnConfig.text;
+                button.className = `button ${btnConfig.class || 'secondary'}`;
+                button.onclick = () => {
+                    hideModal('battle-log-modal'); // 點擊後總是先關閉戰報
+                    if (btnConfig.onClick) btnConfig.onClick();
+                };
+                footer.appendChild(button);
+            });
+        } else {
+            // 如果沒有傳入自訂按鈕，則顯示預設的關閉按鈕
+            const defaultButton = document.createElement('button');
+            defaultButton.id = 'close-battle-log-btn';
+            defaultButton.className = 'button secondary';
+            defaultButton.textContent = '關閉';
+            defaultButton.setAttribute('data-modal-id', 'battle-log-modal');
+            footer.appendChild(defaultButton);
+        }
+    }
+    // --- 核心修改處 END ---
 
     DOMElements.battleLogArea.scrollTop = 0;
     showModal('battle-log-modal');
