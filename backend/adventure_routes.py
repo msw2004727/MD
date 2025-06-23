@@ -99,8 +99,6 @@ def abandon_adventure_route():
     if not progress or not progress.get("is_active"):
         return jsonify({"error": "沒有正在進行的遠征可以放棄。"}), 400
 
-    # --- 核心修改處 START ---
-    # 將遠征隊伍的最終狀態同步回主農場列表
     farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
     for member in progress.get("expedition_team", []):
         if member["monster_id"] in farmed_monsters_map:
@@ -108,13 +106,10 @@ def abandon_adventure_route():
             monster_in_farm["hp"] = member["current_hp"]
             monster_in_farm["mp"] = member["current_mp"]
             adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
-    # --- 核心修改處 END ---
 
-    # 將冒險狀態設為非活躍
     progress["is_active"] = False
     player_data["adventure_progress"] = progress
     
-    # 儲存更新後的玩家資料
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 已成功放棄遠征。")
         return jsonify({"success": True, "message": "已成功結束本次遠征。"}), 200
@@ -233,7 +228,6 @@ def resolve_choice_route():
     progress = player_data.get("adventure_progress", {})
     current_event = progress.get("current_event", {})
     
-    # 判斷是否為 BOSS 戰事件
     if current_event.get("event_type") == "boss_encounter":
         boss_data = current_event.get("boss_data")
         if not boss_data:
@@ -248,7 +242,6 @@ def resolve_choice_route():
         if not player_monster:
             return jsonify({"error": "找不到您的遠征隊長資料。"}), 404
 
-        # 執行戰鬥模擬
         battle_result = simulate_battle_full(player_monster, boss_data, game_configs, player_data)
         
         captain_in_team = next((member for member in team if member["monster_id"] == captain_id), None)
@@ -259,9 +252,7 @@ def resolve_choice_route():
         
         progress["expedition_team"] = team
         
-        # 處理戰鬥結果
         if battle_result.get("winner_id") == captain_id:
-            # 戰勝BOSS，推進到下一層
             floor_completion_result = complete_floor_service(player_data)
             player_data["adventure_progress"] = floor_completion_result.get("updated_progress")
             
@@ -276,8 +267,6 @@ def resolve_choice_route():
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
         else:
-            # --- 核心修改處 START ---
-            # 戰敗，將所有隊員的最終狀態同步回主農場列表，並結束遠征
             farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
             for member in progress.get("expedition_team", []):
                 if member["monster_id"] in farmed_monsters_map:
@@ -288,7 +277,6 @@ def resolve_choice_route():
             
             progress["is_active"] = False
             player_data["adventure_progress"] = progress
-            # --- 核心修改處 END ---
             if save_player_data_service(user_id, player_data):
                  return jsonify({
                     "success": True,
@@ -311,11 +299,15 @@ def resolve_choice_route():
         player_data["adventure_progress"] = updated_progress
         
         if save_player_data_service(user_id, player_data):
+            # --- 核心修改處 START ---
+            # 在回應中加入更新後的 playerStats
             return jsonify({
                 "success": True,
                 "event_outcome": "choice_resolved",
                 "outcome_story": service_result.get("outcome_story"),
-                "updated_progress": updated_progress
+                "updated_progress": updated_progress,
+                "updated_player_stats": player_data.get("playerStats")
             }), 200
+            # --- 核心修改處 END ---
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
