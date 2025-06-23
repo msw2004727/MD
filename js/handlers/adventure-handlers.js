@@ -113,39 +113,42 @@ async function handleAdventureChoiceClick(buttonElement) {
     }
 
     try {
+        const currentProgress = gameState.playerData?.adventure_progress;
+        const currentEvent = currentProgress?.current_event;
+
+        // --- 核心修改處 START ---
+        // 在呼叫API前，先將我方和敵方（BOSS）的資料暫存起來
+        let captainId = null;
+        let opponentBossData = null;
+
+        if (currentEvent?.event_type === "boss_encounter") {
+            captainId = currentProgress.expedition_team[0].monster_id;
+            opponentBossData = currentEvent.boss_data; 
+        }
+
         const result = await resolveAdventureEvent(choiceId);
+
         if (!result || !result.success) {
             throw new Error(result?.error || '處理事件時發生未知錯誤。');
         }
 
-        // --- 核心修改處 START ---
-        // 判斷是否為BOSS戰的結果
         if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
             await refreshPlayerData(); 
-            if (result.battle_result) {
-                // 從當前最新的玩家資料中找到隊長怪獸
-                const adventureProgress = gameState.playerData.adventure_progress;
-                const captainId = adventureProgress.expedition_team[0].monster_id;
-                const captainMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainId);
-                
-                // 從後端回傳的結果中獲取BOSS資料
-                const opponentMonster = result.battle_result.opponent_monster_snapshot || result.battle_result.battleTargetMonster;
-
-                // 將雙方怪獸資料傳入戰報函式
-                showBattleLogModal(result.battle_result, captainMonster, opponentMonster);
+            
+            if (result.battle_result && captainId && opponentBossData) {
+                // 從刷新後的資料中，根據ID找到最新的我方怪獸資料
+                const finalCaptainMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainId);
+                // 傳入我方最新資料和戰鬥前的BOSS資料來顯示戰報
+                showBattleLogModal(result.battle_result, finalCaptainMonster, opponentBossData);
             }
+
             if (result.event_outcome === 'boss_loss') {
-                await refreshPlayerData();
                 initializeAdventureUI();
-            } else { // boss_win
-                // 通關後，UI會由下一次的 advanceAdventure 或 complete_floor 重新渲染
-                // 這裡我們只需要更新本地狀態即可
-                gameState.playerData.adventure_progress = result.updated_progress;
-                gameState.currentAdventureEvent = null;
+            } else {
+                gameState.playerData.adventure_progress = result.updated_progress || currentProgress;
                 renderAdventureProgressUI(gameState.playerData.adventure_progress);
             }
         } else {
-            // 處理一般事件選擇結果
             gameState.playerData.adventure_progress = result.updated_progress;
             gameState.currentAdventureEvent = null; 
 
