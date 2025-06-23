@@ -1,0 +1,145 @@
+[
+  {
+    "event_id": "TRAP_001",
+    "event_type": "trap",
+    "name": "地上的陷阱",
+    "applicable_facilities": ["facility_001", "facility_002"],
+    "description_template": "你們在昏暗的通道中前進，突然，{monster_name}發現前方的地面似乎有些不對勁，好像是一個偽裝起來的陷阱！",
+    "choices": [
+      {
+        "choice_id": "TRAP_001_A",
+        "text": "小心翼翼地繞過去",
+        "outcomes": [
+          {
+            "type": "positive",
+            "weight": 60,
+            "story_fragment": "憑藉著敏銳的直覺，隊伍成功地避開了陷阱，毫髮無傷地繼續前進。",
+            "effects": []
+          },
+          {
+            "type": "negative",
+            "weight": 40,
+            "story_fragment": "沒想到這是一個連鎖陷阱！在繞路時，你們觸發了另一邊的機關，一陣毒箭從牆壁射出！",
+            "effects": [
+              {
+                "effect": "change_resource", "resource": "hp", "target": "team_all",
+                "amount": -15, "comment": "隊伍全員HP減少15"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "choice_id": "TRAP_001_B",
+        "text": "派速度最快的怪獸去解除",
+        "outcomes": [
+          {
+            "type": "positive",
+            "weight": 50,
+            "story_fragment": "被派出的怪獸以電光石火的速度成功破壞了陷阱的核心，化解了危機！",
+            "effects": []
+          },
+          {
+            "type": "negative",
+            "weight": 50,
+            "story_fragment": "雖然怪獸很快，但陷阱更快！一聲巨響，怪獸被炸得灰頭土臉。",
+            "effects": [
+              {
+                "effect": "change_resource", "resource": "hp", "target": "team_fastest",
+                "amount": -30, "comment": "隊伍中速度最快的怪獸HP減少30"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "choice_id": "TRAP_001_C",
+        "text": "直接觸發它，硬闖過去！",
+        "outcomes": [
+          {
+            "type": "neutral",
+            "weight": 100,
+            "story_fragment": "「管他呢！」你們決定正面突破。陷阱應聲觸發，雖然有些狼狽，但總算是闖了過去。",
+            "effects": [
+              {
+                "effect": "change_resource", "resource": "hp", "target": "team_all",
+                "amount": -10, "comment": "隊伍全員HP減少10"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "TREASURE_001",
+    "event_type": "treasure",
+    "name": "閃光的寶箱",
+    "applicable_facilities": [],
+    "description_template": "在探索的路上，你們發現了一個被人遺忘的、閃爍著微光的華麗寶箱。",
+    "choices": [
+      {
+        "choice_id": "TREASURE_001_A",
+        "text": "立刻打開它！",
+        "outcomes": [
+          {
+            "type": "positive",
+            "weight": 70,
+            "story_fragment": "隨著「喀嚓」一聲，箱蓋彈開，裡面裝滿了閃閃發光的金幣！",
+            "effects": [
+              { "effect": "change_resource", "resource": "gold", "target": "player", "amount": 50 }
+            ]
+          },
+          {
+            "type": "positive",
+            "weight": 25,
+            "story_fragment": "箱子裡空無一物，但在箱底你們發現了一塊稀有的DNA碎片！",
+            "effects": [
+              { "effect": "give_item", "item_type": "dna", "item_pool_id": "adventure_rare_dna", "quantity": 1 }
+            ]
+          },
+          {
+            "type": "negative",
+            "weight": 5,
+            "story_fragment": "沒想到這是一個偽裝成寶箱的怪獸！牠張開血盆大口撲了上來！",
+            "effects": [
+              { "effect": "start_combat", "enemy_pool_id": "mimic_monsters" }
+            ]
+          }
+        ]
+      },
+      {
+        "choice_id": "TREASURE_001_B",
+        "text": "檢查是否有陷阱",
+        "outcomes": [
+          {
+            "type": "positive",
+            "weight": 90,
+            "story_fragment": "經過一番仔細檢查，確認沒有危險後，你們安心地打開了寶箱，獲得了一筆不小的財富。",
+            "effects": [
+              { "effect": "change_resource", "resource": "gold", "target": "player", "amount": 40 }
+            ]
+          },
+          {
+            "type": "neutral",
+            "weight": 10,
+            "story_fragment": "你們花費了太多時間檢查，結果一隻路過的史萊姆搶先一步吞掉了寶箱，然後溜走了。",
+            "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "TREASURE_001_C",
+        "text": "無視它，繼續前進",
+        "outcomes": [
+          {
+            "type": "neutral",
+            "weight": 100,
+            "story_fragment": "謹慎起見，你們決定不冒任何風險，繞過了寶箱繼續前進。",
+            "effects": []
+          }
+        ]
+      }
+    ]
+  }
+]
