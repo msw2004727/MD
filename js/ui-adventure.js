@@ -29,14 +29,8 @@ function showTeamSelectionModal(facility, islandId) {
     let selectedMonsters = [];
     confirmBtn.disabled = true; 
 
-    // --- 核心修改處 START ---
-    /**
-     * 更新隊長勳章的顯示。
-     */
     function updateCaptainMedal() {
-        // 移除所有現存的勳章
         monsterListContainer.querySelectorAll('.captain-medal').forEach(medal => medal.remove());
-
         if (selectedMonsters.length > 0) {
             const captainId = selectedMonsters[0];
             const captainCard = monsterListContainer.querySelector(`.monster-selection-card[data-monster-id="${captainId}"]`);
@@ -47,13 +41,11 @@ function showTeamSelectionModal(facility, islandId) {
                     medalEl.className = 'captain-medal';
                     medalEl.textContent = '🎖️';
                     medalEl.title = '遠征隊隊長';
-                    // 將勳章加到標題列的尾端
                     header.appendChild(medalEl);
                 }
             }
         }
     }
-    // --- 核心修改處 END ---
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
@@ -65,9 +57,13 @@ function showTeamSelectionModal(facility, islandId) {
             card.className = 'monster-selection-card';
             card.dataset.monsterId = monster.id;
 
+            // --- 核心修改處 START ---
+            const isDeployed = monster.id === gameState.playerData.selectedMonsterId;
             const isBusy = monster.farmStatus?.isTraining || monster.farmStatus?.isBattling;
             const isInjured = monster.hp < monster.initial_max_hp * 0.25;
-            const isDisabled = isBusy || isInjured;
+            // 將是否出戰加入到禁用判斷中
+            const isDisabled = isBusy || isInjured || isDeployed;
+            // --- 核心修改處 END ---
 
             if (isDisabled) {
                 card.classList.add('disabled');
@@ -86,6 +82,8 @@ function showTeamSelectionModal(facility, islandId) {
             }
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
+            // --- 核心修改處 START ---
+            // 在狀態顯示區新增「出戰中」的提示文字
             card.innerHTML = `
                 <div class="monster-selection-card-header">
                     <span class="text-rarity-${(monster.rarity || 'common').toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
@@ -99,9 +97,11 @@ function showTeamSelectionModal(facility, islandId) {
                         <span>防禦: ${monster.defense}</span>
                         ${isBusy ? `<span style="color:var(--warning-color);">修煉中</span>` : ''}
                         ${isInjured ? `<span style="color:var(--danger-color);">瀕死</span>` : ''}
+                        ${isDeployed ? `<span style="color:var(--accent-color);">出戰中</span>` : ''}
                     </div>
                 </div>
             `;
+            // --- 核心修改處 END ---
 
             if (!isDisabled) {
                 card.addEventListener('click', () => {
@@ -109,17 +109,13 @@ function showTeamSelectionModal(facility, islandId) {
                     const selectedIndex = selectedMonsters.indexOf(monsterId);
 
                     if (selectedIndex > -1) {
-                        // 如果怪獸已被選中，則取消選擇
                         selectedMonsters.splice(selectedIndex, 1);
                         card.classList.remove('selected');
                     } else {
-                        // 如果怪獸未被選中
                         if (selectedMonsters.length < 3) {
                             selectedMonsters.push(monsterId);
                             card.classList.add('selected');
                         } else {
-                            // --- 核心修改處：處理超選第四隻的邏輯 ---
-                            // 移除第一隻（前任隊長），並加入新的這一隻
                             const deselectedId = selectedMonsters.shift(); 
                             const deselectedCard = monsterListContainer.querySelector(`.monster-selection-card[data-monster-id="${deselectedId}"]`);
                             if (deselectedCard) {
@@ -130,7 +126,6 @@ function showTeamSelectionModal(facility, islandId) {
                         }
                     }
                     
-                    // --- 核心修改處：每次選擇變動後，都更新隊長勳章 ---
                     updateCaptainMedal();
                     confirmBtn.disabled = selectedMonsters.length === 0;
                 });
