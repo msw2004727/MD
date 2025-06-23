@@ -201,8 +201,6 @@ function renderAdventureProgressUI(adventureProgress) {
         `;
     });
     
-    // --- 核心修改處 START ---
-    // 在 footer 中新增「放棄遠征」按鈕
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
             <header class="adventure-progress-header">
@@ -221,7 +219,7 @@ function renderAdventureProgressUI(adventureProgress) {
 
                 <main id="adventure-event-panel" class="adventure-event-panel">
                     <div id="adventure-event-description" class="event-description">
-                        <p>遠征隊已準備就緒，前方的道路充滿了未知...</p>
+                        
                     </div>
                     <div id="adventure-event-choices" class="event-choices"></div>
                 </main>
@@ -233,27 +231,39 @@ function renderAdventureProgressUI(adventureProgress) {
             </footer>
         </div>
     `;
-    // --- 核心修改處 END ---
 
     const advanceBtn = document.getElementById('adventure-advance-btn');
     const choicesEl = document.getElementById('adventure-event-choices');
     const descriptionEl = document.getElementById('adventure-event-description');
     
-    const currentEvent = gameState.currentAdventureEvent;
+    // --- 核心修改處 START ---
+    // 不再讀取全域的 gameState.currentAdventureEvent，而是直接使用傳入的參數 adventureProgress
+    const currentEvent = adventureProgress.current_event;
+    
+    // 優先使用我們在 handler 中為了顯示事件結果而臨時加入的 story_override
+    const descriptionText = adventureProgress.story_override || currentEvent?.description;
 
+    if (descriptionText) {
+        descriptionEl.innerHTML = `<p>${descriptionText}</p>`;
+    }
+
+    // 根據是否有事件和選項，來決定顯示「選項按鈕」還是「繼續前進」按鈕
     if (currentEvent && currentEvent.choices && currentEvent.choices.length > 0) {
-        if (descriptionEl) descriptionEl.innerHTML = `<p>${currentEvent.description || '前方一片迷霧...'}</p>`;
-        if (choicesEl) {
-            choicesEl.innerHTML = currentEvent.choices.map(choice => 
-                `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
-            ).join('');
-        }
+        // 如果有事件選項，就渲染選項按鈕，並隱藏「繼續前進」
+        choicesEl.innerHTML = currentEvent.choices.map(choice => 
+            `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
+        ).join('');
         if (advanceBtn) advanceBtn.style.display = 'none';
     } else {
-        if (descriptionEl) descriptionEl.innerHTML = `<p>你們已準備好，可以繼續前進了。</p>`;
-        if (choicesEl) choicesEl.innerHTML = '';
+        // 如果沒有事件（例如事件剛解決，或還沒推進），則顯示「繼續前進」按鈕
+        // 並且只有在描述區為空時，才填入預設文字
+        if (descriptionEl.innerHTML.trim() === '') {
+            descriptionEl.innerHTML = `<p>你們已準備好，可以繼續前進了。</p>`;
+        }
+        choicesEl.innerHTML = '';
         if (advanceBtn) advanceBtn.style.display = 'block';
     }
+    // --- 核心修改處 END ---
 }
 
 
