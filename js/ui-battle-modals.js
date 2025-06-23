@@ -75,7 +75,7 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
                 const skillLevel = skillInfo.level || 1;
                 const levelTag = `<span class="text-xs opacity-75 mr-1">Lv${skillLevel}</span>`;
                 
-                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*`, 'g');
+                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
                 const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="text-decoration: none;">${levelTag}<strong>$1</strong></a>`;
                 
                 styledText = styledText.replace(regex, replacement);
@@ -319,33 +319,35 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         });
     }
 
-    // --- 核心修改處 START ---
-    // 根據是否傳入 customFooterActions 來決定顯示的按鈕
     const footer = DOMElements.battleLogModal.querySelector('.modal-footer');
     if (footer) {
-        footer.innerHTML = ''; // 清空舊按鈕
+        footer.innerHTML = ''; 
         if (customFooterActions && customFooterActions.length > 0) {
             customFooterActions.forEach(btnConfig => {
                 const button = document.createElement('button');
                 button.textContent = btnConfig.text;
                 button.className = `button ${btnConfig.class || 'secondary'}`;
                 button.onclick = () => {
-                    hideModal('battle-log-modal'); // 點擊後總是先關閉戰報
+                    hideModal('battle-log-modal'); 
                     if (btnConfig.onClick) btnConfig.onClick();
                 };
                 footer.appendChild(button);
             });
         } else {
-            // 如果沒有傳入自訂按鈕，則顯示預設的關閉按鈕
+            // --- 核心修改處 START ---
             const defaultButton = document.createElement('button');
             defaultButton.id = 'close-battle-log-btn';
             defaultButton.className = 'button secondary';
             defaultButton.textContent = '關閉';
-            defaultButton.setAttribute('data-modal-id', 'battle-log-modal');
+            // 為預設按鈕綁定關閉事件
+            defaultButton.onclick = () => {
+                hideModal('battle-log-modal');
+                refreshPlayerData();
+            };
             footer.appendChild(defaultButton);
+            // --- 核心修改處 END ---
         }
     }
-    // --- 核心修改處 END ---
 
     DOMElements.battleLogArea.scrollTop = 0;
     showModal('battle-log-modal');
