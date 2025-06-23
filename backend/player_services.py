@@ -276,12 +276,10 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 dna_list = player_game_data_dict.get(dna_list_key, [])
                 for i, dna_item in enumerate(dna_list):
                     if dna_item and isinstance(dna_item, dict) and "baseId" not in dna_item:
-                        item_id = dna_item.get("id", "")
-                        if item_id and not item_id.startswith("dna_inst_"):
-                            needs_migration_save = True
-                            player_services_logger.info(f"為玩家 {player_id} 的 DNA (ID: {item_id}) 進行 'baseId' 遷移。")
-                            dna_item["baseId"] = item_id
-                            dna_item["id"] = f"dna_inst_{player_id}_{int(time.time() * 1000)}_{i}"
+                        needs_migration_save = True
+                        player_services_logger.info(f"為玩家 {player_id} 的 DNA (ID: {dna_item.get('id', '')}) 進行 'baseId' 遷移。")
+                        dna_item["baseId"] = dna_item.get("id", "")
+                        dna_item["id"] = f"dna_inst_{player_id}_{int(time.time() * 1000)}_{i}"
 
             if needs_migration_save:
                 try:
@@ -373,7 +371,8 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
             "playerNotes": game_data.get("playerNotes", []),
-            "mailbox": game_data.get("mailbox", []) 
+            "mailbox": game_data.get("mailbox", []),
+            "adventure_progress": game_data.get("adventure_progress")
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
