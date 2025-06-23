@@ -3,3 +3,9 @@ python backend/MD_populate_gamedata.py
 
 屬性類別
 "火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"
+
+本地地圖生成腳本指令
+
+cd C:\Users\kere\Documents\MD
+
+python backend/development_scripts/map_generator.py
