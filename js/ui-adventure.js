@@ -196,6 +196,11 @@ function handleMapNodeClick(node) {
  * @param {object} adventureProgress - 包含地圖資料的完整冒險進度物件。
  */
 function renderAdventureMap(adventureProgress) {
+    // --- 核心修改處 START ---
+    // 每次渲染地圖時，都確保監聽器已經被設定
+    initializeAdventureMapHandlers();
+    // --- 核心修改處 END ---
+
     const modal = document.getElementById('adventure-map-modal');
     const nodesContainer = document.getElementById('adventure-map-nodes-container');
     const canvas = document.getElementById('adventure-map-canvas');
@@ -380,14 +385,10 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
 
         if (result && result.success) {
-            // --- 核心修改處 START ---
-            // 在渲染地圖前，手動將後端回傳的 adventure_progress 更新到全域狀態中
             if (gameState.playerData) {
                 gameState.playerData.adventure_progress = result.adventure_progress;
             }
-            // 接著再刷新一次完整的玩家資料，確保金幣等狀態也同步
             await refreshPlayerData();
-            // --- 核心修改處 END ---
 
             hideModal('feedback-modal');
             
@@ -414,9 +415,6 @@ async function initializeAdventureUI() {
         return;
     }
     
-    // 初始化一次性的事件監聽器
-    initializeAdventureMapHandlers();
-
     const adventureProgress = gameState.playerData?.adventure_progress;
     if (adventureProgress && adventureProgress.is_active) {
         renderAdventureMap(adventureProgress);
