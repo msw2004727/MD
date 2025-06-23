@@ -57,13 +57,10 @@ function showTeamSelectionModal(facility, islandId) {
             card.className = 'monster-selection-card';
             card.dataset.monsterId = monster.id;
 
-            // --- 核心修改處 START ---
             const isDeployed = monster.id === gameState.playerData.selectedMonsterId;
             const isBusy = monster.farmStatus?.isTraining || monster.farmStatus?.isBattling;
             const isInjured = monster.hp < monster.initial_max_hp * 0.25;
-            // 將是否出戰加入到禁用判斷中
             const isDisabled = isBusy || isInjured || isDeployed;
-            // --- 核心修改處 END ---
 
             if (isDisabled) {
                 card.classList.add('disabled');
@@ -82,8 +79,6 @@ function showTeamSelectionModal(facility, islandId) {
             }
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
-            // --- 核心修改處 START ---
-            // 在狀態顯示區新增「出戰中」的提示文字
             card.innerHTML = `
                 <div class="monster-selection-card-header">
                     <span class="text-rarity-${(monster.rarity || 'common').toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
@@ -101,7 +96,6 @@ function showTeamSelectionModal(facility, islandId) {
                     </div>
                 </div>
             `;
-            // --- 核心修改處 END ---
 
             if (!isDisabled) {
                 card.addEventListener('click', () => {
@@ -172,7 +166,8 @@ function renderAdventureProgressUI(adventureProgress) {
     }
 
     let teamStatusHtml = '';
-    adventureProgress.expedition_team.forEach(member => {
+    // --- 核心修改處 START ---
+    adventureProgress.expedition_team.forEach((member, index) => {
         const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
         if (!originalMonster) return;
 
@@ -188,11 +183,16 @@ function renderAdventureProgressUI(adventureProgress) {
         }
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         
+        // 判斷是否為隊長 (索引值為0)
+        const isCaptain = index === 0;
+        // 如果是隊長，則產生徽章的HTML，否則為空字串
+        const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
+        
         teamStatusHtml += `
             <div class="team-member-card">
                 <div class="avatar" style="background-image: url('${imagePath}')"></div>
                 <div class="info">
-                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname}</div>
+                    <div class="name text-rarity-${(originalMonster.rarity || 'common').toLowerCase()}">${member.nickname} ${captainMedal}</div>
                     <div class="status-bar-container" style="gap: 4px; margin-top: 2px;">
                         <div class="status-bar-background" style="height: 8px;">
                             <div class="status-bar-fill" style="width: ${(member.current_hp / originalMonster.initial_max_hp) * 100}%; background-color: var(--success-color);"></div>
@@ -203,6 +203,7 @@ function renderAdventureProgressUI(adventureProgress) {
             </div>
         `;
     });
+    // --- 核心修改處 END ---
     
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
