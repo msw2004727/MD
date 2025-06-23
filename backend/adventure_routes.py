@@ -5,11 +5,9 @@ import logging
 from flask import Blueprint, jsonify, request
 
 # 從專案的其他模組導入
-from .MD_routes import _get_authenticated_user_id
+from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
-# --- 核心修改處 START ---
 from .adventure_services import start_expedition_service, move_on_adventure_map_service, handle_node_event_service, get_all_islands_service
-# --- 核心修改處 END ---
 
 # 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
 adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure')
@@ -18,7 +16,6 @@ adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure
 adventure_routes_logger = logging.getLogger(__name__)
 
 
-# --- 核心修改處 START ---
 @adventure_bp.route('/islands', methods=['GET'])
 def get_islands_route():
     """
@@ -29,14 +26,12 @@ def get_islands_route():
     try:
         islands_data = get_all_islands_service()
         if not islands_data:
-             # 如果服務層返回空列表，表示找不到檔案或檔案為空
              return jsonify({"error": "找不到冒險島資料或資料為空。"}), 404
         
         return jsonify(islands_data), 200
     except Exception as e:
         adventure_routes_logger.error(f"獲取冒險島資料時在路由層發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "伺服器內部錯誤，無法獲取冒險島資料。"}), 500
-# --- 核心修改處 END ---
 
 
 @adventure_bp.route('/start', methods=['POST'])
@@ -58,10 +53,36 @@ def start_adventure_route():
 
     adventure_routes_logger.info(f"玩家 {user_id} 請求開始遠征：島嶼 {island_id}, 設施 {facility_id}")
 
-    # 此處未來將呼叫 adventure_services 中的函式
-    # success = start_expedition_service(...)
+    # 獲取最新資料以進行驗證
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
 
-    return jsonify({"success": True, "message": "遠征功能開發中！"}), 200
+    # 呼叫服務層的核心邏輯
+    updated_player_data, error_msg = start_expedition_service(
+        player_data, island_id, facility_id, team_monster_ids, game_configs
+    )
+
+    # 處理服務層的回應
+    if error_msg:
+        # 如果有錯誤訊息，表示驗證失敗，回傳 400 錯誤
+        return jsonify({"error": error_msg}), 400
+
+    if updated_player_data:
+        # 如果成功，儲存更新後的玩家資料
+        if save_player_data_service(user_id, updated_player_data):
+            return jsonify({
+                "success": True, 
+                "message": "遠征已成功開始！",
+                "adventure_progress": updated_player_data.get("adventure_progress")
+            }), 200
+        else:
+            return jsonify({"error": "開始遠征後儲存玩家資料失敗。"}), 500
+    else:
+        # 如果服務層返回 None 且沒有錯誤訊息，這是一個未預期的情況
+        return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
 
 
 @adventure_bp.route('/progress', methods=['GET'])
@@ -99,8 +120,5 @@ def move_on_map_route():
     if not target_node_id:
          return jsonify({"error": "請求中缺少目標節點ID (target_node_id)。"}), 400
 
-    # 此處未來將呼叫 adventure_services 中的函式
-    # updated_player_data = move_on_adventure_map_service(...)
-    
     adventure_routes_logger.info(f"玩家 {user_id} 請求移動至節點 {target_node_id} (功能開發中)。")
     return jsonify({"success": True, "message": f"已移動至 {target_node_id} (功能開發中)。"}), 200
