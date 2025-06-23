@@ -238,13 +238,12 @@ def populate_game_configs():
         script_logger.error(f"處理 StatusEffects 資料失敗: {e}")
         return
         
-    # --- 新增：載入戰鬥亮點資料 (從 battle_highlights.json) ---
+    # --- 載入戰鬥亮點資料 (從 battle_highlights.json) ---
     try:
         highlights_path = os.path.join(data_dir, 'battle_highlights.json')
         with open(highlights_path, 'r', encoding='utf-8') as f:
             highlights_data = json.load(f)
         script_logger.info(f"成功從 {highlights_path} 載入戰鬥亮點資料。")
-        # 直接將整個 JSON 物件存入，包含 'highlights_map' 和 'default_highlight'
         db_client.collection('MD_GameConfigs').document('BattleHighlights').set(highlights_data)
         script_logger.info("成功將 battle_highlights.json 的內容寫入 Firestore 的 BattleHighlights 文件。")
     except FileNotFoundError:
@@ -252,7 +251,7 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 BattleHighlights 資料失敗: {e}")
 
-    # --- 新增：載入冒險島資料 ---
+    # --- 載入冒險島資料 ---
     try:
         islands_path = os.path.join(data_dir, 'adventure_islands.json')
         with open(islands_path, 'r', encoding='utf-8') as f:
@@ -264,6 +263,32 @@ def populate_game_configs():
         script_logger.warning(f"提示: 找不到冒險島設定檔 {islands_path}，將跳過此項。")
     except Exception as e:
         script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
+
+    # --- 【新增】載入冒險事件資料 ---
+    try:
+        events_path = os.path.join(data_dir, 'adventure_events.json')
+        with open(events_path, 'r', encoding='utf-8') as f:
+            events_data = json.load(f)
+        script_logger.info(f"成功從 {events_path} 載入冒險事件資料。")
+        db_client.collection('MD_GameConfigs').document('AdventureEvents').set({'events': events_data})
+        script_logger.info("成功寫入 AdventureEvents 資料。")
+    except FileNotFoundError:
+        script_logger.warning(f"提示: 找不到冒險事件設定檔 {events_path}，將跳過此項。")
+    except Exception as e:
+        script_logger.error(f"處理 AdventureEvents 資料失敗: {e}")
+        
+    # --- 【新增】載入冒險BOSS資料 ---
+    try:
+        bosses_path = os.path.join(data_dir, 'adventure_bosses.json')
+        with open(bosses_path, 'r', encoding='utf-8') as f:
+            bosses_data = json.load(f)
+        script_logger.info(f"成功從 {bosses_path} 載入冒險BOSS資料。")
+        db_client.collection('MD_GameConfigs').document('AdventureBosses').set(bosses_data)
+        script_logger.info("成功寫入 AdventureBosses 資料。")
+    except FileNotFoundError:
+        script_logger.warning(f"提示: 找不到冒險BOSS設定檔 {bosses_path}，將跳過此項。")
+    except Exception as e:
+        script_logger.error(f"處理 AdventureBosses 資料失敗: {e}")
 
     # --- 寫入其他設定 ---
     
