@@ -2,7 +2,36 @@
 // 專門負責渲染「冒險島」的所有UI。
 
 // --- 核心修改處 START ---
-// 新增：繪製路徑的函式
+/**
+ * 初始化冒險地圖的事件監聽器。
+ * 使用事件委派模式，只在父容器上設定一個監聽器。
+ */
+function initializeAdventureMapHandlers() {
+    const nodesContainer = document.getElementById('adventure-map-nodes-container');
+    if (!nodesContainer) return;
+
+    // 為避免重複綁定，先移除舊的監聽器
+    // 透過複製節點並取代的方式來移除所有事件監聽
+    const newContainer = nodesContainer.cloneNode(true);
+    nodesContainer.parentNode.replaceChild(newContainer, nodesContainer);
+
+    newContainer.addEventListener('click', (event) => {
+        const clickedNodeElement = event.target.closest('.map-node.clickable');
+        if (!clickedNodeElement) return;
+
+        const nodeId = clickedNodeElement.dataset.nodeId;
+        if (!nodeId) return;
+        
+        const adventureProgress = gameState.playerData?.adventure_progress;
+        if (!adventureProgress) return;
+        
+        const targetNode = adventureProgress.map_data.nodes.find(n => n.id === nodeId);
+        if (targetNode) {
+            handleMapNodeClick(targetNode);
+        }
+    });
+}
+
 /**
  * 在 Canvas 上繪製給定的路徑。
  * @param {Array<object>} path - 由 A* 演算法回傳的節點陣列。
@@ -47,7 +76,6 @@ function drawPathOnCanvas(path) {
 
 // A* 路徑尋找演算法的實現。
 function findAStarPath(nodes, startNode, goalNode) {
-    // 將節點列表轉換為更容易查找的 2D 網格
     const grid = [];
     const width = 30;
     const height = 30;
@@ -148,15 +176,12 @@ function handleMapNodeClick(node) {
         return;
     }
 
-    // 使用 A* 演算法尋找路徑
     const path = findAStarPath(allNodes, currentNode, node);
 
-    // 修改：不再彈出提示窗，而是直接呼叫繪圖函式
     drawPathOnCanvas(path);
 
     if (path.length > 0) {
         console.log("找到的路徑:", path.map(p => p.id));
-        // 未來在這裡處理顯示路徑消耗和確認按鈕
     } else {
         console.log(`找不到通往 (${node.position.x}, ${node.position.y}) 的路徑。`);
     }
@@ -199,6 +224,7 @@ function renderAdventureMap(adventureProgress) {
     canvas.height = 30 * GRID_SIZE;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // --- 核心修改處：移除此處的 addEventListener ---
     nodes.forEach(node => {
         const nodeEl = document.createElement('div');
         nodeEl.className = 'map-node';
@@ -209,11 +235,12 @@ function renderAdventureMap(adventureProgress) {
         
         if (node.type !== 'obstacle') {
             nodeEl.classList.add('clickable');
-            nodeEl.addEventListener('click', () => handleMapNodeClick(node));
+            // nodeEl.addEventListener('click', () => handleMapNodeClick(node)); // <- 已移除
         }
 
         nodesContainer.appendChild(nodeEl);
     });
+    // --- 核心修改處 END ---
     
     if(playerCurrentNode) {
         const playerToken = document.createElement('div');
@@ -223,6 +250,10 @@ function renderAdventureMap(adventureProgress) {
         playerToken.style.top = `${playerCurrentNode.position.y * GRID_SIZE}px`;
         nodesContainer.appendChild(playerToken);
     }
+
+    // --- 核心修改處：在渲染地圖後，初始化事件處理器 ---
+    initializeAdventureMapHandlers();
+    // --- 核心修改處 END ---
 
     showModal('adventure-map-modal');
 }
