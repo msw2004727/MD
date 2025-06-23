@@ -424,13 +424,23 @@ async function startExpedition(islandId, facilityId, teamMonsterIds) {
     });
 }
 
-// --- 核心修改處 START ---
 /**
  * 在冒險中推進一步。
  * @returns {Promise<object>} 包含新事件資料或錯誤訊息的物件。
  */
 async function advanceAdventure() {
     return fetchAPI('/adventure/advance', {
+        method: 'POST'
+    });
+}
+
+// --- 核心修改處 START ---
+/**
+ * 通關當前樓層並前進到下一層。
+ * @returns {Promise<object>} 包含成功訊息與新進度資料的物件。
+ */
+async function completeAdventureFloor() {
+    return fetchAPI('/adventure/complete_floor', {
         method: 'POST'
     });
 }
