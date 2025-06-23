@@ -21,8 +21,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "就在你們通過時，頂梁柱垮了下來！雖然沒被直接砸中，但飛濺的碎石還是劃傷了隊伍。 [損失：隊伍全員HP -15] 🩹",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -15 }]
+            "story_fragment": "就在你們通過時，頂梁柱垮了下來！雖然沒被直接砸中，但飛濺的碎石還是劃傷了隊伍。 [損失：隊伍全員HP -150] 🩹",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -150 }]
           }
         ]
       },
@@ -42,8 +42,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "在加固時，梁柱的一部分碎裂掉落，正好砸中了它。 [損失：防禦最高者HP -25] 🤕",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest_def", "amount": -25 }]
+            "story_fragment": "在加固時，梁柱的一部分碎裂掉落，正好砸中了它。 [損失：防禦最高者HP -250] 🤕",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest_def", "amount": -250 }]
           }
         ]
       }
@@ -71,8 +71,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "開採的聲響太大，引來了一群憤怒的蝙蝠！ [損失：隊伍全員HP -10] 🦇",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
+            "story_fragment": "開採的聲響太大，引來了一群憤怒的蝙蝠！ [損失：隊伍全員HP -100] 🦇",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
           }
         ]
       },
@@ -140,8 +140,8 @@
           },
           {
             "type": "negative", "weight": 60,
-            "story_fragment": "幽靈被激怒了！他舉起十字鎬，對隊伍發出了一次充滿怨念的攻擊。 [損失：隊伍全員HP -20] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+            "story_fragment": "幽靈被激怒了！他舉起十字鎬，對隊伍發出了一次充滿怨念的攻擊。 [損失：隊伍全員HP -200] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
           }
         ]
       }
@@ -190,8 +190,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "扳動控制器時，生鏽的把手斷了，劃傷了{monster_name}的手。 [損失：隊伍隨機單體HP -15] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -15 }]
+            "story_fragment": "扳動控制器時，生鏽的把手斷了，劃傷了{monster_name}的手。 [損失：隊伍隨機單體HP -150] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -150 }]
           }
         ]
       }
@@ -209,8 +209,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 40,
-            "story_fragment": "警告只是個惡作劇！箱子裡裝滿了珍貴的礦石和金幣！ [獲得：金幣 x100, 稀有金之DNA x1] 🥳",
-            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 100 }, { "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_rare", "quantity": 1 }]
+            "story_fragment": "警告只是個惡作劇！箱子裡裝滿了珍貴的礦石和金幣！ [獲得：金幣 x10, 稀有金之DNA x1] 🥳",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 10 }, { "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_rare", "quantity": 1 }]
           },
           {
             "type": "neutral", "weight": 10,
@@ -219,8 +219,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "警告是真的！一陣劇烈的爆炸把你們都炸飛了！ [損失：隊伍全員HP -40] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+            "story_fragment": "警告是真的！一陣劇烈的爆炸把你們都炸飛了！ [損失：隊伍全員HP -400] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
           }
         ]
       },
@@ -240,8 +240,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "你們雖然遠離了，但爆炸的衝擊波還是稍微影響到了隊伍。 [損失：隊伍全員HP -5] 💨",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -5 }]
+            "story_fragment": "你們雖然遠離了，但爆炸的衝擊波還是稍微影響到了隊伍。 [損失：隊伍全員HP -50] 💨",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
           }
         ]
       }
@@ -319,8 +319,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "背包裡衝出一隻劇毒的蠍子！ [損失：隊伍隨機單體HP -30] 🦂",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -30 }]
+            "story_fragment": "背包裡衝出一隻劇毒的蠍子！ [損失：隊伍隨機單體HP -300] 🦂",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -300 }]
           }
         ]
       },
@@ -357,8 +357,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 30,
-            "story_fragment": "你們找到了一個地下水泉，泉水蘊含著治療的能量。 [獲得：隊伍全員HP +30] 💧",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 30 }]
+            "story_fragment": "你們找到了一個地下水泉，泉水蘊含著治療的能量。 [獲得：隊伍全員HP +300] 💧",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 300 }]
           },
           {
             "type": "neutral", "weight": 60,
@@ -408,13 +408,13 @@
           },
           {
             "type": "neutral", "weight": 30,
-            "story_fragment": "你們與鑽岩蟲纏鬥了一番，最終牠鑽回了地底深處。 [損失：隊伍全員HP -15] ⚔️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -15 }]
+            "story_fragment": "你們與鑽岩蟲纏鬥了一番，最終牠鑽回了地底深處。 [損失：隊伍全員HP -150] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -150 }]
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "鑽岩蟲比想像中更強，你們被牠撞得人仰馬翻後才狼狽地逃走。 [損失：隊伍全員HP -30] 😵",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -30 }]
+            "story_fragment": "鑽岩蟲比想像中更強，你們被牠撞得人仰馬翻後才狼狽地逃走。 [損失：隊伍全員HP -300] 😵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -300 }]
           }
         ]
       },
@@ -463,8 +463,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "升降梯的纜繩斷了！你們隨著平台墜落了一小段距離，受到了衝擊！ [損失：隊伍全員HP -35] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -35 }]
+            "story_fragment": "升降梯的纜繩斷了！你們隨著平台墜落了一小段距離，受到了衝擊！ [損失：隊伍全員HP -350] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -350 }]
           }
         ]
       },
