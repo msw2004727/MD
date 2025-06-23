@@ -11,7 +11,6 @@ async function handleHealClick(monsterId) {
     const monster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
     if (!monster) return;
 
-    // --- 核心修改處 START ---
     // 檢查怪獸是否真的需要治療
     const needsHealing = (monster.hp < monster.initial_max_hp) || 
                          (monster.mp < monster.initial_max_mp) ||
@@ -42,6 +41,8 @@ async function handleHealClick(monsterId) {
                 const result = await healMonster(monsterId, 'full_restore');
                 if (result) {
                     await refreshPlayerData();
+                    // 治療成功後，不僅要更新農場，也要更新醫療站的列表
+                    if(typeof renderMedicalStation === 'function') renderMedicalStation();
                     showFeedbackModal('成功', '怪獸已完全恢復！');
                 } else {
                     hideModal('feedback-modal');
@@ -54,7 +55,6 @@ async function handleHealClick(monsterId) {
         },
         { confirmButtonClass: 'success', confirmButtonText: '確定治療' }
     );
-    // --- 核心修改處 END ---
 }
 
 
@@ -110,8 +110,12 @@ function renderMonsterFarm() {
         return;
     }
 
+    // 移除舊的表頭 (如果存在)，因為卡片式佈局不再需要它
+    const headers = document.getElementById('farm-headers');
+    if (headers) headers.innerHTML = '';
+
     listContainer.innerHTML = '';
-    
+    // 設定容器為卡片網格佈局
     listContainer.className = 'farm-card-grid';
 
 
@@ -123,6 +127,18 @@ function renderMonsterFarm() {
         return;
     }
     
+    // 根據 gameState 中的設定排序
+    const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
+    monsters.sort((a, b) => {
+        let valA = a[sortConfig.key] || 0;
+        let valB = b[sortConfig.key] || 0;
+        if (typeof valA === 'string') {
+            return sortConfig.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        } else {
+            return sortConfig.order === 'asc' ? valA - valB : valB - valA;
+        }
+    });
+
     monsters.forEach((monster) => {
         const monsterCard = document.createElement('div');
         monsterCard.className = 'monster-card';
@@ -155,7 +171,6 @@ function renderMonsterFarm() {
 
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
-        // --- 核心修改處 START ---
         let statusHtml = '';
         if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
@@ -173,7 +188,6 @@ function renderMonsterFarm() {
         } else {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
         }
-        // --- 核心修改處 END ---
         
         let actionsHTML = '';
         if (isDeployed) {
@@ -199,15 +213,15 @@ function renderMonsterFarm() {
         }
 
         monsterCard.innerHTML = `
-            <div class="monster-card-name text-rarity-${rarityKey} text-xs">${displayName}</div>
+            <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
             <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
                 ${avatarHtml}
             </a>
             ${deployButtonHtml}
+            ${statusHtml} 
             <div class="monster-card-actions">
                 ${actionsHTML}
             </div>
-            ${statusHtml} 
         `;
         
         listContainer.appendChild(monsterCard);

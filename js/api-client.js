@@ -398,5 +398,13 @@ async function removeFriend(friendId) {
     });
 }
 
+/**
+ * 【新增】獲取冒險島的資料
+ * @returns {Promise<Array<object>>} 包含所有島嶼設定資料的陣列
+ */
+async function getAdventureIslandsData() {
+    return fetchAPI('/adventure/islands');
+}
+
 
 console.log("API client module loaded.");

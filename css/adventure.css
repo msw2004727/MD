@@ -6,6 +6,8 @@
     display: flex;
     padding: 0.5rem;
     box-sizing: border-box;
+    /* 新增：讓內容可以垂直滾動 */
+    overflow-y: auto; 
 }
 
 /* 外層 Wrapper，用於將內容置中 */
@@ -14,65 +16,111 @@
     height: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* 改為從頂部對齊 */
 }
 
-/* 內容區，維持固定的長寬比 */
+/* 內容區，維持固定的長寬比並放置背景圖 */
 .adventure-content-area {
     width: 100%;
     max-width: 100%;
-    height: auto;
-    max-height: 100%;
-    background-size: 100% 100%;
+    height: 100%;
+    background-size: cover; /* 背景圖覆蓋整個區域 */
     background-position: center;
     background-repeat: no-repeat;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: hidden; 
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    
-    /* --- 網格佈局樣式 --- */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 【修改】改為 3 欄 */
-    grid-template-rows: repeat(3, 1fr);    /* 【修改】改為 3 列 */
-    gap: 4px;
-    padding: 4px;
+    padding: 1rem; /* 為內容增加內邊距 */
     box-sizing: border-box;
 
-    /* --- 背景圖設定 (手機優先) --- */
+    /* 手機優先，使用窄版背景圖 */
     background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands004.png?raw=true');
-    aspect-ratio: 9 / 16; /* 窄版圖片的長寬比 */
 }
 
 /* 當螢幕寬度大於 768px 時 (例如平板或電腦) */
 @media (min-width: 768px) {
     .adventure-content-area {
-        /* 自動切換為寬版圖片 */
+        /* 自動切換為寬版背景圖 */
         background-image: url('https://github.com/msw2004727/MD/blob/main/images/islands005.png?raw=true');
-        aspect-ratio: 16 / 9; /* 寬版圖片的長寬比 */
     }
 }
 
-/* 單一的網格儲存格 */
-.adventure-grid-cell {
-    border: 2px dashed rgba(255, 255, 255, 0.4); /* 【修改】使用更明顯的虛線 */
+
+/* --- 新增：設施列表與卡片樣式 --- */
+
+.adventure-island-container {
+    background-color: color-mix(in srgb, var(--bg-primary) 80%, transparent); /* 半透明背景，突顯內容 */
     border-radius: 8px;
-    transition: background-color 0.3s, border-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+    padding: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
-.adventure-grid-cell:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.8);
-}
-
-/* 【新增】格子內的座標文字樣式 */
-.adventure-coordinate-text {
-    font-size: 1.2rem;
+.adventure-island-title {
+    font-size: 1.5rem;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 5px black, 0 0 5px black; /* 加強文字陰影，使其在複雜背景上更清晰 */
-    pointer-events: none; /* 讓點擊可以穿透文字，直接點到格子本身 */
+    color: var(--rarity-legendary-text);
+    text-shadow: 0 0 8px var(--rarity-legendary-text);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.75rem;
+}
+
+.adventure-facility-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.adventure-facility-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.adventure-facility-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+
+.facility-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.facility-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.facility-cost {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--rarity-legendary-text); /* 使用金色突顯費用 */
+}
+
+.facility-card-body p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.facility-card-footer {
+    margin-top: auto; /* 將此區塊推至卡片底部 */
+    text-align: right;
+}
+
+.challenge-facility-btn {
+    padding: 8px 20px;
 }

@@ -2,24 +2,25 @@
 // 專門處理「冒險島」頁籤內的所有使用者互動事件。
 
 /**
- * 處理點擊冒險島上的探索節點按鈕。
+ * 處理點擊冒險島設施卡片上的「挑戰」按鈕。
  * @param {Event} event - 點擊事件對象。
  */
-function handleAdventureNodeClick(event) {
-    const button = event.target.closest('.adventure-node-btn');
-    if (!button) {
-        return; // 如果點擊的不是按鈕，則不執行任何操作
+function handleFacilityChallengeClick(event) {
+    const button = event.target.closest('.challenge-facility-btn');
+    // 從按鈕的 data-* 屬性中獲取設施ID
+    const facilityId = button.dataset.facilityId; 
+
+    if (!facilityId) {
+        console.error("挑戰按鈕上缺少 'data-facility-id' 屬性。");
+        return;
     }
 
-    const nodeIndex = button.dataset.nodeIndex;
-    const nodeType = Array.from(button.classList).find(cls => cls.startsWith('type-'))?.split('-')[1] || '未知';
-
     // 顯示一個暫時的彈窗，表示功能正在開發中
-    // 之後這裡會替換為打開「指派遠征隊伍」的彈窗邏輯
-    const message = `你點擊了第 ${parseInt(nodeIndex, 10) + 1} 號探索區域（類型：${nodeType}）！<br><br>指派遠征隊伍的功能正在加速開發中，敬請期待！`;
+    const message = `您已選擇挑戰設施：${facilityId}！<br><br>後續的戰鬥邏輯正在開發中。`;
     
+    // 確保 showFeedbackModal 函式存在
     if(typeof showFeedbackModal === 'function') {
-        showFeedbackModal('準備遠征', message);
+        showFeedbackModal('準備挑戰', message);
     } else {
         alert(message.replace(/<br>/g, '\n'));
     }
@@ -33,9 +34,17 @@ function initializeAdventureHandlers() {
     const adventureContainer = DOMElements.adventureTabContent;
 
     if (adventureContainer) {
-        // 使用事件委派，將監聽器綁定在父容器上，以處理所有探索按鈕的點擊
-        adventureContainer.addEventListener('click', handleAdventureNodeClick);
-        console.log("冒險島事件處理器已成功初始化。");
+        // 使用事件委派，將監聽器綁定在父容器上，以處理所有設施卡片的點擊
+        adventureContainer.addEventListener('click', (event) => {
+            const challengeButton = event.target.closest('.challenge-facility-btn');
+            
+            if (challengeButton) {
+                // 如果點擊的是挑戰按鈕，則呼叫對應的處理函式
+                handleFacilityChallengeClick(event);
+            }
+            // 未來可以在此處加入對其他按鈕的判斷，例如 '查看詳情' 等
+        });
+        console.log("冒險島事件處理器已成功初始化，並監聽挑戰按鈕。");
     } else {
         // 這是個後備機制，以防 handler 比 ui.js 先載入
         setTimeout(initializeAdventureHandlers, 100);

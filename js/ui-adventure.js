@@ -4,44 +4,106 @@
 /**
  * 初始化冒險島UI的總入口函式。
  * 當玩家點擊「冒險島」頁籤時，這個函式會被觸發。
+ * 現在它會從後端獲取資料來動態渲染。
  */
-function initializeAdventureUI() {
+async function initializeAdventureUI() {
     const adventureTabContent = document.getElementById('guild-content');
     if (!adventureTabContent) {
         console.error("冒險島的內容容器 'guild-content' 未找到。");
         return;
     }
     
-    // 清空現有內容
-    adventureTabContent.innerHTML = '';
+    // 清空現有內容並顯示載入中提示
+    adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">正在從遠方島嶼獲取情報...</p>';
 
-    // 建立一個外層 Wrapper 來做置中
-    const wrapper = document.createElement('div');
-    wrapper.className = 'adventure-wrapper';
+    try {
+        const islandsData = await getAdventureIslandsData();
 
-    // 建立一個內層 Content Area 來維持長寬比，並放置背景和網格
-    const contentArea = document.createElement('div');
-    contentArea.className = 'adventure-content-area';
+        // 再次清空，準備渲染真實內容
+        adventureTabContent.innerHTML = '';
 
-    // 【核心修改】產生 3x3 = 9 個格子
-    for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'adventure-grid-cell';
-        cell.dataset.index = i; // 標記格子的索引
+        if (!islandsData || !Array.isArray(islandsData) || islandsData.length === 0) {
+            adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">目前沒有可前往的冒險島嶼。</p>';
+            return;
+        }
 
-        // 【核心修改】計算並顯示座標
-        const x = i % 3;
-        const y = Math.floor(i / 3);
+        // 目前只處理第一個島嶼的資料
+        const island = islandsData[0];
+        const facilities = island.facilities || [];
+
+        // 建立一個外層 Wrapper 來做置中
+        const wrapper = document.createElement('div');
+        wrapper.className = 'adventure-wrapper';
+
+        // 建立一個內層 Content Area 來維持長寬比，並放置背景和內容
+        const contentArea = document.createElement('div');
+        contentArea.className = 'adventure-content-area';
         
-        const coordinateText = document.createElement('div');
-        coordinateText.className = 'adventure-coordinate-text';
-        coordinateText.textContent = `(${x}, ${y})`;
-        
-        cell.appendChild(coordinateText);
-        contentArea.appendChild(cell);
+        // 根據後端資料設定背景圖
+        const wideBg = island.backgrounds?.wide || '';
+        const narrowBg = island.backgrounds?.narrow || '';
+
+        // 使用 style 標籤來動態設定響應式背景
+        const style = document.createElement('style');
+        style.textContent = `
+            .adventure-content-area {
+                background-image: url('${narrowBg}');
+            }
+            @media (min-width: 768px) {
+                .adventure-content-area {
+                    background-image: url('${wideBg}');
+                }
+            }
+        `;
+        document.head.appendChild(style); // 將樣式注入到文檔頭部
+
+
+        // 建立島嶼容器
+        const islandContainer = document.createElement('div');
+        islandContainer.className = 'adventure-island-container';
+
+        // 建立島嶼標題
+        const islandTitle = document.createElement('h3');
+        islandTitle.className = 'adventure-island-title';
+        islandTitle.textContent = island.islandName || '未知的島嶼';
+        islandContainer.appendChild(islandTitle);
+
+        // 建立設施列表容器
+        const facilityList = document.createElement('div');
+        facilityList.className = 'adventure-facility-list';
+
+        // 根據設施資料動態生成卡片
+        if (facilities.length > 0) {
+            facilities.forEach(facility => {
+                const card = document.createElement('div');
+                card.className = 'adventure-facility-card';
+
+                card.innerHTML = `
+                    <div class="facility-card-header">
+                        <h4 class="facility-title">${facility.name || '未知設施'}</h4>
+                        <span class="facility-cost">費用: ${facility.cost || 0} 🪙</span>
+                    </div>
+                    <div class="facility-card-body">
+                        <p>${facility.description || '暫無描述。'}</p>
+                    </div>
+                    <div class="facility-card-footer">
+                        <button class="button primary challenge-facility-btn" data-facility-id="${facility.facilityId}">挑戰</button>
+                    </div>
+                `;
+                facilityList.appendChild(card);
+            });
+        } else {
+            facilityList.innerHTML = '<p class="text-center text-sm text-[var(--text-secondary)] py-4">這座島嶼上目前沒有可挑戰的設施。</p>';
+        }
+
+        // 組合結構並放入頁籤
+        islandContainer.appendChild(facilityList);
+        contentArea.appendChild(islandContainer);
+        wrapper.appendChild(contentArea);
+        adventureTabContent.appendChild(wrapper);
+
+    } catch (error) {
+        console.error("獲取或渲染冒險島資料時發生錯誤:", error);
+        adventureTabContent.innerHTML = `<p class="text-center text-lg text-[var(--text-secondary)] py-10" style="color: var(--danger-color);">錯誤：無法載入冒險島資料。<br>${error.message}</p>`;
     }
-
-    // 組合結構並放入頁籤
-    wrapper.appendChild(contentArea);
-    adventureTabContent.appendChild(wrapper);
 }
