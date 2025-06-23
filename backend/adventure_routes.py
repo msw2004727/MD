@@ -160,14 +160,11 @@ def advance_route():
     
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 成功推進冒險進度並已儲存。")
-        # --- 核心修改處 START ---
-        # 確保在回傳的 JSON 中，除了 event_data，也一併回傳 updated_progress
         return jsonify({
             "success": True,
             "event_data": event_data,
             "updated_progress": updated_progress
         }), 200
-        # --- 核心修改處 END ---
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 推進冒險進度後，儲存資料失敗。")
         return jsonify({"error": "推進成功但儲存進度失敗。"}), 500
@@ -243,6 +240,18 @@ def resolve_choice_route():
         # 執行戰鬥模擬
         battle_result = simulate_battle_full(player_monster, boss_data, game_configs, player_data)
         
+        # --- 核心修改處 START ---
+        # 在 expedition_team 中找到對應的怪獸，並更新其 HP 和 MP
+        captain_in_team = next((member for member in team if member["monster_id"] == captain_id), None)
+        if captain_in_team:
+            captain_in_team["current_hp"] = battle_result.get("player_monster_final_hp", captain_in_team["current_hp"])
+            captain_in_team["current_mp"] = battle_result.get("player_monster_final_mp", captain_in_team["current_mp"])
+            adventure_routes_logger.info(f"遠征隊長 {captain_id} 戰後 HP/MP 更新為: {captain_in_team['current_hp']}/{captain_in_team['current_mp']}")
+        
+        # 將更新後的 team 重新賦值給 progress
+        progress["expedition_team"] = team
+        # --- 核心修改處 END ---
+
         # 處理戰鬥結果
         if battle_result.get("winner_id") == captain_id:
             # 戰勝BOSS，推進到下一層
@@ -255,7 +264,7 @@ def resolve_choice_route():
                     "event_outcome": "boss_win",
                     "battle_result": battle_result,
                     "message": floor_completion_result.get("message"),
-                    "updated_progress": player_data["adventure_progress"] # --- 新增回傳進度
+                    "updated_progress": player_data["adventure_progress"]
                 }), 200
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
@@ -269,7 +278,7 @@ def resolve_choice_route():
                     "event_outcome": "boss_loss",
                     "battle_result": battle_result,
                     "message": "遠征失敗，您的隊伍已被擊敗。",
-                    "updated_progress": player_data["adventure_progress"] # --- 新增回傳進度
+                    "updated_progress": player_data["adventure_progress"]
                 }), 200
             else:
                 return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
