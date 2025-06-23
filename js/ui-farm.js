@@ -171,8 +171,14 @@ function renderMonsterFarm() {
 
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
+        // --- 核心修改處 START ---
+        const adventureProgress = gameState.playerData?.adventure_progress;
+        const isOnExpedition = adventureProgress?.is_active && adventureProgress.expedition_team.some(member => member.monster_id === monster.id);
+        
         let statusHtml = '';
-        if (monster.farmStatus?.isTraining) {
+        if (isOnExpedition) {
+            statusHtml = `<div class="monster-card-status" style="color: var(--status-expedition); font-weight: bold;">遠征中</div>`;
+        } else if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
             statusHtml = `
@@ -190,7 +196,13 @@ function renderMonsterFarm() {
         }
         
         let actionsHTML = '';
-        if (isDeployed) {
+        if (isOnExpedition) {
+             actionsHTML = `
+                <button class="button danger text-xs" disabled>放生</button>
+                <button class="button action text-xs" disabled>治療</button>
+                <button class="button primary text-xs" disabled>修煉</button>
+            `;
+        } else if (isDeployed) {
             actionsHTML = `
                 <button class="button danger text-xs" disabled>放生</button>
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
@@ -211,6 +223,7 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
+        // --- 核心修改處 END ---
 
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
