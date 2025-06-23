@@ -79,20 +79,15 @@ async function handleAdvanceClick() {
     advanceBtn.textContent = '前進中...';
 
     try {
-        // --- 核心修改處 START ---
-        // result 現在會包含 updated_progress 和 event_data
-        const result = await advanceAdventure(); 
+        const result = await advanceAdventure();
         if (result && result.success) {
-            // 使用後端回傳的最新進度，更新本地 gameState
             gameState.playerData.adventure_progress = result.updated_progress;
             gameState.currentAdventureEvent = result.event_data;
             
-            // 使用更新後的 gameState，重新渲染整個冒險介面
             renderAdventureProgressUI(result.updated_progress);
         } else {
             throw new Error(result?.error || '無法獲取下一個事件。');
         }
-        // --- 核心修改處 END ---
 
     } catch (error) {
         console.error("推進冒險失敗:", error);
@@ -124,28 +119,41 @@ async function handleAdventureChoiceClick(buttonElement) {
         }
 
         // --- 核心修改處 START ---
-        // 統一處理邏輯，無論結果如何，都先更新本地狀態，然後重繪UI
-        gameState.playerData.adventure_progress = result.updated_progress;
-        gameState.currentAdventureEvent = null; // 事件已解決，清除當前事件
-        
-        // 使用新的、包含事件結果描述的進度物件來重新渲染
-        // 我們需要一個臨時的 progress 物件來傳遞 story
-        const progressForRendering = {
-            ...result.updated_progress,
-            story_override: result.outcome_story 
-        };
-        renderAdventureProgressUI(progressForRendering);
-
-        // 如果是戰鬥，在UI渲染後再彈出戰報
+        // 判斷是否為BOSS戰的結果
         if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
+            await refreshPlayerData(); 
             if (result.battle_result) {
-                showBattleLogModal(result.battle_result);
+                // 從當前最新的玩家資料中找到隊長怪獸
+                const adventureProgress = gameState.playerData.adventure_progress;
+                const captainId = adventureProgress.expedition_team[0].monster_id;
+                const captainMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainId);
+                
+                // 從後端回傳的結果中獲取BOSS資料
+                const opponentMonster = result.battle_result.opponent_monster_snapshot || result.battle_result.battleTargetMonster;
+
+                // 將雙方怪獸資料傳入戰報函式
+                showBattleLogModal(result.battle_result, captainMonster, opponentMonster);
             }
-            // 如果戰敗，遠征結束，刷新後會自動回到設施選擇畫面
             if (result.event_outcome === 'boss_loss') {
                 await refreshPlayerData();
                 initializeAdventureUI();
+            } else { // boss_win
+                // 通關後，UI會由下一次的 advanceAdventure 或 complete_floor 重新渲染
+                // 這裡我們只需要更新本地狀態即可
+                gameState.playerData.adventure_progress = result.updated_progress;
+                gameState.currentAdventureEvent = null;
+                renderAdventureProgressUI(gameState.playerData.adventure_progress);
             }
+        } else {
+            // 處理一般事件選擇結果
+            gameState.playerData.adventure_progress = result.updated_progress;
+            gameState.currentAdventureEvent = null; 
+
+            const progressForRendering = {
+                ...result.updated_progress,
+                story_override: result.outcome_story 
+            };
+            renderAdventureProgressUI(progressForRendering);
         }
         // --- 核心修改處 END ---
 
@@ -190,7 +198,6 @@ function initializeAdventureHandlers() {
     const adventureContainer = DOMElements.guildContent;
 
     if (adventureContainer) {
-        // 使用事件委派來捕捉所有在冒險島內的點擊
         adventureContainer.addEventListener('click', (event) => {
             const challengeButton = event.target.closest('.challenge-facility-btn');
             const advanceButton = event.target.closest('#adventure-advance-btn');
@@ -210,7 +217,6 @@ function initializeAdventureHandlers() {
         });
         console.log("冒險島事件處理器已成功初始化。");
     } else {
-        // 如果容器還不存在，稍後再試
         setTimeout(initializeAdventureHandlers, 100);
     }
 }
