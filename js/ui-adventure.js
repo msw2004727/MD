@@ -4,8 +4,9 @@
 /**
  * 根據點擊的設施，顯示隊伍選擇彈窗。
  * @param {object} facility - 被點擊的設施的資料物件。
+ * @param {string} islandId - 設施所在的島嶼ID。
  */
-function showTeamSelectionModal(facility) {
+function showTeamSelectionModal(facility, islandId) {
     const modal = document.getElementById('expedition-team-selection-modal');
     const title = document.getElementById('team-selection-modal-title');
     const facilityInfo = document.getElementById('team-selection-facility-info');
@@ -98,15 +99,6 @@ function showTeamSelectionModal(facility) {
     }
 
     confirmBtn.onclick = () => {
-        const islandsData = gameState.gameConfigs.adventure_islands || [];
-        let islandId = null;
-        for (const island of islandsData) {
-            if (island.facilities && island.facilities.some(fac => fac.facilityId === facility.facilityId)) {
-                islandId = island.islandId;
-                break;
-            }
-        }
-        
         if (islandId) {
             initiateExpedition(islandId, facility.facilityId, selectedMonsters);
         } else {
@@ -119,7 +111,7 @@ function showTeamSelectionModal(facility) {
 
 
 /**
- * 【新增】渲染遠征進行中的主畫面。
+ * 渲染遠征進行中的主畫面。
  * @param {object} adventureProgress - 包含當前進度的物件。
  */
 function renderAdventureProgressUI(adventureProgress) {
@@ -127,10 +119,12 @@ function renderAdventureProgressUI(adventureProgress) {
     const adventureTabContent = document.getElementById('guild-content');
     if (!adventureTabContent) return;
 
-    const facilityData = gameState.gameConfigs?.adventure_islands?.[0]?.facilities?.find(f => f.facilityId === adventureProgress.facility_id);
+    // --- 核心修改處 START ---
+    const facilityData = gameState.gameConfigs?.adventure_islands
+        .flatMap(island => island.facilities)
+        .find(f => f.facilityId === adventureProgress.facility_id);
     const facilityName = facilityData?.name || '未知的區域';
 
-    // 1. 建立進度條
     let progressBarHtml = '';
     for (let i = 0; i < adventureProgress.total_steps_in_floor; i++) {
         let stepClass = 'progress-step';
@@ -142,7 +136,6 @@ function renderAdventureProgressUI(adventureProgress) {
         progressBarHtml += `<div class="${stepClass}" title="第 ${i + 1} 步"></div>`;
     }
 
-    // 2. 建立隊伍狀態
     let teamStatusHtml = '';
     adventureProgress.expedition_team.forEach(member => {
         const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
@@ -176,7 +169,6 @@ function renderAdventureProgressUI(adventureProgress) {
         `;
     });
     
-    // 3. 組合完整UI
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
             <header class="adventure-progress-header">
@@ -197,8 +189,7 @@ function renderAdventureProgressUI(adventureProgress) {
                     <div id="adventure-event-description" class="event-description">
                         <p>遠征隊已準備就緒，前方的道路充滿了未知...</p>
                     </div>
-                    <div id="adventure-event-choices" class="event-choices">
-                        </div>
+                    <div id="adventure-event-choices" class="event-choices"></div>
                 </main>
             </div>
 
@@ -207,6 +198,30 @@ function renderAdventureProgressUI(adventureProgress) {
             </footer>
         </div>
     `;
+
+    // 渲染後，根據當前事件狀態決定顯示/隱藏「繼續前進」或「選項」
+    const advanceBtn = document.getElementById('adventure-advance-btn');
+    const choicesEl = document.getElementById('adventure-event-choices');
+    const descriptionEl = document.getElementById('adventure-event-description');
+    
+    const currentEvent = gameState.currentAdventureEvent;
+
+    if (currentEvent && currentEvent.choices && currentEvent.choices.length > 0) {
+        // 如果有事件和選項，顯示它們並隱藏「繼續前進」
+        if (descriptionEl) descriptionEl.innerHTML = `<p>${currentEvent.description || '前方一片迷霧...'}</p>`;
+        if (choicesEl) {
+            choicesEl.innerHTML = currentEvent.choices.map(choice => 
+                `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
+            ).join('');
+        }
+        if (advanceBtn) advanceBtn.style.display = 'none';
+    } else {
+        // 如果沒有事件，清空選項並顯示「繼續前進」
+        if (descriptionEl) descriptionEl.innerHTML = `<p>你們已準備好，可以繼續前進了。</p>`;
+        if (choicesEl) choicesEl.innerHTML = '';
+        if (advanceBtn) advanceBtn.style.display = 'block';
+    }
+    // --- 核心修改處 END ---
 }
 
 
