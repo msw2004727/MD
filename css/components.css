@@ -418,7 +418,6 @@ body.light-theme .leaderboard-table tr:hover td {
 .snapshot-info-left { text-align: left; }
 .snapshot-info-right { text-align: right; }
 
-/* --- 核心修改處 START --- */
 #snapshot-main-content {
     position: absolute;
     top: 8px;
@@ -444,7 +443,6 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
-/* --- 核心修改處 END --- */
 
 #snapshot-evaluation {
     font-size: 0.875rem;
@@ -653,15 +651,11 @@ body.light-theme .leaderboard-table tr:hover td {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* --- 核心修改處 START --- */
 .dna-draw-result-item .dna-name {
     font-weight: bold;
     font-size: 1rem;
-    /* color: var(--text-primary); <-- 移除這行，讓稀有度顏色生效 */
     margin-bottom: 0.25rem;
 }
-/* --- 核心修改處 END --- */
-
 
 .dna-draw-result-item .dna-type {
     font-size: 0.8rem;
@@ -1158,9 +1152,9 @@ body.light-theme .leaderboard-table tr:hover td {
 
 
 .monster-card-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.25rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
     width: 100%;
     margin-top: 0.25rem;
 }
