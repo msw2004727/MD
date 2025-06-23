@@ -794,3 +794,14 @@ p.monster-score {
     text-transform: uppercase;
     display: inline-block;
 }
+
+/* --- 新增：確保彈窗中的橫幅圖片置中 --- */
+.feedback-banner img,
+.announcement-image-container img,
+.battle-header-banner img,
+.confirmation-banner img,
+#announcement-ad-banner img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
