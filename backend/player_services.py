@@ -9,11 +9,8 @@ from firebase_admin import firestore
 from google.cloud.firestore_v1.field_path import FieldPath
 import random 
 
-# --- 核心修改處 START ---
-# 導入 math 模組和相關服務
 import math
 from .mail_services import add_mail_to_player
-# --- 核心修改處 END ---
 
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry
 from .utils_services import generate_monster_full_nickname
@@ -84,7 +81,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "leech_skill_uses": 0,
         "flawless_victories": 0,
         "special_victories": {},
-        "last_champion_reward_timestamp": 0 # 新增：初始化獎勵時間戳
+        "last_champion_reward_timestamp": 0
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
@@ -118,7 +115,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "friends": [],
         "dnaCombinationSlots": [None] * 5,
         "mailbox": [], 
-        "playerNotes": [] 
+        "playerNotes": [],
+        "adventure_progress": None 
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -173,7 +171,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
-            # --- 核心修改處 START：新增冠軍每日獎勵結算邏輯 ---
             is_self_request = nickname_from_auth is not None
             if is_self_request:
                 player_stats = player_game_data_dict.setdefault("playerStats", {})
@@ -191,12 +188,9 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 
                 if player_rank > 0 and champion_slot_info:
                     last_reward_timestamp = player_stats.get("last_champion_reward_timestamp", 0)
-                    
-                    # 使用佔領時間戳作為獎勵計算的起始點
                     occupied_timestamp = champion_slot_info.get("occupiedTimestamp", 0)
                     start_time = max(last_reward_timestamp, occupied_timestamp)
                     current_time = int(time.time())
-                    
                     seconds_per_day = 86400
                     days_to_reward = math.floor((current_time - start_time) / seconds_per_day)
 
@@ -208,17 +202,13 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                         if total_gold_reward > 0:
                             player_stats["gold"] = player_stats.get("gold", 0) + total_gold_reward
                             player_stats["last_champion_reward_timestamp"] = current_time
-                            
                             mail_title = f"🏆 冠軍殿堂每日俸祿"
                             mail_content = f"恭喜您！作為冠軍殿堂第 {player_rank} 名的榮譽成員，系統已為您發放過去 {days_to_reward} 天的俸祿，共計 {total_gold_reward} 🪙。已自動存入您的錢包。"
                             mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
                             add_mail_to_player(player_game_data_dict, mail_template)
-                            
                             player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
                             save_player_data_service(player_id, player_game_data_dict)
-            # --- 核心修改處 END ---
 
-            # 資料遷移邏輯...
             needs_migration_save = False
             player_stats = player_game_data_dict.get("playerStats", {})
             if "gold" not in player_stats:
@@ -303,7 +293,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "friends": player_game_data_dict.get("friends", []),
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
                 "mailbox": player_game_data_dict.get("mailbox", []),
-                "playerNotes": player_game_data_dict.get("playerNotes", [])
+                "playerNotes": player_game_data_dict.get("playerNotes", []),
+                "adventure_progress": player_game_data_dict.get("adventure_progress") # 新增：確保讀取冒險進度
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname:
                 player_game_data["playerStats"]["nickname"] = authoritative_nickname
