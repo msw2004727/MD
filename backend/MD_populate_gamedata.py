@@ -264,31 +264,8 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
 
-    # --- 【新增】載入冒險事件資料 ---
-    try:
-        events_path = os.path.join(data_dir, 'adventure_events.json')
-        with open(events_path, 'r', encoding='utf-8') as f:
-            events_data = json.load(f)
-        script_logger.info(f"成功從 {events_path} 載入冒險事件資料。")
-        db_client.collection('MD_GameConfigs').document('AdventureEvents').set({'events': events_data})
-        script_logger.info("成功寫入 AdventureEvents 資料。")
-    except FileNotFoundError:
-        script_logger.warning(f"提示: 找不到冒險事件設定檔 {events_path}，將跳過此項。")
-    except Exception as e:
-        script_logger.error(f"處理 AdventureEvents 資料失敗: {e}")
-        
-    # --- 【新增】載入冒險BOSS資料 ---
-    try:
-        bosses_path = os.path.join(data_dir, 'adventure_bosses.json')
-        with open(bosses_path, 'r', encoding='utf-8') as f:
-            bosses_data = json.load(f)
-        script_logger.info(f"成功從 {bosses_path} 載入冒險BOSS資料。")
-        db_client.collection('MD_GameConfigs').document('AdventureBosses').set(bosses_data)
-        script_logger.info("成功寫入 AdventureBosses 資料。")
-    except FileNotFoundError:
-        script_logger.warning(f"提示: 找不到冒險BOSS設定檔 {bosses_path}，將跳過此項。")
-    except Exception as e:
-        script_logger.error(f"處理 AdventureBosses 資料失敗: {e}")
+    # --- 【核心修改處】移除對 adventure_events.json 和 adventure_bosses.json 的讀取 ---
+
 
     # --- 寫入其他設定 ---
     
