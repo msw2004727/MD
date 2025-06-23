@@ -84,21 +84,15 @@ def start_expedition_service(
     expedition_team_status: List[ExpeditionMemberStatus] = []
     player_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
     
-    # --- 核心修改處 START ---
-    # 獲取出戰怪獸的ID
     deployed_monster_id = player_data.get("selectedMonsterId")
-    # --- 核心修改處 END ---
 
     for monster_id in team_monster_ids:
         monster = player_monsters_map.get(monster_id)
         if not monster:
             return None, f"隊伍中包含了無效的怪獸（ID: {monster_id}）。"
             
-        # --- 核心修改處 START ---
-        # 新增檢查：怪獸是否為出戰怪獸
         if monster_id == deployed_monster_id:
             return None, f"怪獸「{monster.get('nickname')}」正在出戰中，無法參加遠征。"
-        # --- 核心修改處 END ---
 
         if monster.get("farmStatus", {}).get("isTraining"):
             return None, f"怪獸「{monster.get('nickname')}」正在修煉中，無法參加遠征。"
@@ -125,15 +119,16 @@ def start_expedition_service(
     return player_data, None
 
 
-def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
-    try:
-        file_path = os.path.join(os.path.dirname(__file__), 'data', boss_pool_id)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return []
+def _load_boss_pool(boss_pool_id: str, game_configs: GameConfigs) -> List[Dict[str, Any]]:
+    """從預先載入的 game_configs 中獲取 BOSS 資料。"""
+    all_bosses_data = game_configs.get("adventure_bosses", {})
+    boss_pool = all_bosses_data.get(boss_pool_id, [])
+    if not boss_pool:
+        adventure_logger.warning(f"在 game_configs 中找不到 BOSS 池: {boss_pool_id}")
+    return boss_pool
 
-def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]:
+def _load_event_pool(facility_id: str, game_configs: GameConfigs) -> List[Dict[str, Any]]:
+    """從預先載入的 game_configs 中獲取事件資料。"""
     event_file_map = {
         "facility_001": "adventure_events_forest.json",
         "facility_002": "adventure_events_mine.json",
@@ -141,13 +136,15 @@ def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]:
         "facility_004": "adventure_events_ruins.json"
     }
     event_file_name = event_file_map.get(facility_id)
-    if not event_file_name: return []
-    try:
-        file_path = os.path.join(os.path.dirname(__file__), 'data', event_file_name)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
+    if not event_file_name:
+        adventure_logger.warning(f"在 event_file_map 中找不到 facility_id: {facility_id} 的對應檔案。")
         return []
+        
+    all_events_data = game_configs.get("adventure_events", {})
+    event_pool = all_events_data.get(event_file_name, [])
+    if not event_pool:
+        adventure_logger.warning(f"在 game_configs 中找不到事件池: {event_file_name}")
+    return event_pool
 
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     progress = player_data.get("adventure_progress")
@@ -162,8 +159,9 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
         current_floor = progress.get("current_floor", 1)
         all_islands = game_configs.get("adventure_islands", [])
         facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
+        
         if facility_data and facility_data.get("boss_pool_id"):
-            boss_pool = _load_boss_pool(facility_data["boss_pool_id"])
+            boss_pool = _load_boss_pool(facility_data["boss_pool_id"], game_configs)
             if boss_pool:
                 base_boss = random.choice(boss_pool).copy()
                 if current_floor > 1:
@@ -179,7 +177,7 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
                     "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}], "boss_data": base_boss
                 }
     else:
-        all_events = _load_event_pool(current_facility_id)
+        all_events = _load_event_pool(current_facility_id, game_configs)
         if all_events:
             chosen_event = random.choice(all_events).copy()
             team_members = progress.get("expedition_team", [])
@@ -251,44 +249,54 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
             chosen_outcome = random.choices(outcome_pool, weights=weights, k=1)[0]
             break
             
+    # --- 核心修改處 START ---
+    team_members = progress.get("expedition_team", [])
+    # 無論如何都先準備好一個怪獸名稱，以便格式化文字
+    monster_for_story = random.choice(team_members) if team_members else {"nickname": "隊伍"}
+    monster_name_for_story = monster_for_story.get("nickname", "隊伍")
+            
     if not chosen_outcome:
-        return {"success": False, "error": "無效的選擇或事件格式錯誤。"}
+        outcome_story = "你們的選擇似乎沒有引起任何變化。"
+    else:
+        raw_story_fragment = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
+        # 在這裡使用 .format() 方法替換佔位符
+        outcome_story = raw_story_fragment.format(monster_name=monster_name_for_story)
 
-    outcome_story = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
-    for effect in chosen_outcome.get("effects", []):
-        effect_type = effect.get("effect")
-        target_type = effect.get("target")
-        
-        if effect_type == "change_resource":
-            resource = effect.get("resource")
-            amount = effect.get("amount", 0)
-            if resource == "gold":
-                player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
-            elif resource in ["hp", "mp"]:
-                team = progress.get("expedition_team", [])
-                targets_to_affect = []
-                if target_type == "team_all":
-                    targets_to_affect = team
-                elif target_type == "team_random_one" and team:
-                    targets_to_affect = [random.choice(team)]
+        for effect in chosen_outcome.get("effects", []):
+            effect_type = effect.get("effect")
+            target_type = effect.get("target")
+            
+            if effect_type == "change_resource":
+                resource = effect.get("resource")
+                amount = effect.get("amount", 0)
+                if resource == "gold":
+                    player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
+                elif resource in ["hp", "mp"]:
+                    targets_to_affect = []
+                    if target_type == "team_all":
+                        targets_to_affect = team_members
+                    # 修正：將 "member_who_chose" 也視為隨機選擇一名成員
+                    elif target_type in ["team_random_one", "member_who_chose"] and team_members:
+                        targets_to_affect = [random.choice(team_members)]
 
-                for member in targets_to_affect:
-                    key = f"current_{resource}"
-                    full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
-                    if full_monster:
-                        max_value = full_monster.get(f"initial_max_{resource}", member.get(key, 0))
-                        member[key] = min(max_value, member.get(key, 0) + amount)
-                        member[key] = max(0, member[key])
-        
-        elif effect_type == "give_item":
-            pool_id = effect.get("item_pool_id", "")
-            quantity = effect.get("quantity", 1)
-            dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
-            if dna_pool:
-                for _ in range(quantity):
-                    item = random.choice(dna_pool)
-                    progress.get("adventure_inventory", []).append(item)
+                    for member in targets_to_affect:
+                        key = f"current_{resource}"
+                        full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
+                        if full_monster:
+                            max_value = full_monster.get(f"initial_max_{resource}", member.get(key, 0))
+                            member[key] = min(max_value, member.get(key, 0) + amount)
+                            member[key] = max(0, member[key])
+            
+            elif effect_type == "give_item":
+                pool_id = effect.get("item_pool_id", "")
+                quantity = effect.get("quantity", 1)
+                dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
+                if dna_pool:
+                    for _ in range(quantity):
+                        item = random.choice(dna_pool)
+                        progress.get("adventure_inventory", []).append(item)
     
     progress["current_event"] = None
 
     return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
+    # --- 核心修改處 END ---
