@@ -84,21 +84,15 @@ def start_expedition_service(
     expedition_team_status: List[ExpeditionMemberStatus] = []
     player_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
     
-    # --- 核心修改處 START ---
-    # 獲取出戰怪獸的ID
     deployed_monster_id = player_data.get("selectedMonsterId")
-    # --- 核心修改處 END ---
 
     for monster_id in team_monster_ids:
         monster = player_monsters_map.get(monster_id)
         if not monster:
             return None, f"隊伍中包含了無效的怪獸（ID: {monster_id}）。"
             
-        # --- 核心修改處 START ---
-        # 新增檢查：怪獸是否為出戰怪獸
         if monster_id == deployed_monster_id:
             return None, f"怪獸「{monster.get('nickname')}」正在出戰中，無法參加遠征。"
-        # --- 核心修改處 END ---
 
         if monster.get("farmStatus", {}).get("isTraining"):
             return None, f"怪獸「{monster.get('nickname')}」正在修煉中，無法參加遠征。"
@@ -125,29 +119,10 @@ def start_expedition_service(
     return player_data, None
 
 
-def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
-    try:
-        file_path = os.path.join(os.path.dirname(__file__), 'data', boss_pool_id)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return []
-
-def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]:
-    event_file_map = {
-        "facility_001": "adventure_events_forest.json",
-        "facility_002": "adventure_events_mine.json",
-        "facility_003": "adventure_events_cave.json",
-        "facility_004": "adventure_events_ruins.json"
-    }
-    event_file_name = event_file_map.get(facility_id)
-    if not event_file_name: return []
-    try:
-        file_path = os.path.join(os.path.dirname(__file__), 'data', event_file_name)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return []
+# --- 核心修改處 START: 移除檔案讀取函式 ---
+# def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]: ... (已移除)
+# def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]: ... (已移除)
+# --- 核心修改處 END ---
 
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     progress = player_data.get("adventure_progress")
@@ -162,8 +137,12 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
         current_floor = progress.get("current_floor", 1)
         all_islands = game_configs.get("adventure_islands", [])
         facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
+        
+        # --- 核心修改處 START: 從 game_configs 讀取 BOSS 資料 ---
         if facility_data and facility_data.get("boss_pool_id"):
-            boss_pool = _load_boss_pool(facility_data["boss_pool_id"])
+            all_bosses_data = game_configs.get("adventure_bosses", {})
+            boss_pool = all_bosses_data.get(facility_data["boss_pool_id"], [])
+            
             if boss_pool:
                 base_boss = random.choice(boss_pool).copy()
                 if current_floor > 1:
@@ -178,8 +157,21 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
                     "description": base_boss.get("description", "一個巨大的身影擋住了去路！"),
                     "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}], "boss_data": base_boss
                 }
+        # --- 核心修改處 END ---
+
     else:
-        all_events = _load_event_pool(current_facility_id)
+        # --- 核心修改處 START: 從 game_configs 讀取事件資料 ---
+        event_file_map = {
+            "facility_001": "adventure_events_forest",
+            "facility_002": "adventure_events_mine",
+            "facility_003": "adventure_events_cave",
+            "facility_004": "adventure_events_ruins"
+        }
+        event_pool_id = event_file_map.get(current_facility_id)
+        all_events_data = game_configs.get("adventure_events", {})
+        all_events = all_events_data.get(event_pool_id, [])
+        # --- 核心修改處 END ---
+
         if all_events:
             chosen_event = random.choice(all_events).copy()
             team_members = progress.get("expedition_team", [])
@@ -271,6 +263,13 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     targets_to_affect = team
                 elif target_type == "team_random_one" and team:
                     targets_to_affect = [random.choice(team)]
+                # --- 新增對 team_strongest_def 等目標的處理 ---
+                elif target_type == "team_strongest_def" and team:
+                    # 這部分需要怪獸的完整資料來比較，但遠征隊只有狀態，這是一個設計上的限制。
+                    # 簡化處理：暫時隨機選擇一個成員。
+                    targets_to_affect = [random.choice(team)] if team else []
+                elif target_type == "team_fastest" and team:
+                    targets_to_affect = [random.choice(team)] if team else []
 
                 for member in targets_to_affect:
                     key = f"current_{resource}"
@@ -283,7 +282,18 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
         elif effect_type == "give_item":
             pool_id = effect.get("item_pool_id", "")
             quantity = effect.get("quantity", 1)
-            dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
+            # 簡化版：從所有DNA中根據稀有度篩選
+            rarity_map = { "common": "普通", "rare": "稀有", "elite": "菁英", "legendary": "傳奇"}
+            target_rarity = None
+            for key, rarity_name in rarity_map.items():
+                 if key in pool_id:
+                     target_rarity = rarity_name
+                     break
+            
+            dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if dna.get("rarity") == target_rarity]
+            if not dna_pool: # 如果找不到對應稀有度的，就從所有DNA中選
+                dna_pool = game_configs.get("dna_fragments", [])
+            
             if dna_pool:
                 for _ in range(quantity):
                     item = random.choice(dna_pool)
