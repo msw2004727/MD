@@ -25,8 +25,8 @@ function showTeamSelectionModal(facility) {
     `;
 
     monsterListContainer.innerHTML = '';
-    let selectedMonsters = []; 
-    confirmBtn.disabled = true; // 預設禁用確認按鈕
+    let selectedMonsters = [];
+    confirmBtn.disabled = true; // 按鈕在初始時應為禁用狀態
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
@@ -90,6 +90,7 @@ function showTeamSelectionModal(facility) {
                             showFeedbackModal('提示', '最多只能選擇3隻怪獸參加遠征。');
                         }
                     }
+                    // 【修改】直接更新按鈕的 disabled 狀態
                     confirmBtn.disabled = selectedMonsters.length === 0;
                 });
             }
@@ -97,12 +98,9 @@ function showTeamSelectionModal(facility) {
         });
     }
 
-    // 清除舊的監聽器並綁定新的
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    newConfirmBtn.disabled = true; // 確保複製後也是禁用狀態
-    
-    newConfirmBtn.addEventListener('click', () => {
+    // 【修改】移除 cloneNode，直接為按鈕綁定 onclick 事件
+    // 每次打開彈窗時，這個 onclick 都會被重新賦值，確保使用的是最新的 selectedMonsters 數據
+    confirmBtn.onclick = () => {
         const islandsData = gameState.gameConfigs.adventure_islands || [];
         let islandId = null;
         for (const island of islandsData) {
@@ -117,10 +115,11 @@ function showTeamSelectionModal(facility) {
         } else {
             showFeedbackModal('錯誤', '無法確定設施所屬的島嶼。');
         }
-    });
+    };
 
     showModal('expedition-team-selection-modal');
 }
+
 
 /**
  * 渲染遠征進行中的主畫面。
