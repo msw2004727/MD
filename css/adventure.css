@@ -124,3 +124,69 @@
 .challenge-facility-btn {
     padding: 8px 20px;
 }
+
+/* --- 新增：遠征隊伍選擇彈窗樣式 --- */
+#team-selection-monster-list .monster-selection-card {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#team-selection-monster-list .monster-selection-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-3px);
+}
+
+#team-selection-monster-list .monster-selection-card.selected {
+    border-color: var(--success-color);
+    box-shadow: 0 0 10px -2px var(--success-color);
+}
+
+#team-selection-monster-list .monster-selection-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--bg-slot);
+}
+
+.monster-selection-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.monster-selection-card-body {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+}
+
+.monster-selection-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--bg-slot);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.monster-selection-stats {
+    font-size: 0.8rem;
+    text-align: left;
+    color: var(--text-secondary);
+    flex-grow: 1;
+}
+
+.monster-selection-stats span {
+    display: inline-block;
+    margin-right: 0.75rem;
+}
