@@ -4,18 +4,38 @@
 import logging
 import random
 import time
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 import os
 import json
 
-# --- 核心修改處 START ---
-# 將原本混合的導入，拆分為從各自正確的檔案導入
-from .MD_models import PlayerGameData, GameConfigs, Monster
-from .adventure_models import AdventureProgress, MapData, MapNode
-# --- 核心修改處 END ---
+# 導入遊戲核心及冒險島專用的資料模型
+from .MD_models import PlayerGameData, GameConfigs, Monster, AdventureProgress, MapData, MapNode
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
+
+# --- 新增：讀取世界地圖資料的全域變數 ---
+_world_map_data = None
+
+def _load_world_map_data():
+    """
+    從 JSON 檔案載入預先生成的世界地圖資料到記憶體中。
+    """
+    global _world_map_data
+    if _world_map_data is not None:
+        return _world_map_data
+
+    adventure_logger.info("首次載入世界地圖資料 'world_map_data.json'...")
+    try:
+        data_file_path = os.path.join(os.path.dirname(__file__), 'data', 'world_map_data.json')
+        with open(data_file_path, 'r', encoding='utf-8') as f:
+            _world_map_data = json.load(f)
+        adventure_logger.info("世界地圖資料已成功載入到記憶體。")
+        return _world_map_data
+    except Exception as e:
+        adventure_logger.error(f"載入 'world_map_data.json' 時發生嚴重錯誤: {e}", exc_info=True)
+        return None
+
 
 # --- 讀取所有島嶼資料的服務 ---
 def get_all_islands_service() -> List[Dict[str, Any]]:
@@ -50,76 +70,76 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
 
 def generate_adventure_map_service(facility_id: str, game_configs: GameConfigs) -> Optional[MapData]:
     """
-    根據設施ID，為一次新的遠征生成隨機的地圖資料。
+    從預先生成的大地圖中，隨機切割出一塊 30x30 的區域作為本次遠征地圖。
     """
-    adventure_logger.info(f"為設施 {facility_id} 生成新的隨機冒險地圖...")
+    adventure_logger.info(f"為設施 {facility_id} 從世界地圖中切割新的冒險區域...")
     
-    # --- 地圖生成參數 ---
-    MAP_DEPTH = 7  # 地圖總層數（包含起點和終點）
-    MAX_NODES_PER_LAYER = 3  # 每層最多節點數
-    NODE_TYPE_WEIGHTS = {
-        "combat": 60,
-        "elite": 15,
-        "treasure": 15,
-        "fountain": 10
-    }
+    world_data = _load_world_map_data()
+    if not world_data or "map" not in world_data:
+        return None
+
+    world_map = world_data["map"]
+    world_width = world_data["width"]
+    world_height = world_data["height"]
     
+    region_size = 30 # 定義要切割的區域大小
+
+    # 隨機選擇起始點
+    start_x = random.randint(0, world_width - region_size)
+    start_y = random.randint(0, world_height - region_size)
+    
+    # 切割出 30x30 的區域
+    region_map = [row[start_x : start_x + region_size] for row in world_map[start_y : start_y + region_size]]
+    
+    # 將二維陣列轉換為我們需要的節點列表格式
     nodes: List[MapNode] = []
-    paths: List[List[str]] = []
-    layers: List[List[MapNode]] = [[] for _ in range(MAP_DEPTH)]
-
-    # 1. 建立起點和終點
-    start_node: MapNode = {"id": "node_start", "type": "start", "position": {"x": 0, "y": 1}, "is_cleared": True}
-    layers[0].append(start_node)
-    nodes.append(start_node)
-
-    boss_node: MapNode = {"id": "node_boss", "type": "boss", "position": {"x": MAP_DEPTH - 1, "y": 1}, "is_cleared": False}
-    layers[MAP_DEPTH - 1].append(boss_node)
-    nodes.append(boss_node)
     
-    # 2. 建立中間層節點
-    for layer_index in range(1, MAP_DEPTH - 2):
-        num_nodes = random.randint(2, MAX_NODES_PER_LAYER)
-        for node_index in range(num_nodes):
-            node_type = random.choices(list(NODE_TYPE_WEIGHTS.keys()), weights=list(NODE_TYPE_WEIGHTS.values()), k=1)[0]
+    # 尋找一個合適的起始點 (第一個非障礙物的格子)
+    player_start_pos = None
+    for y, row in enumerate(region_map):
+        for x, tile_char in enumerate(row):
+            if tile_char not in ["⛰️", "💧", "🌳"]:
+                player_start_pos = {"x": x, "y": y}
+                break
+        if player_start_pos:
+            break
+    
+    # 如果找不到任何可站立的點（極端情況），則隨機選一個
+    if not player_start_pos:
+        player_start_pos = {"x": random.randint(0, region_size-1), "y": random.randint(0, region_size-1)}
+
+
+    # 建立節點列表
+    for y, row in enumerate(region_map):
+        for x, tile_char in enumerate(row):
+            node_id = f"node_{x}_{y}"
+            node_type = "empty" # 預設為空地
+            
+            # 根據 Emoji 字元對應到節點類型
+            emoji_to_type = {
+                "👾": "combat", "🎁": "treasure", "💰": "reward", 
+                "🗝️": "key", "🏰": "dungeon", "🛖": "village",
+                "✨": "portal", "⛰️": "obstacle", "💧": "obstacle", "🌳": "obstacle"
+            }
+            node_type = emoji_to_type.get(tile_char, "empty")
+            
             node: MapNode = {
-                "id": f"node_{layer_index}_{node_index}",
+                "id": node_id,
                 "type": node_type,
-                "position": {"x": layer_index, "y": node_index},
+                "display_char": tile_char, # 新增：顯示用的字元
+                "position": {"x": x, "y": y},
                 "is_cleared": False
             }
-            layers[layer_index].append(node)
             nodes.append(node)
-            
-    # 3. 建立 Boss 前的休息點
-    rest_node: MapNode = {"id": "node_rest", "type": "fountain", "position": {"x": MAP_DEPTH - 2, "y": 1}, "is_cleared": False}
-    layers[MAP_DEPTH - 2].append(rest_node)
-    nodes.append(rest_node)
-
-    # 4. 生成路徑
-    for i in range(MAP_DEPTH - 1):
-        current_layer_nodes = layers[i]
-        next_layer_nodes = layers[i+1]
-        
-        for node in current_layer_nodes:
-            # 確保每個節點至少有一條出路
-            num_paths_out = random.randint(1, 2)
-            possible_targets = random.sample(next_layer_nodes, min(num_paths_out, len(next_layer_nodes)))
-            for target in possible_targets:
-                paths.append([node["id"], target["id"]])
-        
-        for node in next_layer_nodes:
-            # 確保每個節點至少有一條入路
-            has_incoming_path = any(p[1] == node["id"] for p in paths)
-            if not has_incoming_path:
-                random_source = random.choice(current_layer_nodes)
-                paths.append([random_source["id"], node["id"]])
 
     generated_map: MapData = {
         "nodes": nodes,
-        "paths": paths
+        "paths": [],  # 在網格式地圖中，路徑是隱含的，不需要明確定義
+        "player_start_pos": player_start_pos # 新增：告訴前端玩家的起始位置
     }
+    
     return generated_map
+
 
 # --- 遠征管理服務 (Expedition Management Services) ---
 
@@ -168,9 +188,11 @@ def start_expedition_service(player_data: PlayerGameData, island_id: str, facili
     if not map_data:
         return None, "生成遠征地圖失敗。"
         
-    start_node = next((n for n in map_data.get("nodes", []) if n.get("type") == "start"), None)
-    if not start_node:
-        return None, "地圖資料錯誤，缺少起始點。"
+    player_start_pos = map_data.get("player_start_pos")
+    if not player_start_pos:
+        return None, "地圖資料錯誤，缺少玩家起始點。"
+        
+    current_node_id = f"node_{player_start_pos['x']}_{player_start_pos['y']}"
 
     adventure_progress: AdventureProgress = {
         "is_active": True,
@@ -178,7 +200,7 @@ def start_expedition_service(player_data: PlayerGameData, island_id: str, facili
         "facility_id": facility_id,
         "expedition_team": team_monster_ids,
         "map_data": map_data,
-        "current_node_id": start_node.get("id"),
+        "current_node_id": current_node_id,
         "exploration_points": 100,
         "start_timestamp": int(time.time())
     }
