@@ -1,7 +1,9 @@
 // js/ui-battle-modals.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
-function showBattleLogModal(battleResult) {
+// --- 核心修改處 START ---
+// 修改函式簽名，直接接收戰鬥雙方的怪獸資料
+function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
@@ -16,14 +18,14 @@ function showBattleLogModal(battleResult) {
         showModal('battle-log-modal');
         return;
     }
-
-    const playerMonsterData = getSelectedMonster();
-    const opponentMonsterData = gameState.battleTargetMonster;
+    
+    // 不再從全域 gameState 讀取，而是直接使用傳入的參數
     if (!playerMonsterData || !opponentMonsterData) {
         DOMElements.battleLogArea.innerHTML = '<p>遺失戰鬥怪獸資料，無法呈現戰報。</p>';
         showModal('battle-log-modal');
         return;
     }
+    // --- 核心修改處 END ---
 
     const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
     const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
@@ -71,14 +73,10 @@ function showBattleLogModal(battleResult) {
                 const skillRarityKey = skillInfo.rarity ? (rarityMap[skillInfo.rarity] || 'common') : 'common';
                 const skillColorClass = `text-rarity-${skillRarityKey}`;
                 
-                // 【修改】預設等級為1，並產生等級標籤
                 const skillLevel = skillInfo.level || 1;
                 const levelTag = `<span class="text-xs opacity-75 mr-1">Lv${skillLevel}</span>`;
                 
-                // 【修改】新的正規表達式，專門尋找被 ** 包圍的技能名稱
                 const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
-
-                // 【修改】新的替換內容，包含等級標籤和粗體顯示
                 const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="text-decoration: none;">${levelTag}<strong>$1</strong></a>`;
                 
                 styledText = styledText.replace(regex, replacement);
