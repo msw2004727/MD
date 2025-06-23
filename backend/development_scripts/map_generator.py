@@ -6,6 +6,7 @@ import json
 import random
 import os
 import sys
+import math # --- 核心修改處：導入 math 函式庫 ---
 
 # --- 路徑設定，確保可以導入 noise 模組 ---
 # 假設 noise 模組會被安裝在專案的虛擬環境中
@@ -28,11 +29,9 @@ TERRAIN_OCTAVES = 6  # 雜訊八度，增加細節
 TERRAIN_PERSISTENCE = 0.5  # 持續性
 TERRAIN_LACUNARITY = 2.0  # 空隙度
 
-# --- 核心修改處 START ---
 # 調整地形閾值，讓基礎地形（障礙物）更多樣
 WATER_LEVEL = -0.2
 MOUNTAIN_LEVEL = 0.35
-# --- 核心修改處 END ---
 
 
 # 地圖物件圖示
@@ -88,7 +87,6 @@ def generate_world_map():
     for _ in range(4): place_structure(world_map, PORTAL, placed_structures, min_dist=5)
 
 
-    # --- 核心修改處 START ---
     # 4. 在剩餘的空地上高密度地填充隨機物件
     print("正在高密度填充隨機事件與植被...")
 
@@ -115,7 +113,6 @@ def generate_world_map():
                 # 使用加權隨機選擇來決定這個格子放什麼
                 chosen_object = random.choices(fill_objects, weights=weights, k=1)[0]
                 world_map[y][x] = chosen_object
-    # --- 核心修改處 END ---
 
     print("地圖生成完畢！")
     return world_map
@@ -160,4 +157,27 @@ def save_map_to_json(world_map, filename="world_map_data.json"):
     將生成的地圖儲存為 JSON 檔案。
     """
     backend_dir = os.path.dirname(os.path.dirname(__file__))
-    data_dir = os.path.join(backend
+    data_dir = os.path.join(backend_dir, 'data')
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+        
+    filepath = os.path.join(data_dir, filename)
+    
+    map_data = {
+        "width": MAP_WIDTH,
+        "height": MAP_HEIGHT,
+        "map": world_map
+    }
+    
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(map_data, f, ensure_ascii=False) # 移除 indent 以減小檔案體積
+        
+    print(f"地圖已成功儲存至：{filepath}")
+
+
+if __name__ == '__main__':
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+    sys.path.insert(0, project_root)
+
+    generated_map = generate_world_map()
+    save_map_to_json(generated_map)
