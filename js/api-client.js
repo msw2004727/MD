@@ -434,7 +434,6 @@ async function advanceAdventure() {
     });
 }
 
-// --- 核心修改處 START ---
 /**
  * 通關當前樓層並前進到下一層。
  * @returns {Promise<object>} 包含成功訊息與新進度資料的物件。
@@ -442,6 +441,19 @@ async function advanceAdventure() {
 async function completeAdventureFloor() {
     return fetchAPI('/adventure/complete_floor', {
         method: 'POST'
+    });
+}
+
+// --- 核心修改處 START ---
+/**
+ * 處理玩家對冒險事件的選擇。
+ * @param {string} choiceId - 玩家選擇的選項ID。
+ * @returns {Promise<object>} 包含事件結果與更新後進度的物件。
+ */
+async function resolveAdventureEvent(choiceId) {
+    return fetchAPI('/adventure/resolve', {
+        method: 'POST',
+        body: JSON.stringify({ choice_id: choiceId }),
     });
 }
 // --- 核心修改處 END ---
