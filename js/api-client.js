@@ -399,11 +399,29 @@ async function removeFriend(friendId) {
 }
 
 /**
- * 【新增】獲取冒險島的資料
+ * 獲取冒險島的資料
  * @returns {Promise<Array<object>>} 包含所有島嶼設定資料的陣列
  */
 async function getAdventureIslandsData() {
     return fetchAPI('/adventure/islands');
+}
+
+/**
+ * 【新增】開始一次新的遠征
+ * @param {string} islandId 島嶼ID
+ * @param {string} facilityId 設施ID
+ * @param {Array<string>} teamMonsterIds 選擇的怪獸ID列表
+ * @returns {Promise<object>} 包含遠征進度或錯誤訊息的物件
+ */
+async function startExpedition(islandId, facilityId, teamMonsterIds) {
+    return fetchAPI('/adventure/start', {
+        method: 'POST',
+        body: JSON.stringify({
+            island_id: islandId,
+            facility_id: facilityId,
+            team_monster_ids: teamMonsterIds
+        }),
+    });
 }
 
 
