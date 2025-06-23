@@ -940,29 +940,28 @@ function handleLeaderboardSorting() {
     });
 } 
 
-// 修改：處理挑戰按鈕點擊，並在收到結果後，檢查是否有新稱號
+// --- 核心修改處 START ---
+// 修改 handleChallengeMonsterClick 函式
 async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
     if(event) event.stopPropagation();
 
+    // 1. 獲取我方與敵方怪獸資料（與原先邏輯相同）
     const playerMonster = getSelectedMonster();
     if (!playerMonster) {
         showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
         return;
     }
-
     if (playerMonster.hp <= playerMonster.initial_max_hp * 0.25) {
         const hpInfo = `<span style="color: var(--danger-color);">${playerMonster.hp}/${playerMonster.initial_max_hp} HP</span>`;
         showFeedbackModal('無法戰鬥', `您的怪獸 <strong>${playerMonster.nickname}</strong> (${hpInfo}) 目前瀕死需要休息，無法出戰。`);
         return;
     }
-
     if (playerMonster.farmStatus?.isTraining) {
          showFeedbackModal('提示', `${playerMonster.nickname} 目前正在修煉中，無法出戰。`);
         return;
     }
 
     let opponentMonster = null;
-
     try {
         showFeedbackModal('準備戰鬥...', '正在獲取對手資訊...', true);
         
@@ -1006,8 +1005,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
             return;
         }
 
-        gameState.battleTargetMonster = opponentMonster;
-
+        // 2. 顯示確認彈窗（與原先邏輯相同）
         showConfirmationModal(
             '確認出戰',
             `您確定要讓 ${playerMonster.nickname} (評價: ${playerMonster.score}) 挑戰 ${opponentMonster.nickname} (評價: ${opponentMonster.score}) 嗎？`,
@@ -1026,28 +1024,31 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                     
                     hideModal('feedback-modal');
 
-                    // 檢查是否有新獲得的稱號
+                    // 3. 修改呼叫方式：直接將我方與敵方怪獸資料傳入
+                    showBattleLogModal(battleResult, playerMonster, opponentMonster);
+
+                    // 4. 戰後刷新資料
+                    await refreshPlayerData();
+                    updateMonsterSnapshot(getSelectedMonster());
+
                     if (battleResult.newly_awarded_titles && battleResult.newly_awarded_titles.length > 0) {
                         const newTitle = battleResult.newly_awarded_titles[0];
                         const awardDetails = {
                             type: 'title',
                             name: newTitle.name,
                             buffs: newTitle.buffs,
-                            bannerUrl: 'https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true'
+                            bannerUrl: 'https://github.com/msw2004727/MD/blob/main/images/BN010.png?raw=true'
                         };
                         const actionButtons = [{
-                            text: '太棒了！查看戰報',
+                            text: '太棒了！',
                             class: 'primary',
-                            onClick: () => showBattleLogModal(battleResult)
+                            onClick: () => {}
                         }];
-                        showFeedbackModal('榮譽加身！', '', false, null, actionButtons, awardDetails);
-                    } else {
-                        // 如果沒有新稱號，直接顯示戰報
-                        showBattleLogModal(battleResult);
+                        // 戰報顯示後再彈出稱號提示
+                        setTimeout(() => {
+                           showFeedbackModal('榮譽加身！', '', false, null, actionButtons, awardDetails);
+                        }, 500);
                     }
-
-                    await refreshPlayerData();
-                    updateMonsterSnapshot(getSelectedMonster());
 
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
@@ -1066,6 +1067,7 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         updateMonsterSnapshot(playerMonster);
     }
 }
+// --- 核心修改處 END ---
 
 
 function handleBattleLogModalClose() {
