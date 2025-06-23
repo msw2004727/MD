@@ -180,8 +180,7 @@ async function handleAdventureChoiceClick(buttonElement) {
                 }];
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
                 setTimeout(() => {
-                    // --- 核心修改處 START ---
-                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionEnd || '';
+                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionFailed || '';
                     const messageHtml = `
                         <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
                             <img src="${bannerUrl}" alt="遠征失敗橫幅" style="max-width: 100%; border-radius: 6px;">
@@ -189,11 +188,22 @@ async function handleAdventureChoiceClick(buttonElement) {
                         <p>隊長被打到瀕死，隊員們趕緊將隊長扛回農場進行急救！</p>
                     `;
                     showFeedbackModal('遠征失敗', messageHtml, false, null, lossActions);
-                    // --- 核心修改處 END ---
                 }, 300);
             }
 
         } else {
+            // --- 核心修改處 START ---
+            // 處理普通事件後，檢查後端是否有回傳更新後的玩家狀態
+            if (result.updated_player_stats) {
+                // 如果有，就更新前端的 gameState
+                gameState.playerData.playerStats = result.updated_player_stats;
+                // 並立即刷新金幣顯示
+                if (typeof updatePlayerCurrencyDisplay === 'function') {
+                    updatePlayerCurrencyDisplay(gameState.playerData.playerStats.gold);
+                }
+            }
+            // --- 核心修改處 END ---
+
             gameState.playerData.adventure_progress = result.updated_progress;
             gameState.currentAdventureEvent = null; 
 
@@ -225,7 +235,6 @@ async function handleAbandonAdventure() {
                     await refreshPlayerData();
                     initializeAdventureUI();
                     hideModal('feedback-modal');
-                    // --- 核心修改處 START ---
                     const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionEnd || '';
                     const messageHtml = `
                         <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
@@ -234,7 +243,6 @@ async function handleAbandonAdventure() {
                         <p>您已成功返回農場。</p>
                     `;
                     showFeedbackModal('遠征結束', messageHtml);
-                    // --- 核心修改處 END ---
                 } else {
                     throw new Error(result?.error || '未知的錯誤');
                 }
