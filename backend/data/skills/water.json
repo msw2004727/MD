@@ -348,7 +348,7 @@
   },
   {
     "name": "鹽水",
-    "description": "對手生命值低於一半時，威力加倍。",
+    "description": "對手生命值低於一半時，威力會加倍。",
     "type": "水",
     "rarity": "稀有",
     "skill_category": "特殊",
@@ -473,6 +473,32 @@
       },
       "10": {
         "description": "浮上攻擊時，威力提升20點。"
+      }
+    }
+  },
+  {
+    "name": "絕對零度",
+    "description": "釋放出能凍結一切的絕對零度攻擊，若擊中則對手直接瀕死。",
+    "type": "水",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 25,
+    "priority": 0,
+    "accuracy": 30,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "one_hit_ko",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升5%。",
+        "add_accuracy": 5
+      },
+      "10": {
+        "description": "若自身等級高於對手，命中率額外提升10%。"
       }
     }
   }
