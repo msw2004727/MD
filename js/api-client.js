@@ -407,7 +407,7 @@ async function getAdventureIslandsData() {
 }
 
 /**
- * 【新增】開始一次新的遠征
+ * 開始一次新的遠征
  * @param {string} islandId 島嶼ID
  * @param {string} facilityId 設施ID
  * @param {Array<string>} teamMonsterIds 選擇的怪獸ID列表
@@ -423,6 +423,18 @@ async function startExpedition(islandId, facilityId, teamMonsterIds) {
         }),
     });
 }
+
+// --- 核心修改處 START ---
+/**
+ * 在冒險中推進一步。
+ * @returns {Promise<object>} 包含新事件資料或錯誤訊息的物件。
+ */
+async function advanceAdventure() {
+    return fetchAPI('/adventure/advance', {
+        method: 'POST'
+    });
+}
+// --- 核心修改處 END ---
 
 
 console.log("API client module loaded.");
