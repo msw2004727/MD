@@ -166,7 +166,6 @@ function renderAdventureProgressUI(adventureProgress) {
     }
 
     let teamStatusHtml = '';
-    // --- 核心修改處 START ---
     adventureProgress.expedition_team.forEach((member, index) => {
         const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
         if (!originalMonster) return;
@@ -183,9 +182,7 @@ function renderAdventureProgressUI(adventureProgress) {
         }
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         
-        // 判斷是否為隊長 (索引值為0)
         const isCaptain = index === 0;
-        // 如果是隊長，則產生徽章的HTML，否則為空字串
         const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
         
         teamStatusHtml += `
@@ -203,8 +200,9 @@ function renderAdventureProgressUI(adventureProgress) {
             </div>
         `;
     });
-    // --- 核心修改處 END ---
     
+    // --- 核心修改處 START ---
+    // 在 footer 中新增「放棄遠征」按鈕
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
             <header class="adventure-progress-header">
@@ -230,10 +228,12 @@ function renderAdventureProgressUI(adventureProgress) {
             </div>
 
             <footer class="adventure-actions">
+                <button id="adventure-abandon-btn" class="button danger">放棄遠征</button>
                 <button id="adventure-advance-btn" class="button primary">繼續前進</button>
             </footer>
         </div>
     `;
+    // --- 核心修改處 END ---
 
     const advanceBtn = document.getElementById('adventure-advance-btn');
     const choicesEl = document.getElementById('adventure-event-choices');
