@@ -21,8 +21,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "你們的動作慢了一步，被及腰的潮水困住，消耗了大量體力才脫身。 [損失：隊伍全員HP -30] 🌊",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -30 }]
+            "story_fragment": "你們的動作慢了一步，被及腰的潮水困住，消耗了大量體力才脫身。 [損失：隊伍全員HP -300] 🌊",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -300 }]
           }
         ]
       },
@@ -42,8 +42,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "在高處等待時，一隻巨大的海鳥將你們當成了獵物，發動了突襲！ [損失：隊伍隨機單體HP -25] 🦅",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -25 }]
+            "story_fragment": "在高處等待時，一隻巨大的海鳥將你們當成了獵物，發動了突襲！ [損失：隊伍隨機單體HP -250] 🦅",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -250 }]
           }
         ]
       }
@@ -92,8 +92,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "你們的舉動驚動了整個水母群！無數的電擊觸手向你們襲來！ [損失：隊伍全員HP -40] 🐙",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+            "story_fragment": "你們的舉動驚動了整個水母群！無數的電擊觸手向你們襲來！ [損失：隊伍全員HP -400] 🐙",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
           }
         ]
       }
@@ -121,8 +121,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "船體結構不穩，一塊甲板掉了下來，差點砸中{monster_name}！ [損失：隊伍隨機單體HP -30] 😱",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -30 }]
+            "story_fragment": "船體結構不穩，一塊甲板掉了下來，差點砸中{monster_name}！ [損失：隊伍隨機單體HP -300] 😱",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -300 }]
           }
         ]
       },
@@ -169,8 +169,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "錯誤的音調觸發了陷阱！石壁上射出大量水箭！ [損失：隊伍全員HP -25] 💧",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -25 }]
+            "story_fragment": "錯誤的音調觸發了陷阱！石壁上射出大量水箭！ [損失：隊伍全員HP -250] 💧",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -250 }]
           }
         ]
       },
@@ -219,8 +219,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "它不喜歡你們的食物，生氣地用鉗子夾了{monster_name}一下。 [損失：隊伍隨機單體HP -30] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -30 }]
+            "story_fragment": "它不喜歡你們的食物，生氣地用鉗子夾了{monster_name}一下。 [損失：隊伍隨機單體HP -300] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -300 }]
           }
         ]
       },
@@ -235,13 +235,13 @@
           },
           {
             "type": "neutral", "weight": 30,
-            "story_fragment": "巨蟹非常耐打，你們打鬥了一番後，它鑽進水裡溜走了。 [損失：隊伍全員HP -20] ⚔️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+            "story_fragment": "巨蟹非常耐打，你們打鬥了一番後，它鑽進水裡溜走了。 [損失：隊伍全員HP -200] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "巨蟹的鉗子力大無窮，你們被打得節節敗退。 [損失：隊伍全員HP -40] 😵",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+            "story_fragment": "巨蟹的鉗子力大無窮，你們被打得節節敗退。 [損失：隊伍全員HP -400] 😵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
           }
         ]
       }
@@ -269,8 +269,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "漩渦中強大的水流讓隊伍成員互相碰撞，大家都受了傷。 [損失：隊伍全員HP -50] 🌀",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
+            "story_fragment": "漩渦中強大的水流讓隊伍成員互相碰撞，大家都受了傷。 [損失：隊伍全員HP -500] 🌀",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -500 }]
           }
         ]
       },
@@ -319,8 +319,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "在撬開的過程中，貝殼鋒利的邊緣劃傷了{monster_name}。 [損失：隊伍隨機單體HP -20] 🩸",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -20 }]
+            "story_fragment": "在撬開的過程中，貝殼鋒利的邊緣劃傷了{monster_name}。 [損失：隊伍隨機單體HP -200] 🩸",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -200 }]
           }
         ]
       },
@@ -357,8 +357,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 40,
-            "story_fragment": "怪獸們在間歇泉玩得很開心，洗去了疲憊，還意外找到一枚被沖上岸的金幣。 [獲得：隊伍全員HP +15, 金幣 x10] 😄",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 15 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": 10 }]
+            "story_fragment": "怪獸們在間歇泉玩得很開心，洗去了疲憊，還意外找到一枚被沖上岸的金幣。 [獲得：隊伍全員HP +150, 金幣 x10] 😄",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 150 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": 10 }]
           },
           {
             "type": "neutral", "weight": 60,
@@ -430,8 +430,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "它雖然沒有眼睛，但感官異常敏銳，用尾巴掃倒了{monster_name}後逃走了。 [損失：隊伍隨機單體HP -25] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -25 }]
+            "story_fragment": "它雖然沒有眼睛，但感官異常敏銳，用尾巴掃倒了{monster_name}後逃走了。 [損失：隊伍隨機單體HP -250] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -250 }]
           }
         ]
       }
@@ -459,8 +459,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "探路的怪獸自己滑了下去，雖然沒受重傷，但看起來很狼狽。 [損失：速度最快者HP -15] 摔",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_fastest", "amount": -15 }]
+            "story_fragment": "探路的怪獸自己滑了下去，雖然沒受重傷，但看起來很狼狽。 [損失：速度最快者HP -150] 摔",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_fastest", "amount": -150 }]
           }
         ]
       },
@@ -480,8 +480,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "大家撞成一團，全都受了點輕傷。 [損失：隊伍全員HP -20] 🤕",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+            "story_fragment": "大家撞成一團，全都受了點輕傷。 [損失：隊伍全員HP -200] 🤕",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
           }
         ]
       }
