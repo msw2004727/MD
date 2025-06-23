@@ -44,7 +44,7 @@ async function loadAndDisplayAnnouncement() {
         if (titleElement && contentContainer && adBannerContainer) {
             titleElement.textContent = announcementData.title || "📢 遊戲官方公告";
             
-            const bannerUrl = gameState.assetPaths?.images?.modals?.announcement;
+            const bannerUrl = gameState.assetPaths?.images?.modals?.officialAnnouncement;
             if (bannerUrl) {
                 adBannerContainer.innerHTML = `<img src="${bannerUrl}" alt="官方公告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">`;
             } else {
