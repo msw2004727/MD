@@ -66,7 +66,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
         adventure_logger.error(f"解析 'adventure_islands.json' 時發生錯誤: {e}")
         return []
     except Exception as e:
-        adventure_logger.error(f"讀取冒險島資料時發生未知錯誤: {e}", exc_info=True)
+        adventure_routes_logger.error(f"讀取冒險島資料時發生未知錯誤: {e}", exc_info=True)
         return []
 
 # --- 地圖生成服務 (Map Generation Services) ---
@@ -116,15 +116,18 @@ def generate_adventure_map_service(facility_id: str, game_configs: GameConfigs) 
     for y, row in enumerate(region_map):
         for x, tile_char in enumerate(row):
             node_id = f"node_{x}_{y}"
-            node_type = "empty" # 預設為空地
             
-            # 根據 Emoji 字元對應到節點類型
+            # --- 核心修改處 START ---
+            # 擴充 Emoji 到節點類型的映射表
             emoji_to_type = {
                 "👾": "combat", "🎁": "treasure", "💰": "reward", 
                 "🗝️": "key", "🏰": "dungeon", "🛖": "village",
-                "✨": "portal", "⛰️": "obstacle", "💧": "obstacle", "🌳": "obstacle"
+                "✨": "portal", "⚔️": "arena", "💎": "rare_mine",
+                "🕸️": "trap", "🏛️": "temple", "❓": "unknown_event",
+                "⛰️": "obstacle", "💧": "obstacle", "🌳": "obstacle"
             }
             node_type = emoji_to_type.get(tile_char, "empty")
+            # --- 核心修改處 END ---
             
             node: MapNode = {
                 "id": node_id,
