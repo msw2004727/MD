@@ -521,5 +521,43 @@
         ]
       }
     }
+  },
+  {
+    "name": "龍之舞",
+    "description": "跳起神秘的龍之舞，提升自身的攻擊和速度。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": [
+          "攻擊",
+          "速度"
+        ],
+        "amount": [
+          0.2,
+          0.2
+        ],
+        "is_multiplier": [
+          true,
+          true
+        ],
+        "target": "self",
+        "log_success": "{performer}跳起了龍之舞，攻擊和速度都提升了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "提升的數值增加為25%。",
+        "amount_set": [0.25, 0.25]
+      },
+      "10": {
+        "description": "使用後，清除自身所有的負面狀態。"
+      }
+    }
   }
 ]
