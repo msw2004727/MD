@@ -17,6 +17,7 @@
         {
           "title": "目前0.3.9v已實裝內容：",
           "items": [
+            { "text": "冒險島持續打磨優化中", "color": "success" },
             { "text": "站內信件功能完善", "color": "success" },
             { "text": "基礎治療功能", "color": "success" },
             { "text": "優化農場顯示方式", "color": "success" },
@@ -45,8 +46,7 @@
             { "text": "訓練場", "color": "accent" },
             { "text": "交易所", "color": "accent" },
             { "text": "醫療站", "color": "accent" },
-            { "text": "冒險島", "color": "accent" },
-            { "text": "怪獸族譜", "color": "accent" }
+            { "text": "怪獸情感族譜", "color": "accent" }
           
           ]
         }
