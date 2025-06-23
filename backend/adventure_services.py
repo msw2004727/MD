@@ -130,7 +130,6 @@ def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
         adventure_logger.error(f"解析BOSS檔案 {boss_pool_id} 時發生錯誤。")
         return []
 
-# --- 核心修改處 START ---
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家在地圖上推進一個進度的邏輯。
@@ -143,7 +142,6 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
 
     progress["current_step"] += 1
 
-    # 檢查是否到達樓層終點
     if progress["current_step"] >= progress["total_steps_in_floor"]:
         current_floor = progress.get("current_floor", 1)
         adventure_logger.info(f"玩家已到達樓層終點 (第 {current_floor} 層)，觸發 BOSS 戰。")
@@ -163,20 +161,15 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
         if not boss_pool:
             return {"success": False, "error": "無法載入BOSS資料。"}
             
-        base_boss = random.choice(boss_pool).copy() # 使用 .copy() 避免修改原始設定
+        base_boss = random.choice(boss_pool).copy()
         
-        # --- BOSS 成長與命名機制 ---
         if current_floor > 1:
             growth_factor = 1.1 ** (current_floor - 1)
-            # 動態命名
             base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
-            # 數值成長
             stats_to_grow = ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']
             for stat in stats_to_grow:
                 if stat in base_boss:
                     base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
-            
-            # 更新總評價 (簡單估算)
             base_boss['score'] = math.ceil(base_boss.get('score', 600) * growth_factor)
 
         adventure_logger.info(f"已生成BOSS：{base_boss['nickname']}，樓層：{current_floor}")
@@ -186,11 +179,10 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
             "name": f"強大的氣息！遭遇 {base_boss.get('nickname')}！",
             "description": base_boss.get("description", "一個巨大的身影擋住了去路！一場惡戰在所難免！"),
             "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}],
-            "boss_data": base_boss # 使用強化後的BOSS資料
+            "boss_data": base_boss
         }
         return {"success": True, "event_data": boss_event, "updated_progress": progress}
 
-    # --- 以下為普通事件邏輯，維持不變 ---
     all_events = game_configs.get("adventure_events", [])
     if not all_events:
         adventure_logger.warning("在遊戲設定中找不到任何冒險事件 (adventure_events.json)，返回一個預設事件。")
@@ -211,7 +203,37 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     adventure_logger.info(f"為玩家抽選到事件：{chosen_event.get('name')}")
     
     return {"success": True, "event_data": chosen_event, "updated_progress": progress}
-# --- 核心修改處 END ---
+
+# --- 核心修改處 START ---
+def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
+    """
+    處理玩家通關一層並晉級的邏輯。
+    """
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("is_active"):
+        return {"success": False, "error": "沒有正在進行的遠征，無法結算樓層。"}
+
+    # 計算通關獎勵
+    current_floor = progress.get("current_floor", 1)
+    gold_reward = 50 + (current_floor * 10)
+    
+    # 更新玩家金幣
+    player_stats = player_data.get("playerStats", {})
+    player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
+    
+    # 晉級到下一層
+    progress["current_floor"] += 1
+    # 重設步數
+    progress["current_step"] = 0
+    
+    adventure_logger.info(f"玩家 {player_data.get('nickname')} 已通關第 {current_floor} 層，獲得 {gold_reward} 金幣，並前進到第 {progress['current_floor']} 層。")
+    
+    # 返回更新後的進度，以便路由層儲存
+    return {
+        "success": True,
+        "message": f"恭喜通關第 {current_floor} 層！獲得 {gold_reward} 金幣獎勵！",
+        "updated_progress": progress
+    }
 
 def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, game_configs: GameConfigs) -> Dict[str, Any]:
     """
@@ -220,3 +242,4 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: {choice_id}...")
     return {"status": "pending_implementation", "message": "事件處理功能開發中。"}
+# --- 核心修改處 END ---
