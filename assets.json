@@ -31,7 +31,7 @@
       "comment_zh_dnaGuideBanner": "DNA碎片說明的彈窗橫幅",
       "expeditionEnd": "https://github.com/msw2004727/MD/blob/main/images/BN019.png?raw=true",
       "comment_zh_expeditionEnd": "遠征結束(放棄)彈窗",
-      "expeditionFailed": "請提供遠征失敗的圖片URL",
+      "expeditionFailed": "https://github.com/msw2004727/MD/blob/main/images/BN020.png?raw=true",
       "comment_zh_expeditionFailed": "遠征失敗(戰敗)彈窗",
       "loadingBanners": {
         "comment": "所有讀取中狀態的獨立橫幅",
