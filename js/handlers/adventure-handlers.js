@@ -97,7 +97,6 @@ async function handleAdvanceClick() {
                 ).join('');
             }
             
-            // 收到事件後，隱藏「繼續前進」按鈕，等待玩家做選擇
             advanceBtn.style.display = 'none';
 
         } else {
@@ -133,8 +132,6 @@ async function handleAdventureChoiceClick(buttonElement) {
             return;
         }
         
-        // --- 核心修改處 START ---
-        // 從遠征隊伍中找出隊長（第一位成員）
         const expeditionTeam = gameState.playerData?.adventure_progress?.expedition_team;
         if (!expeditionTeam || expeditionTeam.length === 0) {
             showFeedbackModal('錯誤', '您的遠征隊伍中沒有怪獸，無法挑戰BOSS！');
@@ -147,7 +144,6 @@ async function handleAdventureChoiceClick(buttonElement) {
             showFeedbackModal('錯誤', '找不到您的遠征隊長資料，無法開始戰鬥！');
             return;
         }
-        // --- 核心修改處 END ---
         
         showConfirmationModal(
             `挑戰 ${bossData.nickname}`,
@@ -164,23 +160,17 @@ async function handleAdventureChoiceClick(buttonElement) {
                     });
                     
                     const battleResult = response.battle_result;
-                    
-                    // 戰鬥結束後，無論勝敗，先更新一次玩家資料以同步HP/MP等狀態
-                    await refreshPlayerData();
                     showBattleLogModal(battleResult);
                     
                     if (battleResult.winner_id === playerMonster.id) {
-                        // 勝利
                         showFeedbackModal('通關結算中...', '正在前往下一層...', true);
                         const advanceResult = await completeAdventureFloor();
                         if (advanceResult.success) {
-                            // 再次刷新資料以獲取通關獎勵
-                            await refreshPlayerData(); 
+                            await refreshPlayerData();
                             gameState.playerData.adventure_progress = advanceResult.new_progress;
                             renderAdventureProgressUI(advanceResult.new_progress);
                         }
                     } else {
-                        // 失敗或平手
                         if (gameState.playerData?.adventure_progress) {
                             gameState.playerData.adventure_progress.is_active = false;
                         }
@@ -200,9 +190,48 @@ async function handleAdventureChoiceClick(buttonElement) {
             { confirmButtonClass: 'primary', confirmButtonText: '開始戰鬥' }
         );
 
+    // --- 核心修改處 START ---
     } else {
-        showFeedbackModal('提示', `您選擇了「${choiceId}」，該功能尚在開發中！`);
+        // 處理一般事件的選擇
+        const choicesEl = document.getElementById('adventure-event-choices');
+        if (choicesEl) {
+            // 禁用所有按鈕避免重複點擊
+            choicesEl.querySelectorAll('button').forEach(btn => btn.disabled = true);
+        }
+
+        try {
+            const result = await resolveAdventureEvent(choiceId);
+            if (result && result.success) {
+                // 使用後端回傳的故事片段來更新描述
+                const descriptionEl = document.getElementById('adventure-event-description');
+                if (descriptionEl) {
+                    descriptionEl.innerHTML = `<p>${result.outcome_story || '什麼事都沒發生...'}</p>`;
+                }
+                
+                // 清空選項區
+                if (choicesEl) choicesEl.innerHTML = '';
+                
+                // 更新本地的進度資料
+                gameState.playerData.adventure_progress = result.updated_progress;
+                // 清空當前事件，以便顯示「繼續前進」
+                gameState.currentAdventureEvent = null;
+                
+                // 重新渲染UI以反映HP/MP變化，並重新顯示「繼續前進」按鈕
+                renderAdventureProgressUI(result.updated_progress);
+
+            } else {
+                throw new Error(result?.error || '處理事件時發生未知錯誤。');
+            }
+        } catch (error) {
+            console.error("處理事件選擇失敗:", error);
+            showFeedbackModal('處理失敗', error.message);
+            // 發生錯誤時，重新啟用按鈕讓玩家可以重試
+            if (choicesEl) {
+                choicesEl.querySelectorAll('button').forEach(btn => btn.disabled = false);
+            }
+        }
     }
+    // --- 核心修改處 END ---
 }
 
 /**
