@@ -6,6 +6,7 @@ import random
 import time
 import json
 import os
+import math # 新增 math 模組
 from typing import List, Dict, Optional, Any, Tuple
 
 # 從各自正確的檔案導入模型
@@ -112,7 +113,6 @@ def start_expedition_service(
     return player_data, None
 
 
-# --- 核心修改處 START ---
 def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
     """從指定的JSON檔案載入BOSS資料池。"""
     try:
@@ -130,6 +130,7 @@ def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
         adventure_logger.error(f"解析BOSS檔案 {boss_pool_id} 時發生錯誤。")
         return []
 
+# --- 核心修改處 START ---
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家在地圖上推進一個進度的邏輯。
@@ -142,8 +143,10 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
 
     progress["current_step"] += 1
 
+    # 檢查是否到達樓層終點
     if progress["current_step"] >= progress["total_steps_in_floor"]:
-        adventure_logger.info(f"玩家已到達樓層終點 (第 {progress['current_floor']} 層)，觸發 BOSS 戰。")
+        current_floor = progress.get("current_floor", 1)
+        adventure_logger.info(f"玩家已到達樓層終點 (第 {current_floor} 層)，觸發 BOSS 戰。")
         
         current_facility_id = progress.get("facility_id")
         all_islands = game_configs.get("adventure_islands", [])
@@ -160,17 +163,34 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
         if not boss_pool:
             return {"success": False, "error": "無法載入BOSS資料。"}
             
-        chosen_boss = random.choice(boss_pool)
+        base_boss = random.choice(boss_pool).copy() # 使用 .copy() 避免修改原始設定
         
+        # --- BOSS 成長與命名機制 ---
+        if current_floor > 1:
+            growth_factor = 1.1 ** (current_floor - 1)
+            # 動態命名
+            base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
+            # 數值成長
+            stats_to_grow = ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']
+            for stat in stats_to_grow:
+                if stat in base_boss:
+                    base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
+            
+            # 更新總評價 (簡單估算)
+            base_boss['score'] = math.ceil(base_boss.get('score', 600) * growth_factor)
+
+        adventure_logger.info(f"已生成BOSS：{base_boss['nickname']}，樓層：{current_floor}")
+
         boss_event = {
             "event_type": "boss_encounter",
-            "name": f"強大的氣息！遭遇 {chosen_boss.get('nickname')}！",
-            "description": chosen_boss.get("description", "一個巨大的身影擋住了去路！一場惡戰在所難免！"),
+            "name": f"強大的氣息！遭遇 {base_boss.get('nickname')}！",
+            "description": base_boss.get("description", "一個巨大的身影擋住了去路！一場惡戰在所難免！"),
             "choices": [{"choice_id": "FIGHT_BOSS", "text": "迎戰！"}],
-            "boss_data": chosen_boss
+            "boss_data": base_boss # 使用強化後的BOSS資料
         }
         return {"success": True, "event_data": boss_event, "updated_progress": progress}
 
+    # --- 以下為普通事件邏輯，維持不變 ---
     all_events = game_configs.get("adventure_events", [])
     if not all_events:
         adventure_logger.warning("在遊戲設定中找不到任何冒險事件 (adventure_events.json)，返回一個預設事件。")
@@ -199,13 +219,4 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     (此為後續步驟的核心函式，目前為預留)
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: {choice_id}...")
-    # 待辦事項：
-    # 1. 根據 choice_id 找到對應事件和選項。
-    # 2. 根據權重隨機一個結果 (正面/負面/中立)。
-    # 3. 呼叫 AI 服務生成對應的故事片段。
-    # 4. 將故事片段存入 adventure_progress['story_fragments']。
-    # 5. 根據結果的 effects 更新 adventure_progress 中的數據 (HP, 物品等)。
-    # 6. 返回結果給前端。
-
-    # 預留的回應
     return {"status": "pending_implementation", "message": "事件處理功能開發中。"}
