@@ -1,0 +1,490 @@
+[
+  {
+    "event_id": "CAVE_001",
+    "event_type": "puzzle",
+    "name": "潮汐通道",
+    "description_template": "前方是一個狹窄的通道，牆壁上有明顯的水痕。{monster_name}感覺到潮水即將上漲。",
+    "choices": [
+      {
+        "choice_id": "CAVE_001_A",
+        "text": "在漲潮前快速衝過去",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "你們算準時機，在潮水淹沒通道前成功衝了過去，並在對岸發現了被沖上來的寶物。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "water_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "你們驚險地通過了通道，但隊伍被濺起的水花淋得濕透。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "你們的動作慢了一步，被及腰的潮水困住，消耗了大量體力才脫身。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -30 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_001_B",
+        "text": "尋找高處等待退潮",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "在等待時，你們發現高處的岩壁上嵌著一顆發光的珍珠。",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 80 }]
+          },
+          {
+            "type": "neutral", "weight": 80,
+            "story_fragment": "你們在安全的地方等待了很久，直到潮水退去才繼續前進。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "在高處等待時，一隻巨大的海鳥將你們當成了獵物，發動了突襲！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -25 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_002",
+    "event_type": "encounter",
+    "name": "發光的水母群",
+    "description_template": "你們走進一個巨大的溶洞，洞頂和水中漂浮著無數發光的水母，如同星空般絢爛。",
+    "choices": [
+      {
+        "choice_id": "CAVE_002_A",
+        "text": "小心地從旁邊游過去",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 20,
+            "story_fragment": "一隻水母似乎很喜歡{monster_name}，它脫落了一小塊組織，其中蘊含著奇特的能量。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "light_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "你們安全地穿過了美麗的水母群，沒有打擾到牠們。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "儘管很小心，還是有怪獸不慎碰到了水母的觸手，被電得發麻。",
+            "effects": [{ "effect": "apply_temp_debuff", "stat": "speed", "amount": -15, "duration": 2 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_002_B",
+        "text": "嘗試捕捉一隻",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "你們成功捕獲了一隻較小的水母，並從中提取了有用的DNA。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "water_common", "quantity": 2 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "水母太滑了，你們沒能抓住它。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 50,
+            "story_fragment": "你們的舉動驚動了整個水母群！無數的電擊觸手向你們襲來！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_003",
+    "event_type": "resource",
+    "name": "古代沉船",
+    "description_template": "在一個被水淹沒的巨大洞穴中，你們發現了一艘古代沉船的殘骸。",
+    "choices": [
+      {
+        "choice_id": "CAVE_003_A",
+        "text": "進入船內搜索",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "你們在船長室找到了一個防水的箱子，裡面裝滿了金幣！",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 120 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "船內已經被搜刮一空，什麼也沒剩下。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "船體結構不穩，一塊甲板掉了下來，差點砸中{monster_name}！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -30 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_003_B",
+        "text": "只在船外圍尋找",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 80,
+            "story_fragment": "你們在船邊的沙地裡，找到了一些從船上散落出來的金屬零件。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "船的周圍只有一些無用的碎片。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_004",
+    "event_type": "puzzle",
+    "name": "迴音石壁",
+    "description_template": "你們面前是一面光滑的石壁，上面有幾個不同形狀的凹槽。當風吹過洞穴時，會發出奇特的音調。",
+    "choices": [
+      {
+        "choice_id": "CAVE_004_A",
+        "text": "讓怪獸們模仿風聲吼叫",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "你們成功模仿了正確的音調！石壁緩緩開啟，後面是一條通往寶藏的密道。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "wind_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "你們的吼叫聲此起彼落，但石壁毫無反應。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "錯誤的音調觸發了陷阱！石壁上射出大量水箭！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -25 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_004_B",
+        "text": "尋找可以放入凹槽的石頭",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "你們找到了形狀吻合的石頭，放入凹槽後石壁開啟了！",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "earth_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 60,
+            "story_fragment": "你們找了半天，也沒找到形狀剛好的石頭。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "你們強行塞入一塊石頭，結果整個機關都卡死了。",
+            "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_005",
+    "event_type": "encounter",
+    "name": "洞穴巨蟹",
+    "description_template": "一隻殼上長滿了發光水晶的巨大螃蟹擋住了你們的去路，它揮舞著巨大的鉗子。",
+    "choices": [
+      {
+        "choice_id": "CAVE_005_A",
+        "text": "給它一些食物示好",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "巨蟹吃掉了你們的食物，高興地吐出一個泡泡，裡面包裹著一顆珍珠。",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 100 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "巨蟹對你們的食物不感興趣，橫著走開了。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "它不喜歡你們的食物，生氣地用鉗子夾了{monster_name}一下。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -30 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_005_B",
+        "text": "直接開戰",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "你們擊敗了巨蟹，從它的殼上敲下了一塊完整的水晶DNA。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "light_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "巨蟹非常耐打，你們打鬥了一番後，它鑽進水裡溜走了。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "巨蟹的鉗子力大無窮，你們被打得節節敗退。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_006",
+    "event_type": "choice_dilemma",
+    "name": "神秘漩渦",
+    "description_template": "在一個巨大的水潭中央，出現了一個神秘的漩渦，似乎通往未知的地方。",
+    "choices": [
+      {
+        "choice_id": "CAVE_006_A",
+        "text": "讓隊伍跳進漩渦",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "漩渦將你們傳送到一個隱藏的寶庫！",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 200 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "漩渦只是把你們沖到了洞穴的另一個出口，節省了一些走路的時間。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 50,
+            "story_fragment": "漩渦中強大的水流讓隊伍成員互相碰撞，大家都受了傷。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -50 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_006_B",
+        "text": "向漩渦丟石頭試探",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "石頭丟進去後，漩渦中噴出了一塊被水流捲上來的DNA碎片。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "water_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "石頭被捲進去後就沒了聲息，什麼也沒發生。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "石頭丟進去後，漩渦裡伸出一隻巨大的觸手，把你們嚇了一跳！",
+            "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_007",
+    "event_type": "resource",
+    "name": "珍珠貝",
+    "description_template": "在淺水區，你們發現一個巨大的珍珠貝，緊緊地關著。",
+    "choices": [
+      {
+        "choice_id": "CAVE_007_A",
+        "text": "用蠻力撬開它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "你們成功撬開了它，裡面有一顆巨大的黑珍珠！",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 150 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "珍珠貝的殼太硬了，你們沒能打開它。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "在撬開的過程中，貝殼鋒利的邊緣劃傷了{monster_name}。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -20 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_007_B",
+        "text": "用食物引誘它張開",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "珍珠貝聞到了食物的香味，張開了殼，你們輕鬆取得了裡面的珍珠。",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 100 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "珍珠貝對你們的食物不感興趣，紋絲不動。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_008",
+    "event_type": "story",
+    "name": "間歇泉",
+    "description_template": "你們路過一個間歇泉，它每隔一段時間就會噴出高高的水柱，非常壯觀。",
+    "choices": [
+      {
+        "choice_id": "CAVE_008_A",
+        "text": "讓怪獸們玩水",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "怪獸們在間歇泉玩得很開心，洗去了疲憊，還意外找到一枚被沖上岸的金幣。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 15 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": 10 }]
+          },
+          {
+            "type": "neutral", "weight": 60,
+            "story_fragment": "怪獸們玩了一會兒水，心情變得很好。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_008_B",
+        "text": "小心避開，繼續前進",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們小心地繞過了間歇泉，沒有被淋濕。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_009",
+    "event_type": "encounter",
+    "name": "洞穴沙羅曼達",
+    "description_template": "在一個水潭邊，你們看到一隻皮膚半透明、沒有眼睛的洞穴沙羅曼達（蠑螈）。",
+    "choices": [
+      {
+        "choice_id": "CAVE_009_A",
+        "text": "觀察它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "在觀察時，你們發現它蛻下的一層皮，似乎蘊含著暗影的力量。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "dark_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 90,
+            "story_fragment": "它似乎沒有註意到你們，只是安靜地待在水邊。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_009_B",
+        "text": "試圖捕捉它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "你們成功抓住了這隻反應遲鈍的生物，獲得了珍貴的樣本。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "mix_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "沙羅曼達非常滑溜，一溜煙就鑽進了水裡不見了。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 50,
+            "story_fragment": "它雖然沒有眼睛，但感官異常敏銳，用尾巴掃倒了{monster_name}後逃走了。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -25 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "CAVE_010",
+    "event_type": "trap",
+    "name": "濕滑的斜坡",
+    "description_template": "前方是一段長滿青苔的濕滑下坡路，看起來很危險。",
+    "choices": [
+      {
+        "choice_id": "CAVE_010_A",
+        "text": "派速度快的怪獸先去探路",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 70,
+            "story_fragment": "速度最快的怪獸身手矯健，找到了最安全的路線，帶領大家順利通過。",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "探路的怪獸自己差點滑倒，但總算找到了勉強能走的路。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "探路的怪獸自己滑了下去，雖然沒受重傷，但看起來很狼狽。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_fastest", "amount": -15 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "CAVE_010_B",
+        "text": "大家一起滑下去！",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 20,
+            "story_fragment": "這簡直是天然的滑水道！隊伍玩得不亦樂乎，毫髮無傷地到達了坡底。",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "你們像保齡球一樣滾了下去，雖然有點暈，但沒受什麼傷。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "大家撞成一團，全都受了點輕傷。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
+          }
+        ]
+      }
+    ]
+  }
+]
