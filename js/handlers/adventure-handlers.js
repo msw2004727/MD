@@ -45,7 +45,21 @@ function handleFacilityChallengeClick(event) {
  */
 async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
     hideModal('expedition-team-selection-modal');
-    showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
+    
+    // --- 核心修改處 START ---
+    // 從 gameState 中查找設施的中文名稱
+    let facilityName = facilityId; // 如果找不到，則退回顯示ID
+    const islandsData = gameState.gameConfigs?.adventure_islands || [];
+    for (const island of islandsData) {
+        const facility = island.facilities?.find(fac => fac.facilityId === facilityId);
+        if (facility && facility.name) {
+            facilityName = facility.name;
+            break;
+        }
+    }
+    // 使用中文名稱來顯示提示訊息
+    showFeedbackModal('準備出發...', `正在為「${facilityName}」組建遠征隊...`, true);
+    // --- 核心修改處 END ---
 
     try {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
@@ -133,24 +147,18 @@ async function handleAdventureChoiceClick(buttonElement) {
         const battleResult = result.battle_result;
         const updatedProgress = result.updated_progress;
         
-        // --- 核心修改處 START ---
         if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
-            // 戰鬥結束，先刷新一次資料
             await refreshPlayerData();
             
-            // 從最新的資料中，找到正確的我方與敵方怪獸物件
             const finalCaptainMonster = captainId ? gameState.playerData.farmedMonsters.find(m => m.id === captainId) : null;
             const finalOpponentMonster = opponentBossData;
 
-            // 判斷勝利、平手或失敗
             if (battleResult && battleResult.winner_id === captainId) {
-                // 勝利
                 gameState.playerData.adventure_progress = updatedProgress;
                 renderAdventureProgressUI(updatedProgress);
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
 
             } else if (battleResult && battleResult.winner_id === "平手") {
-                // 平手
                 const drawActions = [
                     {
                         text: '放棄遠征',
@@ -166,7 +174,6 @@ async function handleAdventureChoiceClick(buttonElement) {
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster, drawActions);
 
             } else {
-                // 失敗
                 const lossActions = [{
                     text: '返回農場',
                     class: 'primary',
@@ -175,16 +182,13 @@ async function handleAdventureChoiceClick(buttonElement) {
                         initializeAdventureUI();
                     }
                 }];
-                // 先顯示戰報，關閉後再顯示失敗訊息
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
-                // 這裡可以延遲一點彈出，避免兩個視窗重疊
                 setTimeout(() => {
                     showFeedbackModal('遠征失敗', '隊長被打到瀕死，隊員們趕緊將隊長扛回農場進行急救！', false, null, lossActions);
                 }, 300);
             }
 
         } else {
-            // 處理一般事件
             gameState.playerData.adventure_progress = result.updated_progress;
             gameState.currentAdventureEvent = null; 
 
@@ -194,7 +198,6 @@ async function handleAdventureChoiceClick(buttonElement) {
             };
             renderAdventureProgressUI(progressForRendering);
         }
-        // --- 核心修改處 END ---
 
     } catch (error) {
         console.error("處理事件選擇失敗:", error);
