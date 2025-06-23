@@ -8,8 +8,8 @@ from flask import Blueprint, jsonify, request
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
 # --- 核心修改處 START ---
-# 導入 complete_floor_service 服務
-from .adventure_services import start_expedition_service, get_all_islands_service, advance_floor_service, complete_floor_service
+# 導入 resolve_event_choice_service 服務
+from .adventure_services import start_expedition_service, get_all_islands_service, advance_floor_service, complete_floor_service, resolve_event_choice_service
 # --- 核心修改處 END ---
 
 
@@ -138,7 +138,6 @@ def advance_route():
         adventure_routes_logger.error(f"玩家 {user_id} 推進冒險進度後，儲存資料失敗。")
         return jsonify({"error": "推進成功但儲存進度失敗。"}), 500
 
-# --- 核心修改處 START ---
 @adventure_bp.route('/complete_floor', methods=['POST'])
 def complete_floor_route():
     """
@@ -158,7 +157,6 @@ def complete_floor_route():
     if not service_result.get("success"):
         return jsonify({"error": service_result.get("error", "通關結算失敗。")}), 400
         
-    # 服務層已處理完所有邏輯，現在只需儲存
     updated_progress = service_result.get("updated_progress")
     player_data["adventure_progress"] = updated_progress
 
@@ -170,4 +168,42 @@ def complete_floor_route():
         }), 200
     else:
         return jsonify({"error": "通關後儲存進度失敗。"}), 500
+
+# --- 核心修改處 START ---
+@adventure_bp.route('/resolve', methods=['POST'])
+def resolve_choice_route():
+    """
+    處理玩家對冒險事件做出的選擇。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    choice_id = data.get('choice_id')
+    if not choice_id:
+        return jsonify({"error": "請求中缺少 'choice_id'。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+        
+    service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
+    
+    if not service_result.get("success"):
+        return jsonify({"error": service_result.get("error", "處理事件選擇失敗。")}), 400
+        
+    # 服務層已處理完所有邏輯，現在只需儲存
+    updated_progress = service_result.get("updated_progress")
+    player_data["adventure_progress"] = updated_progress
+    
+    if save_player_data_service(user_id, player_data):
+        return jsonify({
+            "success": True,
+            "outcome_story": service_result.get("outcome_story"),
+            "updated_progress": updated_progress
+        }), 200
+    else:
+        return jsonify({"error": "儲存事件結果失敗。"}), 500
 # --- 核心修改處 END ---
