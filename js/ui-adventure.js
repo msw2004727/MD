@@ -2,278 +2,6 @@
 // 專門負責渲染「冒險島」的所有UI。
 
 /**
- * 初始化冒險地圖的事件監聽器。
- * 使用事件委派模式，只在父容器上設定一個監聽器。
- * 這個函式現在應該只被呼叫一次。
- */
-function initializeAdventureMapHandlers() {
-    const nodesContainer = document.getElementById('adventure-map-nodes-container');
-    if (!nodesContainer) return;
-
-    // 為避免重複綁定，先移除可能存在的舊監聽器
-    // 這次我們不使用 cloneNode，而是直接管理事件監聽
-    if (nodesContainer.dataset.listenerAttached === 'true') {
-        return; // 如果已經綁定過，就直接返回
-    }
-
-    nodesContainer.addEventListener('click', (event) => {
-        const clickedNodeElement = event.target.closest('.map-node.clickable');
-        if (!clickedNodeElement) return;
-
-        const nodeId = clickedNodeElement.dataset.nodeId;
-        if (!nodeId) return;
-        
-        const adventureProgress = gameState.playerData?.adventure_progress;
-        if (!adventureProgress) return;
-        
-        const targetNode = adventureProgress.map_data.nodes.find(n => n.id === nodeId);
-        if (targetNode) {
-            handleMapNodeClick(targetNode);
-        }
-    });
-
-    nodesContainer.dataset.listenerAttached = 'true'; // 標記已綁定
-}
-
-/**
- * 在 Canvas 上繪製給定的路徑。
- * @param {Array<object>} path - 由 A* 演算法回傳的節點陣列。
- */
-function drawPathOnCanvas(path) {
-    const canvas = document.getElementById('adventure-map-canvas');
-    if (!canvas || !canvas.getContext) return;
-
-    const ctx = canvas.getContext('2d');
-    const GRID_SIZE = 30; // 必須與 renderAdventureMap 中使用的格子大小一致
-
-    // 清除舊的路徑
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (!path || path.length < 2) {
-        console.log("DEBUG: 路徑為空或太短，不進行繪製。");
-        return; // 路徑太短，無需繪製
-    }
-
-    console.log("DEBUG: 開始在 Canvas 上繪製路徑...");
-    ctx.beginPath();
-    ctx.strokeStyle = 'rgba(255, 223, 186, 0.8)'; // 淡金色的路徑
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-    ctx.shadowBlur = 5;
-
-    // 從路徑的起點開始
-    const startX = path[0].position.x * GRID_SIZE + GRID_SIZE / 2;
-    const startY = path[0].position.y * GRID_SIZE + GRID_SIZE / 2;
-    ctx.moveTo(startX, startY);
-
-    // 連接到路徑上的每一個點
-    for (let i = 1; i < path.length; i++) {
-        const x = path[i].position.x * GRID_SIZE + GRID_SIZE / 2;
-        const y = path[i].position.y * GRID_SIZE + GRID_SIZE / 2;
-        ctx.lineTo(x, y);
-    }
-
-    ctx.stroke(); // 繪製路徑
-    console.log("DEBUG: 路徑繪製完成。");
-}
-
-
-// A* 路徑尋找演算法的實現。
-function findAStarPath(nodes, startNode, goalNode) {
-    const grid = [];
-    const width = 30;
-    const height = 30;
-    for (let i = 0; i < height; i++) {
-        grid.push(new Array(width).fill(null));
-    }
-
-    nodes.forEach(node => {
-        grid[node.position.y][node.position.x] = node;
-    });
-
-    function heuristic(a, b) {
-        return Math.abs(a.position.x - b.position.x) + Math.abs(a.position.y - b.position.y);
-    }
-
-    const openSet = [startNode]; 
-    const cameFrom = new Map(); 
-
-    const gScore = new Map(); 
-    gScore.set(startNode.id, 0);
-
-    const fScore = new Map(); 
-    fScore.set(startNode.id, heuristic(startNode, goalNode));
-
-    while (openSet.length > 0) {
-        let current = openSet[0];
-        for (let i = 1; i < openSet.length; i++) {
-            if (fScore.get(openSet[i].id) < fScore.get(current.id)) {
-                current = openSet[i];
-            }
-        }
-
-        if (current.id === goalNode.id) {
-            const path = [];
-            let temp = current;
-            while (temp) {
-                path.push(temp);
-                temp = cameFrom.get(temp.id);
-            }
-            return path.reverse();
-        }
-
-        const index = openSet.indexOf(current);
-        openSet.splice(index, 1);
-
-        const neighbors = [];
-        const { x, y } = current.position;
-        const potentialNeighbors = [
-            (y > 0) ? grid[y - 1][x] : null,
-            (y < height - 1) ? grid[y + 1][x] : null,
-            (x > 0) ? grid[y][x - 1] : null,
-            (x < width - 1) ? grid[y][x + 1] : null
-        ];
-
-        potentialNeighbors.forEach(neighbor => {
-            if (neighbor && neighbor.type !== 'obstacle') {
-                neighbors.push(neighbor);
-            }
-        });
-
-        for (const neighbor of neighbors) {
-            const tentativeGScore = gScore.get(current.id) + 1; 
-
-            if (tentativeGScore < (gScore.get(neighbor.id) || Infinity)) {
-                cameFrom.set(neighbor.id, current);
-                gScore.set(neighbor.id, tentativeGScore);
-                fScore.set(neighbor.id, tentativeGScore + heuristic(neighbor, goalNode));
-                
-                if (!openSet.some(node => node.id === neighbor.id)) {
-                    openSet.push(neighbor);
-                }
-            }
-        }
-    }
-
-    return [];
-}
-
-
-/**
- * 處理地圖節點點擊事件。
- * @param {object} node - 被點擊的目標節點物件。
- */
-function handleMapNodeClick(node) {
-    // --- 核心修改處 START：加入詳細的日誌 ---
-    console.log("--- handleMapNodeClick triggered ---");
-    const adventureProgress = gameState.playerData?.adventure_progress;
-
-    if (!adventureProgress) {
-        console.error("DEBUG: adventure_progress is missing from gameState.playerData!");
-        return;
-    }
-    console.log("DEBUG: Found adventure_progress:", JSON.parse(JSON.stringify(adventureProgress)));
-
-    const allNodes = adventureProgress.map_data.nodes;
-    const currentNode = allNodes.find(n => n.id === adventureProgress.current_node_id);
-
-    if (!currentNode) {
-        console.error("DEBUG: Cannot find currentNode with ID:", adventureProgress.current_node_id);
-        showFeedbackModal('錯誤', '找不到玩家目前的位置資訊。');
-        return;
-    }
-    console.log("DEBUG: Start node:", currentNode);
-    console.log("DEBUG: Goal node:", node);
-    // --- 核心修改處 END ---
-    
-    if (currentNode.id === node.id) {
-        drawPathOnCanvas([]); // 點擊自身，清除路徑
-        return;
-    }
-
-    console.log("DEBUG: Calling findAStarPath...");
-    const path = findAStarPath(allNodes, currentNode, node);
-    console.log("DEBUG: Path returned from A*:", path);
-
-    drawPathOnCanvas(path);
-
-    if (path.length > 0) {
-        console.log("找到的路徑:", path.map(p => p.id));
-    } else {
-        console.log(`找不到通往 (${node.position.x}, ${node.position.y}) 的路徑。`);
-    }
-}
-
-
-/**
- * 根據後端傳來的地圖資料，渲染冒險地圖。
- * @param {object} adventureProgress - 包含地圖資料的完整冒險進度物件。
- */
-function renderAdventureMap(adventureProgress) {
-    // 每次渲染地圖時，都確保監聽器已經被設定
-    initializeAdventureMapHandlers();
-
-    const modal = document.getElementById('adventure-map-modal');
-    const nodesContainer = document.getElementById('adventure-map-nodes-container');
-    const canvas = document.getElementById('adventure-map-canvas');
-    const title = document.getElementById('adventure-map-title');
-
-    if (!modal || !nodesContainer || !canvas || !title) {
-        console.error("冒險地圖的元件未找到。");
-        return;
-    }
-
-    const facilityId = adventureProgress.facility_id;
-    let facilityName = facilityId;
-    const facilityData = gameState.gameConfigs?.adventure_islands?.[0]?.facilities?.find(f => f.facilityId === facilityId);
-    if (facilityData) {
-        facilityName = facilityData.name;
-    }
-    title.textContent = `探索地圖 - ${facilityName}`;
-    
-    nodesContainer.innerHTML = '';
-    const ctx = canvas.getContext('2d');
-    
-    const mapData = adventureProgress.map_data;
-    const nodes = mapData.nodes;
-    const playerCurrentNode = nodes.find(n => n.id === adventureProgress.current_node_id);
-
-    const GRID_SIZE = 30; 
-    canvas.width = 30 * GRID_SIZE;
-    canvas.height = 30 * GRID_SIZE;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    nodes.forEach(node => {
-        const nodeEl = document.createElement('div');
-        nodeEl.className = 'map-node';
-        nodeEl.textContent = node.display_char;
-        nodeEl.style.gridColumnStart = node.position.x + 1;
-        nodeEl.style.gridRowStart = node.position.y + 1;
-        nodeEl.dataset.nodeId = node.id;
-        
-        if (node.type !== 'obstacle') {
-            nodeEl.classList.add('clickable');
-        }
-
-        nodesContainer.appendChild(nodeEl);
-    });
-    
-    if(playerCurrentNode) {
-        const playerToken = document.createElement('div');
-        playerToken.className = 'player-token';
-        playerToken.textContent = '您';
-        playerToken.style.left = `${playerCurrentNode.position.x * GRID_SIZE}px`;
-        playerToken.style.top = `${playerCurrentNode.position.y * GRID_SIZE}px`;
-        nodesContainer.appendChild(playerToken);
-    }
-
-    showModal('adventure-map-modal');
-}
-
-
-/**
  * 根據點擊的設施，顯示隊伍選擇彈窗。
  * @param {object} facility - 被點擊的設施的資料物件。
  */
@@ -298,74 +26,83 @@ function showTeamSelectionModal(facility) {
 
     monsterListContainer.innerHTML = '';
     let selectedMonsters = []; 
+    confirmBtn.disabled = true; // 預設禁用確認按鈕
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
-    monsters.forEach(monster => {
-        const card = document.createElement('div');
-        card.className = 'monster-selection-card';
-        card.dataset.monsterId = monster.id;
+    if (monsters.length === 0) {
+        monsterListContainer.innerHTML = `<p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">您沒有可派遣的怪獸。</p>`;
+    } else {
+        monsters.forEach(monster => {
+            const card = document.createElement('div');
+            card.className = 'monster-selection-card';
+            card.dataset.monsterId = monster.id;
 
-        const isBusy = monster.farmStatus?.isTraining || monster.farmStatus?.isBattling;
-        const isInjured = monster.hp < monster.initial_max_hp * 0.25;
-        const isDisabled = isBusy || isInjured;
+            const isBusy = monster.farmStatus?.isTraining || monster.farmStatus?.isBattling;
+            const isInjured = monster.hp < monster.initial_max_hp * 0.25;
+            const isDisabled = isBusy || isInjured;
 
-        if (isDisabled) {
-            card.classList.add('disabled');
-        }
-
-        const headInfo = { type: '無', rarity: '普通' };
-        const constituentIds = monster.constituent_dna_ids || [];
-        if (constituentIds.length > 0) {
-            const headDnaId = constituentIds[0];
-            const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
-            const headDnaTemplate = allDnaTemplates.find(dna => dna.id === headDnaId);
-            if (headDnaTemplate) {
-                headInfo.type = headDnaTemplate.type || '無';
-                headInfo.rarity = headDnaTemplate.rarity || '普通';
+            if (isDisabled) {
+                card.classList.add('disabled');
             }
-        }
-        const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
-        card.innerHTML = `
-            <div class="monster-selection-card-header">
-                <span class="text-rarity-${monster.rarity.toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
-                <span class="text-sm">Lv.${monster.level || 1}</span>
-            </div>
-            <div class="monster-selection-card-body">
-                <div class="monster-selection-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>
-                <div class="monster-selection-stats">
-                    <span>HP: ${monster.hp}/${monster.initial_max_hp}</span>
-                    <span>攻擊: ${monster.attack}</span>
-                    <span>防禦: ${monster.defense}</span>
-                    ${isBusy ? `<span style="color:var(--warning-color);">修煉中</span>` : ''}
-                    ${isInjured ? `<span style="color:var(--danger-color);">瀕死</span>` : ''}
-                </div>
-            </div>
-        `;
-
-        if (!isDisabled) {
-            card.addEventListener('click', () => {
-                const monsterId = card.dataset.monsterId;
-                if (selectedMonsters.includes(monsterId)) {
-                    selectedMonsters = selectedMonsters.filter(id => id !== monsterId);
-                    card.classList.remove('selected');
-                } else {
-                    if (selectedMonsters.length < 3) {
-                        selectedMonsters.push(monsterId);
-                        card.classList.add('selected');
-                    } else {
-                        showFeedbackModal('提示', '最多只能選擇3隻怪獸參加遠征。');
-                    }
+            const headInfo = { type: '無', rarity: '普通' };
+            const constituentIds = monster.constituent_dna_ids || [];
+            if (constituentIds.length > 0) {
+                const headDnaId = constituentIds[0];
+                const allDnaTemplates = gameState.gameConfigs?.dna_fragments || [];
+                const headDnaTemplate = allDnaTemplates.find(dna => dna.id === headDnaId);
+                if (headDnaTemplate) {
+                    headInfo.type = headDnaTemplate.type || '無';
+                    headInfo.rarity = headDnaTemplate.rarity || '普通';
                 }
-                confirmBtn.disabled = selectedMonsters.length === 0;
-            });
-        }
-        
-        monsterListContainer.appendChild(card);
-    });
+            }
+            const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
-    confirmBtn.onclick = () => {
+            card.innerHTML = `
+                <div class="monster-selection-card-header">
+                    <span class="text-rarity-${(monster.rarity || 'common').toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
+                    <span class="text-sm">Lv.${monster.level || 1}</span>
+                </div>
+                <div class="monster-selection-card-body">
+                    <div class="monster-selection-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>
+                    <div class="monster-selection-stats">
+                        <span>HP: ${monster.hp}/${monster.initial_max_hp}</span>
+                        <span>攻擊: ${monster.attack}</span>
+                        <span>防禦: ${monster.defense}</span>
+                        ${isBusy ? `<span style="color:var(--warning-color);">修煉中</span>` : ''}
+                        ${isInjured ? `<span style="color:var(--danger-color);">瀕死</span>` : ''}
+                    </div>
+                </div>
+            `;
+
+            if (!isDisabled) {
+                card.addEventListener('click', () => {
+                    const monsterId = card.dataset.monsterId;
+                    if (selectedMonsters.includes(monsterId)) {
+                        selectedMonsters = selectedMonsters.filter(id => id !== monsterId);
+                        card.classList.remove('selected');
+                    } else {
+                        if (selectedMonsters.length < 3) {
+                            selectedMonsters.push(monsterId);
+                            card.classList.add('selected');
+                        } else {
+                            showFeedbackModal('提示', '最多只能選擇3隻怪獸參加遠征。');
+                        }
+                    }
+                    confirmBtn.disabled = selectedMonsters.length === 0;
+                });
+            }
+            monsterListContainer.appendChild(card);
+        });
+    }
+
+    // 清除舊的監聽器並綁定新的
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    newConfirmBtn.disabled = true; // 確保複製後也是禁用狀態
+    
+    newConfirmBtn.addEventListener('click', () => {
         const islandsData = gameState.gameConfigs.adventure_islands || [];
         let islandId = null;
         for (const island of islandsData) {
@@ -380,58 +117,32 @@ function showTeamSelectionModal(facility) {
         } else {
             showFeedbackModal('錯誤', '無法確定設施所屬的島嶼。');
         }
-    };
+    });
 
     showModal('expedition-team-selection-modal');
 }
 
 /**
- * 處理開始遠征的邏輯，呼叫後端 API。
- * @param {string} islandId - 島嶼ID
- * @param {string} facilityId - 設施ID
- * @param {Array<string>} teamMonsterIds - 被選中的怪獸ID列表
+ * 渲染遠征進行中的主畫面。
+ * (此為下一階段的預留函式)
+ * @param {object} adventureProgress - 包含當前進度的物件。
  */
-async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
-    hideModal('expedition-team-selection-modal');
-    showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
-
-    try {
-        const result = await startExpedition(islandId, facilityId, teamMonsterIds);
-
-        if (result && result.success) {
-            if (gameState.playerData) {
-                gameState.playerData.adventure_progress = result.adventure_progress;
-            }
-            await refreshPlayerData();
-
-            hideModal('feedback-modal');
-            
-            renderAdventureMap(result.adventure_progress);
-
-        } else {
-            throw new Error(result?.error || '未知的錯誤導致遠征無法開始。');
-        }
-
-    } catch (error) {
-        hideModal('feedback-modal');
-        showFeedbackModal('出發失敗', `無法開始遠征：${error.message}`);
-    }
+function renderAdventureProgressUI(adventureProgress) {
+    console.log("TODO: 渲染遠征進度UI", adventureProgress);
+    hideAllModals(); // 隱藏所有彈窗
+    // 在這裡加入渲染進度條、事件描述、選項按鈕的程式碼
+    const adventureTabContent = document.getElementById('guild-content');
+    adventureTabContent.innerHTML = `<p class="text-center text-lg text-[var(--text-secondary)] py-10">遠征開始！(UI開發中...)</p>`;
 }
 
 
 /**
- * 初始化冒險島UI的總入口函式。
+ * 根據後端傳來的島嶼資料，渲染冒險島的設施列表。
  */
 async function initializeAdventureUI() {
     const adventureTabContent = document.getElementById('guild-content');
     if (!adventureTabContent) {
         console.error("冒險島的內容容器 'guild-content' 未找到。");
-        return;
-    }
-    
-    const adventureProgress = gameState.playerData?.adventure_progress;
-    if (adventureProgress && adventureProgress.is_active) {
-        renderAdventureMap(adventureProgress);
         return;
     }
     
@@ -446,6 +157,7 @@ async function initializeAdventureUI() {
             return;
         }
 
+        // 暫時只處理第一個島嶼
         const island = islandsData[0];
         const facilities = island.facilities || [];
         
@@ -460,18 +172,17 @@ async function initializeAdventureUI() {
         
         const wideBg = island.backgrounds?.wide || '';
         const narrowBg = island.backgrounds?.narrow || '';
-        const style = document.createElement('style');
-        style.textContent = `
-            .adventure-content-area {
-                background-image: url('${narrowBg}');
-            }
-            @media (min-width: 768px) {
-                .adventure-content-area {
-                    background-image: url('${wideBg}');
-                }
-            }
+        const styleId = 'adventure-bg-style';
+        let styleTag = document.getElementById(styleId);
+        if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = styleId;
+            document.head.appendChild(styleTag);
+        }
+        styleTag.textContent = `
+            .adventure-content-area { background-image: url('${narrowBg}'); }
+            @media (min-width: 768px) { .adventure-content-area { background-image: url('${wideBg}'); } }
         `;
-        document.head.appendChild(style);
 
         const islandContainer = document.createElement('div');
         islandContainer.className = 'adventure-island-container';
@@ -490,7 +201,7 @@ async function initializeAdventureUI() {
                 card.innerHTML = `
                     <div class="facility-card-header">
                         <h4 class="facility-title">${facility.name || '未知設施'}</h4>
-                        <span class="facility-cost">費用: ${facility.cost || 0} 🪙</span>
+                        <span class="facility-cost">${facility.cost || 0} 🪙</span>
                     </div>
                     <div class="facility-card-body">
                         <p>${facility.description || '暫無描述。'}</p>
