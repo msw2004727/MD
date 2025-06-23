@@ -8,10 +8,7 @@
     "initial_max_hp": 2200, "hp": 2200, "initial_max_mp": 1000, "mp": 1000,
     "attack": 220, "defense": 180, "speed": 200, "crit": 15,
     "personality": { "name": "暴躁的" }, "score": 1250,
-    "skills": [
-      { "name": "爆炎衝", "level": 7 },
-      { "name": "熔化", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "fire_rare", "quantity": 1, "chance": 0.7 } ]
@@ -26,10 +23,7 @@
     "initial_max_hp": 2000, "hp": 2000, "initial_max_mp": 1200, "mp": 1200,
     "attack": 190, "defense": 200, "speed": 210, "crit": 16,
     "personality": { "name": "冷静的" }, "score": 1220,
-    "skills": [
-      { "name": "高壓水炮", "level": 7 },
-      { "name": "黑霧", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "water_rare", "quantity": 1, "chance": 0.7 } ]
@@ -44,10 +38,7 @@
     "initial_max_hp": 2400, "hp": 2400, "initial_max_mp": 800, "mp": 800,
     "attack": 180, "defense": 240, "speed": 180, "crit": 14,
     "personality": { "name": "沉默的" }, "score": 1280,
-    "skills": [
-      { "name": "木槌", "level": 8 },
-      { "name": "硬化", "level": 8 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "wood_rare", "quantity": 1, "chance": 0.7 } ]
@@ -62,10 +53,7 @@
     "initial_max_hp": 1800, "hp": 1800, "initial_max_mp": 900, "mp": 900,
     "attack": 230, "defense": 280, "speed": 190, "crit": 15,
     "personality": { "name": "忠誠的" }, "score": 1300,
-    "skills": [
-      { "name": "鐵壁", "level": 7 },
-      { "name": "鐵頭", "level": 8 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "gold_rare", "quantity": 1, "chance": 0.7 } ]
@@ -80,10 +68,7 @@
     "initial_max_hp": 2600, "hp": 2600, "initial_max_mp": 700, "mp": 700,
     "attack": 210, "defense": 250, "speed": 200, "crit": 13,
     "personality": { "name": "頑固的" }, "score": 1260,
-    "skills": [
-      { "name": "挖洞", "level": 8 },
-      { "name": "岩石封鎖", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "earth_rare", "quantity": 1, "chance": 0.7 } ]
@@ -98,10 +83,7 @@
     "initial_max_hp": 1900, "hp": 1900, "initial_max_mp": 1400, "mp": 1400,
     "attack": 200, "defense": 190, "speed": 230, "crit": 18,
     "personality": { "name": "優雅的" }, "score": 1240,
-    "skills": [
-      { "name": "信號光束", "level": 8 },
-      { "name": "光牆", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "light_rare", "quantity": 1, "chance": 0.7 } ]
@@ -116,10 +98,7 @@
     "initial_max_hp": 1800, "hp": 1800, "initial_max_mp": 1100, "mp": 1100,
     "attack": 240, "defense": 170, "speed": 250, "crit": 20,
     "personality": { "name": "狡猾的" }, "score": 1280,
-    "skills": [
-      { "name": "惡意追擊", "level": 7 },
-      { "name": "偷盜", "level": 8 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "dark_rare", "quantity": 1, "chance": 0.7 } ]
@@ -134,10 +113,7 @@
     "initial_max_hp": 2100, "hp": 2100, "initial_max_mp": 1300, "mp": 1300,
     "attack": 200, "defense": 200, "speed": 200, "crit": 15,
     "personality": { "name": "善變的" }, "score": 1200,
-    "skills": [
-      { "name": "污泥炸彈", "level": 7 },
-      { "name": "清除之煙", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "poison_rare", "quantity": 1, "chance": 0.7 } ]
@@ -152,10 +128,7 @@
     "initial_max_hp": 1900, "hp": 1900, "initial_max_mp": 1000, "mp": 1000,
     "attack": 180, "defense": 180, "speed": 280, "crit": 18,
     "personality": { "name": "活潑的" }, "score": 1230,
-    "skills": [
-      { "name": "空氣斬", "level": 8 },
-      { "name": "順風", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "wind_rare", "quantity": 1, "chance": 0.7 } ]
@@ -170,10 +143,7 @@
     "initial_max_hp": 2500, "hp": 2500, "initial_max_mp": 500, "mp": 500,
     "attack": 250, "defense": 220, "speed": 180, "crit": 15,
     "personality": { "name": "貪吃的" }, "score": 1240,
-    "skills": [
-      { "name": "泰山壓頂", "level": 7 },
-      { "name": "必殺門牙", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "none_rare", "quantity": 1, "chance": 0.7 } ]
@@ -188,10 +158,7 @@
     "initial_max_hp": 2200, "hp": 2200, "initial_max_mp": 1500, "mp": 1500,
     "attack": 210, "defense": 210, "speed": 210, "crit": 17,
     "personality": { "name": "隨和的" }, "score": 1250,
-    "skills": [
-      { "name": "三角攻擊", "level": 7 },
-      { "name": "鏡面屬性", "level": 7 }
-    ],
+    "skills": [],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
       "random": [ { "type": "dna", "item_pool_id": "mix_rare", "quantity": 1, "chance": 0.7 } ]
