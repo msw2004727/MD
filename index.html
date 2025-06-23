@@ -72,7 +72,7 @@
             <h3 class="modal-header">📢 遊戲官方公告</h3>
             <div class="modal-body">
                 <div id="announcement-ad-banner" style="background-color: var(--bg-slot); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="modals.announcement" alt="廣告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="modals.officialAnnouncement" alt="廣告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">
                 </div>
                 <div id="announcement-content">
                     </div>
@@ -575,8 +575,8 @@
             </div>
             <div class="modal-footer">
                 <button id="confirm-expedition-start-btn" class="button primary" disabled>出發遠征</button>
-                <button class="button secondary" data-modal-id="expedition-team-selection-modal">取消</button>
-            </div>
+                <button class="button secondary modal-close" data-modal-id="expedition-team-selection-modal">取消</button>
+                </div>
         </div>
     </div>
     
@@ -594,8 +594,6 @@
         (function() {
             const gameVersion = '0.4.0.5'; 
 
-            // --- 核心修改處 START ---
-            // 調整 JS 檔案的載入順序
             const jsFiles = [
                 // 1. 核心設定與狀態管理
                 'js/firebase-config.js',
@@ -622,19 +620,18 @@
                 'js/ui-chat.js',
                 'js/ui-mailbox.js',
                 'js/ui-medical.js',
-                'js/ui-adventure.js', // 將 adventure UI 提前
+                'js/ui-adventure.js', 
 
                 // 3. 所有事件處理器 (Handlers)
                 'js/handlers/ui-handlers.js',
                 'js/handlers/game-interaction-handlers.js',
                 'js/handlers/drag-drop-handlers.js',
                 'js/handlers/monster-handlers.js',
-                'js/handlers/adventure-handlers.js', // 將 adventure handler 提前
+                'js/handlers/adventure-handlers.js', 
 
                 // 4. 最後的主進入點
                 'js/main.js'
             ];
-            // --- 核心修改處 END ---
 
             jsFiles.forEach(path => {
                 document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
