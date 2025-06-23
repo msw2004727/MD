@@ -116,7 +116,8 @@ function showTeamSelectionModal(facility) {
         }
         
         if (islandId) {
-            startExpedition(islandId, facility.facilityId, selectedMonsters);
+            // 【修改】呼叫新命名的函式
+            initiateExpedition(islandId, facility.facilityId, selectedMonsters);
         } else {
             showFeedbackModal('錯誤', '無法確定設施所屬的島嶼。');
         }
@@ -128,24 +129,23 @@ function showTeamSelectionModal(facility) {
 
 /**
  * 處理開始遠征的邏輯，呼叫後端 API。
+ * 【修改】函式名稱從 startExpedition 改為 initiateExpedition
  * @param {string} islandId - 島嶼ID
  * @param {string} facilityId - 設施ID
  * @param {Array<string>} teamMonsterIds - 被選中的怪獸ID列表
  */
-async function startExpedition(islandId, facilityId, teamMonsterIds) {
+async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
     hideModal('expedition-team-selection-modal');
     showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
 
     try {
-        // 呼叫 api-client.js 中的函式
+        // 現在這個 startExpedition 是明確地呼叫 api-client.js 中的函式
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
 
         if (result && result.success) {
-            // 成功後刷新玩家資料，以獲取後端產生的 adventure_progress
             await refreshPlayerData();
             
             hideModal('feedback-modal');
-            // 由於地圖介面尚未開發，先顯示成功提示
             showFeedbackModal(
                 '遠征開始！',
                 '您的隊伍已成功出發！地圖探索功能即將開放，敬請期待。',
@@ -154,19 +154,18 @@ async function startExpedition(islandId, facilityId, teamMonsterIds) {
                 [{ text: '太棒了！', class: 'primary' }]
             );
             
-            // 遠征開始後，自動切回第一個頁籤
             const firstTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button');
             if(firstTabButton) {
                 switchTabContent(firstTabButton.dataset.tabTarget, firstTabButton);
             }
 
         } else {
-            // 處理後端回傳的邏輯錯誤
-            throw new Error(result.error || '未知的錯誤導致遠征無法開始。');
+            // 正確處理後端回傳的邏輯錯誤
+            throw new Error(result?.error || '未知的錯誤導致遠征無法開始。');
         }
 
     } catch (error) {
-        // 處理 API 請求失敗或後端回傳的錯誤
+        // 處理 API 請求失敗或後端驗證失敗的錯誤
         hideModal('feedback-modal');
         showFeedbackModal('出發失敗', `無法開始遠征：${error.message}`);
     }
@@ -253,12 +252,4 @@ async function initializeAdventureUI() {
         }
 
         islandContainer.appendChild(facilityList);
-        contentArea.appendChild(islandContainer);
-        wrapper.appendChild(contentArea);
-        adventureTabContent.appendChild(wrapper);
-
-    } catch (error) {
-        console.error("獲取或渲染冒險島資料時發生錯誤:", error);
-        adventureTabContent.innerHTML = `<p class="text-center text-lg text-[var(--text-secondary)] py-10" style="color: var(--danger-color);">錯誤：無法載入冒險島資料。<br>${error.message}</p>`;
-    }
-}
+        contentArea.appendChild(island
