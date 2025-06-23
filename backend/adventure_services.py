@@ -84,10 +84,22 @@ def start_expedition_service(
     expedition_team_status: List[ExpeditionMemberStatus] = []
     player_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
     
+    # --- 核心修改處 START ---
+    # 獲取出戰怪獸的ID
+    deployed_monster_id = player_data.get("selectedMonsterId")
+    # --- 核心修改處 END ---
+
     for monster_id in team_monster_ids:
         monster = player_monsters_map.get(monster_id)
         if not monster:
             return None, f"隊伍中包含了無效的怪獸（ID: {monster_id}）。"
+            
+        # --- 核心修改處 START ---
+        # 新增檢查：怪獸是否為出戰怪獸
+        if monster_id == deployed_monster_id:
+            return None, f"怪獸「{monster.get('nickname')}」正在出戰中，無法參加遠征。"
+        # --- 核心修改處 END ---
+
         if monster.get("farmStatus", {}).get("isTraining"):
             return None, f"怪獸「{monster.get('nickname')}」正在修煉中，無法參加遠征。"
         if monster.get("hp", 0) < monster.get("initial_max_hp", 1) * 0.25:
@@ -187,7 +199,6 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     progress["current_event"] = event_data
     return {"success": True, "event_data": event_data, "updated_progress": progress}
 
-# --- 核心修改處 START ---
 def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     """
     處理玩家通關一層並晉級的邏輯。
@@ -204,7 +215,7 @@ def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     
     progress["current_floor"] += 1
     progress["current_step"] = 0
-    progress["current_event"] = None # 清空當前事件，準備下一層
+    progress["current_event"] = None 
     
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 已通關第 {current_floor} 層，獲得 {gold_reward} 金幣，並前進到第 {progress['current_floor']} 層。")
     
@@ -227,14 +238,12 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     if not current_event:
         return {"success": False, "error": "當前沒有需要回應的事件。"}
 
-    # 查找玩家做出的選擇
     chosen_outcome = None
     for choice in current_event.get("choices", []):
         if choice.get("choice_id") == choice_id:
             outcomes = choice.get("outcomes", [])
             if not outcomes: break
             
-            # 根據權重隨機一個結果
             outcome_pool = [o for o in outcomes if o.get("weight", 0) > 0]
             if not outcome_pool: break
             
@@ -245,7 +254,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     if not chosen_outcome:
         return {"success": False, "error": "無效的選擇或事件格式錯誤。"}
 
-    # 處理結果中的效果
     outcome_story = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
     for effect in chosen_outcome.get("effects", []):
         effect_type = effect.get("effect")
@@ -266,7 +274,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
                 for member in targets_to_affect:
                     key = f"current_{resource}"
-                    # 找到完整怪獸資料以獲取max值
                     full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
                     if full_monster:
                         max_value = full_monster.get(f"initial_max_{resource}", member.get(key, 0))
@@ -282,8 +289,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     item = random.choice(dna_pool)
                     progress.get("adventure_inventory", []).append(item)
     
-    # 清理當前事件，準備下一步
     progress["current_event"] = None
 
     return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
-# --- 核心修改處 END ---
