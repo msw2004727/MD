@@ -6,7 +6,7 @@ import random
 import time
 import json
 import os
-import math # 新增 math 模組
+import math 
 from typing import List, Dict, Optional, Any, Tuple
 
 # 從各自正確的檔案導入模型
@@ -130,6 +130,37 @@ def _load_boss_pool(boss_pool_id: str) -> List[Dict[str, Any]]:
         adventure_logger.error(f"解析BOSS檔案 {boss_pool_id} 時發生錯誤。")
         return []
 
+# --- 核心修改處 START ---
+def _load_event_pool(facility_id: str) -> List[Dict[str, Any]]:
+    """根據設施ID，從對應的JSON檔案載入事件池。"""
+    # 建立設施ID與事件檔案名稱的對應關係
+    event_file_map = {
+        "facility_001": "adventure_events_forest.json",
+        "facility_002": "adventure_events_mine.json",
+        "facility_003": "adventure_events_cave.json",
+        "facility_004": "adventure_events_ruins.json"
+    }
+    
+    event_file_name = event_file_map.get(facility_id)
+    if not event_file_name:
+        adventure_logger.warning(f"找不到設施ID '{facility_id}' 對應的事件檔案。")
+        return []
+
+    try:
+        file_path = os.path.join(os.path.dirname(__file__), 'data', event_file_name)
+        with open(file_path, 'r', encoding='utf-8') as f:
+            events_data = json.load(f)
+        if isinstance(events_data, list):
+            return events_data
+        adventure_logger.error(f"事件檔案 {event_file_name} 格式錯誤，根層級不是列表。")
+        return []
+    except FileNotFoundError:
+        adventure_logger.error(f"找不到指定的事件檔案：{event_file_name}")
+        return []
+    except json.JSONDecodeError:
+        adventure_logger.error(f"解析事件檔案 {event_file_name} 時發生錯誤。")
+        return []
+
 def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家在地圖上推進一個進度的邏輯。
@@ -142,11 +173,13 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
 
     progress["current_step"] += 1
 
+    current_facility_id = progress.get("facility_id")
+
+    # 檢查是否到達樓層終點
     if progress["current_step"] >= progress["total_steps_in_floor"]:
         current_floor = progress.get("current_floor", 1)
         adventure_logger.info(f"玩家已到達樓層終點 (第 {current_floor} 層)，觸發 BOSS 戰。")
         
-        current_facility_id = progress.get("facility_id")
         all_islands = game_configs.get("adventure_islands", [])
         facility_data = None
         for island in all_islands:
@@ -183,9 +216,10 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
         }
         return {"success": True, "event_data": boss_event, "updated_progress": progress}
 
-    all_events = game_configs.get("adventure_events", [])
+    # 如果未到終點，則從對應的事件池抽選一個隨機事件
+    all_events = _load_event_pool(current_facility_id)
     if not all_events:
-        adventure_logger.warning("在遊戲設定中找不到任何冒險事件 (adventure_events.json)，返回一個預設事件。")
+        adventure_logger.warning(f"設施 {current_facility_id} 的事件池為空，返回一個預設事件。")
         default_event = {
             "event_type": "generic", "name": "前進",
             "description": "你們繼續小心翼翼地前進，但似乎沒有發生任何特別的事。",
@@ -203,8 +237,8 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     adventure_logger.info(f"為玩家抽選到事件：{chosen_event.get('name')}")
     
     return {"success": True, "event_data": chosen_event, "updated_progress": progress}
+# --- 核心修改處 END ---
 
-# --- 核心修改處 START ---
 def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     """
     處理玩家通關一層並晉級的邏輯。
@@ -213,22 +247,17 @@ def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
     if not progress or not progress.get("is_active"):
         return {"success": False, "error": "沒有正在進行的遠征，無法結算樓層。"}
 
-    # 計算通關獎勵
     current_floor = progress.get("current_floor", 1)
     gold_reward = 50 + (current_floor * 10)
     
-    # 更新玩家金幣
     player_stats = player_data.get("playerStats", {})
     player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
     
-    # 晉級到下一層
     progress["current_floor"] += 1
-    # 重設步數
     progress["current_step"] = 0
     
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 已通關第 {current_floor} 層，獲得 {gold_reward} 金幣，並前進到第 {progress['current_floor']} 層。")
     
-    # 返回更新後的進度，以便路由層儲存
     return {
         "success": True,
         "message": f"恭喜通關第 {current_floor} 層！獲得 {gold_reward} 金幣獎勵！",
@@ -238,8 +267,6 @@ def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
 def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家對事件做出的選擇，並返回結果。
-    (此為後續步驟的核心函式，目前為預留)
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: {choice_id}...")
     return {"status": "pending_implementation", "message": "事件處理功能開發中。"}
-# --- 核心修改處 END ---
