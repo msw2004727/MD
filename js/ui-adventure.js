@@ -2,6 +2,65 @@
 // 專門負責渲染「冒險島」的所有UI。
 
 /**
+ * 根據後端傳來的地圖資料，渲染冒Amour地圖。
+ * @param {object} adventureProgress - 包含地圖資料的完整冒險進度物件。
+ */
+function renderAdventureMap(adventureProgress) {
+    const modal = document.getElementById('adventure-map-modal');
+    const nodesContainer = document.getElementById('adventure-map-nodes-container');
+    const canvas = document.getElementById('adventure-map-canvas');
+    const title = document.getElementById('adventure-map-title');
+
+    if (!modal || !nodesContainer || !canvas || !title) {
+        console.error("冒險地圖的元件未找到。");
+        return;
+    }
+
+    const facilityId = adventureProgress.facility_id;
+    let facilityName = facilityId;
+    // 從遊戲設定中查找設施名稱
+    const facilityData = gameState.gameConfigs?.adventure_islands?.[0]?.facilities?.find(f => f.facilityId === facilityId);
+    if (facilityData) {
+        facilityName = facilityData.name;
+    }
+    title.textContent = `探索地圖 - ${facilityName}`;
+    
+    // 清空舊的地圖節點
+    nodesContainer.innerHTML = '';
+    const ctx = canvas.getContext('2d');
+    
+    const mapData = adventureProgress.map_data;
+    const playerStartPos = mapData.player_start_pos;
+    const nodes = mapData.nodes;
+
+    const GRID_SIZE = 30; // 每個格子的像素大小
+    canvas.width = 30 * GRID_SIZE;
+    canvas.height = 30 * GRID_SIZE;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 渲染所有節點圖示
+    nodes.forEach(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'map-node';
+        nodeEl.textContent = node.display_char;
+        nodeEl.style.gridColumnStart = node.position.x + 1;
+        nodeEl.style.gridRowStart = node.position.y + 1;
+        nodesContainer.appendChild(nodeEl);
+    });
+
+    // 渲染玩家圖示
+    const playerToken = document.createElement('div');
+    playerToken.className = 'player-token';
+    playerToken.textContent = '您';
+    playerToken.style.left = `${playerStartPos.x * GRID_SIZE}px`;
+    playerToken.style.top = `${playerStartPos.y * GRID_SIZE}px`;
+    nodesContainer.appendChild(playerToken);
+
+    showModal('adventure-map-modal');
+}
+
+
+/**
  * 根據點擊的設施，顯示隊伍選擇彈窗。
  * @param {object} facility - 被點擊的設施的資料物件。
  */
@@ -105,7 +164,6 @@ function showTeamSelectionModal(facility) {
 
     // 綁定確認按鈕的事件
     confirmBtn.onclick = () => {
-        // 從設施資料中找到對應的島嶼ID
         const islandsData = gameState.gameConfigs.adventure_islands || [];
         let islandId = null;
         for (const island of islandsData) {
@@ -122,13 +180,11 @@ function showTeamSelectionModal(facility) {
         }
     };
 
-    // 顯示彈窗
     showModal('expedition-team-selection-modal');
 }
 
 /**
  * 處理開始遠征的邏輯，呼叫後端 API。
- * 函式名稱從 startExpedition 改為 initiateExpedition 以避免衝突
  * @param {string} islandId - 島嶼ID
  * @param {string} facilityId - 設施ID
  * @param {Array<string>} teamMonsterIds - 被選中的怪獸ID列表
@@ -138,28 +194,16 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
     showFeedbackModal('準備出發...', `正在為「${facilityId}」組建遠征隊...`, true);
 
     try {
-        // 呼叫 api-client.js 中的 startExpedition 函式
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
 
         if (result && result.success) {
             await refreshPlayerData();
-            
             hideModal('feedback-modal');
-            showFeedbackModal(
-                '遠征開始！',
-                '您的隊伍已成功出發！地圖探索功能即將開放，敬請期待。',
-                false,
-                null,
-                [{ text: '太棒了！', class: 'primary' }]
-            );
             
-            const firstTabButton = DOMElements.dnaFarmTabs.querySelector('.tab-button');
-            if(firstTabButton) {
-                switchTabContent(firstTabButton.dataset.tabTarget, firstTabButton);
-            }
+            // 成功後，呼叫渲染地圖的函式
+            renderAdventureMap(result.adventure_progress);
 
         } else {
-            // 現在可以正確處理後端回傳的錯誤
             throw new Error(result?.error || '未知的錯誤導致遠征無法開始。');
         }
 
@@ -180,6 +224,15 @@ async function initializeAdventureUI() {
         return;
     }
     
+    // 檢查玩家是否正在遠征中
+    const adventureProgress = gameState.playerData?.adventure_progress;
+    if (adventureProgress && adventureProgress.is_active) {
+        // 如果正在遠征，直接顯示地圖
+        renderAdventureMap(adventureProgress);
+        return;
+    }
+    
+    // 如果沒有在遠征，則顯示島嶼選擇列表
     adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">正在從遠方島嶼獲取情報...</p>';
 
     try {
@@ -194,7 +247,6 @@ async function initializeAdventureUI() {
         const island = islandsData[0];
         const facilities = island.facilities || [];
         
-        // 將島嶼資料存到 gameState 中，以便後續使用
         if (gameState.gameConfigs) {
             gameState.gameConfigs.adventure_islands = islandsData;
         }
