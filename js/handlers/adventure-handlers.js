@@ -17,17 +17,21 @@ function handleFacilityChallengeClick(event) {
 
     const islandsData = gameState.gameConfigs.adventure_islands || [];
     let facilityData = null;
+    let islandId = null;
 
     for (const island of islandsData) {
         if (island.facilities && Array.isArray(island.facilities)) {
             facilityData = island.facilities.find(fac => fac.facilityId === facilityId);
-            if (facilityData) break;
+            if (facilityData) {
+                islandId = island.islandId;
+                break;
+            }
         }
     }
 
     if (facilityData) {
         // 呼叫在 ui-adventure.js 中新增的函式來顯示隊伍選擇彈窗
-        showTeamSelectionModal(facilityData);
+        showTeamSelectionModal(facilityData, islandId);
     } else {
         console.error(`在遊戲設定中找不到 ID 為 ${facilityId} 的設施資料。`);
         showFeedbackModal('錯誤', '找不到該設施的詳細資料。');
@@ -71,6 +75,55 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
 }
 
 
+// --- 核心修改處 START ---
+/**
+ * 新增函式：處理點擊「繼續前進」按鈕的邏輯
+ */
+async function handleAdvanceClick() {
+    const advanceBtn = document.getElementById('adventure-advance-btn');
+    if (!advanceBtn || advanceBtn.disabled) return;
+
+    advanceBtn.disabled = true;
+    advanceBtn.textContent = '前進中...';
+
+    try {
+        const result = await advanceAdventure();
+        if (result && result.success && result.event_data) {
+            const eventData = result.event_data;
+            
+            // 更新事件描述
+            const descriptionEl = document.getElementById('adventure-event-description');
+            if (descriptionEl) {
+                descriptionEl.innerHTML = `<p>${eventData.description || '前方一片迷霧...'}</p>`;
+            }
+
+            // 更新選項按鈕
+            const choicesEl = document.getElementById('adventure-event-choices');
+            if (choicesEl) {
+                choicesEl.innerHTML = (eventData.choices || []).map(choice => 
+                    `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
+                ).join('');
+            }
+            // 更新進度條
+            if (gameState.playerData?.adventure_progress) {
+                 gameState.playerData.adventure_progress.current_step += 1;
+                 renderAdventureProgressUI(gameState.playerData.adventure_progress);
+            }
+            
+        } else {
+            throw new Error(result?.error || '無法獲取下一個事件。');
+        }
+    } catch (error) {
+        console.error("推進冒險失敗:", error);
+        showFeedbackModal('推進失敗', error.message);
+    } finally {
+        if(advanceBtn) {
+            advanceBtn.disabled = false;
+            advanceBtn.textContent = '繼續前進';
+        }
+    }
+}
+
 /**
  * 初始化冒險島所有功能的事件監聽器。
  */
@@ -78,18 +131,23 @@ function initializeAdventureHandlers() {
     const adventureContainer = DOMElements.guildContent;
 
     if (adventureContainer) {
-        // 使用事件委派，將監聽器綁定在父容器上，以處理所有設施卡片的點擊
+        // 使用事件委派，將監聽器綁定在父容器上
         adventureContainer.addEventListener('click', (event) => {
             const challengeButton = event.target.closest('.challenge-facility-btn');
+            const advanceButton = event.target.closest('#adventure-advance-btn');
             
             if (challengeButton) {
-                // 如果點擊的是挑戰按鈕，則呼叫對應的處理函式
+                // 如果點擊的是挑戰按鈕
                 handleFacilityChallengeClick(event);
+            } else if (advanceButton) {
+                // 如果點擊的是繼續前進按鈕
+                handleAdvanceClick();
             }
         });
-        console.log("冒險島事件處理器已成功初始化，並監聽挑戰按鈕。");
+        console.log("冒險島事件處理器已成功初始化。");
     } else {
-        // 這是個後備機制，以防 handler 比 ui.js 先載入
+        // 後備機制
         setTimeout(initializeAdventureHandlers, 100);
     }
 }
+// --- 核心修改處 END ---
