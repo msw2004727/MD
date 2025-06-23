@@ -1,8 +1,6 @@
 // js/ui-battle-modals.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
-// --- 核心修改處 START ---
-// 修改函式簽名，直接接收戰鬥雙方的怪獸資料
 function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData) {
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
@@ -19,13 +17,11 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         return;
     }
     
-    // 不再從全域 gameState 讀取，而是直接使用傳入的參數
     if (!playerMonsterData || !opponentMonsterData) {
         DOMElements.battleLogArea.innerHTML = '<p>遺失戰鬥怪獸資料，無法呈現戰報。</p>';
         showModal('battle-log-modal');
         return;
     }
-    // --- 核心修改處 END ---
 
     const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
     const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
@@ -47,13 +43,25 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
 
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
+        // --- 核心修改處 START ---
         const replaceName = (fullNickname, shortName, rarity) => {
             const monRarityKey = rarity ? (rarityMap[rarity] || 'common') : 'common';
             const monColorClass = `text-rarity-${monRarityKey}`;
-            const searchRegex = new RegExp(fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
+            
+            // 將特殊字元進行轉義，以確保正規表達式能正常運作
+            const escapedNickname = fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+            
+            // 建立一個新的正規表達式，它可以匹配 '**名稱**' 或 '名稱' 這兩種格式
+            // (?: ... ) 是一個非捕獲組，? 表示前面的組（也就是 **）出現 0 次或 1 次
+            const searchRegex = new RegExp(`(?:\\*\\*)?${escapedNickname}(?:\\*\\*)?`, 'g');
+            
+            // 替換內容維持不變，就是帶有顏色和粗體的 span 標籤
             const replacement = `<span class="${monColorClass}" style="font-weight: bold;">${shortName}</span>`;
+            
+            // 執行替換
             styledText = styledText.replace(searchRegex, replacement);
         };
+        // --- 核心修改處 END ---
 
         if (playerMon && playerMon.nickname) {
             replaceName(playerMon.nickname, playerDisplayName, playerMon.rarity);
@@ -76,7 +84,7 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
                 const skillLevel = skillInfo.level || 1;
                 const levelTag = `<span class="text-xs opacity-75 mr-1">Lv${skillLevel}</span>`;
                 
-                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*(?!<\\/a>|<\\/span>|<\\/strong>)`, 'g');
+                const regex = new RegExp(`(?![^<]*>)(?<!<a[^>]*?>)(?<!<span[^>]*?>|<strong>)\\*\\*(${skillName})\\*\\*`, 'g');
                 const replacement = `<a href="#" class="skill-name-link ${skillColorClass}" data-skill-name="${skillName}" style="text-decoration: none;">${levelTag}<strong>$1</strong></a>`;
                 
                 styledText = styledText.replace(regex, replacement);
