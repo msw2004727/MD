@@ -82,7 +82,7 @@
 .monster-selection-stats span { display: inline-block; margin-right: 0.75rem; }
 
 
-/* --- 【新增】遠征進度 UI 樣式 --- */
+/* --- 遠征進度 UI 樣式 --- */
 .adventure-progress-container {
     width: 100%;
     display: flex;
@@ -164,6 +164,21 @@
     border-radius: 6px;
 }
 
+.team-member-card .name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.captain-medal {
+    font-size: 0.9rem;
+    line-height: 1;
+    color: gold;
+    text-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
 .team-member-card .avatar {
     width: 40px;
     height: 40px;
@@ -176,11 +191,6 @@
 
 .team-member-card .info {
     flex-grow: 1;
-}
-
-.team-member-card .name {
-    font-size: 0.9rem;
-    font-weight: 500;
 }
 
 .adventure-event-panel {
@@ -206,7 +216,11 @@
     gap: 0.75rem;
 }
 
+/* --- 核心修改處 START --- */
 .adventure-actions {
     margin-top: 1rem;
-    text-align: center;
+    display: flex; /* 使用 flexbox 排列 */
+    justify-content: center; /* 水平置中 */
+    gap: 1rem; /* 按鈕之間的間距 */
 }
+/* --- 核心修改處 END --- */
