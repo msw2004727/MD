@@ -228,6 +228,16 @@
     transition: transform 0.2s;
 }
 
+/* --- 核心修改處 START --- */
+/* 為可點擊的節點新增手形游標 */
+.map-node.clickable {
+    cursor: pointer;
+}
+.map-node.clickable:hover {
+    transform: scale(1.2);
+}
+/* --- 核心修改處 END --- */
+
 /* 玩家圖示 */
 .player-token {
     width: 28px;
