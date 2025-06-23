@@ -1,75 +1,44 @@
 [
   {
     "islandId": "beginner_island_01",
-    "name": "初始之島",
+    "islandName": "初始之島",
     "description": "一切冒險開始的地方，充滿了基礎的挑戰與機遇。",
-    "layout": "3x3",
     "backgrounds": {
       "wide": "https://github.com/msw2004727/MD/blob/main/images/islands005.png?raw=true",
       "narrow": "https://github.com/msw2004727/MD/blob/main/images/islands004.png?raw=true"
     },
-    "nodes": [
-      { 
-        "coords": "(0,0)", 
-        "type": "start", 
-        "name": "起始營地",
-        "description": "安全的出發點，可以在此整備隊伍。"
+    "facilities": [
+      {
+        "facilityId": "facility_001",
+        "name": "新手森林",
+        "description": "充滿了相對溫和的怪獸，是新手訓練師磨練技巧的最佳場所。",
+        "cost": 10,
+        "level_range": [1, 5],
+        "loot_table_id": "loot_forest_common"
       },
-      { 
-        "coords": "(0,1)", 
-        "type": "combat",
-        "name": "草原遭遇戰",
-        "description": "似乎有什麼東西在草叢裡移動...",
-        "level_range": [1, 5] 
+      {
+        "facilityId": "facility_002",
+        "name": "廢棄礦坑",
+        "description": "黑暗的礦坑深處似乎潛藏著什麼，傳聞有稀有的金屬系與土系怪獸出沒。",
+        "cost": 25,
+        "level_range": [8, 15],
+        "loot_table_id": "loot_mine_rare"
       },
-      { 
-        "coords": "(0,2)", 
-        "type": "treasure", 
-        "name": "閃光的石頭",
-        "description": "一塊石頭底下似乎埋藏著什麼好東西。",
-        "rewards": ["dna_common_pack_1"]
+      {
+        "facilityId": "facility_003",
+        "name": "潮汐洞穴",
+        "description": "隨著潮水漲落而變化的洞穴，需要把握時機才能深入探索。這裡的水系怪獸十分強大。",
+        "cost": 40,
+        "level_range": [12, 20],
+        "loot_table_id": "loot_cave_rare"
       },
-      { 
-        "coords": "(1,0)", 
-        "type": "combat",
-        "name": "森林邊緣",
-        "description": "森林的入口處，時常有迷路的怪獸出沒。",
-        "level_range": [3, 7] 
-      },
-      { 
-        "coords": "(1,1)", 
-        "type": "fountain", 
-        "name": "寧靜之泉",
-        "description": "喝下泉水似乎能治癒傷口。",
-        "effect": "heal_hp_20_percent"
-      },
-      { 
-        "coords": "(1,2)", 
-        "type": "elite", 
-        "name": "精英挑戰",
-        "description": "一個強大的身影擋住了去路！",
-        "level_range": [8, 10]
-      },
-      { 
-        "coords": "(2,0)", 
-        "type": "merchant",
-        "name": "神秘商人",
-        "description": "一位神秘的商人，似乎有稀有的貨物。",
-        "items": ["dna_rare_pack_1"]
-      },
-      { 
-        "coords": "(2,1)", 
-        "type": "combat", 
-        "name": "洞穴入口",
-        "description": "黑暗的洞穴中傳來了奇怪的聲響。",
-        "level_range": [5, 9]
-      },
-      { 
-        "coords": "(2,2)", 
-        "type": "boss", 
-        "name": "島嶼主宰",
-        "description": "這座島的統治者現身了！",
-        "boss_id": "boss_island_01"
+      {
+        "facilityId": "facility_004",
+        "name": "古代遺跡",
+        "description": "被時間遺忘的神秘遺跡，據說守護者是混亂的古代兵器。",
+        "cost": 100,
+        "level_range": [25, 35],
+        "loot_table_id": "loot_ruin_elite"
       }
     ]
   }
