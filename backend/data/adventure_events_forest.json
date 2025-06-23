@@ -1,0 +1,470 @@
+[
+  {
+    "event_id": "FOREST_001",
+    "event_type": "encounter",
+    "name": "迷路的螢火蟲",
+    "description_template": "{monster_name}看到一隻小小的螢火蟲在原地打轉，似乎是迷路了，發出微弱的光芒。",
+    "choices": [
+      {
+        "choice_id": "FOREST_001_A",
+        "text": "引導它找到回家的路",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 80,
+            "story_fragment": "在你們的幫助下，螢火蟲找到了回家的方向。作為感謝，它留下了一些閃閃發光的光塵。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "light_common", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "你們花了一些時間引導螢火蟲，牠高興地飛走了，但沒有留下任何東西。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_001_B",
+        "text": "試圖抓住它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "你以迅雷不及掩耳的速度抓住了螢火蟲，從它身上獲得了微弱的能量。",
+            "effects": [{ "effect": "change_resource", "resource": "mp", "target": "team_random_one", "amount": 10 }]
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "螢火蟲被嚇了一跳，迅速飛走了，什麼也沒留下。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "在追捕過程中，{monster_name}不小心被樹根絆倒，摔了一跤。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -5 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_002",
+    "event_type": "resource",
+    "name": "清澈的溪流",
+    "description_template": "你們發現了一條清澈見底的小溪，溪水冰涼，{monster_name}看起來很想喝水。",
+    "choices": [
+      {
+        "choice_id": "FOREST_002_A",
+        "text": "讓隊伍全員喝水休息",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 80,
+            "story_fragment": "清涼的溪水洗去了隊伍的疲憊，大家感到精神煥發。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 20 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "溪水很舒服，但你們休息了太久，稍微耽擱了行程。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_002_B",
+        "text": "在溪邊尋找水屬性DNA",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "你們在岸邊的石頭下，找到了一塊被水沖刷得十分圓潤的DNA碎片。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "water_common", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "你們找了半天，但除了漂亮的石頭外一無所獲。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "在尋找時，一隻螃蟹夾了{monster_name}的腳一下！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_003",
+    "event_type": "choice_dilemma",
+    "name": "奇怪的果實",
+    "description_template": "{monster_name}發現一棵奇怪的樹，上面結著一顆看起來很好吃，但又散發著古怪氣味的果實。",
+    "choices": [
+      {
+        "choice_id": "FOREST_003_A",
+        "text": "讓怪獸吃掉它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "果實意外地美味！{monster_name}吃完後感覺力量湧現！",
+            "effects": [{ "effect": "apply_temp_buff", "stat": "attack", "amount": 10, "duration": 3 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "果實味道很怪，不好吃也不難吃，什麼也沒發生。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "哎呀！果實有毒！{monster_name}吃完後肚子痛了起來。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "member_who_chose", "amount": -20 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_003_B",
+        "text": "無視它，繼續前進",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "你們剛走開，一隻鳥飛來吃了果實，結果立刻中毒從樹上掉了下來，你們撿到了一些金幣。",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 15 }]
+          },
+          {
+            "type": "neutral", "weight": 90,
+            "story_fragment": "保險起見，你們沒有碰那顆奇怪的果實。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_004",
+    "event_type": "story",
+    "name": "古老的塗鴉",
+    "description_template": "你們在一塊巨大的岩石上，發現了一些年代久遠的塗鴉，描繪著古代怪獸戰鬥的場景。",
+    "choices": [
+      {
+        "choice_id": "FOREST_004_A",
+        "text": "仔細研究",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "從古老的畫作中，你們領悟了戰鬥的真諦，全隊的攻擊力都暫時提升了！",
+            "effects": [{ "effect": "apply_temp_buff", "stat": "attack", "amount": 5, "duration": 2 }]
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "雖然看不懂文字，但從圖畫中，{monster_name}似乎領悟到了一些戰鬥的訣竅。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_004_B",
+        "text": "不感興趣，繼續走",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們對這些塗鴉不感興趣，繼續踏上了旅程。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_005",
+    "event_type": "puzzle",
+    "name": "擋路的藤蔓",
+    "description_template": "前方的道路被茂密的荊棘藤蔓擋住了，看起來很難通過。",
+    "choices": [
+      {
+        "choice_id": "FOREST_005_A",
+        "text": "用火燒出一條路",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 80,
+            "story_fragment": "火焰很有效地燒開了藤蔓，你們順利通過了。",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 10,
+            "story_fragment": "火焰燒開了藤蔓，但也引來了森林管理員的警告。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "火勢有點失控，{monster_name}被燻得灰頭土臉。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_005_B",
+        "text": "用力量硬闖",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "力量最強的怪獸爆發神力，輕鬆清開了道路！",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "隊伍中力量最強的怪獸費了九牛二虎之力才清開道路，消耗了不少體力。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest", "amount": -10 }]
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "藤蔓上的尖刺劃傷了大家。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -5 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_006",
+    "event_type": "encounter",
+    "name": "生氣的松鼠",
+    "description_template": "{monster_name}不小心踩到了一顆橡實，一隻憤怒的松鼠從樹上跳下來，對你們齜牙咧嘴。",
+    "choices": [
+      {
+        "choice_id": "FOREST_006_A",
+        "text": "把橡實還給它並道歉",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "松鼠接過橡實，高興地吱吱叫了兩聲，然後從它的秘密寶庫裡丟給你們一枚閃亮的金幣作為交換。",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 10 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "松鼠拿回橡實，氣沖沖地跑回樹上去了。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_006_B",
+        "text": "嚇走它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "你們發出吼叫，松鼠嚇得一溜煙跑掉了。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "松鼠被激怒了，呼朋引伴從樹上丟下大量果子砸你們！",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_007",
+    "event_type": "resource",
+    "name": "發光的蘑菇",
+    "description_template": "在一個陰暗的樹洞裡，你們發現了一叢散發著柔和光芒的蘑菇。",
+    "choices": [
+      {
+        "choice_id": "FOREST_007_A",
+        "text": "採集蘑菇",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "這些蘑菇蘊含著奇妙的能量，你們感覺魔力恢復了。",
+            "effects": [{ "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 15 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "你們採集了蘑菇，但不知道有什麼用，只好先收起來。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "蘑菇的孢子讓大家打了好幾個噴嚏，感覺有點頭暈。",
+            "effects": [{ "effect": "apply_temp_debuff", "stat": "accuracy", "amount": -5, "duration": 2 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_007_B",
+        "text": "不碰它們",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們只是欣賞了一下這奇妙的景觀，便繼續前進了。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_008",
+    "event_type": "story",
+    "name": "林間的風",
+    "description_template": "一陣涼爽的風吹過森林，帶來了遠方的花香和泥土的氣息。{monster_name}深深地吸了一口氣。",
+    "choices": [
+      {
+        "choice_id": "FOREST_008_A",
+        "text": "停下來享受片刻",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 70,
+            "story_fragment": "這片刻的寧靜讓隊伍的心情變得很好，暫時提升了全隊的速度！",
+            "effects": [{ "effect": "apply_temp_buff", "stat": "speed", "amount": 10, "duration": 2 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "你們享受了一下涼風，感覺很舒服。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_008_B",
+        "text": "趕路要緊",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們沒有停下腳步，繼續專心趕路。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_009",
+    "event_type": "encounter",
+    "name": "友善的樹精",
+    "description_template": "一棵會走路的樹向你們揮手，它似乎想和{monster_name}交朋友。",
+    "choices": [
+      {
+        "choice_id": "FOREST_009_A",
+        "text": "友好地回應",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 70,
+            "story_fragment": "樹精很高興，它搖晃樹枝，掉下一些新鮮的漿果給你們吃，恢復了隊伍的體力。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 25 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "你們和樹精愉快地聊了一會兒，然後互相道別。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_009_B",
+        "text": "保持警惕，準備戰鬥",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 80,
+            "story_fragment": "樹精看到你們充滿戒心，聳了聳肩，轉身走回了森林深處。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "你們的敵意惹惱了樹精，它用藤蔓抽打了你們一下才離開。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -15 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "FOREST_010",
+    "event_type": "trap",
+    "name": "偽裝的捕蠅草",
+    "description_template": "{monster_name}被一朵鮮豔的花朵吸引，但靠近一看才發現那是一株偽裝起來的巨大捕蠅草！",
+    "choices": [
+      {
+        "choice_id": "FOREST_010_A",
+        "text": "迅速後退",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "你們不僅成功後退，還引誘捕蠅草咬住了旁邊的石頭，趁機獲得了它根部的養分。",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "wood_common", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 70,
+            "story_fragment": "你們及時發現了危險，迅速後退，避開了攻擊。",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "FOREST_010_B",
+        "text": "攻擊它！",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 20,
+            "story_fragment": "你們在捕蠅草反應過來前就發動了攻擊，成功將其擊敗！",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "你們和捕蠅草纏鬥了一番，最終它縮回了地下。",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "捕蠅草的反應更快，它用酸性汁液噴了你們一身！",
+            "effects": [{ "effect": "apply_temp_debuff", "stat": "defense", "amount": -10, "duration": 2 }]
+          }
+        ]
+      }
+    ]
+  }
+]
