@@ -46,9 +46,7 @@ function handleFacilityChallengeClick(event) {
 async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
     hideModal('expedition-team-selection-modal');
     
-    // --- 核心修改處 START ---
-    // 從 gameState 中查找設施的中文名稱
-    let facilityName = facilityId; // 如果找不到，則退回顯示ID
+    let facilityName = facilityId; 
     const islandsData = gameState.gameConfigs?.adventure_islands || [];
     for (const island of islandsData) {
         const facility = island.facilities?.find(fac => fac.facilityId === facilityId);
@@ -57,9 +55,7 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
             break;
         }
     }
-    // 使用中文名稱來顯示提示訊息
     showFeedbackModal('準備出發...', `正在為「${facilityName}」組建遠征隊...`, true);
-    // --- 核心修改處 END ---
 
     try {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
@@ -240,23 +236,57 @@ function initializeAdventureHandlers() {
     const adventureContainer = DOMElements.guildContent;
 
     if (adventureContainer) {
-        adventureContainer.addEventListener('click', (event) => {
+        // --- 核心修改處 START ---
+        // 將事件監聽器改為異步函式以支援 await
+        adventureContainer.addEventListener('click', async (event) => {
             const challengeButton = event.target.closest('.challenge-facility-btn');
             const advanceButton = event.target.closest('#adventure-advance-btn');
             const choiceButton = event.target.closest('.adventure-choice-btn');
             const abandonButton = event.target.closest('#adventure-abandon-btn');
+            const switchCaptainButton = event.target.closest('.switch-captain-btn');
 
             if (challengeButton) {
                 handleFacilityChallengeClick(event);
             } else if (advanceButton) {
-                handleAdvanceClick();
+                await handleAdvanceClick();
             } else if (choiceButton) {
-                handleAdventureChoiceClick(choiceButton);
-            } 
-            else if (abandonButton) {
-                handleAbandonAdventure();
+                await handleAdventureChoiceClick(choiceButton);
+            } else if (abandonButton) {
+                await handleAbandonAdventure();
+            } else if (switchCaptainButton) {
+                // 新增：處理切換隊長按鈕的點擊
+                const monsterIdToPromote = switchCaptainButton.dataset.monsterId;
+                if (!monsterIdToPromote) return;
+
+                const adventureProgress = gameState.playerData?.adventure_progress;
+                if (!adventureProgress || !adventureProgress.is_active) return;
+
+                const team = adventureProgress.expedition_team;
+                const memberIndex = team.findIndex(member => member.monster_id === monsterIdToPromote);
+
+                if (memberIndex > 0) { // 確保不是點擊隊長自己
+                    switchCaptainButton.disabled = true;
+
+                    // 重新排序隊伍陣列，將被點擊的成員移到最前面
+                    const [memberToPromote] = team.splice(memberIndex, 1);
+                    team.unshift(memberToPromote);
+
+                    // 重新渲染UI以立即反映變更
+                    renderAdventureProgressUI(adventureProgress);
+
+                    // 儲存更新後的隊伍順序到後端
+                    try {
+                        await savePlayerData(gameState.playerId, gameState.playerData);
+                        console.log(`遠征隊隊長已更換為 ${monsterIdToPromote} 並成功儲存。`);
+                    } catch (error) {
+                        console.error("儲存新隊長順序失敗:", error);
+                        // 可選：如果儲存失敗，可以在此處將隊伍順序還原並提示使用者
+                        showFeedbackModal('錯誤', '更換隊長失敗，請稍後再試。');
+                    }
+                }
             }
         });
+        // --- 核心修改處 END ---
         console.log("冒險島事件處理器已成功初始化。");
     } else {
         setTimeout(initializeAdventureHandlers, 100);
