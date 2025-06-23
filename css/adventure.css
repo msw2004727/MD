@@ -215,10 +215,8 @@
     position: absolute;
     top: 0;
     left: 0;
-    /* --- 核心修改處 START --- */
-    z-index: 2; /* 將節點(格子)圖層移到上方，確保能被點擊 */
-    /* --- 核心修改處 END --- */
-    pointer-events: none; /* 預設讓整個容器都穿透點擊 */
+    z-index: 2; /* 確保節點(格子)圖層在上方 */
+    /* pointer-events: none; <-- 核心修改處：移除此行 */
 }
 
 /* Canvas 的樣式 */
@@ -226,10 +224,8 @@
     position: absolute;
     top: 0;
     left: 0;
-    /* --- 核心修改處 START --- */
-    z-index: 1; /* 將畫布圖層移到下方，作為背景繪製路徑 */
-    /* --- 核心修改處 END --- */
-    pointer-events: none; /* 讓滑鼠點擊可以穿透畫布，點到下方的節點 */
+    z-index: 1; /* 確保畫布圖層在下方 */
+    pointer-events: none; 
 }
 
 
