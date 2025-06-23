@@ -7,13 +7,36 @@ from flask import Blueprint, jsonify, request
 # 從專案的其他模組導入
 from .MD_routes import _get_authenticated_user_id
 from .player_services import get_player_data_service, save_player_data_service
-from .adventure_services import start_expedition_service, move_on_adventure_map_service, handle_node_event_service
+# --- 核心修改處 START ---
+from .adventure_services import start_expedition_service, move_on_adventure_map_service, handle_node_event_service, get_all_islands_service
+# --- 核心修改處 END ---
 
 # 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
 adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure')
 
 # 建立此路由專用的日誌記錄器
 adventure_routes_logger = logging.getLogger(__name__)
+
+
+# --- 核心修改處 START ---
+@adventure_bp.route('/islands', methods=['GET'])
+def get_islands_route():
+    """
+    獲取所有冒險島的靜態設定資料。
+    這是一個公開的 API，任何人都可以查看。
+    """
+    adventure_routes_logger.info("收到獲取所有冒險島資料的請求。")
+    try:
+        islands_data = get_all_islands_service()
+        if not islands_data:
+             # 如果服務層返回空列表，表示找不到檔案或檔案為空
+             return jsonify({"error": "找不到冒險島資料或資料為空。"}), 404
+        
+        return jsonify(islands_data), 200
+    except Exception as e:
+        adventure_routes_logger.error(f"獲取冒險島資料時在路由層發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "伺服器內部錯誤，無法獲取冒險島資料。"}), 500
+# --- 核心修改處 END ---
 
 
 @adventure_bp.route('/start', methods=['POST'])
