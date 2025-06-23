@@ -70,7 +70,9 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
         }
     }
 
-    gameState.battleTargetMonster = finalOpponent;
+    // --- 核心修改處 START ---
+    // 移除對 gameState.battleTargetMonster 的依賴
+    // gameState.battleTargetMonster = finalOpponent; 
 
     showConfirmationModal(
         confirmationTitle,
@@ -88,21 +90,16 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
                     challenged_rank: rankToChallenge
                 });
 
-                // --- 核心修改處 START ---
-                // 戰鬥結束後，不再手動處理回傳的資料，
-                // 而是直接呼叫統一的排行榜刷新函式，它會處理所有後續的資料獲取和渲染。
-                await refreshPlayerData(); // 先刷新一次玩家資料
-                await handleMonsterLeaderboardClick(); // 重新載入並渲染整個排行榜+冠軍殿堂
+                await refreshPlayerData(); 
+                await handleMonsterLeaderboardClick(); 
                 
-                // 隱藏載入中彈窗，並顯示戰報
                 hideModal('feedback-modal');
-                showBattleLogModal(response.battle_result);
+                // 直接將 playerMonster 和 finalOpponent 傳入函式
+                showBattleLogModal(response.battle_result, playerMonster, finalOpponent);
 
-                // 檢查是否有新稱號 (此函式現在只負責彈窗，不獲取資料)
                 if (response.battle_result && typeof checkAndShowNewTitleModal === 'function') {
                     checkAndShowNewTitleModal(response.battle_result); 
                 }
-                // --- 核心修改處 END ---
 
             } catch (battleError) {
                 hideModal('feedback-modal');
