@@ -79,10 +79,11 @@ function showTeamSelectionModal(facility, islandId) {
             }
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
 
+            // --- 核心修改處 START ---
+            // 移除了顯示等級的 <span> 元素
             card.innerHTML = `
                 <div class="monster-selection-card-header">
                     <span class="text-rarity-${(monster.rarity || 'common').toLowerCase()}">${getMonsterDisplayName(monster, gameState.gameConfigs)}</span>
-                    <span class="text-sm">Lv.${monster.level || 1}</span>
                 </div>
                 <div class="monster-selection-card-body">
                     <div class="monster-selection-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>
@@ -96,6 +97,7 @@ function showTeamSelectionModal(facility, islandId) {
                     </div>
                 </div>
             `;
+            // --- 核心修改處 END ---
 
             if (!isDisabled) {
                 card.addEventListener('click', () => {
@@ -329,8 +331,6 @@ async function initializeAdventureUI() {
             facilities.forEach(facility => {
                 const card = document.createElement('div');
                 card.className = 'adventure-facility-card';
-                // --- 核心修改處 START ---
-                // 在 .facility-card-footer 中加入新的排行榜按鈕
                 card.innerHTML = `
                     <div class="facility-card-header">
                         <h4 class="facility-title">${facility.name || '未知設施'}</h4>
@@ -344,7 +344,6 @@ async function initializeAdventureUI() {
                         <button class="button primary challenge-facility-btn" data-facility-id="${facility.facilityId}">挑戰</button>
                     </div>
                 `;
-                // --- 核心修改處 END ---
                 facilityList.appendChild(card);
             });
         } else {
