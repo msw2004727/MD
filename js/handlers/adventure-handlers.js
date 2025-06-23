@@ -30,7 +30,6 @@ function handleFacilityChallengeClick(event) {
     }
 
     if (facilityData) {
-        // 呼叫在 ui-adventure.js 中新增的函式來顯示隊伍選擇彈窗
         showTeamSelectionModal(facilityData, islandId);
     } else {
         console.error(`在遊戲設定中找不到 ID 為 ${facilityId} 的設施資料。`);
@@ -52,18 +51,12 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
 
         if (result && result.success) {
-            // 更新本地的 adventure_progress 狀態
             if (gameState.playerData) {
                 gameState.playerData.adventure_progress = result.adventure_progress;
             }
-            // 重新整理一次玩家資料，確保金幣等狀態同步
             await refreshPlayerData();
-
             hideModal('feedback-modal');
-            
-            // 呼叫 UI 函式渲染遠征畫面
             renderAdventureProgressUI(result.adventure_progress);
-
         } else {
             throw new Error(result?.error || '未知的錯誤導致遠征無法開始。');
         }
@@ -74,10 +67,8 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
     }
 }
 
-
-// --- 核心修改處 START ---
 /**
- * 新增函式：處理點擊「繼續前進」按鈕的邏輯
+ * 處理點擊「繼續前進」按鈕的邏輯
  */
 async function handleAdvanceClick() {
     const advanceBtn = document.getElementById('adventure-advance-btn');
@@ -91,19 +82,21 @@ async function handleAdvanceClick() {
         if (result && result.success && result.event_data) {
             const eventData = result.event_data;
             
-            // 更新事件描述
+            // 將當前事件存入 gameState，以便後續選擇時使用
+            gameState.currentAdventureEvent = eventData;
+            
             const descriptionEl = document.getElementById('adventure-event-description');
             if (descriptionEl) {
                 descriptionEl.innerHTML = `<p>${eventData.description || '前方一片迷霧...'}</p>`;
             }
 
-            // 更新選項按鈕
             const choicesEl = document.getElementById('adventure-event-choices');
             if (choicesEl) {
                 choicesEl.innerHTML = (eventData.choices || []).map(choice => 
                     `<button class="button secondary w-full adventure-choice-btn" data-choice-id="${choice.choice_id}">${choice.text}</button>`
                 ).join('');
             }
+            
             // 更新進度條
             if (gameState.playerData?.adventure_progress) {
                  gameState.playerData.adventure_progress.current_step += 1;
@@ -124,6 +117,38 @@ async function handleAdvanceClick() {
     }
 }
 
+// --- 核心修改處 START ---
+/**
+ * 新增函式：處理玩家對冒險事件做出選擇後的邏輯
+ * @param {HTMLElement} buttonElement - 被點擊的選項按鈕
+ */
+async function handleAdventureChoiceClick(buttonElement) {
+    const choiceId = buttonElement.dataset.choiceId;
+    const eventData = gameState.currentAdventureEvent;
+
+    if (!eventData) {
+        console.error("錯誤：找不到當前的冒險事件資料。");
+        return;
+    }
+
+    // 專門處理 BOSS 戰事件
+    if (eventData.event_type === 'boss_encounter') {
+        const bossData = eventData.boss_data;
+        if (!bossData) {
+            showFeedbackModal('錯誤', 'BOSS資料遺失，無法開始戰鬥。');
+            return;
+        }
+        
+        // 這裡我們直接呼叫 handleChallengeMonsterClick 來觸發戰鬥流程
+        // 注意：我們傳入的 npcId 是 BOSS 的 ID，這樣戰鬥服務才知道要打誰
+        await handleChallengeMonsterClick(null, null, null, bossData.id, bossData.nickname);
+    } 
+    // TODO: 未來在此處添加 else 區塊，以處理一般事件的選擇
+    else {
+        showFeedbackModal('提示', `您選擇了「${choiceId}」，該功能尚在開發中！`);
+    }
+}
+
 /**
  * 初始化冒險島所有功能的事件監聽器。
  */
@@ -135,18 +160,18 @@ function initializeAdventureHandlers() {
         adventureContainer.addEventListener('click', (event) => {
             const challengeButton = event.target.closest('.challenge-facility-btn');
             const advanceButton = event.target.closest('#adventure-advance-btn');
-            
+            const choiceButton = event.target.closest('.adventure-choice-btn');
+
             if (challengeButton) {
-                // 如果點擊的是挑戰按鈕
                 handleFacilityChallengeClick(event);
             } else if (advanceButton) {
-                // 如果點擊的是繼續前進按鈕
                 handleAdvanceClick();
+            } else if (choiceButton) {
+                handleAdventureChoiceClick(choiceButton);
             }
         });
         console.log("冒險島事件處理器已成功初始化。");
     } else {
-        // 後備機制
         setTimeout(initializeAdventureHandlers, 100);
     }
 }
