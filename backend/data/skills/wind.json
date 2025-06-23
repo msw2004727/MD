@@ -377,7 +377,7 @@
         "description": "同時對對手造成少量傷害。"
       },
       "10": {
-        "description": "使用後，我方全體異常狀態解除。"
+        "description": "我方全體異常狀態解除。"
       }
     }
   },
@@ -466,6 +466,32 @@
       },
       "10": {
         "description": "若此招爆擊，則無視對手防禦。"
+      }
+    }
+  },
+  {
+    "name": "飛葉快刀",
+    "description": "高速發射葉片進行攻擊，必定會命中。",
+    "type": "風",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "damage",
+        "power": 45,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "有25%機率連續攻擊兩次。"
       }
     }
   }
