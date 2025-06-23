@@ -594,7 +594,10 @@
         (function() {
             const gameVersion = '0.4.0.5'; 
 
+            // --- 核心修改處 START ---
+            // 調整 JS 檔案的載入順序
             const jsFiles = [
+                // 1. 核心設定與狀態管理
                 'js/firebase-config.js',
                 'js/config.js',
                 'js/game-state.js',
@@ -603,6 +606,8 @@
                 'js/game-logic.js',
                 'js/utils.js',
                 'js/monster-part-assets.js',
+
+                // 2. 核心 UI 渲染與元件
                 'js/ui.js',
                 'js/ui-inventory.js',
                 'js/ui-snapshot.js',
@@ -616,14 +621,20 @@
                 'js/ui-notes.js',
                 'js/ui-chat.js',
                 'js/ui-mailbox.js',
-                'js/ui-adventure.js',
+                'js/ui-medical.js',
+                'js/ui-adventure.js', // 將 adventure UI 提前
+
+                // 3. 所有事件處理器 (Handlers)
                 'js/handlers/ui-handlers.js',
                 'js/handlers/game-interaction-handlers.js',
                 'js/handlers/drag-drop-handlers.js',
                 'js/handlers/monster-handlers.js',
-                'js/handlers/adventure-handlers.js',
+                'js/handlers/adventure-handlers.js', // 將 adventure handler 提前
+
+                // 4. 最後的主進入點
                 'js/main.js'
             ];
+            // --- 核心修改處 END ---
 
             jsFiles.forEach(path => {
                 document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
