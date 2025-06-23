@@ -118,8 +118,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "friends": [],
         "dnaCombinationSlots": [None] * 5,
         "mailbox": [], 
-        "playerNotes": [],
-        "adventure_progress": None # 新增：初始化冒險進度
+        "playerNotes": [] 
     }
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
@@ -174,6 +173,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
+            # --- 核心修改處 START：新增冠軍每日獎勵結算邏輯 ---
             is_self_request = nickname_from_auth is not None
             if is_self_request:
                 player_stats = player_game_data_dict.setdefault("playerStats", {})
@@ -191,6 +191,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 
                 if player_rank > 0 and champion_slot_info:
                     last_reward_timestamp = player_stats.get("last_champion_reward_timestamp", 0)
+                    
+                    # 使用佔領時間戳作為獎勵計算的起始點
                     occupied_timestamp = champion_slot_info.get("occupiedTimestamp", 0)
                     start_time = max(last_reward_timestamp, occupied_timestamp)
                     current_time = int(time.time())
@@ -214,7 +216,9 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                             
                             player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
                             save_player_data_service(player_id, player_game_data_dict)
+            # --- 核心修改處 END ---
 
+            # 資料遷移邏輯...
             needs_migration_save = False
             player_stats = player_game_data_dict.get("playerStats", {})
             if "gold" not in player_stats:
@@ -301,10 +305,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "friends": player_game_data_dict.get("friends", []),
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
                 "mailbox": player_game_data_dict.get("mailbox", []),
-                "playerNotes": player_game_data_dict.get("playerNotes", []),
-                # --- 核心修改處 START ---
-                "adventure_progress": player_game_data_dict.get("adventure_progress", None)
-                # --- 核心修改處 END ---
+                "playerNotes": player_game_data_dict.get("playerNotes", [])
             }
             if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname:
                 player_game_data["playerStats"]["nickname"] = authoritative_nickname
@@ -372,10 +373,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
             "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
             "playerNotes": game_data.get("playerNotes", []),
-            "mailbox": game_data.get("mailbox", []),
-            # --- 核心修改處 START ---
-            "adventure_progress": game_data.get("adventure_progress")
-            # --- 核心修改處 END ---
+            "mailbox": game_data.get("mailbox", []) 
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
