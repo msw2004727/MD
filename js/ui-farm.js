@@ -139,6 +139,14 @@ function renderMonsterFarm() {
         }
     });
 
+    // --- 核心修改處 START ---
+    // 獲取當前的冒險進度
+    const adventureProgress = gameState.playerData?.adventure_progress;
+    const expeditionTeamIds = (adventureProgress && adventureProgress.is_active) 
+        ? new Set(adventureProgress.expedition_team.map(m => m.monster_id)) 
+        : new Set();
+    // --- 核心修改處 END ---
+
     monsters.forEach((monster) => {
         const monsterCard = document.createElement('div');
         monsterCard.className = 'monster-card';
@@ -171,8 +179,13 @@ function renderMonsterFarm() {
 
         let deployButtonHtml = `<button class="monster-card-deploy-btn ${isDeployed ? 'deployed' : ''}" onclick="handleDeployMonsterClick('${monster.id}')" ${isDeployed ? 'disabled' : ''}>${isDeployed ? '⚔️' : '出戰'}</button>`;
         
+        // --- 核心修改處 START ---
         let statusHtml = '';
-        if (monster.farmStatus?.isTraining) {
+        const onExpedition = expeditionTeamIds.has(monster.id);
+
+        if (onExpedition) {
+            statusHtml = `<div class="monster-card-status" style="color: var(--status-expedition);">遠征中 🗺️</div>`;
+        } else if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
             statusHtml = `
@@ -196,6 +209,13 @@ function renderMonsterFarm() {
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button primary text-xs" disabled>修煉</button>
             `;
+        } else if (onExpedition) {
+            // 遠征中的怪獸不能進行任何操作
+            actionsHTML = `
+                <button class="button danger text-xs" disabled>放生</button>
+                <button class="button action text-xs" disabled>治療</button>
+                <button class="button primary text-xs" disabled>修煉</button>
+            `;
         } else if (monster.farmStatus?.isTraining) {
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
@@ -211,6 +231,7 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
+        // --- 核心修改處 END ---
 
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
