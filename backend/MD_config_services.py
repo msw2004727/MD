@@ -30,8 +30,6 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
     try:
         config_collection_ref = db.collection('MD_GameConfigs')
 
-        # --- 核心修改處 START ---
-        # 將所有設定檔的路徑和對應的 config key 統一管理
         doc_map = {
             "DNAFragments": ("dna_fragments", "all_fragments"),
             "Rarities": ("rarities", "dna_rarities"),
@@ -54,28 +52,27 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "AdventureIslands": ("adventure_islands", "islands"),
         }
         
-        # 動態載入 adventure_events 和 bosses
-        event_files = [f for f in os.listdir(data_dir) if f.startswith('adventure_events_') and f.endswith('.json')]
-        boss_files = [f for f in os.listdir(data_dir) if f.startswith('bosses_') and f.endswith('.json')]
-        
-        # 暫存讀取的事件和BOSS資料
+        # --- 核心修改處 START ---
+        # 動態載入 adventure_events 和 bosses 檔案
         adventure_events_data = {}
+        event_files = [f for f in os.listdir(data_dir) if f.startswith('adventure_events_') and f.endswith('.json')]
         for file_name in event_files:
             try:
-                pool_id = os.path.splitext(file_name)[0] # e.g., "adventure_events_forest"
+                # 使用檔案名作為 key，例如 "adventure_events_forest.json"
                 with open(os.path.join(data_dir, file_name), 'r', encoding='utf-8') as f:
-                    adventure_events_data[pool_id] = json.load(f)
+                    adventure_events_data[file_name] = json.load(f)
                     config_logger.info(f"成功從本地載入冒險事件: {file_name}")
             except Exception as e:
                 config_logger.error(f"讀取事件檔 {file_name} 失敗: {e}")
         configs['adventure_events'] = adventure_events_data
 
         adventure_bosses_data = {}
+        boss_files = [f for f in os.listdir(data_dir) if f.startswith('bosses_') and f.endswith('.json')]
         for file_name in boss_files:
             try:
-                pool_id = file_name # e.g., "bosses_novice_forest.json"
+                # 使用檔案名作為 key，例如 "bosses_novice_forest.json"
                 with open(os.path.join(data_dir, file_name), 'r', encoding='utf-8') as f:
-                    adventure_bosses_data[pool_id] = json.load(f)
+                    adventure_bosses_data[file_name] = json.load(f)
                     config_logger.info(f"成功從本地載入BOSS資料: {file_name}")
             except Exception as e:
                 config_logger.error(f"讀取BOSS檔 {file_name} 失敗: {e}")
@@ -83,10 +80,6 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
         # --- 核心修改處 END ---
 
         for doc_name, (config_key, field_name) in doc_map.items():
-            # 跳過本地已處理的檔案
-            if config_key in configs:
-                continue
-
             doc_ref = config_collection_ref.document(doc_name)
             doc = doc_ref.get()
             if doc.exists:
