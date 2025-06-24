@@ -9,15 +9,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let logIntervalId = null;
         let currentPlayerLogs = [];
 
+        // 直接定義完整的後端 API URL，不再使用相對路徑或依賴外部檔案
+        const ADMIN_API_URL = 'https://md-server-5wre.onrender.com/api/MD';
+
         if (!adminToken) {
             window.location.href = 'index.html';
             return;
         }
-        // 【優化】動態獲取 API URL
-        const ADMIN_API_URL = (typeof window.API_BASE_URL !== 'undefined') 
-            ? window.API_BASE_URL 
-            : '/api/MD'; 
-
+        
         // --- DOM 元素獲取區 ---
         const DOMElements = {
             navItems: document.querySelectorAll('.nav-item'),
@@ -71,18 +70,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: response.statusText }));
                     if (response.status === 401 || response.status === 403) {
-                        localStorage.removeItem('admin_token');
-                        alert('登入憑證已失效，請重新登入。');
-                        window.location.href = 'index.html';
+                         localStorage.removeItem('admin_token');
+                         alert('登入憑證已失效，請重新登入。');
+                         window.location.href = 'index.html';
                     }
                     throw new Error(errorData.error || `伺服器錯誤: ${response.status}`);
                 }
-                // 檢查回應內容類型是否為 JSON
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     return response.json();
                 } else {
-                    return response.text(); // 如果不是 JSON，則返回純文字
+                    return response.text();
                 }
             } catch (error) {
                 alert(`API 請求失敗: ${error.message}`);
@@ -92,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function updateTime() { 
             if(DOMElements.currentTimeEl) { 
-                DOMElements.currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); 
+                DOMElements.currentTimeEl.textContent = new Date().toLocaleString('zh-TW', { hour12: false }).replace(',', ''); 
             } 
         }
 
@@ -111,7 +109,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadBroadcastLog();
             } else if (targetId === 'game-configs') {
                 if (typeof initializeConfigEditor === 'function') {
-                    initializeConfigEditor();
+                    // 將 API URL 傳遞給 config-editor 模組
+                    initializeConfigEditor(ADMIN_API_URL, adminToken);
                 } else {
                     console.error("config-editor.js 或 initializeConfigEditor 函式未載入。");
                     alert("設定檔編輯器模組載入失敗，請檢查控制台。");
@@ -127,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!DOMElements.logDisplayContainer) return;
             DOMElements.logDisplayContainer.innerHTML = '<p style="color: var(--admin-text-secondary);">正在載入最新日誌...</p>';
             try {
-                // 後端日誌路由與其他 admin 路由不同
                 const response = await fetch(`${ADMIN_API_URL}/logs`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                 if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
                 
@@ -145,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // --- 玩家日誌渲染與篩選 ---
         function renderPlayerLogs(logs, category = '全部') {
-            if (!DOMElements.playerLogDisplay) return;
+             if (!DOMElements.playerLogDisplay) return;
 
             if (!logs || logs.length === 0) {
                 DOMElements.playerLogDisplay.innerHTML = '<p class="placeholder-text">該玩家暫無日誌紀錄。</p>';
@@ -233,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
             currentPlayerData = null;
             try {
                 const data = await fetchAdminAPI(`/player_data?uid=${uid}`);
-                data.uid = uid; // 確保 UID 被加到物件中
+                data.uid = uid;
                 renderPlayerData(data);
             } catch (err) {
                 DOMElements.dataDisplay.innerHTML = `<p class="placeholder-text" style="color:var(--danger-color);">查詢失敗：${err.message}</p>`;
@@ -269,7 +267,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         async function handleSavePlayerData() {
-            if (!currentPlayerData) { alert('沒有可儲存的玩家資料。'); return; }
+            if (!currentPlayerData) {
+                alert('沒有可儲存的玩家資料。');
+                return;
+            }
             const saveBtn = document.getElementById('save-player-data-btn');
             saveBtn.disabled = true;
             saveBtn.textContent = '儲存中...';
@@ -285,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const result = await fetchAdminAPI(`/player_data/${dataToUpdate.uid}`, { method: 'POST', body: JSON.stringify(dataToUpdate) });
                 alert(result.message);
-                currentPlayerData = dataToUpdate; // 更新本地緩存
+                currentPlayerData = dataToUpdate;
             } catch (err) {
                 alert(`儲存失敗：${err.message}`);
             } finally {
@@ -351,12 +352,90 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        async function handleBroadcastMail() { /* ...與上一版相同... */ }
-        function saveSenderPreset() { /* ...與上一版相同... */ }
-        function loadSenderPresets() { /* ...與上一版相同... */ }
+        async function handleBroadcastMail() {
+            const senderName = DOMElements.broadcastSenderNameInput.value.trim() || '遊戲管理員';
+            const title = document.getElementById('broadcast-title').value.trim();
+            const content = document.getElementById('broadcast-content').value.trim();
+            const payloadStr = document.getElementById('broadcast-payload').value.trim() || '{}';
+            if (!title || !content) { alert('信件標題和內容不能為空。'); return; }
+            const btn = document.getElementById('broadcast-mail-btn');
+            const responseEl = document.getElementById('broadcast-response');
+            btn.disabled = true;
+            btn.textContent = '發送中...';
+            responseEl.style.display = 'none';
+            try {
+                JSON.parse(payloadStr);
+                const result = await fetchAdminAPI('/broadcast_mail', { method: 'POST', body: JSON.stringify({ sender_name: senderName, title, content, payload_str: payloadStr }) });
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+                document.getElementById('broadcast-title').value = '';
+                document.getElementById('broadcast-content').value = '';
+                document.getElementById('broadcast-payload').value = '';
+                loadBroadcastLog();
+            } catch (err) {
+                responseEl.textContent = `發送失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = '向所有玩家發送';
+            }
+        }
+
+        function saveSenderPreset() {
+            const newName = DOMElements.broadcastSenderNameInput.value.trim();
+            if (!newName) { alert('寄件人名稱不能為空。'); return; }
+            let presets = [];
+            try {
+                const stored = localStorage.getItem(SENDER_PRESETS_KEY);
+                if (stored) presets = JSON.parse(stored);
+            } catch(e) { console.error("Error reading presets:", e); }
+            if (!Array.isArray(presets)) presets = [];
+            if (!presets.includes(newName)) {
+                presets.push(newName);
+                localStorage.setItem(SENDER_PRESETS_KEY, JSON.stringify(presets));
+                alert(`已儲存寄件人：${newName}`);
+                loadSenderPresets();
+                DOMElements.broadcastSenderPresetsSelect.value = newName;
+            } else {
+                alert('此名稱已存在於預設選單中。');
+            }
+        }
+        
+        function loadSenderPresets() {
+            let presets = ['遊戲管理員', '系統通知'];
+            try {
+                const storedPresets = localStorage.getItem(SENDER_PRESETS_KEY);
+                if (storedPresets) {
+                    const parsed = JSON.parse(storedPresets);
+                    if (Array.isArray(parsed)) {
+                        presets = parsed;
+                    }
+                }
+            } catch (error) {
+                console.error("讀取寄件人預設集失敗，將使用預設值:", error);
+                localStorage.removeItem(SENDER_PRESETS_KEY);
+            }
+            DOMElements.broadcastSenderPresetsSelect.innerHTML = '<option value="">選擇預設名稱...</option>';
+            presets.forEach(name => {
+                const option = new Option(name, name);
+                DOMElements.broadcastSenderPresetsSelect.add(option);
+            });
+        }
 
         // --- 儀表板總覽邏輯 ---
-        async function handleGenerateReport() { /* ...與上一版相同... */ }
+        async function handleGenerateReport() {
+            DOMElements.generateReportBtn.disabled = true;
+            DOMElements.generateReportBtn.textContent = '生成中...';
+            DOMElements.overviewReportContainer.innerHTML = '<p>正在從伺服器計算數據，請稍候...</p>';
+            try {
+                const stats = await fetchAdminAPI('/game_overview');
+                const rarityOrder = ["神話", "傳奇", "菁英", "稀有", "普通"];
+                let rarityHtml = rarityOrder.map(rarity => `<div class="overview-card"><h4 class="stat-title">${rarity}怪獸數量</h4><p class="stat-value">${(stats.monsterRarityCount[rarity] || 0).toLocaleString()}</p></div>`).join('');
+                DOMElements.overviewReportContainer.innerHTML = `<div class="overview-grid"><div class="overview-card"><h4 class="stat-title">總玩家數</h4><p class="stat-value">${(stats.totalPlayers || 0).toLocaleString()}</p></div><div class="overview-card"><h4 class="stat-title">全服金幣總量</h4><p class="stat-value">${(stats.totalGold || 0).toLocaleString()} 🪙</p></div><div class="overview-card"><h4 class="stat-title">全服DNA總數</h4><p class="stat-value">${(stats.totalDnaFragments || 0).toLocaleString()}</p></div>${rarityHtml}</div>`;
+            } catch (err) { DOMElements.overviewReportContainer.innerHTML = `<p style="color: var(--danger-color);">生成報表失敗：${err.message}</p>`; }
+            finally { DOMElements.generateReportBtn.disabled = false; DOMElements.generateReportBtn.textContent = '重新生成全服數據報表'; }
+        }
         
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
@@ -388,8 +467,8 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
+        
         if (typeof initializeConfigEditor === 'function') {
-             // 這個函式由 config-editor.js 提供
              initializeConfigEditor();
         }
         
