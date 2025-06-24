@@ -33,6 +33,7 @@
             flex-direction: column;
             padding: 1rem 0;
             flex-shrink: 0;
+            overflow-y: auto;
         }
         .sidebar-header {
             padding: 0 1.5rem 1rem;
@@ -74,11 +75,12 @@
         }
         .content-header {
             margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--admin-border-color);
+            padding-bottom: 0.75rem;
         }
         #logout-btn {
             width: 100%;
         }
-        /* --- 核心修改處 START --- */
         .content-panel { display: none; }
         .content-panel.active { display: block; }
         .search-container { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
@@ -92,18 +94,73 @@
             color: var(--admin-text-primary);
         }
         #player-data-display {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #000;
-            color: #0f0;
-            padding: 1rem;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 70vh;
-            overflow-y: auto;
-            border: 1px solid var(--admin-border-color);
+            background-color: transparent;
+            color: var(--admin-text-secondary);
+            padding: 0;
+            border-radius: 0;
+            white-space: normal;
+            word-break: normal;
+            border: none;
         }
-        /* --- 核心修改處 END --- */
+        .data-section {
+            background-color: var(--admin-panel-bg);
+            border: 1px solid var(--admin-border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .data-section h3 {
+            margin-top: 0;
+            color: var(--admin-accent);
+            border-bottom: 1px solid var(--admin-border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--admin-text-secondary);
+        }
+        .form-group input {
+            padding: 8px 10px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--admin-border-color);
+            background-color: var(--admin-bg);
+            color: var(--admin-text-primary);
+        }
+        .dna-grid, .monster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        .dna-card, .monster-card-admin {
+            border: 1px solid var(--admin-border-color);
+            padding: 1rem;
+            border-radius: 6px;
+        }
+        .dna-card h4, .monster-card-admin h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            color: var(--admin-accent-hover);
+        }
+        .monster-card-admin ul {
+            padding-left: 1.2rem;
+            margin: 0;
+        }
+        .save-changes-container {
+            margin-top: 1.5rem;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
@@ -127,6 +184,7 @@
             <p>請從左側導覽欄選擇您要使用的功能。</p>
             <p>目前系統時間: <span id="current-time"></span></p>
         </div>
+
         <div id="player-management" class="content-panel">
             <h2 class="content-header">玩家管理</h2>
             <div class="search-container">
@@ -137,6 +195,7 @@
                 <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 以檢視資料。</p>
             </div>
         </div>
+
         <div id="mail-system" class="content-panel">
             <h2 class="content-header">群發信件</h2>
             <p>此處將實作群發系統信件與信件回收功能。</p>
@@ -162,11 +221,9 @@
             const logoutBtn = document.getElementById('logout-btn');
             const currentTimeEl = document.getElementById('current-time');
             
-            // --- 核心修改處 START ---
             const searchInput = document.getElementById('player-search-input');
             const searchBtn = document.getElementById('player-search-btn');
             const dataDisplay = document.getElementById('player-data-display');
-            // --- 核心修改處 END ---
 
             // 導覽欄切換邏輯
             navItems.forEach(item => {
@@ -187,7 +244,6 @@
                 window.location.href = 'admin.html';
             });
             
-            // 顯示當前時間
             function updateTime() {
                 if(currentTimeEl) {
                     currentTimeEl.textContent = new Date().toLocaleString('zh-TW');
@@ -197,6 +253,73 @@
             setInterval(updateTime, 1000);
 
             // --- 核心修改處 START ---
+            // 將渲染資料的邏輯抽取成獨立函式
+            function renderPlayerData(playerData) {
+                dataDisplay.innerHTML = `
+                    <div class="data-section">
+                        <h3>玩家狀態 (Player Stats)</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="admin-nickname">暱稱</label>
+                                <input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-gold">金幣</label>
+                                <input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}">
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-wins">勝場</label>
+                                <input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}">
+                            </div>
+                            <div class="form-group">
+                                <label for="admin-losses">敗場</label>
+                                <input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-section">
+                        <h3>DNA 碎片庫存</h3>
+                        <div id="admin-dna-grid" class="dna-grid">
+                            ${(playerData.playerOwnedDNA || []).map(dna => dna ? `
+                                <div class="dna-card">
+                                    <h4>${dna.name} (${dna.rarity})</h4>
+                                    <p>屬性: ${dna.type}, HP: ${dna.hp}, ATK: ${dna.attack}</p>
+                                </div>
+                            ` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}
+                        </div>
+                    </div>
+
+                    <div class="data-section">
+                        <h3>持有怪獸</h3>
+                        <div id="admin-monster-grid" class="monster-grid">
+                            ${(playerData.farmedMonsters || []).map(monster => `
+                                <div class="monster-card-admin">
+                                    <h4>${monster.nickname} (${monster.rarity})</h4>
+                                    <ul>
+                                        <li>HP: ${monster.hp}/${monster.initial_max_hp}</li>
+                                        <li>攻擊: ${monster.attack}</li>
+                                        <li>防禦: ${monster.defense}</li>
+                                        <li>速度: ${monster.speed}</li>
+                                        <li>評價: ${monster.score}</li>
+                                    </ul>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="save-changes-container">
+                        <button id="save-player-data-btn" class="button success">儲存變更</button>
+                    </div>
+                `;
+                
+                // 為儲存按鈕綁定事件
+                document.getElementById('save-player-data-btn').addEventListener('click', () => {
+                    alert('數值即時調整功能將在下一步驟中完成！');
+                    // 後續將在此處實現收集表單資料並發送 API 的邏輯
+                });
+            }
+
             // 玩家搜尋邏輯
             async function searchPlayer() {
                 const uid = searchInput.value.trim();
@@ -209,22 +332,21 @@
 
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, {
-                        headers: {
-                            'Authorization': `Bearer ${adminToken}`
-                        }
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
                     });
                     const result = await response.json();
                     if (!response.ok) {
                         throw new Error(result.error || `伺服器錯誤: ${response.status}`);
                     }
-                    // 使用 JSON.stringify 美化輸出
-                    dataDisplay.textContent = JSON.stringify(result, null, 2);
+                    // 呼叫新的渲染函式
+                    renderPlayerData(result);
                 } catch (err) {
-                    dataDisplay.textContent = `查詢失敗：${err.message}`;
+                    dataDisplay.innerHTML = `<p style="color: var(--danger-color);">查詢失敗：${err.message}</p>`;
                 } finally {
                     searchBtn.disabled = false;
                 }
             }
+            // --- 核心修改處 END ---
 
             searchBtn.addEventListener('click', searchPlayer);
             searchInput.addEventListener('keydown', (e) => {
@@ -232,7 +354,6 @@
                     searchPlayer();
                 }
             });
-            // --- 核心修改處 END ---
         });
     </script>
 </body>
