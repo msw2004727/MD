@@ -7,7 +7,8 @@ function initializeConfigEditor() {
     const saveConfigBtn = document.getElementById('save-config-btn');
     const configResponseEl = document.getElementById('config-response');
     const adminToken = localStorage.getItem('admin_token');
-    const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
+    // 【修改】將常數名稱改為 EDITOR_API_URL 以避免命名衝突
+    const EDITOR_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
 
     if (!configFileSelector || !configsDisplayArea || !saveConfigBtn || !configResponseEl) {
         console.warn("Config editor DOM elements are not all present. Aborting initialization.");
@@ -21,7 +22,8 @@ function initializeConfigEditor() {
         configFileSelector.disabled = true;
         configsDisplayArea.value = '正在獲取設定檔列表...';
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/list_configs`, {
+            // 【修改】使用新的 EDITOR_API_URL
+            const response = await fetch(`${EDITOR_API_URL}/admin/list_configs`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             const files = await response.json();
@@ -53,13 +55,15 @@ function initializeConfigEditor() {
         configsDisplayArea.value = '正在從伺服器獲取資料...';
         saveConfigBtn.disabled = true;
         try {
-             const response = await fetch(`${API_BASE_URL}/admin/get_config?file=${encodeURIComponent(selectedFile)}`, {
+            // 【修改】使用新的 EDITOR_API_URL
+             const response = await fetch(`${EDITOR_API_URL}/admin/get_config?file=${encodeURIComponent(selectedFile)}`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
             
-            const content = (typeof result === 'object' && 'content' in result) ? result.content : JSON.stringify(result, null, 2);
+            // 由於後端現在可能直接回傳JSON物件，這裡做個判斷來正確顯示
+            const content = (typeof result === 'object' && result.content !== undefined) ? result.content : JSON.stringify(result, null, 2);
             configsDisplayArea.value = content;
             saveConfigBtn.disabled = false;
         } catch (err) {
@@ -84,7 +88,8 @@ function initializeConfigEditor() {
         configResponseEl.style.display = 'none';
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/save_config`, {
+            // 【修改】使用新的 EDITOR_API_URL
+            const response = await fetch(`${EDITOR_API_URL}/admin/save_config`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify({ file: selectedFile, content: content })
