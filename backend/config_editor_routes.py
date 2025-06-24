@@ -78,25 +78,42 @@ def save_config_route():
             
     return secured_save_config()
 
-@config_editor_bp.route('/save_adventure_settings', methods=['POST', 'OPTIONS'])
+@admin_bp.route('/save_adventure_settings', methods=['POST', 'OPTIONS'])
+@token_required
 def save_adventure_settings_route():
-    from .admin_routes import token_required
     from .config_editor_services import save_adventure_settings_service
+    data = request.get_json()
+    global_settings = data.get('global_settings')
+    facilities_settings = data.get('facilities_settings')
+
+    if not global_settings or not facilities_settings:
+        return jsonify({"error": "請求中缺少 'global_settings' 或 'facilities_settings' 參數。"}), 400
+    
+    success, error = save_adventure_settings_service(global_settings, facilities_settings)
+    
+    if success:
+        return jsonify({"success": True, "message": "冒險島設定已成功儲存並重新載入。"}), 200
+    else:
+        return jsonify({"error": error}), 500
+
+# --- 核心修改處 START ---
+@config_editor_bp.route('/save_adventure_growth_settings', methods=['POST', 'OPTIONS'])
+def save_adventure_growth_settings_route():
+    from .admin_routes import token_required
+    from .config_editor_services import save_adventure_growth_settings_service
 
     @token_required
-    def secured_save_adventure_settings():
+    def secured_save_adventure_growth_settings():
         data = request.get_json()
-        global_settings = data.get('global_settings')
-        facilities_settings = data.get('facilities_settings')
-
-        if not global_settings or not facilities_settings:
-            return jsonify({"error": "請求中缺少 'global_settings' 或 'facilities_settings' 參數。"}), 400
+        if not data:
+            return jsonify({"error": "請求中缺少設定資料。"}), 400
         
-        success, error = save_adventure_settings_service(global_settings, facilities_settings)
+        success, error = save_adventure_growth_settings_service(data)
         
         if success:
-            return jsonify({"success": True, "message": "冒險島設定已成功儲存並重新載入。"}), 200
+            return jsonify({"success": True, "message": "冒險島成長設定已成功儲存並重新載入。"}), 200
         else:
             return jsonify({"error": error}), 500
             
-    return secured_save_adventure_settings()
+    return secured_save_adventure_growth_settings()
+# --- 核心修改處 END ---
