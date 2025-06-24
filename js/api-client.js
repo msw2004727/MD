@@ -342,15 +342,17 @@ async function respondToFriendRequest(mailId, action) {
  * @param {string} recipientId 收件人的 ID
  * @param {string} title 信件標題
  * @param {string} content 信件內容
+ * @param {object | null} payload 附件內容 (可選)
  * @returns {Promise<object>} 後端的回應
  */
-async function sendMail(recipientId, title, content) {
+async function sendMail(recipientId, title, content, payload = null) {
     return fetchAPI('/mailbox/send', {
         method: 'POST',
         body: JSON.stringify({
             recipient_id: recipientId,
             title: title,
-            content: content
+            content: content,
+            payload: payload
         }),
     });
 }
@@ -444,7 +446,7 @@ async function completeAdventureFloor() {
     });
 }
 
-// --- 核心修改處 START ---
+
 /**
  * 處理玩家對冒險事件的選擇。
  * @param {string} choiceId - 玩家選擇的選項ID。
@@ -454,6 +456,21 @@ async function resolveAdventureEvent(choiceId) {
     return fetchAPI('/adventure/resolve', {
         method: 'POST',
         body: JSON.stringify({ choice_id: choiceId }),
+    });
+}
+
+// --- 核心修改處 START ---
+/**
+ * 領取一封信件中的所有附件。
+ * @param {string} mailId - 要領取附件的信件 ID。
+ * @returns {Promise<object>} 包含操作結果的物件。
+ */
+async function claimMailAttachments(mailId) {
+    if (!mailId) {
+        throw new Error("領取附件需要提供 mailId。");
+    }
+    return fetchAPI(`/mailbox/${mailId}/claim`, {
+        method: 'POST'
     });
 }
 // --- 核心修改處 END ---
