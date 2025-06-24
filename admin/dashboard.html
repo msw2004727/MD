@@ -84,12 +84,19 @@
             <h2 class="content-header">遊戲設定</h2>
             <div class="data-section">
                 <h3>即時設定編輯器</h3>
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="config-file-selector">選擇要編輯的設定檔</label>
                     <select id="config-file-selector" class="admin-input"></select>
                 </div>
-                <pre id="game-configs-display"><p>請從上方選擇一個設定檔以檢視內容。</p></pre>
-            </div>
+                <div class="form-group">
+                    <label for="game-configs-display">檔案內容 (請謹慎修改)</label>
+                    <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以載入內容..."></textarea>
+                </div>
+                <div class="save-changes-container">
+                    <button id="save-config-btn" class="button success" disabled>儲存設定變更</button>
+                </div>
+                <div id="config-response" class="admin-response-message" style="display: none;"></div>
+                </div>
         </div>
     </main>
 
