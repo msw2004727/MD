@@ -19,8 +19,11 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727')
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        # --- 核心修改處 START ---
+        # 處理 CORS 預檢請求 (OPTIONS)
         if request.method == 'OPTIONS':
             return jsonify({'status': 'ok'}), 200
+        # --- 核心修改處 END ---
             
         token = None
         if 'Authorization' in request.headers:
@@ -43,6 +46,12 @@ def token_required(f):
 
 @admin_bp.route('/login', methods=['POST', 'OPTIONS'])
 def admin_login():
+    # --- 核心修改處 START ---
+    # 處理 CORS 預檢請求 (OPTIONS)
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    # --- 核心修改處 END ---
+        
     data = request.get_json()
     if not data or 'password' not in data:
         return jsonify({'error': '缺少密碼'}), 400
