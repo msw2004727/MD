@@ -61,6 +61,21 @@
                         <div id="player-data-display">
                             <p style="color: var(--admin-text-secondary);">請先從左側查詢並選擇一位玩家以檢視其詳細資料。</p>
                         </div>
+                        
+                        <div id="player-log-section" class="data-section" style="display: none;">
+                            <h3>玩家個人日誌</h3>
+                            <div id="player-log-filters" class="log-filters" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <button class="button secondary text-xs active" data-log-category="全部">全部</button>
+                                <button class="button secondary text-xs" data-log-category="系統">系統</button>
+                                <button class="button secondary text-xs" data-log-category="戰鬥">戰鬥</button>
+                                <button class="button secondary text-xs" data-log-category="合成">合成</button>
+                                <button class="button secondary text-xs" data-log-category="物品">物品</button>
+                                <button class="button secondary text-xs" data-log-category="金幣">金幣</button>
+                            </div>
+                            <div id="player-log-display" class="log-display" style="height: 300px; background-color: var(--admin-bg); border-radius: 8px; border: 1px solid var(--admin-border-color); padding: 1rem; overflow-y: auto; font-size: 0.9rem;">
+                                <p style="color: var(--admin-text-secondary);">暫無日誌紀錄。</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,7 +122,6 @@
                     </div>
                  </div>
             </div>
-            
             <div id="game-configs" class="content-panel">
                 <h2 class="content-header">遊戲設定</h2>
                 <div class="data-section">
@@ -126,7 +140,6 @@
                     <div id="config-response" class="admin-response-message" style="display: none;"></div>
                 </div>
             </div>
-
             <div id="log-monitoring" class="content-panel">
                 <h2 class="content-header">後端日誌監控</h2>
                 <div class="data-section">
@@ -139,7 +152,6 @@
                     </div>
                 </div>
             </div>
-
         </main>
     </div>
 
