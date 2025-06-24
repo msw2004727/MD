@@ -18,10 +18,10 @@ function initializeMedicalStationDOMElements() {
  * 渲染醫療站的怪獸列表。
  */
 function renderMedicalStation() {
-    // 確保 DOM 元素已初始化
-    if (Object.keys(medicalStationElements).length === 0 || !medicalStationElements.listContainer) {
-        initializeMedicalStationDOMElements();
-    }
+    // --- 核心修改處 START ---
+    // 確保 DOM 元素在每次渲染時都重新獲取，而不是依賴初始化時的狀態
+    initializeMedicalStationDOMElements();
+    // --- 核心修改處 END ---
     
     const headersContainer = medicalStationElements.headersContainer;
     const listContainer = medicalStationElements.listContainer;
