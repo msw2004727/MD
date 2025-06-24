@@ -178,16 +178,17 @@ function updateMonsterSnapshot(monster) {
     clearMonsterBodyPartsDisplay();
 
     if (monster && monster.id) {
-        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'block';
 
-        const elementNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
+        // --- 核心修改處 START ---
+        // 直接使用新的工具函式來獲取帶有樣式的 HTML
+        DOMElements.snapshotNickname.innerHTML = getMonsterDisplayName(monster, gameState.gameConfigs);
+        // 不再需要手動設定 className
+        // --- 核心修改處 END ---
         
         const achievement = monster.title || '新秀';
-        
-        DOMElements.snapshotNickname.textContent = elementNickname;
-        DOMElements.snapshotNickname.className = `text-rarity-${rarityKey}`;
         DOMElements.snapshotAchievementTitle.textContent = achievement;
+        DOMElements.snapshotAchievementTitle.style.color = `var(--text-secondary)`; // 確保成就稱號顏色正常
 
         const dnaSlots = new Array(5).fill(null);
         if (monster.constituent_dna_ids && gameState.gameConfigs?.dna_fragments) {
@@ -279,6 +280,7 @@ function updateMonsterSnapshot(monster) {
         DOMElements.snapshotHpFill.style.width = `${hpPercent}%`;
         DOMElements.snapshotMpFill.style.width = `${mpPercent}%`;
         
+        const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-secondary))`;
         DOMElements.monsterSnapshotArea.style.borderColor = rarityColorVar;
         DOMElements.monsterSnapshotArea.style.boxShadow = `0 0 10px -2px ${rarityColorVar}, inset 0 0 15px -5px color-mix(in srgb, ${rarityColorVar} 30%, transparent)`;
@@ -309,8 +311,8 @@ function updateMonsterSnapshot(monster) {
 
     } else {
         DOMElements.monsterSnapshotBodySilhouette.style.display = 'none';
-        DOMElements.snapshotNickname.textContent = '尚無怪獸';
-        DOMElements.snapshotNickname.className = '';
+        DOMElements.snapshotNickname.innerHTML = '<span>尚無怪獸</span>'; // 修改為 innerHTML
+        DOMElements.snapshotNickname.className = ''; // 清除舊的 class
         DOMElements.snapshotAchievementTitle.textContent = '稱號';
         DOMElements.snapshotWinLoss.innerHTML = `<span>勝: -</span><span>敗: -</span>`;
         DOMElements.snapshotEvaluation.textContent = `評價: -`;
@@ -320,10 +322,7 @@ function updateMonsterSnapshot(monster) {
         gameState.selectedMonsterId = null;
     }
 
-    // --- 核心修改處 START ---
-    // 確保在整個快照區塊被完整繪製後，才呼叫紅點更新函式
     if (typeof updateMailNotificationDot === 'function') {
         updateMailNotificationDot();
     }
-    // --- 核心修改處 END ---
 }
