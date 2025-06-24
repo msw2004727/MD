@@ -107,24 +107,27 @@ body.admin-body {
     font-weight: bold;
 }
 
-/* --- 【新增】多欄位佈局 --- */
+/* --- 【核心修改處 START】 --- */
+/* 將原有的 .two-column 等特定樣式，整合成一個更通用的彈性網格佈局 */
 .dashboard-grid {
     display: grid;
     gap: 1.5rem;
-}
-.dashboard-grid.two-column {
-    grid-template-columns: 1fr 2fr; /* 預設 1:2 比例 */
-}
-.dashboard-grid.two-column.side-right {
-    grid-template-columns: 2fr 1fr; /* 右側邊欄版本 */
+    /* 使用 auto-fit 自動判斷容器寬度能容納多少個欄位。
+      minmax(420px, 1fr) 設定每個欄位的最小寬度為 420px (避免內容被過度擠壓)，
+      最大則會彈性填滿剩餘空間 (1fr)。
+      這一個規則就能同時處理寬、窄螢幕的佈局。
+    */
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
 }
 
-@media (max-width: 992px) {
-    .dashboard-grid.two-column,
-    .dashboard-grid.two-column.side-right {
-        grid-template-columns: 1fr; /* 在窄螢幕上變為單欄 */
-    }
-}
+/* 移除不再需要的舊樣式 */
+/*
+.dashboard-grid.two-column { ... }
+.dashboard-grid.two-column.side-right { ... }
+@media (max-width: 992px) { ... }
+*/
+/* --- 【核心修改處 END】 --- */
+
 
 .side-pane h3, .main-pane h3 {
     font-size: 1.1rem;
