@@ -55,7 +55,17 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
             break;
         }
     }
-    showFeedbackModal('準備出發...', `正在為「${facilityName}」組建遠征隊...`, true);
+    
+    // --- 核心修改處 START ---
+    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionStart || '';
+    const messageHtml = `
+        <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
+            <img src="${bannerUrl}" alt="準備遠征橫幅" style="max-width: 100%; border-radius: 6px;">
+        </div>
+        <p>正在為「${facilityName}」組建遠征隊...</p>
+    `;
+    showFeedbackModal('準備出發...', messageHtml, true);
+    // --- 核心修改處 END ---
 
     try {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
@@ -192,17 +202,12 @@ async function handleAdventureChoiceClick(buttonElement) {
             }
 
         } else {
-            // --- 核心修改處 START ---
-            // 處理普通事件後，檢查後端是否有回傳更新後的玩家狀態
             if (result.updated_player_stats) {
-                // 如果有，就更新前端的 gameState
                 gameState.playerData.playerStats = result.updated_player_stats;
-                // 並立即刷新金幣顯示
                 if (typeof updatePlayerCurrencyDisplay === 'function') {
                     updatePlayerCurrencyDisplay(gameState.playerData.playerStats.gold);
                 }
             }
-            // --- 核心修改處 END ---
 
             gameState.playerData.adventure_progress = result.updated_progress;
             gameState.currentAdventureEvent = null; 
