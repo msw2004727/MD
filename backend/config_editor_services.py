@@ -34,8 +34,14 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "skills/wood.json": ("Skills", "skill_database.木"),
 }
 
-# 新增一個列表來定義哪些是本地檔案
-LOCAL_CONFIG_FILES = ["adventure_settings.json", "adventure_islands.json"]
+# --- 核心修改處 START ---
+# 將 adventure_growth_settings.json 也加入到本地檔案列表
+LOCAL_CONFIG_FILES = [
+    "adventure_settings.json", 
+    "adventure_islands.json",
+    "adventure_growth_settings.json"
+]
+# --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
@@ -103,6 +109,25 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     if not db:
         return False, "資料庫服務未初始化。"
 
+    # --- 核心修改處 START ---
+    # 新增：處理本地檔案儲存
+    if filename in LOCAL_CONFIG_FILES:
+        try:
+            parsed_content = json.loads(content_str)
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            file_path = os.path.join(data_dir, filename)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(parsed_content, f, indent=2, ensure_ascii=False)
+            config_editor_logger.info(f"設定檔 '{filename}' 已成功儲存至本地。")
+            reload_main_app_configs()
+            return True, None
+        except json.JSONDecodeError as e:
+            return False, f"儲存失敗：內容不是有效的 JSON 格式。錯誤: {e}"
+        except Exception as e:
+            config_editor_logger.error(f"儲存設定檔 '{filename}' 到本地時發生錯誤: {e}", exc_info=True)
+            return False, "儲存檔案到本地時發生伺服器內部錯誤。"
+    # --- 核心修改處 END ---
+
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return False, f"不支援的設定檔 '{filename}'。"
 
@@ -138,8 +163,6 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         adv_settings_path = os.path.join(data_dir, 'adventure_settings.json')
         with open(adv_settings_path, 'w', encoding='utf-8') as f:
             json.dump(global_settings, f, indent=2, ensure_ascii=False)
-        # --- 核心修改處 START ---
-        # 將 config_logger.info 改為 config_editor_logger.info
         config_editor_logger.info(f"已成功儲存全域冒險設定至 '{adv_settings_path}'。")
 
         islands_path = os.path.join(data_dir, 'adventure_islands.json')
@@ -156,9 +179,7 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         
         with open(islands_path, 'w', encoding='utf-8') as f:
             json.dump(islands_data, f, indent=2, ensure_ascii=False)
-        # 將 config_logger.info 改為 config_editor_logger.info
         config_editor_logger.info(f"已成功更新並儲存各地區設施設定至 '{islands_path}'。")
-        # --- 核心修改處 END ---
 
         reload_main_app_configs()
         
@@ -167,6 +188,35 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
     except Exception as e:
         config_editor_logger.error(f"儲存冒險島設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存冒險島設定時發生伺服器內部錯誤。"
+
+# --- 核心修改處 START ---
+def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool, Optional[str]]:
+    """
+    將新的冒險島成長設定儲存到 adventure_growth_settings.json 檔案。
+    """
+    try:
+        # 驗證傳入的資料結構
+        if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
+            return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
+
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        file_path = os.path.join(data_dir, 'adventure_growth_settings.json')
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(growth_settings, f, indent=2, ensure_ascii=False)
+        
+        config_editor_logger.info(f"冒險島成長設定已成功儲存至 '{file_path}'。")
+        
+        # 重新載入主應用的設定，讓變更即時生效
+        reload_main_app_configs()
+        
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存冒險島成長設定時發生錯誤: {e}", exc_info=True)
+        return False, "儲存冒險島成長設定時發生伺服器內部錯誤。"
+# --- 核心修改處 END ---
+
 
 def reload_main_app_configs():
     try:
