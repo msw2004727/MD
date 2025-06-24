@@ -124,7 +124,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- 日誌監控邏輯 ---
         async function loadAndDisplayLogs() {
             if (!DOMElements.logDisplayContainer) return;
-            DOMElements.logDisplayContainer.innerHTML = '<p style="color: var(--admin-text-secondary);">正在載入最新日誌...</p>';
+
+            // --- 核心修改處 START ---
+            const container = DOMElements.logDisplayContainer;
+            // 1. 在更新內容前，儲存當前的捲動狀態
+            const oldScrollHeight = container.scrollHeight;
+            const oldScrollTop = container.scrollTop;
+            // --- 核心修改處 END ---
+
             try {
                 const response = await fetch(`${ADMIN_API_URL}/logs`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                 if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
@@ -134,10 +141,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const doc = parser.parseFromString(htmlContent, "text/html");
                 const logEntries = doc.body.innerHTML;
                 
-                DOMElements.logDisplayContainer.innerHTML = logEntries || '<p>日誌目前為空。</p>';
-                DOMElements.logDisplayContainer.scrollTop = DOMElements.logDisplayContainer.scrollHeight;
+                container.innerHTML = logEntries || '<p>日誌目前為空。</p>';
+
+                // --- 核心修改處 START ---
+                // 2. 根據內容高度的變化，恢復捲動位置
+                const newScrollHeight = container.scrollHeight;
+                container.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
+                // --- 核心修改處 END ---
+
             } catch (err) {
-                DOMElements.logDisplayContainer.innerHTML = `<p style="color: var(--danger-color);">載入日誌失敗：${err.message}</p>`;
+                container.innerHTML = `<p style="color: var(--danger-color);">載入日誌失敗：${err.message}</p>`;
             }
         }
         
@@ -252,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isLikelyUid) {
                 await fetchAndDisplayPlayerData(query);
             } else {
-                // --- 核心修改處 START ---
                 try {
                     // 改用 fetch 直接呼叫正確的 API 路徑
                     const response = await fetch(`${ADMIN_API_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, {
@@ -270,7 +282,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert(`API 請求失敗: ${err.message}`);
                     DOMElements.searchResultsContainer.innerHTML = `<p style="color: var(--danger-color);">搜尋失敗：${err.message}</p>`;
                 }
-                // --- 核心修改處 END ---
             }
             DOMElements.searchBtn.disabled = false;
         }
