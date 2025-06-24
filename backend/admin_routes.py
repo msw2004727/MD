@@ -12,6 +12,8 @@ from flask import Blueprint, jsonify, request, current_app
 
 # 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
+# 【修改】導入整個 config_editor_services 模組
+from . import config_editor_services
 
 # 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
@@ -47,6 +49,9 @@ def token_required(f):
         return f(*args, **kwargs)
     return decorated
 
+# 【修改】將 config_editor 相關路由移至專門的檔案，這裡只保留 admin 核心路由
+# backend/admin_routes.py
+
 @admin_bp.route('/login', methods=['POST'])
 def admin_login():
     """後台登入 API"""
@@ -62,8 +67,6 @@ def admin_login():
         return jsonify({'success': True, 'token': token})
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
-
-# --- 以下是需要保護的後台路由 ---
 
 @admin_bp.route('/player_data', methods=['GET'])
 @token_required
@@ -98,15 +101,11 @@ def send_mail_to_player_route():
     recipient_id = data.get('recipient_id')
     title = data.get('title')
     content = data.get('content')
-    # 【修改】從請求中讀取 sender_name，如果沒有則使用預設值
     sender_name = data.get('sender_name', '遊戲管理員')
-
     if not all([recipient_id, title, content]):
         return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
-
     success, error_msg = send_mail_to_player_service(
         sender_id="system_admin",
-        # 【修改】將寫死的字串改為使用上面獲取的變數
         sender_nickname=sender_name,
         recipient_id=recipient_id,
         title=title,
@@ -114,7 +113,6 @@ def send_mail_to_player_route():
         payload={},
         mail_type="system_message"
     )
-
     if success:
         return jsonify({"success": True, "message": f"信件已成功發送給玩家 {recipient_id}。"}), 200
     else:
@@ -125,8 +123,7 @@ def send_mail_to_player_route():
 def get_broadcast_log_route():
     from . import MD_firebase_config
     db = MD_firebase_config.db
-    if not db:
-        return jsonify({"error": "資料庫服務異常"}), 500
+    if not db: return jsonify({"error": "資料庫服務異常"}), 500
     try:
         logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').limit(50).stream()
         logs = [log.to_dict() for log in logs_ref]
@@ -142,10 +139,8 @@ def broadcast_mail_route():
     from . import MD_firebase_config
     from .mail_services import send_mail_to_player_service
     db = MD_firebase_config.db
-    if not db:
-        return jsonify({"error": "資料庫服務異常"}), 500
+    if not db: return jsonify({"error": "資料庫服務異常"}), 500
     data = request.get_json()
-    # 【修改】從請求中讀取 sender_name，如果沒有則使用預設值
     sender_name = data.get('sender_name', '遊戲管理員')
     title = data.get('title')
     content = data.get('content')
@@ -164,7 +159,6 @@ def broadcast_mail_route():
             recipient_id = user_doc.id
             success, _ = send_mail_to_player_service(
                 sender_id="system_admin",
-                # 【修改】將寫死的字串改為使用上面獲取的變數
                 sender_nickname=sender_name,
                 recipient_id=recipient_id,
                 title=title,
@@ -172,17 +166,9 @@ def broadcast_mail_route():
                 payload=payload,
                 mail_type="system_message"
             )
-            if success:
-                count += 1
+            if success: count += 1
         import time
-        log_entry = {
-            "broadcastId": str(time.time()),
-            "timestamp": int(time.time()),
-            "title": title,
-            "content": content,
-            "payload": payload,
-            "recipient_count": count
-        }
+        log_entry = {"broadcastId": str(time.time()), "timestamp": int(time.time()), "title": title, "content": content, "payload": payload, "recipient_count": count}
         db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').add(log_entry)
         return jsonify({"success": True, "message": f"信件已成功發送給 {count} 位玩家。"}), 200
     except Exception as e:
@@ -193,8 +179,7 @@ def broadcast_mail_route():
 def get_game_overview_route():
     from . import MD_firebase_config
     db = MD_firebase_config.db
-    if not db:
-        return jsonify({"error": "資料庫服務異常"}), 500
+    if not db: return jsonify({"error": "資料庫服務異常"}), 500
     try:
         total_players, total_gold, total_dna_fragments = 0, 0, 0
         monster_rarity_count = {"普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0}
@@ -222,8 +207,7 @@ def get_game_overview_route():
 def recall_mail_route():
     from . import MD_firebase_config
     db = MD_firebase_config.db
-    if not db:
-        return jsonify({"error": "資料庫服務異常"}), 500
+    if not db: return jsonify({"error": "資料庫服務異常"}), 500
     data = request.get_json()
     broadcast_id_to_recall = data.get('broadcastId')
     if not broadcast_id_to_recall:
