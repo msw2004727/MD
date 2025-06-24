@@ -8,7 +8,7 @@ function openSendMailModal(friendUid, friendNickname) {
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
-    // 重新設計彈窗的 HTML 結構
+    // --- 核心修改處 START ---
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -25,21 +25,27 @@ function openSendMailModal(friendUid, friendNickname) {
 
             <div class="mail-attachment-section">
                 <h5 class="attachment-title">🎁 附加禮物 (可選)</h5>
-                <div class="attachment-controls">
-                    <div class="attachment-gold-control">
-                        <label for="mail-gold-input">🪙</label>
-                        <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="金額">
-                        <span class="text-xs text-[var(--text-secondary)]">您擁有: ${currentGold.toLocaleString()}</span>
+                
+                <div class="attachment-grid">
+                    <div class="attachment-gold-wrapper">
+                        <label for="mail-gold-input">🪙 金額</label>
+                        <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="輸入金額">
                     </div>
-                    <button id="attach-dna-btn" class="button secondary text-xs">附加 DNA</button>
-                    <button id="attach-item-btn" class="button secondary text-xs" disabled>附加物品</button>
+                    <div id="mail-fee-display" class="mail-fee-display">
+                        手續費 (1%): 0<br>
+                        總計: 0
+                    </div>
+
+                    <button id="attach-dna-btn" class="button secondary">附加 DNA</button>
+                    <button id="attach-item-btn" class="button secondary" disabled>附加物品</button>
                 </div>
-                <p class="text-xs text-[var(--text-secondary)] mt-1" style="padding-left: 30px;">※※寄送金幣則會有1%手續費捐贈給怪獸保護協會，感謝您。</p>
-                <div id="attached-dna-preview" class="attached-dna-preview">
-                    </div>
+
+                <div id="attached-dna-preview" class="attached-dna-preview"></div>
+                <p class="text-xs text-[var(--text-secondary)] mt-2">※ 寄送金幣將收取1%手續費，由怪獸保護協會託管，感謝您的愛心。</p>
             </div>
         </div>
     `;
+    // --- 核心修改處 END ---
 
     showConfirmationModal(
         '撰寫信件',
@@ -59,8 +65,6 @@ function openSendMailModal(friendUid, friendNickname) {
                 return;
             }
 
-            // --- 核心修改處 START ---
-            // 在前端也計算一次總花費，用於驗證
             const fee = Math.floor(attachedGold * 0.01);
             const totalCost = attachedGold + fee;
 
@@ -68,7 +72,6 @@ function openSendMailModal(friendUid, friendNickname) {
                 showFeedbackModal('錯誤', `金額不足！寄送 ${attachedGold.toLocaleString()} 🪙，含手續費 ${fee.toLocaleString()} 🪙，共需 ${totalCost.toLocaleString()} 🪙。`);
                 return;
             }
-            // --- 核心修改處 END ---
 
             const payload = {};
             if (attachedGold > 0) payload.gold = attachedGold;
@@ -96,8 +99,26 @@ function openSendMailModal(friendUid, friendNickname) {
         },
         { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
     );
-
+    
+    // --- 核心修改處 START ---
     // 為新建立的元件綁定事件
+    const goldInputEl = document.getElementById('mail-gold-input');
+    const feeDisplayEl = document.getElementById('mail-fee-display');
+
+    if (goldInputEl && feeDisplayEl) {
+        goldInputEl.addEventListener('input', () => {
+            const amount = parseInt(goldInputEl.value, 10) || 0;
+            if (amount > 0) {
+                goldInputEl.style.color = 'gold';
+            } else {
+                goldInputEl.style.color = ''; // 恢復預設顏色
+            }
+            const fee = Math.floor(amount * 0.01);
+            const total = amount + fee;
+            feeDisplayEl.innerHTML = `手續費 (1%): ${fee.toLocaleString()}<br>總計: <span style="color: var(--danger-color);">${total.toLocaleString()}</span>`;
+        });
+    }
+
     const attachDnaBtn = document.getElementById('attach-dna-btn');
     const attachedDnaPreview = document.getElementById('attached-dna-preview');
 
@@ -147,6 +168,7 @@ function openSendMailModal(friendUid, friendNickname) {
             });
         });
     });
+    // --- 核心修改處 END ---
 }
 
 async function handleSendFriendRequest(recipientId, buttonElement) {
