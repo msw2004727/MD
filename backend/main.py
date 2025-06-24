@@ -20,7 +20,7 @@ from backend.champion_routes import champion_bp
 from backend.mail_routes import mail_bp
 from backend.adventure_routes import adventure_bp 
 from backend.admin_routes import admin_bp
-from backend.config_editor_routes import config_editor_bp # 新增這行
+from backend.config_editor_routes import config_editor_bp
 
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
@@ -29,7 +29,16 @@ setup_logging()
 app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
-# --- CORS 配置 ---
+# --- 【核心修改處】註冊所有藍圖 ---
+app.register_blueprint(md_bp)
+app.register_blueprint(champion_bp) 
+app.register_blueprint(mail_bp)
+app.register_blueprint(adventure_bp)
+app.register_blueprint(admin_bp) 
+app.register_blueprint(config_editor_bp)
+
+
+# --- CORS 配置 (移動至此處) ---
 allowed_origins = [
     "https://msw2004727.github.io",
     "http://127.0.0.1:5500",
@@ -45,15 +54,6 @@ CORS(app,
      expose_headers=["Content-Type", "Authorization"]
 )
 app_logger.info("CORS configured to allow origins: %s", allowed_origins)
-
-
-# --- 【核心修改處】註冊所有藍圖 ---
-app.register_blueprint(md_bp)
-app.register_blueprint(champion_bp) 
-app.register_blueprint(mail_bp)
-app.register_blueprint(adventure_bp)
-app.register_blueprint(admin_bp) 
-app.register_blueprint(config_editor_bp) # 新增這行
 
 
 # --- Firebase Admin SDK 初始化 ---
