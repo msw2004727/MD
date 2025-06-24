@@ -70,10 +70,6 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
         }
     }
 
-    // --- 核心修改處 START ---
-    // 移除對 gameState.battleTargetMonster 的依賴
-    // gameState.battleTargetMonster = finalOpponent; 
-
     showConfirmationModal(
         confirmationTitle,
         confirmationMessage,
@@ -94,7 +90,6 @@ async function handleChampionChallengeClick(event, rankToChallenge, opponentMons
                 await handleMonsterLeaderboardClick(); 
                 
                 hideModal('feedback-modal');
-                // 直接將 playerMonster 和 finalOpponent 傳入函式
                 showBattleLogModal(response.battle_result, playerMonster, finalOpponent);
 
                 if (response.battle_result && typeof checkAndShowNewTitleModal === 'function') {
@@ -203,12 +198,11 @@ function renderChampionSlots(championsData) {
 
             const monsterNameSpan = document.createElement('span');
             monsterNameSpan.className = 'champion-monster-name';
-            monsterNameSpan.textContent = getMonsterDisplayName(monster, gameState.gameConfigs);
+            // --- 核心修改處 START ---
+            // 使用 innerHTML 來渲染帶有顏色的名稱
+            monsterNameSpan.innerHTML = getMonsterDisplayName(monster, gameState.gameConfigs);
+            // --- 核心修改處 END ---
             
-            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-            const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-            monsterNameSpan.classList.add(`text-rarity-${rarityKey}`);
-
             identityContainer.appendChild(ownerTag);
             identityContainer.appendChild(document.createTextNode(' 的 '));
             identityContainer.appendChild(monsterNameSpan);
