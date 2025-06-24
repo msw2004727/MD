@@ -411,7 +411,7 @@ async function initializeAdventureUI() {
                     </div>
                     <div class="facility-card-body">
                         <p>${facility.description || '暫無描述。'}</p>
-                        <div class="facility-reward-preview" style="color: var(--rarity-legendary-text); font-size: 0.75rem; text-align: left; margin-top: 0.75rem;">
+                        <div class="facility-reward-preview" style="color: var(--rarity-legendary-text); font-size: 0.75rem; text-align: left; padding-top: 0.75rem; padding-bottom: 0.25rem;">
                             🏆 ${facility.reward_preview || ''}
                         </div>
                     </div>
