@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- 全域變數與初始化 ---
     const adminToken = localStorage.getItem('admin_token');
-    // 注意: 請確保這個 URL 與您的後端部署或本地測試環境一致
-    const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD'; 
+    
+    // 【優化】動態獲取 API URL，如果全局 config.js 存在則使用，否則使用後備 URL
+    const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
+        ? window.API_BASE_URL 
+        : 'https://md-server-5wre.onrender.com/api/MD'; 
 
     const DOMElements = {
         sidebarLinks: document.querySelectorAll('.nav-link'),
@@ -60,6 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/admin${endpoint}`, options);
             const data = await response.json();
             if (!response.ok) {
+                // 如果是 Token 錯誤，直接跳轉回登入頁
+                if (response.status === 401 || response.status === 403) {
+                     localStorage.removeItem('admin_token');
+                     alert('登入憑證已失效，請重新登入。');
+                     window.location.href = 'index.html';
+                }
                 throw new Error(data.error || `伺服器錯誤: ${response.status}`);
             }
             return data;
@@ -83,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         document.getElementById(targetId).classList.add('active');
 
-        // 根據切換到的區塊載入對應的初始資料
         if (targetId === 'dashboard-section') loadGameOverview();
         if (targetId === 'broadcast-system-section') loadBroadcastLog();
         if (targetId === 'config-editor-section') loadAndPopulateConfigsDropdown();
@@ -151,12 +159,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 body: JSON.stringify(dataToSave)
             });
+            
+            // 【優化】儲存成功後，清空編輯器並提示用戶重新查詢以獲取最新資料
+            DOMElements.playerDataEditor.value = "儲存成功！請重新查詢以檢視最新資料。";
+            DOMElements.savePlayerDataBtn.disabled = true;
             showFeedback('成功', result.message);
+
         } catch (error) {
             showFeedback('儲存失敗', `資料格式錯誤或API請求失敗: ${error.message}`);
         } finally {
             DOMElements.savePlayerDataBtn.textContent = "儲存玩家資料變更";
-            DOMElements.savePlayerDataBtn.disabled = false;
+            // 注意：這裡不把 disabled 設回 false，強制使用者重新查詢
         }
     }
     
@@ -168,14 +181,14 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = '';
             logs.forEach(log => {
                 const row = tableBody.insertRow();
-                const timestamp = new Date(log.timestamp * 1000).toLocaleString('zh-TW');
+                const timestamp = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { hour12: false });
                 const payloadStr = JSON.stringify(log.payload || {});
 
                 row.innerHTML = `
                     <td>${timestamp}</td>
                     <td>${log.title}</td>
                     <td>${log.content}</td>
-                    <td>${payloadStr}</td>
+                    <td><textarea rows="1" readonly>${payloadStr}</textarea></td>
                     <td><button class="btn btn-danger" data-id="${log.broadcastId}">撤回</button></td>
                 `;
             });
@@ -208,7 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(payload)
             });
             showFeedback('成功', result.message);
-            loadBroadcastLog();
+            // 清空輸入框
+            DOMElements.broadcastTitleInput.value = '';
+            DOMElements.broadcastContentInput.value = '';
+            DOMElements.broadcastPayloadInput.value = '';
+            loadBroadcastLog(); // 重新載入紀錄
         } catch (error) {
             console.error("廣播失敗:", error);
         }
@@ -236,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const files = await fetchAdminAPI('/list_configs');
             const selector = DOMElements.configFileSelector;
-            // 清空舊選項，保留第一個提示選項
             while (selector.options.length > 1) {
                 selector.remove(1);
             }
@@ -272,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!selectedFile) return;
 
         try {
-            JSON.parse(content); // 驗證 JSON 格式
+            JSON.parse(content);
             DOMElements.saveConfigBtn.textContent = '儲存中...';
             DOMElements.saveConfigBtn.disabled = true;
             const result = await fetchAdminAPI('/save_config', {
@@ -295,6 +311,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     DOMElements.playerSearchBtn.addEventListener('click', searchPlayer);
+    // 【優化】增加 Enter 鍵觸發搜尋
+    DOMElements.playerSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            searchPlayer();
+        }
+    });
+
     DOMElements.savePlayerDataBtn.addEventListener('click', savePlayerData);
     DOMElements.sendBroadcastBtn.addEventListener('click', sendBroadcast);
     DOMElements.configFileSelector.addEventListener('change', loadSelectedConfig);
