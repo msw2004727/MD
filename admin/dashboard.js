@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- 變數定義區 ---
     const adminToken = localStorage.getItem('admin_token');
-    const SENDER_PRESETS_KEY = 'admin_sender_presets'; 
+    const SENDER_PRESETS_KEY = 'admin_sender_presets'; // 用於儲存寄件人名稱的 localStorage 鍵值
     let currentPlayerData = null;
-    // 【新增】一個變數來存放日誌自動刷新的計時器
     let logIntervalId = null;
 
     if (!adminToken) {
@@ -34,62 +33,108 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateReportBtn = document.getElementById('generate-report-btn');
     const overviewReportContainer = document.getElementById('overview-report-container');
 
-    // 【新增】獲取日誌監控頁籤的相關元素
     const logDisplayContainer = document.getElementById('log-display-container');
     const refreshLogsBtn = document.getElementById('refresh-logs-btn');
 
+    const playerLogSection = document.getElementById('player-log-section');
+    const playerLogFilters = document.getElementById('player-log-filters');
+    const playerLogDisplay = document.getElementById('player-log-display');
+
 
     // --- 函式定義區 ---
-    
-    // 【新增】載入並顯示後端日誌的函式
+
+    function renderPlayerLogs(logs, category = '全部') {
+        if (!playerLogDisplay) return;
+
+        if (!logs || logs.length === 0) {
+            playerLogDisplay.innerHTML = '<p style="color: var(--admin-text-secondary);">暫無日誌紀錄。</p>';
+            return;
+        }
+
+        const filteredLogs = category === '全部'
+            ? logs
+            : logs.filter(log => log.category === category);
+
+        if (filteredLogs.length === 0) {
+            playerLogDisplay.innerHTML = `<p style="color: var(--admin-text-secondary);">在「${category}」分類下暫無紀錄。</p>`;
+            return;
+        }
+        
+        const categoryColors = {
+            '系統': 'var(--admin-accent)',
+            '金幣': 'gold',
+            '戰鬥': 'var(--danger-color)',
+            '合成': '#10B981', 
+            '物品': '#e879f9'
+        };
+
+        playerLogDisplay.innerHTML = filteredLogs.map(log => {
+            const date = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const color = categoryColors[log.category] || 'var(--admin-text-secondary)';
+            return `
+                <div style="padding-bottom: 0.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--admin-border-color);">
+                    <p style="margin: 0; color: var(--admin-text-secondary); font-size: 0.8rem;">${date}</p>
+                    <p style="margin: 0.25rem 0 0 0;">
+                        <strong style="color: ${color};">[${log.category}]</strong>
+                        <span>${log.message}</span>
+                    </p>
+                </div>
+            `;
+        }).join('');
+    }
+
     async function loadAndDisplayLogs() {
         if (!logDisplayContainer) return;
         logDisplayContainer.innerHTML = '<p style="color: var(--admin-text-secondary);">正在載入最新日誌...</p>';
         try {
-            // 後端 /api/MD/logs 回傳的是 HTML 格式的純文字
-            const response = await fetch(`${ADMIN_API_URL}/logs`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` }
-            });
-            if (!response.ok) {
-                throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
-            }
+            const response = await fetch(`${ADMIN_API_URL}/logs`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+            if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
             const htmlContent = await response.text();
             
-            // 使用 DOMParser 來解析 HTML 字串，只取出 body 內的內容，避免重複的 <html> 標籤
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlContent, "text/html");
             logDisplayContainer.innerHTML = doc.body.innerHTML || '<p>日誌目前為空。</p>';
             
-            // 自動滾動到最底部
             logDisplayContainer.scrollTop = logDisplayContainer.scrollHeight;
 
         } catch (err) {
             logDisplayContainer.innerHTML = `<p style="color: var(--danger-color);">載入日誌失敗：${err.message}</p>`;
         }
     }
+    
+    function renderPlayerData(playerData) {
+        currentPlayerData = playerData;
+        const dnaGridHtml = (playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5; display: flex; align-items: center; justify-content: center;">空位</div>').join('');
+        const monsterGridHtml = (playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score || 0}</li></ul></div>`).join('');
+        dataDisplay.innerHTML = `<div class="data-section"><h3>玩家狀態 (Player Stats)</h3><div class="form-grid"><div class="form-group"><label for="admin-nickname">暱稱</label><input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}"></div><div class="form-group"><label for="admin-gold">金幣</label><input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}"></div><div class="form-group"><label for="admin-wins">勝場</label><input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}"></div><div class="form-group"><label for="admin-losses">敗場</label><input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}"></div></div></div><div class="data-section"><h3>DNA 碎片庫存 (預覽)</h3><div id="admin-dna-grid" class="dna-grid">${dnaGridHtml}</div></div><div class="data-section"><h3>持有怪獸 (預覽)</h3><div id="admin-monster-grid" class="monster-grid">${monsterGridHtml}</div></div><div class="save-changes-container"><button id="send-player-mail-btn" class="button secondary">寄送系統信件</button><button id="save-player-data-btn" class="button success">儲存玩家數值變更</button></div>`;
 
-    // 【修改】switchTab 函式，加入對新頁籤的處理
-    function switchTab(targetId) {
-        // 清除可能在運行的計時器
-        if (logIntervalId) {
-            clearInterval(logIntervalId);
-            logIntervalId = null;
+        if (playerLogSection) {
+            const logs = playerData.playerLogs || [];
+            if (logs.length > 0) {
+                playerLogSection.style.display = 'block';
+                playerLogFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                playerLogFilters.querySelector('button[data-log-category="全部"]').classList.add('active');
+                renderPlayerLogs(logs, '全部');
+            } else {
+                playerLogSection.style.display = 'none';
+            }
         }
+    }
 
+    function switchTab(targetId) {
+        if (logIntervalId) { clearInterval(logIntervalId); logIntervalId = null; }
         navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
         contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
-        
         if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
             initializeConfigEditor();
         } else if (targetId === 'mail-system') {
             loadBroadcastLog();
         } else if (targetId === 'log-monitoring') {
-            // 當切換到日誌頁籤時，先載入一次，然後設定每5秒自動刷新
             loadAndDisplayLogs();
             logIntervalId = setInterval(loadAndDisplayLogs, 5000); 
         }
     }
-
+    
     function loadSenderPresets() {
         const presets = JSON.parse(localStorage.getItem(SENDER_PRESETS_KEY)) || ['遊戲管理員', '系統通知'];
         broadcastSenderPresetsSelect.innerHTML = '<option value="">選擇預設名稱...</option>';
@@ -115,13 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
-
-    function renderPlayerData(playerData) {
-        currentPlayerData = playerData;
-        const dnaGridHtml = (playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5; display: flex; align-items: center; justify-content: center;">空位</div>').join('');
-        const monsterGridHtml = (playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score || 0}</li></ul></div>`).join('');
-        dataDisplay.innerHTML = `<div class="data-section"><h3>玩家狀態 (Player Stats)</h3><div class="form-grid"><div class="form-group"><label for="admin-nickname">暱稱</label><input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}"></div><div class="form-group"><label for="admin-gold">金幣</label><input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}"></div><div class="form-group"><label for="admin-wins">勝場</label><input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}"></div><div class="form-group"><label for="admin-losses">敗場</label><input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}"></div></div></div><div class="data-section"><h3>DNA 碎片庫存 (預覽)</h3><div id="admin-dna-grid" class="dna-grid">${dnaGridHtml}</div></div><div class="data-section"><h3>持有怪獸 (預覽)</h3><div id="admin-monster-grid" class="monster-grid">${monsterGridHtml}</div></div><div class="save-changes-container"><button id="send-player-mail-btn" class="button secondary">寄送系統信件</button><button id="save-player-data-btn" class="button success">儲存玩家數值變更</button></div>`;
-    }
 
     async function handleSavePlayerData() {
         if (!currentPlayerData) { alert('沒有可儲存的玩家資料。'); return; }
@@ -291,10 +329,19 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshLogBtn.addEventListener('click', loadBroadcastLog);
     broadcastLogContainer.addEventListener('click', handleRecallMail);
     generateReportBtn.addEventListener('click', handleGenerateReport);
-    
-    // 【新增】為新的日誌刷新按鈕綁定事件
-    if (refreshLogsBtn) {
-        refreshLogsBtn.addEventListener('click', loadAndDisplayLogs);
+    if (refreshLogsBtn) { refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
+
+    if (playerLogFilters) {
+        playerLogFilters.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const category = e.target.dataset.logCategory;
+                playerLogFilters.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                if (currentPlayerData) {
+                    renderPlayerLogs(currentPlayerData.playerLogs, category);
+                }
+            }
+        });
     }
     
     // --- 初始執行區 ---
