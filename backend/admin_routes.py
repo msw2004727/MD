@@ -1,70 +1,54 @@
 # backend/admin_routes.py
-# 核心修改處：建立全新的後台管理路由檔案
 
 import os
 import jwt
 import json
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-# 【新增】導入 firestore 以便使用查詢功能
 from firebase_admin import firestore
 from flask import Blueprint, jsonify, request, current_app
 
-# 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
 
-# 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
 
-# 後台管理的密鑰，為了安全，建議您之後將其設定為 Render 的環境變數
 ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your_super_secret_admin_key_12345')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727') # 您的後台密碼
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727')
 
-# 裝飾器：用於驗證後台管理員的 JWT Token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # 針對瀏覽器因CORS發出的預檢請求(OPTIONS)，直接回傳成功
         if request.method == 'OPTIONS':
             return jsonify({'status': 'ok'}), 200
-            
         token = None
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             if ' ' in auth_header:
                 token = auth_header.split(" ")[1]
-
         if not token:
             return jsonify({'message': '錯誤：缺少 Token'}), 401
-
         try:
             data = jwt.decode(token, ADMIN_SECRET_KEY, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
             return jsonify({'message': '錯誤：Token 已過期'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'message': '錯誤：無效的 Token'}), 401
-
         return f(*args, **kwargs)
     return decorated
 
 @admin_bp.route('/login', methods=['POST'])
 def admin_login():
-    """後台登入 API"""
     data = request.get_json()
     if not data or 'password' not in data:
         return jsonify({'error': '缺少密碼'}), 400
-
     if data['password'] == ADMIN_PASSWORD:
         token = jwt.encode({
             'user': 'admin',
             'exp': datetime.now(tz=timezone.utc) + timedelta(hours=8)
         }, ADMIN_SECRET_KEY, algorithm="HS256")
-        
         return jsonify({'success': True, 'token': token})
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
-
-# --- 以下是需要保護的後台路由 ---
 
 @admin_bp.route('/player_data', methods=['GET'])
 @token_required
@@ -72,10 +56,8 @@ def get_admin_player_data_route():
     uid = request.args.get('uid')
     if not uid:
         return jsonify({"error": "請求中缺少玩家 UID"}), 400
-    
     game_configs = current_app.config.get('MD_GAME_CONFIGS', {})
     player_data, _ = get_player_data_service(uid, None, game_configs)
-    
     if player_data:
         player_data['uid'] = uid
         return jsonify(player_data), 200
@@ -88,7 +70,6 @@ def update_admin_player_data_route(uid):
     data_to_save = request.get_json()
     if not data_to_save:
         return jsonify({"error": "請求中沒有要儲存的資料"}), 400
-    
     if save_player_data_service(uid, data_to_save):
         return jsonify({"success": True, "message": f"玩家 {uid} 的資料已成功更新。"}), 200
     else:
@@ -98,15 +79,12 @@ def update_admin_player_data_route(uid):
 @token_required
 def send_mail_to_player_route():
     from .mail_services import send_mail_to_player_service
-    
     data = request.get_json()
     recipient_id = data.get('recipient_id')
     title = data.get('title')
     content = data.get('content')
-
     if not all([recipient_id, title, content]):
         return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
-
     success, error_msg = send_mail_to_player_service(
         sender_id="system_admin",
         sender_nickname="遊戲管理員",
@@ -116,13 +94,11 @@ def send_mail_to_player_route():
         payload={},
         mail_type="system_message"
     )
-
     if success:
         return jsonify({"success": True, "message": f"信件已成功發送給玩家 {recipient_id}。"}), 200
     else:
         return jsonify({"error": error_msg or "發送信件時發生未知錯誤。"}), 500
 
-# 【新增】一個新的 API 路由，用來獲取已發送的廣播信件歷史
 @admin_bp.route('/get_broadcast_log', methods=['GET'])
 @token_required
 def get_broadcast_log_route():
@@ -130,44 +106,38 @@ def get_broadcast_log_route():
     db = MD_firebase_config.db
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
-
     try:
-        # 查詢 MD_SystemLogs/Broadcasts/log_entries 集合，並按時間戳降序排列
-        logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').order_by(
-            'timestamp', direction=firestore.Query.DESCENDING
-        ).limit(50).stream()
-
-        # 將查詢結果轉換為列表
+        # 【修改】移除 .order_by() 以避免因缺少索引而導致的後端錯誤
+        logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').limit(50).stream()
+        
         logs = [log.to_dict() for log in logs_ref]
+        
+        # 【新增】在後端程式碼中手動進行排序，以確保功能不變
+        logs.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
+        
         return jsonify(logs), 200
     except Exception as e:
         current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "獲取歷史紀錄時發生內部錯誤。"}), 500
-
 
 @admin_bp.route('/broadcast_mail', methods=['POST'])
 @token_required
 def broadcast_mail_route():
     from . import MD_firebase_config
     from .mail_services import send_mail_to_player_service
-    
     db = MD_firebase_config.db
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
-
     data = request.get_json()
     title = data.get('title')
     content = data.get('content')
     payload_str = data.get('payload_str', '{}')
-
     if not title or not content:
         return jsonify({"error": "信件標題和內容不能為空。"}), 400
-
     try:
         payload = json.loads(payload_str)
     except json.JSONDecodeError:
         return jsonify({"error": "附件 (Payload) 的 JSON 格式不正確。"}), 400
-
     try:
         users_ref = db.collection('users')
         all_users_docs = users_ref.stream()
@@ -185,7 +155,6 @@ def broadcast_mail_route():
             )
             if success:
                 count += 1
-        
         import time
         log_entry = {
             "broadcastId": str(time.time()),
@@ -196,11 +165,10 @@ def broadcast_mail_route():
             "recipient_count": count
         }
         db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').add(log_entry)
-
         return jsonify({"success": True, "message": f"信件已成功發送給 {count} 位玩家。"}), 200
     except Exception as e:
         return jsonify({"error": f"群發信件時發生錯誤: {str(e)}"}), 500
-        
+
 @admin_bp.route('/game_overview', methods=['GET'])
 @token_required
 def get_game_overview_route():
@@ -208,51 +176,38 @@ def get_game_overview_route():
     db = MD_firebase_config.db
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
-
     try:
         total_players = 0
         total_gold = 0
         total_dna_fragments = 0
-        monster_rarity_count = {
-            "普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0
-        }
-
+        monster_rarity_count = {"普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0}
         users_ref = db.collection('users')
         all_users_docs = list(users_ref.stream())
-        
         total_players = len(all_users_docs)
-
         for user_doc in all_users_docs:
             game_data_doc = user_doc.reference.collection('gameData').document('main').get()
             if not game_data_doc.exists:
                 continue
-                
             player_data = game_data_doc.to_dict()
             if not player_data:
                 continue
-
             total_gold += player_data.get("playerStats", {}).get("gold", 0)
             total_dna_fragments += sum(1 for dna in player_data.get("playerOwnedDNA", []) if dna is not None)
-            
             for monster in player_data.get("farmedMonsters", []):
                 rarity = monster.get("rarity")
                 if rarity in monster_rarity_count:
                     monster_rarity_count[rarity] += 1
-
         overview_stats = {
             "totalPlayers": total_players,
             "totalGold": total_gold,
             "totalDnaFragments": total_dna_fragments,
             "monsterRarityCount": monster_rarity_count
         }
-        
         return jsonify(overview_stats), 200
-        
     except Exception as e:
         current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "生成報表時發生內部錯誤。"}), 500
 
-# 【新增】一個新的 API 路由，用來回收已發送的廣播信件
 @admin_bp.route('/recall_mail', methods=['POST'])
 @token_required
 def recall_mail_route():
@@ -260,29 +215,20 @@ def recall_mail_route():
     db = MD_firebase_config.db
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
-
     data = request.get_json()
     broadcast_id_to_recall = data.get('broadcastId')
     if not broadcast_id_to_recall:
         return jsonify({"error": "請求中缺少 broadcastId。"}), 400
-
     try:
-        # 在伺服器端日誌中記錄操作
         current_app.logger.info(f"Admin is attempting to recall broadcast mail with ID: {broadcast_id_to_recall}")
-        # 注意：實際的回收邏輯（從每個玩家的信箱中刪除）會比較複雜且耗時。
-        # 這裡先做一個簡化版，僅從發送日誌中刪除，以供演示。
-        # 完整的實現需要遍歷所有玩家，是一個高成本操作。
-        
         query = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').where('broadcastId', '==', broadcast_id_to_recall).limit(1)
         docs = query.stream()
         doc_to_delete = next(docs, None)
-
         if doc_to_delete:
             doc_to_delete.reference.delete()
             return jsonify({"success": True, "message": f"廣播信件(ID: {broadcast_id_to_recall})已從日誌中移除。完整回收功能待開發。"}), 200
         else:
             return jsonify({"error": "在日誌中找不到該封廣播信件。"}), 404
-
     except Exception as e:
         current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
