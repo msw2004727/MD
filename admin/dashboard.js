@@ -252,16 +252,25 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isLikelyUid) {
                 await fetchAndDisplayPlayerData(query);
             } else {
+                // --- 核心修改處 START ---
                 try {
-                    const result = await fetchAdminAPI(`/players/search?nickname=${encodeURIComponent(query)}&limit=10`);
+                    // 改用 fetch 直接呼叫正確的 API 路徑
+                    const response = await fetch(`${ADMIN_API_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, {
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || '搜尋失敗');
+
                     if (!result.players || result.players.length === 0) {
                         DOMElements.searchResultsContainer.innerHTML = '<p>找不到符合此暱稱的玩家。</p>';
                     } else {
                         DOMElements.searchResultsContainer.innerHTML = result.players.map(p => `<div class="search-result-item" data-uid="${p.uid}"><span>${p.nickname}</span><span class="uid">${p.uid}</span></div>`).join('');
                     }
                 } catch (err) {
+                    alert(`API 請求失敗: ${err.message}`);
                     DOMElements.searchResultsContainer.innerHTML = `<p style="color: var(--danger-color);">搜尋失敗：${err.message}</p>`;
                 }
+                // --- 核心修改處 END ---
             }
             DOMElements.searchBtn.disabled = false;
         }
