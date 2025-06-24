@@ -2,14 +2,13 @@
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
 function openSendMailModal(friendUid, friendNickname) {
-    // 暫存要附加的物品與金額
-    let attachedGold = 0;
-    let attachedDna = null; 
+    // --- 核心修改處 START ---
+    // 將單一附件變數改為陣列，以儲存多個附件
+    let attachedDnas = []; 
+    // --- 核心修改處 END ---
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
-    // --- 核心修改處 START ---
-    // 移除了 <label> 中的「金額」二字
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -46,7 +45,6 @@ function openSendMailModal(friendUid, friendNickname) {
             </div>
         </div>
     `;
-    // --- 核心修改處 END ---
 
     showConfirmationModal(
         '撰寫信件',
@@ -55,7 +53,7 @@ function openSendMailModal(friendUid, friendNickname) {
             const title = document.getElementById('mail-title-input').value.trim();
             const content = document.getElementById('mail-content-input').value.trim();
             const goldInput = document.getElementById('mail-gold-input').value;
-            attachedGold = parseInt(goldInput, 10) || 0;
+            const attachedGold = parseInt(goldInput, 10) || 0;
 
             if (!title || !content) {
                 showFeedbackModal('錯誤', '信件標題和內容不能為空。');
@@ -76,7 +74,13 @@ function openSendMailModal(friendUid, friendNickname) {
 
             const payload = {};
             if (attachedGold > 0) payload.gold = attachedGold;
-            if (attachedDna) payload.items = [{ type: 'dna', data: attachedDna }];
+            
+            // --- 核心修改處 START ---
+            // 修改 payload 生成邏輯以支援多個附件
+            if (attachedDnas.length > 0) {
+                payload.items = attachedDnas.map(dna => ({ type: 'dna', data: dna }));
+            }
+            // --- 核心修改處 END ---
 
             if (!title && !content && Object.keys(payload).length === 0) {
                  showFeedbackModal('錯誤', '不能發送一封完全空白的信件。');
@@ -110,7 +114,7 @@ function openSendMailModal(friendUid, friendNickname) {
             if (amount > 0) {
                 goldInputEl.style.color = 'gold';
             } else {
-                goldInputEl.style.color = ''; // 恢復預設顏色
+                goldInputEl.style.color = '';
             }
             const fee = Math.floor(amount * 0.01);
             const total = amount + fee;
@@ -121,6 +125,32 @@ function openSendMailModal(friendUid, friendNickname) {
     const attachDnaBtn = document.getElementById('attach-dna-btn');
     const attachedDnaPreview = document.getElementById('attached-dna-preview');
 
+    // --- 核心修改處 START ---
+    // 建立一個專門用來渲染預覽附件的函式
+    function renderAttachedDnaPreview() {
+        attachedDnaPreview.innerHTML = '';
+        if (attachedDnas.length > 0) {
+            attachedDnaPreview.style.justifyContent = 'flex-start'; // 靠左對齊
+            attachedDnas.forEach(dna => {
+                const dnaItemDiv = document.createElement('div');
+                dnaItemDiv.className = 'dna-item occupied';
+                dnaItemDiv.style.cursor = 'pointer';
+                dnaItemDiv.title = '點擊以移除附件';
+                // 點擊預覽圖示即可移除
+                dnaItemDiv.onclick = () => {
+                    attachedDnas = attachedDnas.filter(d => d.id !== dna.id);
+                    renderAttachedDnaPreview(); // 重新渲染預覽
+                };
+                applyDnaItemStyle(dnaItemDiv, dna);
+                attachedDnaPreview.appendChild(dnaItemDiv);
+            });
+        } else {
+             attachedDnaPreview.style.justifyContent = 'center'; // 恢復置中
+        }
+    }
+    // --- 核心修改處 END ---
+
+
     attachDnaBtn.addEventListener('click', () => {
         const inventory = gameState.playerData.playerOwnedDNA.filter(Boolean); 
         if (inventory.length === 0) {
@@ -128,42 +158,50 @@ function openSendMailModal(friendUid, friendNickname) {
             return;
         }
 
-        let inventoryHtml = '<div class="inventory-grid mail-inventory-selection" style="max-height: 300px; overflow-y: auto;">';
+        let inventoryHtml = `<p class="text-center text-sm text-[var(--text-secondary)] mb-2">請選擇要附加的DNA (最多 ${5 - attachedDnas.length} 個)</p>`;
+        inventoryHtml += '<div class="inventory-grid mail-inventory-selection" style="max-height: 300px; overflow-y: auto;">';
         inventory.forEach(dna => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'dna-item occupied mail-attach-dna-item';
             itemDiv.dataset.dnaId = dna.id;
+            
+            // 如果已在附加列表中，則加上 'selected' 樣式
+            if (attachedDnas.some(d => d.id === dna.id)) {
+                itemDiv.classList.add('selected');
+            }
+
             applyDnaItemStyle(itemDiv, dna);
             inventoryHtml += itemDiv.outerHTML;
         });
         inventoryHtml += '</div>';
 
-        showFeedbackModal('選擇要附加的DNA (單選)', inventoryHtml, false, null, [{ text: '取消', class: 'secondary' }]);
+        showFeedbackModal('選擇要附加的DNA', inventoryHtml, false, null, [{ text: '完成', class: 'primary' }]);
 
+        // --- 核心修改處 START ---
+        // 修改選擇彈窗內的點擊邏輯，以支援多選和取消
         document.querySelectorAll('.mail-attach-dna-item').forEach(item => {
             item.addEventListener('click', () => {
                 const dnaId = item.dataset.dnaId;
-                attachedDna = inventory.find(d => d.id === dnaId);
+                const dnaObject = inventory.find(d => d.id === dnaId);
+                const isAlreadyAttached = attachedDnas.some(d => d.id === dnaId);
 
-                if (attachedDna) {
-                    const dnaItemDiv = document.createElement('div');
-                    dnaItemDiv.className = 'dna-item occupied';
-                    
-                    dnaItemDiv.style.cursor = 'pointer'; 
-                    dnaItemDiv.title = '點擊以移除附件';
-                    dnaItemDiv.onclick = () => {
-                        attachedDna = null;
-                        attachedDnaPreview.innerHTML = '';
-                    };
-                    
-                    applyDnaItemStyle(dnaItemDiv, attachedDna);
-                    
-                    attachedDnaPreview.innerHTML = '';
-                    attachedDnaPreview.appendChild(dnaItemDiv);
+                if (isAlreadyAttached) {
+                    // 如果已經選了，就取消選擇
+                    attachedDnas = attachedDnas.filter(d => d.id !== dnaId);
+                    item.classList.remove('selected');
+                } else {
+                    // 如果尚未選擇，檢查是否已達上限
+                    if (attachedDnas.length < 5) {
+                        attachedDnas.push(dnaObject);
+                        item.classList.add('selected');
+                    } else {
+                        showFeedbackModal('提示', '最多只能附加 5 個附件。');
+                    }
                 }
-                hideModal('feedback-modal');
+                renderAttachedDnaPreview(); // 每次點擊都更新主彈窗的預覽
             });
         });
+        // --- 核心修改處 END ---
     });
 }
 
