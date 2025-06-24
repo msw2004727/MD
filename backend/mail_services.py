@@ -4,18 +4,15 @@
 import logging
 import time
 import uuid
-# --- 核心修改處 START ---
-# 導入 TYPE_CHECKING 用於處理循環依賴的類型提示
+import math
 from typing import Optional, List, Dict, Any, Tuple, TYPE_CHECKING
 
 # 從專案的其他模組導入
 from . import MD_firebase_config
-# from .MD_models import PlayerGameData, MailItem, PlayerOwnedDNA # 移除此處的直接導入
 
 # 使用 TYPE_CHECKING 來避免運行時的循環導入錯誤
 if TYPE_CHECKING:
     from .MD_models import PlayerGameData, MailItem, PlayerOwnedDNA, GameConfigs
-# --- 核心修改處 END ---
 
 
 # 設定日誌記錄器
@@ -95,14 +92,20 @@ def send_mail_to_player_service(
                 mail_logger.error(f"寄信失敗：找不到寄件人 {sender_id} 的資料以扣除資產。")
                 return False
 
-            # 處理金幣
+            # --- 核心修改處 START ---
+            # 處理金幣與手續費
             gold_to_send = int(payload.get("gold", 0))
             if gold_to_send > 0:
+                fee = math.floor(gold_to_send * 0.01) # 無條件捨去
+                total_cost = gold_to_send + fee
                 sender_gold = sender_data.get("playerStats", {}).get("gold", 0)
-                if sender_gold < gold_to_send:
-                    mail_logger.warning(f"寄信失敗：寄件人 {sender_id} 金幣不足。")
+                
+                if sender_gold < total_cost:
+                    mail_logger.warning(f"寄信失敗：寄件人 {sender_id} 金幣不足 (需要 {total_cost}, 擁有 {sender_gold})。")
                     return False
-                sender_data["playerStats"]["gold"] = sender_gold - gold_to_send
+                sender_data["playerStats"]["gold"] = sender_gold - total_cost
+                mail_logger.info(f"寄送金幣 {gold_to_send}，已從寄件人 {sender_id} 扣除包含手續費在內的總額 {total_cost}。")
+            # --- 核心修改處 END ---
 
             # 處理物品 (DNA)
             items_to_send = payload.get("items", [])
