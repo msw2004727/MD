@@ -6,7 +6,7 @@ import os
 import csv
 from typing import Dict, Any, List
 
-def load_game_configs() -> Dict[str, Any]:
+def load_all_game_configs_from_firestore() -> Dict[str, Any]:
     """
     從多個 JSON 和 CSV 檔案載入所有遊戲設定。
     """
