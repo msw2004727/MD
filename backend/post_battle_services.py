@@ -71,15 +71,25 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
             buffs_text = ""
             if title.get("buffs"):
                 buff_parts = []
+                # --- 核心修改處 START ---
+                # 新增中文名稱對照表
                 stat_name_map = {
                     'hp': 'HP', 'mp': 'MP', 'attack': '攻擊', 'defense': '防禦', 'speed': '速度', 'crit': '爆擊率',
                     'cultivation_item_find_chance': '修煉物品發現率', 'elemental_damage_boost': '元素傷害',
-                    'score_gain_boost': '積分獲取'
+                    'score_gain_boost': '積分獲取', 'evasion': '閃避率',
+                    'fire_resistance': '火抗性', 'water_resistance': '水抗性', 'wood_resistance': '木抗性',
+                    'gold_resistance': '金抗性', 'earth_resistance': '土抗性', 'light_resistance': '光抗性',
+                    'dark_resistance': '暗抗性', 'poison_damage_boost': '毒素傷害',
+                    'cultivation_exp_gain': '修煉經驗獲取', 'cultivation_time_reduction': '修煉時間縮短',
+                    'dna_return_rate_on_disassemble': '分解DNA返還率', 'leech_skill_effect': '生命吸取效果',
+                    'mp_regen_per_turn': 'MP每回合恢復'
                 }
                 for stat, value in title["buffs"].items():
+                    # 使用對照表來取得中文名稱，如果找不到則使用原始鍵值
                     name = stat_name_map.get(stat, stat)
-                    display_value = f"+{value * 100}%" if 0 < value < 1 else f"+{value}"
+                    display_value = f"+{value * 100:.0f}%" if 0 < value < 1 else f"+{value}"
                     buff_parts.append(f"{name}{display_value}")
+                # --- 核心修改處 END ---
                 buffs_text = f" 稱號效果：{ '、'.join(buff_parts) }"
 
             mail_content = f"恭喜您！由於您的卓越表現，您已成功解鎖了新的稱號：「{title.get('name')}」。 描述：{title.get('description', '無')}{buffs_text}"
@@ -218,8 +228,6 @@ def process_battle_results(
 
     opponent_name = opponent_monster_data.get('nickname', '一名對手')
     
-    # --- 核心修改處 START ---
-    # 將判斷邏輯移出 f-string
     win_text = '<span style=\'color: var(--success-color);\'>獲勝</span>'
     loss_text = '<span style=\'color: var(--danger-color);\'>戰敗</span>'
     
@@ -228,7 +236,6 @@ def process_battle_results(
     
     opponent_result_text = loss_text if is_player_winner else win_text
     opponent_log_message = f"「{player_data.get('nickname', '一名挑戰者')}」向您發起挑戰，您{opponent_result_text}了！"
-    # --- 核心修改處 END ---
     
     _add_player_log(player_data, "戰鬥", player_log_message)
 
