@@ -133,6 +133,24 @@ def get_broadcast_log_route():
         current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "獲取歷史紀錄時發生內部錯誤。"}), 500
 
+# --- 核心修改處 START ---
+@admin_bp.route('/get_cs_mail', methods=['GET', 'OPTIONS'])
+@token_required
+def get_cs_mail_route():
+    """獲取後台客服信箱中的所有信件。"""
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db: return jsonify({"error": "資料庫服務異常"}), 500
+    try:
+        # 從 MD_AdminMailbox 集合讀取信件，並按時間排序
+        mails_ref = db.collection('MD_AdminMailbox').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(100).stream()
+        mails = [mail.to_dict() for mail in mails_ref]
+        return jsonify(mails), 200
+    except Exception as e:
+        current_app.logger.error(f"獲取客服信箱信件時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "獲取客服信箱時發生內部錯誤。"}), 500
+# --- 核心修改處 END ---
+
 @admin_bp.route('/broadcast_mail', methods=['POST', 'OPTIONS'])
 @token_required
 def broadcast_mail_route():
