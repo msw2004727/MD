@@ -162,6 +162,7 @@
     padding: 0.5rem;
     background-color: var(--bg-slot);
     border-radius: 6px;
+    position: relative; /* 為了讓增益圖示可以定位 */
 }
 
 .team-member-card .name {
@@ -216,11 +217,46 @@
     gap: 0.75rem;
 }
 
-/* --- 核心修改處 START --- */
 .adventure-actions {
     margin-top: 1rem;
     display: flex; /* 使用 flexbox 排列 */
     justify-content: center; /* 水平置中 */
     gap: 1rem; /* 按鈕之間的間距 */
+}
+
+/* --- 核心修改處 START --- */
+/* 增益/減益 圖示動畫 */
+@keyframes fade-out-pulse {
+    0% { transform: scale(1.5); opacity: 1; }
+    50% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(0.8); opacity: 0; }
+}
+
+/* 圖示通用樣式 */
+.status-effect-indicator {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    font-size: 0.75rem; /* 等同 text-xs */
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    animation: fade-out-pulse 2s ease-out forwards;
+    pointer-events: none; /* 讓圖示不會擋到滑鼠點擊 */
+}
+
+/* 增益 (紅色) */
+.status-effect-indicator.buff {
+    color: white;
+    background-color: var(--danger-color);
+    text-shadow: 0 0 3px black;
+}
+
+/* 減益 (綠色) */
+.status-effect-indicator.debuff {
+    color: white;
+    background-color: var(--success-color);
+    text-shadow: 0 0 3px black;
 }
 /* --- 核心修改處 END --- */
