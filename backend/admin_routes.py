@@ -10,10 +10,10 @@ import uuid
 import time
 from .player_services import get_player_data_service, save_player_data_service 
 from .MD_routes import _get_game_configs_data_from_app_context 
-from .mail_services import add_mail_to_player 
+from .mail_services import add_mail_to_player, send_mail_to_player_service # --- 核心修改處：導入 send_mail_to_player_service ---
 from . import MD_firebase_config
 from google.cloud import firestore
-import json # 導入 json 模組
+import json
 
 # 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
@@ -180,7 +180,7 @@ def broadcast_mail_route():
             batch.update(game_data_ref, {'mailbox': firestore.ArrayUnion([new_mail_item])})
             count += 1
 
-            if count % 499 == 0:
+            if count > 0 and count % 499 == 0:
                 batch.commit()
                 batch = db.batch()
                 admin_logger.info(f"已提交一批次 ({count}) 的系統信件。")
@@ -281,6 +281,42 @@ def recall_mail_route():
     except Exception as e:
         admin_logger.error(f"回收信件過程中發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生伺服器內部錯誤。"}), 500
+
+# --- 核心修改處 START ---
+@admin_bp.route('/send_mail_to_player', methods=['POST'])
+def send_mail_to_player_route():
+    """
+    處理對單一玩家發送系統信件的請求。
+    """
+    if not verify_admin_token():
+        return jsonify({"error": "管理員驗證失敗"}), 401
+
+    data = request.json
+    recipient_id = data.get('recipient_id')
+    title = data.get('title')
+    content = data.get('content')
+
+    if not all([recipient_id, title, content]):
+        return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
+
+    # 呼叫現有的寄信服務，並將寄件人設定為系統管理員
+    success, error_message = send_mail_to_player_service(
+        sender_id="system_admin",
+        sender_nickname="系統管理員",
+        recipient_id=recipient_id,
+        title=title,
+        content=content,
+        payload={}, # 單獨寄送的系統信件通常不帶附件，若要帶附件可擴充此處
+        mail_type="system_message"
+    )
+    
+    if success:
+        admin_logger.info(f"後台成功發送信件給玩家 {recipient_id}。")
+        return jsonify({"success": True, "message": f"已成功發送信件給玩家 {recipient_id}。"}), 200
+    else:
+        admin_logger.error(f"後台發送信件給玩家 {recipient_id} 失敗: {error_message}")
+        return jsonify({"error": error_message or "發送信件時發生未知錯誤。"}), 500
+# --- 核心修改處 END ---
 
 @admin_bp.route('/check_auth', methods=['GET'])
 def check_auth_status():
