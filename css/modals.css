@@ -27,7 +27,8 @@
 #confirmation-modal-close-x.modal-close,
 #official-announcement-close-x,
 #close-training-results-btn,
-#cultivation-modal-close-x {
+#cultivation-modal-close-x,
+#expedition-modal-close-x {
     background-color: var(--danger-color);
     color: var(--button-danger-text);
     width: 28px;
@@ -45,7 +46,8 @@
 #confirmation-modal-close-x.modal-close:hover,
 #official-announcement-close-x:hover,
 #close-training-results-btn:hover,
-#cultivation-modal-close-x:hover {
+#cultivation-modal-close-x:hover,
+#expedition-modal-close-x:hover {
     background-color: var(--danger-hover-dark);
     color: var(--button-danger-text);
 }
@@ -53,7 +55,8 @@ body.light-theme #feedback-modal-close-x:hover,
 body.light-theme #confirmation-modal-close-x.modal-close:hover,
 body.light-theme #official-announcement-close-x:hover,
 body.light-theme #close-training-results-btn:hover,
-body.light-theme #cultivation-modal-close-x:hover {
+body.light-theme #cultivation-modal-close-x:hover,
+body.light-theme #expedition-modal-close-x:hover {
     background-color: var(--danger-hover-light);
 }
 
