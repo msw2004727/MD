@@ -6,6 +6,8 @@ import jwt
 import json
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+# 【新增】導入 firestore 以便使用查詢功能
+from firebase_admin import firestore
 from flask import Blueprint, jsonify, request, current_app
 
 # 從專案的其他模組導入
@@ -92,7 +94,6 @@ def update_admin_player_data_route(uid):
     else:
         return jsonify({"error": "儲存玩家資料時發生錯誤"}), 500
 
-# 【新增】一個新的 API 路由，專門用於從後台向單一玩家發送信件
 @admin_bp.route('/send_mail_to_player', methods=['POST'])
 @token_required
 def send_mail_to_player_route():
@@ -106,14 +107,13 @@ def send_mail_to_player_route():
     if not all([recipient_id, title, content]):
         return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
 
-    # 來自後台的信件，寄件人固定為系統管理員
     success, error_msg = send_mail_to_player_service(
         sender_id="system_admin",
         sender_nickname="遊戲管理員",
         recipient_id=recipient_id,
         title=title,
         content=content,
-        payload={}, # 管理員寄信預設不帶附件
+        payload={},
         mail_type="system_message"
     )
 
@@ -121,6 +121,28 @@ def send_mail_to_player_route():
         return jsonify({"success": True, "message": f"信件已成功發送給玩家 {recipient_id}。"}), 200
     else:
         return jsonify({"error": error_msg or "發送信件時發生未知錯誤。"}), 500
+
+# 【新增】一個新的 API 路由，用來獲取已發送的廣播信件歷史
+@admin_bp.route('/get_broadcast_log', methods=['GET'])
+@token_required
+def get_broadcast_log_route():
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db:
+        return jsonify({"error": "資料庫服務異常"}), 500
+
+    try:
+        # 查詢 MD_SystemLogs/Broadcasts/log_entries 集合，並按時間戳降序排列
+        logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').order_by(
+            'timestamp', direction=firestore.Query.DESCENDING
+        ).limit(50).stream()
+
+        # 將查詢結果轉換為列表
+        logs = [log.to_dict() for log in logs_ref]
+        return jsonify(logs), 200
+    except Exception as e:
+        current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "獲取歷史紀錄時發生內部錯誤。"}), 500
 
 
 @admin_bp.route('/broadcast_mail', methods=['POST'])
@@ -229,3 +251,38 @@ def get_game_overview_route():
     except Exception as e:
         current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "生成報表時發生內部錯誤。"}), 500
+
+# 【新增】一個新的 API 路由，用來回收已發送的廣播信件
+@admin_bp.route('/recall_mail', methods=['POST'])
+@token_required
+def recall_mail_route():
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db:
+        return jsonify({"error": "資料庫服務異常"}), 500
+
+    data = request.get_json()
+    broadcast_id_to_recall = data.get('broadcastId')
+    if not broadcast_id_to_recall:
+        return jsonify({"error": "請求中缺少 broadcastId。"}), 400
+
+    try:
+        # 在伺服器端日誌中記錄操作
+        current_app.logger.info(f"Admin is attempting to recall broadcast mail with ID: {broadcast_id_to_recall}")
+        # 注意：實際的回收邏輯（從每個玩家的信箱中刪除）會比較複雜且耗時。
+        # 這裡先做一個簡化版，僅從發送日誌中刪除，以供演示。
+        # 完整的實現需要遍歷所有玩家，是一個高成本操作。
+        
+        query = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').where('broadcastId', '==', broadcast_id_to_recall).limit(1)
+        docs = query.stream()
+        doc_to_delete = next(docs, None)
+
+        if doc_to_delete:
+            doc_to_delete.reference.delete()
+            return jsonify({"success": True, "message": f"廣播信件(ID: {broadcast_id_to_recall})已從日誌中移除。完整回收功能待開發。"}), 200
+        else:
+            return jsonify({"error": "在日誌中找不到該封廣播信件。"}), 404
+
+    except Exception as e:
+        current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
