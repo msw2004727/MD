@@ -107,8 +107,6 @@ def start_expedition_service(
 
     player_data["playerStats"]["gold"] = player_gold - cost
 
-    # --- 核心修改處 START ---
-    # 在建立遠征進度時，初始化 expedition_stats
     adventure_progress: AdventureProgress = {
         "is_active": True, "island_id": island_id, "facility_id": facility_id,
         "start_timestamp": int(time.time()), "expedition_team": expedition_team_status,
@@ -128,7 +126,6 @@ def start_expedition_service(
             "dna_fragments_obtained": 0
         }
     }
-    # --- 核心修改處 END ---
     player_data["adventure_progress"] = adventure_progress
     
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 的遠征已成功建立。")
@@ -181,11 +178,8 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
             if boss_pool:
                 base_boss = random.choice(boss_pool).copy()
                 if current_floor > 1:
-                    # --- 核心修改處 START ---
-                    # 從 game_configs 讀取難度增長率
                     adv_settings = game_configs.get("adventure_settings", {})
                     growth_factor = adv_settings.get("boss_difficulty_multiplier_per_floor", 1.1) ** (current_floor - 1)
-                    # --- 核心修改處 END ---
                     base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
                     for stat in ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']:
                         if stat in base_boss: base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
@@ -227,13 +221,10 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
 
     current_floor = progress.get("current_floor", 1)
     
-    # --- 核心修改處 START ---
-    # 從 game_configs 讀取金幣獎勵設定
     adv_settings = game_configs.get("adventure_settings", {})
     base_gold = adv_settings.get("floor_clear_base_gold", 50)
     bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
     gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
-    # --- 核心修改處 END ---
     
     player_stats = player_data.get("playerStats", {})
     player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
@@ -263,6 +254,11 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     if not current_event:
         return {"success": False, "error": "當前沒有需要回應的事件。"}
 
+    # --- 核心修改處 START ---
+    # 獲取統計數據的參考
+    stats = progress.get("expedition_stats")
+    # --- 核心修改處 END ---
+
     chosen_outcome = None
     for choice in current_event.get("choices", []):
         if choice.get("choice_id") == choice_id:
@@ -290,34 +286,54 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
             effect_type = effect.get("effect")
             target_type = effect.get("target")
             
-            if effect_type == "change_resource":
-                resource = effect.get("resource")
-                amount = effect.get("amount", 0)
-                if resource == "gold":
-                    player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
-                elif resource in ["hp", "mp"]:
-                    targets_to_affect = []
-                    if target_type == "team_all":
-                        targets_to_affect = team_members
-                    elif target_type in ["team_random_one", "member_who_chose"] and team_members:
-                        targets_to_affect = [random.choice(team_members)]
+            # --- 核心修改處 START ---
+            # 根據效果更新統計數據
+            if stats: # 確保 stats 字典存在
+                if effect_type == "change_resource":
+                    resource = effect.get("resource")
+                    amount = effect.get("amount", 0)
+                    if resource == "gold" and amount > 0:
+                        stats["gold_obtained"] += amount
+                        player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
+                    elif resource in ["hp", "mp"]:
+                        for member in team_members: # 假設效果總是對全隊生效
+                            key_current = f"current_{resource}"
+                            key_healed = f"{resource}_healed"
+                            key_consumed = f"{resource}_consumed"
+                            
+                            original_value = member.get(key_current, 0)
+                            
+                            full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
+                            if full_monster:
+                                max_value = full_monster.get(f"initial_max_{resource}", original_value)
+                                new_value = min(max_value, original_value + amount)
+                                new_value = max(0, new_value)
+                                member[key_current] = new_value
 
-                    for member in targets_to_affect:
-                        key = f"current_{resource}"
-                        full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
-                        if full_monster:
-                            max_value = full_monster.get(f"initial_max_{resource}", member.get(key, 0))
-                            member[key] = min(max_value, member.get(key, 0) + amount)
-                            member[key] = max(0, member[key])
-            
-            elif effect_type == "give_item":
-                pool_id = effect.get("item_pool_id", "")
-                quantity = effect.get("quantity", 1)
-                dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
-                if dna_pool:
-                    for _ in range(quantity):
-                        item = random.choice(dna_pool)
-                        progress.get("adventure_inventory", []).append(item)
+                                actual_change = new_value - original_value
+                                if actual_change > 0:
+                                    stats[key_healed] = stats.get(key_healed, 0) + actual_change
+                                elif actual_change < 0:
+                                    stats[key_consumed] = stats.get(key_consumed, 0) + abs(actual_change)
+
+                elif effect_type == "give_item":
+                    if effect.get("item_type") == "dna":
+                        stats["dna_fragments_obtained"] = stats.get("dna_fragments_obtained", 0) + effect.get("quantity", 1)
+                    # 將物品加入冒險背包
+                    pool_id = effect.get("item_pool_id", "")
+                    quantity = effect.get("quantity", 1)
+                    dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
+                    if dna_pool:
+                        for _ in range(quantity):
+                            item = random.choice(dna_pool)
+                            progress.get("adventure_inventory", []).append(item)
+
+                elif effect_type == "apply_temp_buff":
+                    stats["buffs_received"] = stats.get("buffs_received", 0) + 1
+                
+                elif effect_type == "apply_temp_debuff":
+                    stats["debuffs_received"] = stats.get("debuffs_received", 0) + 1
+            # --- 核心修改處 END ---
     
     progress["current_event"] = None
 
