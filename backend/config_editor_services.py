@@ -5,6 +5,7 @@ import os
 import json
 import logging
 from flask import current_app
+# 【新增】從 typing 模組導入 Optional，以解決 NameError
 from typing import Optional
 
 # 【新增】從 firebase_admin 導入 firestore 以便操作資料庫
@@ -73,13 +74,18 @@ def get_config_content(filename: str) -> tuple[Optional[str], Optional[str]]:
 
         doc_data = doc.to_dict()
         
-        # 處理巢狀路徑 (例如 "skill_database.火")
+        # 【修改】使用更安全的 .get() 方法來處理巢狀路徑，避免 KeyError
         data_to_return = doc_data
         for key in field_path.split('.'):
-            if data_to_return and key in data_to_return:
-                data_to_return = data_to_return[key]
+            if isinstance(data_to_return, dict):
+                data_to_return = data_to_return.get(key)
             else:
-                return None, f"在文件 '{doc_name}' 中找不到欄位路徑：'{field_path}'"
+                # 如果中間路徑不是字典或不存在，則無法繼續尋找
+                return None, f"在文件 '{doc_name}' 中找不到欄位路徑：'{field_path}' (於 '{key}')"
+            
+            if data_to_return is None:
+                # 如果 get() 返回 None，表示鍵不存在
+                return None, f"在文件 '{doc_name}' 中找不到欄位路徑：'{field_path}' (於 '{key}')"
         
         # 將Python物件轉換為格式化的JSON字串回傳給前端
         content_str = json.dumps(data_to_return, ensure_ascii=False, indent=2)
@@ -133,7 +139,6 @@ def reload_main_app_configs():
     觸發主 Flask 應用程式重新載入所有遊戲設定。
     """
     try:
-        # 【修改】因為此服務現在也寫入資料庫，所以這裡的載入邏輯也應該是從 Firestore 讀取，確保一致性
         from .MD_config_services import load_all_game_configs_from_firestore
         current_app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
         config_editor_logger.info("主應用程式的遊戲設定已從 Firestore 重新載入。")
