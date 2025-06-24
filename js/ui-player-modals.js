@@ -2,39 +2,39 @@
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
 function openSendMailModal(friendUid, friendNickname) {
-    // --- 核心修改處 START ---
     // 暫存要附加的物品與金額
     let attachedGold = 0;
-    let attachedDna = null; // 一次只能附加一個DNA
+    let attachedDna = null; 
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
-    // 重新設計彈窗的 HTML 內容
+    // --- 核心修改處 START ---
+    // 重新設計彈窗的 HTML 結構，使其更緊湊美觀
     const mailFormHtml = `
-        <div id="send-mail-container" style="text-align: left; font-size: 0.9rem;">
-            <p style="margin-bottom: 1rem;">正在寫信給：<strong style="color: var(--accent-color);">${friendNickname}</strong></p>
+        <div id="send-mail-container" class="send-mail-container">
+            <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
             
-            <div style="margin-bottom: 0.75rem;">
-                <label for="mail-title-input" class="block mb-1 font-semibold">標題：</label>
-                <input type="text" id="mail-title-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="輸入信件標題..." maxlength="30">
+            <div class="mail-input-group">
+                <label for="mail-title-input">標題</label>
+                <input type="text" id="mail-title-input" placeholder="輸入信件標題..." maxlength="30">
             </div>
-            <div>
-                <label for="mail-content-input" class="block mb-1 font-semibold">內容：</label>
-                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="輸入信件內容..." maxlength="200"></textarea>
+            
+            <div class="mail-input-group">
+                <label for="mail-content-input">內容</label>
+                <textarea id="mail-content-input" rows="4" placeholder="輸入信件內容..." maxlength="200"></textarea>
             </div>
 
-            <div id="mail-attachment-section" class="mt-4 pt-3 border-t border-dashed border-[var(--border-color)]">
-                <h5 class="font-semibold mb-2">附加禮物</h5>
-                <div class="flex items-center gap-3 mb-3">
-                    <label for="mail-gold-input">🪙 金幣:</label>
-                    <input type="number" id="mail-gold-input" class="p-1 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)] w-24" min="0" max="${currentGold}" placeholder="0">
-                    <span class="text-xs text-[var(--text-secondary)]">您擁有: ${currentGold.toLocaleString()}</span>
+            <div class="mail-attachment-section">
+                <h5 class="attachment-title">附加禮物 (可選)</h5>
+                <div class="attachment-controls">
+                    <div class="attachment-gold-control">
+                        <label for="mail-gold-input">🪙</label>
+                        <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="金額">
+                    </div>
+                    <button id="attach-dna-btn" class="button secondary text-xs">附加 DNA</button>
                 </div>
-                <div class="flex items-center gap-3">
-                    <label>🧬 DNA:</label>
-                    <button id="attach-dna-btn" class="button secondary text-xs">選擇DNA</button>
-                    <div id="attached-dna-preview" class="flex items-center gap-2"></div>
-                </div>
+                 <div id="attached-dna-preview" class="attached-dna-preview">
+                    </div>
             </div>
         </div>
     `;
@@ -57,16 +57,18 @@ function openSendMailModal(friendUid, friendNickname) {
                 return;
             }
              if (attachedGold > currentGold) {
-                showFeedbackModal('錯誤', '附加金額超過您擁有的金幣數量。');
+                showFeedbackModal('錯誤', `附加金額超過您擁有的金幣 (${currentGold.toLocaleString()})。`);
                 return;
             }
 
             const payload = {};
-            if (attachedGold > 0) {
-                payload.gold = attachedGold;
-            }
-            if (attachedDna) {
-                payload.items = [{ type: 'dna', data: attachedDna }];
+            if (attachedGold > 0) payload.gold = attachedGold;
+            if (attachedDna) payload.items = [{ type: 'dna', data: attachedDna }];
+
+            // 檢查是否沒有任何內容或附件
+            if (!title && !content && Object.keys(payload).length === 0) {
+                 showFeedbackModal('錯誤', '不能發送一封完全空白的信件。');
+                return;
             }
 
             showFeedbackModal('寄送中...', `正在將您的信件送往 ${friendNickname} 的信箱...`, true);
@@ -75,7 +77,7 @@ function openSendMailModal(friendUid, friendNickname) {
                 if (result && result.success) {
                     hideModal('feedback-modal');
                     showFeedbackModal('成功', '信件已成功寄出！');
-                    await refreshPlayerData(); // 寄送成功後刷新自己的資料(金幣和物品)
+                    await refreshPlayerData();
                 } else {
                     throw new Error(result.error || '未知的錯誤');
                 }
@@ -87,18 +89,18 @@ function openSendMailModal(friendUid, friendNickname) {
         { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
     );
 
-    // 為新建立的「選擇DNA」按鈕綁定事件
+    // 為新建立的元件綁定事件
     const attachDnaBtn = document.getElementById('attach-dna-btn');
     const attachedDnaPreview = document.getElementById('attached-dna-preview');
 
     attachDnaBtn.addEventListener('click', () => {
-        const inventory = gameState.playerData.playerOwnedDNA.filter(Boolean); // 過濾掉空槽位
+        const inventory = gameState.playerData.playerOwnedDNA.filter(Boolean); 
         if (inventory.length === 0) {
             showFeedbackModal('提示', '您的庫存中沒有可附加的DNA。');
             return;
         }
 
-        let inventoryHtml = '<div class="inventory-grid" style="max-height: 300px; overflow-y: auto;">';
+        let inventoryHtml = '<div class="inventory-grid mail-inventory-selection" style="max-height: 300px; overflow-y: auto;">';
         inventory.forEach(dna => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'dna-item occupied mail-attach-dna-item';
@@ -108,7 +110,7 @@ function openSendMailModal(friendUid, friendNickname) {
         });
         inventoryHtml += '</div>';
 
-        showFeedbackModal('選擇要附加的DNA', inventoryHtml, false, null, [{ text: '取消', class: 'secondary' }]);
+        showFeedbackModal('選擇要附加的DNA (單選)', inventoryHtml, false, null, [{ text: '取消', class: 'secondary' }]);
 
         document.querySelectorAll('.mail-attach-dna-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -118,12 +120,12 @@ function openSendMailModal(friendUid, friendNickname) {
                 if (attachedDna) {
                     const dnaItemDiv = document.createElement('div');
                     dnaItemDiv.className = 'dna-item occupied';
+                    dnaItemDiv.style.cursor = 'default';
                     applyDnaItemStyle(dnaItemDiv, attachedDna);
                     
                     const removeBtn = document.createElement('button');
                     removeBtn.innerHTML = '&times;';
-                    removeBtn.className = 'button danger text-xs';
-                    removeBtn.style.marginLeft = '8px';
+                    removeBtn.className = 'button danger text-xs remove-attachment-btn';
                     removeBtn.onclick = () => {
                         attachedDna = null;
                         attachedDnaPreview.innerHTML = '';
@@ -294,7 +296,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                     hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
                     cultivation_item_find_chance: '修煉物品發現機率', cultivation_exp_gain: '修煉經驗提升',
                     cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
-                    elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒素傷害提升',
+                    elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
                     leech_skill_effect: '生命吸取效果', mp_regen_per_turn: 'MP每回合恢復',
                     dna_return_rate_on_disassemble: '分解DNA返還率', fire_resistance: '火系抗性',
                     water_resistance: '水系抗性', wood_resistance: '木系抗性', gold_resistance: '金系抗性',
