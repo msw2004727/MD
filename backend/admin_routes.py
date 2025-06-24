@@ -13,6 +13,7 @@ from .MD_routes import _get_game_configs_data_from_app_context
 from .mail_services import add_mail_to_player 
 from . import MD_firebase_config
 from google.cloud import firestore
+import json # 導入 json 模組
 
 # 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
@@ -126,7 +127,6 @@ def update_player_data_by_admin(player_id: str):
         admin_logger.error(f"後台更新玩家 {player_id} 資料時發生未知錯誤: {e}", exc_info=True)
         return jsonify({"error": "伺服器內部錯誤，更新失敗。"}), 500
 
-# --- 核心修改處 START ---
 @admin_bp.route('/broadcast_mail', methods=['POST'])
 def broadcast_mail_route():
     """
@@ -168,7 +168,7 @@ def broadcast_mail_route():
             
             new_mail_item = {
                 "id": str(uuid.uuid4()),
-                "broadcastId": broadcast_id, # 加入廣播ID以便追蹤
+                "broadcastId": broadcast_id,
                 "type": "system_message",
                 "title": title,
                 "sender_name": "系統管理員",
@@ -188,7 +188,6 @@ def broadcast_mail_route():
         if count > 0 and count % 499 != 0:
             batch.commit()
         
-        # 將本次廣播存入紀錄
         log_ref = db.collection('MD_SystemMailLog').document(broadcast_id)
         log_ref.set({
             "broadcastId": broadcast_id,
@@ -259,15 +258,13 @@ def recall_mail_route():
 
             if player_data and 'mailbox' in player_data:
                 mailbox = player_data['mailbox']
-                # 找到要刪除的信件
                 mail_to_remove = next((mail for mail in mailbox if mail.get("broadcastId") == broadcast_id), None)
                 
                 if mail_to_remove:
-                    # 使用 ArrayRemove 來移除指定的物件
                     batch.update(game_data_ref, {'mailbox': firestore.ArrayRemove([mail_to_remove])})
                     count += 1
 
-                    if count % 499 == 0:
+                    if count > 0 and count % 499 == 0:
                         batch.commit()
                         batch = db.batch()
                         admin_logger.info(f"已提交一批次 ({count}) 的信件回收操作。")
@@ -275,7 +272,6 @@ def recall_mail_route():
         if count > 0 and count % 499 != 0:
             batch.commit()
 
-        # 從日誌中刪除該筆紀錄
         log_ref = db.collection('MD_SystemMailLog').document(broadcast_id)
         log_ref.delete()
 
@@ -285,7 +281,6 @@ def recall_mail_route():
     except Exception as e:
         admin_logger.error(f"回收信件過程中發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生伺服器內部錯誤。"}), 500
-# --- 核心修改處 END ---
 
 @admin_bp.route('/check_auth', methods=['GET'])
 def check_auth_status():
