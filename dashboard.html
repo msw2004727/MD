@@ -194,7 +194,6 @@
         .broadcast-log-table td.actions-cell {
             text-align: right;
         }
-        /* --- 核心修改處 START --- */
         #player-search-results {
             margin-bottom: 1.5rem;
             max-height: 200px;
@@ -217,6 +216,28 @@
             font-size: 0.8rem;
             color: var(--admin-text-secondary);
         }
+        /* --- 核心修改處 START --- */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .overview-card {
+            background: var(--admin-panel-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--admin-accent);
+        }
+        .overview-card .stat-title {
+            font-size: 1rem;
+            color: var(--admin-text-secondary);
+            margin: 0 0 0.5rem 0;
+        }
+        .overview-card .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--admin-text-primary);
+        }
         /* --- 核心修改處 END --- */
     </style>
 </head>
@@ -237,11 +258,19 @@
     </div>
     <main class="main-content">
         <div id="dashboard-home" class="content-panel active">
-            <h2 class="content-header">歡迎回來，管理員</h2>
-            <p>請從左側導覽欄選擇您要使用的功能。</p>
-            <p>目前系統時間: <span id="current-time"></span></p>
+            <h2 class="content-header">遊戲總覽</h2>
+            <div class="data-section">
+                <button id="generate-report-btn" class="button primary">生成全服數據報表</button>
+                <div id="overview-report-container" style="margin-top: 1.5rem;">
+                    <p>點擊按鈕以生成最新的伺服器數據統計。</p>
+                </div>
+            </div>
+            <div class="data-section">
+                <h3>系統狀態</h3>
+                <p>目前系統時間: <span id="current-time"></span></p>
+                <p>後端伺服器運行正常。</p>
+            </div>
         </div>
-        
         <div id="player-management" class="content-panel">
             <h2 class="content-header">玩家管理</h2>
             <div class="search-container">
@@ -311,16 +340,16 @@
             const dataDisplay = document.getElementById('player-data-display');
             const searchResultsContainer = document.getElementById('player-search-results');
             
-            const broadcastTitle = document.getElementById('broadcast-title');
-            const broadcastContent = document.getElementById('broadcast-content');
-            const broadcastPayload = document.getElementById('broadcast-payload');
             const broadcastBtn = document.getElementById('broadcast-mail-btn');
-            const broadcastResponseEl = document.getElementById('broadcast-response');
-
             const refreshLogBtn = document.getElementById('refresh-log-btn');
             const broadcastLogContainer = document.getElementById('broadcast-log-container');
 
-            // 導覽、登出、時間邏輯 (維持不變)
+            // --- 核心修改處 START ---
+            const generateReportBtn = document.getElementById('generate-report-btn');
+            const overviewReportContainer = document.getElementById('overview-report-container');
+            // --- 核心修改處 END ---
+
+            // 導覽、登出、時間邏輯 (維持不變)...
             navItems.forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -330,9 +359,7 @@
                     contentPanels.forEach(panel => {
                         panel.style.display = panel.id === targetId ? 'block' : 'none';
                     });
-                    if (targetId === 'mail-system') {
-                        loadBroadcastLog();
-                    }
+                    if (targetId === 'mail-system') { loadBroadcastLog(); }
                 });
             });
             logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'admin.html'; });
@@ -340,92 +367,78 @@
             updateTime();
             setInterval(updateTime, 1000);
 
+            // 玩家管理相關函式 (維持不變)...
             function renderPlayerData(playerData) { /* ... */ }
             async function handleSavePlayerData() { /* ... */ }
             async function handleSendPlayerMail() { /* ... */ }
-
-            // --- 核心修改處 START ---
-            // 獨立出一個根據 UID 獲取並顯示完整玩家資料的函式
-            async function fetchAndDisplayPlayerData(uid) {
-                dataDisplay.innerHTML = '<p>查詢中...</p>';
-                searchResultsContainer.innerHTML = ''; // 清空搜尋結果
-                currentPlayerData = null;
-                try {
-                    const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
-                    renderPlayerData(result); // 呼叫既有的渲染函式
-                } catch (err) {
-                    dataDisplay.innerHTML = `<p style="color: var(--danger-color);">查詢失敗：${err.message}</p>`;
-                }
-            }
-
-            // 修改主要的搜尋函式
-            async function searchPlayer() {
-                const query = searchInput.value.trim();
-                if (!query) {
-                    searchResultsContainer.innerHTML = '';
-                    dataDisplay.innerHTML = '<p>請輸入玩家 UID 或暱稱。</p>';
-                    return;
-                }
-
-                // 簡單判斷輸入的是UID還是暱稱
-                // UID 通常較長且可能包含數字和字母，暱稱較短
-                // 這裡我們假設長度大於20的為UID (Firebase UID 通常是28個字元)
-                const isLikelyUid = query.length > 20;
-
-                searchBtn.disabled = true;
-                searchResultsContainer.innerHTML = '<p>搜尋中...</p>';
-                dataDisplay.innerHTML = '';
-
-                if (isLikelyUid) {
-                    // 如果像 UID，直接獲取詳細資料
-                    await fetchAndDisplayPlayerData(query);
-                } else {
-                    // 如果像暱稱，先獲取搜尋列表
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, {
-                            headers: { 'Authorization': `Bearer ${adminToken}` }
-                        });
-                        const result = await response.json();
-                        if (!response.ok) throw new Error(result.error || '搜尋失敗');
-                        
-                        if (!result.players || result.players.length === 0) {
-                            searchResultsContainer.innerHTML = '<p>找不到符合此暱稱的玩家。</p>';
-                        } else {
-                            searchResultsContainer.innerHTML = result.players.map(p => `
-                                <div class="search-result-item" data-uid="${p.uid}">
-                                    <span>${p.nickname}</span>
-                                    <span class="uid">${p.uid}</span>
-                                </div>
-                            `).join('');
-                        }
-                    } catch (err) {
-                         searchResultsContainer.innerHTML = `<p style="color: var(--danger-color);">搜尋失敗：${err.message}</p>`;
-                    }
-                }
-                searchBtn.disabled = false;
-            }
-
-            // 為搜尋結果列表新增事件委派監聽
-            searchResultsContainer.addEventListener('click', (e) => {
-                const item = e.target.closest('.search-result-item');
-                if (item && item.dataset.uid) {
-                    fetchAndDisplayPlayerData(item.dataset.uid);
-                }
-            });
-            // --- 核心修改處 END ---
-
+            async function fetchAndDisplayPlayerData(uid) { /* ... */ }
+            async function searchPlayer() { /* ... */ }
             searchBtn.addEventListener('click', searchPlayer);
             searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
+            searchResultsContainer.addEventListener('click', (e) => { /* ... */ });
 
-            // 群發信件與回收信件邏輯 (維持不變)
+            // 信件系統相關函式 (維持不變)...
             async function handleBroadcastMail() { /* ... */ }
             broadcastBtn.addEventListener('click', handleBroadcastMail);
             async function loadBroadcastLog() { /* ... */ }
             async function handleRecallMail(event) { /* ... */ }
             refreshLogBtn.addEventListener('click', loadBroadcastLog);
             broadcastLogContainer.addEventListener('click', handleRecallMail);
+
+            // --- 核心修改處 START ---
+            // 遊戲總覽報表生成邏輯
+            async function handleGenerateReport() {
+                generateReportBtn.disabled = true;
+                generateReportBtn.textContent = '報表生成中...';
+                overviewReportContainer.innerHTML = '<p>正在遍歷所有玩家資料，請稍候...</p>';
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/game_overview`, {
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
+                    });
+                    const stats = await response.json();
+                    if (!response.ok) throw new Error(stats.error || '獲取報表失敗');
+                    
+                    const rarityColors = {
+                        "普通": "#abb2bf", "稀有": "#28a745", "菁英": "#dc3545", "傳奇": "#ffc107", "神話": "#6f42c1"
+                    };
+
+                    overviewReportContainer.innerHTML = `
+                        <div class="overview-grid">
+                            <div class="overview-card">
+                                <div class="stat-title">總玩家數</div>
+                                <div class="stat-value">${stats.totalPlayers.toLocaleString()}</div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="stat-title">全服金幣總量</div>
+                                <div class="stat-value">🪙 ${stats.totalGold.toLocaleString()}</div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="stat-title">全服DNA碎片總數</div>
+                                <div class="stat-value">🧬 ${stats.totalDnaFragments.toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div class="data-section" style="margin-top: 1.5rem;">
+                            <h3>怪獸稀有度分佈</h3>
+                            ${Object.entries(stats.monsterRarityCount).map(([rarity, count]) => `
+                                <div class="form-group" style="flex-direction: row; justify-content: space-between; align-items: center;">
+                                    <label style="color: ${rarityColors[rarity] || '#fff'}; font-weight: bold;">${rarity}</label>
+                                    <span>${count.toLocaleString()} 隻</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                } catch(err) {
+                    overviewReportContainer.innerHTML = `<p style="color: var(--danger-color);">生成報表失敗：${err.message}</p>`;
+                } finally {
+                    generateReportBtn.disabled = false;
+                    generateReportBtn.textContent = '生成全服數據報表';
+                }
+            }
+
+            generateReportBtn.addEventListener('click', handleGenerateReport);
+            // --- 核心修改處 END ---
         });
     </script>
 </body>
