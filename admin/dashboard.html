@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>後台儀表板 - 怪獸異世界</title>
+    <title>怪獸保護協會</title>
     <link href="dashboard.css?v=0.4.1.2" rel="stylesheet">
 </head>
 <body class="admin-body">
     
     <header class="top-navbar">
         <div class="navbar-brand">
-            <h1 class="navbar-title">上帝模式</h1>
+            <h1 class="navbar-title">怪獸保護協會</h1>
         </div>
         <nav class="navbar-nav">
             <a href="#" class="nav-item active" data-target="dashboard-home">總覽</a>
             <a href="#" class="nav-item" data-target="player-management">玩家管理</a>
             <a href="#" class="nav-item" data-target="mail-system">群發信件</a>
+            <a href="#" class="nav-item" data-target="cs-mailbox">客服信箱</a>
             <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
             <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
         </nav>
@@ -37,7 +38,7 @@
                 </div>
                 <div class="data-section">
                     <h3>系統狀態</h3>
-                    <p>目前系統時間: <span id="current-time"></span></p>
+                    <p>目前系統時間: <span id="current-time-overview"></span></p>
                     <p>後端伺服器運行正常。</p>
                 </div>
             </div>
@@ -120,6 +121,19 @@
                         </div>
                     </div>
                  </div>
+            </div>
+            
+            <div id="cs-mailbox" class="content-panel">
+                <h2 class="content-header">客服信箱</h2>
+                <div class="data-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>玩家回覆信件</h3>
+                        <button id="refresh-cs-mail-btn" class="button secondary">刷新信件</button>
+                    </div>
+                    <div id="cs-mail-container">
+                        <p class="placeholder-text">點擊「刷新信件」以載入最新內容...</p>
+                    </div>
+                </div>
             </div>
             <div id="game-configs" class="content-panel">
                 <h2 class="content-header">遊戲設定</h2>
