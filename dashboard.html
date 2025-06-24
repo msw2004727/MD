@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台儀表板 - 怪獸異世界</title>
+    <link href="css/theme.css?v=0.4.1.1" rel="stylesheet">
+    <link href="css/buttons.css?v=0.4.1.1" rel="stylesheet">
+    <style>
+        :root {
+            --admin-bg: #1c1c1e;
+            --admin-panel-bg: #2c2c2e;
+            --admin-border-color: #444;
+            --admin-text-primary: #f5f5f7;
+            --admin-text-secondary: #a1a1a6;
+            --admin-accent: #0a84ff;
+            --admin-accent-hover: #3b9bff;
+        }
+        body {
+            background-color: var(--admin-bg);
+            color: var(--admin-text-primary);
+            font-family: 'Noto Sans TC', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 240px;
+            background-color: var(--admin-panel-bg);
+            border-right: 1px solid var(--admin-border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 0 1.5rem 1rem;
+            border-bottom: 1px solid var(--admin-border-color);
+            text-align: center;
+        }
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--admin-accent);
+            margin: 0;
+        }
+        .sidebar-nav {
+            flex-grow: 1;
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .sidebar-nav a {
+            display: block;
+            color: var(--admin-text-primary);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: var(--admin-accent);
+            color: #fff;
+        }
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--admin-border-color);
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .content-header {
+            margin-bottom: 1.5rem;
+        }
+        #logout-btn {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-title">上帝模式</h1>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="#" class="nav-item active" data-target="dashboard-home">總覽</a></li>
+            <li><a href="#" class="nav-item" data-target="player-management">玩家管理</a></li>
+            <li><a href="#" class="nav-item" data-target="mail-system">群發信件</a></li>
+            <li><a href="#" class="nav-item" data-target="game-configs">遊戲設定</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logout-btn" class="button danger">登出後台</button>
+        </div>
+    </div>
+    <main class="main-content">
+        <div id="dashboard-home" class="content-panel active">
+            <h2 class="content-header">歡迎回來，管理員</h2>
+            <p>請從左側導覽欄選擇您要使用的功能。</p>
+            <p>目前系統時間: <span id="current-time"></span></p>
+        </div>
+        <div id="player-management" class="content-panel" style="display: none;">
+            <h2 class="content-header">玩家管理</h2>
+            <p>此處將實作玩家搜尋與資料編輯功能。</p>
+        </div>
+        <div id="mail-system" class="content-panel" style="display: none;">
+            <h2 class="content-header">群發信件</h2>
+            <p>此處將實作群發系統信件與信件回收功能。</p>
+        </div>
+        <div id="game-configs" class="content-panel" style="display: none;">
+            <h2 class="content-header">遊戲設定</h2>
+            <p>此處將實作即時調整遊戲數值的功能。</p>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const adminToken = localStorage.getItem('admin_token');
+            if (!adminToken) {
+                // 如果沒有 Token，直接踢回登入頁
+                window.location.href = 'admin.html';
+                return;
+            }
+
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentPanels = document.querySelectorAll('.content-panel');
+            const logoutBtn = document.getElementById('logout-btn');
+            const currentTimeEl = document.getElementById('current-time');
+
+            // 導覽欄切換邏輯
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const targetId = item.dataset.target;
+                    contentPanels.forEach(panel => {
+                        panel.style.display = panel.id === targetId ? 'block' : 'none';
+                    });
+                });
+            });
+
+            // 登出邏輯
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('admin_token');
+                window.location.href = 'admin.html';
+            });
+            
+            // 顯示當前時間
+            function updateTime() {
+                if(currentTimeEl) {
+                    currentTimeEl.textContent = new Date().toLocaleString('zh-TW');
+                }
+            }
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // 可以在此處加上一個定期的 Token 驗證 API 呼叫，確保安全性
+            // 例如: setInterval(() => { verifyTokenOnServer(); }, 60000);
+        });
+    </script>
+</body>
+</html>
