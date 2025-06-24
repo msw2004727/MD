@@ -173,7 +173,8 @@ function renderMailboxList(mails) {
         const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
 
         // --- 核心修改處 START ---
-        const hasPayload = mail.payload && (Object.keys(mail.payload).length > 0) && (payload.gold > 0 || payload.items?.length > 0);
+        // 修正了 'payload' 變數未定義的錯誤，應使用 'mail.payload'
+        const hasPayload = mail.payload && ((mail.payload.gold && mail.payload.gold > 0) || (mail.payload.items && mail.payload.items.length > 0));
         const attachmentClass = hasPayload ? 'has-attachment' : '';
         let mailItemClass = `mail-item ${statusClass} ${attachmentClass}`;
         // --- 核心修改處 END ---
@@ -238,7 +239,8 @@ async function openMailReader(mailId) {
     const footer = mailboxDOMElements.mailReaderModal.querySelector('.modal-footer');
     
     const payload = mail.payload;
-    const hasAttachments = payload && (payload.gold || (payload.items && payload.items.length > 0));
+    // 修正了附件判斷邏輯，使其更明確
+    const hasAttachments = payload && ((payload.gold && payload.gold > 0) || (payload.items && payload.items.length > 0));
 
     if (hasAttachments) {
         attachmentsContainer.style.display = 'block';
