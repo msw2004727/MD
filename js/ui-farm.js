@@ -104,18 +104,54 @@ function showMonsterInfoFromFarm(monsterId) {
 
 function renderMonsterFarm() {
     const listContainer = DOMElements.farmedMonstersList;
-
     if (!listContainer) {
         console.error("renderMonsterFarm Error: Farm container (#farmed-monsters-list) not found.");
         return;
     }
 
-    const headers = document.getElementById('farm-headers');
-    if (headers) headers.innerHTML = '';
+    const farmContentContainer = document.getElementById('monster-farm-content');
+    if (!farmContentContainer) return;
+    
+    // --- 核心修改處 START ---
+    // 清空舊的標題容器，並建立新的
+    const oldTitleContainer = farmContentContainer.querySelector('.panel-title-container');
+    if (oldTitleContainer) oldTitleContainer.remove();
+
+    const titleContainer = document.createElement('div');
+    titleContainer.className = 'panel-title-container';
+    titleContainer.style.cssText = 'border-bottom: none; margin-bottom: 15px;'; // 增加下方間距
+
+    // 建立標題
+    const titleHtml = `<h2 class="panel-title dna-panel-title">🏡 怪獸農場</h2>`;
+
+    // 建立排序功能的 HTML
+    const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
+    const sortOptions = {
+        'score': '評價', 'hp': 'HP', 'mp': 'MP', 'speed': '速度', 'status': '狀態'
+    };
+    const currentSortText = sortOptions[sortConfig.key] || '評價';
+
+    const sortControlHtml = `
+        <div class="farm-sort-container">
+            <button id="farm-sort-btn" class="button secondary text-xs">
+                排序: ${currentSortText} <span class="sort-arrow">${sortConfig.order === 'desc' ? '▼' : '▲'}</span>
+            </button>
+            <div id="farm-sort-dropdown" class="dropdown-menu">
+                <a href="#" class="dropdown-item" data-sort-key="score">評價</a>
+                <a href="#" class="dropdown-item" data-sort-key="hp">HP</a>
+                <a href="#" class="dropdown-item" data-sort-key="mp">MP</a>
+                <a href="#" class="dropdown-item" data-sort-key="speed">速度</a>
+                <a href="#" class="dropdown-item" data-sort-key="status">狀態</a>
+            </div>
+        </div>
+    `;
+
+    titleContainer.innerHTML = titleHtml + sortControlHtml;
+    // 將新的標題容器插入到 farmContentContainer 的最前面
+    farmContentContainer.prepend(titleContainer);
 
     listContainer.innerHTML = '';
     listContainer.className = 'farm-card-grid';
-
 
     const monsters = gameState.playerData?.farmedMonsters || [];
 
@@ -124,17 +160,39 @@ function renderMonsterFarm() {
         listContainer.className = ''; 
         return;
     }
-    
-    const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
+
+    // 狀態排序的優先級
+    const statusPriority = { 'deployed': 1, 'expedition': 2, 'training': 3, 'injured': 4, 'idle': 5 };
+
     monsters.sort((a, b) => {
-        let valA = a[sortConfig.key] || 0;
-        let valB = b[sortConfig.key] || 0;
+        let valA, valB;
+        if (sortConfig.key === 'status') {
+            const getStatus = (m) => {
+                if (gameState.playerData.selectedMonsterId === m.id) return 'deployed';
+                if (gameState.playerData.adventure_progress?.is_active && gameState.playerData.adventure_progress.expedition_team.some(member => member.monster_id === m.id)) return 'expedition';
+                if (m.farmStatus?.isTraining) return 'training';
+                if (m.hp < m.initial_max_hp * 0.25) return 'injured';
+                return 'idle';
+            };
+            valA = statusPriority[getStatus(a)];
+            valB = statusPriority[getStatus(b)];
+            // 狀態排序永遠是升序 (優先級高的在前)
+            return valA - valB;
+        } else if (sortConfig.key === 'hp' || sortConfig.key === 'mp') {
+            valA = a[sortConfig.key];
+            valB = b[sortConfig.key];
+        } else {
+            valA = a[sortConfig.key] || 0;
+            valB = b[sortConfig.key] || 0;
+        }
+
         if (typeof valA === 'string') {
             return sortConfig.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         } else {
             return sortConfig.order === 'asc' ? valA - valB : valB - valA;
         }
     });
+    // --- 核心修改處 END ---
 
     monsters.forEach((monster) => {
         const monsterCard = document.createElement('div');
@@ -166,7 +224,6 @@ function renderMonsterFarm() {
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         let avatarHtml = `<div class="monster-card-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>`;
 
-        // --- 核心修改處 START ---
         const adventureProgress = gameState.playerData?.adventure_progress;
         const isOnExpedition = adventureProgress?.is_active && adventureProgress.expedition_team.some(member => member.monster_id === monster.id);
         const isTraining = monster.farmStatus?.isTraining;
@@ -176,7 +233,6 @@ function renderMonsterFarm() {
         let deployButtonHtml = '';
         let actionsHTML = '';
 
-        // 決定出戰按鈕的狀態與外觀
         if (isDeployed) {
             deployButtonHtml = `<button class="monster-card-deploy-btn deployed" disabled>⚔️</button>`;
         } else if (isOnExpedition) {
@@ -189,7 +245,6 @@ function renderMonsterFarm() {
             deployButtonHtml = `<button class="monster-card-deploy-btn" onclick="handleDeployMonsterClick('${monster.id}')">出戰</button>`;
         }
 
-        // 決定狀態文字的顯示
         if (isDeployed) {
             statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
         } else if (isOnExpedition) {
@@ -209,7 +264,6 @@ function renderMonsterFarm() {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
         }
 
-        // 決定下方三個操作按鈕的狀態
         if (isDeployed || isOnExpedition) {
              actionsHTML = `
                 <button class="button danger text-xs" disabled>放生</button>
@@ -237,7 +291,6 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
-        // --- 核心修改處 END ---
 
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
@@ -253,4 +306,48 @@ function renderMonsterFarm() {
         
         listContainer.appendChild(monsterCard);
     });
+
+    // --- 核心修改處 START ---
+    // 為新建立的排序按鈕綁定事件
+    const sortBtn = document.getElementById('farm-sort-btn');
+    const sortDropdown = document.getElementById('farm-sort-dropdown');
+
+    if (sortBtn && sortDropdown) {
+        sortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sortDropdown.classList.toggle('show');
+        });
+
+        sortDropdown.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.dropdown-item');
+            if (target) {
+                const newSortKey = target.dataset.sortKey;
+                const currentSortKey = gameState.farmSortConfig.key;
+                let newSortOrder = 'desc';
+
+                // 如果點擊的是同一個鍵，則切換排序方向
+                if (currentSortKey === newSortKey) {
+                    newSortOrder = gameState.farmSortConfig.order === 'desc' ? 'asc' : 'desc';
+                }
+
+                // 更新排序狀態
+                gameState.farmSortConfig = {
+                    key: newSortKey,
+                    order: newSortOrder
+                };
+                
+                // 重新渲染農場
+                renderMonsterFarm();
+            }
+        });
+
+        // 點擊頁面其他地方關閉下拉選單
+        document.addEventListener('click', (e) => {
+            if (!sortBtn.contains(e.target) && !sortDropdown.contains(e.target)) {
+                sortDropdown.classList.remove('show');
+            }
+        });
+    }
+    // --- 核心修改處 END ---
 }
