@@ -171,10 +171,11 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
+            # 【修改】使用 .setdefault() 來安全地獲取或創建 playerStats，避免 KeyError
+            player_stats = player_game_data_dict.setdefault("playerStats", {})
+            
             is_self_request = nickname_from_auth is not None
             if is_self_request:
-                player_stats = player_game_data_dict.setdefault("playerStats", {})
-                
                 champions_data = get_champions_data()
                 player_rank = 0
                 champion_slot_info = None
@@ -207,19 +208,25 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                             mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
                             add_mail_to_player(player_game_data_dict, mail_template)
                             player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
-                            save_player_data_service(player_id, player_game_data_dict)
-
+                            # 此處的儲存操作將在後續的資料遷移儲存中一併處理
+            
             needs_migration_save = False
-            player_stats = player_game_data_dict.get("playerStats", {})
             if "gold" not in player_stats:
                 player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
                 needs_migration_save = True
+            
+            # 【修改】使用安全的 player_stats 變數進行後續操作
+            if "nickname" not in player_stats or player_stats.get("nickname") != authoritative_nickname:
+                player_stats["nickname"] = authoritative_nickname
+                needs_migration_save = True
+
             current_titles = player_stats.get("titles", [])
             if current_titles and isinstance(current_titles[0], str):
                 all_titles_config = game_configs.get("titles", [])
                 new_titles_list = [t for t in all_titles_config if t.get("name") in current_titles]
                 player_stats["titles"] = new_titles_list
                 needs_migration_save = True
+
             if "equipped_title_id" not in player_stats:
                 current_titles_obj = player_stats.get("titles", [])
                 default_equip_id = None
@@ -234,6 +241,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 if default_equip_id:
                     player_stats["equipped_title_id"] = default_equip_id
                     needs_migration_save = True
+
             farmed_monsters = player_game_data_dict.get("farmedMonsters", [])
             if farmed_monsters:
                 element_nicknames_map = game_configs.get("element_nicknames", {})
@@ -273,6 +281,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
             if needs_migration_save:
                 try:
+                    # 在儲存前，確保修改後的 player_stats 被寫回主字典
+                    player_game_data_dict["playerStats"] = player_stats
                     save_player_data_service(player_id, player_game_data_dict)
                 except Exception as e:
                     player_services_logger.error(f"為玩家 {player_id} 執行資料遷移時儲存失敗: {e}", exc_info=True)
@@ -282,10 +292,11 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if len(loaded_dna) < max_inventory_slots: loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
             elif len(loaded_dna) > max_inventory_slots: loaded_dna = loaded_dna[:max_inventory_slots]
 
+            # 【修改】使用已經安全處理過的 player_stats 變數來構建最終的回傳物件
             player_game_data: PlayerGameData = {
                 "playerOwnedDNA": loaded_dna,
                 "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                "playerStats": player_game_data_dict.get("playerStats", {}),
+                "playerStats": player_stats,
                 "nickname": authoritative_nickname,
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
@@ -294,10 +305,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
                 "mailbox": player_game_data_dict.get("mailbox", []),
                 "playerNotes": player_game_data_dict.get("playerNotes", []),
-                "adventure_progress": player_game_data_dict.get("adventure_progress") # 新增：確保讀取冒險進度
+                "adventure_progress": player_game_data_dict.get("adventure_progress")
             }
-            if "nickname" not in player_game_data["playerStats"] or player_game_data["playerStats"]["nickname"] != authoritative_nickname:
-                player_game_data["playerStats"]["nickname"] = authoritative_nickname
             return player_game_data, False
         
         player_services_logger.info(f"在 Firestore 中找不到玩家 {player_id} 的遊戲資料，將初始化新玩家資料。")
