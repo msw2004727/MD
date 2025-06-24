@@ -19,6 +19,7 @@
             <a href="#" class="nav-item" data-target="player-management">玩家管理</a>
             <a href="#" class="nav-item" data-target="mail-system">群發信件</a>
             <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
+            <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
         </nav>
         <div class="navbar-actions">
             <button id="logout-btn" class="button danger">登出</button>
@@ -117,7 +118,7 @@
                     </div>
                     <div class="form-group">
                         <label for="game-configs-display">檔案內容 (請謹慎修改)</label>
-                        <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以載入內容..."></textarea>
+                        <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以檢視或編輯..."></textarea>
                     </div>
                     <div class="save-changes-container">
                         <button id="save-config-btn" class="button success" disabled>儲存設定變更</button>
@@ -125,6 +126,20 @@
                     <div id="config-response" class="admin-response-message" style="display: none;"></div>
                 </div>
             </div>
+
+            <div id="log-monitoring" class="content-panel">
+                <h2 class="content-header">後端日誌監控</h2>
+                <div class="data-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>即時日誌</h3>
+                        <button id="refresh-logs-btn" class="button secondary">手動刷新</button>
+                    </div>
+                    <div id="log-display-container" style="height: 65vh; background-color: var(--admin-bg); border-radius: 8px; border: 1px solid var(--admin-border-color); padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word;">
+                        <p style="color: var(--admin-text-secondary);">點擊「手動刷新」以載入日誌...</p>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
