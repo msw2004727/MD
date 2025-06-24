@@ -211,7 +211,6 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
 }
 
 /* --- 核心修改處 START --- */
-/* 撰寫信件彈窗的整體佈局 */
 .send-mail-container {
     display: flex;
     flex-direction: column;
@@ -222,6 +221,7 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     text-align: center;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
 }
 
 .send-mail-container .mail-input-group {
@@ -234,6 +234,7 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     font-weight: 500;
     color: var(--text-secondary);
     font-size: 0.9em;
+    margin-left: 4px;
 }
 
 .send-mail-container .mail-input-group input,
@@ -244,26 +245,30 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     border-radius: 6px;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    box-sizing: border-box; /* 確保 padding 不會影響寬度 */
 }
 
 /* 附件區塊的樣式 */
 .mail-attachment-section {
     margin-top: 0.5rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border-color);
+    padding: 1rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-slot);
 }
 
 .attachment-title {
     font-weight: 600;
     color: var(--accent-color);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    text-align: center;
 }
 
 .attachment-controls {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+    gap: 0.75rem;
+    flex-wrap: wrap; /* 允許在空間不足時換行 */
 }
 
 .attachment-gold-control {
@@ -272,9 +277,15 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     gap: 0.5rem;
 }
 
+.attachment-gold-control label {
+    font-size: 1.2rem; /* 金幣圖示大小 */
+}
+
 .attachment-gold-control input {
     width: 80px;
     padding: 6px 8px;
+    background-color: var(--bg-primary) !important; /* 使用 !important 確保覆蓋通用樣式 */
+    color: var(--text-primary) !important;
 }
 
 .attached-dna-preview {
@@ -282,6 +293,13 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     align-items: center;
     gap: 0.5rem;
     min-height: 50px;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.attached-dna-preview:empty {
+    display: none; /* 如果沒有預覽內容，則不顯示 */
 }
 
 .attached-dna-preview .dna-item {
@@ -289,12 +307,14 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     height: 50px;
     font-size: 0.7rem;
     min-height: 0;
+    flex-shrink: 0;
 }
 
 .attached-dna-preview .remove-attachment-btn {
     padding: 4px 8px;
     line-height: 1;
     min-width: auto;
+    border-radius: 50%;
 }
 
 /* 用於附加物品選擇的庫存格樣式 */
