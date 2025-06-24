@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'index.html';
         return;
     }
-    const API_BASE_URL = '/api/MD'; 
+    const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
     let currentPlayerData = null;
 
     // --- DOM 元素獲取區 ---
@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- 核心修改處 START ---
     async function handleGenerateReport() {
         generateReportBtn.disabled = true;
         generateReportBtn.textContent = '生成中...';
@@ -312,6 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             generateReportBtn.textContent = '重新生成全服數據報表';
         }
     }
+    // --- 核心修改處 END ---
 
     async function loadAndPopulateConfigsDropdown() {
         if (configFileSelector.options.length > 1 && !configFileSelector.dataset.needsRefresh) return;
