@@ -1176,4 +1176,47 @@ body.light-theme .leaderboard-table tr:hover td {
 body.light-theme .friend-actions .remove-friend-btn:hover {
     border-color: var(--danger-hover-light);
 }
+
+/* 農場排序按鈕與下拉選單樣式 */
+.farm-sort-container {
+    position: relative;
+    display: inline-block;
+}
+
+#farm-sort-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    min-width: 90px;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-panel);
+    min-width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 10;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0;
+    right: 0; /* Align to the right of the button */
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu .dropdown-item {
+    color: var(--text-primary);
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: var(--accent-hover);
+    color: var(--button-primary-text);
+}
 /* --- 核心修改處 END --- */
