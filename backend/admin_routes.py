@@ -25,6 +25,10 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727') # 您的後台�
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        # 【修改】針對瀏覽器因CORS發出的預檢請求(OPTIONS)，直接回傳成功，以允許後續的正式請求。
+        if request.method == 'OPTIONS':
+            return jsonify({'status': 'ok'}), 200
+            
         token = None
         if 'Authorization' in request.headers:
             # 確保 "Bearer " 後有 token
