@@ -165,7 +165,11 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
             if boss_pool:
                 base_boss = random.choice(boss_pool).copy()
                 if current_floor > 1:
-                    growth_factor = 1.1 ** (current_floor - 1)
+                    # --- 核心修改處 START ---
+                    # 從 game_configs 讀取難度增長率
+                    adv_settings = game_configs.get("adventure_settings", {})
+                    growth_factor = adv_settings.get("boss_difficulty_multiplier_per_floor", 1.1) ** (current_floor - 1)
+                    # --- 核心修改處 END ---
                     base_boss['nickname'] = f"第 {current_floor} 層的{base_boss['nickname']}"
                     for stat in ['initial_max_hp', 'hp', 'initial_max_mp', 'mp', 'attack', 'defense', 'speed']:
                         if stat in base_boss: base_boss[stat] = math.ceil(base_boss[stat] * growth_factor)
@@ -197,7 +201,7 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     progress["current_event"] = event_data
     return {"success": True, "event_data": event_data, "updated_progress": progress}
 
-def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
+def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfigs) -> Dict[str, Any]:
     """
     處理玩家通關一層並晉級的邏輯。
     """
@@ -206,7 +210,14 @@ def complete_floor_service(player_data: PlayerGameData) -> Dict[str, Any]:
         return {"success": False, "error": "沒有正在進行的遠征，無法結算樓層。"}
 
     current_floor = progress.get("current_floor", 1)
-    gold_reward = 50 + (current_floor * 10)
+    
+    # --- 核心修改處 START ---
+    # 從 game_configs 讀取金幣獎勵設定
+    adv_settings = game_configs.get("adventure_settings", {})
+    base_gold = adv_settings.get("floor_clear_base_gold", 50)
+    bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
+    gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
+    # --- 核心修改處 END ---
     
     player_stats = player_data.get("playerStats", {})
     player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
@@ -249,9 +260,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
             chosen_outcome = random.choices(outcome_pool, weights=weights, k=1)[0]
             break
             
-    # --- 核心修改處 START ---
     team_members = progress.get("expedition_team", [])
-    # 無論如何都先準備好一個怪獸名稱，以便格式化文字
     monster_for_story = random.choice(team_members) if team_members else {"nickname": "隊伍"}
     monster_name_for_story = monster_for_story.get("nickname", "隊伍")
             
@@ -259,7 +268,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
         outcome_story = "你們的選擇似乎沒有引起任何變化。"
     else:
         raw_story_fragment = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
-        # 在這裡使用 .format() 方法替換佔位符
         outcome_story = raw_story_fragment.format(monster_name=monster_name_for_story)
 
         for effect in chosen_outcome.get("effects", []):
@@ -275,7 +283,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     targets_to_affect = []
                     if target_type == "team_all":
                         targets_to_affect = team_members
-                    # 修正：將 "member_who_chose" 也視為隨機選擇一名成員
                     elif target_type in ["team_random_one", "member_who_chose"] and team_members:
                         targets_to_affect = [random.choice(team_members)]
 
@@ -299,4 +306,3 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     progress["current_event"] = None
 
     return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
-    # --- 核心修改處 END ---
