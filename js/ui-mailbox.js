@@ -21,6 +21,7 @@ function initializeMailboxDOMElements() {
     };
 }
 
+
 /**
  * 新增函式：動態注入信箱專用的CSS樣式，確保響應式佈局。
  */
@@ -70,6 +71,61 @@ function injectMailboxStyles() {
         body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
              background-color: var(--danger-hover-light);
         }
+        /* --- 核心修改處 START --- */
+        /* 附件區塊樣式 */
+        #mail-reader-attachments {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+        }
+        #mail-attachments-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            justify-content: center; /* 置中附件 */
+        }
+        .mail-attachment-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-primary);
+            min-width: 80px;
+        }
+        .mail-attachment-item .dna-item {
+            width: 50px;
+            height: 50px;
+            font-size: 0.7rem;
+            min-height: 0;
+            cursor: default; /* 附件不可拖曳 */
+        }
+        .attachment-gold {
+            font-weight: bold;
+            color: gold;
+        }
+        /* 信件列表附件圖示 */
+        .mail-title-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+            flex-grow: 1;
+        }
+        .mail-attachment-icon {
+            font-size: 1rem;
+            color: var(--rarity-legendary-text);
+        }
+        .mail-item.has-attachment .mail-title::after {
+            content: '🎁';
+            margin-left: 8px;
+            color: var(--rarity-legendary-text);
+            font-size: 1rem;
+        }
+        /* --- 核心修改處 END --- */
     `;
     document.head.appendChild(style);
 }
@@ -116,7 +172,11 @@ function renderMailboxList(mails) {
         const senderName = mail.sender_name || '系統訊息';
         const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
 
-        let mailItemClass = `mail-item ${statusClass}`;
+        // --- 核心修改處 START ---
+        const hasPayload = mail.payload && (Object.keys(mail.payload).length > 0) && (payload.gold > 0 || payload.items?.length > 0);
+        const attachmentClass = hasPayload ? 'has-attachment' : '';
+        let mailItemClass = `mail-item ${statusClass} ${attachmentClass}`;
+        // --- 核心修改處 END ---
 
         if (mail.type === 'friend_request') {
             mailItemClass += ' friend-request-item';
@@ -168,28 +228,69 @@ async function openMailReader(mailId) {
         mailboxDOMElements.mailReaderSender.textContent = senderName;
     }
     
-    mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ');
+    mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ').replace(/\n/g, '<br>');
 
     mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
 
+    // --- 核心修改處 START ---
+    // 渲染附件區塊
+    const attachmentsContainer = mailboxDOMElements.mailReaderAttachmentsContainer;
     const footer = mailboxDOMElements.mailReaderModal.querySelector('.modal-footer');
-    if (footer) {
+    
+    const payload = mail.payload;
+    const hasAttachments = payload && (payload.gold || (payload.items && payload.items.length > 0));
+
+    if (hasAttachments) {
+        attachmentsContainer.style.display = 'block';
+        const itemsContainer = attachmentsContainer.querySelector('#mail-attachments-container');
+        itemsContainer.innerHTML = ''; // 清空舊附件
+
+        if (payload.gold) {
+            itemsContainer.innerHTML += `
+                <div class="mail-attachment-item">
+                    <span class="attachment-gold text-2xl">🪙</span>
+                    <span class="attachment-gold">${payload.gold.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        if (payload.items) {
+            payload.items.forEach(item => {
+                if (item.type === 'dna') {
+                    const dna = item.data;
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'mail-attachment-item';
+                    
+                    const dnaItemDiv = document.createElement('div');
+                    dnaItemDiv.className = 'dna-item';
+                    applyDnaItemStyle(dnaItemDiv, dna);
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'text-xs mt-1';
+                    nameSpan.textContent = dna.name;
+
+                    itemDiv.appendChild(dnaItemDiv);
+                    itemDiv.appendChild(nameSpan);
+                    itemsContainer.appendChild(itemDiv);
+                }
+            });
+        }
+        
+        footer.innerHTML = `<button id="claim-attachments-btn" class="button success" data-mail-id="${mail.id}">一鍵領取</button>`;
+    } else {
+        attachmentsContainer.style.display = 'none';
         if (mail.sender_id && mail.type !== 'friend_request') {
             footer.innerHTML = `<button class="button primary reply-mail-btn" data-sender-id="${mail.sender_id}" data-sender-name="${mail.sender_name}">回覆寄件人</button>`;
         } else {
             footer.innerHTML = `<button class="button secondary" onclick="hideModal('mail-reader-modal')">關閉</button>`;
         }
     }
+    // --- 核心修改處 END ---
 
-    // --- 核心修改處 START ---
-    // 確保關閉按鈕一直都有紅圈樣式
     const closeButton = mailboxDOMElements.mailReaderModal.querySelector('.modal-close');
     if (closeButton) {
         closeButton.classList.add('system-notification-close-btn');
     }
-    // --- 核心修改處 END ---
-
-    mailboxDOMElements.mailReaderAttachmentsContainer.style.display = 'none';
 
     showModal('mail-reader-modal');
 
@@ -204,6 +305,7 @@ async function openMailReader(mailId) {
         }
     }
 }
+
 
 async function handleDeleteMail(mailId, event) {
     event.stopPropagation(); 
@@ -228,6 +330,34 @@ async function handleDeleteMail(mailId, event) {
         { confirmButtonClass: 'danger', confirmButtonText: '確定刪除' }
     );
 }
+
+// --- 核心修改處 START ---
+async function handleClaimAttachments(mailId) {
+    if (!mailId) return;
+
+    showFeedbackModal('領取中...', '正在將附件放入您的背包...', true);
+    try {
+        const result = await claimMailAttachments(mailId);
+        if (result.success) {
+            await refreshPlayerData();
+            hideModal('mail-reader-modal');
+            renderMailboxList(gameState.playerData.mailbox);
+            updateMailNotificationDot();
+            
+            let successMessage = "附件已成功領取！";
+            if (result.warning) {
+                successMessage += `<br><strong style="color:var(--warning-color);">${result.warning}</strong>`;
+            }
+            showFeedbackModal('領取成功', successMessage);
+        } else {
+            throw new Error(result.error || '未知的錯誤');
+        }
+    } catch (error) {
+        hideModal('feedback-modal');
+        showFeedbackModal('領取失敗', `無法領取附件：${error.message}`);
+    }
+}
+// --- 核心修改處 END ---
 
 function initializeMailboxEventHandlers() {
     initializeMailboxDOMElements();
@@ -298,12 +428,18 @@ function initializeMailboxEventHandlers() {
     }
 
     setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
+
     if (mailboxDOMElements.mailReaderModal) {
         mailboxDOMElements.mailReaderModal.addEventListener('click', (event) => {
             const replyBtn = event.target.closest('.reply-mail-btn');
             const closeBtn = event.target.closest('.modal-close');
+            // --- 核心修改處 START ---
+            const claimBtn = event.target.closest('#claim-attachments-btn');
 
-            if (replyBtn) {
+            if (claimBtn) {
+                handleClaimAttachments(claimBtn.dataset.mailId);
+            } else if (replyBtn) {
+            // --- 核心修改處 END ---
                 const senderId = replyBtn.dataset.senderId;
                 const senderName = replyBtn.dataset.senderName;
                 if (senderId && senderName && typeof openSendMailModal === 'function') {
