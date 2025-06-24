@@ -8,8 +8,7 @@ function openSendMailModal(friendUid, friendNickname) {
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
-    // --- 核心修改處 START ---
-    // 重新設計彈窗的 HTML 內容，使其更緊湊美觀
+    // 重新設計彈窗的 HTML 結構
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -35,7 +34,8 @@ function openSendMailModal(friendUid, friendNickname) {
                     <button id="attach-dna-btn" class="button secondary text-xs">附加 DNA</button>
                     <button id="attach-item-btn" class="button secondary text-xs" disabled>附加物品</button>
                 </div>
-                 <div id="attached-dna-preview" class="attached-dna-preview">
+                <p class="text-xs text-[var(--text-secondary)] mt-1" style="padding-left: 30px;">※※寄送金幣則會有1%手續費捐贈給怪獸保護協會，感謝您。</p>
+                <div id="attached-dna-preview" class="attached-dna-preview">
                     </div>
             </div>
         </div>
@@ -58,10 +58,17 @@ function openSendMailModal(friendUid, friendNickname) {
                 showFeedbackModal('錯誤', '附加金額不能為負數。');
                 return;
             }
-             if (attachedGold > currentGold) {
-                showFeedbackModal('錯誤', `附加金額超過您擁有的金幣 (${currentGold.toLocaleString()})。`);
+
+            // --- 核心修改處 START ---
+            // 在前端也計算一次總花費，用於驗證
+            const fee = Math.floor(attachedGold * 0.01);
+            const totalCost = attachedGold + fee;
+
+            if (totalCost > currentGold) {
+                showFeedbackModal('錯誤', `金額不足！寄送 ${attachedGold.toLocaleString()} 🪙，含手續費 ${fee.toLocaleString()} 🪙，共需 ${totalCost.toLocaleString()} 🪙。`);
                 return;
             }
+            // --- 核心修改處 END ---
 
             const payload = {};
             if (attachedGold > 0) payload.gold = attachedGold;
@@ -141,7 +148,6 @@ function openSendMailModal(friendUid, friendNickname) {
         });
     });
 }
-// --- 核心修改處 END ---
 
 async function handleSendFriendRequest(recipientId, buttonElement) {
     if (!recipientId || !buttonElement) return;
