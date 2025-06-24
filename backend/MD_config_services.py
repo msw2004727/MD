@@ -50,7 +50,7 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "ChampionGuardians": ("champion_guardians", "guardians"),
             "BattleHighlights": ("battle_highlights", None),
             "AdventureIslands": ("adventure_islands", "islands"),
-            "AdventureSettings": ("adventure_settings", None), # --- 核心修改處 START ---
+            "AdventureSettings": ("adventure_settings", None),
         }
         
         adventure_events_data = {}
@@ -76,8 +76,6 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
         configs['adventure_bosses'] = adventure_bosses_data
         
         for doc_name, (config_key, field_name) in doc_map.items():
-            # --- 核心修改處 START ---
-            # 針對本地設定檔進行特殊處理
             local_config_files = ["AdventureSettings"]
             if doc_name in local_config_files:
                 try:
@@ -90,7 +88,6 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
                     configs[config_key] = {}
                     config_logger.warning(f"本地設定檔 for '{doc_name}' not found, using default empty value.")
                 continue
-            # --- 核心修改處 END ---
 
             doc_ref = config_collection_ref.document(doc_name)
             doc = doc_ref.get()
@@ -132,8 +129,10 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
                     config_logger.warning(f"在 Firestore 中找不到設定文檔：'{doc_name}'，已使用預設空值。")
         
         config_logger.info("遊戲設定已成功載入。")
+        # --- 核心修改處：將 return 移至 try 區塊的末尾 ---
+        return configs
 
     except Exception as e:
         config_logger.error(f"從 Firestore 或本地載入遊戲設定時發生嚴重錯誤: {e}", exc_info=True)
-    
-    return configs
+        # --- 核心修改處：在發生錯誤時，返回已部分載入的 configs 或一個空字典 ---
+        return configs if configs else {}
