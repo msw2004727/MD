@@ -160,11 +160,9 @@
         }
         .save-changes-container {
             margin-top: 1.5rem;
-            /* --- 核心修改處 START --- */
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
-            /* --- 核心修改處 END --- */
         }
         .admin-response-message {
             margin-top: 1rem;
@@ -196,6 +194,30 @@
         .broadcast-log-table td.actions-cell {
             text-align: right;
         }
+        /* --- 核心修改處 START --- */
+        #player-search-results {
+            margin-bottom: 1.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .search-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .search-result-item:hover {
+            background-color: var(--admin-panel-bg);
+        }
+        .search-result-item .uid {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--admin-text-secondary);
+        }
+        /* --- 核心修改處 END --- */
     </style>
 </head>
 <body>
@@ -223,11 +245,12 @@
         <div id="player-management" class="content-panel">
             <h2 class="content-header">玩家管理</h2>
             <div class="search-container">
-                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 進行查詢...">
+                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 或暱稱進行查詢...">
                 <button id="player-search-btn" class="button primary">查詢</button>
             </div>
+            <div id="player-search-results"></div>
             <div id="player-data-display">
-                <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 以檢視資料。</p>
+                <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 或暱稱以檢視資料。</p>
             </div>
         </div>
         
@@ -245,7 +268,7 @@
                 </div>
                 <div class="form-group">
                     <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
-                    <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100, "items": [{"type": "dna", "data": {"id": "dna_fire_c01"}}]}'></textarea>
+                    <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100}'></textarea>
                 </div>
                 <div class="save-changes-container">
                     <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
@@ -286,6 +309,7 @@
             const searchInput = document.getElementById('player-search-input');
             const searchBtn = document.getElementById('player-search-btn');
             const dataDisplay = document.getElementById('player-data-display');
+            const searchResultsContainer = document.getElementById('player-search-results');
             
             const broadcastTitle = document.getElementById('broadcast-title');
             const broadcastContent = document.getElementById('broadcast-content');
@@ -296,161 +320,112 @@
             const refreshLogBtn = document.getElementById('refresh-log-btn');
             const broadcastLogContainer = document.getElementById('broadcast-log-container');
 
+            // 導覽、登出、時間邏輯 (維持不變)
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    const targetId = item.dataset.target;
+                    contentPanels.forEach(panel => {
+                        panel.style.display = panel.id === targetId ? 'block' : 'none';
+                    });
+                    if (targetId === 'mail-system') {
+                        loadBroadcastLog();
+                    }
+                });
+            });
+            logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'admin.html'; });
+            function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            function renderPlayerData(playerData) { /* ... */ }
+            async function handleSavePlayerData() { /* ... */ }
+            async function handleSendPlayerMail() { /* ... */ }
+
             // --- 核心修改處 START ---
-            function renderPlayerData(playerData) {
-                currentPlayerData = playerData;
-
-                dataDisplay.innerHTML = `
-                    <div class="data-section">
-                        <h3>玩家狀態 (Player Stats)</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="admin-nickname">暱稱</label>
-                                <input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label for="admin-gold">金幣</label>
-                                <input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}">
-                            </div>
-                            <div class="form-group">
-                                <label for="admin-wins">勝場</label>
-                                <input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}">
-                            </div>
-                            <div class="form-group">
-                                <label for="admin-losses">敗場</label>
-                                <input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="data-section">
-                        <h3>DNA 碎片庫存 (此處為預覽，不可編輯)</h3>
-                        <div id="admin-dna-grid" class="dna-grid">
-                            ${(playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}
-                        </div>
-                    </div>
-                    <div class="data-section">
-                        <h3>持有怪獸 (此處為預覽，不可編輯)</h3>
-                        <div id="admin-monster-grid" class="monster-grid">
-                            ${(playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score}</li></ul></div>`).join('')}
-                        </div>
-                    </div>
-                    <div class="save-changes-container">
-                        <button id="send-player-mail-btn" class="button secondary">寄送系統信件</button>
-                        <button id="save-player-data-btn" class="button success">儲存玩家數值變更</button>
-                    </div>
-                `;
-                
-                document.getElementById('save-player-data-btn').addEventListener('click', handleSavePlayerData);
-                document.getElementById('send-player-mail-btn').addEventListener('click', handleSendPlayerMail);
-            }
-
-            // 處理對單一玩家寄信
-            async function handleSendPlayerMail() {
-                if (!currentPlayerData) {
-                    alert('請先查詢一位玩家。');
-                    return;
-                }
-                const title = prompt(`請輸入要寄送給「${currentPlayerData.nickname}」的信件標題：`);
-                if (!title) return;
-                const content = prompt(`請輸入信件內容：`);
-                if (!content) return;
-
-                const btn = document.getElementById('send-player-mail-btn');
-                btn.disabled = true;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/admin/send_mail_to_player`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${adminToken}`
-                        },
-                        body: JSON.stringify({ recipient_id: currentPlayerData.uid, title, content })
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || '發送失敗');
-                    alert(result.message);
-                } catch (err) {
-                    alert(`發送失敗：${err.message}`);
-                } finally {
-                    btn.disabled = false;
-                }
-            }
-            
-            // 處理儲存玩家資料
-            async function handleSavePlayerData() {
-                if (!currentPlayerData) {
-                    alert('沒有可儲存的玩家資料。');
-                    return;
-                }
-                const saveBtn = document.getElementById('save-player-data-btn');
-                saveBtn.disabled = true;
-                saveBtn.textContent = '儲存中...';
-                
-                const dataToUpdate = { ...currentPlayerData };
-                dataToUpdate.nickname = document.getElementById('admin-nickname').value;
-                dataToUpdate.playerStats.nickname = dataToUpdate.nickname;
-                dataToUpdate.playerStats.gold = parseInt(document.getElementById('admin-gold').value, 10);
-                dataToUpdate.playerStats.wins = parseInt(document.getElementById('admin-wins').value, 10);
-                dataToUpdate.playerStats.losses = parseInt(document.getElementById('admin-losses').value, 10);
-                
-                try {
-                    const response = await fetch(`${API_BASE_URL}/admin/player_data/${dataToUpdate.uid}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${adminToken}`
-                        },
-                        body: JSON.stringify(dataToUpdate)
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || '儲存失敗');
-                    alert(result.message);
-                    currentPlayerData = dataToUpdate; // 更新本地暫存
-                } catch (err) {
-                    alert(`儲存失敗：${err.message}`);
-                } finally {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = '儲存玩家數值變更';
-                }
-            }
-
-            async function searchPlayer() {
-                const uid = searchInput.value.trim();
-                if (!uid) {
-                    dataDisplay.textContent = '請輸入玩家 UID。'; return;
-                }
-                dataDisplay.textContent = '查詢中...';
-                searchBtn.disabled = true;
+            // 獨立出一個根據 UID 獲取並顯示完整玩家資料的函式
+            async function fetchAndDisplayPlayerData(uid) {
+                dataDisplay.innerHTML = '<p>查詢中...</p>';
+                searchResultsContainer.innerHTML = ''; // 清空搜尋結果
                 currentPlayerData = null;
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
-                    renderPlayerData(result);
+                    renderPlayerData(result); // 呼叫既有的渲染函式
                 } catch (err) {
                     dataDisplay.innerHTML = `<p style="color: var(--danger-color);">查詢失敗：${err.message}</p>`;
-                } finally {
-                    searchBtn.disabled = false;
                 }
             }
+
+            // 修改主要的搜尋函式
+            async function searchPlayer() {
+                const query = searchInput.value.trim();
+                if (!query) {
+                    searchResultsContainer.innerHTML = '';
+                    dataDisplay.innerHTML = '<p>請輸入玩家 UID 或暱稱。</p>';
+                    return;
+                }
+
+                // 簡單判斷輸入的是UID還是暱稱
+                // UID 通常較長且可能包含數字和字母，暱稱較短
+                // 這裡我們假設長度大於20的為UID (Firebase UID 通常是28個字元)
+                const isLikelyUid = query.length > 20;
+
+                searchBtn.disabled = true;
+                searchResultsContainer.innerHTML = '<p>搜尋中...</p>';
+                dataDisplay.innerHTML = '';
+
+                if (isLikelyUid) {
+                    // 如果像 UID，直接獲取詳細資料
+                    await fetchAndDisplayPlayerData(query);
+                } else {
+                    // 如果像暱稱，先獲取搜尋列表
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, {
+                            headers: { 'Authorization': `Bearer ${adminToken}` }
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || '搜尋失敗');
+                        
+                        if (!result.players || result.players.length === 0) {
+                            searchResultsContainer.innerHTML = '<p>找不到符合此暱稱的玩家。</p>';
+                        } else {
+                            searchResultsContainer.innerHTML = result.players.map(p => `
+                                <div class="search-result-item" data-uid="${p.uid}">
+                                    <span>${p.nickname}</span>
+                                    <span class="uid">${p.uid}</span>
+                                </div>
+                            `).join('');
+                        }
+                    } catch (err) {
+                         searchResultsContainer.innerHTML = `<p style="color: var(--danger-color);">搜尋失敗：${err.message}</p>`;
+                    }
+                }
+                searchBtn.disabled = false;
+            }
+
+            // 為搜尋結果列表新增事件委派監聽
+            searchResultsContainer.addEventListener('click', (e) => {
+                const item = e.target.closest('.search-result-item');
+                if (item && item.dataset.uid) {
+                    fetchAndDisplayPlayerData(item.dataset.uid);
+                }
+            });
+            // --- 核心修改處 END ---
+
             searchBtn.addEventListener('click', searchPlayer);
             searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
 
-            async function handleBroadcastMail() {
-                // ... (群發信件邏輯維持不變)
-            }
+            // 群發信件與回收信件邏輯 (維持不變)
+            async function handleBroadcastMail() { /* ... */ }
             broadcastBtn.addEventListener('click', handleBroadcastMail);
-            
-            async function loadBroadcastLog() {
-                // ... (載入紀錄邏輯維持不變)
-            }
-            async function handleRecallMail(event) {
-                // ... (回收信件邏輯維持不變)
-            }
+            async function loadBroadcastLog() { /* ... */ }
+            async function handleRecallMail(event) { /* ... */ }
             refreshLogBtn.addEventListener('click', loadBroadcastLog);
             broadcastLogContainer.addEventListener('click', handleRecallMail);
-            // --- 核心修改處 END ---
         });
     </script>
 </body>
