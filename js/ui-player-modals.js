@@ -8,6 +8,8 @@ function openSendMailModal(friendUid, friendNickname) {
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
+    // --- 核心修改處 START ---
+    // 移除了 <label> 中的「金額」二字
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -27,7 +29,7 @@ function openSendMailModal(friendUid, friendNickname) {
                 
                 <div class="attachment-grid">
                     <div class="attachment-gold-wrapper">
-                        <label for="mail-gold-input">🪙 金額</label>
+                        <label for="mail-gold-input">🪙</label>
                         <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="輸入金額">
                     </div>
                     <div id="mail-fee-display" class="mail-fee-display">
@@ -44,6 +46,7 @@ function openSendMailModal(friendUid, friendNickname) {
             </div>
         </div>
     `;
+    // --- 核心修改處 END ---
 
     showConfirmationModal(
         '撰寫信件',
@@ -111,10 +114,7 @@ function openSendMailModal(friendUid, friendNickname) {
             }
             const fee = Math.floor(amount * 0.01);
             const total = amount + fee;
-            // --- 核心修改處 START ---
-            // 移除換行符 <br>，改用 span 元素包裹，方便 CSS 控制排版
             feeDisplayEl.innerHTML = `<span>手續費 (1%): ${fee.toLocaleString()}</span><span>總計: <strong style="color: var(--danger-color);">${total.toLocaleString()}</strong></span>`;
-            // --- 核心修改處 END ---
         });
     }
 
@@ -149,27 +149,17 @@ function openSendMailModal(friendUid, friendNickname) {
                     const dnaItemDiv = document.createElement('div');
                     dnaItemDiv.className = 'dna-item occupied';
                     
-                    // --- 核心修改處 START ---
-                    // 讓物品本身可以被點擊以移除
                     dnaItemDiv.style.cursor = 'pointer'; 
                     dnaItemDiv.title = '點擊以移除附件';
                     dnaItemDiv.onclick = () => {
                         attachedDna = null;
                         attachedDnaPreview.innerHTML = '';
                     };
-                    // --- 核心修改處 END ---
                     
                     applyDnaItemStyle(dnaItemDiv, attachedDna);
                     
-                    // --- 核心修改處 START ---
-                    // 移除獨立的刪除按鈕
-                    // const removeBtn = document.createElement('button');
-                    // ... (相關程式碼已刪除)
-                    // --- 核心修改處 END ---
-                    
                     attachedDnaPreview.innerHTML = '';
                     attachedDnaPreview.appendChild(dnaItemDiv);
-                    // 移除 appendChild(removeBtn)
                 }
                 hideModal('feedback-modal');
             });
