@@ -314,7 +314,6 @@ def send_mail_to_player_route():
         admin_logger.error(f"後台發送信件給玩家 {recipient_id} 失敗: {error_message}")
         return jsonify({"error": error_message or "發送信件時發生未知錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @admin_bp.route('/game_overview', methods=['GET'])
 def get_game_overview_route():
     """
@@ -368,10 +367,72 @@ def get_game_overview_route():
     except Exception as e:
         admin_logger.error(f"計算遊戲總覽數據時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "計算總覽數據時發生伺服器內部錯誤。"}), 500
-# --- 核心修改處 END ---
 
 @admin_bp.route('/check_auth', methods=['GET'])
 def check_auth_status():
     if not verify_admin_token():
         return jsonify({"authenticated": False, "error": "Token 無效或已過期"}), 401
     return jsonify({"authenticated": True, "message": "驗證成功！"}), 200
+
+# --- 核心修改處 START ---
+@admin_bp.route('/list_configs', methods=['GET'])
+def list_configs_route():
+    """列出所有可編輯的遊戲設定檔。"""
+    if not verify_admin_token():
+        return jsonify({"error": "管理員驗證失敗"}), 401
+    
+    config_files = []
+    try:
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        # 掃描主 data 目錄
+        for filename in os.listdir(data_dir):
+            if filename.endswith(('.json', '.csv')):
+                config_files.append(filename)
+        
+        # 掃描 skills 子目錄
+        skills_dir = os.path.join(data_dir, 'skills')
+        if os.path.isdir(skills_dir):
+            for filename in os.listdir(skills_dir):
+                if filename.endswith('.json'):
+                    config_files.append(os.path.join('skills', filename).replace('\\', '/')) # 確保路徑分隔符統一
+
+        admin_logger.info(f"成功列出可編輯的設定檔：{config_files}")
+        return jsonify(sorted(config_files)), 200
+    except Exception as e:
+        admin_logger.error(f"列出設定檔時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "無法讀取設定檔列表。"}), 500
+
+@admin_bp.route('/get_config', methods=['GET'])
+def get_config_route():
+    """獲取指定設定檔的內容。"""
+    if not verify_admin_token():
+        return jsonify({"error": "管理員驗證失敗"}), 401
+
+    filename = request.args.get('file')
+    if not filename:
+        return jsonify({"error": "請提供 'file' 參數。"}), 400
+
+    try:
+        # 安全性檢查：確保檔案路徑在允許的 'data' 目錄內
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+        file_path = os.path.abspath(os.path.join(data_dir, filename))
+
+        if not file_path.startswith(data_dir):
+            admin_logger.warning(f"後台嘗試存取非法路徑: {filename}")
+            return jsonify({"error": "禁止存取該路徑。"}), 403
+
+        if not os.path.exists(file_path):
+            return jsonify({"error": "找不到指定的設定檔。"}), 404
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            if filename.endswith('.json'):
+                content = json.load(f)
+            else: # 對於 .csv 或其他格式，直接回傳文字內容
+                content = f.read()
+        
+        return jsonify(content), 200
+
+    except Exception as e:
+        admin_logger.error(f"讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": f"讀取設定檔 '{filename}' 失敗。"}), 500
+# --- 核心修改處 END ---
