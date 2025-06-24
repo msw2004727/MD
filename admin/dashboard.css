@@ -67,6 +67,36 @@ body.admin-body {
 .admin-response-message.success { background-color: color-mix(in srgb, var(--success-color) 20%, transparent); color: var(--success-color); }
 .admin-response-message.error { background-color: color-mix(in srgb, var(--danger-color) 20%, transparent); color: var(--danger-color); }
 
+/* --- 核心修改處 START --- */
+.input-hint {
+    font-size: 0.8rem;
+    color: var(--admin-text-secondary);
+    margin-top: 4px;
+    padding-left: 2px;
+}
+#adventure-facilities-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.facility-settings-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1.5rem;
+    background-color: var(--admin-bg);
+    padding: 1rem;
+    border-radius: 8px;
+}
+.facility-settings-card h4 {
+    grid-column: 1 / -1;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    color: var(--admin-accent-hover);
+}
+/* --- 核心修改處 END --- */
+
+
 /* --- 特定區塊樣式 --- */
 .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
 .overview-card { background: linear-gradient(145deg, #2a3a4a, #1c2634); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--admin-border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -85,8 +115,8 @@ body.admin-body {
 .monster-card-admin ul { list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem; color: var(--admin-text-secondary); }
 #broadcast-log-container { max-height: 50vh; overflow-y: auto; }
 .log-display, .log-display-box {
-    display: flex; /* 新增 */
-    flex-direction: column-reverse; /* 新增 */
+    display: flex; 
+    flex-direction: column-reverse;
     height: 65vh;
     background-color: var(--admin-bg);
     border-radius: 8px;
