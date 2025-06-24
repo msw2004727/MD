@@ -402,6 +402,8 @@ async function initializeAdventureUI() {
             facilities.forEach(facility => {
                 const card = document.createElement('div');
                 card.className = 'adventure-facility-card';
+                // --- 核心修改處 START ---
+                // 移除了 facility-reward-preview 的 font-weight: bold;
                 card.innerHTML = `
                     <div class="facility-card-header">
                         <h4 class="facility-title">${facility.name || '未知設施'}</h4>
@@ -409,7 +411,7 @@ async function initializeAdventureUI() {
                     </div>
                     <div class="facility-card-body">
                         <p>${facility.description || '暫無描述。'}</p>
-                        <div class="facility-reward-preview" style="color: var(--rarity-legendary-text); font-size: 0.75rem; text-align: left; margin-top: 0.5rem; font-weight: bold;">
+                        <div class="facility-reward-preview" style="color: var(--rarity-legendary-text); font-size: 0.75rem; text-align: left; margin-top: 0.5rem;">
                             🏆 ${facility.reward_preview || ''}
                         </div>
                     </div>
@@ -418,6 +420,7 @@ async function initializeAdventureUI() {
                         <button class="button primary challenge-facility-btn" data-facility-id="${facility.facilityId}">挑戰</button>
                     </div>
                 `;
+                // --- 核心修改處 END ---
                 facilityList.appendChild(card);
             });
         } else {
