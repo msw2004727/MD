@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'index.html';
         return;
     }
-    const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
+    // 【修改】將此處的常數名稱從 API_BASE_URL 改為 ADMIN_API_URL，避免與全域變數衝突
+    const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
     let currentPlayerData = null;
 
     // --- DOM 元素獲取區 ---
@@ -103,7 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dataToUpdate.playerStats.losses = parseInt(document.getElementById('admin-losses').value, 10);
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/player_data/${dataToUpdate.uid}`, {
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/player_data/${dataToUpdate.uid}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify(dataToUpdate)
@@ -130,7 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('send-player-mail-btn');
         btn.disabled = true;
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/send_mail_to_player`, {
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/send_mail_to_player`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify({ recipient_id: currentPlayerData.uid, title, content })
@@ -150,7 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
         searchResultsContainer.innerHTML = '';
         currentPlayerData = null;
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
             renderPlayerData(result);
@@ -174,7 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
             await fetchAndDisplayPlayerData(query);
         } else {
             try {
-                const response = await fetch(`${API_BASE_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+                // 【修改】使用新的 ADMIN_API_URL
+                const response = await fetch(`${ADMIN_API_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || '搜尋失敗');
                 if (!result.players || result.players.length === 0) {
@@ -192,7 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadBroadcastLog() {
         broadcastLogContainer.innerHTML = '<p>正在載入紀錄...</p>';
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/get_broadcast_log`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/get_broadcast_log`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
             const logs = await response.json();
             if (!response.ok) throw new Error(logs.error || '載入失敗');
 
@@ -228,7 +234,8 @@ document.addEventListener('DOMContentLoaded', function() {
         event.target.disabled = true;
         event.target.textContent = '回收中...';
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/recall_mail`, {
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/recall_mail`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify({ broadcastId: broadcastId })
@@ -262,7 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
         responseEl.style.display = 'none';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/broadcast_mail`, {
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/broadcast_mail`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify({ title, content, payload_str: payloadStr })
@@ -292,7 +300,8 @@ document.addEventListener('DOMContentLoaded', function() {
         overviewReportContainer.innerHTML = '<p>正在從伺服器計算數據，請稍候...</p>';
         
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/game_overview`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
+            // 【修改】使用新的 ADMIN_API_URL
+            const response = await fetch(`${ADMIN_API_URL}/admin/game_overview`, { headers: { 'Authorization': `Bearer ${adminToken}` }});
             const stats = await response.json();
             if (!response.ok) throw new Error(stats.error || '獲取報表失敗');
             
