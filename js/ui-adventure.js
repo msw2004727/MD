@@ -249,7 +249,6 @@ function renderAdventureProgressUI(adventureProgress) {
         const monster = gameState.playerData.farmedMonsters.find(m => m.id === growthResult.monster_id);
         let growthHtml = '';
         if(monster) {
-            // --- 核心修改處 START ---
             const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
@@ -280,7 +279,6 @@ function renderAdventureProgressUI(adventureProgress) {
                     </div>
                 </div>
             `;
-            // --- 核心修改處 END ---
         }
         growthDisplayEl.innerHTML = growthHtml;
     }
@@ -411,6 +409,9 @@ async function initializeAdventureUI() {
                     </div>
                     <div class="facility-card-body">
                         <p>${facility.description || '暫無描述。'}</p>
+                        <div class="facility-reward-preview" style="color: var(--rarity-legendary-text); font-size: 0.75rem; text-align: left; margin-top: 0.5rem; font-weight: bold;">
+                            🏆 ${facility.reward_preview || ''}
+                        </div>
                     </div>
                     <div class="facility-card-footer">
                         <button class="button secondary" style="width: 36px; height: 36px; border-radius: 50%; padding: 0; font-size: 1.2rem;" title="層數排行榜 (開發中)" disabled>🏆</button>
