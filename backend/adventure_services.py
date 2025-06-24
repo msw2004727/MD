@@ -57,7 +57,12 @@ def start_expedition_service(
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 嘗試在島嶼 {island_id} 的設施 {facility_id} 開始遠征。")
     
-    if player_data.get("adventure_progress", {}).get("is_active"):
+    # --- 核心修改處 START ---
+    # 修正前：if player_data.get("adventure_progress", {}).get("is_active"):
+    # 修正後：
+    progress = player_data.get("adventure_progress")
+    if progress and progress.get("is_active"):
+    # --- 核心修改處 END ---
         return None, "您已經有一場遠征正在進行中，無法開始新的遠征。"
 
     all_islands = game_configs.get("adventure_islands", [])
@@ -265,9 +270,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
         return {"success": False, "error": "當前沒有需要回應的事件。"}
 
     stats = progress.get("expedition_stats")
-    # --- 核心修改處 START ---
-    applied_effects = [] # 初始化一個列表來收集觸發的效果
-    # --- 核心修改處 END ---
+    applied_effects = []
 
     chosen_outcome = None
     for choice in current_event.get("choices", []):
@@ -300,17 +303,14 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     resource = effect.get("resource")
                     amount = effect.get("amount", 0)
                     
-                    # 處理金幣
                     if resource == "gold":
                         if amount > 0: stats["gold_obtained"] += amount
                         player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
 
-                    # 處理 HP 和 MP
                     elif resource in ["hp", "mp"]:
                         targets_to_affect = []
                         if effect.get("target") == "team_all": targets_to_affect = team_members
                         elif effect.get("target") in ["team_random_one", "member_who_chose", "team_strongest_def", "team_strongest", "team_fastest"] and team_members:
-                            # 簡化處理，隨機選一個成員來應用效果
                             targets_to_affect = [random.choice(team_members)]
                         
                         for member in targets_to_affect:
@@ -342,7 +342,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                             item = random.choice(dna_pool)
                             progress.get("adventure_inventory", []).append(item)
 
-                # --- 核心修改處 START ---
                 elif effect_type == "apply_temp_buff":
                     stats["buffs_received"] += 1
                     applied_effects.append({"type": "buff", "stat": effect.get("stat", "未知")})
@@ -350,18 +349,15 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                 elif effect_type == "apply_temp_debuff":
                     stats["debuffs_received"] += 1
                     applied_effects.append({"type": "debuff", "stat": effect.get("stat", "未知")})
-                # --- 核心修改處 END ---
 
     progress["current_event"] = None
 
-    # --- 核心修改處 START ---
     return {
         "success": True, 
         "outcome_story": outcome_story, 
         "updated_progress": progress,
-        "applied_effects": applied_effects  # 將收集到的效果加入回傳
+        "applied_effects": applied_effects
     }
-    # --- 核心修改處 END ---
 
 def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: str) -> Optional[PlayerGameData]:
     """
