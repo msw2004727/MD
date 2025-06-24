@@ -56,6 +56,14 @@
             <div class="data-section">
                 <h3>撰寫新信件</h3>
                 <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="broadcast-sender-name">寄件人名稱</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="broadcast-sender-name" class="admin-input" placeholder="預設為：遊戲管理員" value="遊戲管理員">
+                        <select id="broadcast-sender-presets" class="admin-input" style="flex-grow: 0.5;"></select>
+                        <button id="save-sender-name-btn" class="button secondary" title="儲存目前名稱到選單">💾</button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="broadcast-title">信件標題</label>
                     <input type="text" id="broadcast-title" class="admin-input" placeholder="輸入要發送的信件標題">
                 </div>
