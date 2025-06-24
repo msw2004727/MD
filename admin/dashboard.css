@@ -1,8 +1,8 @@
-/* dashboard.css - v2 (Modernized Look)
-  - Redesigned for a horizontal, responsive layout.
-  - Added a top navigation bar.
-  - Implemented a wide, multi-column content area for desktops.
-  - Refined color palette, spacing, and typography for a cleaner, more professional feel.
+/* dashboard.css - v3 (Complete Redesign)
+  - Implements a modern sidebar + main content layout.
+  - Sidebar is fixed, content area is scrollable.
+  - Responsive design for narrower screens.
+  - Refined color palette and component styling.
 */
 
 :root {
@@ -12,215 +12,212 @@
     --admin-text-primary: #F9FAFB; /* 主要文字 */
     --admin-text-secondary: #9CA3AF; /* 次要文字 */
     --admin-accent: #3B82F6; /* 主題藍色 */
-    --admin-accent-hover: #60A5FA;
+    --admin-accent-hover: #2563EB;
+    --admin-sidebar-width: 260px; /* 側邊欄寬度 */
     --success-color: #10B981;
     --danger-color: #EF4444;
 }
 
-/* 【修改】針對新的 body class 和整體佈局 */
+/* --- 全新佈局 --- */
 body.admin-body {
     background-color: var(--admin-bg);
     color: var(--admin-text-primary);
     font-family: 'Noto Sans TC', sans-serif;
     margin: 0;
     display: flex;
-    flex-direction: column; /* 改為垂直堆疊 (導覽列在上，內容在下) */
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* 防止整個頁面滾動 */
 }
 
-/* 【新增】頂部導覽列樣式 */
-.top-navbar {
-    width: 100%;
+.sidebar {
+    width: var(--admin-sidebar-width);
     background-color: var(--admin-panel-bg);
-    border-bottom: 1px solid var(--admin-border-color);
+    border-right: 1px solid var(--admin-border-color);
     display: flex;
-    align-items: center;
-    padding: 0 1.5rem;
+    flex-direction: column;
     flex-shrink: 0;
-    height: 60px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 100;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
 }
 
-.navbar-brand {
-    margin-right: 2rem;
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    text-align: center;
 }
 
-.navbar-title {
-    font-size: 1.25rem;
+.sidebar-title {
+    font-size: 1.5rem;
     font-weight: bold;
     color: var(--admin-text-primary);
     margin: 0;
 }
 
-.navbar-nav {
-    display: flex;
-    gap: 0.5rem;
-    height: 100%;
-    align-items: center;
+.sidebar-nav {
     flex-grow: 1;
+    padding: 1rem 0;
 }
 
-.navbar-nav a.nav-item {
-    display: flex;
-    align-items: center;
-    padding: 0 1rem;
-    height: 100%;
+.sidebar-item {
+    display: block;
+    padding: 0.75rem 1.5rem;
     color: var(--admin-text-secondary);
     text-decoration: none;
     font-size: 1rem;
-    border-bottom: 3px solid transparent;
-    transition: color 0.2s, border-bottom-color 0.2s;
+    border-left: 4px solid transparent;
+    transition: color 0.2s, background-color 0.2s, border-left-color 0.2s;
 }
 
-.navbar-nav a.nav-item:hover {
+.sidebar-item:hover {
     color: var(--admin-text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-.navbar-nav a.nav-item.active {
+.sidebar-item.active {
     color: var(--admin-accent-hover);
+    background-color: color-mix(in srgb, var(--admin-accent) 15%, transparent);
     font-weight: 600;
-    border-bottom-color: var(--admin-accent-hover);
+    border-left-color: var(--admin-accent-hover);
 }
 
-.navbar-actions {
-    margin-left: auto;
+.sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--admin-border-color);
 }
 
-/* 【新增】主要內容區塊的容器 */
+.sidebar-footer .button {
+    width: 100%;
+}
+
 .main-content-wrapper {
     flex-grow: 1;
-    overflow-y: auto; /* 讓內容區塊可以滾動 */
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 防止 wrapper 本身滾動 */
 }
 
-.main-content {
-    max-width: 1400px; /* 給內容一個更寬的最大寬度 */
-    margin: 0 auto;
+.main-header {
+    padding: 0 2rem;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--admin-border-color);
+    background-color: var(--admin-panel-bg);
+    flex-shrink: 0;
 }
 
 .content-header {
-    margin-bottom: 2rem;
+    margin: 0;
     color: var(--admin-text-primary);
-    font-size: 1.75rem;
-    font-weight: bold;
-}
-
-/* --- 【核心修改處 START】 --- */
-/* 將原有的 .two-column 等特定樣式，整合成一個更通用的彈性網格佈局 */
-.dashboard-grid {
-    display: grid;
-    gap: 1.5rem;
-    /* 使用 auto-fit 自動判斷容器寬度能容納多少個欄位。
-      minmax(420px, 1fr) 設定每個欄位的最小寬度為 420px (避免內容被過度擠壓)，
-      最大則會彈性填滿剩餘空間 (1fr)。
-      這一個規則就能同時處理寬、窄螢幕的佈局。
-    */
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-}
-
-/* 移除不再需要的舊樣式 */
-/*
-.dashboard-grid.two-column { ... }
-.dashboard-grid.two-column.side-right { ... }
-@media (max-width: 992px) { ... }
-*/
-/* --- 【核心修改處 END】 --- */
-
-
-.side-pane h3, .main-pane h3 {
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    color: var(--admin-text-secondary);
-    margin-top: 0;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--admin-border-color);
 }
 
-/* 動畫與其他通用樣式 */
+.content-area {
+    padding: 2rem;
+    overflow-y: auto; /* 讓這個區域可以獨立滾動 */
+    flex-grow: 1;
+}
+
+/* --- 內容樣式調整 --- */
 .content-panel { display: none; }
-.content-panel.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+.content-panel.active { display: block; animation: fadeIn 0.3s ease-in-out; }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.admin-input {
-    flex-grow: 1;
-    padding: 10px 14px;
-    font-size: 1rem;
-    border-radius: 6px;
-    border: 1px solid var(--admin-border-color);
-    background-color: #2b3748; /* 微調輸入框背景 */
-    color: var(--admin-text-primary);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.admin-input:focus, .form-group textarea:focus, .form-group select:focus {
-    outline: none;
-    border-color: var(--admin-accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-accent) 30%, transparent);
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
 }
 
 .data-section {
     background-color: var(--admin-panel-bg);
-    border: 1px solid var(--admin-border-color);
-    border-radius: 12px;
+    border-radius: 8px;
     padding: 1.5rem;
-    margin-bottom: 2rem;
+    border: none; /* 移除舊邊框，改用陰影 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
 }
 
 .data-section h3 {
     margin-top: 0;
-    font-size: 1.25rem;
-    color: var(--admin-text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
     border-bottom: 1px solid var(--admin-border-color);
-    padding-bottom: 1rem;
-    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
 }
 
-.overview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.5rem;
+/* 其他組件樣式微調 */
+.admin-input, .form-group textarea, .form-group select {
+    background-color: var(--admin-bg); /* 加深輸入框背景 */
 }
 
-.overview-card {
-    background: linear-gradient(145deg, #2a3a4a, #1c2634);
-    padding: 1.5rem;
-    border-radius: 12px;
+#player-data-display {
+    padding: 0;
+}
+
+.save-changes-container {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* 日誌區塊樣式 */
+.log-filters {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.log-display {
+    height: 300px;
+    background-color: var(--admin-bg);
+    border-radius: 8px;
     border: 1px solid var(--admin-border-color);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 1rem;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    transition: opacity 0.3s;
 }
 
-.overview-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-.overview-card .stat-title { font-size: 1rem; color: var(--admin-text-secondary); margin: 0 0 0.75rem 0; }
-.overview-card .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--admin-text-primary); line-height: 1; }
-#logout-btn { width: auto; padding: 0.5rem 1rem; }
-.search-container { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-#player-data-display { background-color: transparent; color: var(--admin-text-secondary); padding: 0; border-radius: 0; white-space: normal; word-break: normal; border: none; }
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-.form-group { display: flex; flex-direction: column; gap: 0.25rem; }
-.form-group label { font-size: 0.9rem; color: var(--admin-text-secondary); }
-.form-group input, .form-group textarea, .form-group select { padding: 8px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid var(--admin-border-color); background-color: #2b3748; color: var(--admin-text-primary); resize: vertical; }
-.dna-grid, .monster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
-.dna-card, .monster-card-admin { border: 1px solid var(--admin-border-color); padding: 1rem; border-radius: 6px; background-color: var(--admin-bg); }
-.dna-card h4, .monster-card-admin h4 { margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--admin-accent-hover); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.monster-card-admin ul { list-style-type: none; padding-left: 0; margin: 0; font-size: 0.9rem; color: var(--admin-text-secondary); }
-.save-changes-container { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem; }
-.admin-response-message { margin-top: 1rem; padding: 0.75rem; border-radius: 6px; text-align: center; }
-.admin-response-message.success { background-color: color-mix(in srgb, var(--success-color) 20%, transparent); color: var(--success-color); }
-.admin-response-message.error { background-color: color-mix(in srgb, var(--danger-color) 20%, transparent); color: var(--danger-color); }
-.broadcast-log-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.broadcast-log-table th, .broadcast-log-table td { padding: 0.75rem; border-bottom: 1px solid var(--admin-border-color); text-align: left; }
-.broadcast-log-table th { font-weight: 600; }
-.broadcast-log-table td.actions-cell { text-align: right; }
-#player-search-results { margin-bottom: 1.5rem; max-height: 200px; overflow-y: auto; }
-.search-result-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
-.search-result-item:hover { background-color: #2b3748; }
-.search-result-item .uid { font-family: monospace; font-size: 0.8rem; color: var(--admin-text-secondary); }
-#game-configs-display { background-color: var(--admin-bg); border: 1px solid var(--admin-border-color); border-radius: 6px; padding: 1rem; margin-top: 1.5rem; max-height: 60vh; overflow: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; color: var(--admin-text-secondary); }
+.log-display.empty-log {
+    opacity: 0.6;
+    border-style: dashed;
+}
+
+.log-display.empty-log p {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.log-filters button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Log Monitoring 日誌監控頁面 */
+.log-display-container {
+    height: 65vh;
+    background-color: #000;
+    color: #00FF00;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border-color);
+    padding: 1rem;
+    overflow-y: scroll;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.log-entry .timestamp { color: #888; }
+.log-entry .levelname { font-weight: bold; }
