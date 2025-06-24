@@ -166,7 +166,6 @@ function renderMonsterFarm() {
         const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
         let avatarHtml = `<div class="monster-card-avatar" style="${imagePath ? `background-image: url('${imagePath}')` : ''}"></div>`;
 
-        // --- 核心修改處 START ---
         const adventureProgress = gameState.playerData?.adventure_progress;
         const isOnExpedition = adventureProgress?.is_active && adventureProgress.expedition_team.some(member => member.monster_id === monster.id);
         const isTraining = monster.farmStatus?.isTraining;
@@ -205,11 +204,13 @@ function renderMonsterFarm() {
         } else if (isInjured) {
             statusHtml = `<div class="monster-card-status" style="color: var(--text-secondary); font-weight: bold;">傷</div>`;
             deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>傷</button>`;
+            // --- 核心修改處 START ---
             actionsHTML = `
                 <button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
-                <button class="button primary text-xs" disabled>修煉</button>
+                <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
+            // --- 核心修改處 END ---
         } else {
             statusHtml = `<div class="monster-card-status">閒置中</div>`;
             deployButtonHtml = `<button class="monster-card-deploy-btn" onclick="handleDeployMonsterClick('${monster.id}')">出戰</button>`;
@@ -219,7 +220,6 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
-        // --- 核心修改處 END ---
 
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
