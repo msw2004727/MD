@@ -35,18 +35,18 @@ CONFIG_FILE_FIRESTORE_MAP = {
 }
 
 # --- 核心修改處 START ---
-# 將 adventure_growth_settings.json 也加入到本地檔案列表
-LOCAL_CONFIG_FILES = [
+# 將本地檔案列表從 list '[]' 改為 tuple '()'
+LOCAL_CONFIG_FILES = (
     "adventure_settings.json", 
     "adventure_islands.json",
     "adventure_growth_settings.json"
-]
+)
 # --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
     # 將兩種類型的設定檔合併並排序
-    all_configs = list(CONFIG_FILE_FIRESTORE_MAP.keys()) + LOCAL_CONFIG_FILES
+    all_configs = list(CONFIG_FILE_FIRESTORE_MAP.keys()) + list(LOCAL_CONFIG_FILES)
     return sorted(list(set(all_configs)))
 
 def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Optional[str]]:
@@ -57,7 +57,6 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
     if not db:
         return None, "資料庫服務未初始化。"
 
-    # --- 核心修改處 START ---
     # 檢查是否為本地設定檔
     if filename in LOCAL_CONFIG_FILES:
         try:
@@ -75,7 +74,6 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
         except Exception as e:
             config_editor_logger.error(f"從本地讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
             return None, f"讀取本地檔案 {filename} 時發生錯誤。"
-    # --- 核心修改處 END ---
 
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return None, f"不支援的設定檔 '{filename}'。"
