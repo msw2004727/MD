@@ -167,8 +167,20 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     progress["current_step"] += 1
     current_facility_id = progress.get("facility_id")
     event_data = None
+    
+    # --- 核心修改處 START ---
+    # 獲取統計數據的參考，並更新事件計數
+    stats = progress.get("expedition_stats")
+    if stats:
+        stats["events_encountered"] = stats.get("events_encountered", 0) + 1
+    # --- 核心修改處 END ---
 
     if progress["current_step"] >= progress["total_steps_in_floor"]:
+        # --- 核心修改處 START ---
+        # 更新 BOSS 戰計數
+        if stats:
+            stats["bosses_fought"] = stats.get("bosses_fought", 0) + 1
+        # --- 核心修改處 END ---
         current_floor = progress.get("current_floor", 1)
         all_islands = game_configs.get("adventure_islands", [])
         facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
@@ -226,6 +238,13 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
     bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
     gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
     
+    # --- 核心修改處 START ---
+    # 通關時，也要將獎勵金幣計入統計
+    stats = progress.get("expedition_stats")
+    if stats:
+        stats["gold_obtained"] = stats.get("gold_obtained", 0) + gold_reward
+    # --- 核心修改處 END ---
+    
     player_stats = player_data.get("playerStats", {})
     player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
     
@@ -254,10 +273,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     if not current_event:
         return {"success": False, "error": "當前沒有需要回應的事件。"}
 
-    # --- 核心修改處 START ---
-    # 獲取統計數據的參考
     stats = progress.get("expedition_stats")
-    # --- 核心修改處 END ---
 
     chosen_outcome = None
     for choice in current_event.get("choices", []):
@@ -286,9 +302,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
             effect_type = effect.get("effect")
             target_type = effect.get("target")
             
-            # --- 核心修改處 START ---
-            # 根據效果更新統計數據
-            if stats: # 確保 stats 字典存在
+            if stats: 
                 if effect_type == "change_resource":
                     resource = effect.get("resource")
                     amount = effect.get("amount", 0)
@@ -296,7 +310,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                         stats["gold_obtained"] += amount
                         player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
                     elif resource in ["hp", "mp"]:
-                        for member in team_members: # 假設效果總是對全隊生效
+                        for member in team_members: 
                             key_current = f"current_{resource}"
                             key_healed = f"{resource}_healed"
                             key_consumed = f"{resource}_consumed"
@@ -319,7 +333,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                 elif effect_type == "give_item":
                     if effect.get("item_type") == "dna":
                         stats["dna_fragments_obtained"] = stats.get("dna_fragments_obtained", 0) + effect.get("quantity", 1)
-                    # 將物品加入冒險背包
                     pool_id = effect.get("item_pool_id", "")
                     quantity = effect.get("quantity", 1)
                     dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
@@ -333,7 +346,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                 
                 elif effect_type == "apply_temp_debuff":
                     stats["debuffs_received"] = stats.get("debuffs_received", 0) + 1
-            # --- 核心修改處 END ---
     
     progress["current_event"] = None
 
