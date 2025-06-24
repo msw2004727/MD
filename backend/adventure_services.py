@@ -11,10 +11,83 @@ from typing import List, Dict, Optional, Any, Tuple
 
 # 從各自正確的檔案導入模型
 from .MD_models import PlayerGameData, GameConfigs, Monster
-from .adventure_models import AdventureProgress, ExpeditionMemberStatus, AdventureFacility, AdventureIsland, ExpeditionStats
+from .adventure_models import AdventureProgress, ExpeditionMemberStatus, AdventureFacility, AdventureIsland, ExpeditionStats, ExpeditionGrowthResult
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
+
+
+def _handle_random_growth_event(player_data: PlayerGameData, progress: AdventureProgress) -> Optional[ExpeditionGrowthResult]:
+    """
+    處理冒險中的隨機成長事件。
+    返回成長結果，如果未觸發則返回 None。
+    """
+    facility_id = progress.get("facility_id")
+    if not facility_id:
+        return None
+
+    # 定義難度對應的機率和成長點數
+    difficulty_map = {
+        "facility_001": {"chance": 0.05, "points": 1}, # 新手森林
+        "facility_002": {"chance": 0.10, "points": 2}, # 廢棄礦坑
+        "facility_003": {"chance": 0.15, "points": 3}, # 潮汐洞穴
+        "facility_004": {"chance": 0.30, "points": 4}  # 古代遺蹟
+    }
+    
+    facility_difficulty = difficulty_map.get(facility_id)
+    if not facility_difficulty:
+        return None 
+
+    # --- 核心修改處 START ---
+    # 新增詳細的日誌記錄
+    chance_to_trigger = facility_difficulty["chance"]
+    roll = random.random()
+    adventure_logger.info(f"隨機成長檢定：設施 {facility_id} (機率: {chance_to_trigger*100}%)，擲骰結果: {roll:.4f}")
+
+    # 擲骰子決定是否觸發成長
+    if roll > chance_to_trigger:
+        adventure_logger.info("隨機成長：未觸發。")
+        return None # 未觸發
+    
+    adventure_logger.info("隨機成長：成功觸發！")
+    # --- 核心修改處 END ---
+
+    # 從遠征隊中隨機選擇一隻怪獸
+    team = progress.get("expedition_team", [])
+    if not team:
+        return None
+        
+    member_to_grow = random.choice(team)
+    monster_id_to_grow = member_to_grow.get("monster_id")
+
+    # 在完整的玩家資料中找到這隻怪獸
+    monster_in_farm = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id_to_grow), None)
+    if not monster_in_farm:
+        adventure_logger.warning(f"隨機成長：在農場中找不到怪獸 {monster_id_to_grow}")
+        return None
+
+    # 準備成長
+    stats_to_grow = ['hp', 'mp', 'attack', 'defense', 'speed', 'crit']
+    points_to_distribute = facility_difficulty["points"]
+    gains_log: Dict[str, int] = {}
+    
+    cultivation_gains = monster_in_farm.setdefault("cultivation_gains", {})
+
+    for _ in range(points_to_distribute):
+        chosen_stat = random.choice(stats_to_grow)
+        cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + 1
+        gains_log[chosen_stat] = gains_log.get(chosen_stat, 0) + 1
+
+    adventure_logger.info(f"隨機成長觸發！怪獸 {monster_in_farm.get('nickname')} 獲得了成長: {gains_log}")
+    
+    # 建立回傳給前端的結果
+    growth_result: ExpeditionGrowthResult = {
+        "monster_id": monster_id_to_grow,
+        "monster_nickname": monster_in_farm.get("nickname", "未知怪獸"),
+        "stat_gains": gains_log
+    }
+    
+    return growth_result
 
 
 def get_all_islands_service() -> List[Dict[str, Any]]:
@@ -57,12 +130,8 @@ def start_expedition_service(
     """
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 嘗試在島嶼 {island_id} 的設施 {facility_id} 開始遠征。")
     
-    # --- 核心修改處 START ---
-    # 修正前：if player_data.get("adventure_progress", {}).get("is_active"):
-    # 修正後：
     progress = player_data.get("adventure_progress")
     if progress and progress.get("is_active"):
-    # --- 核心修改處 END ---
         return None, "您已經有一場遠征正在進行中，無法開始新的遠征。"
 
     all_islands = game_configs.get("adventure_islands", [])
@@ -271,6 +340,9 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
     stats = progress.get("expedition_stats")
     applied_effects = []
+    
+    if "last_event_growth" in progress:
+        del progress["last_event_growth"]
 
     chosen_outcome = None
     for choice in current_event.get("choices", []):
@@ -351,6 +423,10 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     applied_effects.append({"type": "debuff", "stat": effect.get("stat", "未知")})
 
     progress["current_event"] = None
+
+    random_growth_result = _handle_random_growth_event(player_data, progress)
+    if random_growth_result:
+        progress["last_event_growth"] = random_growth_result
 
     return {
         "success": True, 
