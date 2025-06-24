@@ -19,11 +19,9 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727')
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # --- 核心修改處 START ---
         # 處理 CORS 預檢請求 (OPTIONS)
         if request.method == 'OPTIONS':
             return jsonify({'status': 'ok'}), 200
-        # --- 核心修改處 END ---
             
         token = None
         if 'Authorization' in request.headers:
@@ -46,11 +44,9 @@ def token_required(f):
 
 @admin_bp.route('/login', methods=['POST', 'OPTIONS'])
 def admin_login():
-    # --- 核心修改處 START ---
     # 處理 CORS 預檢請求 (OPTIONS)
     if request.method == 'OPTIONS':
         return jsonify({'status': 'ok'}), 200
-    # --- 核心修改處 END ---
         
     data = request.get_json()
     if not data or 'password' not in data:
@@ -238,3 +234,31 @@ def recall_mail_route():
     except Exception as e:
         current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
+
+# --- 核心修改處 START ---
+@admin_bp.route('/delete_cs_mail/<string:mail_id>', methods=['DELETE', 'OPTIONS'])
+@token_required
+def delete_cs_mail_route(mail_id):
+    """
+    刪除一封指定的客服信件。
+    """
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db: 
+        return jsonify({"error": "資料庫服務異常"}), 500
+    
+    try:
+        mail_ref = db.collection('MD_AdminMailbox').document(mail_id)
+        mail_doc = mail_ref.get()
+        
+        if not mail_doc.exists:
+            return jsonify({"error": "找不到該封信件。"}), 404
+            
+        mail_ref.delete()
+        current_app.logger.info(f"管理員已刪除客服信件，ID: {mail_id}")
+        return jsonify({"success": True, "message": "信件已成功刪除。"}), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"刪除客服信件 {mail_id} 時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "刪除信件時發生內部錯誤。"}), 500
+# --- 核心修改處 END ---
