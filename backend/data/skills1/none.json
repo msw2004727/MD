@@ -1,0 +1,206 @@
+[
+  {
+    "name": "均衡直拳",
+    "description": "用力量與技巧均衡的直拳攻擊對手。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 98,
+    "effects": [
+      { "type": "damage", "power": 28, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後自身隨機提升一項能力值。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.08, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      }
+    }
+  },
+  {
+    "name": "穩重連擊",
+    "description": "穩健連續出拳，每擊兼顧速度與力量。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 98,
+    "effects": [
+      { "type": "damage", "power": 16, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數增為3次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 3 }
+        ]
+      },
+      "10": {
+        "description": "每次命中都有5%機率回復自身5HP。",
+        "add_effects": [
+          { "type": "heal", "amount": 5, "chance": 0.05, "target": "self" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "中性庇護",
+    "description": "提升自身所有能力值小幅度並回復HP。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "全屬性", "amount": 0.08, "is_multiplier": true, "duration": 4, "target": "self", "log_success": "全屬性能力提升！" },
+      { "type": "heal", "amount": 10, "target": "self" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "回復量+10，效果持續時間+2回合。",
+        "heal_add": 10,
+        "duration_add": 2
+      },
+      "10": {
+        "description": "全屬性提升效果再加強2%。",
+        "amount_add": 0.02
+      }
+    }
+  },
+  {
+    "name": "能量波動",
+    "description": "釋放純粹能量波攻擊敵人，魔法傷害。",
+    "type": "無",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      { "type": "damage", "power": 32, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後隨機降低敵方一項能力。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_down", "amount": -0.08, "target": "opponent_single" }
+        ]
+      },
+      "10": {
+        "description": "技能威力提升8點。",
+        "add_power": 8
+      }
+    }
+  },
+  {
+    "name": "均衡重擊",
+    "description": "以均衡之力猛擊對手，力量沉穩。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 98,
+    "effects": [
+      { "type": "damage", "power": 54, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後隨機提升自身一項能力20%。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.2, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "威力提升18點。",
+        "add_power": 18
+      }
+    }
+  },
+  {
+    "name": "全能連擊",
+    "description": "多段連擊，每段都均衡計算力量與速度。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 17,
+    "priority": 0,
+    "accuracy": 98,
+    "effects": [
+      { "type": "damage", "power": 21, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數變為4次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 4 }
+        ]
+      },
+      "10": {
+        "description": "每次命中後回復自身5HP。",
+        "add_effects": [
+          { "type": "heal", "amount": 5, "target": "self" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "平衡守護",
+    "description": "全體隊友獲得全屬性小幅提升與恢復。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "全屬性", "amount": 0.12, "is_multiplier": true, "duration": 5, "target": "team_allies", "log_success": "平衡守護提升全體全屬性！" },
+      { "type": "heal", "amount": 15, "target": "team_allies" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "全體回復量+10。",
+        "heal_add": 10
+      },
+      "10": {
+        "description": "效果持續回合+2，全屬性提升再加2%。",
+        "duration_add": 2,
+        "amount_add": 0.02
+      }
+    }
+  },
+  {
+    "name": "本源能量",
+    "description": "釋放純淨本源能量攻擊全體敵人。",
+    "type": "無",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 19,
+    "priority": 0,
+    "accuracy": 96,
+    "effects": [
+      { "type": "damage", "power": 40, "target": "opponent_all" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後隨機降低全體敵方一項能力。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_team_stat_down", "amount": -0.1, "target": "opponent_all" }
+        ]
+      },
+      "10": {
+        "description": "技能威力提升10點。",
+        "add_power": 10
+      }
+    }
+  }
+]
