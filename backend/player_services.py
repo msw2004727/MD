@@ -12,41 +12,52 @@ import random
 import math
 from .mail_services import add_mail_to_player
 
-from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry
+# 【修改】從 MD_models 導入 PlayerLogEntry
+from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry, PlayerLogEntry
 from .utils_services import generate_monster_full_nickname
 from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
 
-# --- 預設遊戲設定 (用於輔助函式或測試，避免循環導入) ---
+# --- 預設遊戲設定 (保持不變) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "dna_fragments": [], 
-    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
     "skills": {}, 
     "personalities": [],
-    "titles": [{"id": "title_001", "name": "新手", "description": "", "condition": {}, "buffs": {}}], # type: ignore
+    "titles": [{"id": "title_001", "name": "新手", "description": "", "condition": {}, "buffs": {}}],
     "monster_achievements_list": ["新秀"],
     "element_nicknames": {"火": "炎獸"},
-    "naming_constraints": {
-        "max_player_title_len": 5, "max_monster_achievement_len": 5,
-        "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15
-    },
-    "health_conditions": [],
-    "newbie_guide": [],
-    "npc_monsters": [],
-    "value_settings": {
-        "element_value_factors": {},
-        "dna_recharge_conversion_factor": 0.15,
-        "max_farm_slots": 10,
-        "max_monster_skills": 3,
-        "max_battle_turns": 30,
-        "max_inventory_slots": 12,
-        "max_temp_backpack_slots": 9
-    },
-    "absorption_config": {},
-    "cultivation_config": {},
-    "elemental_advantage_chart": {},
+    "naming_constraints": { "max_player_title_len": 5, "max_monster_achievement_len": 5, "max_element_nickname_len": 5, "max_monster_full_nickname_len": 15 },
+    "health_conditions": [], "newbie_guide": [], "npc_monsters": [],
+    "value_settings": { "element_value_factors": {}, "dna_recharge_conversion_factor": 0.15, "max_farm_slots": 10, "max_monster_skills": 3, "max_battle_turns": 30, "max_inventory_slots": 12, "max_temp_backpack_slots": 9 },
+    "absorption_config": {}, "cultivation_config": {}, "elemental_advantage_chart": {},
 }
+
+# --- 【新增】一個通用的日誌新增函式 ---
+def _add_player_log(player_data: PlayerGameData, category: str, message: str) -> PlayerGameData:
+    """
+    為玩家新增一筆日誌，並確保日誌列表最多只保留30筆。
+    """
+    # 確保 playerLogs 列表存在
+    if "playerLogs" not in player_data or not isinstance(player_data.get("playerLogs"), list):
+        player_data["playerLogs"] = []
+
+    # 建立新的日誌項目
+    new_log: PlayerLogEntry = {
+        "timestamp": int(time.time()),
+        "category": category,
+        "message": message
+    }
+    
+    # 將新日誌插入到列表的最前面
+    player_data["playerLogs"].insert(0, new_log)
+    
+    # 維持列表長度不超過30
+    if len(player_data["playerLogs"]) > 30:
+        player_data["playerLogs"] = player_data["playerLogs"][:30]
+    
+    return player_data
 
 
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
@@ -57,31 +68,16 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     default_title_object = next((t for t in all_titles_data if t.get("id") == "title_001"), None)
 
     if not default_title_object:
-        default_title_object = {
-            "id": "title_001", "name": "新手", "description": "踏入怪獸異世界的第一步。",
-            "condition": {"type": "default", "value": 0}, "buffs": {}
-        }
+        default_title_object = {"id": "title_001", "name": "新手", "description": "踏入怪獸異世界的第一步。", "condition": {"type": "default", "value": 0}, "buffs": {}}
 
     player_stats: PlayerStats = {
-        "rank": "N/A", "wins": 0, "losses": 0, "score": 0,
-        "titles": [default_title_object], 
-        "achievements": ["首次登入異世界"],
-        "medals": 0,
-        "nickname": nickname,
-        "equipped_title_id": default_title_object["id"],
-        "gold": game_configs.get("value_settings", {}).get("starting_gold", 500),
-        "current_win_streak": 0,
-        "current_loss_streak": 0,
-        "highest_win_streak": 0,
-        "completed_cultivations": 0,
-        "disassembled_monsters": 0,
-        "discovered_recipes": [],
-        "highest_rarity_created": "普通",
-        "status_applied_counts": {},
-        "leech_skill_uses": 0,
-        "flawless_victories": 0,
-        "special_victories": {},
-        "last_champion_reward_timestamp": 0
+        "rank": "N/A", "wins": 0, "losses": 0, "score": 0, "titles": [default_title_object], 
+        "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname,
+        "equipped_title_id": default_title_object["id"], "gold": game_configs.get("value_settings", {}).get("starting_gold", 500),
+        "current_win_streak": 0, "current_loss_streak": 0, "highest_win_streak": 0,
+        "completed_cultivations": 0, "disassembled_monsters": 0, "discovered_recipes": [],
+        "highest_rarity_created": "普通", "status_applied_counts": {}, "leech_skill_uses": 0,
+        "flawless_victories": 0, "special_victories": {}, "last_champion_reward_timestamp": 0
     }
 
     value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
@@ -93,9 +89,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
 
     if dna_fragments_templates:
         eligible_dna_templates = [dna for dna in dna_fragments_templates if dna.get("rarity") in ["普通", "稀有"]]
-        if not eligible_dna_templates:
-            eligible_dna_templates = list(dna_fragments_templates) 
-
+        if not eligible_dna_templates: eligible_dna_templates = list(dna_fragments_templates) 
         for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)):
             if not eligible_dna_templates: break
             template = random.choice(eligible_dna_templates)
@@ -105,19 +99,15 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
             pass
 
     new_player_data: PlayerGameData = {
-        "playerOwnedDNA": initial_dna_owned,
-        "farmedMonsters": [],
-        "playerStats": player_stats,
-        "nickname": nickname,
-        "lastSave": int(time.time()),
-        "lastSeen": int(time.time()),
-        "selectedMonsterId": None,
-        "friends": [],
-        "dnaCombinationSlots": [None] * 5,
-        "mailbox": [], 
-        "playerNotes": [],
-        "adventure_progress": None 
+        "playerOwnedDNA": initial_dna_owned, "farmedMonsters": [], "playerStats": player_stats,
+        "nickname": nickname, "lastSave": int(time.time()), "lastSeen": int(time.time()),
+        "selectedMonsterId": None, "friends": [], "dnaCombinationSlots": [None] * 5,
+        "mailbox": [], "playerNotes": [], "adventure_progress": None, "playerLogs": [] # 新增：初始化空的日誌列表
     }
+    
+    # 【新增】為新玩家加入第一條日誌紀錄
+    _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
+    
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
     return new_player_data
 
@@ -171,11 +161,13 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             
             player_services_logger.info(f"成功從 Firestore 獲取玩家遊戲資料：{player_id}")
             
-            # 【修改】使用 .setdefault() 來安全地獲取或創建 playerStats，避免 KeyError
             player_stats = player_game_data_dict.setdefault("playerStats", {})
             
             is_self_request = nickname_from_auth is not None
             if is_self_request:
+                # 【新增】當是玩家本人請求資料時（視為一次登入或活動），新增一筆日誌
+                _add_player_log(player_game_data_dict, "系統", "玩家登入或活動。")
+
                 champions_data = get_champions_data()
                 player_rank = 0
                 champion_slot_info = None
@@ -208,14 +200,13 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                             mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
                             add_mail_to_player(player_game_data_dict, mail_template)
                             player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
-                            # 此處的儲存操作將在後續的資料遷移儲存中一併處理
-            
+                            save_player_data_service(player_id, player_game_data_dict)
+
             needs_migration_save = False
             if "gold" not in player_stats:
                 player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
                 needs_migration_save = True
             
-            # 【修改】使用安全的 player_stats 變數進行後續操作
             if "nickname" not in player_stats or player_stats.get("nickname") != authoritative_nickname:
                 player_stats["nickname"] = authoritative_nickname
                 needs_migration_save = True
@@ -281,7 +272,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
             if needs_migration_save:
                 try:
-                    # 在儲存前，確保修改後的 player_stats 被寫回主字典
                     player_game_data_dict["playerStats"] = player_stats
                     save_player_data_service(player_id, player_game_data_dict)
                 except Exception as e:
@@ -292,12 +282,9 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if len(loaded_dna) < max_inventory_slots: loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
             elif len(loaded_dna) > max_inventory_slots: loaded_dna = loaded_dna[:max_inventory_slots]
 
-            # 【修改】使用已經安全處理過的 player_stats 變數來構建最終的回傳物件
             player_game_data: PlayerGameData = {
-                "playerOwnedDNA": loaded_dna,
-                "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
-                "playerStats": player_stats,
-                "nickname": authoritative_nickname,
+                "playerOwnedDNA": loaded_dna, "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
+                "playerStats": player_stats, "nickname": authoritative_nickname,
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
                 "lastSeen": player_game_data_dict.get("lastSeen", int(time.time())),
                 "selectedMonsterId": player_game_data_dict.get("selectedMonsterId", None),
@@ -305,7 +292,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "dnaCombinationSlots": player_game_data_dict.get("dnaCombinationSlots", [None] * 5),
                 "mailbox": player_game_data_dict.get("mailbox", []),
                 "playerNotes": player_game_data_dict.get("playerNotes", []),
-                "adventure_progress": player_game_data_dict.get("adventure_progress")
+                "adventure_progress": player_game_data_dict.get("adventure_progress"),
+                "playerLogs": player_game_data_dict.get("playerLogs", []) # 新增：確保讀取日誌
             }
             return player_game_data, False
         
@@ -361,18 +349,14 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
 
     try:
         data_to_save: Dict[str, Any] = {
-            "playerOwnedDNA": game_data.get("playerOwnedDNA", []),
-            "farmedMonsters": game_data.get("farmedMonsters", []),
-            "playerStats": game_data.get("playerStats", {}),
-            "nickname": game_data.get("nickname", "未知玩家"),
-            "lastSave": current_time_unix,
-            "lastSeen": current_time_unix,
-            "selectedMonsterId": game_data.get("selectedMonsterId"),
-            "friends": game_data.get("friends", []),
+            "playerOwnedDNA": game_data.get("playerOwnedDNA", []), "farmedMonsters": game_data.get("farmedMonsters", []),
+            "playerStats": game_data.get("playerStats", {}), "nickname": game_data.get("nickname", "未知玩家"),
+            "lastSave": current_time_unix, "lastSeen": current_time_unix,
+            "selectedMonsterId": game_data.get("selectedMonsterId"), "friends": game_data.get("friends", []),
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
-            "playerNotes": game_data.get("playerNotes", []),
-            "mailbox": game_data.get("mailbox", []),
-            "adventure_progress": game_data.get("adventure_progress")
+            "playerNotes": game_data.get("playerNotes", []), "mailbox": game_data.get("mailbox", []),
+            "adventure_progress": game_data.get("adventure_progress"),
+            "playerLogs": game_data.get("playerLogs", []) # 新增：確保儲存日誌
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \
@@ -396,9 +380,7 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         return False
 
 def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
-    """
-    執行免費的 DNA 抽取。
-    """
+    """執行免費的 DNA 抽取。"""
     player_services_logger.info("正在執行免費 DNA 抽取...")
     try:
         from .MD_config_services import load_all_game_configs_from_firestore
@@ -411,21 +393,15 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
         all_dna_fragments = game_configs['dna_fragments']
         
         allowed_rarities = {"普通", "稀有"}
-        filtered_pool = [
-            dna for dna in all_dna_fragments 
-            if dna.get('rarity') in allowed_rarities
-        ]
+        filtered_pool = [dna for dna in all_dna_fragments if dna.get('rarity') in allowed_rarities]
 
         if not filtered_pool:
             player_services_logger.error("篩選後的 DNA 卡池為空，無法抽取。")
             return []
             
         num_to_draw = 3
-        
         drawn_dna_templates = random.choices(filtered_pool, k=num_to_draw)
-        
         player_services_logger.info(f"成功抽取了 {num_to_draw} 個 DNA。")
-        
         return drawn_dna_templates
 
     except Exception as e:
@@ -433,9 +409,7 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
         return None
 
 def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[int]]:
-    """
-    一次性獲取多個好友的 `lastSeen` 時間戳。
-    """
+    """一次性獲取多個好友的 `lastSeen` 時間戳。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (get_friends_statuses_service 內部)。")
@@ -466,9 +440,7 @@ def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[in
     return statuses
 
 def add_note_service(player_data: PlayerGameData, target_type: str, note_content: str, monster_id: Optional[str] = None) -> Optional[PlayerGameData]:
-    """
-    新增一條註記到玩家或指定的怪獸。
-    """
+    """新增一條註記到玩家或指定的怪獸。"""
     if not note_content.strip():
         player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
         return player_data
@@ -477,10 +449,7 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
         player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
         return None 
 
-    new_note: NoteEntry = {
-        "timestamp": int(time.time()),
-        "content": note_content
-    }
+    new_note: NoteEntry = {"timestamp": int(time.time()), "content": note_content}
 
     if target_type == "player":
         if "playerNotes" not in player_data or not isinstance(player_data.get("playerNotes"), list):
@@ -493,16 +462,12 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
         if not monster_id:
             player_services_logger.error("新增怪獸註記失敗：未提供怪獸 ID。")
             return None 
-
         monster_to_update = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == monster_id), None)
-
         if not monster_to_update:
             player_services_logger.error(f"新增怪獸註記失敗：找不到 ID 為 {monster_id} 的怪獸。")
             return None 
-        
         if "monsterNotes" not in monster_to_update or not isinstance(monster_to_update.get("monsterNotes"), list):
             monster_to_update["monsterNotes"] = []
-        
         monster_to_update["monsterNotes"].append(new_note)
         player_services_logger.info(f"已為怪獸 {monster_id} 新增一條註記。")
         return player_data
