@@ -4,17 +4,25 @@
 import logging
 import time
 import uuid
-from typing import Optional, List, Dict, Any, Tuple
+# --- 核心修改處 START ---
+# 導入 TYPE_CHECKING 用於處理循環依賴的類型提示
+from typing import Optional, List, Dict, Any, Tuple, TYPE_CHECKING
 
 # 從專案的其他模組導入
 from . import MD_firebase_config
-from .MD_models import PlayerGameData, MailItem, PlayerOwnedDNA
+# from .MD_models import PlayerGameData, MailItem, PlayerOwnedDNA # 移除此處的直接導入
+
+# 使用 TYPE_CHECKING 來避免運行時的循環導入錯誤
+if TYPE_CHECKING:
+    from .MD_models import PlayerGameData, MailItem, PlayerOwnedDNA, GameConfigs
+# --- 核心修改處 END ---
+
 
 # 設定日誌記錄器
 mail_logger = logging.getLogger(__name__)
 
 
-def add_mail_to_player(player_data: PlayerGameData, mail_item_template: Dict[str, Any]) -> Optional[PlayerGameData]:
+def add_mail_to_player(player_data: 'PlayerGameData', mail_item_template: Dict[str, Any]) -> Optional['PlayerGameData']:
     """
     為指定玩家的信箱新增一封信件。
 
@@ -31,7 +39,7 @@ def add_mail_to_player(player_data: PlayerGameData, mail_item_template: Dict[str
         return None
 
     # 為信件產生一個唯一的ID和時間戳
-    new_mail_item: MailItem = {
+    new_mail_item: 'MailItem' = {
         "id": str(uuid.uuid4()),  # 使用 uuid 保證 ID 的唯一性
         "type": mail_item_template.get("type", "system_message"),
         "title": mail_item_template.get("title", "無標題"),
@@ -122,7 +130,7 @@ def send_mail_to_player_service(
             mail_logger.error(f"寄信失敗：找不到收件人 {recipient_id} 的遊戲資料。")
             return False
         
-        recipient_data: PlayerGameData = recipient_doc.to_dict() # type: ignore
+        recipient_data: 'PlayerGameData' = recipient_doc.to_dict() # type: ignore
 
         mail_template = {
             "type": mail_type, "title": title, "content": content,
@@ -147,7 +155,7 @@ def send_mail_to_player_service(
         return False
 
 
-def delete_mail_from_player(player_data: PlayerGameData, mail_id: str) -> Optional[PlayerGameData]:
+def delete_mail_from_player(player_data: 'PlayerGameData', mail_id: str) -> Optional['PlayerGameData']:
     if not player_data or not player_data.get("mailbox"):
         mail_logger.warning(f"刪除信件失敗：玩家沒有信箱或信箱為空。")
         return player_data
@@ -163,7 +171,7 @@ def delete_mail_from_player(player_data: PlayerGameData, mail_id: str) -> Option
     return player_data
 
 
-def mark_mail_as_read(player_data: PlayerGameData, mail_id: str) -> Optional[PlayerGameData]:
+def mark_mail_as_read(player_data: 'PlayerGameData', mail_id: str) -> Optional['PlayerGameData']:
     if not player_data or not player_data.get("mailbox"):
         mail_logger.warning(f"標記已讀失敗：玩家沒有信箱或信箱為空。")
         return player_data
@@ -183,7 +191,7 @@ def mark_mail_as_read(player_data: PlayerGameData, mail_id: str) -> Optional[Pla
     return player_data
 
 
-def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], Optional[str]]:
+def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, game_configs: 'GameConfigs') -> Tuple[Optional['PlayerGameData'], Optional[str]]:
     """
     處理玩家領取信件附件的邏輯。
     返回一個元組 (更新後的玩家資料, 錯誤訊息)。如果成功，錯誤訊息為 None。
@@ -208,7 +216,7 @@ def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, ga
         return player_data, "此信件沒有附件可以領取。"
 
     player_stats = player_data.get("playerStats", {})
-    inventory: List[Optional[PlayerOwnedDNA]] = player_data.get("playerOwnedDNA", [])
+    inventory: List[Optional['PlayerOwnedDNA']] = player_data.get("playerOwnedDNA", [])
     max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12)
 
     gold_to_claim = int(payload.get("gold", 0))
