@@ -59,7 +59,7 @@ def send_mail_to_player_service(
     mail_type: str = "system_message"
 ) -> Tuple[bool, Optional[str]]:
     """
-    處理一個玩家向另一個玩家發送信件的邏輯。
+    處理一個玩家向另一個玩家或系統發送信件的邏輯。
     """
     from .player_services import save_player_data_service, get_player_data_service
     
@@ -72,6 +72,30 @@ def send_mail_to_player_service(
         mail_logger.warning(f"玩家 {sender_id} 試圖寄信給自己，操作已阻止。")
         return False, "無法寄信給自己。"
 
+    # --- 核心修改處 START ---
+    # 如果收件人是系統管理員，則走特殊的客服信箱儲存路徑
+    if recipient_id == "system_admin":
+        try:
+            admin_mailbox_ref = db.collection('MD_AdminMailbox').document()
+            new_mail_item: 'MailItem' = {
+                "id": admin_mailbox_ref.id,
+                "type": "player_feedback",
+                "title": title,
+                "sender_id": sender_id,
+                "sender_name": sender_nickname,
+                "timestamp": int(time.time()),
+                "is_read": False,
+                "content": content,
+                "payload": payload or {},
+            }
+            admin_mailbox_ref.set(new_mail_item)
+            mail_logger.info(f"玩家 {sender_nickname}({sender_id}) 的回覆已成功存入後台客服信箱。")
+            return True, None
+        except Exception as e:
+            mail_logger.error(f"儲存玩家回覆至後台信箱時發生錯誤: {e}", exc_info=True)
+            return False, "無法將您的回覆提交給系統，請稍後再試。"
+    # --- 核心修改處 END ---
+            
     try:
         recipient_doc_ref = db.collection('users').document(recipient_id).collection('gameData').document('main')
         recipient_doc = recipient_doc_ref.get()
