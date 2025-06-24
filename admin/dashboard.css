@@ -59,7 +59,7 @@ h3 {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    transition: width 0.3s ease, transform 0.3s ease; /* 增加 transform 過渡 */
+    transition: width 0.3s ease, transform 0.3s ease;
 }
 
 .sidebar-title {
@@ -83,7 +83,7 @@ h3 {
     margin-bottom: 0.5rem;
     border-radius: 8px;
     transition: background-color 0.2s, color 0.2s;
-    white-space: nowrap; /* 防止文字換行 */
+    white-space: nowrap;
 }
 
 .nav-link:hover {
@@ -257,7 +257,6 @@ tbody tr:last-child td {
     border-bottom: none;
 }
 
-
 /* --- 彈窗 --- */
 .modal-overlay {
     position: fixed;
@@ -285,7 +284,49 @@ tbody tr:last-child td {
     margin-bottom: 1.5rem;
 }
 
-/* --- 響應式設計 (手機版面優化) --- */
+/* --- 【新增】玩家資料美化樣式 --- */
+.player-data-container {
+    display: grid;
+    gap: 1.5rem;
+}
+.placeholder-text {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--bg-panel);
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+}
+.player-main-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+.sub-section {
+    margin-top: 1.5rem;
+}
+.sub-section h3 {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.dna-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+.dna-item-admin {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+/* --- 響應式設計 --- */
 @media (max-width: 768px) {
     .dashboard-container {
         flex-direction: column;
@@ -294,30 +335,30 @@ tbody tr:last-child td {
     .sidebar {
         width: 100%;
         height: auto;
-        padding: 0.5rem 1rem; /* 減少上下內距 */
+        padding: 0.5rem 1rem;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         flex-direction: row;
         align-items: center;
-        overflow-x: auto; /* 【優化】讓導覽列可以水平滾動 */
+        overflow-x: auto;
     }
     .sidebar-title {
         font-size: 1.2rem;
-        margin-right: auto; /* 【優化】將標題推到最左邊 */
+        margin-right: auto;
         white-space: nowrap;
     }
     .nav-menu {
         display: flex;
         gap: 0.5rem;
         flex-grow: 0;
-        flex-shrink: 0; /* 【優化】防止導覽項目被壓縮 */
+        flex-shrink: 0;
     }
     .nav-link {
         padding: 0.5rem 0.8rem;
         margin: 0;
     }
     .sidebar-footer {
-        margin-left: 1rem; /* 【優化】讓登出按鈕和導覽項目有間距 */
+        margin-left: 1rem;
         margin-top: 0;
     }
     .main-content {
