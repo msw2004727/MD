@@ -53,8 +53,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
 
+    // --- 核心修改處 START：重寫 renderPlayerData 函式 ---
     function renderPlayerData(playerData) {
         currentPlayerData = playerData;
+
+        const dnaGridHtml = (playerData.playerOwnedDNA || [])
+            .map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5; display: flex; align-items: center; justify-content: center;">空位</div>')
+            .join('');
+
+        const monsterGridHtml = (playerData.farmedMonsters || [])
+            .map(monster => `
+                <div class="monster-card-admin">
+                    <h4>${monster.nickname} (${monster.rarity})</h4>
+                    <ul>
+                        <li>HP: ${monster.hp}/${monster.initial_max_hp}</li>
+                        <li>評價: ${monster.score || 0}</li>
+                    </ul>
+                </div>
+            `).join('');
+
         dataDisplay.innerHTML = `
             <div class="data-section">
                 <h3>玩家狀態 (Player Stats)</h3>
@@ -65,13 +82,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="form-group"><label for="admin-losses">敗場</label><input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}"></div>
                 </div>
             </div>
-            <div class="data-section"><h3>DNA 碎片庫存 (預覽)</h3><div id="admin-dna-grid" class="dna-grid">${(playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}</div></div>
-            <div class="data-section"><h3>持有怪獸 (預覽)</h3><div id="admin-monster-grid" class="monster-grid">${(playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score}</li></ul></div>`).join('')}</div></div>
+            <div class="data-section">
+                <h3>DNA 碎片庫存 (預覽)</h3>
+                <div id="admin-dna-grid" class="dna-grid">${dnaGridHtml}</div>
+            </div>
+            <div class="data-section">
+                <h3>持有怪獸 (預覽)</h3>
+                <div id="admin-monster-grid" class="monster-grid">${monsterGridHtml}</div>
+            </div>
             <div class="save-changes-container">
                 <button id="send-player-mail-btn" class="button secondary">寄送系統信件</button>
                 <button id="save-player-data-btn" class="button success">儲存玩家數值變更</button>
             </div>`;
     }
+    // --- 核心修改處 END ---
 
     async function handleSavePlayerData() {
         if (!currentPlayerData) { alert('沒有可儲存的玩家資料。'); return; }
@@ -270,7 +294,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 核心修改處 START ---
     async function handleGenerateReport() {
         generateReportBtn.disabled = true;
         generateReportBtn.textContent = '生成中...';
@@ -313,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
             generateReportBtn.textContent = '重新生成全服數據報表';
         }
     }
-    // --- 核心修改處 END ---
 
     async function loadAndPopulateConfigsDropdown() {
         if (configFileSelector.options.length > 1 && !configFileSelector.dataset.needsRefresh) return;
