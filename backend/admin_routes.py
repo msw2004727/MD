@@ -6,10 +6,13 @@ import logging
 from flask import Blueprint, jsonify, request, current_app
 from datetime import datetime, timedelta, timezone
 import jwt # PyJWT，用於生成和驗證 Token
-from .player_services import get_player_data_service, save_player_data_service
-from .MD_routes import _get_game_configs_data_from_app_context
-from .mail_services import add_mail_to_player # --- 核心修改處：導入 add_mail_to_player ---
-from . import MD_firebase_config # --- 核心修改處：導入 firebase_config ---
+import uuid # --- 核心修改處：導入 uuid 和 time ---
+import time
+from .player_services import get_player_data_service, save_player_data_service 
+from .MD_routes import _get_game_configs_data_from_app_context 
+from .mail_services import add_mail_to_player 
+from . import MD_firebase_config
+from google.cloud import firestore # --- 核心修改處：導入 firestore ---
 
 # 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
@@ -98,6 +101,34 @@ def get_player_data_for_admin():
         return jsonify({"error": f"找不到 UID 為 {player_id} 的玩家資料。"}), 404
         
 # --- 核心修改處 START ---
+@admin_bp.route('/player_data/<string:player_id>', methods=['POST'])
+def update_player_data_by_admin(player_id: str):
+    """
+    接收管理員從後台提交的修改後玩家資料，並儲存到資料庫。
+    """
+    if not verify_admin_token():
+        return jsonify({"error": "管理員驗證失敗"}), 401
+
+    updated_data = request.json
+    if not updated_data:
+        return jsonify({"error": "請求中未包含要更新的資料。"}), 400
+        
+    admin_logger.info(f"後台請求更新玩家 {player_id} 的資料。")
+
+    try:
+        # 直接使用 save_player_data_service 函式來覆寫資料
+        # 注意：這個操作權限很大，會完整覆蓋玩家的 gameData/main 文件
+        if save_player_data_service(player_id, updated_data):
+            admin_logger.info(f"成功更新玩家 {player_id} 的資料。")
+            return jsonify({"success": True, "message": "玩家資料已成功儲存！"}), 200
+        else:
+            admin_logger.error(f"後台更新玩家 {player_id} 資料時，save_player_data_service 回傳 False。")
+            return jsonify({"error": "儲存玩家資料到資料庫時失敗。"}), 500
+            
+    except Exception as e:
+        admin_logger.error(f"後台更新玩家 {player_id} 資料時發生未知錯誤: {e}", exc_info=True)
+        return jsonify({"error": "伺服器內部錯誤，更新失敗。"}), 500
+
 @admin_bp.route('/broadcast_mail', methods=['POST'])
 def broadcast_mail_route():
     """
@@ -109,13 +140,12 @@ def broadcast_mail_route():
     data = request.json
     title = data.get('title')
     content = data.get('content')
-    payload_str = data.get('payload_str', '{}') # 接收字串格式的 payload
+    payload_str = data.get('payload_str', '{}') 
 
     if not title or not content:
         return jsonify({"error": "信件標題和內容不能為空。"}), 400
 
     try:
-        # 解析 JSON 字串 payload
         payload = json.loads(payload_str) if payload_str else {}
     except json.JSONDecodeError:
         return jsonify({"error": "附件 (Payload) 的 JSON 格式不正確。"}), 400
@@ -127,7 +157,7 @@ def broadcast_mail_route():
 
     try:
         users_ref = db.collection('users')
-        users_docs = users_ref.stream() # 獲取所有玩家文件
+        users_docs = users_ref.stream() 
         
         batch = db.batch()
         count = 0
@@ -144,9 +174,6 @@ def broadcast_mail_route():
             player_id = doc.id
             game_data_ref = users_ref.document(player_id).collection('gameData').document('main')
             
-            # 使用 FieldValue.array_union 來安全地添加新信件
-            # 注意：add_mail_to_player 內部是 insert(0)，更複雜，這裡簡化為批次更新
-            # 為了使用批次處理，我們直接在這裡構造信件物件
             new_mail_item = {
                 "id": str(uuid.uuid4()),
                 "type": mail_template["type"],
@@ -157,18 +184,16 @@ def broadcast_mail_route():
                 "content": mail_template["content"],
                 "payload": mail_template["payload"],
             }
-            # 使用 array_union 將新信件添加到 mailbox 陣列
             batch.update(game_data_ref, {'mailbox': firestore.ArrayUnion([new_mail_item])})
             count += 1
 
-            # Firestore 的批次寫入上限為 500 次操作
             if count % 499 == 0:
                 batch.commit()
                 batch = db.batch()
                 admin_logger.info(f"已提交一批次 ({count}) 的系統信件。")
 
         if count % 499 != 0:
-            batch.commit() # 提交最後剩餘的批次
+            batch.commit()
 
         admin_logger.info(f"群發系統信件成功，共發送給 {count} 位玩家。")
         return jsonify({"success": True, "message": f"成功發送信件給 {count} 位玩家。"}), 200
@@ -180,13 +205,6 @@ def broadcast_mail_route():
 
 @admin_bp.route('/check_auth', methods=['GET'])
 def check_auth_status():
-    auth_header = request.headers.get('Authorization')
-    if not auth_header or not auth_header.startswith('Bearer '):
-        return jsonify({"authenticated": False, "error": "缺少 Token"}), 401
-
-    token = auth_header.split('Bearer ')[1]
-    # 使用 self.verify_admin_token()
-    if verify_admin_token():
-        return jsonify({"authenticated": True, "message": "驗證成功！"}), 200
-    else:
+    if not verify_admin_token():
         return jsonify({"authenticated": False, "error": "Token 無效或已過期"}), 401
+    return jsonify({"authenticated": True, "message": "驗證成功！"}), 200
