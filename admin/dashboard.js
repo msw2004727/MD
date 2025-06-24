@@ -57,6 +57,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 facilitiesContainer: document.getElementById('adventure-facilities-container'),
                 saveBtn: document.getElementById('save-adventure-settings-btn'),
                 responseEl: document.getElementById('adventure-settings-response'),
+                // --- 核心修改處 START ---
+                growthFacilitiesContainer: document.getElementById('adventure-growth-facilities-container'),
+                growthStatsContainer: document.getElementById('adventure-growth-stats-container'),
+                saveGrowthBtn: document.getElementById('save-adventure-growth-settings-btn'),
+                growthResponseEl: document.getElementById('adventure-growth-settings-response'),
+                // --- 核心修改處 END ---
             },
 
             // 設定檔
@@ -495,8 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // --- 核心修改處 START ---
-        // 新增：處理客服信箱按鈕點擊的函式
         async function handleCsMailActions(event) {
             const replyBtn = event.target.closest('.cs-reply-btn');
             const deleteBtn = event.target.closest('.cs-delete-mail-btn');
@@ -535,7 +539,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteBtn.disabled = true;
                 deleteBtn.textContent = '刪除中...';
                 try {
-                    // 注意：API 端點使用了 <string:mail_id> 路由參數
                     const result = await fetchAdminAPI(`/delete_cs_mail/${mailId}`, { method: 'DELETE' });
                     alert(result.message);
                     loadCsMail(); // 成功後重新載入列表
@@ -546,29 +549,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        // --- 核心修改處 END ---
 
-
+        // --- 核心修改處 START ---
         // 冒險島設定邏輯
         async function loadAdventureSettings() {
-            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer } = DOMElements.advSettings;
-            if (!bossMultiplierInput) return;
+            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, growthFacilitiesContainer, growthStatsContainer } = DOMElements.advSettings;
+            if (!bossMultiplierInput || !growthFacilitiesContainer) return;
 
+            // 清空舊內容
             bossMultiplierInput.value = '';
             baseGoldInput.value = '';
             bonusGoldInput.value = '';
             facilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
+            growthFacilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
+            growthStatsContainer.innerHTML = '';
+
 
             try {
-                const [advSettings, islandsData] = await Promise.all([
+                const [advSettings, islandsData, growthSettings] = await Promise.all([
                     fetchAdminAPI('/get_config?file=adventure_settings.json'),
-                    fetchAdminAPI('/get_config?file=adventure_islands.json')
+                    fetchAdminAPI('/get_config?file=adventure_islands.json'),
+                    fetchAdminAPI('/get_config?file=adventure_growth_settings.json')
                 ]);
 
+                // 渲染全域參數
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
                 baseGoldInput.value = advSettings.floor_clear_base_gold || 50;
                 bonusGoldInput.value = advSettings.floor_clear_bonus_gold_per_floor || 10;
                 
+                // 渲染設施入場費
                 if (islandsData && Array.isArray(islandsData)) {
                     facilitiesContainer.innerHTML = islandsData.map(island => `
                         <div class="facility-settings-card" data-island-id="${island.islandId}">
@@ -584,12 +593,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     facilitiesContainer.innerHTML = '<p class="placeholder-text">找不到設施資料。</p>';
                 }
+                
+                // 渲染隨機成長參數
+                if (growthSettings && growthSettings.facilities) {
+                    const facilityNames = {};
+                    islandsData.forEach(island => island.facilities.forEach(f => { facilityNames[f.facilityId] = f.name; }));
+
+                    growthFacilitiesContainer.innerHTML = Object.entries(growthSettings.facilities).map(([id, settings]) => `
+                        <div class="facility-settings-card">
+                            <h4>${facilityNames[id] || id}</h4>
+                            <div class="form-group">
+                                <label for="growth-chance-${id}">成長觸發機率 (%)</label>
+                                <input type="number" id="growth-chance-${id}" data-facility-id="${id}" data-setting="growth_chance" class="admin-input" value="${(settings.growth_chance * 100).toFixed(1)}" step="0.1" min="0" max="100">
+                            </div>
+                             <div class="form-group">
+                                <label for="growth-points-${id}">成長點數</label>
+                                <input type="number" id="growth-points-${id}" data-facility-id="${id}" data-setting="growth_points" class="admin-input" value="${settings.growth_points}" step="1" min="0">
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                     growthFacilitiesContainer.innerHTML = '<p class="placeholder-text">找不到成長設定資料。</p>';
+                }
+                
+                if (growthSettings && growthSettings.stat_weights) {
+                    let statsHtml = `
+                        <div class="facility-settings-card">
+                            <h4>各項能力成長權重 (數字越大，越容易成長)</h4>`;
+                    statsHtml += Object.entries(growthSettings.stat_weights).map(([stat, weight]) => `
+                        <div class="form-group">
+                            <label for="stat-weight-${stat}">${stat.toUpperCase()}</label>
+                            <input type="number" id="stat-weight-${stat}" data-stat-name="${stat}" class="admin-input" value="${weight}" step="1" min="0">
+                        </div>
+                    `).join('');
+                    statsHtml += `</div>`;
+                    growthStatsContainer.innerHTML = statsHtml;
+                }
 
             } catch (err) {
                  facilitiesContainer.innerHTML = `<p style="color: var(--danger-color);">載入冒險島設定失敗：${err.message}</p>`;
+                 growthFacilitiesContainer.innerHTML = `<p style="color: var(--danger-color);">載入成長設定失敗：${err.message}</p>`;
             }
         }
-        
+        // --- 核心修改處 END ---
+
         async function handleSaveAdventureSettings() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
             
@@ -676,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.refreshLogBtn.addEventListener('click', loadBroadcastLog);
         DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
         if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
-        if (DOMElements.csMailContainer) { DOMElements.csMailContainer.addEventListener('click', handleCsMailActions); } // --- 核心修改處 START ---
+        if (DOMElements.csMailContainer) { DOMElements.csMailContainer.addEventListener('click', handleCsMailActions); }
         if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } 
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
