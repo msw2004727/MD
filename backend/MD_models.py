@@ -4,10 +4,8 @@
 
 from typing import List, Dict, Optional, TypedDict, NotRequired, Union, Literal, Tuple, Any
 
-# --- 核心修改處 START ---
 # 從我們新建的冒險島模型檔案中，導入 AdventureProgress 型別
 from .adventure_models import AdventureProgress
-# --- 核心修改處 END ---
 
 # --- 基本類型定義 ---
 ElementTypes = Literal[
@@ -26,25 +24,27 @@ class ChatHistoryEntry(TypedDict):
     role: Literal["user", "assistant"]
     content: str
 
-# --- 【新增】信箱系統資料模型 START ---
+# --- 【新增】玩家個人日誌項目結構 ---
+class PlayerLogEntry(TypedDict):
+    timestamp: int
+    category: str # 例如: '系統', '金幣', '戰鬥', '合成', '物品'
+    message: str
+
+# --- 信箱系統資料模型 ---
 class MailItem(TypedDict):
-    """
-    定義單一信件的資料結構。
-    """
-    id: str  # 信件的唯一ID
-    type: Literal["friend_request", "system_message", "reward"]  # 信件類型
-    title: str  # 信件標題
-    sender_id: NotRequired[Optional[str]]  # 寄件人ID (系統信件則無)
-    sender_name: NotRequired[Optional[str]]  # 寄件人暱稱
-    timestamp: int  # 發送時間的時間戳
-    is_read: bool  # 是否已讀
-    content: NotRequired[str] # 信件內容 (文字訊息)
-    payload: NotRequired[Dict[str, Any]] # 附加資料，如 { "item_type": "dna", "item_id": "dna_fire_c01", "amount": 1 }
-
-# --- 【新增】信箱系統資料模型 END ---
+    """定義單一信件的資料結構。"""
+    id: str
+    type: Literal["friend_request", "system_message", "reward"]
+    title: str
+    sender_id: NotRequired[Optional[str]]
+    sender_name: NotRequired[Optional[str]]
+    timestamp: int
+    is_read: bool
+    content: NotRequired[str]
+    payload: NotRequired[Dict[str, Any]]
 
 
-# --- 設定檔模型 ---
+# --- 設定檔模型 (此部分內容未變更，保持原樣) ---
 
 class DNAFragment(TypedDict):
     id: str
@@ -155,7 +155,6 @@ class NewbieGuideEntry(TypedDict):
     title: str
     content: str
 
-# --- 遊戲核心設定子模型 ---
 class AbsorptionConfig(TypedDict):
     base_stat_gain_factor: float
     score_diff_exponent: float
@@ -328,13 +327,11 @@ class PlayerGameData(TypedDict):
     lastSave: NotRequired[int]
     dnaCombinationSlots: NotRequired[List[Optional[PlayerOwnedDNA]]]
     friends: NotRequired[List[Any]]
-    playerNotes: NotRequired[List[NoteEntry]]
     mailbox: NotRequired[List[MailItem]]
-    # --- 核心修改處 START ---
-    # 在玩家資料結構中新增一個可選的冒險進度欄位
     adventure_progress: NotRequired[AdventureProgress]
-    # --- 核心修改處 END ---
-
+    playerNotes: NotRequired[List[NoteEntry]]
+    # 【新增】玩家個人日誌欄位
+    playerLogs: NotRequired[List[PlayerLogEntry]]
 
 class MonsterRecipe(TypedDict):
     combinationKey: str 
@@ -342,7 +339,6 @@ class MonsterRecipe(TypedDict):
     creationTimestamp: int
     discoveredByPlayerId: NotRequired[str]
 
-# --- 戰鬥系統相關模型 ---
 class BattleAction(TypedDict):
     performer_id: str
     target_id: str
@@ -373,7 +369,6 @@ class BattleResult(TypedDict):
     ai_battle_report_content: Dict[str, Any]
     absorption_details: NotRequired[Dict[str, Any]]
 
-# --- 冠軍殿堂相關模型 ---
 class ChampionSlot(TypedDict):
     monsterId: str
     ownerId: str
@@ -387,7 +382,6 @@ class ChampionsData(TypedDict):
     rank3: Optional[ChampionSlot]
     rank4: Optional[ChampionSlot]
 
-# --- 完整的遊戲設定檔模型 ---
 class GameConfigs(TypedDict):
     dna_fragments: List[DNAFragment]
     rarities: Dict[str, RarityDetail]
@@ -407,8 +401,10 @@ class GameConfigs(TypedDict):
     cultivation_stories: NotRequired[Dict[str, Any]]
     champion_guardians: NotRequired[Dict[str, Any]]
     battle_highlights: NotRequired[Dict[str, Any]]
-    # --- 新增: 冒險島的設定也應被包含在遊戲核心設定中 ---
     adventure_islands: NotRequired[List[Any]] 
+    # 【新增】冒險事件與BOSS資料也應被包含在遊戲核心設定中
+    adventure_events: NotRequired[Dict[str, List[Any]]]
+    adventure_bosses: NotRequired[Dict[str, List[Any]]]
 
 if __name__ == '__main__':
     print("MD_models.py 已執行。TypedDict 定義可用。")
