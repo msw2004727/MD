@@ -59,7 +59,7 @@ h3 {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, transform 0.3s ease; /* 增加 transform 過渡 */
 }
 
 .sidebar-title {
@@ -83,6 +83,7 @@ h3 {
     margin-bottom: 0.5rem;
     border-radius: 8px;
     transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap; /* 防止文字換行 */
 }
 
 .nav-link:hover {
@@ -252,6 +253,10 @@ th {
 tbody tr:hover {
     background-color: var(--bg-input);
 }
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
 
 /* --- 彈窗 --- */
 .modal-overlay {
@@ -280,7 +285,7 @@ tbody tr:hover {
     margin-bottom: 1.5rem;
 }
 
-/* --- 響應式設計 --- */
+/* --- 響應式設計 (手機版面優化) --- */
 @media (max-width: 768px) {
     .dashboard-container {
         flex-direction: column;
@@ -289,29 +294,35 @@ tbody tr:hover {
     .sidebar {
         width: 100%;
         height: auto;
-        padding: 1rem;
+        padding: 0.5rem 1rem; /* 減少上下內距 */
         border-right: none;
         border-bottom: 1px solid var(--border-color);
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
+        overflow-x: auto; /* 【優化】讓導覽列可以水平滾動 */
     }
     .sidebar-title {
         font-size: 1.2rem;
-        margin: 0;
+        margin-right: auto; /* 【優化】將標題推到最左邊 */
+        white-space: nowrap;
     }
     .nav-menu {
         display: flex;
         gap: 0.5rem;
         flex-grow: 0;
+        flex-shrink: 0; /* 【優化】防止導覽項目被壓縮 */
     }
     .nav-link {
         padding: 0.5rem 0.8rem;
         margin: 0;
     }
+    .sidebar-footer {
+        margin-left: 1rem; /* 【優化】讓登出按鈕和導覽項目有間距 */
+        margin-top: 0;
+    }
     .main-content {
         height: auto;
-        padding: 1rem;
+        padding: 1.5rem 1rem;
     }
     .stats-grid {
         grid-template-columns: 1fr;
