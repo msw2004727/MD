@@ -13,6 +13,7 @@
             <ul class="nav-menu">
                 <li><a href="#" class="nav-link active" data-target="dashboard-section">📊 儀表板</a></li>
                 <li><a href="#" class="nav-link" data-target="player-management-section">🧑‍🔬 玩家管理</a></li>
+                <li><a href="#" class="nav-link" data-target="player-logs-section">📜 玩家日誌</a></li>
                 <li><a href="#" class="nav-link" data-target="broadcast-system-section">📢 廣播系統</a></li>
                 <li><a href="#" class="nav-link" data-target="config-editor-section">⚙️ 設定檔編輯器</a></li>
             </ul>
@@ -23,108 +24,65 @@
 
         <main class="main-content">
             <section id="dashboard-section" class="admin-section active">
-                <h2>遊戲總覽</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>總玩家數</h3>
-                        <p id="total-players">載入中...</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>全服總金幣</h3>
-                        <p id="total-gold">載入中...</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>全服DNA碎片總數</h3>
-                        <p id="total-dna">載入中...</p>
-                    </div>
-                    <div class="stat-card full-width">
-                        <h3>怪獸稀有度分佈</h3>
-                        <div id="monster-rarity-distribution" class="rarity-grid">
-                            </div>
-                    </div>
-                </div>
-            </section>
+                 </section>
 
             <section id="player-management-section" class="admin-section">
-                <h2>玩家資料管理</h2>
+                </section>
+            
+            <section id="player-logs-section" class="admin-section">
+                <h2>玩家日誌查詢</h2>
                 <div class="form-group">
-                    <label for="player-uid-search">輸入玩家 UID 進行查詢：</label>
+                    <label for="log-player-uid-search">輸入玩家 UID 進行查詢：</label>
                     <div class="input-group">
-                        <input type="text" id="player-uid-search" placeholder="輸入完整的玩家 UID...">
-                        <button id="search-player-btn" class="btn btn-primary">查詢</button>
+                        <input type="text" id="log-player-uid-search" placeholder="輸入完整的玩家 UID...">
+                        <button id="search-log-player-btn" class="btn btn-primary">查詢日誌</button>
                     </div>
                 </div>
-                <div id="player-data-display" class="player-data-container">
-                    <p class="placeholder-text">請先查詢玩家以檢視詳細資料。</p>
+                <div class="log-filters">
+                    <div class="form-group">
+                        <label for="log-category-filter">篩選分類</label>
+                        <select id="log-category-filter" disabled>
+                            <option value="all">全部分類</option>
+                            <option value="系統">系統</option>
+                            <option value="金幣">金幣</option>
+                            <option value="戰鬥">戰鬥</option>
+                            <option value="合成">合成</option>
+                            <option value="物品">物品</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="log-keyword-filter">篩選關鍵字</label>
+                        <input type="text" id="log-keyword-filter" placeholder="輸入訊息關鍵字..." disabled>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="player-log-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">時間</th>
+                                <th style="width: 100px;">分類</th>
+                                <th>訊息</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-log-tbody">
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-secondary);">請先查詢玩家以載入日誌。</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
             <section id="broadcast-system-section" class="admin-section">
-                <h2>全服廣播系統</h2>
-                <div class="broadcast-composer">
-                    <h3>撰寫新廣播</h3>
-                    <div class="form-group">
-                        <label for="broadcast-sender">寄件人名稱</label>
-                        <input type="text" id="broadcast-sender" value="遊戲管理員">
-                    </div>
-                    <div class="form-group">
-                        <label for="broadcast-title">信件標題</label>
-                        <input type="text" id="broadcast-title" placeholder="輸入標題...">
-                    </div>
-                    <div class="form-group">
-                        <label for="broadcast-content">信件內容</label>
-                        <textarea id="broadcast-content" rows="4" placeholder="輸入信件內文..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="broadcast-payload">附件 (Payload JSON 格式，可選)</label>
-                        <textarea id="broadcast-payload" rows="3" placeholder='例如：{"gold": 100, "items": []}'></textarea>
-                    </div>
-                    <button id="send-broadcast-btn" class="btn btn-primary">發送全服信件</button>
-                </div>
-                <div class="broadcast-log">
-                    <h3>最近的廣播紀錄</h3>
-                    <div class="table-container">
-                        <table id="broadcast-log-table">
-                            <thead>
-                                <tr>
-                                    <th>時間</th>
-                                    <th>標題</th>
-                                    <th>內容</th>
-                                    <th>附件</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+                </section>
 
             <section id="config-editor-section" class="admin-section">
-                <h2>遊戲設定檔編輯器</h2>
-                <div class="form-group">
-                    <label for="config-file-selector">選擇要編輯的設定檔：</label>
-                    <select id="config-file-selector">
-                        <option value="">請選擇...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="game-configs-display">檔案內容 (JSON 格式)：</label>
-                    <textarea id="game-configs-display" rows="25" placeholder="選擇檔案後，內容將顯示於此..."></textarea>
-                </div>
-                <button id="save-config-btn" class="btn btn-success" disabled>儲存設定變更</button>
-            </section>
+                 </section>
         </main>
     </div>
 
     <div id="feedback-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h4 id="feedback-title">提示</h4>
-            <p id="feedback-message"></p>
-            <button id="feedback-close-btn" class="btn btn-primary">關閉</button>
         </div>
-    </div>
 
     <script src="dashboard.js"></script>
 </body>
