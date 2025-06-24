@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
             csMailContainer: document.getElementById('cs-mail-container'),
             refreshCsMailBtn: document.getElementById('refresh-cs-mail-btn'),
             
-            // --- 核心修改處 START ---
             // 冒險島設定
             advSettings: {
                 bossMultiplierInput: document.getElementById('boss-difficulty-multiplier'),
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn: document.getElementById('save-adventure-settings-btn'),
                 responseEl: document.getElementById('adventure-settings-response'),
             },
-            // --- 核心修改處 END ---
 
             // 設定檔
             configFileSelector: document.getElementById('config-file-selector'),
@@ -127,11 +125,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (targetId === 'mail-system') {
                 loadBroadcastLog();
-            } else if (targetId === 'cs-mailbox') {
+            } else if (targetId === 'cs-mailbox') { 
                 loadCsMail();
-            } else if (targetId === 'adventure-island-settings') { // --- 核心修改處 START ---
+            } else if (targetId === 'adventure-island-settings') {
                 loadAdventureSettings();
-            } else if (targetId === 'game-configs') { // --- 核心修改處 END ---
+            } else if (targetId === 'game-configs') {
                 if (typeof initializeConfigEditor === 'function') {
                     initializeConfigEditor(ADMIN_API_URL, adminToken);
                 } else {
@@ -490,39 +488,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // --- 核心修改處 START ---
         // 冒險島設定邏輯
         async function loadAdventureSettings() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer } = DOMElements.advSettings;
             if (!bossMultiplierInput) return;
 
-            // 顯示載入中
             bossMultiplierInput.value = '';
             baseGoldInput.value = '';
             bonusGoldInput.value = '';
             facilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
 
             try {
-                // 平行獲取兩個設定檔
                 const [advSettings, islandsData] = await Promise.all([
                     fetchAdminAPI('/get_config?file=adventure_settings.json'),
                     fetchAdminAPI('/get_config?file=adventure_islands.json')
                 ]);
 
-                // 填充全域參數
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
                 baseGoldInput.value = advSettings.floor_clear_base_gold || 50;
                 bonusGoldInput.value = advSettings.floor_clear_bonus_gold_per_floor || 10;
                 
-                // 渲染各地區設施參數
                 if (islandsData && Array.isArray(islandsData)) {
                     facilitiesContainer.innerHTML = islandsData.map(island => `
-                        <div class="facility-settings-card">
+                        <div class="facility-settings-card" data-island-id="${island.islandId}">
                             <h4>${island.islandName || '未知島嶼'}</h4>
                             ${(island.facilities || []).map(facility => `
                                 <div class="form-group">
                                     <label for="facility-cost-${facility.facilityId}">${facility.name} - 入場費</label>
-                                    <input type="number" id="facility-cost-${facility.facilityId}" class="admin-input" value="${facility.cost || 0}">
+                                    <input type="number" id="facility-cost-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.cost || 0}">
                                 </div>
                             `).join('')}
                         </div>
@@ -533,6 +526,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } catch (err) {
                  facilitiesContainer.innerHTML = `<p style="color: var(--danger-color);">載入冒險島設定失敗：${err.message}</p>`;
+            }
+        }
+        
+        // --- 核心修改處 START ---
+        // 新增：儲存冒險島設定的函式
+        async function handleSaveAdventureSettings() {
+            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
+            
+            // 1. 收集全域設定
+            const globalSettings = {
+                boss_difficulty_multiplier_per_floor: parseFloat(bossMultiplierInput.value) || 1.1,
+                floor_clear_base_gold: parseInt(baseGoldInput.value, 10) || 50,
+                floor_clear_bonus_gold_per_floor: parseInt(bonusGoldInput.value, 10) || 10,
+            };
+
+            // 2. 收集各地區設施設定
+            const facilitiesSettings = [];
+            facilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
+                facilitiesSettings.push({
+                    id: input.dataset.facilityId,
+                    cost: parseInt(input.value, 10) || 0
+                });
+            });
+
+            // 3. 呼叫 API 儲存
+            saveBtn.disabled = true;
+            saveBtn.textContent = '儲存中...';
+            responseEl.style.display = 'none';
+
+            try {
+                const result = await fetchAdminAPI('/save_adventure_settings', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        global_settings: globalSettings,
+                        facilities_settings: facilitiesSettings
+                    })
+                });
+                
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+
+            } catch (err) {
+                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存冒險島設定變更';
             }
         }
         // --- 核心修改處 END ---
@@ -580,6 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.refreshLogBtn.addEventListener('click', loadBroadcastLog);
         DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
         if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
+        if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } // --- 核心修改處 START ---
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
