@@ -9,7 +9,7 @@ function openSendMailModal(friendUid, friendNickname) {
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
     // --- 核心修改處 START ---
-    // 重新設計彈窗的 HTML 結構，使其更緊湊美觀
+    // 重新設計彈窗的 HTML 內容，使其更緊湊美觀
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -25,13 +25,15 @@ function openSendMailModal(friendUid, friendNickname) {
             </div>
 
             <div class="mail-attachment-section">
-                <h5 class="attachment-title">附加禮物 (可選)</h5>
+                <h5 class="attachment-title">🎁 附加禮物 (可選)</h5>
                 <div class="attachment-controls">
                     <div class="attachment-gold-control">
                         <label for="mail-gold-input">🪙</label>
                         <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="金額">
+                        <span class="text-xs text-[var(--text-secondary)]">您擁有: ${currentGold.toLocaleString()}</span>
                     </div>
                     <button id="attach-dna-btn" class="button secondary text-xs">附加 DNA</button>
+                    <button id="attach-item-btn" class="button secondary text-xs" disabled>附加物品</button>
                 </div>
                  <div id="attached-dna-preview" class="attached-dna-preview">
                     </div>
@@ -65,7 +67,6 @@ function openSendMailModal(friendUid, friendNickname) {
             if (attachedGold > 0) payload.gold = attachedGold;
             if (attachedDna) payload.items = [{ type: 'dna', data: attachedDna }];
 
-            // 檢查是否沒有任何內容或附件
             if (!title && !content && Object.keys(payload).length === 0) {
                  showFeedbackModal('錯誤', '不能發送一封完全空白的信件。');
                 return;
@@ -139,8 +140,8 @@ function openSendMailModal(friendUid, friendNickname) {
             });
         });
     });
-    // --- 核心修改處 END ---
 }
+// --- 核心修改處 END ---
 
 async function handleSendFriendRequest(recipientId, buttonElement) {
     if (!recipientId || !buttonElement) return;
