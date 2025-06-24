@@ -50,15 +50,13 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
             "ChampionGuardians": ("champion_guardians", "guardians"),
             "BattleHighlights": ("battle_highlights", None),
             "AdventureIslands": ("adventure_islands", "islands"),
+            "AdventureSettings": ("adventure_settings", None), # --- 核心修改處 START ---
         }
         
-        # --- 核心修改處 START ---
-        # 動態載入 adventure_events 和 bosses 檔案
         adventure_events_data = {}
         event_files = [f for f in os.listdir(data_dir) if f.startswith('adventure_events_') and f.endswith('.json')]
         for file_name in event_files:
             try:
-                # 使用檔案名作為 key，例如 "adventure_events_forest.json"
                 with open(os.path.join(data_dir, file_name), 'r', encoding='utf-8') as f:
                     adventure_events_data[file_name] = json.load(f)
                     config_logger.info(f"成功從本地載入冒險事件: {file_name}")
@@ -70,16 +68,30 @@ def load_all_game_configs_from_firestore() -> GameConfigs:
         boss_files = [f for f in os.listdir(data_dir) if f.startswith('bosses_') and f.endswith('.json')]
         for file_name in boss_files:
             try:
-                # 使用檔案名作為 key，例如 "bosses_novice_forest.json"
                 with open(os.path.join(data_dir, file_name), 'r', encoding='utf-8') as f:
                     adventure_bosses_data[file_name] = json.load(f)
                     config_logger.info(f"成功從本地載入BOSS資料: {file_name}")
             except Exception as e:
                 config_logger.error(f"讀取BOSS檔 {file_name} 失敗: {e}")
         configs['adventure_bosses'] = adventure_bosses_data
-        # --- 核心修改處 END ---
-
+        
         for doc_name, (config_key, field_name) in doc_map.items():
+            # --- 核心修改處 START ---
+            # 針對本地設定檔進行特殊處理
+            local_config_files = ["AdventureSettings"]
+            if doc_name in local_config_files:
+                try:
+                    file_path = os.path.join(data_dir, f"{doc_name.lower().replace('settings', '_settings')}.json")
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    configs[config_key] = data
+                    config_logger.info(f"成功從本地檔案 '{file_path}' 載入 '{doc_name}' 設定。")
+                except FileNotFoundError:
+                    configs[config_key] = {}
+                    config_logger.warning(f"本地設定檔 for '{doc_name}' not found, using default empty value.")
+                continue
+            # --- 核心修改處 END ---
+
             doc_ref = config_collection_ref.document(doc_name)
             doc = doc_ref.get()
             if doc.exists:
