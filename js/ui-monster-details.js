@@ -19,17 +19,19 @@ function updateMonsterInfoModal(monster, gameConfigs) {
     DOMElements.monsterInfoModalHeader.dataset.monsterId = monster.id;
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-    const rarityColorVar = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
     
-    const editableNickname = getMonsterDisplayName(monster, gameState.gameConfigs);
-    
+    // --- 核心修改處 START ---
+    // 不再使用 monster.nickname，而是呼叫 getMonsterDisplayName 來取得帶有樣式的 HTML 名稱
+    const monsterNameHtml = getMonsterDisplayName(monster, gameState.gameConfigs);
+    const editableNickname = monster.custom_element_nickname || monster.element_nickname_part || '';
+    // --- 核心修改處 END ---
+
     const isOwnMonster = gameState.playerData.farmedMonsters.some(m => m.id === monster.id);
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
-            <h4 class="monster-info-name-styled" style="color: ${rarityColorVar};">
-                ${monster.nickname}
+            <h4 class="monster-info-name-styled">
+                ${monsterNameHtml}
             </h4>
             ${isOwnMonster ? `<button id="edit-monster-nickname-btn" class="button secondary" title="編輯名稱">✏️</button>` : ''}
         </div>
@@ -247,24 +249,20 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
-    // --- 【核心修改處 START】 ---
     const getTitleBuffHtml = (statName) => {
         const buff = titleBuffs[statName] || 0;
         if (buff > 0) {
             let displayValue;
-            // 判斷是百分比還是絕對數值
-            if (buff < 1) { // 小於 1 的視為百分比
+            if (buff < 1) { 
                 const buffPercent = buff * 100;
                 displayValue = `+${Number.isInteger(buffPercent) ? buffPercent : buffPercent.toFixed(1)}%`;
-            } else { // 大於等於 1 的視為絕對數值
+            } else { 
                 displayValue = `+${buff}`;
             }
-            // 使用您指定的紅色
             return ` <span style="color: var(--danger-color); font-size: 0.9em; margin-left: 4px;">${displayValue}</span>`;
         }
         return '';
     };
-    // --- 【核心修改處 END】 ---
 
     const interactionStats = monster.interaction_stats || {};
     const battleCount = (monster.resume?.wins || 0) + (monster.resume?.losses || 0);
