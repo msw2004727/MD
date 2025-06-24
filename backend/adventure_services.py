@@ -11,7 +11,7 @@ from typing import List, Dict, Optional, Any, Tuple
 
 # 從各自正確的檔案導入模型
 from .MD_models import PlayerGameData, GameConfigs, Monster
-from .adventure_models import AdventureProgress, ExpeditionMemberStatus, AdventureFacility, AdventureIsland
+from .adventure_models import AdventureProgress, ExpeditionMemberStatus, AdventureFacility, AdventureIsland, ExpeditionStats
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
@@ -168,19 +168,13 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
     current_facility_id = progress.get("facility_id")
     event_data = None
     
-    # --- 核心修改處 START ---
-    # 獲取統計數據的參考，並更新事件計數
     stats = progress.get("expedition_stats")
     if stats:
         stats["events_encountered"] = stats.get("events_encountered", 0) + 1
-    # --- 核心修改處 END ---
 
     if progress["current_step"] >= progress["total_steps_in_floor"]:
-        # --- 核心修改處 START ---
-        # 更新 BOSS 戰計數
         if stats:
             stats["bosses_fought"] = stats.get("bosses_fought", 0) + 1
-        # --- 核心修改處 END ---
         current_floor = progress.get("current_floor", 1)
         all_islands = game_configs.get("adventure_islands", [])
         facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == current_facility_id), None)
@@ -238,12 +232,9 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
     bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
     gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
     
-    # --- 核心修改處 START ---
-    # 通關時，也要將獎勵金幣計入統計
     stats = progress.get("expedition_stats")
     if stats:
         stats["gold_obtained"] = stats.get("gold_obtained", 0) + gold_reward
-    # --- 核心修改處 END ---
     
     player_stats = player_data.get("playerStats", {})
     player_stats["gold"] = player_stats.get("gold", 0) + gold_reward
@@ -350,3 +341,42 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     progress["current_event"] = None
 
     return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
+
+# --- 核心修改處 START ---
+def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: str) -> Optional[PlayerGameData]:
+    """
+    更換遠征隊隊長，並記錄更換次數。
+    """
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("is_active"):
+        adventure_logger.warning("嘗試更換隊長，但沒有正在進行的遠征。")
+        return None
+
+    team = progress.get("expedition_team", [])
+    
+    member_index = -1
+    for i, member in enumerate(team):
+        if member["monster_id"] == monster_id_to_promote:
+            member_index = i
+            break
+            
+    # 如果要晉升的怪獸不在隊伍中，或是他已經是隊長了 (索引為0)，則不進行任何操作
+    if member_index <= 0:
+        adventure_logger.warning(f"更換隊長失敗：怪獸 {monster_id_to_promote} 不在隊伍中或已是隊長。")
+        return None
+
+    # 將要晉升的成員從原位置移除，並插入到隊伍的最前面
+    member_to_promote = team.pop(member_index)
+    team.insert(0, member_to_promote)
+    
+    # 更新統計數據
+    stats = progress.get("expedition_stats")
+    if stats:
+        stats["captain_switches"] = stats.get("captain_switches", 0) + 1
+        adventure_logger.info(f"隊長已更換為 {monster_id_to_promote}。更換次數: {stats['captain_switches']}.")
+        
+    progress["expedition_team"] = team
+    player_data["adventure_progress"] = progress
+    
+    return player_data
+# --- 核心修改處 END ---
