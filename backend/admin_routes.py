@@ -1,245 +1,319 @@
-# backend/admin_routes.py
-# 核心修改處：建立全新的後台管理路由檔案
+# backend/adventure_routes.py
+# 建立一個新的API藍圖，專門處理所有與「冒險島」相關的網路請求。
 
-import os
-import jwt
-import json
-from datetime import datetime, timedelta, timezone
-from functools import wraps
-# 【新增】導入 firestore 以便使用查詢功能
-from firebase_admin import firestore
-from flask import Blueprint, jsonify, request, current_app
+import logging
+from flask import Blueprint, jsonify, request
 
 # 從專案的其他模組導入
+from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
-# 【修改】導入整個 config_editor_services 模組
-from . import config_editor_services
+from .adventure_services import start_expedition_service, get_all_islands_service, advance_floor_service, complete_floor_service, resolve_event_choice_service
+# 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
+from .battle_services import simulate_battle_full
 
-# 建立一個新的藍圖 (Blueprint) 來管理後台的路由
-admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
 
-# 後台管理的密鑰，為了安全，建議您之後將其設定為 Render 的環境變數
-ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your_super_secret_admin_key_12345')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727') # 您的後台密碼
+# 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
+adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure')
 
-# 裝飾器：用於驗證後台管理員的 JWT Token
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        # 針對瀏覽器因CORS發出的預檢請求(OPTIONS)，直接回傳成功
-        if request.method == 'OPTIONS':
-            return jsonify({'status': 'ok'}), 200
-            
-        token = None
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if ' ' in auth_header:
-                token = auth_header.split(" ")[1]
+# 建立此路由專用的日誌記錄器
+adventure_routes_logger = logging.getLogger(__name__)
 
-        if not token:
-            return jsonify({'message': '錯誤：缺少 Token'}), 401
 
-        try:
-            data = jwt.decode(token, ADMIN_SECRET_KEY, algorithms=["HS256"])
-        except jwt.ExpiredSignatureError:
-            return jsonify({'message': '錯誤：Token 已過期'}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({'message': '錯誤：無效的 Token'}), 401
-
-        return f(*args, **kwargs)
-    return decorated
-
-# 【修改】將 config_editor 相關路由移至專門的檔案，這裡只保留 admin 核心路由
-# backend/admin_routes.py
-
-@admin_bp.route('/login', methods=['POST', 'OPTIONS'])
-def admin_login():
-    """後台登入 API"""
-    data = request.get_json()
-    if not data or 'password' not in data:
-        return jsonify({'error': '缺少密碼'}), 400
-    if data['password'] == ADMIN_PASSWORD:
-        token = jwt.encode({
-            'user': 'admin',
-            'exp': datetime.now(tz=timezone.utc) + timedelta(hours=8)
-        }, ADMIN_SECRET_KEY, algorithm="HS256")
+@adventure_bp.route('/islands', methods=['GET'])
+def get_islands_route():
+    """
+    獲取所有冒險島的靜態設定資料。
+    """
+    adventure_routes_logger.info("收到獲取所有冒險島資料的請求。")
+    try:
+        islands_data = get_all_islands_service()
+        if not islands_data:
+             return jsonify({"error": "找不到冒險島資料或資料為空。"}), 404
         
-        return jsonify({'success': True, 'token': token})
-    else:
-        return jsonify({'success': False, 'error': '密碼錯誤'}), 401
-
-@admin_bp.route('/player_data', methods=['GET', 'OPTIONS'])
-@token_required
-def get_admin_player_data_route():
-    uid = request.args.get('uid')
-    if not uid:
-        return jsonify({"error": "請求中缺少玩家 UID"}), 400
-    game_configs = current_app.config.get('MD_GAME_CONFIGS', {})
-    player_data, _ = get_player_data_service(uid, None, game_configs)
-    if player_data:
-        player_data['uid'] = uid
-        return jsonify(player_data), 200
-    else:
-        return jsonify({"error": f"找不到 UID 為 {uid} 的玩家資料"}), 404
-
-@admin_bp.route('/player_data/<string:uid>', methods=['POST', 'OPTIONS'])
-@token_required
-def update_admin_player_data_route(uid):
-    data_to_save = request.get_json()
-    if not data_to_save:
-        return jsonify({"error": "請求中沒有要儲存的資料"}), 400
-    if save_player_data_service(uid, data_to_save):
-        return jsonify({"success": True, "message": f"玩家 {uid} 的資料已成功更新。"}), 200
-    else:
-        return jsonify({"error": "儲存玩家資料時發生錯誤"}), 500
-
-@admin_bp.route('/send_mail_to_player', methods=['POST', 'OPTIONS'])
-@token_required
-def send_mail_to_player_route():
-    from .mail_services import send_mail_to_player_service
-    data = request.get_json()
-    recipient_id = data.get('recipient_id')
-    title = data.get('title')
-    content = data.get('content')
-    sender_name = data.get('sender_name', '遊戲管理員')
-    if not all([recipient_id, title, content]):
-        return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
-    success, error_msg = send_mail_to_player_service(
-        sender_id="system_admin",
-        sender_nickname=sender_name,
-        recipient_id=recipient_id,
-        title=title,
-        content=content,
-        payload={},
-        mail_type="system_message"
-    )
-    if success:
-        return jsonify({"success": True, "message": f"信件已成功發送給玩家 {recipient_id}。"}), 200
-    else:
-        return jsonify({"error": error_msg or "發送信件時發生未知錯誤。"}), 500
-
-@admin_bp.route('/get_broadcast_log', methods=['GET', 'OPTIONS'])
-@token_required
-def get_broadcast_log_route():
-    from . import MD_firebase_config
-    db = MD_firebase_config.db
-    if not db: return jsonify({"error": "資料庫服務異常"}), 500
-    try:
-        logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').limit(50).stream()
-        logs = [log.to_dict() for log in logs_ref]
-        logs.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-        return jsonify(logs), 200
+        return jsonify(islands_data), 200
     except Exception as e:
-        current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "獲取歷史紀錄時發生內部錯誤。"}), 500
+        adventure_routes_logger.error(f"獲取冒險島資料時在路由層發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "伺服器內部錯誤，無法獲取冒險島資料。"}), 500
 
-# --- 核心修改處 START ---
-@admin_bp.route('/get_cs_mail', methods=['GET', 'OPTIONS'])
-@token_required
-def get_cs_mail_route():
-    """獲取後台客服信箱中的所有信件。"""
-    from . import MD_firebase_config
-    db = MD_firebase_config.db
-    if not db: return jsonify({"error": "資料庫服務異常"}), 500
-    try:
-        # 從 MD_AdminMailbox 集合讀取信件，並按時間排序
-        mails_ref = db.collection('MD_AdminMailbox').order_by('timestamp', direction=firestore.Query.DESCENDING).limit(100).stream()
-        mails = [mail.to_dict() for mail in mails_ref]
-        return jsonify(mails), 200
-    except Exception as e:
-        current_app.logger.error(f"獲取客服信箱信件時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "獲取客服信箱時發生內部錯誤。"}), 500
-# --- 核心修改處 END ---
 
-@admin_bp.route('/broadcast_mail', methods=['POST', 'OPTIONS'])
-@token_required
-def broadcast_mail_route():
-    from . import MD_firebase_config
-    from .mail_services import send_mail_to_player_service
-    db = MD_firebase_config.db
-    if not db: return jsonify({"error": "資料庫服務異常"}), 500
-    data = request.get_json()
-    sender_name = data.get('sender_name', '遊戲管理員')
-    title = data.get('title')
-    content = data.get('content')
-    payload_str = data.get('payload_str', '{}')
-    if not title or not content:
-        return jsonify({"error": "信件標題和內容不能為空。"}), 400
-    try:
-        payload = json.loads(payload_str)
-    except json.JSONDecodeError:
-        return jsonify({"error": "附件 (Payload) 的 JSON 格式不正確。"}), 400
-    try:
-        users_ref = db.collection('users')
-        all_users_docs = users_ref.stream()
-        count = 0
-        for user_doc in all_users_docs:
-            recipient_id = user_doc.id
-            success, _ = send_mail_to_player_service(
-                sender_id="system_admin",
-                sender_nickname=sender_name,
-                recipient_id=recipient_id,
-                title=title,
-                content=content,
-                payload=payload,
-                mail_type="system_message"
-            )
-            if success: count += 1
-        import time
-        log_entry = {"broadcastId": str(time.time()), "timestamp": int(time.time()), "title": title, "content": content, "payload": payload, "recipient_count": count}
-        db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').add(log_entry)
-        return jsonify({"success": True, "message": f"信件已成功發送給 {count} 位玩家。"}), 200
-    except Exception as e:
-        return jsonify({"error": f"群發信件時發生錯誤: {str(e)}"}), 500
+@adventure_bp.route('/start', methods=['POST'])
+def start_adventure_route():
+    """
+    處理玩家開始一次新遠征的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
 
-@admin_bp.route('/game_overview', methods=['GET', 'OPTIONS'])
-@token_required
-def get_game_overview_route():
-    from . import MD_firebase_config
-    db = MD_firebase_config.db
-    if not db: return jsonify({"error": "資料庫服務異常"}), 500
-    try:
-        total_players, total_gold, total_dna_fragments = 0, 0, 0
-        monster_rarity_count = {"普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0}
-        users_ref = db.collection('users')
-        all_users_docs = list(users_ref.stream())
-        total_players = len(all_users_docs)
-        for user_doc in all_users_docs:
-            game_data_doc = user_doc.reference.collection('gameData').document('main').get()
-            if not game_data_doc.exists: continue
-            player_data = game_data_doc.to_dict()
-            if not player_data: continue
-            total_gold += player_data.get("playerStats", {}).get("gold", 0)
-            total_dna_fragments += sum(1 for dna in player_data.get("playerOwnedDNA", []) if dna is not None)
-            for monster in player_data.get("farmedMonsters", []):
-                rarity = monster.get("rarity")
-                if rarity in monster_rarity_count: monster_rarity_count[rarity] += 1
-        overview_stats = {"totalPlayers": total_players, "totalGold": total_gold, "totalDnaFragments": total_dna_fragments, "monsterRarityCount": monster_rarity_count}
-        return jsonify(overview_stats), 200
-    except Exception as e:
-        current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "生成報表時發生內部錯誤。"}), 500
+    data = request.json
+    island_id = data.get('island_id')
+    facility_id = data.get('facility_id')
+    team_monster_ids = data.get('team_monster_ids')
 
-@admin_bp.route('/recall_mail', methods=['POST', 'OPTIONS'])
-@token_required
-def recall_mail_route():
-    from . import MD_firebase_config
-    db = MD_firebase_config.db
-    if not db: return jsonify({"error": "資料庫服務異常"}), 500
-    data = request.get_json()
-    broadcast_id_to_recall = data.get('broadcastId')
-    if not broadcast_id_to_recall:
-        return jsonify({"error": "請求中缺少 broadcastId。"}), 400
     try:
-        current_app.logger.info(f"Admin is attempting to recall broadcast mail with ID: {broadcast_id_to_recall}")
-        query = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').where('broadcastId', '==', broadcast_id_to_recall).limit(1)
-        docs = query.stream()
-        doc_to_delete = next(docs, None)
-        if doc_to_delete:
-            doc_to_delete.reference.delete()
-            return jsonify({"success": True, "message": f"廣播信件(ID: {broadcast_id_to_recall})已從日誌中移除。完整回收功能待開發。"}), 200
+        if not all([island_id, facility_id, team_monster_ids]):
+            return jsonify({"error": "請求中缺少必要的欄位 (island_id, facility_id, team_monster_ids)。"}), 400
+
+        adventure_routes_logger.info(f"玩家 {user_id} 請求開始遠征：島嶼 {island_id}, 設施 {facility_id}")
+        
+        game_configs = _get_game_configs_data_from_app_context()
+        player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+        
+        # --- 核心修改處 START ---
+        # 增加對 player_data 的空值檢查
+        if not player_data:
+            adventure_routes_logger.error(f"在開始遠征前，無法獲取玩家 {user_id} 的資料。")
+            return jsonify({"error": "無法獲取玩家資料，請稍後再試。"}), 404
+        # --- 核心修改處 END ---
+
+        updated_player_data, error_msg = start_expedition_service(
+            player_data, island_id, facility_id, team_monster_ids, game_configs
+        )
+
+        if error_msg:
+            return jsonify({"error": error_msg}), 400
+
+        if updated_player_data:
+            if save_player_data_service(user_id, updated_player_data):
+                return jsonify({
+                    "success": True, 
+                    "message": "遠征已成功開始！",
+                    "adventure_progress": updated_player_data.get("adventure_progress")
+                }), 200
+            else:
+                return jsonify({"error": "開始遠征後儲存玩家資料失敗。"}), 500
         else:
-            return jsonify({"error": "在日誌中找不到該封廣播信件。"}), 404
+            return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
+            
     except Exception as e:
-        current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
-        return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
+        adventure_routes_logger.error(f"處理 /adventure/start 請求時發生嚴重錯誤: {e}", exc_info=True)
+        return jsonify({"error": "伺服器在處理遠征請求時發生內部錯誤，請聯繫管理員。"}), 500
+
+
+@adventure_bp.route('/abandon', methods=['POST'])
+def abandon_adventure_route():
+    """
+    處理玩家中途放棄遠征的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("is_active"):
+        return jsonify({"error": "沒有正在進行的遠征可以放棄。"}), 400
+
+    farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
+    for member in progress.get("expedition_team", []):
+        if member["monster_id"] in farmed_monsters_map:
+            monster_in_farm = farmed_monsters_map[member["monster_id"]]
+            monster_in_farm["hp"] = member["current_hp"]
+            monster_in_farm["mp"] = member["current_mp"]
+            adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
+
+    progress["is_active"] = False
+    player_data["adventure_progress"] = progress
+    
+    if save_player_data_service(user_id, player_data):
+        adventure_routes_logger.info(f"玩家 {user_id} 已成功放棄遠征。")
+        return jsonify({"success": True, "message": "已成功結束本次遠征。"}), 200
+    else:
+        adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
+        return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
+
+
+@adventure_bp.route('/progress', methods=['GET'])
+def get_adventure_progress_route():
+    """
+    獲取玩家當前的冒險進度。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    adventure_progress = player_data.get("adventure_progress")
+
+    if adventure_progress and adventure_progress.get("is_active"):
+        return jsonify(adventure_progress), 200
+    else:
+        return jsonify({"is_active": False, "message": "目前沒有正在進行的遠征。"}), 200
+
+
+@adventure_bp.route('/advance', methods=['POST'])
+def advance_route():
+    """
+    處理玩家在地圖上推進的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    service_result = advance_floor_service(player_data, game_configs)
+    
+    if not service_result.get("success"):
+        return jsonify({"error": service_result.get("error", "推進失敗。")}), 400
+        
+    updated_progress = service_result.get("updated_progress")
+    event_data = service_result.get("event_data")
+    
+    player_data["adventure_progress"] = updated_progress
+    
+    if save_player_data_service(user_id, player_data):
+        adventure_routes_logger.info(f"玩家 {user_id} 成功推進冒險進度並已儲存。")
+        return jsonify({
+            "success": True,
+            "event_data": event_data,
+            "updated_progress": updated_progress
+        }), 200
+    else:
+        adventure_routes_logger.error(f"玩家 {user_id} 推進冒險進度後，儲存資料失敗。")
+        return jsonify({"error": "推進成功但儲存進度失敗。"}), 500
+
+@adventure_bp.route('/complete_floor', methods=['POST'])
+def complete_floor_route():
+    """
+    處理玩家在擊敗BOSS後，通關當前樓層的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+        
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+        
+    service_result = complete_floor_service(player_data, game_configs)
+    
+    if not service_result.get("success"):
+        return jsonify({"error": service_result.get("error", "通關結算失敗。")}), 400
+        
+    updated_progress = service_result.get("updated_progress")
+    player_data["adventure_progress"] = updated_progress
+
+    if save_player_data_service(user_id, player_data):
+        return jsonify({
+            "success": True,
+            "message": service_result.get("message"),
+            "new_progress": updated_progress
+        }), 200
+    else:
+        return jsonify({"error": "通關後儲存進度失敗。"}), 500
+
+@adventure_bp.route('/resolve', methods=['POST'])
+def resolve_choice_route():
+    """
+    處理玩家對冒險事件做出的選擇。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    choice_id = data.get('choice_id')
+    if not choice_id:
+        return jsonify({"error": "請求中缺少 'choice_id'。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+        
+    progress = player_data.get("adventure_progress", {})
+    current_event = progress.get("current_event", {})
+    
+    if current_event.get("event_type") == "boss_encounter":
+        boss_data = current_event.get("boss_data")
+        if not boss_data:
+            return jsonify({"error": "BOSS 資料遺失，無法開始戰鬥。"}), 500
+
+        team = progress.get("expedition_team", [])
+        if not team:
+            return jsonify({"error": "您的隊伍是空的，無法戰鬥。"}), 400
+            
+        captain_id = team[0].get("monster_id")
+        player_monster = next((m for m in player_data.get("farmedMonsters", []) if m["id"] == captain_id), None)
+        if not player_monster:
+            return jsonify({"error": "找不到您的遠征隊長資料。"}), 404
+
+        battle_result = simulate_battle_full(player_monster, boss_data, game_configs, player_data)
+        
+        captain_in_team = next((member for member in team if member["monster_id"] == captain_id), None)
+        if captain_in_team:
+            captain_in_team["current_hp"] = battle_result.get("player_monster_final_hp", captain_in_team["current_hp"])
+            captain_in_team["current_mp"] = battle_result.get("player_monster_final_mp", captain_in_team["current_mp"])
+            adventure_routes_logger.info(f"遠征隊長 {captain_id} 戰後 HP/MP 更新為: {captain_in_team['current_hp']}/{captain_in_team['current_mp']}")
+        
+        progress["expedition_team"] = team
+        
+        if battle_result.get("winner_id") == captain_id:
+            floor_completion_result = complete_floor_service(player_data, game_configs)
+            player_data["adventure_progress"] = floor_completion_result.get("updated_progress")
+            
+            if save_player_data_service(user_id, player_data):
+                return jsonify({
+                    "success": True,
+                    "event_outcome": "boss_win",
+                    "battle_result": battle_result,
+                    "message": floor_completion_result.get("message"),
+                    "updated_progress": player_data["adventure_progress"]
+                }), 200
+            else:
+                return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
+        else:
+            farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
+            for member in progress.get("expedition_team", []):
+                if member["monster_id"] in farmed_monsters_map:
+                    monster_in_farm = farmed_monsters_map[member["monster_id"]]
+                    monster_in_farm["hp"] = member["current_hp"]
+                    monster_in_farm["mp"] = member["current_mp"]
+                    adventure_routes_logger.info(f"遠征失敗：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
+            
+            progress["is_active"] = False
+            player_data["adventure_progress"] = progress
+            if save_player_data_service(user_id, player_data):
+                 return jsonify({
+                    "success": True,
+                    "event_outcome": "boss_loss",
+                    "battle_result": battle_result,
+                    "message": "遠征失敗，您的隊伍已被擊敗。",
+                    "updated_progress": player_data["adventure_progress"]
+                }), 200
+            else:
+                return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
+
+    else:
+        # 處理一般事件的選擇
+        service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
+        
+        if not service_result.get("success"):
+            return jsonify({"error": service_result.get("error", "處理事件選擇失敗。")}), 400
+            
+        updated_progress = service_result.get("updated_progress")
+        player_data["adventure_progress"] = updated_progress
+        
+        if save_player_data_service(user_id, player_data):
+            return jsonify({
+                "success": True,
+                "event_outcome": "choice_resolved",
+                "outcome_story": service_result.get("outcome_story"),
+                "updated_progress": updated_progress,
+                "updated_player_stats": player_data.get("playerStats")
+            }), 200
+        else:
+            return jsonify({"error": "儲存事件結果失敗。"}), 500
