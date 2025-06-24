@@ -1,8 +1,8 @@
 /* dashboard.css - v2 (Modernized Look)
-  - Redesigned overview cards for better data visualization.
-  - Added icons to sidebar navigation for intuitive understanding.
+  - Redesigned for a horizontal, responsive layout.
+  - Added a top navigation bar.
+  - Implemented a wide, multi-column content area for desktops.
   - Refined color palette, spacing, and typography for a cleaner, more professional feel.
-  - Added subtle transitions and hover effects for a smoother user experience.
 */
 
 :root {
@@ -92,11 +92,11 @@ body.admin-body {
 .main-content-wrapper {
     flex-grow: 1;
     overflow-y: auto; /* 讓內容區塊可以滾動 */
+    padding: 2rem;
 }
 
 .main-content {
-    padding: 2rem;
-    max-width: 1200px; /* 給內容一個最大寬度，使其在寬螢幕上更易讀 */
+    max-width: 1400px; /* 給內容一個更寬的最大寬度 */
     margin: 0 auto;
 }
 
@@ -107,7 +107,36 @@ body.admin-body {
     font-weight: bold;
 }
 
-/* 其他樣式保持不變，但選擇器可能會因為結構改變而調整 */
+/* --- 【新增】多欄位佈局 --- */
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+.dashboard-grid.two-column {
+    grid-template-columns: 1fr 2fr; /* 預設 1:2 比例 */
+}
+.dashboard-grid.two-column.side-right {
+    grid-template-columns: 2fr 1fr; /* 右側邊欄版本 */
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid.two-column,
+    .dashboard-grid.two-column.side-right {
+        grid-template-columns: 1fr; /* 在窄螢幕上變為單欄 */
+    }
+}
+
+.side-pane h3, .main-pane h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--admin-border-color);
+}
+
+/* 動畫與其他通用樣式 */
 .content-panel { display: none; }
 .content-panel.active { display: block; animation: fadeIn 0.5s ease-in-out; }
 
@@ -165,11 +194,7 @@ body.admin-body {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.overview-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
+.overview-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 .overview-card .stat-title { font-size: 1rem; color: var(--admin-text-secondary); margin: 0 0 0.75rem 0; }
 .overview-card .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--admin-text-primary); line-height: 1; }
 #logout-btn { width: auto; padding: 0.5rem 1rem; }
