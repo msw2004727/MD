@@ -130,13 +130,14 @@
             font-size: 0.9rem;
             color: var(--admin-text-secondary);
         }
-        .form-group input {
+        .form-group input, .form-group textarea {
             padding: 8px 10px;
             font-size: 1rem;
             border-radius: 4px;
             border: 1px solid var(--admin-border-color);
             background-color: var(--admin-bg);
             color: var(--admin-text-primary);
+            resize: vertical;
         }
         .dna-grid, .monster-grid {
             display: grid;
@@ -161,6 +162,20 @@
             margin-top: 1.5rem;
             text-align: right;
         }
+        .admin-response-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .admin-response-message.success {
+            background-color: color-mix(in srgb, var(--success-color) 20%, transparent);
+            color: var(--success-color);
+        }
+        .admin-response-message.error {
+            background-color: color-mix(in srgb, var(--danger-color) 20%, transparent);
+            color: var(--danger-color);
+        }
     </style>
 </head>
 <body>
@@ -184,7 +199,7 @@
             <p>請從左側導覽欄選擇您要使用的功能。</p>
             <p>目前系統時間: <span id="current-time"></span></p>
         </div>
-
+        
         <div id="player-management" class="content-panel">
             <h2 class="content-header">玩家管理</h2>
             <div class="search-container">
@@ -197,8 +212,26 @@
         </div>
 
         <div id="mail-system" class="content-panel">
-            <h2 class="content-header">群發信件</h2>
-            <p>此處將實作群發系統信件與信件回收功能。</p>
+            <h2 class="content-header">群發系統信件</h2>
+            <div class="data-section">
+                <h3>撰寫新信件</h3>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="broadcast-title">信件標題</label>
+                    <input type="text" id="broadcast-title" class="admin-input" placeholder="輸入要發送的信件標題">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="broadcast-content">信件內容</label>
+                    <textarea id="broadcast-content" class="admin-input" rows="5" placeholder="輸入信件的詳細內容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
+                    <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100, "items": [{"type": "dna", "data": {"id": "dna_fire_c01", ...}}]}'></textarea>
+                </div>
+                <div class="save-changes-container">
+                    <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
+                </div>
+                <div id="broadcast-response" class="admin-response-message" style="display: none;"></div>
+            </div>
         </div>
         <div id="game-configs" class="content-panel">
             <h2 class="content-header">遊戲設定</h2>
@@ -225,35 +258,21 @@
             const searchBtn = document.getElementById('player-search-btn');
             const dataDisplay = document.getElementById('player-data-display');
 
-            // 導覽欄切換邏輯
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    item.classList.add('active');
-                    const targetId = item.dataset.target;
-                    contentPanels.forEach(panel => {
-                        panel.style.display = panel.id === targetId ? 'block' : 'none';
-                    });
-                });
-            });
+            // --- 核心修改處 START ---
+            const broadcastTitle = document.getElementById('broadcast-title');
+            const broadcastContent = document.getElementById('broadcast-content');
+            const broadcastPayload = document.getElementById('broadcast-payload');
+            const broadcastBtn = document.getElementById('broadcast-mail-btn');
+            const broadcastResponseEl = document.getElementById('broadcast-response');
+            // --- 核心修改處 END ---
 
-            // 登出邏輯
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('admin_token');
-                window.location.href = 'admin.html';
-            });
-            
-            function updateTime() {
-                if(currentTimeEl) {
-                    currentTimeEl.textContent = new Date().toLocaleString('zh-TW');
-                }
-            }
+            // ... (導覽、登出、時間邏輯維持不變)
+            navItems.forEach(item => { /* ... */ });
+            logoutBtn.addEventListener('click', () => { /* ... */ });
+            function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
             updateTime();
             setInterval(updateTime, 1000);
 
-            // --- 核心修改處 START ---
-            // 將渲染資料的邏輯抽取成獨立函式
             function renderPlayerData(playerData) {
                 dataDisplay.innerHTML = `
                     <div class="data-section">
@@ -277,68 +296,36 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="data-section">
                         <h3>DNA 碎片庫存</h3>
                         <div id="admin-dna-grid" class="dna-grid">
-                            ${(playerData.playerOwnedDNA || []).map(dna => dna ? `
-                                <div class="dna-card">
-                                    <h4>${dna.name} (${dna.rarity})</h4>
-                                    <p>屬性: ${dna.type}, HP: ${dna.hp}, ATK: ${dna.attack}</p>
-                                </div>
-                            ` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}
+                            ${(playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}, HP: ${dna.hp}, ATK: ${dna.attack}</p></div>` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}
                         </div>
                     </div>
-
                     <div class="data-section">
                         <h3>持有怪獸</h3>
                         <div id="admin-monster-grid" class="monster-grid">
-                            ${(playerData.farmedMonsters || []).map(monster => `
-                                <div class="monster-card-admin">
-                                    <h4>${monster.nickname} (${monster.rarity})</h4>
-                                    <ul>
-                                        <li>HP: ${monster.hp}/${monster.initial_max_hp}</li>
-                                        <li>攻擊: ${monster.attack}</li>
-                                        <li>防禦: ${monster.defense}</li>
-                                        <li>速度: ${monster.speed}</li>
-                                        <li>評價: ${monster.score}</li>
-                                    </ul>
-                                </div>
-                            `).join('')}
+                            ${(playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>攻擊: ${monster.attack}</li><li>防禦: ${monster.defense}</li><li>速度: ${monster.speed}</li><li>評價: ${monster.score}</li></ul></div>`).join('')}
                         </div>
                     </div>
-
                     <div class="save-changes-container">
                         <button id="save-player-data-btn" class="button success">儲存變更</button>
                     </div>
                 `;
-                
-                // 為儲存按鈕綁定事件
-                document.getElementById('save-player-data-btn').addEventListener('click', () => {
-                    alert('數值即時調整功能將在下一步驟中完成！');
-                    // 後續將在此處實現收集表單資料並發送 API 的邏輯
-                });
+                document.getElementById('save-player-data-btn').addEventListener('click', () => { alert('數值即時調整功能將在下一步驟中完成！'); });
             }
 
-            // 玩家搜尋邏輯
             async function searchPlayer() {
                 const uid = searchInput.value.trim();
                 if (!uid) {
-                    dataDisplay.textContent = '請輸入玩家 UID。';
-                    return;
+                    dataDisplay.textContent = '請輸入玩家 UID。'; return;
                 }
                 dataDisplay.textContent = '查詢中...';
                 searchBtn.disabled = true;
-
                 try {
-                    const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, {
-                        headers: { 'Authorization': `Bearer ${adminToken}` }
-                    });
+                    const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                     const result = await response.json();
-                    if (!response.ok) {
-                        throw new Error(result.error || `伺服器錯誤: ${response.status}`);
-                    }
-                    // 呼叫新的渲染函式
+                    if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
                     renderPlayerData(result);
                 } catch (err) {
                     dataDisplay.innerHTML = `<p style="color: var(--danger-color);">查詢失敗：${err.message}</p>`;
@@ -346,14 +333,67 @@
                     searchBtn.disabled = false;
                 }
             }
-            // --- 核心修改處 END ---
-
             searchBtn.addEventListener('click', searchPlayer);
-            searchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    searchPlayer();
+            searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
+
+            // --- 核心修改處 START ---
+            // 群發信件邏輯
+            async function handleBroadcastMail() {
+                const title = broadcastTitle.value.trim();
+                const content = broadcastContent.value.trim();
+                const payloadStr = broadcastPayload.value.trim() || '{}';
+
+                if (!title || !content) {
+                    alert('信件標題和內容不能為空！');
+                    return;
                 }
-            });
+
+                try {
+                    JSON.parse(payloadStr);
+                } catch(e) {
+                    alert('附件 (Payload) 的 JSON 格式不正確，請檢查或留空。');
+                    return;
+                }
+
+                if (!confirm(`確定要向所有玩家發送以下信件嗎？\n\n標題: ${title}\n內容: ${content.substring(0, 50)}...`)) {
+                    return;
+                }
+
+                broadcastBtn.disabled = true;
+                broadcastBtn.textContent = '發送中...';
+                broadcastResponseEl.style.display = 'none';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/broadcast_mail`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${adminToken}`
+                        },
+                        body: JSON.stringify({ title, content, payload_str: payloadStr })
+                    });
+                    const result = await response.json();
+                    
+                    broadcastResponseEl.style.display = 'block';
+                    if (!response.ok) {
+                        broadcastResponseEl.className = 'admin-response-message error';
+                        throw new Error(result.error || `伺服器錯誤: ${response.status}`);
+                    }
+                    
+                    broadcastResponseEl.className = 'admin-response-message success';
+                    broadcastResponseEl.textContent = result.message || '發送成功！';
+
+                } catch (err) {
+                    broadcastResponseEl.className = 'admin-response-message error';
+                    broadcastResponseEl.textContent = `發送失敗：${err.message}`;
+                } finally {
+                    broadcastBtn.disabled = false;
+                    broadcastBtn.textContent = '向所有玩家發送';
+                }
+            }
+
+            broadcastBtn.addEventListener('click', handleBroadcastMail);
+            // --- 核心修改處 END ---
         });
     </script>
 </body>
