@@ -1,12 +1,9 @@
 # MD/backend/main.py
 # Flask 應用程式主啟動點
 
-# --- 新增：路徑修正 ---
 import os
 import sys
-# 將專案根目錄（backend資料夾的上一層）添加到 Python 的模組搜索路徑
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# --- 路徑修正結束 ---
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS 
@@ -17,23 +14,19 @@ import logging
 
 from backend.logging_config import setup_logging
 
-# --- 【新增與修改】導入所有功能的藍圖 ---
+# --- 【核心修改處】導入所有功能的藍圖 ---
 from backend.MD_routes import md_bp
 from backend.champion_routes import champion_bp 
 from backend.mail_routes import mail_bp
 from backend.adventure_routes import adventure_bp 
-from backend.admin_routes import admin_bp # --- 核心修改處 START ---
+from backend.admin_routes import admin_bp
+from backend.config_editor_routes import config_editor_bp # 新增這行
 
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
 
-# 執行日誌設定
 setup_logging()
-
-# 現在，我們可以像平常一樣獲取日誌記錄器
 app_logger = logging.getLogger(__name__)
-
-# 初始化 Flask 應用程式
 app = Flask(__name__)
 
 # --- CORS 配置 ---
@@ -54,12 +47,14 @@ CORS(app,
 app_logger.info("CORS configured to allow origins: %s", allowed_origins)
 
 
-# 註冊藍圖
+# --- 【核心修改處】註冊所有藍圖 ---
 app.register_blueprint(md_bp)
 app.register_blueprint(champion_bp) 
 app.register_blueprint(mail_bp)
 app.register_blueprint(adventure_bp)
-app.register_blueprint(admin_bp) # --- 核心修改處 END ---
+app.register_blueprint(admin_bp) 
+app.register_blueprint(config_editor_bp) # 新增這行
+
 
 # --- Firebase Admin SDK 初始化 ---
 SERVICE_ACCOUNT_KEY_PATH = 'serviceAccountKey.json'
@@ -112,7 +107,6 @@ app_logger.info("Firebase Admin SDK 初始化狀態: %s", firebase_app_initializ
 app_logger.info("--- Firebase Admin SDK 初始化結束 ---")
 
 
-# 獲取 Firestore 客戶端並注入
 if firebase_app_initialized and firebase_admin._apps:
     try:
         db_client = firestore.client()
@@ -125,7 +119,6 @@ else:
     app_logger.error("因 Firebase Admin SDK 初始化問題，無法獲取 Firestore 客戶端。")
     firebase_app_initialized = False
 
-# 在應用程式啟動時載入遊戲設定
 if firebase_app_initialized and MD_firebase_config.db is not None:
     with app.app_context():
         app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
@@ -137,7 +130,6 @@ else:
     app_logger.warning("由於 Firebase 初始化或 Firestore 客戶端設定問題 (MD_firebase_config.db is None)，未載入遊戲設定。")
 
 
-# 健康檢查路由
 @app.route('/')
 def index():
     game_configs_loaded = bool(app.config.get('MD_GAME_CONFIGS'))
@@ -150,15 +142,12 @@ def index():
         "log_viewer_url": "/api/MD/logs"
     }), 200
 
-# 新增一個路由來提供日誌檔案
 @app.route('/api/MD/logs')
 def view_logs():
-    """提供一個網頁來查看即時日誌。"""
     log_directory = os.path.join(os.path.dirname(__file__), 'logs')
     return send_from_directory(log_directory, 'game_log.html')
 
 
-# 如果直接運行此檔案 (例如本地開發)，則啟動 Flask 內建的開發伺服器
 if __name__ == '__main__':
     if firebase_app_initialized and MD_firebase_config.db is not None:
         app_logger.info("在開發模式下啟動 Flask 應用程式 (使用 Flask 內建伺服器)。")
