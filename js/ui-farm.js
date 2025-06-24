@@ -283,20 +283,27 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
-
+        
+        // --- 核心修改處 START ---
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
-            <a href="#" onclick="showMonsterInfoFromFarm('${monster.id}'); return false;" style="text-decoration: none;">
-                ${avatarHtml}
-            </a>
+            ${avatarHtml}
             ${deployButtonHtml}
             ${statusHtml} 
             <div class="monster-card-actions">
                 ${actionsHTML}
             </div>
         `;
-        
         listContainer.appendChild(monsterCard);
+        
+        // 使用 addEventListener 綁定事件
+        const avatarElement = monsterCard.querySelector('.monster-card-avatar');
+        if (avatarElement) {
+            avatarElement.addEventListener('click', () => {
+                showMonsterInfoFromFarm(monster.id);
+            });
+        }
+        // --- 核心修改處 END ---
     });
 
     const sortBtn = document.getElementById('farm-sort-btn');
