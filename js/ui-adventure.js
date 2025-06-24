@@ -188,13 +188,11 @@ function renderAdventureProgressUI(adventureProgress) {
         const isCaptain = index === 0;
         const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
         
-        // --- 核心修改處 START ---
         const switchCaptainBtn = !isCaptain ? 
             `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">換</button>` : '';
-        // --- 核心修改處 END ---
 
         teamStatusHtml += `
-            <div class="team-member-card">
+            <div class="team-member-card" data-monster-id-in-expedition="${member.monster_id}">
                 <div class="avatar" style="background-image: url('${imagePath}')"></div>
                 <div class="info">
                     <div class="name text-rarity-${rarityKey}">${displayName} ${captainMedal}${switchCaptainBtn}</div>
@@ -221,7 +219,10 @@ function renderAdventureProgressUI(adventureProgress) {
 
             <div class="adventure-main-content">
                 <aside class="adventure-team-status-panel">
-                    <h4 class="details-section-title" style="margin-bottom: 0.5rem; text-align: center;">遠征隊</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h4 class="details-section-title" style="border: none; margin: 0; padding: 0;">遠征隊</h4>
+                        <span id="team-status-effects"></span>
+                    </div>
                     ${teamStatusHtml}
                 </aside>
 
@@ -263,6 +264,38 @@ function renderAdventureProgressUI(adventureProgress) {
         }
         choicesEl.innerHTML = '';
         if (advanceBtn) advanceBtn.style.display = 'block';
+    }
+}
+
+/**
+ * 在指定的怪獸卡片上顯示暫時的狀態效果圖示。
+ * @param {string} effectType - 'buff' 或 'debuff'
+ * @param {string} statName - 屬性中文名，如 '攻擊'
+ * @param {string|null} targetMonsterId - 目標怪獸的ID，如果為null則對全隊生效
+ */
+function displayTemporaryStatusEffect(effectType, statName, targetMonsterId = null) {
+    const statMap = { '攻擊': '攻', '防禦': '防', '速度': '速', '命中率': '命', '閃避率': '閃', '特攻': '特攻', '特防': '特防', 'all': '全' };
+    const shortStatName = statMap[statName] || statName;
+    const indicatorText = `${shortStatName}${effectType === 'buff' ? '▲' : '▼'}`;
+    const indicatorClass = effectType === 'buff' ? 'buff' : 'debuff';
+
+    const createIndicator = () => {
+        const indicator = document.createElement('span');
+        indicator.className = `status-effect-indicator ${indicatorClass}`;
+        indicator.textContent = indicatorText;
+        return indicator;
+    };
+    
+    if (targetMonsterId) {
+        const targetCard = document.querySelector(`.team-member-card[data-monster-id-in-expedition="${targetMonsterId}"]`);
+        if (targetCard) {
+            targetCard.appendChild(createIndicator());
+        }
+    } else {
+        const teamCards = document.querySelectorAll('.team-member-card');
+        teamCards.forEach(card => {
+            card.appendChild(createIndicator());
+        });
     }
 }
 
