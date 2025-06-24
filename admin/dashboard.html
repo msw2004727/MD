@@ -44,51 +44,67 @@
             
             <div id="player-management" class="content-panel">
                 <h2 class="content-header">玩家管理</h2>
-                <div class="search-container">
-                    <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 或暱稱進行查詢...">
-                    <button id="player-search-btn" class="button primary">查詢</button>
-                </div>
-                <div id="player-search-results"></div>
-                <div id="player-data-display">
-                    <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 或暱稱以檢視資料。</p>
+                <div class="dashboard-grid two-column">
+                    <div class="side-pane">
+                        <h3>查詢玩家</h3>
+                        <div class="data-section">
+                            <div class="search-container">
+                                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 或暱稱進行查詢...">
+                                <button id="player-search-btn" class="button primary">查詢</button>
+                            </div>
+                            <div id="player-search-results"></div>
+                        </div>
+                    </div>
+                    <div class="main-pane">
+                        <h3>玩家資料</h3>
+                        <div id="player-data-display">
+                            <p style="color: var(--admin-text-secondary);">請先從左側查詢並選擇一位玩家以檢視其詳細資料。</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
             <div id="mail-system" class="content-panel">
-                <h2 class="content-header">群發信件</h2>
-                <div class="data-section">
-                    <h3>撰寫新信件</h3>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label for="broadcast-sender-name">寄件人名稱</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" id="broadcast-sender-name" class="admin-input" placeholder="預設為：遊戲管理員" value="遊戲管理員">
-                            <select id="broadcast-sender-presets" class="admin-input" style="flex-grow: 0.5;"></select>
-                            <button id="save-sender-name-btn" class="button secondary" title="儲存目前名稱到選單">💾</button>
+                 <h2 class="content-header">群發信件</h2>
+                 <div class="dashboard-grid two-column side-right">
+                    <div class="main-pane">
+                        <div class="data-section">
+                            <h3>撰寫新信件</h3>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label for="broadcast-sender-name">寄件人名稱</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <input type="text" id="broadcast-sender-name" class="admin-input" placeholder="預設為：遊戲管理員" value="遊戲管理員">
+                                    <select id="broadcast-sender-presets" class="admin-input" style="flex-grow: 0.5;"></select>
+                                    <button id="save-sender-name-btn" class="button secondary" title="儲存目前名稱到選單">💾</button>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label for="broadcast-title">信件標題</label>
+                                <input type="text" id="broadcast-title" class="admin-input" placeholder="輸入要發送的信件標題">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 1rem;">
+                                <label for="broadcast-content">信件內容</label>
+                                <textarea id="broadcast-content" class="admin-input" rows="5" placeholder="輸入信件的詳細內容..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
+                                <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100}'></textarea>
+                            </div>
+                            <div class="save-changes-container">
+                                <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
+                            </div>
+                            <div id="broadcast-response" class="admin-response-message" style="display: none;"></div>
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label for="broadcast-title">信件標題</label>
-                        <input type="text" id="broadcast-title" class="admin-input" placeholder="輸入要發送的信件標題">
+                    <div class="side-pane">
+                        <div class="data-section">
+                            <h3>已發送系統信件歷史 <button id="refresh-log-btn" class="button secondary" style="font-size: 0.8rem; padding: 4px 8px; margin-left: 1rem;">刷新</button></h3>
+                            <div id="broadcast-log-container">
+                                <p>正在載入紀錄...</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label for="broadcast-content">信件內容</label>
-                        <textarea id="broadcast-content" class="admin-input" rows="5" placeholder="輸入信件的詳細內容..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
-                        <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100}'></textarea>
-                    </div>
-                    <div class="save-changes-container">
-                        <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
-                    </div>
-                    <div id="broadcast-response" class="admin-response-message" style="display: none;"></div>
-                </div>
-                <div class="data-section">
-                    <h3>已發送系統信件歷史 <button id="refresh-log-btn" class="button secondary" style="font-size: 0.8rem; padding: 4px 8px; margin-left: 1rem;">刷新</button></h3>
-                    <div id="broadcast-log-container">
-                        <p>正在載入紀錄...</p>
-                    </div>
-                </div>
+                 </div>
             </div>
             
             <div id="game-configs" class="content-panel">
