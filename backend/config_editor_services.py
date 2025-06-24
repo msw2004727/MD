@@ -115,6 +115,7 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     if not db:
         return False, "資料庫服務未初始化。"
 
+    # 新增：處理本地檔案儲存
     if filename in LOCAL_CONFIG_FILES:
         try:
             parsed_content = json.loads(content_str)
