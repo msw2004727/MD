@@ -90,14 +90,13 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], bool]:
     """獲取玩家遊戲資料，如果不存在則初始化並儲存。返回 (玩家資料, 是否為新玩家) 的元組。"""
-    # (此函式內部邏輯不變，但它呼叫的 _add_player_log 現在來自 utils_services)
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (get_player_data_service 內部)。")
         return None, False
 
     db = firestore_db_instance
-    from .mail_services import add_mail_to_player # 【修改】將導入移至函式內部，避免循環依賴
+    from .mail_services import add_mail_to_player 
 
     try:
         user_profile_ref = db.collection('users').document(player_id)
@@ -173,12 +172,26 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                         if total_gold_reward > 0:
                             player_stats["gold"] = player_stats.get("gold", 0) + total_gold_reward
                             player_stats["last_champion_reward_timestamp"] = current_time
+                            
                             mail_title = f"🏆 冠軍殿堂每日俸祿"
                             mail_content = f"恭喜您！作為冠軍殿堂第 {player_rank} 名的榮譽成員，系統已為您發放過去 {days_to_reward} 天的俸祿，共計 {total_gold_reward} 🪙。已自動存入您的錢包。"
                             mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
-                            add_mail_to_player(player_game_data_dict, mail_template)
-                            player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣。")
-                            save_player_data_service(player_id, player_game_data_dict)
+
+                            # --- 核心修改處 START ---
+                            # 檢查信箱中是否已存在未讀的俸祿信件
+                            mailbox = player_game_data_dict.get("mailbox", [])
+                            unread_champion_mail_exists = any(
+                                mail.get("title") == mail_title and not mail.get("is_read")
+                                for mail in mailbox
+                            )
+                            # 只有在不存在未讀俸祿信件時，才新增信件
+                            if not unread_champion_mail_exists:
+                                add_mail_to_player(player_game_data_dict, mail_template)
+                                player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣，並寄送通知信。")
+                                # 注意：此處不再單獨儲存，將由後續的遷移檢查統一儲存
+                            else:
+                                player_services_logger.info(f"玩家 {player_id} 已有未讀的俸祿信件，本次不再重複發送。")
+                            # --- 核心修改處 END ---
 
             needs_migration_save = False
             if "gold" not in player_stats:
