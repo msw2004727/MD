@@ -7,8 +7,8 @@ from flask import Blueprint, jsonify, request
 # 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
 # --- 核心修改處 START ---
-# 導入新建立的 send_mail_to_player_service 服務
-from .mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read, send_mail_to_player_service
+# 導入新建立的 send_mail_to_player_service 與 claim_mail_attachments_service 服務
+from .mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read, send_mail_to_player_service, claim_mail_attachments_service
 # --- 核心修改處 END ---
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 
@@ -81,7 +81,6 @@ def mark_as_read_route(mail_id: str):
     else:
         return jsonify({"error": "標記已讀後儲存資料失敗。"}), 500
 
-# --- 核心修改處 START ---
 @mail_bp.route('/send', methods=['POST'])
 def send_mail_route():
     """
@@ -97,6 +96,7 @@ def send_mail_route():
     recipient_id = data.get('recipient_id')
     title = data.get('title')
     content = data.get('content')
+    payload = data.get('payload') # 新增：接收 payload
 
     # 驗證參數是否齊全
     if not all([recipient_id, title, content]):
@@ -108,8 +108,8 @@ def send_mail_route():
         sender_nickname=sender_nickname,
         recipient_id=recipient_id,
         title=title,
-        content=content
-        # 未來可在此處傳入 payload 處理贈禮
+        content=content,
+        payload=payload
     )
 
     if success:
@@ -117,4 +117,36 @@ def send_mail_route():
     else:
         # 服務層內部會記錄詳細錯誤，這裡只返回通用失敗訊息
         return jsonify({"error": "寄信失敗，可能是收件人不存在或伺服器內部錯誤。"}), 500
+
+# --- 核心修改處 START ---
+@mail_bp.route('/<mail_id>/claim', methods=['POST'])
+def claim_attachments_route(mail_id: str):
+    """
+    處理玩家領取一封信件中所有附件的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    # 呼叫我們在 mail_services 中建立的新函式
+    updated_player_data, error_msg = claim_mail_attachments_service(player_data, mail_id, game_configs)
+
+    if not updated_player_data:
+        # 如果服務層返回 None，表示發生了嚴重錯誤
+        return jsonify({"error": error_msg or "領取附件時發生未知錯誤。"}), 500
+
+    # 儲存更新後的玩家資料
+    if save_player_data_service(user_id, updated_player_data):
+        response_data = {"success": True, "message": "附件已成功領取！"}
+        if error_msg:
+            # 如果有部分物品未領取成功 (例如背包滿了)，則在成功的回應中附加一條提示
+            response_data["warning"] = error_msg
+        return jsonify(response_data), 200
+    else:
+        return jsonify({"error": "領取附件後儲存玩家資料失敗。"}), 500
 # --- 核心修改處 END ---
