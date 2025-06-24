@@ -2,6 +2,7 @@
 # 新增的路由檔案：專門處理後台編輯遊戲設定的 API
 
 import logging
+import json
 from flask import Blueprint, jsonify, request
 
 # 從專案的其他模組導入
@@ -32,34 +33,39 @@ def list_configs_route():
 @config_editor_bp.route('/get_config', methods=['GET'])
 @token_required
 def get_config_route():
-    """根據檔名獲取設定檔內容。"""
+    """
+    【修改】根據檔名獲取設定檔內容。
+    """
     filename = request.args.get('file')
     if not filename:
         return jsonify({"error": "缺少 'file' 參數。"}), 400
 
-    content, error = get_config_content(filename)
+    # 服務層現在直接回傳 Python 物件
+    content_obj, error = get_config_content(filename)
+
     if error:
-        return jsonify({"error": error}), 404 if "找不到" in error else 500
+        # 如果有錯誤訊息，就回傳 500 錯誤
+        return jsonify({"error": error}), 500
     
-    # 嘗試將 JSON 字串解析為物件回傳，否則直接回傳純文字
-    try:
-        return jsonify(json.loads(content)), 200
-    except json.JSONDecodeError:
-        return jsonify({"content": content}), 200
+    # 直接將 Python 物件交給 jsonify 處理，這是最安全的方式
+    return jsonify(content_obj), 200
 
 
 @config_editor_bp.route('/save_config', methods=['POST'])
 @token_required
 def save_config_route():
-    """儲存設定檔內容。"""
+    """
+    【修改】儲存設定檔內容。
+    """
     data = request.get_json()
     filename = data.get('file')
-    content = data.get('content')
+    content_str = data.get('content') # 前端傳來的是未經處理的字串
 
-    if not filename or content is None:
+    if not filename or content_str is None:
         return jsonify({"error": "請求中缺少 'file' 或 'content' 參數。"}), 400
 
-    success, error = save_config_content(filename, content)
+    # 將字串內容直接傳遞給服務層，由服務層負責解析和儲存
+    success, error = save_config_content(filename, content_str)
     
     if success:
         return jsonify({"success": True, "message": f"檔案 '{filename}' 已成功儲存並重新載入。"}), 200
