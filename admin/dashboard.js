@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- 變數定義區 ---
     const adminToken = localStorage.getItem('admin_token');
-    const SENDER_PRESETS_KEY = 'admin_sender_presets'; // 用於儲存寄件人名稱的 localStorage 鍵值
+    const SENDER_PRESETS_KEY = 'admin_sender_presets'; 
     let currentPlayerData = null;
     let logIntervalId = null;
 
