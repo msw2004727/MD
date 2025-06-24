@@ -183,11 +183,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            // --- 核心修改處 START ---
             const categoryColors = { '系統': '#9CA3AF', '金幣': '#FBBF24', '戰鬥': '#F87171', '合成': '#60A5FA', '物品': '#34D399' };
             DOMElements.playerLogDisplay.innerHTML = filteredLogs.map(log => {
                 const date = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
                 const color = categoryColors[log.category] || '#9CA3AF';
-                const cleanMessage = log.message.replace(/<[^>]*>/g, '');
+                // 清理訊息中的 HTML 標籤以避免 XSS
+                const cleanMessage = log.message.replace(/</g, "&lt;").replace(/>/g, "&gt;"); 
+                
+                // 使用一個主 div (log-entry) 包裝每一條日誌的所有內容
                 return `
                     <div class="log-entry">
                         <div class="log-meta">
@@ -198,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             }).join('');
+            // --- 核心修改處 END ---
         }
 
         // --- 玩家資料渲染 ---
