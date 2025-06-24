@@ -5,6 +5,8 @@ import os
 import json
 import logging
 from flask import current_app
+# 【新增】從 typing 模組導入 Optional，以解決 NameError
+from typing import Optional
 
 # 設定日誌記錄器
 config_editor_logger = logging.getLogger(__name__)
@@ -84,6 +86,7 @@ def save_config_content(filename: str, content: str) -> tuple[bool, Optional[str
     # 如果是 JSON 檔案，先驗證其格式是否正確
     if filename.endswith('.json'):
         try:
+            # 這裡的 content 應該是一個字串，我們先嘗試解析它
             json.loads(content)
         except json.JSONDecodeError as e:
             error_msg = f"儲存失敗：內容不是有效的 JSON 格式。錯誤: {e}"
@@ -93,6 +96,7 @@ def save_config_content(filename: str, content: str) -> tuple[bool, Optional[str
     file_path = os.path.join(DATA_DIR, filename)
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
+            # 直接寫入從前端傳來的字串內容
             f.write(content)
         config_editor_logger.info(f"設定檔 '{filename}' 已成功儲存。")
         
