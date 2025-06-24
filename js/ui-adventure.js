@@ -221,7 +221,7 @@ function renderAdventureProgressUI(adventureProgress) {
                 <aside class="adventure-team-status-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <h4 class="details-section-title" style="border: none; margin: 0; padding: 0;">遠征隊</h4>
-                        <span id="team-status-effects"></span>
+                        <span id="team-status-effects" style="display: flex; gap: 0.5rem;"></span>
                     </div>
                     ${teamStatusHtml}
                 </aside>
@@ -250,7 +250,7 @@ function renderAdventureProgressUI(adventureProgress) {
     const descriptionText = adventureProgress.story_override || currentEvent?.description;
 
     if (descriptionText) {
-        descriptionEl.innerHTML = `<p>${descriptionText}</p>`;
+        descriptionEl.innerHTML = `<p>${descriptionText.replace(/\n/g, '<br>')}</p>`;
     }
 
     if (currentEvent && currentEvent.choices && currentEvent.choices.length > 0) {
@@ -268,35 +268,28 @@ function renderAdventureProgressUI(adventureProgress) {
 }
 
 /**
- * 在指定的怪獸卡片上顯示暫時的狀態效果圖示。
+ * 在指定的怪獸卡片或隊伍標題上顯示暫時的狀態效果圖示。
  * @param {string} effectType - 'buff' 或 'debuff'
  * @param {string} statName - 屬性中文名，如 '攻擊'
- * @param {string|null} targetMonsterId - 目標怪獸的ID，如果為null則對全隊生效
  */
-function displayTemporaryStatusEffect(effectType, statName, targetMonsterId = null) {
+function displayTemporaryStatusEffect(effectType, statName) {
     const statMap = { '攻擊': '攻', '防禦': '防', '速度': '速', '命中率': '命', '閃避率': '閃', '特攻': '特攻', '特防': '特防', 'all': '全' };
     const shortStatName = statMap[statName] || statName;
     const indicatorText = `${shortStatName}${effectType === 'buff' ? '▲' : '▼'}`;
     const indicatorClass = effectType === 'buff' ? 'buff' : 'debuff';
 
-    const createIndicator = () => {
-        const indicator = document.createElement('span');
-        indicator.className = `status-effect-indicator ${indicatorClass}`;
-        indicator.textContent = indicatorText;
-        return indicator;
-    };
+    const container = document.getElementById('team-status-effects');
+    if (!container) return;
+
+    const indicator = document.createElement('span');
+    indicator.className = `status-effect-indicator ${indicatorClass}`;
+    indicator.textContent = indicatorText;
     
-    if (targetMonsterId) {
-        const targetCard = document.querySelector(`.team-member-card[data-monster-id-in-expedition="${targetMonsterId}"]`);
-        if (targetCard) {
-            targetCard.appendChild(createIndicator());
-        }
-    } else {
-        const teamCards = document.querySelectorAll('.team-member-card');
-        teamCards.forEach(card => {
-            card.appendChild(createIndicator());
-        });
-    }
+    // 清除舊的同類圖示，避免重疊
+    const oldIndicators = container.querySelectorAll('.status-effect-indicator');
+    oldIndicators.forEach(ind => ind.remove());
+    
+    container.appendChild(indicator);
 }
 
 
