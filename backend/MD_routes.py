@@ -393,7 +393,7 @@ def combine_dna_api_route():
         return jsonify({"error": error_message}), 400
 
 
-@md_bp.route('/players/search', methods=['GET'])
+@md_bp.route('/players/search', methods=['GET', 'OPTIONS'])
 def search_players_api_route():
     nickname_query = request.args.get('nickname', '').strip()
     limit_str = request.args.get('limit', '10')
@@ -474,8 +474,6 @@ def simulate_battle_api_route():
     if battle_result.get("battle_end"):
         routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
         
-        # --- 核心修改處 START ---
-        # 1. 將回傳結果從元組改為接收一個字典
         post_battle_data = process_battle_results(
             player_id=user_id,
             opponent_id=opponent_owner_id_req,
@@ -489,7 +487,6 @@ def simulate_battle_api_route():
             challenged_rank=challenged_rank
         )
         
-        # 2. 從字典中提取需要的資料
         updated_player_data = post_battle_data.get("updated_player_data")
         newly_awarded_titles = post_battle_data.get("newly_awarded_titles")
         updated_champions_data = post_battle_data.get("updated_champions_data")
@@ -497,16 +494,13 @@ def simulate_battle_api_route():
         if newly_awarded_titles:
             battle_result["newly_awarded_titles"] = newly_awarded_titles
         
-        # 3. 將所有需要的資料打包到最終的API回應中
         return jsonify({
             "success": True, 
             "battle_result": battle_result,
             "updated_player_data": updated_player_data,
             "updated_champions_data": updated_champions_data
         }), 200
-        # --- 核心修改處 END ---
     
-    # 如果戰鬥未結束（理論上不應該發生在 full_simulate），返回當前結果
     return jsonify({"success": True, "battle_result": battle_result}), 200
 
 
