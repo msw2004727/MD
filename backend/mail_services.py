@@ -9,6 +9,8 @@ from typing import Optional, List, Dict, Any, Tuple, TYPE_CHECKING
 
 # 從專案的其他模組導入
 from . import MD_firebase_config
+# 【修改】從 player_services 導入日誌紀錄函式
+from .player_services import _add_player_log
 
 # 使用 TYPE_CHECKING 來避免運行時的循環導入錯誤
 if TYPE_CHECKING:
@@ -22,22 +24,13 @@ mail_logger = logging.getLogger(__name__)
 def add_mail_to_player(player_data: 'PlayerGameData', mail_item_template: Dict[str, Any]) -> Optional['PlayerGameData']:
     """
     為指定玩家的信箱新增一封信件。
-
-    Args:
-        player_data: 目標玩家的完整遊戲資料。
-        mail_item_template: 一個包含信件基本資訊的字典，
-                            例如 {'type': 'system_message', 'title': '歡迎訊息', 'content': '...'}。
-
-    Returns:
-        更新後的玩家資料 (如果成功)，否則返回 None。
     """
     if not player_data:
         mail_logger.error("新增信件失敗：player_data 為空。")
         return None
 
-    # 為信件產生一個唯一的ID和時間戳
     new_mail_item: 'MailItem' = {
-        "id": str(uuid.uuid4()),  # 使用 uuid 保證 ID 的唯一性
+        "id": str(uuid.uuid4()),
         "type": mail_item_template.get("type", "system_message"),
         "title": mail_item_template.get("title", "無標題"),
         "sender_id": mail_item_template.get("sender_id"),
@@ -48,15 +41,11 @@ def add_mail_to_player(player_data: 'PlayerGameData', mail_item_template: Dict[s
         "payload": mail_item_template.get("payload", {}),
     }
 
-    # 找到玩家的信箱，如果不存在則建立一個
     if "mailbox" not in player_data or not isinstance(player_data.get("mailbox"), list):
         player_data["mailbox"] = []
 
-    # 將新信件加到信箱的最前面
     player_data["mailbox"].insert(0, new_mail_item)
-
     mail_logger.info(f"成功為玩家 {player_data.get('nickname')} 新增一封標題為 '{new_mail_item['title']}' 的信件。")
-
     return player_data
 
 
@@ -71,8 +60,6 @@ def send_mail_to_player_service(
 ) -> Tuple[bool, Optional[str]]:
     """
     處理一個玩家向另一個玩家發送信件的邏輯。
-    包含附件時，會先從寄件人身上扣除資產。
-    返回一個元組 (是否成功, 錯誤訊息)。
     """
     from .player_services import save_player_data_service, get_player_data_service
     
@@ -86,8 +73,6 @@ def send_mail_to_player_service(
         return False, "無法寄信給自己。"
 
     try:
-        # --- 核心修改處 START ---
-        # 1. 優先檢查收件人是否存在
         recipient_doc_ref = db.collection('users').document(recipient_id).collection('gameData').document('main')
         recipient_doc = recipient_doc_ref.get()
 
@@ -100,14 +85,12 @@ def send_mail_to_player_service(
         sender_data_modified = False
         sender_data = None
 
-        # 2. 如果有附件，再處理寄件人的資產扣除
         if payload and (payload.get("gold", 0) > 0 or payload.get("items")):
             sender_data, _ = get_player_data_service(sender_id, sender_nickname, {})
             if not sender_data:
                 mail_logger.error(f"寄信失敗：找不到寄件人 {sender_id} 的資料以扣除資產。")
                 return False, "無法讀取您的玩家資料。"
 
-            # 處理金幣扣除
             gold_to_send = int(payload.get("gold", 0))
             if gold_to_send > 0:
                 fee = math.floor(gold_to_send * 0.01)
@@ -121,7 +104,6 @@ def send_mail_to_player_service(
                 sender_data_modified = True
                 mail_logger.info(f"寄送金幣 {gold_to_send}，已從寄件人 {sender_id} 扣除包含手續費在內的總額 {total_cost}。")
 
-            # 處理物品扣除 (並返回具體錯誤)
             items_to_send = payload.get("items", [])
             if items_to_send:
                 sender_inventory = sender_data.get("playerOwnedDNA", [])
@@ -136,13 +118,11 @@ def send_mail_to_player_service(
                 sender_data["playerOwnedDNA"] = new_inventory
                 sender_data_modified = True
 
-        # 3. 如果寄件人資料有變動，先儲存寄件人資料
         if sender_data_modified and sender_data:
             if not save_player_data_service(sender_id, sender_data):
                 mail_logger.error(f"寄信失敗：扣除寄件人 {sender_id} 的資產後儲存失敗。")
                 return False, "扣除您的資產時發生錯誤，為安全起見，信件已取消寄送。"
         
-        # 4. 將信件加入收件人信箱並儲存
         mail_template = {
             "type": mail_type, "title": title, "content": content,
             "sender_id": sender_id, "sender_name": sender_nickname, "payload": payload or {}
@@ -159,7 +139,6 @@ def send_mail_to_player_service(
         else:
             mail_logger.error(f"儲存收件人 {recipient_id} 的資料時失敗。")
             return False, "信件已發出但儲存至收件人時失敗，請聯繫管理員。"
-        # --- 核心修改處 END ---
 
     except Exception as e:
         mail_logger.error(f"寄送信件過程中發生未知錯誤: {e}", exc_info=True)
@@ -233,6 +212,8 @@ def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, 
     gold_to_claim = int(payload.get("gold", 0))
     if gold_to_claim > 0:
         player_stats["gold"] = player_stats.get("gold", 0) + gold_to_claim
+        # 【新增】記錄金幣獲取日誌
+        _add_player_log(player_data, "金幣", f"從信件「{target_mail.get('title')}」領取了 {gold_to_claim} 🪙。")
         mail_logger.info(f"玩家 {player_data.get('nickname')} 從信件 {mail_id} 領取了 {gold_to_claim} 金幣。")
 
     items_to_claim = payload.get("items", [])
@@ -254,6 +235,8 @@ def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, 
                 
                 if free_slot_idx != -1:
                     inventory[free_slot_idx] = dna_data
+                    # 【新增】記錄物品獲取日誌
+                    _add_player_log(player_data, "物品", f"從信件「{target_mail.get('title')}」領取了DNA：「{dna_data.get('name')}」。")
                     mail_logger.info(f"玩家 {player_data.get('nickname')} 將DNA '{dna_data.get('name')}' 放入庫存槽位 {free_slot_idx}。")
                 else:
                     unclaimed_items.append(item)
