@@ -66,20 +66,8 @@ def send_mail_to_player_service(
 ) -> bool:
     """
     處理一個玩家向另一個玩家發送信件的邏輯。
-
-    Args:
-        sender_id: 寄件人ID。
-        sender_nickname: 寄件人暱稱。
-        recipient_id: 收件人ID。
-        title: 信件標題。
-        content: 信件內容。
-        payload: 附加的禮物資料 (可選)。
-        mail_type: 信件類型 (可選，預設為 'system_message')。
-
-    Returns:
-        如果信件成功發送並儲存，則返回 True，否則返回 False。
+    包含附件時，會先從寄件人身上扣除資產。
     """
-    # 將導入語句移至函式內部，在需要時才導入，以解決循環導入問題
     from .player_services import save_player_data_service, get_player_data_service
     
     db = MD_firebase_config.db
@@ -92,9 +80,8 @@ def send_mail_to_player_service(
         return False
 
     try:
-        # --- 核心修改：寄送前先處理寄件人資產 ---
+        # 如果信件帶有附件，則先處理寄件人的資產扣除
         if payload and (payload.get("gold", 0) > 0 or payload.get("items")):
-            # 獲取寄件人資料以進行扣款/扣除物品
             sender_data, _ = get_player_data_service(sender_id, sender_nickname, {})
             if not sender_data:
                 mail_logger.error(f"寄信失敗：找不到寄件人 {sender_id} 的資料以扣除資產。")
@@ -106,34 +93,28 @@ def send_mail_to_player_service(
                 sender_gold = sender_data.get("playerStats", {}).get("gold", 0)
                 if sender_gold < gold_to_send:
                     mail_logger.warning(f"寄信失敗：寄件人 {sender_id} 金幣不足。")
-                    return False # 或是返回一個更具體的錯誤訊息
+                    return False
                 sender_data["playerStats"]["gold"] = sender_gold - gold_to_send
 
             # 處理物品 (DNA)
-            items_to_send_ids = [item.get("data", {}).get("id") for item in payload.get("items", []) if item.get("type") == "dna"]
-            if items_to_send_ids:
+            items_to_send = payload.get("items", [])
+            if items_to_send:
                 sender_inventory = sender_data.get("playerOwnedDNA", [])
-                temp_inventory = []
-                sent_items_check = {item_id: False for item_id in items_to_send_ids}
+                item_ids_to_remove = {item['data']['id'] for item in items_to_send if item.get('type') == 'dna' and 'data' in item and 'id' in item['data']}
                 
-                for dna in sender_inventory:
-                    if dna and dna.get("id") in items_to_send_ids:
-                        sent_items_check[dna["id"]] = True
-                    else:
-                        temp_inventory.append(dna)
-                
-                if not all(sent_items_check.values()):
+                sender_item_ids = {dna['id'] for dna in sender_inventory if dna}
+                if not item_ids_to_remove.issubset(sender_item_ids):
                     mail_logger.error(f"寄信失敗：寄件人 {sender_id} 的庫存中找不到所有指定的DNA。")
                     return False
 
-                sender_data["playerOwnedDNA"] = temp_inventory
+                new_inventory = [dna for dna in sender_inventory if not (dna and dna['id'] in item_ids_to_remove)]
+                sender_data["playerOwnedDNA"] = new_inventory
 
-            # 儲存更新後的寄件人資料
             if not save_player_data_service(sender_id, sender_data):
                 mail_logger.error(f"寄信失敗：扣除寄件人 {sender_id} 的資產後儲存失敗。")
                 return False
 
-        # --- 獲取收件人資料並加入信件 ---
+        # 獲取收件人資料並加入信件
         recipient_doc_ref = db.collection('users').document(recipient_id).collection('gameData').document('main')
         recipient_doc = recipient_doc_ref.get()
 
@@ -159,7 +140,6 @@ def send_mail_to_player_service(
             return True
         else:
             mail_logger.error(f"儲存收件人 {recipient_id} 的資料時失敗。")
-            # 此處應考慮是否需要回滾寄件人的資產扣除
             return False
 
     except Exception as e:
@@ -168,19 +148,9 @@ def send_mail_to_player_service(
 
 
 def delete_mail_from_player(player_data: PlayerGameData, mail_id: str) -> Optional[PlayerGameData]:
-    """
-    從玩家的信箱中刪除一封信件。
-
-    Args:
-        player_data: 目標玩家的完整遊戲資料。
-        mail_id: 要刪除的信件 ID。
-
-    Returns:
-        更新後的玩家資料 (如果成功)，否則返回 None。
-    """
     if not player_data or not player_data.get("mailbox"):
         mail_logger.warning(f"刪除信件失敗：玩家沒有信箱或信箱為空。")
-        return player_data # 返回原始資料，因為沒有可刪除的
+        return player_data
 
     original_mail_count = len(player_data["mailbox"])
     player_data["mailbox"] = [mail for mail in player_data["mailbox"] if mail.get("id") != mail_id]
@@ -194,16 +164,6 @@ def delete_mail_from_player(player_data: PlayerGameData, mail_id: str) -> Option
 
 
 def mark_mail_as_read(player_data: PlayerGameData, mail_id: str) -> Optional[PlayerGameData]:
-    """
-    將玩家信箱中的特定信件標記為已讀。
-
-    Args:
-        player_data: 目標玩家的完整遊戲資料。
-        mail_id: 要標記為已讀的信件 ID。
-
-    Returns:
-        更新後的玩家資料 (如果成功)，否則返回 None。
-    """
     if not player_data or not player_data.get("mailbox"):
         mail_logger.warning(f"標記已讀失敗：玩家沒有信箱或信箱為空。")
         return player_data
@@ -222,7 +182,7 @@ def mark_mail_as_read(player_data: PlayerGameData, mail_id: str) -> Optional[Pla
 
     return player_data
 
-# --- 核心修改處 START ---
+
 def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], Optional[str]]:
     """
     處理玩家領取信件附件的邏輯。
@@ -243,23 +203,19 @@ def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, ga
         return None, f"在信箱中找不到 ID 為 {mail_id} 的信件。"
 
     payload = target_mail.get("payload")
-    if not payload or (not payload.get("gold") and not payload.get("items")):
-        target_mail["title"] = target_mail.get("title", "") + " (無附件)"
-        player_data["mailbox"][mail_index] = target_mail
+    if not payload or (payload.get("gold", 0) == 0 and not payload.get("items")):
+        target_mail["title"] = target_mail.get("title", "無標題") + " (無附件)"
         return player_data, "此信件沒有附件可以領取。"
 
-    # --- 開始處理附件 ---
     player_stats = player_data.get("playerStats", {})
     inventory: List[Optional[PlayerOwnedDNA]] = player_data.get("playerOwnedDNA", [])
     max_inventory_slots = game_configs.get("value_settings", {}).get("max_inventory_slots", 12)
 
-    # 1. 領取金幣
     gold_to_claim = int(payload.get("gold", 0))
     if gold_to_claim > 0:
         player_stats["gold"] = player_stats.get("gold", 0) + gold_to_claim
         mail_logger.info(f"玩家 {player_data.get('nickname')} 從信件 {mail_id} 領取了 {gold_to_claim} 金幣。")
 
-    # 2. 領取物品
     items_to_claim = payload.get("items", [])
     unclaimed_items = []
     if items_to_claim:
@@ -268,9 +224,7 @@ def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, ga
                 dna_data = item.get("data")
                 if not dna_data: continue
 
-                # 尋找庫存中的第一個空格
                 free_slot_idx = -1
-                # 確保庫存列表長度足夠
                 while len(inventory) < max_inventory_slots:
                     inventory.append(None)
                 
@@ -286,25 +240,23 @@ def claim_mail_attachments_service(player_data: PlayerGameData, mail_id: str, ga
                     unclaimed_items.append(item)
                     mail_logger.warning(f"玩家 {player_data.get('nickname')} 的庫存已滿，無法領取DNA '{dna_data.get('name')}'。")
 
-    # 3. 更新玩家資料和信件狀態
     player_data["playerStats"] = player_stats
     player_data["playerOwnedDNA"] = inventory
 
     error_msg = None
     if not unclaimed_items:
-        target_mail["payload"] = {}  # 如果全部領取完畢，就清空 payload
+        target_mail["payload"] = {}
         target_mail["title"] = target_mail.get("title", "無標題") + " (已領取)"
         mail_logger.info(f"信件 {mail_id} 的所有附件已被領取。")
     else:
-        target_mail["payload"]["items"] = unclaimed_items # 只保留未領取的物品
+        target_mail["payload"]["items"] = unclaimed_items
         if gold_to_claim > 0:
-            target_mail["payload"]["gold"] = 0 # 清除已領取的金幣
+            target_mail["payload"]["gold"] = 0
         target_mail["title"] = target_mail.get("title", "無標題") + " (部分領取)"
         error_msg = "庫存已滿，部分附件無法領取。請清理庫存後再試一次。"
         mail_logger.warning(f"信件 {mail_id} 的部分附件因庫存已滿而未被領取。")
 
-    target_mail["is_read"] = True # 領取後自動標為已讀
+    target_mail["is_read"] = True
     player_data["mailbox"][mail_index] = target_mail
     
     return player_data, error_msg
-# --- 核心修改處 END ---
