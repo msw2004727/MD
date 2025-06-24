@@ -45,7 +45,7 @@
             
             <div id="player-management" class="content-panel">
                 <h2 class="content-header">玩家管理</h2>
-                <div class="dashboard-grid two-column">
+                <div class="dashboard-grid">
                     <div class="side-pane">
                         <h3>查詢玩家</h3>
                         <div class="data-section">
@@ -76,13 +76,13 @@
                                 <p style="color: var(--admin-text-secondary);">暫無日誌紀錄。</p>
                             </div>
                         </div>
-                        </div>
+                    </div>
                 </div>
             </div>
             
             <div id="mail-system" class="content-panel">
                  <h2 class="content-header">群發信件</h2>
-                 <div class="dashboard-grid two-column side-right">
+                 <div class="dashboard-grid">
                     <div class="main-pane">
                         <div class="data-section">
                             <h3>撰寫新信件</h3>
@@ -124,22 +124,24 @@
             </div>
             <div id="game-configs" class="content-panel">
                 <h2 class="content-header">遊戲設定</h2>
-                <div class="data-section">
-                    <h3>即時設定編輯器</h3>
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label for="config-file-selector">選擇要編輯的設定檔</label>
-                        <select id="config-file-selector" class="admin-input"></select>
+                <div class="dashboard-grid">
+                    <div class="data-section">
+                        <h3>即時設定編輯器</h3>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label for="config-file-selector">選擇要編輯的設定檔</label>
+                            <select id="config-file-selector" class="admin-input"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="game-configs-display">檔案內容 (請謹慎修改)</label>
+                            <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以檢視或編輯..."></textarea>
+                        </div>
+                        <div class="save-changes-container">
+                            <button id="save-config-btn" class="button success" disabled>儲存設定變更</button>
+                        </div>
+                        <div id="config-response" class="admin-response-message" style="display: none;"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="game-configs-display">檔案內容 (請謹慎修改)</label>
-                        <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以檢視或編輯..."></textarea>
-                    </div>
-                    <div class="save-changes-container">
-                        <button id="save-config-btn" class="button success" disabled>儲存設定變更</button>
-                    </div>
-                    <div id="config-response" class="admin-response-message" style="display: none;"></div>
                 </div>
-            </div>
+                </div>
             <div id="log-monitoring" class="content-panel">
                 <h2 class="content-header">後端日誌監控</h2>
                 <div class="data-section">
