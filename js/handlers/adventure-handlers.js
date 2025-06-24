@@ -2,7 +2,7 @@
 // 專門處理「冒險島」頁籤內的所有使用者互動事件。
 
 /**
- * 處理點擊冒險島設施卡片上的「挑戰」按鈕。
+ * 根據點擊的設施，顯示隊伍選擇彈窗。
  * @param {Event} event - 點擊事件對象。
  */
 function handleFacilityChallengeClick(event) {
@@ -56,7 +56,6 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         }
     }
     
-    // --- 核心修改處 START ---
     const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionStart || '';
     const messageHtml = `
         <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
@@ -65,7 +64,6 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         <p>正在為「${facilityName}」組建遠征隊...</p>
     `;
     showFeedbackModal('準備出發...', messageHtml, true);
-    // --- 核心修改處 END ---
 
     try {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
@@ -153,6 +151,7 @@ async function handleAdventureChoiceClick(buttonElement) {
         const battleResult = result.battle_result;
         const updatedProgress = result.updated_progress;
         
+        // --- 核心修改處 START ---
         if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
             await refreshPlayerData();
             
@@ -179,29 +178,20 @@ async function handleAdventureChoiceClick(buttonElement) {
                 ];
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster, drawActions);
 
-            } else {
-                const lossActions = [{
-                    text: '返回農場',
-                    class: 'primary',
-                    onClick: () => {
-                        hideModal('feedback-modal');
-                        initializeAdventureUI();
-                    }
-                }];
+            } else { // 包含戰敗的情況
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
-                setTimeout(() => {
-                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionFailed || '';
-                    const messageHtml = `
-                        <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
-                            <img src="${bannerUrl}" alt="遠征失敗橫幅" style="max-width: 100%; border-radius: 6px;">
-                        </div>
-                        <p>隊長被打到瀕死，隊員們趕緊將隊長扛回農場進行急救！</p>
-                    `;
-                    showFeedbackModal('遠征失敗', messageHtml, false, null, lossActions);
-                }, 300);
+                
+                // 使用後端返回的統計數據來顯示總結彈窗
+                if (updatedProgress && updatedProgress.expedition_stats) {
+                     setTimeout(() => {
+                        showExpeditionSummaryModal(updatedProgress.expedition_stats);
+                    }, 500);
+                } else {
+                    initializeAdventureUI();
+                }
             }
 
-        } else {
+        } else { // --- 核心修改處 END ---
             if (result.updated_player_stats) {
                 gameState.playerData.playerStats = result.updated_player_stats;
                 if (typeof updatePlayerCurrencyDisplay === 'function') {
@@ -235,22 +225,25 @@ async function handleAbandonAdventure() {
         async () => {
             showFeedbackModal('正在撤退...', '正在從冒險島返回農場...', true);
             try {
-                const result = await fetchAPI('/adventure/abandon', { method: 'POST' });
+                // --- 核心修改處 START ---
+                // API現在會返回最終的統計數據
+                const result = await abandonAdventure(); 
                 if (result && result.success) {
                     await refreshPlayerData();
-                    initializeAdventureUI();
                     hideModal('feedback-modal');
-                    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionEnd || '';
-                    const messageHtml = `
-                        <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
-                            <img src="${bannerUrl}" alt="遠征結束橫幅" style="max-width: 100%; border-radius: 6px;">
-                        </div>
-                        <p>您已成功返回農場。</p>
-                    `;
-                    showFeedbackModal('遠征結束', messageHtml);
+
+                    // 使用後端返回的統計數據來顯示總結彈窗
+                    if (result.expedition_stats && typeof showExpeditionSummaryModal === 'function') {
+                        showExpeditionSummaryModal(result.expedition_stats);
+                    } else {
+                        // 如果沒有統計數據，則顯示通用訊息
+                        initializeAdventureUI();
+                        showFeedbackModal('遠征結束', '您已安全返回農場。');
+                    }
                 } else {
                     throw new Error(result?.error || '未知的錯誤');
                 }
+                // --- 核心修改處 END ---
             } catch (error) {
                 hideModal('feedback-modal');
                 showFeedbackModal('操作失敗', `無法放棄遠征：${error.message}`);
@@ -282,33 +275,32 @@ function initializeAdventureHandlers() {
                 await handleAdventureChoiceClick(choiceButton);
             } else if (abandonButton) {
                 await handleAbandonAdventure();
+            // --- 核心修改處 START ---
             } else if (switchCaptainButton) {
                 const monsterIdToPromote = switchCaptainButton.dataset.monsterId;
                 if (!monsterIdToPromote) return;
+                
+                switchCaptainButton.disabled = true;
 
-                const adventureProgress = gameState.playerData?.adventure_progress;
-                if (!adventureProgress || !adventureProgress.is_active) return;
-
-                const team = adventureProgress.expedition_team;
-                const memberIndex = team.findIndex(member => member.monster_id === monsterIdToPromote);
-
-                if (memberIndex > 0) { 
-                    switchCaptainButton.disabled = true;
-
-                    const [memberToPromote] = team.splice(memberIndex, 1);
-                    team.unshift(memberToPromote);
-
-                    renderAdventureProgressUI(adventureProgress);
-
-                    try {
-                        await savePlayerData(gameState.playerId, gameState.playerData);
-                        console.log(`遠征隊隊長已更換為 ${monsterIdToPromote} 並成功儲存。`);
-                    } catch (error) {
-                        console.error("儲存新隊長順序失敗:", error);
-                        showFeedbackModal('錯誤', '更換隊長失敗，請稍後再試。');
+                try {
+                    // 呼叫新的 API 來更換隊長
+                    const result = await switchAdventureCaptain(monsterIdToPromote);
+                    if (result && result.success) {
+                        // 使用後端返回的最新進度來更新 UI
+                        gameState.playerData.adventure_progress = result.updated_progress;
+                        renderAdventureProgressUI(result.updated_progress);
+                        console.log(`遠征隊隊長已成功更換為 ${monsterIdToPromote}。`);
+                    } else {
+                        throw new Error(result?.error || "更換隊長失敗。");
                     }
+                } catch (error) {
+                    console.error("更換隊長失敗:", error);
+                    showFeedbackModal('錯誤', '更換隊長失敗，請稍後再試。');
+                    // 失敗時重新啟用按鈕
+                    switchCaptainButton.disabled = false;
                 }
             }
+            // --- 核心修改處 END ---
         });
         console.log("冒險島事件處理器已成功初始化。");
     } else {
