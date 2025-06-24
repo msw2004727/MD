@@ -5,116 +5,137 @@ import os
 import json
 import logging
 from flask import current_app
-# 【新增】從 typing 模組導入 Optional，以解決 NameError
 from typing import Optional
+
+# 【新增】從 firebase_admin 導入 firestore 以便操作資料庫
+from firebase_admin import firestore
 
 # 設定日誌記錄器
 config_editor_logger = logging.getLogger(__name__)
 
-# 定義 data 資料夾的絕對路徑
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-# 定義允許操作的子目錄
-ALLOWED_SUBDIRS = ['skills']
+# 【修改】建立一個從"檔案名稱"到"Firestore文件"的映射表
+# 這將告訴我們的服務，前端選擇的某個檔案，對應到資料庫的哪個文件和哪個欄位
+CONFIG_FILE_FIRESTORE_MAP = {
+    # 主要設定檔
+    "titles.json": ("Titles", "player_titles"),
+    "dna_fragments.json": ("DNAFragments", "all_fragments"),
+    "newbie_guide.json": ("NewbieGuide", "guide_entries"),
+    "element_nicknames.json": ("ElementNicknames", "nicknames"),
+    "battle_highlights.json": ("BattleHighlights", "highlight_styles"),
+    "adventure_islands.json": ("AdventureIslands", "islands"),
+    "champion_guardians.json": ("ChampionGuardians", "guardians"),
+    "status_effects.json": ("StatusEffects", "effects_list"),
 
-def _is_safe_path(requested_path: str) -> bool:
-    """
-    安全性檢查：確保請求的路徑在允許的目錄範圍內，防止目錄遍歷攻擊。
-    """
-    # 將請求路徑標準化，解析 '..' 等相對路徑
-    base_path = os.path.realpath(DATA_DIR)
-    # 拼接並標準化最終路徑
-    final_path = os.path.realpath(os.path.join(base_path, requested_path))
-    
-    # 檢查最終路徑是否在 base_path 的目錄樹下
-    return os.path.commonpath([base_path, final_path]) == base_path
+    # 各屬性技能檔 (使用點表示法來更新巢狀欄位)
+    "skills/dark.json": ("Skills", "skill_database.暗"),
+    "skills/earth.json": ("Skills", "skill_database.土"),
+    "skills/fire.json": ("Skills", "skill_database.火"),
+    "skills/gold.json": ("Skills", "skill_database.金"),
+    "skills/light.json": ("Skills", "skill_database.光"),
+    "skills/mix.json": ("Skills", "skill_database.混"),
+    "skills/none.json": ("Skills", "skill_database.無"),
+    "skills/poison.json": ("Skills", "skill_database.毒"),
+    "skills/water.json": ("Skills", "skill_database.水"),
+    "skills/wind.json": ("Skills", "skill_database.風"),
+    "skills/wood.json": ("Skills", "skill_database.木"),
+}
+
 
 def list_editable_configs() -> list[str]:
     """
-    列出 `backend/data` 目錄及其允許的子目錄下所有可編輯的設定檔。
+    列出所有可透過後台編輯的設定檔名稱。
+    (此函式邏輯不變，它定義了前端下拉選單的內容)
     """
-    config_files = []
-    # 排除不應被編輯的檔案
-    excluded_files = ['serviceAccountKey.json']
-
-    # 讀取主 data 目錄
-    for filename in os.listdir(DATA_DIR):
-        if (filename.endswith('.json') or filename.endswith('.csv')) and filename not in excluded_files:
-            config_files.append(filename)
-
-    # 讀取允許的子目錄
-    for subdir in ALLOWED_SUBDIRS:
-        subdir_path = os.path.join(DATA_DIR, subdir)
-        if os.path.isdir(subdir_path):
-            for filename in os.listdir(subdir_path):
-                 if filename.endswith('.json') or filename.endswith('.csv'):
-                     config_files.append(os.path.join(subdir, filename).replace("\\", "/")) # 確保路徑分隔符統一
-
-    config_editor_logger.info(f"成功列出 {len(config_files)} 個可編輯的設定檔。")
-    return sorted(config_files)
+    # 直接返回我們映射表中定義的所有鍵 (檔名)
+    return sorted(list(CONFIG_FILE_FIRESTORE_MAP.keys()))
 
 def get_config_content(filename: str) -> tuple[Optional[str], Optional[str]]:
     """
-    讀取指定設定檔的內容。
+    【重構】讀取指定設定檔的內容，來源改為 Firestore。
     返回 (內容, 錯誤訊息) 的元組。
     """
-    if not _is_safe_path(filename):
-        error_msg = f"安全性錯誤：禁止存取路徑 {filename}"
-        config_editor_logger.error(error_msg)
-        return None, error_msg
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db:
+        return None, "資料庫服務未初始化。"
+        
+    if filename not in CONFIG_FILE_FIRESTORE_MAP:
+        return None, f"不支援的設定檔 '{filename}' 或其尚未被定義於映射表中。"
 
-    file_path = os.path.join(DATA_DIR, filename)
+    doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP[filename]
+
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, None
-    except FileNotFoundError:
-        return None, "找不到指定的設定檔。"
+        doc_ref = db.collection('MD_GameConfigs').document(doc_name)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            return None, f"Firestore 中找不到對應的文件：'{doc_name}'。"
+
+        doc_data = doc.to_dict()
+        
+        # 處理巢狀路徑 (例如 "skill_database.火")
+        data_to_return = doc_data
+        for key in field_path.split('.'):
+            if data_to_return and key in data_to_return:
+                data_to_return = data_to_return[key]
+            else:
+                return None, f"在文件 '{doc_name}' 中找不到欄位路徑：'{field_path}'"
+        
+        # 將Python物件轉換為格式化的JSON字串回傳給前端
+        content_str = json.dumps(data_to_return, ensure_ascii=False, indent=2)
+        return content_str, None
+
     except Exception as e:
-        config_editor_logger.error(f"讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
-        return None, "讀取檔案時發生伺服器內部錯誤。"
+        config_editor_logger.error(f"從 Firestore 讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
+        return None, "讀取 Firestore 資料時發生伺服器內部錯誤。"
 
 def save_config_content(filename: str, content: str) -> tuple[bool, Optional[str]]:
     """
-    儲存修改後的設定檔內容。
+    【重構】儲存修改後的設定檔內容到 Firestore。
     返回 (是否成功, 錯誤訊息) 的元組。
     """
-    if not _is_safe_path(filename):
-        error_msg = f"安全性錯誤：禁止寫入路徑 {filename}"
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db:
+        return False, "資料庫服務未初始化。"
+
+    if filename not in CONFIG_FILE_FIRESTORE_MAP:
+        return False, f"不支援的設定檔 '{filename}' 或其尚未被定義於映射表中。"
+
+    try:
+        # 將前端傳來的JSON字串內容解析為Python物件
+        parsed_content = json.loads(content)
+    except json.JSONDecodeError as e:
+        error_msg = f"儲存失敗：內容不是有效的 JSON 格式。錯誤: {e}"
         config_editor_logger.error(error_msg)
         return False, error_msg
 
-    # 如果是 JSON 檔案，先驗證其格式是否正確
-    if filename.endswith('.json'):
-        try:
-            # 這裡的 content 應該是一個字串，我們先嘗試解析它
-            json.loads(content)
-        except json.JSONDecodeError as e:
-            error_msg = f"儲存失敗：內容不是有效的 JSON 格式。錯誤: {e}"
-            config_editor_logger.error(error_msg)
-            return False, error_msg
-
-    file_path = os.path.join(DATA_DIR, filename)
+    doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP[filename]
+    
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            # 直接寫入從前端傳來的字串內容
-            f.write(content)
-        config_editor_logger.info(f"設定檔 '{filename}' 已成功儲存。")
+        doc_ref = db.collection('MD_GameConfigs').document(doc_name)
+        # 使用 update 方法更新指定欄位，不會影響同文件中的其他欄位
+        doc_ref.update({
+            field_path: parsed_content
+        })
+        config_editor_logger.info(f"設定檔 '{filename}' 已成功儲存至 Firestore 的 '{doc_name}.{field_path}'。")
         
         # 觸發主應用程式重新載入設定
         reload_main_app_configs()
         
         return True, None
     except Exception as e:
-        config_editor_logger.error(f"儲存設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
-        return False, "儲存檔案時發生伺服器內部錯誤。"
+        config_editor_logger.error(f"儲存設定檔 '{filename}' 到 Firestore 時發生錯誤: {e}", exc_info=True)
+        return False, "儲存檔案到 Firestore 時發生伺服器內部錯誤。"
 
 def reload_main_app_configs():
     """
     觸發主 Flask 應用程式重新載入所有遊戲設定。
     """
     try:
+        # 【修改】因為此服務現在也寫入資料庫，所以這裡的載入邏輯也應該是從 Firestore 讀取，確保一致性
         from .MD_config_services import load_all_game_configs_from_firestore
         current_app.config['MD_GAME_CONFIGS'] = load_all_game_configs_from_firestore()
-        config_editor_logger.info("主應用程式的遊戲設定已重新載入。")
+        config_editor_logger.info("主應用程式的遊戲設定已從 Firestore 重新載入。")
     except Exception as e:
         config_editor_logger.error(f"重新載入遊戲設定時失敗: {e}", exc_info=True)
