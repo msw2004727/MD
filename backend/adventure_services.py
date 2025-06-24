@@ -107,12 +107,28 @@ def start_expedition_service(
 
     player_data["playerStats"]["gold"] = player_gold - cost
 
+    # --- 核心修改處 START ---
+    # 在建立遠征進度時，初始化 expedition_stats
     adventure_progress: AdventureProgress = {
         "is_active": True, "island_id": island_id, "facility_id": facility_id,
         "start_timestamp": int(time.time()), "expedition_team": expedition_team_status,
         "current_floor": 1, "current_step": 0, "total_steps_in_floor": 5,
-        "story_fragments": [], "adventure_inventory": [], "current_event": None
+        "story_fragments": [], "adventure_inventory": [], "current_event": None,
+        "expedition_stats": {
+            "gold_obtained": 0,
+            "hp_consumed": 0,
+            "hp_healed": 0,
+            "mp_consumed": 0,
+            "mp_healed": 0,
+            "captain_switches": 0,
+            "events_encountered": 0,
+            "bosses_fought": 0,
+            "buffs_received": 0,
+            "debuffs_received": 0,
+            "dna_fragments_obtained": 0
+        }
     }
+    # --- 核心修改處 END ---
     player_data["adventure_progress"] = adventure_progress
     
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 的遠征已成功建立。")
