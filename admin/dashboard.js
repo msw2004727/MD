@@ -108,15 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetId === 'mail-system') {
                 loadBroadcastLog();
             } else if (targetId === 'game-configs') {
-                // --- 核心修改處 START ---
                 if (typeof initializeConfigEditor === 'function') {
-                    // 將 API URL 和 Token 傳遞給 config-editor 模組
+                    // 將 API URL 傳遞給 config-editor 模組
                     initializeConfigEditor(ADMIN_API_URL, adminToken);
                 } else {
                     console.error("config-editor.js 或 initializeConfigEditor 函式未載入。");
                     alert("設定檔編輯器模組載入失敗，請檢查控制台。");
                 }
-                // --- 核心修改處 END ---
             } else if (targetId === 'log-monitoring') {
                 loadAndDisplayLogs();
                 logIntervalId = setInterval(loadAndDisplayLogs, 10000);
@@ -470,6 +468,9 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
+        if (typeof initializeConfigEditor === 'function') {
+             initializeConfigEditor();
+        }
         
         // --- 初始執行 ---
         updateTime();
