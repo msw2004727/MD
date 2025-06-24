@@ -12,8 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
     
     // --- DOM 元素獲取區 ---
-    const navItems = document.querySelectorAll('.nav-item');
+    const sidebarNav = document.querySelector('.sidebar-nav'); // 【修改】改為獲取側邊欄
     const contentPanels = document.querySelectorAll('.content-panel');
+    const mainContentTitle = document.getElementById('main-content-title'); // 【新增】獲取主標題元素
     const logoutBtn = document.getElementById('logout-btn');
     const currentTimeEl = document.getElementById('current-time');
     
@@ -42,6 +43,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- 函式定義區 ---
+
+    // 【新增/重構】全新的頁籤切換函式
+    function switchTab(targetId, targetTitle) {
+        if (logIntervalId) {
+            clearInterval(logIntervalId);
+            logIntervalId = null;
+        }
+
+        // 更新主內容區的標題
+        if (mainContentTitle) {
+            mainContentTitle.textContent = targetTitle;
+        }
+
+        // 更新側邊欄項目的 active 狀態
+        sidebarNav.querySelectorAll('.sidebar-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.target === targetId);
+        });
+
+        // 切換內容面板
+        contentPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.id === targetId);
+        });
+
+        // 根據切換的頁籤，執行特定的初始化或載入函式
+        if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
+            initializeConfigEditor();
+        } else if (targetId === 'mail-system') {
+            loadBroadcastLog();
+        } else if (targetId === 'log-monitoring') {
+            loadAndDisplayLogs();
+            logIntervalId = setInterval(loadAndDisplayLogs, 5000); 
+        }
+    }
+
 
     function renderPlayerLogs(logs, category = '全部') {
         if (!playerLogDisplay) return;
@@ -108,40 +143,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const monsterGridHtml = (playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score || 0}</li></ul></div>`).join('');
         dataDisplay.innerHTML = `<div class="data-section"><h3>玩家狀態 (Player Stats)</h3><div class="form-grid"><div class="form-group"><label for="admin-nickname">暱稱</label><input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}"></div><div class="form-group"><label for="admin-gold">金幣</label><input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}"></div><div class="form-group"><label for="admin-wins">勝場</label><input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}"></div><div class="form-group"><label for="admin-losses">敗場</label><input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}"></div></div></div><div class="data-section"><h3>DNA 碎片庫存 (預覽)</h3><div id="admin-dna-grid" class="dna-grid">${dnaGridHtml}</div></div><div class="data-section"><h3>持有怪獸 (預覽)</h3><div id="admin-monster-grid" class="monster-grid">${monsterGridHtml}</div></div><div class="save-changes-container"><button id="send-player-mail-btn" class="button secondary">寄送系統信件</button><button id="save-player-data-btn" class="button success">儲存玩家數值變更</button></div>`;
 
-        // 【核心修改處 START】
-        if (playerLogSection && playerLogDisplay && playerLogFilters) {
+        if (playerLogSection) {
             const logs = playerData.playerLogs || [];
-            // 無論如何都顯示區塊
-            playerLogSection.style.display = 'block';
-
             if (logs.length > 0) {
-                // 有日誌：啟用按鈕，移除 empty 樣式，渲染日誌
-                playerLogDisplay.classList.remove('empty-log');
-                playerLogFilters.querySelectorAll('button').forEach(btn => btn.disabled = false);
-                playerLogFilters.querySelector('.active')?.classList.remove('active');
+                playerLogSection.style.display = 'block';
+                playerLogFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
                 playerLogFilters.querySelector('button[data-log-category="全部"]').classList.add('active');
                 renderPlayerLogs(logs, '全部');
             } else {
-                // 沒有日誌：禁用按鈕，加上 empty 樣式，顯示無紀錄訊息
-                playerLogDisplay.classList.add('empty-log');
-                playerLogFilters.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                renderPlayerLogs([], '全部'); // 傳入空陣列以顯示 "暫無日誌紀錄"
+                playerLogSection.style.display = 'none';
             }
-        }
-        // 【核心修改處 END】
-    }
-
-    function switchTab(targetId) {
-        if (logIntervalId) { clearInterval(logIntervalId); logIntervalId = null; }
-        navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
-        contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
-        if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
-            initializeConfigEditor();
-        } else if (targetId === 'mail-system') {
-            loadBroadcastLog();
-        } else if (targetId === 'log-monitoring') {
-            loadAndDisplayLogs();
-            logIntervalId = setInterval(loadAndDisplayLogs, 5000); 
         }
     }
     
@@ -327,7 +338,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // --- 事件綁定區 ---
-    navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
+    
+    // 【修改】將頁籤切換的事件監聽器綁定到新的側邊欄容器上
+    if (sidebarNav) {
+        sidebarNav.addEventListener('click', (e) => {
+            const targetLink = e.target.closest('.sidebar-item');
+            if (targetLink) {
+                e.preventDefault();
+                const targetId = targetLink.dataset.target;
+                const targetTitle = targetLink.dataset.title;
+                switchTab(targetId, targetTitle);
+            }
+        });
+    }
+
     logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'index.html'; });
     searchBtn.addEventListener('click', searchPlayer);
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
@@ -341,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
     generateReportBtn.addEventListener('click', handleGenerateReport);
     if (refreshLogsBtn) { refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
 
-    // 【新增】為玩家日誌篩選按鈕綁定事件
     if (playerLogFilters) {
         playerLogFilters.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
@@ -358,6 +381,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- 初始執行區 ---
     updateTime();
     setInterval(updateTime, 1000);
-    switchTab('dashboard-home');
+    // 【修改】初始化時，預設顯示第一個頁籤的內容與標題
+    const firstNavItem = sidebarNav.querySelector('.sidebar-item');
+    if(firstNavItem) {
+        switchTab(firstNavItem.dataset.target, firstNavItem.dataset.title);
+    }
     loadSenderPresets();
 });
