@@ -210,7 +210,7 @@
                 <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 以檢視資料。</p>
             </div>
         </div>
-
+        
         <div id="mail-system" class="content-panel">
             <h2 class="content-header">群發系統信件</h2>
             <div class="data-section">
@@ -225,7 +225,7 @@
                 </div>
                 <div class="form-group">
                     <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
-                    <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100, "items": [{"type": "dna", "data": {"id": "dna_fire_c01", ...}}]}'></textarea>
+                    <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100, "items": [{"type": "dna", "data": {"id": "dna_fire_c01"}}]}'></textarea>
                 </div>
                 <div class="save-changes-container">
                     <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
@@ -233,6 +233,7 @@
                 <div id="broadcast-response" class="admin-response-message" style="display: none;"></div>
             </div>
         </div>
+        
         <div id="game-configs" class="content-panel">
             <h2 class="content-header">遊戲設定</h2>
             <p>此處將實作即時調整遊戲數值的功能。</p>
@@ -249,6 +250,9 @@
 
             const API_BASE_URL = '/api/MD'; 
 
+            // --- 全域變數，用來暫存當前查詢到的玩家資料 ---
+            let currentPlayerData = null;
+
             const navItems = document.querySelectorAll('.nav-item');
             const contentPanels = document.querySelectorAll('.content-panel');
             const logoutBtn = document.getElementById('logout-btn');
@@ -257,23 +261,38 @@
             const searchInput = document.getElementById('player-search-input');
             const searchBtn = document.getElementById('player-search-btn');
             const dataDisplay = document.getElementById('player-data-display');
-
-            // --- 核心修改處 START ---
+            
             const broadcastTitle = document.getElementById('broadcast-title');
             const broadcastContent = document.getElementById('broadcast-content');
             const broadcastPayload = document.getElementById('broadcast-payload');
             const broadcastBtn = document.getElementById('broadcast-mail-btn');
             const broadcastResponseEl = document.getElementById('broadcast-response');
-            // --- 核心修改處 END ---
 
-            // ... (導覽、登出、時間邏輯維持不變)
-            navItems.forEach(item => { /* ... */ });
-            logoutBtn.addEventListener('click', () => { /* ... */ });
+            // 導覽、登出、時間邏輯 (維持不變)
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+                    const targetId = item.dataset.target;
+                    contentPanels.forEach(panel => {
+                        panel.style.display = panel.id === targetId ? 'block' : 'none';
+                    });
+                });
+            });
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('admin_token');
+                window.location.href = 'admin.html';
+            });
             function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
             updateTime();
             setInterval(updateTime, 1000);
 
+            // --- 核心修改處 START ---
             function renderPlayerData(playerData) {
+                // 儲存當前玩家資料到全域變數
+                currentPlayerData = playerData;
+
                 dataDisplay.innerHTML = `
                     <div class="data-section">
                         <h3>玩家狀態 (Player Stats)</h3>
@@ -296,23 +315,74 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="data-section">
                         <h3>DNA 碎片庫存</h3>
                         <div id="admin-dna-grid" class="dna-grid">
                             ${(playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}, HP: ${dna.hp}, ATK: ${dna.attack}</p></div>` : '<div class="dna-card" style="opacity: 0.5;">空位</div>').join('')}
                         </div>
                     </div>
+
                     <div class="data-section">
                         <h3>持有怪獸</h3>
                         <div id="admin-monster-grid" class="monster-grid">
                             ${(playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>攻擊: ${monster.attack}</li><li>防禦: ${monster.defense}</li><li>速度: ${monster.speed}</li><li>評價: ${monster.score}</li></ul></div>`).join('')}
                         </div>
                     </div>
+
                     <div class="save-changes-container">
-                        <button id="save-player-data-btn" class="button success">儲存變更</button>
+                        <button id="save-player-data-btn" class="button success">儲存對該玩家的變更</button>
                     </div>
                 `;
-                document.getElementById('save-player-data-btn').addEventListener('click', () => { alert('數值即時調整功能將在下一步驟中完成！'); });
+                
+                document.getElementById('save-player-data-btn').addEventListener('click', handleSavePlayerData);
+            }
+
+            async function handleSavePlayerData() {
+                if (!currentPlayerData) {
+                    alert('沒有可儲存的玩家資料。');
+                    return;
+                }
+
+                const saveBtn = document.getElementById('save-player-data-btn');
+                saveBtn.disabled = true;
+                saveBtn.textContent = '儲存中...';
+
+                // 收集表單中的新數值
+                const newNickname = document.getElementById('admin-nickname').value;
+                const newGold = parseInt(document.getElementById('admin-gold').value, 10);
+                const newWins = parseInt(document.getElementById('admin-wins').value, 10);
+                const newLosses = parseInt(document.getElementById('admin-losses').value, 10);
+                
+                // 更新暫存的玩家資料物件
+                currentPlayerData.nickname = newNickname;
+                currentPlayerData.playerStats.nickname = newNickname;
+                currentPlayerData.playerStats.gold = newGold;
+                currentPlayerData.playerStats.wins = newWins;
+                currentPlayerData.playerStats.losses = newLosses;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/player_data/${currentPlayerData.uid}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${adminToken}`
+                        },
+                        // 將整個更新後的玩家資料物件發送到後端
+                        body: JSON.stringify(currentPlayerData)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
+                    
+                    alert('成功！玩家資料已更新。');
+
+                } catch (err) {
+                    alert(`儲存失敗：${err.message}`);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '儲存對該玩家的變更';
+                }
             }
 
             async function searchPlayer() {
@@ -322,6 +392,7 @@
                 }
                 dataDisplay.textContent = '查詢中...';
                 searchBtn.disabled = true;
+                currentPlayerData = null; // 清空舊資料
                 try {
                     const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                     const result = await response.json();
@@ -333,11 +404,11 @@
                     searchBtn.disabled = false;
                 }
             }
+            // --- 核心修改處 END ---
+
             searchBtn.addEventListener('click', searchPlayer);
             searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
 
-            // --- 核心修改處 START ---
-            // 群發信件邏輯
             async function handleBroadcastMail() {
                 const title = broadcastTitle.value.trim();
                 const content = broadcastContent.value.trim();
@@ -393,7 +464,6 @@
             }
 
             broadcastBtn.addEventListener('click', handleBroadcastMail);
-            // --- 核心修改處 END ---
         });
     </script>
 </body>
