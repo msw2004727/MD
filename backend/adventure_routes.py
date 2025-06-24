@@ -50,35 +50,44 @@ def start_adventure_route():
     facility_id = data.get('facility_id')
     team_monster_ids = data.get('team_monster_ids')
 
-    if not all([island_id, facility_id, team_monster_ids]):
-        return jsonify({"error": "請求中缺少必要的欄位 (island_id, facility_id, team_monster_ids)。"}), 400
+    # --- 核心修改處 START ---
+    try:
+        if not all([island_id, facility_id, team_monster_ids]):
+            return jsonify({"error": "請求中缺少必要的欄位 (island_id, facility_id, team_monster_ids)。"}), 400
 
-    adventure_routes_logger.info(f"玩家 {user_id} 請求開始遠征：島嶼 {island_id}, 設施 {facility_id}")
-    
-    game_configs = _get_game_configs_data_from_app_context()
-    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
-    
-    if not player_data:
-        return jsonify({"error": "找不到玩家資料。"}), 404
+        adventure_routes_logger.info(f"玩家 {user_id} 請求開始遠征：島嶼 {island_id}, 設施 {facility_id}")
+        
+        game_configs = _get_game_configs_data_from_app_context()
+        player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+        
+        if not player_data:
+            return jsonify({"error": "找不到玩家資料。"}), 404
 
-    updated_player_data, error_msg = start_expedition_service(
-        player_data, island_id, facility_id, team_monster_ids, game_configs
-    )
+        updated_player_data, error_msg = start_expedition_service(
+            player_data, island_id, facility_id, team_monster_ids, game_configs
+        )
 
-    if error_msg:
-        return jsonify({"error": error_msg}), 400
+        if error_msg:
+            return jsonify({"error": error_msg}), 400
 
-    if updated_player_data:
-        if save_player_data_service(user_id, updated_player_data):
-            return jsonify({
-                "success": True, 
-                "message": "遠征已成功開始！",
-                "adventure_progress": updated_player_data.get("adventure_progress")
-            }), 200
+        if updated_player_data:
+            if save_player_data_service(user_id, updated_player_data):
+                return jsonify({
+                    "success": True, 
+                    "message": "遠征已成功開始！",
+                    "adventure_progress": updated_player_data.get("adventure_progress")
+                }), 200
+            else:
+                return jsonify({"error": "開始遠征後儲存玩家資料失敗。"}), 500
         else:
-            return jsonify({"error": "開始遠征後儲存玩家資料失敗。"}), 500
-    else:
-        return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
+            return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
+            
+    except Exception as e:
+        # 當發生任何未預期的錯誤時，記錄詳細的錯誤堆疊資訊
+        adventure_routes_logger.error(f"處理 /adventure/start 請求時發生嚴重錯誤: {e}", exc_info=True)
+        # 返回一個通用的伺服器錯誤訊息給前端
+        return jsonify({"error": "伺服器在處理遠征請求時發生內部錯誤，請聯繫管理員。"}), 500
+    # --- 核心修改處 END ---
 
 
 @adventure_bp.route('/abandon', methods=['POST'])
@@ -253,7 +262,7 @@ def resolve_choice_route():
         progress["expedition_team"] = team
         
         if battle_result.get("winner_id") == captain_id:
-            floor_completion_result = complete_floor_service(player_data)
+            floor_completion_result = complete_floor_service(player_data, game_configs)
             player_data["adventure_progress"] = floor_completion_result.get("updated_progress")
             
             if save_player_data_service(user_id, player_data):
@@ -299,8 +308,6 @@ def resolve_choice_route():
         player_data["adventure_progress"] = updated_progress
         
         if save_player_data_service(user_id, player_data):
-            # --- 核心修改處 START ---
-            # 在回應中加入更新後的 playerStats
             return jsonify({
                 "success": True,
                 "event_outcome": "choice_resolved",
@@ -308,6 +315,5 @@ def resolve_choice_route():
                 "updated_progress": updated_progress,
                 "updated_player_stats": player_data.get("playerStats")
             }), 200
-            # --- 核心修改處 END ---
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
