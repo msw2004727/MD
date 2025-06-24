@@ -5,6 +5,7 @@ import os
 import json
 import logging
 from flask import current_app
+# 【修改】從 typing 模組導入所有需要的型別提示
 from typing import Optional, Dict, Any, List, Union
 
 # 【新增】從 firebase_admin 導入 firestore 以便操作資料庫
@@ -13,7 +14,7 @@ from firebase_admin import firestore
 # 設定日誌記錄器
 config_editor_logger = logging.getLogger(__name__)
 
-# 【修改】建立一個從"檔案名稱"到"Firestore文件"的映射表
+# 檔案名稱到 Firestore 文件的映射表
 CONFIG_FILE_FIRESTORE_MAP = {
     "titles.json": ("Titles", "player_titles"),
     "dna_fragments.json": ("DNAFragments", "all_fragments"),
@@ -38,9 +39,7 @@ CONFIG_FILE_FIRESTORE_MAP = {
 
 
 def list_editable_configs() -> list[str]:
-    """
-    列出所有可透過後台編輯的設定檔名稱。
-    """
+    """列出所有可透過後台編輯的設定檔名稱。"""
     return sorted(list(CONFIG_FILE_FIRESTORE_MAP.keys()))
 
 def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Optional[str]]:
@@ -89,9 +88,9 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
         config_editor_logger.error(f"從 Firestore 讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
         return None, "讀取 Firestore 資料時發生伺服器內部錯誤。"
 
-def save_config_content(filename: str, content: Union[Dict, List]) -> tuple[bool, Optional[str]]:
+def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional[str]]:
     """
-    【重構】儲存修改後的設定檔內容到 Firestore，直接接收 Python 物件。
+    【重構】儲存修改後的設定檔內容到 Firestore。
     """
     from . import MD_firebase_config
     db = MD_firebase_config.db
@@ -101,19 +100,22 @@ def save_config_content(filename: str, content: Union[Dict, List]) -> tuple[bool
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return False, f"不支援的設定檔 '{filename}'。"
 
+    try:
+        parsed_content = json.loads(content_str)
+    except json.JSONDecodeError as e:
+        error_msg = f"儲存失敗：內容不是有效的 JSON 格式。錯誤: {e}"
+        config_editor_logger.error(error_msg)
+        return False, error_msg
+
     doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP[filename]
     
     try:
         doc_ref = db.collection('MD_GameConfigs').document(doc_name)
         
-        # 如果沒有指定 field_path，表示用新內容覆蓋整個文件
         if field_path is None:
-            doc_ref.set(content)
+            doc_ref.set(parsed_content)
         else:
-            # 使用 update 方法更新指定欄位，不會影響同文件中的其他欄位
-            doc_ref.update({
-                field_path: content
-            })
+            doc_ref.update({field_path: parsed_content})
             
         config_editor_logger.info(f"設定檔 '{filename}' 已成功儲存至 Firestore 的 '{doc_name}.{field_path or ''}'。")
         
