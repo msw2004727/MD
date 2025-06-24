@@ -78,6 +78,32 @@
         #logout-btn {
             width: 100%;
         }
+        /* --- 核心修改處 START --- */
+        .content-panel { display: none; }
+        .content-panel.active { display: block; }
+        .search-container { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .admin-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            font-size: 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--admin-border-color);
+            background-color: var(--admin-panel-bg);
+            color: var(--admin-text-primary);
+        }
+        #player-data-display {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000;
+            color: #0f0;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 1px solid var(--admin-border-color);
+        }
+        /* --- 核心修改處 END --- */
     </style>
 </head>
 <body>
@@ -101,15 +127,21 @@
             <p>請從左側導覽欄選擇您要使用的功能。</p>
             <p>目前系統時間: <span id="current-time"></span></p>
         </div>
-        <div id="player-management" class="content-panel" style="display: none;">
+        <div id="player-management" class="content-panel">
             <h2 class="content-header">玩家管理</h2>
-            <p>此處將實作玩家搜尋與資料編輯功能。</p>
+            <div class="search-container">
+                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 進行查詢...">
+                <button id="player-search-btn" class="button primary">查詢</button>
+            </div>
+            <div id="player-data-display">
+                <p style="color: var(--admin-text-secondary);">請輸入玩家 UID 以檢視資料。</p>
+            </div>
         </div>
-        <div id="mail-system" class="content-panel" style="display: none;">
+        <div id="mail-system" class="content-panel">
             <h2 class="content-header">群發信件</h2>
             <p>此處將實作群發系統信件與信件回收功能。</p>
         </div>
-        <div id="game-configs" class="content-panel" style="display: none;">
+        <div id="game-configs" class="content-panel">
             <h2 class="content-header">遊戲設定</h2>
             <p>此處將實作即時調整遊戲數值的功能。</p>
         </div>
@@ -119,24 +151,29 @@
         document.addEventListener('DOMContentLoaded', function() {
             const adminToken = localStorage.getItem('admin_token');
             if (!adminToken) {
-                // 如果沒有 Token，直接踢回登入頁
                 window.location.href = 'admin.html';
                 return;
             }
+
+            const API_BASE_URL = '/api/MD'; 
 
             const navItems = document.querySelectorAll('.nav-item');
             const contentPanels = document.querySelectorAll('.content-panel');
             const logoutBtn = document.getElementById('logout-btn');
             const currentTimeEl = document.getElementById('current-time');
+            
+            // --- 核心修改處 START ---
+            const searchInput = document.getElementById('player-search-input');
+            const searchBtn = document.getElementById('player-search-btn');
+            const dataDisplay = document.getElementById('player-data-display');
+            // --- 核心修改處 END ---
 
             // 導覽欄切換邏輯
             navItems.forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
                     navItems.forEach(nav => nav.classList.remove('active'));
                     item.classList.add('active');
-
                     const targetId = item.dataset.target;
                     contentPanels.forEach(panel => {
                         panel.style.display = panel.id === targetId ? 'block' : 'none';
@@ -159,8 +196,43 @@
             updateTime();
             setInterval(updateTime, 1000);
 
-            // 可以在此處加上一個定期的 Token 驗證 API 呼叫，確保安全性
-            // 例如: setInterval(() => { verifyTokenOnServer(); }, 60000);
+            // --- 核心修改處 START ---
+            // 玩家搜尋邏輯
+            async function searchPlayer() {
+                const uid = searchInput.value.trim();
+                if (!uid) {
+                    dataDisplay.textContent = '請輸入玩家 UID。';
+                    return;
+                }
+                dataDisplay.textContent = '查詢中...';
+                searchBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/player_data?uid=${uid}`, {
+                        headers: {
+                            'Authorization': `Bearer ${adminToken}`
+                        }
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || `伺服器錯誤: ${response.status}`);
+                    }
+                    // 使用 JSON.stringify 美化輸出
+                    dataDisplay.textContent = JSON.stringify(result, null, 2);
+                } catch (err) {
+                    dataDisplay.textContent = `查詢失敗：${err.message}`;
+                } finally {
+                    searchBtn.disabled = false;
+                }
+            }
+
+            searchBtn.addEventListener('click', searchPlayer);
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    searchPlayer();
+                }
+            });
+            // --- 核心修改處 END ---
         });
     </script>
 </body>
