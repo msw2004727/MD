@@ -1,0 +1,249 @@
+:root {
+    --admin-bg: #1c1c1e;
+    --admin-panel-bg: #2c2c2e;
+    --admin-border-color: #444;
+    --admin-text-primary: #f5f5f7;
+    --admin-text-secondary: #a1a1a6;
+    --admin-accent: #0a84ff;
+    --admin-accent-hover: #3b9bff;
+}
+body {
+    background-color: var(--admin-bg);
+    color: var(--admin-text-primary);
+    font-family: 'Noto Sans TC', sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+.sidebar {
+    width: 240px;
+    background-color: var(--admin-panel-bg);
+    border-right: 1px solid var(--admin-border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+.sidebar-header {
+    padding: 0 1.5rem 1rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    text-align: center;
+}
+.sidebar-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--admin-accent);
+    margin: 0;
+}
+.sidebar-nav {
+    flex-grow: 1;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+.sidebar-nav a {
+    display: block;
+    color: var(--admin-text-primary);
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    transition: background-color 0.2s, color 0.2s;
+    border-left: 3px solid transparent;
+}
+.sidebar-nav a:hover {
+    background-color: color-mix(in srgb, var(--admin-accent) 15%, transparent);
+}
+.sidebar-nav a.active {
+    background-color: color-mix(in srgb, var(--admin-accent) 25%, transparent);
+    color: #fff;
+    font-weight: 500;
+    border-left-color: var(--admin-accent);
+}
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--admin-border-color);
+}
+.main-content {
+    flex-grow: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+.content-header {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 0.75rem;
+}
+#logout-btn {
+    width: 100%;
+}
+.content-panel { display: none; }
+.content-panel.active { display: block; }
+.search-container { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.admin-input {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--admin-border-color);
+    background-color: var(--admin-panel-bg);
+    color: var(--admin-text-primary);
+}
+#player-data-display {
+    background-color: transparent;
+    color: var(--admin-text-secondary);
+    padding: 0;
+    border-radius: 0;
+    white-space: normal;
+    word-break: normal;
+    border: none;
+}
+.data-section {
+    background-color: var(--admin-panel-bg);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.data-section h3 {
+    margin-top: 0;
+    color: var(--admin-accent);
+    border-bottom: 1px solid var(--admin-border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.form-group label {
+    font-size: 0.9rem;
+    color: var(--admin-text-secondary);
+}
+.form-group input, .form-group textarea, .form-group select {
+    padding: 8px 10px;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--admin-border-color);
+    background-color: var(--admin-bg);
+    color: var(--admin-text-primary);
+    resize: vertical;
+}
+.dna-grid, .monster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+.dna-card, .monster-card-admin {
+    border: 1px solid var(--admin-border-color);
+    padding: 1rem;
+    border-radius: 6px;
+}
+.dna-card h4, .monster-card-admin h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: var(--admin-accent-hover);
+}
+.monster-card-admin ul {
+    padding-left: 1.2rem;
+    margin: 0;
+}
+.save-changes-container {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+.admin-response-message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+.admin-response-message.success {
+    background-color: color-mix(in srgb, var(--success-color) 20%, transparent);
+    color: var(--success-color);
+}
+.admin-response-message.error {
+    background-color: color-mix(in srgb, var(--danger-color) 20%, transparent);
+    color: var(--danger-color);
+}
+.broadcast-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.broadcast-log-table th, .broadcast-log-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    text-align: left;
+}
+.broadcast-log-table th {
+    font-weight: 600;
+}
+.broadcast-log-table td.actions-cell {
+    text-align: right;
+}
+#player-search-results {
+    margin-bottom: 1.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+.search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.search-result-item:hover {
+    background-color: var(--admin-panel-bg);
+}
+.search-result-item .uid {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--admin-text-secondary);
+}
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+.overview-card {
+    background: var(--admin-panel-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--admin-accent);
+}
+.overview-card .stat-title {
+    font-size: 1rem;
+    color: var(--admin-text-secondary);
+    margin: 0 0 0.5rem 0;
+}
+.overview-card .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--admin-text-primary);
+}
+#game-configs-display {
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    max-height: 60vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--admin-text-secondary);
+}
