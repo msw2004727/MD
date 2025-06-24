@@ -84,7 +84,20 @@ body.admin-body {
 .dna-card h4, .monster-card-admin h4 { margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--admin-accent-hover); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .monster-card-admin ul { list-style-type: none; padding: 0; margin: 0; font-size: 0.9rem; color: var(--admin-text-secondary); }
 #broadcast-log-container { max-height: 50vh; overflow-y: auto; }
-.log-display, .log-display-box { height: 65vh; background-color: var(--admin-bg); border-radius: 8px; border: 1px solid var(--admin-border-color); padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word; }
+.log-display, .log-display-box {
+    display: flex; /* 新增 */
+    flex-direction: column-reverse; /* 新增 */
+    height: 65vh;
+    background-color: var(--admin-bg);
+    border-radius: 8px;
+    border: 1px solid var(--admin-border-color);
+    padding: 1rem;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
 .log-filters button { font-size: 0.8rem; padding: 4px 10px; background-color: #374151; color: var(--admin-text-secondary); border: none; }
 .log-filters button.active { background-color: var(--admin-accent); color: white; font-weight: bold; }
 .log-display .log-category { padding: 2px 6px; border-radius: 4px; font-family: 'Noto Sans TC', sans-serif; font-size: 0.8rem; color: white; }
