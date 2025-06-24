@@ -10,17 +10,42 @@ from google.cloud.firestore_v1.field_path import FieldPath
 import random 
 
 import math
-# 【修改】這裡不再需要導入 mail_services
-# from .mail_services import add_mail_to_player
 
-# 【修改】從 utils_services 導入我們搬過去的日誌函式
-from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level, _add_player_log
+# --- 核心修改處 START ---
+# 移除從 utils_services 導入 _add_player_log
+from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
+# --- 核心修改處 END ---
+
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry, PlayerLogEntry
 from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
 
-# --- 【移除】_add_player_log 函式，它已經被搬到 utils_services.py ---
+
+# --- 核心修改處 START ---
+# 將 _add_player_log 函式移回此檔案
+def _add_player_log(player_data: PlayerGameData, category: str, message: str):
+    """
+    為指定的玩家資料物件新增一條日誌。
+    """
+    if "playerLogs" not in player_data or not isinstance(player_data.get("playerLogs"), list):
+        player_data["playerLogs"] = []
+    
+    # 限制日誌最多只保留最近的 50 條
+    MAX_LOGS = 50
+    if len(player_data["playerLogs"]) >= MAX_LOGS:
+        # 從最舊的日誌開始移除 (pop(0) 移除列表頭部)
+        player_data["playerLogs"] = player_data["playerLogs"][-(MAX_LOGS-1):]
+
+    new_log: PlayerLogEntry = {
+        "timestamp": int(time.time()),
+        "category": category,
+        "message": message,
+    }
+    # 將新日誌加到列表尾部
+    player_data["playerLogs"].append(new_log)
+# --- 核心修改處 END ---
+
 
 # --- 預設遊戲設定 (保持不變) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
@@ -39,7 +64,6 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
 
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
     """為新玩家初始化遊戲資料。"""
-    # (此函式內部邏輯不變，但它呼叫的 _add_player_log 現在來自 utils_services)
     player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
     
     all_titles_data = game_configs.get("titles", [])
@@ -177,21 +201,17 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                             mail_content = f"恭喜您！作為冠軍殿堂第 {player_rank} 名的榮譽成員，系統已為您發放過去 {days_to_reward} 天的俸祿，共計 {total_gold_reward} 🪙。已自動存入您的錢包。"
                             mail_template = { "type": "reward", "title": mail_title, "content": mail_content }
 
-                            # --- 核心修改處 START ---
-                            # 檢查信箱中是否已存在未讀的俸祿信件
                             mailbox = player_game_data_dict.get("mailbox", [])
                             unread_champion_mail_exists = any(
                                 mail.get("title") == mail_title and not mail.get("is_read")
                                 for mail in mailbox
                             )
-                            # 只有在不存在未讀俸祿信件時，才新增信件
+                            
                             if not unread_champion_mail_exists:
                                 add_mail_to_player(player_game_data_dict, mail_template)
                                 player_services_logger.info(f"已為冠軍玩家 {player_id} (第{player_rank}名) 發放 {days_to_reward} 天的獎勵，共 {total_gold_reward} 金幣，並寄送通知信。")
-                                # 注意：此處不再單獨儲存，將由後續的遷移檢查統一儲存
                             else:
                                 player_services_logger.info(f"玩家 {player_id} 已有未讀的俸祿信件，本次不再重複發送。")
-                            # --- 核心修改處 END ---
 
             needs_migration_save = False
             if "gold" not in player_stats:
@@ -303,7 +323,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
 def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
     """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
-    # (此函式內部邏輯不變)
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
         player_services_logger.error("Firestore 資料庫未初始化 (save_player_data_service 內部)。")
@@ -371,7 +390,6 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         player_services_logger.error(f"儲存玩家遊戲資料到 Firestore 時發生錯誤 ({player_id}): {e}", exc_info=True)
         return False
 
-# ... 其餘函式 (draw_free_dna, get_friends_statuses_service, add_note_service) 保持不變 ...
 def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
     """執行免費的 DNA 抽取。"""
     player_services_logger.info("正在執行免費 DNA 抽取...")
