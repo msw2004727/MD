@@ -51,6 +51,20 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
     if not db:
         return None, "資料庫服務未初始化。"
         
+    # --- 核心修改處 START ---
+    # 檢查是否為本地設定檔
+    if filename == "adventure_settings.json":
+        try:
+            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            file_path = os.path.join(data_dir, filename)
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = json.load(f)
+            return content, None
+        except Exception as e:
+            config_editor_logger.error(f"從本地讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
+            return None, f"讀取本地檔案 {filename} 時發生錯誤。"
+    # --- 核心修改處 END ---
+
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return None, f"不支援的設定檔 '{filename}'。"
 
@@ -124,6 +138,51 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     except Exception as e:
         config_editor_logger.error(f"儲存設定檔 '{filename}' 到 Firestore 時發生錯誤: {e}", exc_info=True)
         return False, "儲存檔案到 Firestore 時發生伺服器內部錯誤。"
+
+# --- 核心修改處 START ---
+def save_adventure_settings_service(global_settings: Dict, facilities_settings: List) -> tuple[bool, Optional[str]]:
+    """
+    專門用來儲存冒險島的相關設定。
+    """
+    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+    
+    try:
+        # 1. 儲存全域設定到 adventure_settings.json
+        adv_settings_path = os.path.join(data_dir, 'adventure_settings.json')
+        with open(adv_settings_path, 'w', encoding='utf-8') as f:
+            json.dump(global_settings, f, indent=2, ensure_ascii=False)
+        config_logger.info(f"已成功儲存全域冒險設定至 '{adv_settings_path}'。")
+
+        # 2. 儲存各地區設施設定到 adventure_islands.json
+        islands_path = os.path.join(data_dir, 'adventure_islands.json')
+        
+        # 先讀取現有的島嶼資料
+        with open(islands_path, 'r', encoding='utf-8') as f:
+            islands_data = json.load(f)
+
+        # 更新設施的 cost
+        for facility_update in facilities_settings:
+            for island in islands_data:
+                for facility in island.get('facilities', []):
+                    if facility.get('facilityId') == facility_update.get('id'):
+                        facility['cost'] = facility_update.get('cost', facility['cost'])
+                        break
+        
+        # 將更新後的完整資料寫回檔案
+        with open(islands_path, 'w', encoding='utf-8') as f:
+            json.dump(islands_data, f, indent=2, ensure_ascii=False)
+        config_logger.info(f"已成功更新並儲存各地區設施設定至 '{islands_path}'。")
+
+        # 3. 觸發主應用程式重新載入所有設定
+        reload_main_app_configs()
+        
+        return True, None
+        
+    except Exception as e:
+        config_editor_logger.error(f"儲存冒險島設定時發生錯誤: {e}", exc_info=True)
+        return False, "儲存冒險島設定時發生伺服器內部錯誤。"
+# --- 核心修改處 END ---
+
 
 def reload_main_app_configs():
     """
