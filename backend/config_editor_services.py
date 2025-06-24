@@ -34,12 +34,14 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "skills/wood.json": ("Skills", "skill_database.木"),
 }
 
-# 新增一個列表來定義哪些是本地檔案
+# --- 核心修改處 START ---
+# 將 adventure_growth_settings.json 也加入到本地檔案列表
 LOCAL_CONFIG_FILES = [
     "adventure_settings.json", 
     "adventure_islands.json",
     "adventure_growth_settings.json"
 ]
+# --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
