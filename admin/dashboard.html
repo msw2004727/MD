@@ -54,11 +54,9 @@
                         <button id="search-player-btn" class="btn btn-primary">查詢</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="player-data-editor">玩家資料 (JSON 格式，可直接編輯)：</label>
-                    <textarea id="player-data-editor" rows="20" placeholder="查詢後此處將顯示玩家的 JSON 資料..."></textarea>
+                <div id="player-data-display" class="player-data-container">
+                    <p class="placeholder-text">請先查詢玩家以檢視詳細資料。</p>
                 </div>
-                <button id="save-player-data-btn" class="btn btn-success" disabled>儲存玩家資料變更</button>
             </section>
 
             <section id="broadcast-system-section" class="admin-section">
