@@ -2,7 +2,7 @@
 // 專門處理「冒險島」頁籤內的所有使用者互動事件。
 
 /**
- * 根據點擊的設施，顯示隊伍選擇彈窗。
+ * 處理點擊冒險島設施卡片上的「挑戰」按鈕。
  * @param {Event} event - 點擊事件對象。
  */
 function handleFacilityChallengeClick(event) {
@@ -56,6 +56,7 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         }
     }
     
+    // --- 核心修改處 START ---
     const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionStart || '';
     const messageHtml = `
         <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
@@ -64,6 +65,7 @@ async function initiateExpedition(islandId, facilityId, teamMonsterIds) {
         <p>正在為「${facilityName}」組建遠征隊...</p>
     `;
     showFeedbackModal('準備出發...', messageHtml, true);
+    // --- 核心修改處 END ---
 
     try {
         const result = await startExpedition(islandId, facilityId, teamMonsterIds);
@@ -151,7 +153,6 @@ async function handleAdventureChoiceClick(buttonElement) {
         const battleResult = result.battle_result;
         const updatedProgress = result.updated_progress;
         
-        // --- 核心修改處 START ---
         if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
             await refreshPlayerData();
             
@@ -178,20 +179,23 @@ async function handleAdventureChoiceClick(buttonElement) {
                 ];
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster, drawActions);
 
-            } else { // 包含戰敗的情況
+            } else {
+                // --- 核心修改處 START ---
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
                 
                 // 使用後端返回的統計數據來顯示總結彈窗
                 if (updatedProgress && updatedProgress.expedition_stats) {
                      setTimeout(() => {
                         showExpeditionSummaryModal(updatedProgress.expedition_stats);
-                    }, 500);
+                    }, 500); // 延遲顯示，避免與戰報重疊
                 } else {
+                    // 如果沒有統計數據，直接返回主介面
                     initializeAdventureUI();
                 }
+                // --- 核心修改處 END ---
             }
 
-        } else { // --- 核心修改處 END ---
+        } else {
             if (result.updated_player_stats) {
                 gameState.playerData.playerStats = result.updated_player_stats;
                 if (typeof updatePlayerCurrencyDisplay === 'function') {
