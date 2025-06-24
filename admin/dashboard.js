@@ -30,8 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateReportBtn = document.getElementById('generate-report-btn');
     const overviewReportContainer = document.getElementById('overview-report-container');
 
+    // --- 核心修改處 START：新增設定編輯器的 DOM 元素 ---
     const configFileSelector = document.getElementById('config-file-selector');
-    const configsDisplay = document.getElementById('game-configs-display');
+    const configsDisplayArea = document.getElementById('game-configs-display');
+    const saveConfigBtn = document.getElementById('save-config-btn');
+    const configResponseEl = document.getElementById('config-response');
+    // --- 核心修改處 END ---
 
 
     // --- 函式定義區 ---
@@ -44,16 +48,17 @@ document.addEventListener('DOMContentLoaded', function() {
             panel.classList.toggle('active', panel.id === targetId);
         });
 
+        // --- 核心修改處 START：切換頁籤時觸發對應的載入函式 ---
         if (targetId === 'game-configs') {
             loadAndPopulateConfigsDropdown();
         } else if (targetId === 'mail-system') {
             loadBroadcastLog();
         }
+        // --- 核心修改處 END ---
     }
 
     function updateTime() { if(currentTimeEl) { currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
 
-    // --- 核心修改處 START：重寫 renderPlayerData 函式 ---
     function renderPlayerData(playerData) {
         currentPlayerData = playerData;
 
@@ -95,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button id="save-player-data-btn" class="button success">儲存玩家數值變更</button>
             </div>`;
     }
-    // --- 核心修改處 END ---
 
     async function handleSavePlayerData() {
         if (!currentPlayerData) { alert('沒有可儲存的玩家資料。'); return; }
@@ -337,11 +341,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- 核心修改處 START：新增設定編輯器相關函式 ---
     async function loadAndPopulateConfigsDropdown() {
         if (configFileSelector.options.length > 1 && !configFileSelector.dataset.needsRefresh) return;
         
         configFileSelector.innerHTML = '<option value="">請選擇一個檔案...</option>';
         configFileSelector.disabled = true;
+        configsDisplayArea.value = '正在獲取設定檔列表...';
         try {
             const response = await fetch(`${API_BASE_URL}/admin/list_configs`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
@@ -354,11 +360,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 configFileSelector.add(option);
             });
             configFileSelector.dataset.needsRefresh = "false";
+            configsDisplayArea.value = '請從上方選擇一個設定檔以檢視或編輯。';
         } catch (err) {
             console.error('載入設定檔列表失敗:', err);
-            const option = new Option(`載入失敗: ${err.message}`, '');
-            option.disabled = true;
-            configFileSelector.add(option);
+            configsDisplayArea.value = `載入設定檔列表失敗: ${err.message}`;
         } finally {
             configFileSelector.disabled = false;
         }
@@ -366,12 +371,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadSelectedConfig() {
         const selectedFile = configFileSelector.value;
+        configResponseEl.style.display = 'none';
         if (!selectedFile) {
-            configsDisplay.textContent = '請從上方選擇一個設定檔以檢視內容。';
+            configsDisplayArea.value = '請從上方選擇一個設定檔以檢視或編輯。';
+            saveConfigBtn.disabled = true;
             return;
         }
         
-        configsDisplay.textContent = '正在從伺服器獲取資料...';
+        configsDisplayArea.value = '正在從伺服器獲取資料...';
+        saveConfigBtn.disabled = true;
         try {
              const response = await fetch(`${API_BASE_URL}/admin/get_config?file=${encodeURIComponent(selectedFile)}`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
@@ -379,11 +387,53 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
             
-            configsDisplay.textContent = JSON.stringify(result, null, 2);
+            // 後端可能會回傳 JSON 物件或包含純文字的物件
+            const content = (typeof result === 'object' && 'content' in result) ? result.content : JSON.stringify(result, null, 2);
+            configsDisplayArea.value = content;
+            saveConfigBtn.disabled = false;
         } catch (err) {
-            configsDisplay.textContent = `載入失敗：${err.message}`;
+            configsDisplayArea.value = `載入失敗：${err.message}`;
         }
     }
+
+    async function handleSaveConfig() {
+        const selectedFile = configFileSelector.value;
+        const content = configsDisplayArea.value;
+
+        if (!selectedFile) {
+            alert('請先選擇一個要儲存的檔案。');
+            return;
+        }
+        if (!confirm(`您確定要覆蓋伺服器上的檔案「${selectedFile}」嗎？\n\n如果 JSON 格式錯誤，可能會導致遊戲功能異常！`)) {
+            return;
+        }
+
+        saveConfigBtn.disabled = true;
+        saveConfigBtn.textContent = '儲存中...';
+        configResponseEl.style.display = 'none';
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/save_config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                body: JSON.stringify({ file: selectedFile, content: content })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || '儲存失敗');
+            
+            configResponseEl.textContent = result.message;
+            configResponseEl.className = 'admin-response-message success';
+        } catch (err) {
+            configResponseEl.textContent = `儲存失敗：${err.message}`;
+            configResponseEl.className = 'admin-response-message error';
+        } finally {
+            configResponseEl.style.display = 'block';
+            saveConfigBtn.disabled = false;
+            saveConfigBtn.textContent = '儲存設定變更';
+        }
+    }
+    // --- 核心修改處 END ---
+
 
     // --- 事件綁定區 ---
     navItems.forEach(item => {
@@ -410,7 +460,12 @@ document.addEventListener('DOMContentLoaded', function() {
     broadcastLogContainer.addEventListener('click', handleRecallMail);
     generateReportBtn.addEventListener('click', handleGenerateReport);
 
+    // --- 核心修改處 START：新增事件綁定 ---
     configFileSelector.addEventListener('change', loadSelectedConfig);
+    if (saveConfigBtn) {
+        saveConfigBtn.addEventListener('click', handleSaveConfig);
+    }
+    // --- 核心修改處 END ---
 
     // --- 初始執行區 ---
     updateTime();
