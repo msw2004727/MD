@@ -7,7 +7,13 @@ from flask import Blueprint, jsonify, request
 # 從專案的其他模組導入
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
-from .adventure_services import start_expedition_service, get_all_islands_service, advance_floor_service, complete_floor_service, resolve_event_choice_service
+# --- 核心修改處 START ---
+# 導入新建立的 switch_captain_service 函式
+from .adventure_services import (
+    start_expedition_service, get_all_islands_service, advance_floor_service, 
+    complete_floor_service, resolve_event_choice_service, switch_captain_service
+)
+# --- 核心修改處 END ---
 # 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
 from .battle_services import simulate_battle_full
 
@@ -50,7 +56,6 @@ def start_adventure_route():
     facility_id = data.get('facility_id')
     team_monster_ids = data.get('team_monster_ids')
 
-    # --- 核心修改處 START ---
     try:
         if not all([island_id, facility_id, team_monster_ids]):
             return jsonify({"error": "請求中缺少必要的欄位 (island_id, facility_id, team_monster_ids)。"}), 400
@@ -83,11 +88,8 @@ def start_adventure_route():
             return jsonify({"error": "開始遠征時發生未知服務錯誤。"}), 500
             
     except Exception as e:
-        # 當發生任何未預期的錯誤時，記錄詳細的錯誤堆疊資訊
         adventure_routes_logger.error(f"處理 /adventure/start 請求時發生嚴重錯誤: {e}", exc_info=True)
-        # 返回一個通用的伺服器錯誤訊息給前端
         return jsonify({"error": "伺服器在處理遠征請求時發生內部錯誤，請聯繫管理員。"}), 500
-    # --- 核心修改處 END ---
 
 
 @adventure_bp.route('/abandon', methods=['POST'])
@@ -198,7 +200,7 @@ def complete_floor_route():
     if not player_data:
         return jsonify({"error": "找不到玩家資料。"}), 404
         
-    service_result = complete_floor_service(player_data)
+    service_result = complete_floor_service(player_data, game_configs)
     
     if not service_result.get("success"):
         return jsonify({"error": service_result.get("error", "通關結算失敗。")}), 400
@@ -317,3 +319,39 @@ def resolve_choice_route():
             }), 200
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
+
+# --- 核心修改處 START ---
+@adventure_bp.route('/switch_captain', methods=['POST'])
+def switch_captain_route():
+    """
+    處理玩家在遠征中更換隊長的請求。
+    """
+    user_id, nickname, error_response = _get_authenticated_user_id()
+    if error_response:
+        return error_response
+
+    data = request.json
+    monster_id_to_promote = data.get('monster_id')
+
+    if not monster_id_to_promote:
+        return jsonify({"error": "請求中缺少 'monster_id'。"}), 400
+
+    game_configs = _get_game_configs_data_from_app_context()
+    player_data, _ = get_player_data_service(user_id, nickname, game_configs)
+    if not player_data:
+        return jsonify({"error": "找不到玩家資料。"}), 404
+
+    updated_player_data = switch_captain_service(player_data, monster_id_to_promote)
+
+    if not updated_player_data:
+        return jsonify({"error": "更換隊長失敗，可能是怪獸無效或已是隊長。"}), 400
+
+    if save_player_data_service(user_id, updated_player_data):
+        return jsonify({
+            "success": True,
+            "message": "隊長已更換。",
+            "updated_progress": updated_player_data.get("adventure_progress")
+        }), 200
+    else:
+        return jsonify({"error": "更換隊長後儲存進度失敗。"}), 500
+# --- 核心修改處 END ---
