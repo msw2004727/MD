@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>後台儀表板 - 怪獸異世界</title>
-    <link href="css/theme.css?v=0.4.1.1" rel="stylesheet">
-    <link href="css/buttons.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/theme.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/buttons.css?v=0.4.1.1" rel="stylesheet">
     <style>
         :root {
             --admin-bg: #1c1c1e;
@@ -348,7 +348,7 @@
             // --- 變數定義區 ---
             const adminToken = localStorage.getItem('admin_token');
             if (!adminToken) {
-                window.location.href = 'admin.html';
+                window.location.href = 'index.html';
                 return;
             }
             const API_BASE_URL = '/api/MD'; 
@@ -602,7 +602,7 @@
                     broadcastTitleInput.value = '';
                     broadcastContentInput.value = '';
                     broadcastPayloadInput.value = '';
-                    loadBroadcastLog(); // 發送成功後刷新紀錄
+                    loadBroadcastLog();
                 } catch (err) {
                     broadcastResponseEl.textContent = `發送失敗：${err.message}`;
                     broadcastResponseEl.className = 'admin-response-message error';
@@ -704,7 +704,6 @@
                 }
             }
 
-
             // --- 事件綁定區 ---
             navItems.forEach(item => {
                 item.addEventListener('click', (e) => {
@@ -713,7 +712,7 @@
                 });
             });
 
-            logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'admin.html'; });
+            logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'index.html'; });
             searchBtn.addEventListener('click', searchPlayer);
             searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
             searchResultsContainer.addEventListener('click', (e) => {
