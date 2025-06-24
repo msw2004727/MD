@@ -183,7 +183,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // --- 核心修改處 START ---
             const categoryColors = { '系統': '#9CA3AF', '金幣': '#FBBF24', '戰鬥': '#F87171', '合成': '#60A5FA', '物品': '#34D399' };
             DOMElements.playerLogDisplay.innerHTML = filteredLogs.map(log => {
                 const date = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
@@ -202,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             }).join('');
-            // --- 核心修改處 END ---
         }
 
         // --- 玩家資料渲染 ---
@@ -484,6 +482,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="cs-mail-content">
                                 ${mail.content.replace(/\n/g, '<br>')}
                             </div>
+                            <div class="cs-mail-actions">
+                                <button class="button secondary cs-reply-btn" data-recipient-id="${senderId}" data-recipient-name="${sender}">回覆</button>
+                                <button class="button danger text-xs cs-delete-mail-btn" data-mail-id="${mail.id}">刪除</button>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -492,6 +494,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 DOMElements.csMailContainer.innerHTML = `<p style="color: var(--danger-color);">載入客服信件失敗：${err.message}</p>`;
             }
         }
+        
+        // --- 核心修改處 START ---
+        // 新增：處理客服信箱按鈕點擊的函式
+        async function handleCsMailActions(event) {
+            const replyBtn = event.target.closest('.cs-reply-btn');
+            const deleteBtn = event.target.closest('.cs-delete-mail-btn');
+
+            if (replyBtn) {
+                const recipientId = replyBtn.dataset.recipientId;
+                const recipientName = replyBtn.dataset.recipientName;
+                const replyTitle = prompt(`回覆給「${recipientName}」的標題：`, `Re: ${replyBtn.closest('.cs-mail-item').querySelector('.cs-mail-title').textContent}`);
+                if (!replyTitle) return;
+                const replyContent = prompt(`請輸入回覆內容：`);
+                if (!replyContent) return;
+                
+                replyBtn.disabled = true;
+                replyBtn.textContent = '發送中...';
+                try {
+                    const result = await fetchAdminAPI('/send_mail_to_player', { 
+                        method: 'POST', 
+                        body: JSON.stringify({ 
+                            recipient_id: recipientId, 
+                            title: replyTitle, 
+                            content: replyContent, 
+                            sender_name: '客服團隊' 
+                        }) 
+                    });
+                    alert(result.message);
+                } catch (err) {
+                    alert(`回覆失敗：${err.message}`);
+                } finally {
+                    replyBtn.disabled = false;
+                    replyBtn.textContent = '回覆';
+                }
+            } else if (deleteBtn) {
+                const mailId = deleteBtn.dataset.mailId;
+                if (!confirm(`您確定要刪除這封來自玩家的信件嗎？此操作不可復原。`)) return;
+
+                deleteBtn.disabled = true;
+                deleteBtn.textContent = '刪除中...';
+                try {
+                    // 注意：API 端點使用了 <string:mail_id> 路由參數
+                    const result = await fetchAdminAPI(`/delete_cs_mail/${mailId}`, { method: 'DELETE' });
+                    alert(result.message);
+                    loadCsMail(); // 成功後重新載入列表
+                } catch (err) {
+                    alert(`刪除失敗：${err.message}`);
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = '刪除';
+                }
+            }
+        }
+        // --- 核心修改處 END ---
+
 
         // 冒險島設定邏輯
         async function loadAdventureSettings() {
@@ -534,19 +590,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // --- 核心修改處 START ---
-        // 新增：儲存冒險島設定的函式
         async function handleSaveAdventureSettings() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
             
-            // 1. 收集全域設定
             const globalSettings = {
                 boss_difficulty_multiplier_per_floor: parseFloat(bossMultiplierInput.value) || 1.1,
                 floor_clear_base_gold: parseInt(baseGoldInput.value, 10) || 50,
                 floor_clear_bonus_gold_per_floor: parseInt(bonusGoldInput.value, 10) || 10,
             };
 
-            // 2. 收集各地區設施設定
             const facilitiesSettings = [];
             facilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
                 facilitiesSettings.push({
@@ -555,7 +607,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            // 3. 呼叫 API 儲存
             saveBtn.disabled = true;
             saveBtn.textContent = '儲存中...';
             responseEl.style.display = 'none';
@@ -581,7 +632,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存冒險島設定變更';
             }
         }
-        // --- 核心修改處 END ---
 
         // --- 儀表板總覽邏輯 ---
         async function handleGenerateReport() {
@@ -626,7 +676,8 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.refreshLogBtn.addEventListener('click', loadBroadcastLog);
         DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
         if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
-        if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } // --- 核心修改處 START ---
+        if (DOMElements.csMailContainer) { DOMElements.csMailContainer.addEventListener('click', handleCsMailActions); } // --- 核心修改處 START ---
+        if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } 
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
