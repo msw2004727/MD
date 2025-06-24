@@ -169,12 +169,9 @@ function renderAdventureProgressUI(adventureProgress) {
         const originalMonster = gameState.playerData.farmedMonsters.find(m => m.id === member.monster_id);
         if (!originalMonster) return;
 
-        // --- 核心修改處 START ---
-        // 使用 getMonsterDisplayName 獲取簡化後的名稱
         const displayName = getMonsterDisplayName(originalMonster, gameState.gameConfigs);
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = originalMonster.rarity ? (rarityMap[originalMonster.rarity] || 'common') : 'common';
-        // --- 核心修改處 END ---
 
         const headInfo = { type: '無', rarity: '普通' };
         const constituentIds = originalMonster.constituent_dna_ids || [];
@@ -191,11 +188,11 @@ function renderAdventureProgressUI(adventureProgress) {
         const isCaptain = index === 0;
         const captainMedal = isCaptain ? '<span class="captain-medal" title="遠征隊隊長">🎖️</span>' : '';
         
-        const switchCaptainBtn = !isCaptain ? 
-            `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">👑</button>` : '';
-
         // --- 核心修改處 START ---
-        // 將顯示的名稱從 member.nickname 改為 displayName
+        const switchCaptainBtn = !isCaptain ? 
+            `<button class="button secondary text-xs switch-captain-btn" data-monster-id="${member.monster_id}" title="任命為隊長" style="padding: 2px 6px; line-height: 1; min-width: auto; margin-left: 5px;">換</button>` : '';
+        // --- 核心修改處 END ---
+
         teamStatusHtml += `
             <div class="team-member-card">
                 <div class="avatar" style="background-image: url('${imagePath}')"></div>
@@ -210,7 +207,6 @@ function renderAdventureProgressUI(adventureProgress) {
                 </div>
             </div>
         `;
-        // --- 核心修改處 END ---
     });
     
     adventureTabContent.innerHTML = `
