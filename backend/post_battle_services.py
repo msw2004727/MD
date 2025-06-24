@@ -6,7 +6,7 @@ import time
 from typing import Dict, Any, List, Optional, Tuple
 
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs, ChampionSlot
-from .player_services import save_player_data_service
+from .player_services import save_player_data_service, _add_player_log # 【修改】導入 _add_player_log
 from .monster_absorption_services import absorb_defeated_monster_service
 from .champion_services import get_champions_data, update_champions_document
 from .mail_services import add_mail_to_player
@@ -109,31 +109,31 @@ def process_battle_results(
     game_configs: GameConfigs,
     is_champion_challenge: bool = False,
     challenged_rank: Optional[int] = None
-) -> Dict[str, Any]: # --- 核心修改處 1：修改回傳值的型別提示 ---
+) -> Dict[str, Any]:
     """
     處理戰鬥結束後的所有數據更新，包含冠軍殿堂邏輯。
     返回一個包含更新後數據的字典。
     """
     newly_awarded_titles: List[Dict[str, Any]] = []
-    updated_champions_data: Optional[Dict[str, Any]] = None # --- 核心修改處 2：初始化一個變數來存放更新後的冠軍資料 ---
+    updated_champions_data: Optional[Dict[str, Any]] = None
     
     # 1. 更新勝利方和失敗方的玩家統計數據 (PlayerStats)
-    player_stats = player_data.get("playerStats")
-    if player_stats:
-        if battle_result.get("winner_id") == player_monster_data['id']:
-            player_stats["wins"] = player_stats.get("wins", 0) + 1
-        elif battle_result.get("loser_id") == player_monster_data['id']:
-            player_stats["losses"] = player_stats.get("losses", 0) + 1
-        player_data["playerStats"] = player_stats
+    player_stats = player_data.get("playerStats", {})
+    is_player_winner = battle_result.get("winner_id") == player_monster_data['id']
+    
+    if is_player_winner:
+        player_stats["wins"] = player_stats.get("wins", 0) + 1
+    else:
+        player_stats["losses"] = player_stats.get("losses", 0) + 1
+    player_data["playerStats"] = player_stats
 
     if opponent_player_data and opponent_id:
-        opponent_stats = opponent_player_data.get("playerStats")
-        if opponent_stats:
-            if battle_result.get("winner_id") == opponent_monster_data['id']:
-                opponent_stats["wins"] = opponent_stats.get("wins", 0) + 1
-            elif battle_result.get("loser_id") == opponent_monster_data['id']:
-                opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
-            opponent_player_data["playerStats"] = opponent_stats
+        opponent_stats = opponent_player_data.get("playerStats", {})
+        if not is_player_winner:
+            opponent_stats["wins"] = opponent_stats.get("wins", 0) + 1
+        else:
+            opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
+        opponent_player_data["playerStats"] = opponent_stats
 
     # 2. 更新參與戰鬥的怪獸數據
     player_monster_in_farm = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == player_monster_data['id']), None)
@@ -143,12 +143,10 @@ def process_battle_results(
         player_monster_in_farm["skills"] = battle_result["player_monster_final_skills"]
         
         monster_resume = player_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
-        if battle_result.get("winner_id") == player_monster_data['id']:
+        if is_player_winner:
             monster_resume["wins"] = monster_resume.get("wins", 0) + 1
-            post_battle_logger.info(f"玩家怪獸 {player_monster_in_farm.get('nickname')} 勝利，勝場 +1")
-        elif battle_result.get("loser_id") == player_monster_data['id']:
+        else:
             monster_resume["losses"] = monster_resume.get("losses", 0) + 1
-            post_battle_logger.info(f"玩家怪獸 {player_monster_in_farm.get('nickname')} 戰敗，敗場 +1")
         player_monster_in_farm["resume"] = monster_resume
 
         if player_monster_in_farm.get("farmStatus"):
@@ -162,9 +160,9 @@ def process_battle_results(
         opponent_monster_in_farm = next((m for m in opponent_player_data.get("farmedMonsters", []) if m.get("id") == opponent_monster_data['id']), None)
         if opponent_monster_in_farm:
             opponent_resume = opponent_monster_in_farm.setdefault("resume", {"wins": 0, "losses": 0})
-            if battle_result.get("winner_id") == opponent_monster_data['id']:
+            if not is_player_winner:
                 opponent_resume["wins"] = opponent_resume.get("wins", 0) + 1
-            elif battle_result.get("loser_id") == opponent_monster_data['id']:
+            else:
                 opponent_resume["losses"] = opponent_resume.get("losses", 0) + 1
             opponent_monster_in_farm["resume"] = opponent_resume
             
@@ -173,7 +171,7 @@ def process_battle_results(
                 opponent_monster_in_farm.setdefault("activityLog", []).insert(0, opponent_activity_log)
 
     # 3. 如果是冠軍挑戰勝利，則處理名次變更
-    if is_champion_challenge and challenged_rank is not None and battle_result.get("winner_id") == player_monster_data['id']:
+    if is_champion_challenge and challenged_rank is not None and is_player_winner:
         post_battle_logger.info(f"偵測到冠軍挑戰勝利！玩家 {player_id} 挑戰第 {challenged_rank} 名成功。開始處理名次變更...")
         
         champions_data = get_champions_data()
@@ -207,11 +205,10 @@ def process_battle_results(
                 post_battle_logger.info(f"原第 4 名的冠軍已被踢出殿堂。")
         
         update_champions_document(champions_data)
-        updated_champions_data = champions_data # --- 核心修改處 3：儲存更新後的冠軍資料以便回傳 ---
-
+        updated_champions_data = champions_data
 
     # 4. 執行勝利吸收邏輯 (如果勝利)
-    if battle_result.get("winner_id") == player_monster_data['id']:
+    if is_player_winner:
         absorption_result = absorb_defeated_monster_service(
             player_id, 
             player_monster_data['id'], 
@@ -223,6 +220,16 @@ def process_battle_results(
             player_data["farmedMonsters"] = absorption_result.get("updated_player_farm", player_data.get("farmedMonsters"))
             player_data["playerOwnedDNA"] = absorption_result.get("updated_player_owned_dna", player_data.get("playerOwnedDNA"))
 
+    # 【新增】記錄戰鬥日誌
+    opponent_name = opponent_monster_data.get('nickname', '一名對手')
+    player_log_message = f"挑戰「{opponent_name}」，您{'<span style=\\'color: var(--success-color);\\'>獲勝</span>' if is_player_winner else '<span style=\\'color: var(--danger-color);\\'>戰敗</span>'}了！"
+    _add_player_log(player_data, "戰鬥", player_log_message)
+
+    if opponent_player_data and opponent_id:
+        player_name = player_data.get('nickname', '一名挑戰者')
+        opponent_log_message = f"「{player_name}」向您發起挑戰，您{'<span style=\\'color: var(--danger-color);\\'>戰敗</span>' if is_player_winner else '<span style=\\'color: var(--success-color);\\'>獲勝</span>'}了！"
+        _add_player_log(opponent_player_data, "戰鬥", opponent_log_message)
+        
     # 5. 檢查是否有新稱號達成
     player_data, newly_awarded_titles = _check_and_award_titles(player_data, game_configs)
     
@@ -231,7 +238,6 @@ def process_battle_results(
     if opponent_id and opponent_player_data:
         save_player_data_service(opponent_id, opponent_player_data)
 
-    # --- 核心修改處 4：修改回傳內容 ---
     return {
         "updated_player_data": player_data,
         "newly_awarded_titles": newly_awarded_titles,
