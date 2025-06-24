@@ -110,12 +110,10 @@ function renderMonsterFarm() {
         return;
     }
 
-    // 移除舊的表頭 (如果存在)，因為卡片式佈局不再需要它
     const headers = document.getElementById('farm-headers');
     if (headers) headers.innerHTML = '';
 
     listContainer.innerHTML = '';
-    // 設定容器為卡片網格佈局
     listContainer.className = 'farm-card-grid';
 
 
@@ -127,7 +125,6 @@ function renderMonsterFarm() {
         return;
     }
     
-    // 根據 gameState 中的設定排序
     const sortConfig = gameState.farmSortConfig || { key: 'score', order: 'desc' };
     monsters.sort((a, b) => {
         let valA = a[sortConfig.key] || 0;
@@ -172,44 +169,49 @@ function renderMonsterFarm() {
         // --- 核心修改處 START ---
         const adventureProgress = gameState.playerData?.adventure_progress;
         const isOnExpedition = adventureProgress?.is_active && adventureProgress.expedition_team.some(member => member.monster_id === monster.id);
-        
+        const isTraining = monster.farmStatus?.isTraining;
+        const isInjured = monster.hp < monster.initial_max_hp * 0.25;
+
         let statusHtml = '';
         let deployButtonHtml = '';
         let actionsHTML = '';
 
-        if (isOnExpedition) {
-            statusHtml = `<div class="monster-card-status" style="color: var(--status-expedition); font-weight: bold;">遠征中</div>`;
-            deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>遠征中</button>`;
+        if (isDeployed) {
+            statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
+            deployButtonHtml = `<button class="monster-card-deploy-btn deployed" disabled>⚔️</button>`;
+            actionsHTML = `
+                <button class="button danger text-xs" disabled>放生</button>
+                <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button primary text-xs" disabled>修煉</button>
+            `;
+        } else if (isOnExpedition) {
+            statusHtml = `<div class="monster-card-status" style="color: var(--text-secondary); font-weight: bold;">遠</div>`;
+            deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>遠</button>`;
             actionsHTML = `
                 <button class="button danger text-xs" disabled>放生</button>
                 <button class="button action text-xs" disabled>治療</button>
                 <button class="button primary text-xs" disabled>修煉</button>
             `;
-        } else if (monster.farmStatus?.isTraining) {
+        } else if (isTraining) {
+            statusHtml = `<div class="monster-card-status" style="color: var(--text-secondary); font-weight: bold;">修</div>`;
+            deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>修</button>`;
             const startTime = monster.farmStatus.trainingStartTime || Date.now();
             const duration = monster.farmStatus.trainingDuration || 3600000;
-            statusHtml = `
-                <div class="monster-card-status">
-                    <div style="color: var(--accent-color);">修煉中</div>
-                    <div class="training-timer text-xs" data-start-time="${startTime}" data-duration="${duration}"></div>
-                </div>
-            `;
-            deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>修煉中</button>`;
             actionsHTML = `
                 <button class="button danger text-xs" disabled>放生</button>
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button warning text-xs" onclick="handleEndCultivationClick(event, '${monster.id}', ${startTime}, ${duration})">召回</button>
             `;
-        } else if (isDeployed) {
-            statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
-            deployButtonHtml = `<button class="monster-card-deploy-btn deployed" onclick="handleDeployMonsterClick('${monster.id}')" disabled>⚔️</button>`;
+        } else if (isInjured) {
+            statusHtml = `<div class="monster-card-status" style="color: var(--text-secondary); font-weight: bold;">傷</div>`;
+            deployButtonHtml = `<button class="monster-card-deploy-btn" disabled>傷</button>`;
             actionsHTML = `
-                <button class="button danger text-xs" disabled>放生</button>
+                <button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button primary text-xs" disabled>修煉</button>
             `;
         } else {
-            statusHtml = `<div class="monster-card-status">${monster.hp < monster.initial_max_hp * 0.25 ? '<span style="color: var(--danger-color);">瀕死</span>' : '閒置中'}</div>`;
+            statusHtml = `<div class="monster-card-status">閒置中</div>`;
             deployButtonHtml = `<button class="monster-card-deploy-btn" onclick="handleDeployMonsterClick('${monster.id}')">出戰</button>`;
             actionsHTML = `
                 <button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>
