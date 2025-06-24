@@ -10,7 +10,8 @@ from .admin_routes import token_required
 from .config_editor_services import (
     list_editable_configs,
     get_config_content,
-    save_config_content
+    save_config_content,
+    save_adventure_settings_service # --- 核心修改處 START ---
 )
 
 # 建立一個新的藍圖 (Blueprint)
@@ -71,3 +72,25 @@ def save_config_route():
         return jsonify({"success": True, "message": f"檔案 '{filename}' 已成功儲存並重新載入。"}), 200
     else:
         return jsonify({"error": error}), 500
+
+# --- 核心修改處 START ---
+@config_editor_bp.route('/save_adventure_settings', methods=['POST', 'OPTIONS'])
+@token_required
+def save_adventure_settings_route():
+    """
+    儲存冒險島的專屬設定。
+    """
+    data = request.get_json()
+    global_settings = data.get('global_settings')
+    facilities_settings = data.get('facilities_settings')
+
+    if not global_settings or not facilities_settings:
+        return jsonify({"error": "請求中缺少 'global_settings' 或 'facilities_settings' 參數。"}), 400
+    
+    success, error = save_adventure_settings_service(global_settings, facilities_settings)
+    
+    if success:
+        return jsonify({"success": True, "message": "冒險島設定已成功儲存並重新載入。"}), 200
+    else:
+        return jsonify({"error": error}), 500
+# --- 核心修改處 END ---
