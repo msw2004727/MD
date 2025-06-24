@@ -1,7 +1,22 @@
 # backend/adventure_models.py
 # 專門定義「冒險島」相關的所有資料結構
 
-from typing import List, Dict, TypedDict, Optional, Any
+from typing import List, Dict, TypedDict, Optional, Any, NotRequired
+
+# --- 【新增】用來記錄遠征過程中的各項統計數據 ---
+class ExpeditionStats(TypedDict):
+    """定義一次遠征的詳細統計數據"""
+    gold_obtained: int
+    hp_consumed: int
+    hp_healed: int
+    mp_consumed: int
+    mp_healed: int
+    captain_switches: int
+    events_encountered: int
+    bosses_fought: int
+    buffs_received: int
+    debuffs_received: int # 額外追加，用於記錄減益效果次數
+    dna_fragments_obtained: int
 
 # --- 【新增】用來記錄遠征隊中，每個成員在當次冒險中的狀態 ---
 class ExpeditionMemberStatus(TypedDict):
@@ -29,6 +44,12 @@ class AdventureProgress(TypedDict):
     story_fragments: List[Dict[str, str]] # 存放AI生成的故事片段，例如: [{"choice": "text", "outcome": "story"}]
     adventure_inventory: List[Any] # 冒險中獲得的臨時物品
     
+    # 【新增】存放當前的事件資料
+    current_event: NotRequired[Optional[Dict[str, Any]]] 
+    
+    # 【新增】存放本次遠征的統計數據
+    expedition_stats: ExpeditionStats
+
 # --- 【移除】舊的網格地圖相關定義 ---
 # MapNode 與 MapData 已被移除
 
@@ -41,6 +62,10 @@ class AdventureFacility(TypedDict):
     cost: int
     level_range: List[int]
     loot_table_id: str
+    # 新增：用於對應事件池和BOSS池的ID
+    event_pool_id: NotRequired[str]
+    boss_pool_id: NotRequired[str]
+
 
 class AdventureIsland(TypedDict):
     """定義單一冒險島嶼的資料結構"""
