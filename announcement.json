@@ -15,7 +15,7 @@
       "type": "columns",
       "columns": [
         {
-          "title": "目前0.4.1.1v已實裝內容：",
+          "title": "目前0.4.1v已實裝內容：",
           "items": [
             { "text": "冒險島持續打磨優化中", "color": "success" },
             { "text": "站內信件功能完善", "color": "success" },
