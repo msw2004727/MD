@@ -6,6 +6,8 @@
     --admin-text-secondary: #a1a1a6;
     --admin-accent: #0a84ff;
     --admin-accent-hover: #3b9bff;
+    --success-color: #30d158;
+    --danger-color: #ff453a;
 }
 body {
     background-color: var(--admin-bg);
@@ -138,22 +140,29 @@ body {
 }
 .dna-grid, .monster-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 1rem;
 }
 .dna-card, .monster-card-admin {
     border: 1px solid var(--admin-border-color);
     padding: 1rem;
     border-radius: 6px;
+    background-color: var(--admin-bg);
 }
 .dna-card h4, .monster-card-admin h4 {
     margin: 0 0 0.5rem 0;
     font-size: 1rem;
     color: var(--admin-accent-hover);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .monster-card-admin ul {
-    padding-left: 1.2rem;
+    list-style-type: none;
+    padding-left: 0;
     margin: 0;
+    font-size: 0.9rem;
+    color: var(--admin-text-secondary);
 }
 .save-changes-container {
     margin-top: 1.5rem;
