@@ -207,8 +207,6 @@ function renderAdventureProgressUI(adventureProgress) {
         `;
     });
     
-    // --- 核心修改處 START ---
-    // 新增一個 div 用來顯示隨機成長結果
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
             <header class="adventure-progress-header">
@@ -280,7 +278,6 @@ function renderAdventureProgressUI(adventureProgress) {
         }
         growthDisplayEl.innerHTML = growthHtml;
     }
-    // --- 核心修改處 END ---
 
     const advanceBtn = document.getElementById('adventure-advance-btn');
     const choicesEl = document.getElementById('adventure-event-choices');
@@ -350,7 +347,9 @@ async function initializeAdventureUI() {
         return;
     }
     
-    adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">正在從遠方島嶼獲取情报...</p>';
+    // --- 核心修改處 START ---
+    adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️正在從遠方島嶼獲取情報...</p>';
+    // --- 核心修改處 END ---
 
     try {
         const islandsData = await getAdventureIslandsData();
