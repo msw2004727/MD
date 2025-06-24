@@ -3,6 +3,13 @@
 
 from typing import List, Dict, TypedDict, Optional, Any, NotRequired
 
+# --- 【新增】用來記錄隨機成長事件的結果 ---
+class ExpeditionGrowthResult(TypedDict):
+    """定義單次隨機成長的結果"""
+    monster_id: str
+    monster_nickname: str
+    stat_gains: Dict[str, int] # e.g., {"攻擊": 2, "速度": 1}
+
 # --- 【新增】用來記錄遠征過程中的各項統計數據 ---
 class ExpeditionStats(TypedDict):
     """定義一次遠征的詳細統計數據"""
@@ -14,8 +21,8 @@ class ExpeditionStats(TypedDict):
     captain_switches: int
     events_encountered: int
     bosses_fought: int
-    buffs_received: int
-    debuffs_received: int # 額外追加，用於記錄減益效果次數
+    buffs_received: int # 額外追加，用於記錄減益效果次數
+    debuffs_received: int
     dna_fragments_obtained: int
 
 # --- 【新增】用來記錄遠征隊中，每個成員在當次冒險中的狀態 ---
@@ -49,6 +56,11 @@ class AdventureProgress(TypedDict):
     
     # 【新增】存放本次遠征的統計數據
     expedition_stats: ExpeditionStats
+    
+    # --- 核心修改處 START ---
+    # 【新增】存放上一個事件觸發的隨機成長結果
+    last_event_growth: NotRequired[Optional[ExpeditionGrowthResult]]
+    # --- 核心修改處 END ---
 
 # --- 【移除】舊的網格地圖相關定義 ---
 # MapNode 與 MapData 已被移除
