@@ -9,8 +9,11 @@ from typing import Optional, List, Dict, Any, Tuple, TYPE_CHECKING
 
 # 從專案的其他模組導入
 from . import MD_firebase_config
-# 【修改】從 player_services 導入日誌紀錄函式
-from .player_services import _add_player_log
+
+# --- 核心修改處 START ---
+# 不再從 player_services 導入 _add_player_log，而是在需要時才從函式內部導入
+# from .player_services import _add_player_log 
+# --- 核心修改處 END ---
 
 # 使用 TYPE_CHECKING 來避免運行時的循環導入錯誤
 if TYPE_CHECKING:
@@ -72,10 +75,7 @@ def send_mail_to_player_service(
         mail_logger.warning(f"玩家 {sender_id} 試圖寄信給自己，操作已阻止。")
         return False, "無法寄信給自己。"
 
-    # --- 核心修改處 START ---
-    # 使用 if/else 結構完全分離兩種寄信邏輯
     if recipient_id == "system_admin":
-        # 寄給系統管理員的邏輯
         try:
             admin_mailbox_ref = db.collection('MD_AdminMailbox').document()
             new_mail_item: 'MailItem' = {
@@ -96,7 +96,6 @@ def send_mail_to_player_service(
             mail_logger.error(f"儲存玩家回覆至後台信箱時發生錯誤: {e}", exc_info=True)
             return False, "無法將您的回覆提交給系統，請稍後再試。"
     else:
-        # 寄給一般玩家的邏輯
         try:
             recipient_doc_ref = db.collection('users').document(recipient_id).collection('gameData').document('main')
             recipient_doc = recipient_doc_ref.get()
@@ -168,7 +167,6 @@ def send_mail_to_player_service(
         except Exception as e:
             mail_logger.error(f"寄送信件給玩家時發生未知錯誤: {e}", exc_info=True)
             return False, "伺服器內部發生未知錯誤。"
-    # --- 核心修改處 END ---
 
 
 def delete_mail_from_player(player_data: 'PlayerGameData', mail_id: str) -> Optional['PlayerGameData']:
@@ -212,6 +210,11 @@ def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, 
     處理玩家領取信件附件的邏輯。
     返回一個元組 (更新後的玩家資料, 錯誤訊息)。如果成功，錯誤訊息為 None。
     """
+    # --- 核心修改處 START ---
+    # 從 player_services 導入 _add_player_log
+    from .player_services import _add_player_log
+    # --- 核心修改處 END ---
+    
     if not player_data or "mailbox" not in player_data:
         return None, "找不到玩家資料或信箱。"
 
@@ -238,7 +241,6 @@ def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, 
     gold_to_claim = int(payload.get("gold", 0))
     if gold_to_claim > 0:
         player_stats["gold"] = player_stats.get("gold", 0) + gold_to_claim
-        # 【新增】記錄金幣獲取日誌
         _add_player_log(player_data, "金幣", f"從信件「{target_mail.get('title')}」領取了 {gold_to_claim} 🪙。")
         mail_logger.info(f"玩家 {player_data.get('nickname')} 從信件 {mail_id} 領取了 {gold_to_claim} 金幣。")
 
@@ -261,7 +263,6 @@ def claim_mail_attachments_service(player_data: 'PlayerGameData', mail_id: str, 
                 
                 if free_slot_idx != -1:
                     inventory[free_slot_idx] = dna_data
-                    # 【新增】記錄物品獲取日誌
                     _add_player_log(player_data, "物品", f"從信件「{target_mail.get('title')}」領取了DNA：「{dna_data.get('name')}」。")
                     mail_logger.info(f"玩家 {player_data.get('nickname')} 將DNA '{dna_data.get('name')}' 放入庫存槽位 {free_slot_idx}。")
                 else:
