@@ -131,3 +131,40 @@ body.admin-body {
 .log-filters button { font-size: 0.8rem; padding: 4px 10px; background-color: #374151; color: var(--admin-text-secondary); border: none; }
 .log-filters button.active { background-color: var(--admin-accent); color: white; font-weight: bold; }
 .log-display .log-category { padding: 2px 6px; border-radius: 4px; font-family: 'Noto Sans TC', sans-serif; font-size: 0.8rem; color: white; }
+
+/* --- 核心修改處 START --- */
+.cs-mail-item {
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.cs-mail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--admin-panel-bg);
+    border-bottom: 1px solid var(--admin-border-color);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+.cs-mail-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--admin-accent-hover);
+}
+.cs-mail-meta {
+    font-size: 0.85rem;
+    color: var(--admin-text-secondary);
+}
+.cs-mail-content {
+    padding: 1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+/* --- 核心修改處 END --- */
