@@ -265,6 +265,9 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
         return {"success": False, "error": "當前沒有需要回應的事件。"}
 
     stats = progress.get("expedition_stats")
+    # --- 核心修改處 START ---
+    applied_effects = [] # 初始化一個列表來收集觸發的效果
+    # --- 核心修改處 END ---
 
     chosen_outcome = None
     for choice in current_event.get("choices", []):
@@ -291,21 +294,27 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
         for effect in chosen_outcome.get("effects", []):
             effect_type = effect.get("effect")
-            target_type = effect.get("target")
             
             if stats: 
                 if effect_type == "change_resource":
                     resource = effect.get("resource")
                     amount = effect.get("amount", 0)
-                    if resource == "gold" and amount > 0:
-                        stats["gold_obtained"] += amount
+                    
+                    # 處理金幣
+                    if resource == "gold":
+                        if amount > 0: stats["gold_obtained"] += amount
                         player_data["playerStats"]["gold"] = player_data["playerStats"].get("gold", 0) + amount
+
+                    # 處理 HP 和 MP
                     elif resource in ["hp", "mp"]:
-                        for member in team_members: 
+                        targets_to_affect = []
+                        if effect.get("target") == "team_all": targets_to_affect = team_members
+                        elif effect.get("target") in ["team_random_one", "member_who_chose", "team_strongest_def", "team_strongest", "team_fastest"] and team_members:
+                            # 簡化處理，隨機選一個成員來應用效果
+                            targets_to_affect = [random.choice(team_members)]
+                        
+                        for member in targets_to_affect:
                             key_current = f"current_{resource}"
-                            key_healed = f"{resource}_healed"
-                            key_consumed = f"{resource}_consumed"
-                            
                             original_value = member.get(key_current, 0)
                             
                             full_monster = next((m for m in player_data.get("farmedMonsters",[]) if m["id"] == member["monster_id"]), None)
@@ -317,13 +326,14 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
                                 actual_change = new_value - original_value
                                 if actual_change > 0:
-                                    stats[key_healed] = stats.get(key_healed, 0) + actual_change
+                                    stats[f"{resource}_healed"] += actual_change
                                 elif actual_change < 0:
-                                    stats[key_consumed] = stats.get(key_consumed, 0) + abs(actual_change)
+                                    stats[f"{resource}_consumed"] += abs(actual_change)
 
                 elif effect_type == "give_item":
                     if effect.get("item_type") == "dna":
-                        stats["dna_fragments_obtained"] = stats.get("dna_fragments_obtained", 0) + effect.get("quantity", 1)
+                        stats["dna_fragments_obtained"] += effect.get("quantity", 1)
+                    
                     pool_id = effect.get("item_pool_id", "")
                     quantity = effect.get("quantity", 1)
                     dna_pool = [dna for dna in game_configs.get("dna_fragments", []) if pool_id in dna.get("id")]
@@ -332,17 +342,27 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                             item = random.choice(dna_pool)
                             progress.get("adventure_inventory", []).append(item)
 
+                # --- 核心修改處 START ---
                 elif effect_type == "apply_temp_buff":
-                    stats["buffs_received"] = stats.get("buffs_received", 0) + 1
+                    stats["buffs_received"] += 1
+                    applied_effects.append({"type": "buff", "stat": effect.get("stat", "未知")})
                 
                 elif effect_type == "apply_temp_debuff":
-                    stats["debuffs_received"] = stats.get("debuffs_received", 0) + 1
-    
+                    stats["debuffs_received"] += 1
+                    applied_effects.append({"type": "debuff", "stat": effect.get("stat", "未知")})
+                # --- 核心修改處 END ---
+
     progress["current_event"] = None
 
-    return {"success": True, "outcome_story": outcome_story, "updated_progress": progress}
+    # --- 核心修改處 START ---
+    return {
+        "success": True, 
+        "outcome_story": outcome_story, 
+        "updated_progress": progress,
+        "applied_effects": applied_effects  # 將收集到的效果加入回傳
+    }
+    # --- 核心修改處 END ---
 
-# --- 核心修改處 START ---
 def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: str) -> Optional[PlayerGameData]:
     """
     更換遠征隊隊長，並記錄更換次數。
@@ -360,16 +380,13 @@ def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: s
             member_index = i
             break
             
-    # 如果要晉升的怪獸不在隊伍中，或是他已經是隊長了 (索引為0)，則不進行任何操作
     if member_index <= 0:
         adventure_logger.warning(f"更換隊長失敗：怪獸 {monster_id_to_promote} 不在隊伍中或已是隊長。")
         return None
 
-    # 將要晉升的成員從原位置移除，並插入到隊伍的最前面
     member_to_promote = team.pop(member_index)
     team.insert(0, member_to_promote)
     
-    # 更新統計數據
     stats = progress.get("expedition_stats")
     if stats:
         stats["captain_switches"] = stats.get("captain_switches", 0) + 1
@@ -379,4 +396,3 @@ def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: s
     player_data["adventure_progress"] = progress
     
     return player_data
-# --- 核心修改處 END ---
