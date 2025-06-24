@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>怪獸保護協會</title>
+    <title>後台儀表板 - 怪獸異世界</title>
     <link href="dashboard.css?v=0.4.1.2" rel="stylesheet">
 </head>
 <body class="admin-body">
     
     <header class="top-navbar">
         <div class="navbar-brand">
-            <h1 class="navbar-title">怪獸保護協會</h1>
+            <h1 class="navbar-title">上帝模式</h1>
         </div>
         <nav class="navbar-nav">
             <a href="#" class="nav-item active" data-target="dashboard-home">總覽</a>
             <a href="#" class="nav-item" data-target="player-management">玩家管理</a>
             <a href="#" class="nav-item" data-target="mail-system">群發信件</a>
             <a href="#" class="nav-item" data-target="cs-mailbox">客服信箱</a>
-            <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
+            <a href="#" class="nav-item" data-target="adventure-island-settings">冒險島設定</a> <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
             <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
         </nav>
         <div class="navbar-actions">
@@ -133,6 +133,40 @@
                     <div id="cs-mail-container">
                         <p class="placeholder-text">點擊「刷新信件」以載入最新內容...</p>
                     </div>
+                </div>
+            </div>
+
+            <div id="adventure-island-settings" class="content-panel">
+                <h2 class="content-header">冒險島設定</h2>
+                <div class="dashboard-grid single-column">
+                    <div class="data-section">
+                        <h3>全域參數調整</h3>
+                        <div class="form-group">
+                            <label for="boss-difficulty-multiplier">BOSS 隨樓層的成長率 (%)</label>
+                            <input type="number" id="boss-difficulty-multiplier" class="admin-input" step="0.01" min="1.0">
+                            <p class="input-hint">每升高一層，BOSS 的數值會乘以這個數字。例如：1.1 代表每層增強 10%。</p>
+                        </div>
+                         <div class="form-group">
+                            <label for="floor-clear-base-gold">通關樓層的基礎獎勵金幣</label>
+                            <input type="number" id="floor-clear-base-gold" class="admin-input" step="1" min="0">
+                            <p class="input-hint">玩家每通關一層，固定獲得的基礎金幣數量。</p>
+                        </div>
+                        <div class="form-group">
+                            <label for="floor-clear-bonus-gold">通關樓層的額外獎勵金幣</label>
+                            <input type="number" id="floor-clear-bonus-gold" class="admin-input" step="1" min="0">
+                            <p class="input-hint">除了基礎獎勵，每層還會額外增加的金幣。總獎勵 = 基礎 + (層數-1) * 額外。</p>
+                        </div>
+                    </div>
+                    <div class="data-section">
+                        <h3>各地區設施參數</h3>
+                        <div id="adventure-facilities-container">
+                           <p class="placeholder-text">正在載入設施列表...</p>
+                        </div>
+                    </div>
+                    <div class="save-changes-container">
+                        <button id="save-adventure-settings-btn" class="button success">儲存冒險島設定變更</button>
+                    </div>
+                    <div id="adventure-settings-response" class="admin-response-message" style="display: none;"></div>
                 </div>
             </div>
             <div id="game-configs" class="content-panel">
