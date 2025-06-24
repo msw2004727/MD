@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>後台登入 - 怪獸異世界</title>
-    <link href="css/theme.css?v=0.4.1.1" rel="stylesheet">
-    <link href="css/layout.css?v=0.4.1.1" rel="stylesheet">
-    <link href="css/buttons.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/theme.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/layout.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/buttons.css?v=0.4.1.1" rel="stylesheet">
     <style>
         body {
             display: flex;
@@ -57,16 +57,13 @@
         <button id="admin-login-btn" class="button primary" style="width: 100%;">登入</button>
     </div>
 
-    <script src="js/config.js?v=0.4.1.1"></script>
+    <script src="../js/config.js?v=0.4.1.1"></script>
     <script>
-        // 簡單的前端登入邏輯
         const loginBtn = document.getElementById('admin-login-btn');
         const passwordInput = document.getElementById('admin-password');
         const errorEl = document.getElementById('admin-error');
         
-        // 現在 API_BASE_URL 應該已經被 config.js 定義好了
         const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD';
-
 
         async function handleAdminLogin() {
             const password = passwordInput.value;
@@ -90,9 +87,7 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
-                    // 登入成功，將 Token 存到 localStorage
                     localStorage.setItem('admin_token', result.token);
-                    // 跳轉到後台主頁面
                     window.location.href = 'dashboard.html'; 
                 } else {
                     throw new Error(result.error || '登入失敗');
