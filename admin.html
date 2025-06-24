@@ -17,10 +17,8 @@
         }
         .admin-login-container {
             width: 100%;
-            /* --- 核心修改處 START --- */
-            max-width: 360px; /* 縮小最大寬度，讓整體更精緻 */
-            padding: 2.5rem; /* 增加內部間距 */
-            /* --- 核心修改處 END --- */
+            max-width: 360px; 
+            padding: 2.5rem; 
             background-color: var(--bg-panel);
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.4);
@@ -42,9 +40,7 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             font-size: 1rem;
-            /* --- 核心修改處 START --- */
-            box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
-            /* --- 核心修改處 END --- */
+            box-sizing: border-box; 
         }
         .admin-error-message {
             color: var(--danger-color);
@@ -61,14 +57,15 @@
         <button id="admin-login-btn" class="button primary" style="width: 100%;">登入</button>
     </div>
 
+    <script src="js/config.js?v=0.4.1.1"></script>
     <script>
         // 簡單的前端登入邏輯
         const loginBtn = document.getElementById('admin-login-btn');
         const passwordInput = document.getElementById('admin-password');
         const errorEl = document.getElementById('admin-error');
         
-        // 從 js/config.js 取得 API URL，如果該檔案不存在，則使用相對路徑
-        const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD';
+        // 現在 API_BASE_URL 應該已經被 config.js 定義好了
+        const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD';
 
 
         async function handleAdminLogin() {
@@ -82,7 +79,7 @@
             loginBtn.textContent = '登入中...';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/admin/login`, {
+                const response = await fetch(`${ADMIN_API_URL}/admin/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -95,7 +92,7 @@
                 if (response.ok && result.success) {
                     // 登入成功，將 Token 存到 localStorage
                     localStorage.setItem('admin_token', result.token);
-                    // 跳轉到後台主頁面 (目前尚未建立)
+                    // 跳轉到後台主頁面
                     window.location.href = 'dashboard.html'; 
                 } else {
                     throw new Error(result.error || '登入失敗');
