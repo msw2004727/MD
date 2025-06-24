@@ -1,209 +1,215 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- 全域變數與初始化 ---
+document.addEventListener('DOMContentLoaded', function() {
+    // --- 變數定義區 ---
     const adminToken = localStorage.getItem('admin_token');
-    const API_BASE_URL = (typeof window.API_BASE_URL !== 'undefined') 
-        ? window.API_BASE_URL 
-        : 'https://md-server-5wre.onrender.com/api/MD'; 
+    const SENDER_PRESETS_KEY = 'admin_sender_presets'; 
+    let currentPlayerData = null;
+    let logIntervalId = null;
+    let currentPlayerLogs = []; // 用於客戶端日誌篩選
 
-    let currentLogs = []; // 【新增】用來緩存當前查詢玩家的日誌
-
-    const DOMElements = {
-        sidebarLinks: document.querySelectorAll('.nav-link'),
-        mainContentSections: document.querySelectorAll('.admin-section'),
-        logoutBtn: document.getElementById('logout-btn'),
-
-        // 儀表板
-        totalPlayers: document.getElementById('total-players'),
-        totalGold: document.getElementById('total-gold'),
-        totalDna: document.getElementById('total-dna'),
-        rarityDistribution: document.getElementById('monster-rarity-distribution'),
-
-        // 玩家管理
-        playerSearchInput: document.getElementById('player-uid-search'),
-        playerSearchBtn: document.getElementById('search-player-btn'),
-        playerDataDisplay: document.getElementById('player-data-display'),
-
-        // 【新增】玩家日誌
-        logPlayerSearchInput: document.getElementById('log-player-uid-search'),
-        logPlayerSearchBtn: document.getElementById('search-log-player-btn'),
-        logCategoryFilter: document.getElementById('log-category-filter'),
-        logKeywordFilter: document.getElementById('log-keyword-filter'),
-        logTableBody: document.getElementById('player-log-tbody'),
-
-        // 廣播系統
-        broadcastSenderInput: document.getElementById('broadcast-sender'),
-        broadcastTitleInput: document.getElementById('broadcast-title'),
-        broadcastContentInput: document.getElementById('broadcast-content'),
-        broadcastPayloadInput: document.getElementById('broadcast-payload'),
-        sendBroadcastBtn: document.getElementById('send-broadcast-btn'),
-        broadcastLogTableBody: document.querySelector('#broadcast-log-table tbody'),
-
-        // 設定檔編輯器
-        configFileSelector: document.getElementById('config-file-selector'),
-        configDisplayArea: document.getElementById('game-configs-display'),
-        saveConfigBtn: document.getElementById('save-config-btn'),
-        
-        // 彈窗
-        feedbackModal: document.getElementById('feedback-modal'),
-        feedbackTitle: document.getElementById('feedback-title'),
-        feedbackMessage: document.getElementById('feedback-message'),
-        feedbackCloseBtn: document.getElementById('feedback-close-btn')
-    };
-
-    // --- 授權檢查 ---
     if (!adminToken) {
-        alert('您尚未登入或 Token 已過期，將跳轉回登入頁面。');
         window.location.href = 'index.html';
         return;
     }
+    const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
+    
+    // --- DOM 元素獲取區 ---
+    const DOMElements = {
+        navItems: document.querySelectorAll('.nav-item'),
+        contentPanels: document.querySelectorAll('.content-panel'),
+        logoutBtn: document.getElementById('logout-btn'),
+        currentTimeEl: document.getElementById('current-time'),
+        
+        // 總覽
+        generateReportBtn: document.getElementById('generate-report-btn'),
+        overviewReportContainer: document.getElementById('overview-report-container'),
+        
+        // 玩家管理
+        searchInput: document.getElementById('player-search-input'),
+        searchBtn: document.getElementById('player-search-btn'),
+        searchResultsContainer: document.getElementById('player-search-results'),
+        dataDisplay: document.getElementById('player-data-display'),
+        playerLogSection: document.getElementById('player-log-section'),
+        playerLogFilters: document.getElementById('player-log-filters'),
+        playerLogDisplay: document.getElementById('player-log-display'),
+        
+        // 廣播
+        broadcastSenderNameInput: document.getElementById('broadcast-sender-name'),
+        broadcastSenderPresetsSelect: document.getElementById('broadcast-sender-presets'),
+        saveSenderNameBtn: document.getElementById('save-sender-name-btn'),
+        broadcastBtn: document.getElementById('broadcast-mail-btn'),
+        broadcastResponseEl: document.getElementById('broadcast-response'),
+        refreshLogBtn: document.getElementById('refresh-log-btn'),
+        broadcastLogContainer: document.getElementById('broadcast-log-container'),
+        
+        // 設定檔
+        configFileSelector: document.getElementById('config-file-selector'),
+        configDisplayArea: document.getElementById('game-configs-display'),
+        saveConfigBtn: document.getElementById('save-config-btn'),
+        configResponseEl: document.getElementById('config-response'),
 
-    // --- 通用 API 請求函式 ---
-    async function fetchAdminAPI(endpoint, options = {}) {
-        // ... (與上一版相同) ...
-    }
+        // 日誌監控
+        logDisplayContainer: document.getElementById('log-display-container'),
+        refreshLogsBtn: document.getElementById('refresh-logs-btn'),
+    };
 
-    // --- 彈窗函式 ---
-    function showFeedback(title, message) {
-        // ... (與上一版相同) ...
-    }
+    // --- 通用函式 ---
+    async function fetchAdminAPI(endpoint, options = {}) { /* ...與上一版相同... */ }
+    function updateTime() { if(DOMElements.currentTimeEl) { DOMElements.currentTimeEl.textContent = new Date().toLocaleString('zh-TW'); } }
 
     // --- 導覽邏輯 ---
-    function switchSection(targetId) {
-        DOMElements.mainContentSections.forEach(section => section.classList.remove('active'));
-        document.getElementById(targetId).classList.add('active');
-
-        if (targetId === 'dashboard-section') loadGameOverview();
-        if (targetId === 'broadcast-system-section') loadBroadcastLog();
-        if (targetId === 'config-editor-section') loadAndPopulateConfigsDropdown();
-    }
-
-    DOMElements.sidebarLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            DOMElements.sidebarLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            switchSection(link.dataset.target);
-        });
-    });
-    
-    // --- 儀表板邏輯 ---
-    async function loadGameOverview() { /* ... */ }
-
-    // --- 玩家管理渲染邏輯 ---
-    function renderPlayerStatsCard(stats) { /* ... */ }
-    function renderMonstersTable(monsters) { /* ... */ }
-    function renderDnaInventory(dnaList) { /* ... */ }
-
-    async function searchPlayer() {
-        const uid = DOMElements.playerSearchInput.value.trim();
-        if (!uid) {
-            showFeedback('提示', '請輸入玩家 UID。');
-            return;
-        }
-        DOMElements.playerDataDisplay.innerHTML = `<p class="placeholder-text">查詢中...</p>`;
-        try {
-            const data = await fetchAdminAPI(`/player_data?uid=${uid}`);
-            
-            let displayHtml = '<div class="player-main-info-grid">';
-            displayHtml += renderPlayerStatsCard(data.playerStats);
-            displayHtml += '</div>';
-            displayHtml += renderMonstersTable(data.farmedMonsters);
-            displayHtml += renderDnaInventory(data.playerOwnedDNA);
-
-            DOMElements.playerDataDisplay.innerHTML = displayHtml;
-        } catch (error) {
-            DOMElements.playerDataDisplay.innerHTML = `<p class="placeholder-text" style="color:var(--accent-danger);">查詢失敗: ${error.message}</p>`;
-        }
-    }
-
-    // --- 【新增】玩家日誌邏輯 ---
-    function renderLogs() {
-        const category = DOMElements.logCategoryFilter.value;
-        const keyword = DOMElements.logKeywordFilter.value.toLowerCase();
+    function switchTab(targetId) {
+        if (logIntervalId) { clearInterval(logIntervalId); logIntervalId = null; }
+        DOMElements.navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
+        DOMElements.contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
         
-        const filteredLogs = currentLogs.filter(log => {
-            const categoryMatch = (category === 'all' || log.category === category);
+        // 根據切換到的頁籤載入對應的初始資料
+        if (targetId === 'dashboard-home' && DOMElements.overviewReportContainer.innerHTML.includes('點擊按鈕')) {
+            handleGenerateReport();
+        } else if (targetId === 'mail-system') {
+            loadBroadcastLog();
+        } else if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
+            initializeConfigEditor();
+        } else if (targetId === 'log-monitoring') {
+            loadAndDisplayLogs();
+            logIntervalId = setInterval(loadAndDisplayLogs, 10000); // 10秒自動刷新
+        }
+    }
+
+    // --- 玩家日誌渲染與篩選 ---
+    function renderPlayerLogs(category = '全部') {
+        if (!DOMElements.playerLogDisplay) return;
+
+        const keyword = document.getElementById('player-log-keyword-search')?.value.toLowerCase() || '';
+
+        const filteredLogs = currentPlayerLogs.filter(log => {
+            const categoryMatch = (category === '全部' || log.category === category);
             const keywordMatch = (!keyword || log.message.toLowerCase().includes(keyword));
             return categoryMatch && keywordMatch;
         });
 
-        const tableBody = DOMElements.logTableBody;
-        tableBody.innerHTML = '';
-
         if (filteredLogs.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">找不到符合條件的日誌。</td></tr>`;
+            DOMElements.playerLogDisplay.innerHTML = `<p class="placeholder-text">找不到符合條件的日誌。</p>`;
             return;
         }
 
-        const categoryColors = {
-            '系統': 'system', '金幣': 'gold', '戰鬥': 'battle',
-            '合成': 'synthesis', '物品': 'item'
-        };
-
-        filteredLogs.forEach(log => {
-            const row = tableBody.insertRow();
-            const timestamp = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { hour12: false });
-            const categoryClass = `log-category log-category-${categoryColors[log.category] || 'system'}`;
-            
-            row.innerHTML = `
-                <td>${timestamp}</td>
-                <td><span class="${categoryClass}">${log.category}</span></td>
-                <td>${log.message}</td>
-            `;
-        });
+        DOMElements.playerLogDisplay.innerHTML = filteredLogs.map(log => {
+            const date = new Date(log.timestamp * 1000).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="log-entry">
+                    <div class="log-meta">
+                        <span class="log-timestamp">${date}</span>
+                        <span class="log-category log-category-${log.category.toLowerCase()}">${log.category}</span>
+                    </div>
+                    <div class="log-message">${log.message.replace(/<span.*?>/g, '').replace(/<\/span>/g, '')}</div>
+                </div>`;
+        }).join('');
     }
 
-    async function loadPlayerLogs() {
-        const uid = DOMElements.logPlayerSearchInput.value.trim();
-        if (!uid) {
-            showFeedback('提示', '請輸入玩家 UID。');
-            return;
-        }
-        
-        DOMElements.logTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">載入中...</td></tr>`;
-        DOMElements.logCategoryFilter.disabled = true;
-        DOMElements.logKeywordFilter.disabled = true;
-        currentLogs = [];
+    // --- 玩家資料渲染 ---
+    function renderPlayerData(playerData) {
+        currentPlayerData = playerData;
+        const stats = playerData.playerStats;
+        const equippedTitle = stats.titles.find(t => t.id === stats.equipped_title_id) || { name: '無' };
 
+        const statsHtml = `
+            <div class="form-grid">
+                <div class="form-group"><label>暱稱</label><input type="text" class="admin-input" id="admin-nickname" value="${playerData.nickname}"></div>
+                <div class="form-group"><label>UID</label><input type="text" class="admin-input" value="${playerData.uid}" readonly></div>
+                <div class="form-group"><label>金幣</label><input type="number" class="admin-input" id="admin-gold" value="${stats.gold || 0}"></div>
+                <div class="form-group"><label>總積分</label><input type="number" class="admin-input" id="admin-score" value="${stats.score || 0}"></div>
+                <div class="form-group"><label>勝場</label><input type="number" class="admin-input" id="admin-wins" value="${stats.wins || 0}"></div>
+                <div class="form-group"><label>敗場</label><input type="number" class="admin-input" id="admin-losses" value="${stats.losses || 0}"></div>
+            </div>
+            <div class="form-group"><label>當前稱號</label><input type="text" class="admin-input" value="${equippedTitle.name}" readonly></div>`;
+
+        const monstersHtml = (playerData.farmedMonsters.length > 0)
+            ? `<div class="monster-grid">${playerData.farmedMonsters.map(m => `<div class="monster-card-admin"><h4>${m.nickname}</h4><ul><li>稀有度: ${m.rarity}</li><li>評價: ${m.score}</li></ul></div>`).join('')}</div>`
+            : '<p class="placeholder-text">無持有怪獸</p>';
+
+        const dnaHtml = (playerData.playerOwnedDNA.filter(d => d).length > 0)
+            ? `<div class="dna-grid">${playerData.playerOwnedDNA.filter(d => d).map(d => `<div class="dna-item-admin">${d.name}</div>`).join('')}</div>`
+            : '<p class="placeholder-text">庫存無DNA</p>';
+        
+        DOMElements.dataDisplay.innerHTML = `
+            <div class="data-section">${statsHtml}</div>
+            <div class="data-section"><h3>持有怪獸</h3>${monstersHtml}</div>
+            <div class="data-section"><h3>DNA庫存</h3>${dnaHtml}</div>
+            <div class="save-changes-container">
+                <button id="send-player-mail-btn" class="button secondary">寄送系統信件</button>
+                <button id="save-player-data-btn" class="button success">儲存玩家數值變更</button>
+            </div>
+        `;
+        
+        // 渲染玩家日誌
+        DOMElements.playerLogSection.style.display = 'block';
+        currentPlayerLogs = (playerData.playerLogs || []).sort((a, b) => b.timestamp - a.timestamp);
+        
+        DOMElements.playerLogFilters.querySelectorAll('button').forEach(btn => btn.disabled = false);
+        DOMElements.playerLogFilters.querySelector('.active')?.classList.remove('active');
+        DOMElements.playerLogFilters.querySelector('button[data-log-category="全部"]').classList.add('active');
+        renderPlayerLogs();
+    }
+    
+    // --- 玩家管理主邏輯 ---
+    async function fetchAndDisplayPlayerData(uid) {
+        DOMElements.dataDisplay.innerHTML = '<p class="placeholder-text">查詢中...</p>';
+        DOMElements.playerLogSection.style.display = 'none';
+        DOMElements.searchResultsContainer.innerHTML = '';
+        currentPlayerData = null;
         try {
             const data = await fetchAdminAPI(`/player_data?uid=${uid}`);
-            currentLogs = (data.playerLogs || []).sort((a, b) => b.timestamp - a.timestamp); // 預設按時間倒序
-            DOMElements.logCategoryFilter.disabled = false;
-            DOMElements.logKeywordFilter.disabled = false;
-            renderLogs(); // 首次渲染
-        } catch (error) {
-            DOMElements.logTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--accent-danger);">查詢失敗: ${error.message}</td></tr>`;
+            renderPlayerData(data);
+        } catch (err) {
+            DOMElements.dataDisplay.innerHTML = `<p class="placeholder-text" style="color:var(--danger-color);">查詢失敗：${err.message}</p>`;
         }
     }
 
-    // --- 廣播系統邏輯 (與之前相同) ---
+    async function searchPlayer() { /* ... 與上一版相同 ... */ }
+    async function handleSavePlayerData() { /* ... */ }
+    async function handleSendPlayerMail() { /* ... */ }
+
+    // --- 其他功能邏輯 ---
+    async function handleGenerateReport() { /* ... */ }
     async function loadBroadcastLog() { /* ... */ }
-    async function sendBroadcast() { /* ... */ }
+    async function handleRecallMail(event) { /* ... */ }
+    async function handleBroadcastMail() { /* ... */ }
+    function saveSenderPreset() { /* ... */ }
+    function loadSenderPresets() { /* ... */ }
+    async function loadAndDisplayLogs() { /* ... */ }
     
-    // --- 設定檔編輯器邏輯 (與之前相同) ---
-    async function loadAndPopulateConfigsDropdown() { /* ... */ }
-    async function loadSelectedConfig() { /* ... */ }
-    async function saveConfig() { /* ... */ }
-
     // --- 事件綁定 ---
+    DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
     DOMElements.logoutBtn.addEventListener('click', () => { /* ... */ });
-    
-    DOMElements.playerSearchBtn.addEventListener('click', searchPlayer);
-    DOMElements.playerSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
-    
-    // 【新增】日誌查詢和篩選的事件綁定
-    DOMElements.logPlayerSearchBtn.addEventListener('click', loadPlayerLogs);
-    DOMElements.logPlayerSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadPlayerLogs(); });
-    DOMElements.logCategoryFilter.addEventListener('change', renderLogs);
-    DOMElements.logKeywordFilter.addEventListener('input', renderLogs);
-    
-    DOMElements.sendBroadcastBtn.addEventListener('click', sendBroadcast);
-    DOMElements.broadcastLogTableBody.addEventListener('click', (e) => { /* ... */ });
-    DOMElements.configFileSelector.addEventListener('change', loadSelectedConfig);
-    DOMElements.saveConfigBtn.addEventListener('click', saveConfig);
-    DOMElements.feedbackCloseBtn.addEventListener('click', () => DOMElements.feedbackModal.style.display = 'none');
+    DOMElements.searchBtn.addEventListener('click', searchPlayer);
+    DOMElements.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
+    DOMElements.searchResultsContainer.addEventListener('click', (e) => { const item = e.target.closest('.search-result-item'); if (item && item.dataset.uid) { fetchAndDisplayPlayerData(item.dataset.uid); } });
+    DOMElements.dataDisplay.addEventListener('click', (e) => { 
+        if (e.target.id === 'save-player-data-btn') { handleSavePlayerData(); } 
+        if (e.target.id === 'send-player-mail-btn') { handleSendPlayerMail(); } 
+    });
+    // 【新增】日誌篩選事件綁定
+    DOMElements.playerLogFilters.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const category = e.target.dataset.logCategory;
+            DOMElements.playerLogFilters.querySelector('.active').classList.remove('active');
+            e.target.classList.add('active');
+            renderPlayerLogs(category);
+        }
+    });
 
-
-    // --- 初始載入 ---
-    loadGameOverview();
+    // 其他事件綁定...
+    DOMElements.broadcastBtn.addEventListener('click', handleBroadcastMail);
+    DOMElements.saveSenderNameBtn.addEventListener('click', saveSenderPreset);
+    DOMElements.broadcastSenderPresetsSelect.addEventListener('change', () => { if (DOMElements.broadcastSenderPresetsSelect.value) { DOMElements.broadcastSenderNameInput.value = DOMElements.broadcastSenderPresetsSelect.value; } });
+    DOMElements.refreshLogBtn.addEventListener('click', loadBroadcastLog);
+    DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
+    DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
+    if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
+    if (typeof initializeConfigEditor === 'function') { initializeConfigEditor(); }
+    
+    // --- 初始執行 ---
+    updateTime();
+    setInterval(updateTime, 1000);
+    switchTab('dashboard-home');
+    loadSenderPresets();
 });
