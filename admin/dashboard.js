@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const logDisplayContainer = document.getElementById('log-display-container');
     const refreshLogsBtn = document.getElementById('refresh-logs-btn');
 
-    // 【新增】獲取玩家日誌相關的 DOM 元素
     const playerLogSection = document.getElementById('player-log-section');
     const playerLogFilters = document.getElementById('player-log-filters');
     const playerLogDisplay = document.getElementById('player-log-display');
@@ -44,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 函式定義區 ---
 
-    // 【新增】渲染玩家個人日誌的函式
     function renderPlayerLogs(logs, category = '全部') {
         if (!playerLogDisplay) return;
 
@@ -104,25 +102,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // 【修改】擴充 renderPlayerData 函式
     function renderPlayerData(playerData) {
         currentPlayerData = playerData;
         const dnaGridHtml = (playerData.playerOwnedDNA || []).map(dna => dna ? `<div class="dna-card"><h4>${dna.name} (${dna.rarity})</h4><p>屬性: ${dna.type}</p></div>` : '<div class="dna-card" style="opacity: 0.5; display: flex; align-items: center; justify-content: center;">空位</div>').join('');
         const monsterGridHtml = (playerData.farmedMonsters || []).map(monster => `<div class="monster-card-admin"><h4>${monster.nickname} (${monster.rarity})</h4><ul><li>HP: ${monster.hp}/${monster.initial_max_hp}</li><li>評價: ${monster.score || 0}</li></ul></div>`).join('');
         dataDisplay.innerHTML = `<div class="data-section"><h3>玩家狀態 (Player Stats)</h3><div class="form-grid"><div class="form-group"><label for="admin-nickname">暱稱</label><input type="text" id="admin-nickname" class="admin-input" value="${playerData.nickname || ''}"></div><div class="form-group"><label for="admin-gold">金幣</label><input type="number" id="admin-gold" class="admin-input" value="${playerData.playerStats.gold || 0}"></div><div class="form-group"><label for="admin-wins">勝場</label><input type="number" id="admin-wins" class="admin-input" value="${playerData.playerStats.wins || 0}"></div><div class="form-group"><label for="admin-losses">敗場</label><input type="number" id="admin-losses" class="admin-input" value="${playerData.playerStats.losses || 0}"></div></div></div><div class="data-section"><h3>DNA 碎片庫存 (預覽)</h3><div id="admin-dna-grid" class="dna-grid">${dnaGridHtml}</div></div><div class="data-section"><h3>持有怪獸 (預覽)</h3><div id="admin-monster-grid" class="monster-grid">${monsterGridHtml}</div></div><div class="save-changes-container"><button id="send-player-mail-btn" class="button secondary">寄送系統信件</button><button id="save-player-data-btn" class="button success">儲存玩家數值變更</button></div>`;
 
-        // 【新增】玩家日誌區塊的渲染邏輯
-        if (playerLogSection) {
+        // 【核心修改處 START】
+        if (playerLogSection && playerLogDisplay && playerLogFilters) {
             const logs = playerData.playerLogs || [];
+            // 無論如何都顯示區塊
+            playerLogSection.style.display = 'block';
+
             if (logs.length > 0) {
-                playerLogSection.style.display = 'block';
-                playerLogFilters.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                // 有日誌：啟用按鈕，移除 empty 樣式，渲染日誌
+                playerLogDisplay.classList.remove('empty-log');
+                playerLogFilters.querySelectorAll('button').forEach(btn => btn.disabled = false);
+                playerLogFilters.querySelector('.active')?.classList.remove('active');
                 playerLogFilters.querySelector('button[data-log-category="全部"]').classList.add('active');
                 renderPlayerLogs(logs, '全部');
             } else {
-                playerLogSection.style.display = 'none';
+                // 沒有日誌：禁用按鈕，加上 empty 樣式，顯示無紀錄訊息
+                playerLogDisplay.classList.add('empty-log');
+                playerLogFilters.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                renderPlayerLogs([], '全部'); // 傳入空陣列以顯示 "暫無日誌紀錄"
             }
         }
+        // 【核心修改處 END】
     }
 
     function switchTab(targetId) {
