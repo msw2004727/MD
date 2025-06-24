@@ -459,7 +459,6 @@ async function resolveAdventureEvent(choiceId) {
     });
 }
 
-// --- 核心修改處 START ---
 /**
  * 領取一封信件中的所有附件。
  * @param {string} mailId - 要領取附件的信件 ID。
@@ -471,6 +470,29 @@ async function claimMailAttachments(mailId) {
     }
     return fetchAPI(`/mailbox/${mailId}/claim`, {
         method: 'POST'
+    });
+}
+
+// --- 核心修改處 START ---
+/**
+ * 請求放棄當前的遠征。
+ * @returns {Promise<object>} 包含成功訊息與最終統計數據的物件。
+ */
+async function abandonAdventure() {
+    return fetchAPI('/adventure/abandon', {
+        method: 'POST'
+    });
+}
+
+/**
+ * 請求更換遠征隊的隊長。
+ * @param {string} monsterId - 要晉升為新隊長的怪獸ID。
+ * @returns {Promise<object>} 包含成功訊息與更新後進度的物件。
+ */
+async function switchAdventureCaptain(monsterId) {
+    return fetchAPI('/adventure/switch_captain', {
+        method: 'POST',
+        body: JSON.stringify({ monster_id: monsterId }),
     });
 }
 // --- 核心修改處 END ---
