@@ -19,7 +19,7 @@ config_editor_bp = Blueprint('config_editor_bp', __name__, url_prefix='/api/MD/a
 config_editor_routes_logger = logging.getLogger(__name__)
 
 
-@config_editor_bp.route('/list_configs', methods=['GET'])
+@config_editor_bp.route('/list_configs', methods=['GET', 'OPTIONS'])
 @token_required
 def list_configs_route():
     """提供可編輯的設定檔列表。"""
@@ -30,7 +30,7 @@ def list_configs_route():
         config_editor_routes_logger.error(f"列出設定檔時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "無法獲取設定檔列表。"}), 500
 
-@config_editor_bp.route('/get_config', methods=['GET'])
+@config_editor_bp.route('/get_config', methods=['GET', 'OPTIONS'])
 @token_required
 def get_config_route():
     """
@@ -51,7 +51,7 @@ def get_config_route():
     return jsonify(content_obj), 200
 
 
-@config_editor_bp.route('/save_config', methods=['POST'])
+@config_editor_bp.route('/save_config', methods=['POST', 'OPTIONS'])
 @token_required
 def save_config_route():
     """
