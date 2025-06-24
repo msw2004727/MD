@@ -5,8 +5,8 @@ import os
 import sys
 import logging
 # --- 核心修改處 START ---
-# 從 logging.handlers 導入 RotatingFileHandler
-from logging.handlers import RotatingFileHandler
+# 從 logging.handlers 導入 TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 # --- 核心修改處 END ---
 from datetime import datetime, timezone, timedelta
 
@@ -48,11 +48,15 @@ def setup_logging():
     log_file_path = os.path.join(log_dir, 'game_log.html')
 
     # --- 核心修改處 START ---
-    # 使用 RotatingFileHandler，設定每個檔案最大為 5MB，保留 3 個備份檔
-    file_handler = RotatingFileHandler(
+    # 使用 TimedRotatingFileHandler
+    # when='midnight': 每天午夜進行日誌輪替
+    # interval=1: 每 1 (天) 輪替一次
+    # backupCount=7: 保留最近 7 天的日誌備份
+    file_handler = TimedRotatingFileHandler(
         log_file_path, 
-        maxBytes=5*1024*1024, # 5 MB
-        backupCount=3, 
+        when='midnight',
+        interval=1,
+        backupCount=7, 
         encoding='utf-8'
     )
     # --- 核心修改處 END ---
@@ -83,8 +87,6 @@ def setup_logging():
     file_handler.setFormatter(html_formatter)
     root_logger.addHandler(file_handler)
     
-    # 檢查檔案是否為空，若是則寫入 HTML 頭部
-    # 這個邏輯對於 RotatingFileHandler 創建新檔案時同樣適用
     if not os.path.exists(log_file_path) or os.path.getsize(log_file_path) == 0:
         with open(log_file_path, 'w', encoding='utf-8') as f:
             f.write("""<!DOCTYPE html>
@@ -96,9 +98,7 @@ def setup_logging():
     <style>
         body { font-family: 'Courier New', Courier, monospace; background-color: #1a1a1a; color: #f0f0f0; margin: 0; padding: 10px; }
         body { display: flex; flex-direction: column-reverse; }
-        /* --- 核心修改處 START --- */
         .log-entry { margin-bottom: 5px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 0.9em; }
-        /* --- 核心修改處 END --- */
         .timestamp { color: #666; }
         .levelname { font-weight: bold; }
         h1 { color: #3498db; border-bottom: 1px solid #3498db; padding-bottom: 5px; }
@@ -108,4 +108,4 @@ def setup_logging():
     </body>
 </html>
 """)
-    root_logger.info("日誌系統設定完成，已切換為中文格式。")
+    root_logger.info("日誌系統設定完成，已切換為每日輪替模式。")
