@@ -57,12 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 facilitiesContainer: document.getElementById('adventure-facilities-container'),
                 saveBtn: document.getElementById('save-adventure-settings-btn'),
                 responseEl: document.getElementById('adventure-settings-response'),
-                // --- 核心修改處 START ---
                 growthFacilitiesContainer: document.getElementById('adventure-growth-facilities-container'),
                 growthStatsContainer: document.getElementById('adventure-growth-stats-container'),
                 saveGrowthBtn: document.getElementById('save-adventure-growth-settings-btn'),
                 growthResponseEl: document.getElementById('adventure-growth-settings-response'),
-                // --- 核心修改處 END ---
             },
 
             // 設定檔
@@ -550,8 +548,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // --- 核心修改處 START ---
-        // 冒險島設定邏輯
         async function loadAdventureSettings() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, growthFacilitiesContainer, growthStatsContainer } = DOMElements.advSettings;
             if (!bossMultiplierInput || !growthFacilitiesContainer) return;
@@ -635,8 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  growthFacilitiesContainer.innerHTML = `<p style="color: var(--danger-color);">載入成長設定失敗：${err.message}</p>`;
             }
         }
-        // --- 核心修改處 END ---
-
+        
         async function handleSaveAdventureSettings() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
             
@@ -679,6 +674,58 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存冒險島設定變更';
             }
         }
+
+        // --- 核心修改處 START ---
+        async function handleSaveAdventureGrowthSettings() {
+            const { growthFacilitiesContainer, growthStatsContainer, saveGrowthBtn, growthResponseEl } = DOMElements.advSettings;
+            
+            const newGrowthSettings = {
+                facilities: {},
+                stat_weights: {}
+            };
+
+            // 收集各地區設施的成長機率和點數
+            growthFacilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
+                const id = input.dataset.facilityId;
+                if (!newGrowthSettings.facilities[id]) {
+                    newGrowthSettings.facilities[id] = {};
+                }
+                if (input.dataset.setting === 'growth_chance') {
+                    newGrowthSettings.facilities[id].growth_chance = parseFloat(input.value) / 100.0;
+                } else if (input.dataset.setting === 'growth_points') {
+                    newGrowthSettings.facilities[id].growth_points = parseInt(input.value, 10);
+                }
+            });
+
+            // 收集各項能力的成長權重
+            growthStatsContainer.querySelectorAll('input[data-stat-name]').forEach(input => {
+                const stat = input.dataset.statName;
+                newGrowthSettings.stat_weights[stat] = parseInt(input.value, 10);
+            });
+            
+            saveGrowthBtn.disabled = true;
+            saveGrowthBtn.textContent = '儲存中...';
+            growthResponseEl.style.display = 'none';
+
+            try {
+                const result = await fetchAdminAPI('/save_adventure_growth_settings', {
+                    method: 'POST',
+                    body: JSON.stringify(newGrowthSettings)
+                });
+                
+                growthResponseEl.textContent = result.message;
+                growthResponseEl.className = 'admin-response-message success';
+
+            } catch (err) {
+                growthResponseEl.textContent = `儲存失敗：${err.message}`;
+                growthResponseEl.className = 'admin-response-message error';
+            } finally {
+                growthResponseEl.style.display = 'block';
+                saveGrowthBtn.disabled = false;
+                saveGrowthBtn.textContent = '儲存隨機成長設定';
+            }
+        }
+        // --- 核心修改處 END ---
 
         // --- 儀表板總覽邏輯 ---
         async function handleGenerateReport() {
@@ -725,6 +772,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
         if (DOMElements.csMailContainer) { DOMElements.csMailContainer.addEventListener('click', handleCsMailActions); }
         if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } 
+        // --- 核心修改處 START ---
+        if (DOMElements.advSettings.saveGrowthBtn) { DOMElements.advSettings.saveGrowthBtn.addEventListener('click', handleSaveAdventureGrowthSettings); }
+        // --- 核心修改處 END ---
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
