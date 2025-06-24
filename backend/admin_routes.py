@@ -52,7 +52,7 @@ def token_required(f):
 # 【修改】將 config_editor 相關路由移至專門的檔案，這裡只保留 admin 核心路由
 # backend/admin_routes.py
 
-@admin_bp.route('/login', methods=['POST'])
+@admin_bp.route('/login', methods=['POST', 'OPTIONS'])
 def admin_login():
     """後台登入 API"""
     data = request.get_json()
@@ -68,7 +68,7 @@ def admin_login():
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
 
-@admin_bp.route('/player_data', methods=['GET'])
+@admin_bp.route('/player_data', methods=['GET', 'OPTIONS'])
 @token_required
 def get_admin_player_data_route():
     uid = request.args.get('uid')
@@ -82,7 +82,7 @@ def get_admin_player_data_route():
     else:
         return jsonify({"error": f"找不到 UID 為 {uid} 的玩家資料"}), 404
 
-@admin_bp.route('/player_data/<string:uid>', methods=['POST'])
+@admin_bp.route('/player_data/<string:uid>', methods=['POST', 'OPTIONS'])
 @token_required
 def update_admin_player_data_route(uid):
     data_to_save = request.get_json()
@@ -93,7 +93,7 @@ def update_admin_player_data_route(uid):
     else:
         return jsonify({"error": "儲存玩家資料時發生錯誤"}), 500
 
-@admin_bp.route('/send_mail_to_player', methods=['POST'])
+@admin_bp.route('/send_mail_to_player', methods=['POST', 'OPTIONS'])
 @token_required
 def send_mail_to_player_route():
     from .mail_services import send_mail_to_player_service
@@ -118,7 +118,7 @@ def send_mail_to_player_route():
     else:
         return jsonify({"error": error_msg or "發送信件時發生未知錯誤。"}), 500
 
-@admin_bp.route('/get_broadcast_log', methods=['GET'])
+@admin_bp.route('/get_broadcast_log', methods=['GET', 'OPTIONS'])
 @token_required
 def get_broadcast_log_route():
     from . import MD_firebase_config
@@ -133,7 +133,7 @@ def get_broadcast_log_route():
         current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "獲取歷史紀錄時發生內部錯誤。"}), 500
 
-@admin_bp.route('/broadcast_mail', methods=['POST'])
+@admin_bp.route('/broadcast_mail', methods=['POST', 'OPTIONS'])
 @token_required
 def broadcast_mail_route():
     from . import MD_firebase_config
@@ -174,7 +174,7 @@ def broadcast_mail_route():
     except Exception as e:
         return jsonify({"error": f"群發信件時發生錯誤: {str(e)}"}), 500
 
-@admin_bp.route('/game_overview', methods=['GET'])
+@admin_bp.route('/game_overview', methods=['GET', 'OPTIONS'])
 @token_required
 def get_game_overview_route():
     from . import MD_firebase_config
@@ -202,7 +202,7 @@ def get_game_overview_route():
         current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "生成報表時發生內部錯誤。"}), 500
 
-@admin_bp.route('/recall_mail', methods=['POST'])
+@admin_bp.route('/recall_mail', methods=['POST', 'OPTIONS'])
 @token_required
 def recall_mail_route():
     from . import MD_firebase_config
