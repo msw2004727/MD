@@ -134,8 +134,7 @@
     flex-shrink: 0; /* 防止按鈕被壓縮 */
 }
 
-/* --- 核心修改處 START --- */
-/* 為系統通知信件的關閉按鈕新增紅圈樣式 */
+/* 系統通知信件的關閉按鈕樣式 */
 #mail-reader-modal .modal-close.system-notification-close-btn {
     background-color: var(--danger-color);
     color: var(--button-danger-text);
@@ -155,5 +154,157 @@
 }
 body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
      background-color: var(--danger-hover-light);
+}
+
+/* 附件區塊樣式 */
+#mail-reader-attachments {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+#mail-attachments-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+.mail-attachment-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    min-width: 80px;
+}
+.mail-attachment-item .dna-item {
+    width: 50px;
+    height: 50px;
+    font-size: 0.7rem;
+    min-height: 0;
+    cursor: default;
+}
+.attachment-gold {
+    font-weight: bold;
+    color: gold;
+}
+/* 信件列表附件圖示 */
+.mail-title-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    flex-grow: 1;
+}
+.mail-attachment-icon {
+    font-size: 1rem;
+    color: var(--rarity-legendary-text);
+}
+.mail-item.has-attachment .mail-title::after {
+    content: '🎁';
+    margin-left: 8px;
+    color: var(--rarity-legendary-text);
+    font-size: 1rem;
+}
+
+/* --- 核心修改處 START --- */
+/* 撰寫信件彈窗的整體佈局 */
+.send-mail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.send-mail-container .recipient-info {
+    text-align: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.send-mail-container .mail-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.send-mail-container .mail-input-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.send-mail-container .mail-input-group input,
+.send-mail-container .mail-input-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* 附件區塊的樣式 */
+.mail-attachment-section {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+.attachment-title {
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.75rem;
+}
+
+.attachment-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.attachment-gold-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.attachment-gold-control input {
+    width: 80px;
+    padding: 6px 8px;
+}
+
+.attached-dna-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 50px;
+}
+
+.attached-dna-preview .dna-item {
+    width: 50px;
+    height: 50px;
+    font-size: 0.7rem;
+    min-height: 0;
+}
+
+.attached-dna-preview .remove-attachment-btn {
+    padding: 4px 8px;
+    line-height: 1;
+    min-width: auto;
+}
+
+/* 用於附加物品選擇的庫存格樣式 */
+.mail-inventory-selection .mail-attach-dna-item {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mail-inventory-selection .mail-attach-dna-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px var(--accent-color);
 }
 /* --- 核心修改處 END --- */
