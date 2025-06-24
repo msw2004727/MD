@@ -17,8 +17,10 @@
         }
         .admin-login-container {
             width: 100%;
-            max-width: 380px;
-            padding: 2rem;
+            /* --- 核心修改處 START --- */
+            max-width: 360px; /* 縮小最大寬度，讓整體更精緻 */
+            padding: 2.5rem; /* 增加內部間距 */
+            /* --- 核心修改處 END --- */
             background-color: var(--bg-panel);
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.4);
@@ -40,6 +42,9 @@
             background-color: var(--bg-primary);
             color: var(--text-primary);
             font-size: 1rem;
+            /* --- 核心修改處 START --- */
+            box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
+            /* --- 核心修改處 END --- */
         }
         .admin-error-message {
             color: var(--danger-color);
