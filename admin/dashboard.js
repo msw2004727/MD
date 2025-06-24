@@ -1,15 +1,17 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- 變數定義區 ---
     const adminToken = localStorage.getItem('admin_token');
-    const SENDER_PRESETS_KEY = 'admin_sender_presets'; // 【新增】用於儲存寄件人名稱的 localStorage 鍵值
+    const SENDER_PRESETS_KEY = 'admin_sender_presets'; 
+    let currentPlayerData = null;
+    // 【新增】一個變數來存放日誌自動刷新的計時器
+    let logIntervalId = null;
 
     if (!adminToken) {
         window.location.href = 'index.html';
         return;
     }
     const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
-    let currentPlayerData = null;
-
+    
     // --- DOM 元素獲取區 ---
     const navItems = document.querySelectorAll('.nav-item');
     const contentPanels = document.querySelectorAll('.content-panel');
@@ -21,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataDisplay = document.getElementById('player-data-display');
     const searchResultsContainer = document.getElementById('player-search-results');
     
-    // 【新增】獲取新的寄件人相關元素
     const broadcastSenderNameInput = document.getElementById('broadcast-sender-name');
     const broadcastSenderPresetsSelect = document.getElementById('broadcast-sender-presets');
     const saveSenderNameBtn = document.getElementById('save-sender-name-btn');
@@ -33,9 +34,62 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateReportBtn = document.getElementById('generate-report-btn');
     const overviewReportContainer = document.getElementById('overview-report-container');
 
-    // --- 函式定義區 ---
+    // 【新增】獲取日誌監控頁籤的相關元素
+    const logDisplayContainer = document.getElementById('log-display-container');
+    const refreshLogsBtn = document.getElementById('refresh-logs-btn');
 
-    // 【新增】載入已儲存的寄件人名稱到下拉選單
+
+    // --- 函式定義區 ---
+    
+    // 【新增】載入並顯示後端日誌的函式
+    async function loadAndDisplayLogs() {
+        if (!logDisplayContainer) return;
+        logDisplayContainer.innerHTML = '<p style="color: var(--admin-text-secondary);">正在載入最新日誌...</p>';
+        try {
+            // 後端 /api/MD/logs 回傳的是 HTML 格式的純文字
+            const response = await fetch(`${ADMIN_API_URL}/logs`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            if (!response.ok) {
+                throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
+            }
+            const htmlContent = await response.text();
+            
+            // 使用 DOMParser 來解析 HTML 字串，只取出 body 內的內容，避免重複的 <html> 標籤
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, "text/html");
+            logDisplayContainer.innerHTML = doc.body.innerHTML || '<p>日誌目前為空。</p>';
+            
+            // 自動滾動到最底部
+            logDisplayContainer.scrollTop = logDisplayContainer.scrollHeight;
+
+        } catch (err) {
+            logDisplayContainer.innerHTML = `<p style="color: var(--danger-color);">載入日誌失敗：${err.message}</p>`;
+        }
+    }
+
+    // 【修改】switchTab 函式，加入對新頁籤的處理
+    function switchTab(targetId) {
+        // 清除可能在運行的計時器
+        if (logIntervalId) {
+            clearInterval(logIntervalId);
+            logIntervalId = null;
+        }
+
+        navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
+        contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
+        
+        if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
+            initializeConfigEditor();
+        } else if (targetId === 'mail-system') {
+            loadBroadcastLog();
+        } else if (targetId === 'log-monitoring') {
+            // 當切換到日誌頁籤時，先載入一次，然後設定每5秒自動刷新
+            loadAndDisplayLogs();
+            logIntervalId = setInterval(loadAndDisplayLogs, 5000); 
+        }
+    }
+
     function loadSenderPresets() {
         const presets = JSON.parse(localStorage.getItem(SENDER_PRESETS_KEY)) || ['遊戲管理員', '系統通知'];
         broadcastSenderPresetsSelect.innerHTML = '<option value="">選擇預設名稱...</option>';
@@ -45,32 +99,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 【新增】儲存新的寄件人名稱
     function saveSenderPreset() {
         const newName = broadcastSenderNameInput.value.trim();
-        if (!newName) {
-            alert('寄件人名稱不能為空。');
-            return;
-        }
+        if (!newName) { alert('寄件人名稱不能為空。'); return; }
         let presets = JSON.parse(localStorage.getItem(SENDER_PRESETS_KEY)) || ['遊戲管理員', '系統通知'];
         if (!presets.includes(newName)) {
             presets.push(newName);
             localStorage.setItem(SENDER_PRESETS_KEY, JSON.stringify(presets));
             alert(`已儲存寄件人：${newName}`);
-            loadSenderPresets(); // 重新載入選單
-            broadcastSenderPresetsSelect.value = newName; // 自動選中剛儲存的名稱
+            loadSenderPresets();
+            broadcastSenderPresetsSelect.value = newName;
         } else {
             alert('此名稱已存在於預設選單中。');
-        }
-    }
-
-    function switchTab(targetId) {
-        navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
-        contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
-        if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
-            initializeConfigEditor();
-        } else if (targetId === 'mail-system') {
-            loadBroadcastLog();
         }
     }
 
@@ -106,9 +146,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function handleSendPlayerMail() {
         if (!currentPlayerData) { alert('請先查詢一位玩家。'); return; }
-        // 【修改】寄送單人信件時，也彈出視窗詢問寄件人名稱
         const senderName = prompt("請輸入寄件人名稱：", "遊戲管理員");
-        if (senderName === null) return; // 如果使用者按取消，則中止操作
+        if (senderName === null) return; 
         const title = prompt(`請輸入要寄送給「${currentPlayerData.nickname}」的信件標題：`);
         if (!title) return;
         const content = prompt(`請輸入信件內容：`);
@@ -116,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('send-player-mail-btn');
         btn.disabled = true;
         try {
-            // 【修改】在請求中加入 sender_name 欄位
             const response = await fetch(`${ADMIN_API_URL}/admin/send_mail_to_player`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }, body: JSON.stringify({ recipient_id: currentPlayerData.uid, title, content, sender_name: senderName.trim() || '遊戲管理員' }) });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || '發送失敗');
@@ -195,22 +233,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function handleBroadcastMail() {
-        // 【修改】讀取新的寄件人名稱輸入框的值
-        const senderName = broadcastSenderNameInput.value.trim() || '遊戲管理員'; // 若為空，則使用預設值
+        const senderName = broadcastSenderNameInput.value.trim() || '遊戲管理員';
         const title = document.getElementById('broadcast-title').value.trim();
         const content = document.getElementById('broadcast-content').value.trim();
         const payloadStr = document.getElementById('broadcast-payload').value.trim() || '{}';
-
         if (!title || !content) { alert('信件標題和內容不能為空。'); return; }
-
         const btn = document.getElementById('broadcast-mail-btn');
         const responseEl = document.getElementById('broadcast-response');
         btn.disabled = true;
         btn.textContent = '發送中...';
         responseEl.style.display = 'none';
-
         try {
-            // 【修改】在請求中加入 sender_name 欄位
             const response = await fetch(`${ADMIN_API_URL}/admin/broadcast_mail`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }, body: JSON.stringify({ sender_name: senderName, title, content, payload_str: payloadStr }) });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || '發送失敗');
@@ -252,23 +285,21 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
     searchResultsContainer.addEventListener('click', (e) => { const item = e.target.closest('.search-result-item'); if (item && item.dataset.uid) { fetchAndDisplayPlayerData(item.dataset.uid); } });
     dataDisplay.addEventListener('click', (e) => { if (e.target.id === 'save-player-data-btn') { handleSavePlayerData(); } if (e.target.id === 'send-player-mail-btn') { handleSendPlayerMail(); } });
-    
-    // 【新增】為新的寄件人相關按鈕綁定事件
     broadcastBtn.addEventListener('click', handleBroadcastMail);
     saveSenderNameBtn.addEventListener('click', saveSenderPreset);
-    broadcastSenderPresetsSelect.addEventListener('change', () => {
-        if (broadcastSenderPresetsSelect.value) {
-            broadcastSenderNameInput.value = broadcastSenderPresetsSelect.value;
-        }
-    });
-
+    broadcastSenderPresetsSelect.addEventListener('change', () => { if (broadcastSenderPresetsSelect.value) { broadcastSenderNameInput.value = broadcastSenderPresetsSelect.value; } });
     refreshLogBtn.addEventListener('click', loadBroadcastLog);
     broadcastLogContainer.addEventListener('click', handleRecallMail);
     generateReportBtn.addEventListener('click', handleGenerateReport);
+    
+    // 【新增】為新的日誌刷新按鈕綁定事件
+    if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener('click', loadAndDisplayLogs);
+    }
     
     // --- 初始執行區 ---
     updateTime();
     setInterval(updateTime, 1000);
     switchTab('dashboard-home');
-    loadSenderPresets(); // 【新增】頁面載入時，執行一次載入預設名稱的函式
+    loadSenderPresets();
 });
