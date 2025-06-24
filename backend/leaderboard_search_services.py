@@ -12,6 +12,8 @@ from .MD_models import (
 
 # 從 MD_firebase_config 導入 db 實例，因為這裡的服務需要與 Firestore 互動
 from . import MD_firebase_config
+# --- 核心修改處：移除不再使用的 FieldFilter 導入 ---
+# from google.cloud.firestore_v1.field_path import FieldPath 
 
 leaderboard_search_services_logger = logging.getLogger(__name__)
 
@@ -155,11 +157,14 @@ def search_players_service(nickname_query: str, limit: int = 10) -> List[Dict[st
 
     results: List[Dict[str, str]] = []
     try:
+        # --- 核心修改處 START ---
+        # 將 .where(filter=...) 的語法改為更通用的 .where(欄位, 運算子, 值)
         query_ref = db.collection('users').where(
-            filter=firestore.FieldFilter('nickname', '>=', nickname_query)
+            'nickname', '>=', nickname_query
         ).where(
-            filter=firestore.FieldFilter('nickname', '<=', nickname_query + '\uf8ff')
+            'nickname', '<=', nickname_query + '\uf8ff'
         ).limit(limit)
+        # --- 核心修改處 END ---
 
         docs = query_ref.stream()
         for doc in docs:
