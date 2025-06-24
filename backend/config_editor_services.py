@@ -34,14 +34,12 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "skills/wood.json": ("Skills", "skill_database.木"),
 }
 
-# --- 核心修改處 START ---
-# 將 adventure_growth_settings.json 也加入到本地檔案列表
+# 新增一個列表來定義哪些是本地檔案
 LOCAL_CONFIG_FILES = [
     "adventure_settings.json", 
     "adventure_islands.json",
     "adventure_growth_settings.json"
 ]
-# --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
@@ -57,17 +55,25 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
     if not db:
         return None, "資料庫服務未初始化。"
 
+    # --- 核心修改處 START ---
     # 檢查是否為本地設定檔
     if filename in LOCAL_CONFIG_FILES:
         try:
-            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            # 確保 data 目錄路徑正確
+            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
             file_path = os.path.join(data_dir, filename)
+            
+            # 檢查檔案是否存在
+            if not os.path.exists(file_path):
+                return None, f"本地設定檔 '{filename}' 不存在。"
+                
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = json.load(f)
             return content, None
         except Exception as e:
             config_editor_logger.error(f"從本地讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
             return None, f"讀取本地檔案 {filename} 時發生錯誤。"
+    # --- 核心修改處 END ---
 
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return None, f"不支援的設定檔 '{filename}'。"
@@ -109,12 +115,10 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     if not db:
         return False, "資料庫服務未初始化。"
 
-    # --- 核心修改處 START ---
-    # 新增：處理本地檔案儲存
     if filename in LOCAL_CONFIG_FILES:
         try:
             parsed_content = json.loads(content_str)
-            data_dir = os.path.join(os.path.dirname(__file__), 'data')
+            data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
             file_path = os.path.join(data_dir, filename)
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(parsed_content, f, indent=2, ensure_ascii=False)
@@ -126,7 +130,6 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
         except Exception as e:
             config_editor_logger.error(f"儲存設定檔 '{filename}' 到本地時發生錯誤: {e}", exc_info=True)
             return False, "儲存檔案到本地時發生伺服器內部錯誤。"
-    # --- 核心修改處 END ---
 
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return False, f"不支援的設定檔 '{filename}'。"
@@ -189,7 +192,6 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         config_editor_logger.error(f"儲存冒險島設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存冒險島設定時發生伺服器內部錯誤。"
 
-# --- 核心修改處 START ---
 def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool, Optional[str]]:
     """
     將新的冒險島成長設定儲存到 adventure_growth_settings.json 檔案。
@@ -215,7 +217,6 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
     except Exception as e:
         config_editor_logger.error(f"儲存冒險島成長設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存冒險島成長設定時發生伺服器內部錯誤。"
-# --- 核心修改處 END ---
 
 
 def reload_main_app_configs():
