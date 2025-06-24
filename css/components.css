@@ -1166,7 +1166,11 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 /* --- 核心修改處 START --- */
-/* 好友列表中，移除好友按鈕的懸停效果 */
+/* 好友列表中，移除好友按鈕的樣式 */
+.friend-actions .remove-friend-btn {
+    color: var(--danger-color);
+}
+
 .friend-actions .remove-friend-btn:hover {
     background-color: var(--danger-color);
     color: var(--button-danger-text);
