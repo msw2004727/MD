@@ -38,7 +38,15 @@ body.admin-body {
 }
 .navbar-brand { margin-right: 2rem; }
 .navbar-title { font-size: 1.25rem; font-weight: bold; color: var(--admin-text-primary); margin: 0; }
-.navbar-nav { display: flex; gap: 0.5rem; height: 100%; align-items: center; flex-grow: 1; overflow-x: auto; }
+.navbar-nav {
+    display: flex;
+    gap: 0.5rem;
+    height: 100%;
+    align-items: center;
+    flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden; /* 新增：強制隱藏垂直滾動軸 */
+}
 .navbar-nav a.nav-item { display: flex; align-items: center; padding: 0 0.75rem; /* 減少左右 padding 來縮小間距 */ height: 100%; color: var(--admin-text-secondary); text-decoration: none; font-size: 1rem; border-bottom: 3px solid transparent; transition: color 0.2s, border-bottom-color 0.2s; white-space: nowrap; }
 .navbar-nav a.nav-item:hover { color: var(--admin-text-primary); }
 .navbar-nav a.nav-item.active { color: var(--admin-accent-hover); font-weight: 600; border-bottom-color: var(--admin-accent-hover); }
@@ -164,8 +172,6 @@ body.admin-body {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
-
-/* --- 核心修改處 START --- */
 .cs-mail-actions {
     padding: 0.5rem 1rem;
     text-align: right;
@@ -177,7 +183,6 @@ body.admin-body {
     font-size: 0.85rem;
     padding: 6px 12px;
 }
-/* --- 核心修改處 END --- */
 
 .log-entry {
     border-bottom: 1px solid var(--admin-border-color);
