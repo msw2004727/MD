@@ -37,6 +37,8 @@
       "comment_zh_expeditionFailed": "遠征失敗(戰敗)彈窗",
       "expeditionStart": "https://github.com/msw2004727/MD/blob/main/images/BN021.png?raw=true",
       "comment_zh_expeditionStart": "準備遠征彈窗",
+      "expeditionSummaryBanner": "https://github.com/msw2004727/MD/blob/main/images/BN019.png?raw=true",
+      "comment_zh_expeditionSummaryBanner": "遠征總結彈窗頂部橫幅",
       "loadingBanners": {
         "comment": "所有讀取中狀態的獨立橫幅",
         "dnaDrawing": "https://github.com/msw2004727/MD/blob/main/images/BN017.png?raw=true",
