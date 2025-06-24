@@ -3,33 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>後台儀表板 - 怪獸異世界</title>
-    <link href="../css/theme.css?v=0.4.1.1" rel="stylesheet">
-    <link href="../css/buttons.css?v=0.4.1.1" rel="stylesheet">
-    <link href="dashboard.css?v=0.4.1.1" rel="stylesheet">
+    <title>怪獸保護協會 - 管理後台</title>
+    <link href="../css/theme.css?v=0.4.1.2" rel="stylesheet">
+    <link href="../css/buttons.css?v=0.4.1.2" rel="stylesheet">
+    <link href="dashboard.css?v=0.4.1.2" rel="stylesheet">
 </head>
 <body class="admin-body">
-    
-    <header class="top-navbar">
-        <div class="navbar-brand">
-            <h1 class="navbar-title">上帝模式</h1>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="sidebar-title">怪獸保護協會</h1>
         </div>
-        <nav class="navbar-nav">
-            <a href="#" class="nav-item active" data-target="dashboard-home">總覽</a>
-            <a href="#" class="nav-item" data-target="player-management">玩家管理</a>
-            <a href="#" class="nav-item" data-target="mail-system">群發信件</a>
-            <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
-            <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
+        <nav class="sidebar-nav">
+            <a href="#" class="sidebar-item active" data-target="dashboard-home" data-title="總覽">總覽</a>
+            <a href="#" class="sidebar-item" data-target="player-management" data-title="玩家管理">玩家管理</a>
+            <a href="#" class="sidebar-item" data-target="mail-system" data-title="群發信件">群發信件</a>
+            <a href="#" class="sidebar-item" data-target="game-configs" data-title="遊戲設定">遊戲設定</a>
+            <a href="#" class="sidebar-item" data-target="log-monitoring" data-title="日誌監控">日誌監控</a>
         </nav>
-        <div class="navbar-actions">
+        <div class="sidebar-footer">
             <button id="logout-btn" class="button danger">登出</button>
         </div>
-    </header>
+    </aside>
 
     <div class="main-content-wrapper">
-        <main class="main-content">
+        <header class="main-header">
+            <h2 id="main-content-title" class="content-header">總覽</h2>
+        </header>
+
+        <main class="content-area">
             <div id="dashboard-home" class="content-panel active">
-                <h2 class="content-header">遊戲總覽</h2>
                 <div class="data-section">
                     <button id="generate-report-btn" class="button primary">生成全服數據報表</button>
                     <div id="overview-report-container" style="margin-top: 1.5rem;">
@@ -42,15 +45,14 @@
                     <p>後端伺服器運行正常。</p>
                 </div>
             </div>
-            
+
             <div id="player-management" class="content-panel">
-                <h2 class="content-header">玩家管理</h2>
                 <div class="dashboard-grid">
                     <div class="side-pane">
                         <h3>查詢玩家</h3>
                         <div class="data-section">
                             <div class="search-container">
-                                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 或暱稱進行查詢...">
+                                <input type="text" id="player-search-input" class="admin-input" placeholder="輸入玩家 UID 或暱稱...">
                                 <button id="player-search-btn" class="button primary">查詢</button>
                             </div>
                             <div id="player-search-results"></div>
@@ -59,12 +61,11 @@
                     <div class="main-pane">
                         <h3>玩家資料</h3>
                         <div id="player-data-display">
-                            <p style="color: var(--admin-text-secondary);">請先從左側查詢並選擇一位玩家以檢視其詳細資料。</p>
+                            <p style="color: var(--admin-text-secondary);">請先從左側查詢並選擇一位玩家。</p>
                         </div>
-                        
                         <div id="player-log-section" class="data-section" style="display: none; margin-top: 1.5rem;">
                             <h3>玩家個人日誌</h3>
-                            <div id="player-log-filters" class="log-filters" style="margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <div id="player-log-filters" class="log-filters">
                                 <button class="button secondary text-xs active" data-log-category="全部">全部</button>
                                 <button class="button secondary text-xs" data-log-category="系統">系統</button>
                                 <button class="button secondary text-xs" data-log-category="戰鬥">戰鬥</button>
@@ -72,7 +73,7 @@
                                 <button class="button secondary text-xs" data-log-category="物品">物品</button>
                                 <button class="button secondary text-xs" data-log-category="金幣">金幣</button>
                             </div>
-                            <div id="player-log-display" class="log-display" style="height: 300px; background-color: var(--admin-bg); border-radius: 8px; border: 1px solid var(--admin-border-color); padding: 1rem; overflow-y: auto; font-size: 0.9rem;">
+                            <div id="player-log-display" class="log-display">
                                 <p style="color: var(--admin-text-secondary);">暫無日誌紀錄。</p>
                             </div>
                         </div>
@@ -81,30 +82,29 @@
             </div>
             
             <div id="mail-system" class="content-panel">
-                 <h2 class="content-header">群發信件</h2>
                  <div class="dashboard-grid">
                     <div class="main-pane">
                         <div class="data-section">
                             <h3>撰寫新信件</h3>
-                            <div class="form-group" style="margin-bottom: 1rem;">
+                            <div class="form-group">
                                 <label for="broadcast-sender-name">寄件人名稱</label>
                                 <div style="display: flex; gap: 0.5rem;">
-                                    <input type="text" id="broadcast-sender-name" class="admin-input" placeholder="預設為：遊戲管理員" value="遊戲管理員">
+                                    <input type="text" id="broadcast-sender-name" class="admin-input" value="遊戲管理員">
                                     <select id="broadcast-sender-presets" class="admin-input" style="flex-grow: 0.5;"></select>
                                     <button id="save-sender-name-btn" class="button secondary" title="儲存目前名稱到選單">💾</button>
                                 </div>
                             </div>
-                            <div class="form-group" style="margin-bottom: 1rem;">
+                            <div class="form-group">
                                 <label for="broadcast-title">信件標題</label>
                                 <input type="text" id="broadcast-title" class="admin-input" placeholder="輸入要發送的信件標題">
                             </div>
-                            <div class="form-group" style="margin-bottom: 1rem;">
+                            <div class="form-group">
                                 <label for="broadcast-content">信件內容</label>
                                 <textarea id="broadcast-content" class="admin-input" rows="5" placeholder="輸入信件的詳細內容..."></textarea>
                             </div>
                             <div class="form-group">
-                                <label for="broadcast-payload">附件 (Payload - JSON格式，可選)</label>
-                                <textarea id="broadcast-payload" class="admin-input" rows="5" placeholder='例如：{"gold": 100}'></textarea>
+                                <label for="broadcast-payload">附件 (Payload - JSON格式)</label>
+                                <textarea id="broadcast-payload" class="admin-input" rows="3" placeholder='例如：{"gold": 100}'></textarea>
                             </div>
                             <div class="save-changes-container">
                                 <button id="broadcast-mail-btn" class="button success">向所有玩家發送</button>
@@ -114,26 +114,24 @@
                     </div>
                     <div class="side-pane">
                         <div class="data-section">
-                            <h3>已發送系統信件歷史 <button id="refresh-log-btn" class="button secondary" style="font-size: 0.8rem; padding: 4px 8px; margin-left: 1rem;">刷新</button></h3>
-                            <div id="broadcast-log-container">
-                                <p>正在載入紀錄...</p>
-                            </div>
+                            <h3>已發送歷史 <button id="refresh-log-btn" class="button secondary text-xs" style="padding: 4px 8px;">刷新</button></h3>
+                            <div id="broadcast-log-container"><p>正在載入紀錄...</p></div>
                         </div>
                     </div>
                  </div>
             </div>
+
             <div id="game-configs" class="content-panel">
-                <h2 class="content-header">遊戲設定</h2>
                 <div class="dashboard-grid">
                     <div class="data-section">
                         <h3>即時設定編輯器</h3>
-                        <div class="form-group" style="margin-bottom: 1rem;">
+                        <div class="form-group">
                             <label for="config-file-selector">選擇要編輯的設定檔</label>
                             <select id="config-file-selector" class="admin-input"></select>
                         </div>
                         <div class="form-group">
                             <label for="game-configs-display">檔案內容 (請謹慎修改)</label>
-                            <textarea id="game-configs-display" class="admin-input" rows="20" style="font-family: monospace; font-size: 0.9rem; white-space: pre; background-color: var(--admin-bg);" placeholder="請從上方選擇一個設定檔以檢視或編輯..."></textarea>
+                            <textarea id="game-configs-display" class="admin-input" rows="20" placeholder="請從上方選擇一個設定檔..."></textarea>
                         </div>
                         <div class="save-changes-container">
                             <button id="save-config-btn" class="button success" disabled>儲存設定變更</button>
@@ -141,15 +139,15 @@
                         <div id="config-response" class="admin-response-message" style="display: none;"></div>
                     </div>
                 </div>
-                </div>
+            </div>
+            
             <div id="log-monitoring" class="content-panel">
-                <h2 class="content-header">後端日誌監控</h2>
                 <div class="data-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>即時日誌</h3>
+                        <h3>後端即時日誌</h3>
                         <button id="refresh-logs-btn" class="button secondary">手動刷新</button>
                     </div>
-                    <div id="log-display-container" style="height: 65vh; background-color: var(--admin-bg); border-radius: 8px; border: 1px solid var(--admin-border-color); padding: 1rem; overflow-y: auto; font-family: monospace; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word;">
+                    <div id="log-display-container" class="log-display-container">
                         <p style="color: var(--admin-text-secondary);">點擊「手動刷新」以載入日誌...</p>
                     </div>
                 </div>
@@ -157,8 +155,8 @@
         </main>
     </div>
 
-    <script src="../js/config.js?v=0.4.1.1"></script>
-    <script src="config-editor.js?v=0.4.1.1"></script>
-    <script src="dashboard.js?v=0.4.1.1"></script>
+    <script src="../js/config.js?v=0.4.1.2"></script>
+    <script src="config-editor.js?v=0.4.1.2"></script>
+    <script src="dashboard.js?v=0.4.1.2"></script>
 </body>
 </html>
