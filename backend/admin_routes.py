@@ -1,43 +1,55 @@
 # backend/admin_routes.py
+# 核心修改處：建立全新的後台管理路由檔案
 
 import os
 import jwt
 import json
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+# 【新增】導入 firestore 以便使用查詢功能
 from firebase_admin import firestore
 from flask import Blueprint, jsonify, request, current_app
 
+# 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
 
+# 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
 
+# 後台管理的密鑰，為了安全，建議您之後將其設定為 Render 的環境變數
 ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your_super_secret_admin_key_12345')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727') # 您的後台密碼
 
+# 裝飾器：用於驗證後台管理員的 JWT Token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        # 針對瀏覽器因CORS發出的預檢請求(OPTIONS)，直接回傳成功
         if request.method == 'OPTIONS':
             return jsonify({'status': 'ok'}), 200
+            
         token = None
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
             if ' ' in auth_header:
                 token = auth_header.split(" ")[1]
+
         if not token:
             return jsonify({'message': '錯誤：缺少 Token'}), 401
+
         try:
             data = jwt.decode(token, ADMIN_SECRET_KEY, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
             return jsonify({'message': '錯誤：Token 已過期'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'message': '錯誤：無效的 Token'}), 401
+
         return f(*args, **kwargs)
     return decorated
 
 @admin_bp.route('/login', methods=['POST'])
 def admin_login():
+    """後台登入 API"""
     data = request.get_json()
     if not data or 'password' not in data:
         return jsonify({'error': '缺少密碼'}), 400
@@ -46,9 +58,12 @@ def admin_login():
             'user': 'admin',
             'exp': datetime.now(tz=timezone.utc) + timedelta(hours=8)
         }, ADMIN_SECRET_KEY, algorithm="HS256")
+        
         return jsonify({'success': True, 'token': token})
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
+
+# --- 以下是需要保護的後台路由 ---
 
 @admin_bp.route('/player_data', methods=['GET'])
 @token_required
@@ -83,17 +98,23 @@ def send_mail_to_player_route():
     recipient_id = data.get('recipient_id')
     title = data.get('title')
     content = data.get('content')
+    # 【修改】從請求中讀取 sender_name，如果沒有則使用預設值
+    sender_name = data.get('sender_name', '遊戲管理員')
+
     if not all([recipient_id, title, content]):
         return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
+
     success, error_msg = send_mail_to_player_service(
         sender_id="system_admin",
-        sender_nickname="遊戲管理員",
+        # 【修改】將寫死的字串改為使用上面獲取的變數
+        sender_nickname=sender_name,
         recipient_id=recipient_id,
         title=title,
         content=content,
         payload={},
         mail_type="system_message"
     )
+
     if success:
         return jsonify({"success": True, "message": f"信件已成功發送給玩家 {recipient_id}。"}), 200
     else:
@@ -107,14 +128,9 @@ def get_broadcast_log_route():
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
     try:
-        # 【修改】移除 .order_by() 以避免因缺少索引而導致的後端錯誤
         logs_ref = db.collection('MD_SystemLogs').document('Broadcasts').collection('log_entries').limit(50).stream()
-        
         logs = [log.to_dict() for log in logs_ref]
-        
-        # 【新增】在後端程式碼中手動進行排序，以確保功能不變
         logs.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
-        
         return jsonify(logs), 200
     except Exception as e:
         current_app.logger.error(f"獲取群發信件歷史時發生錯誤: {e}", exc_info=True)
@@ -129,6 +145,8 @@ def broadcast_mail_route():
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
     data = request.get_json()
+    # 【修改】從請求中讀取 sender_name，如果沒有則使用預設值
+    sender_name = data.get('sender_name', '遊戲管理員')
     title = data.get('title')
     content = data.get('content')
     payload_str = data.get('payload_str', '{}')
@@ -146,7 +164,8 @@ def broadcast_mail_route():
             recipient_id = user_doc.id
             success, _ = send_mail_to_player_service(
                 sender_id="system_admin",
-                sender_nickname="遊戲管理員",
+                # 【修改】將寫死的字串改為使用上面獲取的變數
+                sender_nickname=sender_name,
                 recipient_id=recipient_id,
                 title=title,
                 content=content,
@@ -177,32 +196,22 @@ def get_game_overview_route():
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
     try:
-        total_players = 0
-        total_gold = 0
-        total_dna_fragments = 0
+        total_players, total_gold, total_dna_fragments = 0, 0, 0
         monster_rarity_count = {"普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0}
         users_ref = db.collection('users')
         all_users_docs = list(users_ref.stream())
         total_players = len(all_users_docs)
         for user_doc in all_users_docs:
             game_data_doc = user_doc.reference.collection('gameData').document('main').get()
-            if not game_data_doc.exists:
-                continue
+            if not game_data_doc.exists: continue
             player_data = game_data_doc.to_dict()
-            if not player_data:
-                continue
+            if not player_data: continue
             total_gold += player_data.get("playerStats", {}).get("gold", 0)
             total_dna_fragments += sum(1 for dna in player_data.get("playerOwnedDNA", []) if dna is not None)
             for monster in player_data.get("farmedMonsters", []):
                 rarity = monster.get("rarity")
-                if rarity in monster_rarity_count:
-                    monster_rarity_count[rarity] += 1
-        overview_stats = {
-            "totalPlayers": total_players,
-            "totalGold": total_gold,
-            "totalDnaFragments": total_dna_fragments,
-            "monsterRarityCount": monster_rarity_count
-        }
+                if rarity in monster_rarity_count: monster_rarity_count[rarity] += 1
+        overview_stats = {"totalPlayers": total_players, "totalGold": total_gold, "totalDnaFragments": total_dna_fragments, "monsterRarityCount": monster_rarity_count}
         return jsonify(overview_stats), 200
     except Exception as e:
         current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
