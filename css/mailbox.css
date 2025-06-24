@@ -264,44 +264,44 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     text-align: center;
 }
 
-/* --- 核心修改處 START --- */
 .attachment-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
-    align-items: stretch; /* 修改這裡，讓同一行的項目等高 */
+    align-items: stretch; 
 }
 
 .attachment-gold-wrapper {
     grid-column: 1 / 2;
-    display: flex; /* 修改這裡 */
-    align-items: center; /* 修改這裡 */
-    background-color: var(--bg-primary); /* 修改這裡 */
-    border: 1px solid var(--border-color); /* 修改這裡 */
-    border-radius: 4px; /* 修改這裡 */
-    padding-left: 8px; /* 修改這裡 */
+    display: flex; 
+    align-items: center; 
+    background-color: var(--bg-primary); 
+    border: 1px solid var(--border-color); 
+    border-radius: 4px; 
+    padding-left: 8px; 
 }
 
-.attachment-gold-wrapper .gold-icon { /* 新增樣式 */
+.attachment-gold-wrapper .gold-icon { 
     font-size: 1.2rem;
     margin-right: 4px;
     color: gold;
 }
 
 #mail-gold-input {
-    flex-grow: 1; /* 修改這裡 */
+    flex-grow: 1; 
     padding: 6px 8px;
-    background-color: transparent !important; /* 修改這裡 */
-    border: none; /* 修改這裡 */
+    background-color: transparent !important; 
+    border: none; 
     color: gold; 
     font-weight: bold;
 }
 
-#mail-gold-input:focus { /* 新增樣式 */
+#mail-gold-input:focus { 
     outline: none;
     box-shadow: none;
 }
 
+/* --- 核心修改處 START --- */
 .mail-fee-display {
     grid-column: 2 / 3;
     padding: 6px 8px;
@@ -312,10 +312,12 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     color: var(--text-secondary);
     line-height: 1.5;
     text-align: center;
-    display: flex; /* 新增 */
-    flex-direction: column; /* 新增 */
-    justify-content: center; /* 新增 */
-    align-items: center; /* 新增 */
+    /* 改為 flexbox 以控制換行 */
+    display: flex;
+    flex-wrap: wrap; /* 允許換行 */
+    justify-content: center;
+    align-items: center;
+    gap: 0 0.5em; /* 僅設定水平間距 */
 }
 /* --- 核心修改處 END --- */
 
@@ -327,15 +329,18 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     grid-column: 2 / 3;
 }
 
+/* --- 核心修改處 START --- */
 .attached-dna-preview {
     display: flex;
     align-items: center;
+    justify-content: center; /* 讓物品置中 */
     gap: 0.5rem;
     min-height: 50px;
     margin-top: 0.75rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
 }
+/* --- 核心修改處 END --- */
 
 .attached-dna-preview:empty {
     display: none;
@@ -349,12 +354,17 @@ body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:h
     flex-shrink: 0;
 }
 
+/* --- 核心修改處 START --- */
+/* 移除刪除按鈕的樣式，因為它不再被使用 */
+/*
 .attached-dna-preview .remove-attachment-btn {
     padding: 4px 8px;
     line-height: 1;
     min-width: auto;
     border-radius: 50%;
 }
+*/
+/* --- 核心修改處 END --- */
 
 .mail-inventory-selection .mail-attach-dna-item {
     cursor: pointer;
