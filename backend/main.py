@@ -3,6 +3,9 @@
 
 import os
 import sys
+# --- 核心修改處 START ---
+import re # 導入正規表示式模組
+# --- 核心修改處 END ---
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -44,10 +47,8 @@ app.register_blueprint(config_editor_bp)
 CORS(app, resources={r"/api/*": {
     "origins": [
         "https://msw2004727.github.io",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:5501",
-        "http://localhost:5501"
+        re.compile(r"http://localhost:.*"), # 允許所有來自 localhost 的請求
+        re.compile(r"http://127.0.0.1:.*") # 允許所有來自 127.0.0.1 的請求
     ],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
