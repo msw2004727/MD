@@ -9,17 +9,25 @@ function showExpeditionSummaryModal(stats) {
     const modal = document.getElementById('expedition-summary-modal');
     if (!modal) {
         console.error("找不到遠征總結彈窗 (expedition-summary-modal)。");
-        // 提供一個後備的 alert
         let summaryText = "遠征結束！\n\n";
-        summaryText += `獲得金幣: ${stats.gold_obtained}\n`;
-        summaryText += `獲得DNA碎片: ${stats.dna_fragments_obtained}\n`;
-        summaryText += `遭遇事件數: ${stats.events_encountered}\n`;
+        for (const key in stats) {
+            if (Object.hasOwnProperty.call(stats, key)) {
+                summaryText += `${key}: ${stats[key]}\n`;
+            }
+        }
         alert(summaryText);
         return;
     }
 
     const body = modal.querySelector('.modal-body');
     if (!body) return;
+    
+    // --- 核心修改處 START ---
+
+    const bannerUrl = gameState.assetPaths?.images?.modals?.expeditionSummaryBanner || '';
+    let modalContent = `<img src="${bannerUrl}" alt="遠征總結" style="width: 100%; max-width: 400px; display: block; margin: 0 auto 15px auto; border-radius: 6px;">`;
+    
+    modalContent += '<div class="summary-stats-grid">';
 
     const statsOrder = [
         { key: 'gold_obtained', label: '🪙 總計獲得金幣', class: 'text-gold' },
@@ -35,17 +43,20 @@ function showExpeditionSummaryModal(stats) {
         { key: 'debuffs_received', label: '👎 總計遭受減益', class: 'text-danger' }
     ];
 
-    let statsHtml = '<div class="summary-stats-grid">';
     statsOrder.forEach(item => {
-        const value = stats[item.key] || 0;
-        statsHtml += `
-            <div class="summary-stat-label">${item.label}</div>
-            <div class="summary-stat-value ${item.class}">${value.toLocaleString()}</div>
+        const value = stats?.[item.key] || 0;
+        modalContent += `
+            <div class="summary-stat-item">
+                <span class="summary-stat-label">${item.label}</span>
+                <span class="summary-stat-value ${item.class}">${value.toLocaleString()}</span>
+            </div>
         `;
     });
-    statsHtml += '</div>';
+
+    modalContent += '</div>';
+    body.innerHTML = modalContent;
     
-    body.innerHTML = statsHtml;
+    // --- 核心修改處 END ---
 
     showModal('expedition-summary-modal');
 }
