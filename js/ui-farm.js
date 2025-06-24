@@ -230,12 +230,9 @@ function renderMonsterFarm() {
         let deployButtonHtml = '';
         let actionsHTML = '';
 
-        // --- 核心修改處 START ---
-        // 重新調整狀態與按鈕的判斷順序
         if (isDeployed) {
             statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
             if (isInjured) {
-                // 如果出戰中且瀕死，狀態依然是出戰中，但按鈕會不同
                 statusHtml = `<div class="monster-card-status" style="color: var(--danger-color);">瀕死</div>`;
             }
             deployButtonHtml = `<button class="monster-card-deploy-btn deployed" disabled>⚔️</button>`;
@@ -257,7 +254,7 @@ function renderMonsterFarm() {
             deployButtonHtml = `<button class="monster-card-deploy-btn" disabled style="color: var(--text-secondary);">遠</button>`;
             actionsHTML = `
                 <button class="button danger text-xs" disabled>放生</button>
-                <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button action text-xs" onclick="handleHealClick('${monster.id}')" disabled>治療</button>
                 <button class="button primary text-xs" disabled>修煉</button>
             `;
         } else if (isTraining) {
@@ -286,7 +283,6 @@ function renderMonsterFarm() {
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
             `;
         }
-        // --- 核心修改處 END ---
 
         monsterCard.innerHTML = `
             <div class="monster-card-name text-rarity-${rarityKey}">${displayName}</div>
