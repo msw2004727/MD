@@ -17,93 +17,87 @@
     --danger-color: #EF4444;
 }
 
-body {
+/* 【修改】針對新的 body class 和整體佈局 */
+body.admin-body {
     background-color: var(--admin-bg);
     color: var(--admin-text-primary);
     font-family: 'Noto Sans TC', sans-serif;
     margin: 0;
     display: flex;
+    flex-direction: column; /* 改為垂直堆疊 (導覽列在上，內容在下) */
     height: 100vh;
     overflow: hidden;
 }
 
-.sidebar {
-    width: 240px;
+/* 【新增】頂部導覽列樣式 */
+.top-navbar {
+    width: 100%;
     background-color: var(--admin-panel-bg);
-    border-right: 1px solid var(--admin-border-color);
-    display: flex;
-    flex-direction: column;
-    padding: 1rem 0;
-    flex-shrink: 0;
-    overflow-y: auto;
-    transition: width 0.3s ease;
-}
-
-.sidebar-header {
-    padding: 0 1.5rem 1rem;
     border-bottom: 1px solid var(--admin-border-color);
-    text-align: center;
-}
-
-.sidebar-title {
-    font-size: 1.5rem; /* 加大標題 */
-    font-weight: bold;
-    color: var(--admin-text-primary); /* 改為白色更突出 */
-    margin: 0;
-    letter-spacing: 1px;
-}
-
-.sidebar-title::before {
-    content: '🚀'; /* 新增 emoji 圖示 */
-    margin-right: 0.5rem;
-}
-
-.sidebar-nav {
-    flex-grow: 1;
-    list-style: none;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.sidebar-nav a {
-    display: flex; /* 改為 flexbox 以便對齊圖示和文字 */
+    display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: var(--admin-text-secondary); /* 預設顏色調暗 */
-    text-decoration: none;
-    padding: 0.85rem 1.5rem;
-    font-size: 1rem;
-    transition: background-color 0.2s, color 0.2s, border-left-color 0.2s;
-    border-left: 3px solid transparent;
+    padding: 0 1.5rem;
+    flex-shrink: 0;
+    height: 60px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 100;
 }
 
-/* 【新增】為導覽項目加上圖示 */
-.sidebar-nav a[data-target="dashboard-home"]::before { content: '🏠'; }
-.sidebar-nav a[data-target="player-management"]::before { content: '👥'; }
-.sidebar-nav a[data-target="mail-system"]::before { content: '✉️'; }
-.sidebar-nav a[data-target="game-configs"]::before { content: '⚙️'; }
+.navbar-brand {
+    margin-right: 2rem;
+}
 
-.sidebar-nav a:hover {
-    background-color: color-mix(in srgb, var(--admin-accent) 10%, transparent);
+.navbar-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--admin-text-primary);
+    margin: 0;
+}
+
+.navbar-nav {
+    display: flex;
+    gap: 0.5rem;
+    height: 100%;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.navbar-nav a.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    height: 100%;
+    color: var(--admin-text-secondary);
+    text-decoration: none;
+    font-size: 1rem;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-bottom-color 0.2s;
+}
+
+.navbar-nav a.nav-item:hover {
     color: var(--admin-text-primary);
 }
 
-.sidebar-nav a.active {
-    background-color: color-mix(in srgb, var(--admin-accent) 20%, transparent);
+.navbar-nav a.nav-item.active {
     color: var(--admin-accent-hover);
     font-weight: 600;
-    border-left-color: var(--admin-accent-hover);
+    border-bottom-color: var(--admin-accent-hover);
 }
 
-.sidebar-footer {
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--admin-border-color);
+.navbar-actions {
+    margin-left: auto;
+}
+
+/* 【新增】主要內容區塊的容器 */
+.main-content-wrapper {
+    flex-grow: 1;
+    overflow-y: auto; /* 讓內容區塊可以滾動 */
 }
 
 .main-content {
-    flex-grow: 1;
     padding: 2rem;
-    overflow-y: auto;
+    max-width: 1200px; /* 給內容一個最大寬度，使其在寬螢幕上更易讀 */
+    margin: 0 auto;
 }
 
 .content-header {
@@ -113,6 +107,7 @@ body {
     font-weight: bold;
 }
 
+/* 其他樣式保持不變，但選擇器可能會因為結構改變而調整 */
 .content-panel { display: none; }
 .content-panel.active { display: block; animation: fadeIn 0.5s ease-in-out; }
 
@@ -127,7 +122,7 @@ body {
     font-size: 1rem;
     border-radius: 6px;
     border: 1px solid var(--admin-border-color);
-    background-color: var(--admin-panel-bg);
+    background-color: #2b3748; /* 微調輸入框背景 */
     color: var(--admin-text-primary);
     transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -141,7 +136,7 @@ body {
 .data-section {
     background-color: var(--admin-panel-bg);
     border: 1px solid var(--admin-border-color);
-    border-radius: 12px; /* 更大的圓角 */
+    border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 2rem;
 }
@@ -155,7 +150,6 @@ body {
     margin-bottom: 1.5rem;
 }
 
-/* 【重新設計】遊戲總覽卡片 */
 .overview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -176,27 +170,15 @@ body {
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
-.overview-card .stat-title {
-    font-size: 1rem;
-    color: var(--admin-text-secondary);
-    margin: 0 0 0.75rem 0;
-}
-
-.overview-card .stat-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: var(--admin-text-primary);
-    line-height: 1;
-}
-
-/* 其餘樣式保持不變，以確保原有功能不受影響 */
-#logout-btn { width: 100%; }
+.overview-card .stat-title { font-size: 1rem; color: var(--admin-text-secondary); margin: 0 0 0.75rem 0; }
+.overview-card .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--admin-text-primary); line-height: 1; }
+#logout-btn { width: auto; padding: 0.5rem 1rem; }
 .search-container { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
 #player-data-display { background-color: transparent; color: var(--admin-text-secondary); padding: 0; border-radius: 0; white-space: normal; word-break: normal; border: none; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
 .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
 .form-group label { font-size: 0.9rem; color: var(--admin-text-secondary); }
-.form-group input, .form-group textarea, .form-group select { padding: 8px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid var(--admin-border-color); background-color: var(--admin-bg); color: var(--admin-text-primary); resize: vertical; }
+.form-group input, .form-group textarea, .form-group select { padding: 8px 10px; font-size: 1rem; border-radius: 4px; border: 1px solid var(--admin-border-color); background-color: #2b3748; color: var(--admin-text-primary); resize: vertical; }
 .dna-grid, .monster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
 .dna-card, .monster-card-admin { border: 1px solid var(--admin-border-color); padding: 1rem; border-radius: 6px; background-color: var(--admin-bg); }
 .dna-card h4, .monster-card-admin h4 { margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--admin-accent-hover); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -211,6 +193,6 @@ body {
 .broadcast-log-table td.actions-cell { text-align: right; }
 #player-search-results { margin-bottom: 1.5rem; max-height: 200px; overflow-y: auto; }
 .search-result-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
-.search-result-item:hover { background-color: var(--admin-panel-bg); }
+.search-result-item:hover { background-color: #2b3748; }
 .search-result-item .uid { font-family: monospace; font-size: 0.8rem; color: var(--admin-text-secondary); }
 #game-configs-display { background-color: var(--admin-bg); border: 1px solid var(--admin-border-color); border-radius: 6px; padding: 1rem; margin-top: 1.5rem; max-height: 60vh; overflow: auto; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; color: var(--admin-text-secondary); }
