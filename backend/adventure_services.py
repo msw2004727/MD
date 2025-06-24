@@ -27,16 +27,17 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
         return None
 
     # --- 核心修改處 START ---
-    # 從 game_configs 讀取成長設定，而不是寫死
+    # 從 game_configs 讀取成長設定，而不是使用固定的 difficulty_map
     growth_settings = game_configs.get("adventure_growth_settings", {})
     facility_difficulty = growth_settings.get("facilities", {}).get(facility_id)
     
     if not facility_difficulty:
         adventure_logger.warning(f"在 adventure_growth_settings.json 中找不到設施 {facility_id} 的設定。")
         return None 
-    # --- 核心修改處 END ---
-
+    
     chance_to_trigger = facility_difficulty.get("growth_chance", 0)
+    # --- 核心修改處 END ---
+    
     roll = random.random()
     adventure_logger.info(f"隨機成長檢定：設施 {facility_id} (機率: {chance_to_trigger*100}%)，擲骰結果: {roll:.4f}")
 
@@ -74,7 +75,6 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
     cultivation_gains = monster_in_farm.setdefault("cultivation_gains", {})
 
     for _ in range(points_to_distribute):
-        # 根據權重隨機選擇要成長的屬性
         chosen_stat = random.choices(stats_to_grow, weights=weights, k=1)[0]
         cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + 1
         gains_log[chosen_stat] = gains_log.get(chosen_stat, 0) + 1
@@ -424,10 +424,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
     progress["current_event"] = None
 
-    # --- 核心修改處 START ---
-    # 傳遞 game_configs 參數
     random_growth_result = _handle_random_growth_event(player_data, progress, game_configs)
-    # --- 核心修改處 END ---
     
     if random_growth_result:
         progress["last_event_growth"] = random_growth_result
