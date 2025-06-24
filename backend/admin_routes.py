@@ -10,7 +10,9 @@ from flask import Blueprint, jsonify, request, current_app
 
 # 從專案的其他模組導入
 from .player_services import get_player_data_service, save_player_data_service
-from .mail_services import send_mail_to_player_service
+# --- 核心修改處 START：移除不再使用的 mail_services 導入 ---
+# from .mail_services import send_mail_to_player_service
+# --- 核心修改處 END ---
 
 # 建立一個新的藍圖 (Blueprint) 來管理後台的路由
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
@@ -96,7 +98,11 @@ def update_admin_player_data_route(uid):
 @admin_bp.route('/broadcast_mail', methods=['POST'])
 @token_required
 def broadcast_mail_route():
+    # --- 核心修改處 START：延後導入以避免循環依賴 ---
     from . import MD_firebase_config
+    from .mail_services import send_mail_to_player_service
+    # --- 核心修改處 END ---
+    
     db = MD_firebase_config.db
     if not db:
         return jsonify({"error": "資料庫服務異常"}), 500
@@ -121,7 +127,7 @@ def broadcast_mail_route():
         for user_doc in all_users_docs:
             recipient_id = user_doc.id
             # 直接調用信箱服務來處理單一玩家的信件發送
-            send_mail_to_player_service(
+            success, _ = send_mail_to_player_service(
                 sender_id="system_admin",
                 sender_nickname="遊戲管理員",
                 recipient_id=recipient_id,
@@ -130,9 +136,11 @@ def broadcast_mail_route():
                 payload=payload,
                 mail_type="system_message"
             )
-            count += 1
+            if success:
+                count += 1
         
         # 記錄這次的廣播
+        import time
         log_entry = {
             "broadcastId": str(time.time()),
             "timestamp": int(time.time()),
@@ -146,3 +154,64 @@ def broadcast_mail_route():
         return jsonify({"success": True, "message": f"信件已成功發送給 {count} 位玩家。"}), 200
     except Exception as e:
         return jsonify({"error": f"群發信件時發生錯誤: {str(e)}"}), 500
+        
+# --- 核心修改處 START：新增遊戲總覽 API ---
+@admin_bp.route('/game_overview', methods=['GET'])
+@token_required
+def get_game_overview_route():
+    """
+    獲取遊戲的總覽數據統計。
+    """
+    from . import MD_firebase_config
+    db = MD_firebase_config.db
+    if not db:
+        return jsonify({"error": "資料庫服務異常"}), 500
+
+    try:
+        total_players = 0
+        total_gold = 0
+        total_dna_fragments = 0
+        monster_rarity_count = {
+            "普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0
+        }
+
+        users_ref = db.collection('users')
+        all_users_docs = list(users_ref.stream()) # 一次性獲取所有文檔
+        
+        total_players = len(all_users_docs)
+
+        for user_doc in all_users_docs:
+            game_data_doc = user_doc.reference.collection('gameData').document('main').get()
+            if not game_data_doc.exists:
+                continue
+                
+            player_data = game_data_doc.to_dict()
+            if not player_data:
+                continue
+
+            # 統計金幣
+            total_gold += player_data.get("playerStats", {}).get("gold", 0)
+
+            # 統計DNA碎片
+            total_dna_fragments += sum(1 for dna in player_data.get("playerOwnedDNA", []) if dna is not None)
+            
+            # 統計怪獸稀有度
+            for monster in player_data.get("farmedMonsters", []):
+                rarity = monster.get("rarity")
+                if rarity in monster_rarity_count:
+                    monster_rarity_count[rarity] += 1
+
+        overview_stats = {
+            "totalPlayers": total_players,
+            "totalGold": total_gold,
+            "totalDnaFragments": total_dna_fragments,
+            "monsterRarityCount": monster_rarity_count
+        }
+        
+        return jsonify(overview_stats), 200
+        
+    except Exception as e:
+        # 使用日誌記錄詳細錯誤
+        current_app.logger.error(f"生成遊戲總覽報表時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "生成報表時發生內部錯誤。"}), 500
+# --- 核心修改處 END ---
