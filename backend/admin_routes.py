@@ -10,7 +10,7 @@ import uuid
 import time
 from .player_services import get_player_data_service, save_player_data_service 
 from .MD_routes import _get_game_configs_data_from_app_context 
-from .mail_services import add_mail_to_player, send_mail_to_player_service # --- 核心修改處：導入 send_mail_to_player_service ---
+from .mail_services import add_mail_to_player, send_mail_to_player_service
 from . import MD_firebase_config
 from google.cloud import firestore
 import json
@@ -81,7 +81,6 @@ def admin_login():
 def get_player_data_for_admin():
     """
     為後台提供查詢指定玩家詳細資料的 API。
-    需要管理員 Token 驗證。
     """
     if not verify_admin_token():
         return jsonify({"error": "管理員驗證失敗"}), 401
@@ -282,7 +281,6 @@ def recall_mail_route():
         admin_logger.error(f"回收信件過程中發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生伺服器內部錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @admin_bp.route('/send_mail_to_player', methods=['POST'])
 def send_mail_to_player_route():
     """
@@ -299,14 +297,13 @@ def send_mail_to_player_route():
     if not all([recipient_id, title, content]):
         return jsonify({"error": "請求中缺少 recipient_id, title, 或 content。"}), 400
 
-    # 呼叫現有的寄信服務，並將寄件人設定為系統管理員
     success, error_message = send_mail_to_player_service(
         sender_id="system_admin",
         sender_nickname="系統管理員",
         recipient_id=recipient_id,
         title=title,
         content=content,
-        payload={}, # 單獨寄送的系統信件通常不帶附件，若要帶附件可擴充此處
+        payload={},
         mail_type="system_message"
     )
     
@@ -316,6 +313,61 @@ def send_mail_to_player_route():
     else:
         admin_logger.error(f"後台發送信件給玩家 {recipient_id} 失敗: {error_message}")
         return jsonify({"error": error_message or "發送信件時發生未知錯誤。"}), 500
+
+# --- 核心修改處 START ---
+@admin_bp.route('/game_overview', methods=['GET'])
+def get_game_overview_route():
+    """
+    計算並回傳全服的遊戲數據總覽。
+    """
+    if not verify_admin_token():
+        return jsonify({"error": "管理員驗證失敗"}), 401
+    
+    db = MD_firebase_config.db
+    if not db:
+        return jsonify({"error": "資料庫服務異常。"}), 500
+
+    try:
+        admin_logger.info("開始計算全服遊戲數據總覽...")
+        total_players = 0
+        total_gold = 0
+        total_dna_fragments = 0
+        monster_rarity_count = {
+            "普通": 0, "稀有": 0, "菁英": 0, "傳奇": 0, "神話": 0
+        }
+
+        users_ref = db.collection('users')
+        for user_doc in users_ref.stream():
+            total_players += 1
+            game_data_doc = users_ref.document(user_doc.id).collection('gameData').document('main').get()
+            if game_data_doc.exists:
+                data = game_data_doc.to_dict()
+                
+                # 累加金幣
+                total_gold += data.get("playerStats", {}).get("gold", 0)
+                
+                # 計算DNA總數
+                total_dna_fragments += sum(1 for dna in data.get("playerOwnedDNA", []) if dna is not None)
+                
+                # 計算怪獸稀有度
+                for monster in data.get("farmedMonsters", []):
+                    rarity = monster.get("rarity", "普通")
+                    if rarity in monster_rarity_count:
+                        monster_rarity_count[rarity] += 1
+        
+        overview_stats = {
+            "totalPlayers": total_players,
+            "totalGold": total_gold,
+            "totalDnaFragments": total_dna_fragments,
+            "monsterRarityCount": monster_rarity_count
+        }
+        
+        admin_logger.info(f"全服數據總覽計算完成。玩家數: {total_players}")
+        return jsonify(overview_stats), 200
+
+    except Exception as e:
+        admin_logger.error(f"計算遊戲總覽數據時發生錯誤: {e}", exc_info=True)
+        return jsonify({"error": "計算總覽數據時發生伺服器內部錯誤。"}), 500
 # --- 核心修改處 END ---
 
 @admin_bp.route('/check_auth', methods=['GET'])
