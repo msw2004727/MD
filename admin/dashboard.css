@@ -178,3 +178,24 @@ body.admin-body {
     padding: 6px 12px;
 }
 /* --- 核心修改處 END --- */
+
+.log-entry {
+    border-bottom: 1px solid var(--admin-border-color);
+    padding: 0.75rem 0.25rem;
+}
+.log-entry:last-child {
+    border-bottom: none;
+}
+.log-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+.log-timestamp {
+    font-size: 0.8rem;
+    color: var(--admin-text-secondary);
+}
+.log-message {
+    padding-left: 0.25rem;
+}
