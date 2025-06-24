@@ -231,22 +231,26 @@ function renderMonsterFarm() {
         let actionsHTML = '';
 
         // --- 核心修改處 START ---
-        // 調整狀態顯示的優先級
-        if (isInjured) {
+        // 重新調整狀態與按鈕的判斷順序
+        if (isDeployed) {
+            statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
+            if (isInjured) {
+                // 如果出戰中且瀕死，狀態依然是出戰中，但按鈕會不同
+                statusHtml = `<div class="monster-card-status" style="color: var(--danger-color);">瀕死</div>`;
+            }
+            deployButtonHtml = `<button class="monster-card-deploy-btn deployed" disabled>⚔️</button>`;
+            actionsHTML = `
+                <button class="button danger text-xs" disabled>放生</button>
+                <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
+                <button class="button primary text-xs" disabled>修煉</button>
+            `;
+        } else if (isInjured) {
             statusHtml = `<div class="monster-card-status" style="color: var(--danger-color);">瀕死</div>`;
             deployButtonHtml = `<button class="monster-card-deploy-btn" disabled style="color: var(--text-secondary);">傷</button>`;
             actionsHTML = `
                 <button class="button danger text-xs" onclick="handleReleaseMonsterClick(event, '${monster.id}')">放生</button>
                 <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
                 <button class="button primary text-xs" onclick="handleCultivateMonsterClick(event, '${monster.id}')">修煉</button>
-            `;
-        } else if (isDeployed) {
-            statusHtml = `<div class="monster-card-status" style="color: white; font-weight: bold;">出戰中</div>`;
-            deployButtonHtml = `<button class="monster-card-deploy-btn deployed" disabled>⚔️</button>`;
-            actionsHTML = `
-                <button class="button danger text-xs" disabled>放生</button>
-                <button class="button action text-xs" onclick="handleHealClick('${monster.id}')">治療</button>
-                <button class="button primary text-xs" disabled>修煉</button>
             `;
         } else if (isOnExpedition) {
             statusHtml = `<div class="monster-card-status" style="color: var(--status-expedition); font-weight: bold;">遠征中</div>`;
