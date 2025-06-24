@@ -249,6 +249,11 @@ function renderAdventureProgressUI(adventureProgress) {
         const monster = gameState.playerData.farmedMonsters.find(m => m.id === growthResult.monster_id);
         let growthHtml = '';
         if(monster) {
+            // --- 核心修改處 START ---
+            const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
+            const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
+            const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+
             const headInfo = { type: '無', rarity: '普通' };
             const constituentIds = monster.constituent_dna_ids || [];
             if (constituentIds.length > 0) {
@@ -270,11 +275,12 @@ function renderAdventureProgressUI(adventureProgress) {
                 <div class="growth-result-card">
                     <div class="avatar" style="background-image: url('${imagePath}')"></div>
                     <div class="growth-info">
-                        <span class="monster-name">${growthResult.monster_nickname}</span>
+                        <span class="monster-name text-rarity-${rarityKey}">${displayName}</span>
                         <span class="gains-text">${gainsText}</span>
                     </div>
                 </div>
             `;
+            // --- 核心修改處 END ---
         }
         growthDisplayEl.innerHTML = growthHtml;
     }
@@ -347,9 +353,7 @@ async function initializeAdventureUI() {
         return;
     }
     
-    // --- 核心修改處 START ---
     adventureTabContent.innerHTML = '<p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️正在從遠方島嶼獲取情報...</p>';
-    // --- 核心修改處 END ---
 
     try {
         const islandsData = await getAdventureIslandsData();
