@@ -68,7 +68,8 @@
         "monsterSwitching": "https://github.com/msw2004727/MD/blob/main/images/BN012.png?raw=true",
         "comment_zh_monsterSwitching": "更換出戰怪獸交接中",
         "healing": "https://github.com/msw2004727/MD/blob/main/images/BN016.png?raw=true",
-        "comment_zh_healing": "治療中讀取彈窗"
+        "comment_zh_healing": "治療中讀取彈窗",
+        "retreating": "https://raw.githubusercontent.com/msw2004727/MD/refs/heads/main/images/BN022.png"
       }
     },
     "cultivation": {
