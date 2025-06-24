@@ -46,6 +46,21 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshLogBtn: document.getElementById('refresh-log-btn'),
             broadcastLogContainer: document.getElementById('broadcast-log-container'),
             
+            csMailContainer: document.getElementById('cs-mail-container'),
+            refreshCsMailBtn: document.getElementById('refresh-cs-mail-btn'),
+            
+            // --- 核心修改處 START ---
+            // 冒險島設定
+            advSettings: {
+                bossMultiplierInput: document.getElementById('boss-difficulty-multiplier'),
+                baseGoldInput: document.getElementById('floor-clear-base-gold'),
+                bonusGoldInput: document.getElementById('floor-clear-bonus-gold'),
+                facilitiesContainer: document.getElementById('adventure-facilities-container'),
+                saveBtn: document.getElementById('save-adventure-settings-btn'),
+                responseEl: document.getElementById('adventure-settings-response'),
+            },
+            // --- 核心修改處 END ---
+
             // 設定檔
             configFileSelector: document.getElementById('config-file-selector'),
             configDisplayArea: document.getElementById('game-configs-display'),
@@ -89,9 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         function updateTime() { 
+            const now = new Date().toLocaleString('zh-TW', { hour12: false }).replace(',', '');
             if(DOMElements.currentTimeEl) { 
-                DOMElements.currentTimeEl.textContent = new Date().toLocaleString('zh-TW', { hour12: false }).replace(',', ''); 
-            } 
+                DOMElements.currentTimeEl.textContent = now;
+            }
+            const overviewTimeEl = document.getElementById('current-time-overview');
+            if(overviewTimeEl) {
+                overviewTimeEl.textContent = now;
+            }
         }
 
         // --- 導覽邏輯 ---
@@ -107,9 +127,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else if (targetId === 'mail-system') {
                 loadBroadcastLog();
-            } else if (targetId === 'game-configs') {
+            } else if (targetId === 'cs-mailbox') {
+                loadCsMail();
+            } else if (targetId === 'adventure-island-settings') { // --- 核心修改處 START ---
+                loadAdventureSettings();
+            } else if (targetId === 'game-configs') { // --- 核心修改處 END ---
                 if (typeof initializeConfigEditor === 'function') {
-                    // 將 API URL 傳遞給 config-editor 模組
                     initializeConfigEditor(ADMIN_API_URL, adminToken);
                 } else {
                     console.error("config-editor.js 或 initializeConfigEditor 函式未載入。");
@@ -124,14 +147,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- 日誌監控邏輯 ---
         async function loadAndDisplayLogs() {
             if (!DOMElements.logDisplayContainer) return;
-
-            // --- 核心修改處 START ---
             const container = DOMElements.logDisplayContainer;
-            // 1. 在更新內容前，儲存當前的捲動狀態
             const oldScrollHeight = container.scrollHeight;
             const oldScrollTop = container.scrollTop;
-            // --- 核心修改處 END ---
-
             try {
                 const response = await fetch(`${ADMIN_API_URL}/logs`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                 if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
@@ -142,13 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const logEntries = doc.body.innerHTML;
                 
                 container.innerHTML = logEntries || '<p>日誌目前為空。</p>';
-
-                // --- 核心修改處 START ---
-                // 2. 根據內容高度的變化，恢復捲動位置
                 const newScrollHeight = container.scrollHeight;
                 container.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-                // --- 核心修改處 END ---
-
             } catch (err) {
                 container.innerHTML = `<p style="color: var(--danger-color);">載入日誌失敗：${err.message}</p>`;
             }
@@ -442,6 +455,87 @@ document.addEventListener('DOMContentLoaded', function() {
                 DOMElements.broadcastSenderPresetsSelect.add(option);
             });
         }
+        
+        // 客服信箱邏輯
+        async function loadCsMail() {
+            if (!DOMElements.csMailContainer) return;
+            DOMElements.csMailContainer.innerHTML = '<p>正在載入玩家回覆...</p>';
+            try {
+                const mails = await fetchAdminAPI('/get_cs_mail');
+                if (mails.length === 0) { 
+                    DOMElements.csMailContainer.innerHTML = '<p class="placeholder-text">信箱目前是空的。</p>'; 
+                    return; 
+                }
+                
+                let mailHtml = mails.map(mail => {
+                    const date = new Date(mail.timestamp * 1000).toLocaleString('zh-TW');
+                    const sender = mail.sender_name || '未知玩家';
+                    const senderId = mail.sender_id || 'N/A';
+                    return `
+                        <div class="cs-mail-item">
+                            <div class="cs-mail-header">
+                                <strong class="cs-mail-title">${mail.title}</strong>
+                                <span class="cs-mail-meta">寄件人: ${sender} (${senderId})</span>
+                                <span class="cs-mail-meta">${date}</span>
+                            </div>
+                            <div class="cs-mail-content">
+                                ${mail.content.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                DOMElements.csMailContainer.innerHTML = mailHtml;
+            } catch (err) { 
+                DOMElements.csMailContainer.innerHTML = `<p style="color: var(--danger-color);">載入客服信件失敗：${err.message}</p>`;
+            }
+        }
+
+        // --- 核心修改處 START ---
+        // 冒險島設定邏輯
+        async function loadAdventureSettings() {
+            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer } = DOMElements.advSettings;
+            if (!bossMultiplierInput) return;
+
+            // 顯示載入中
+            bossMultiplierInput.value = '';
+            baseGoldInput.value = '';
+            bonusGoldInput.value = '';
+            facilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
+
+            try {
+                // 平行獲取兩個設定檔
+                const [advSettings, islandsData] = await Promise.all([
+                    fetchAdminAPI('/get_config?file=adventure_settings.json'),
+                    fetchAdminAPI('/get_config?file=adventure_islands.json')
+                ]);
+
+                // 填充全域參數
+                bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
+                baseGoldInput.value = advSettings.floor_clear_base_gold || 50;
+                bonusGoldInput.value = advSettings.floor_clear_bonus_gold_per_floor || 10;
+                
+                // 渲染各地區設施參數
+                if (islandsData && Array.isArray(islandsData)) {
+                    facilitiesContainer.innerHTML = islandsData.map(island => `
+                        <div class="facility-settings-card">
+                            <h4>${island.islandName || '未知島嶼'}</h4>
+                            ${(island.facilities || []).map(facility => `
+                                <div class="form-group">
+                                    <label for="facility-cost-${facility.facilityId}">${facility.name} - 入場費</label>
+                                    <input type="number" id="facility-cost-${facility.facilityId}" class="admin-input" value="${facility.cost || 0}">
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('');
+                } else {
+                    facilitiesContainer.innerHTML = '<p class="placeholder-text">找不到設施資料。</p>';
+                }
+
+            } catch (err) {
+                 facilitiesContainer.innerHTML = `<p style="color: var(--danger-color);">載入冒險島設定失敗：${err.message}</p>`;
+            }
+        }
+        // --- 核心修改處 END ---
 
         // --- 儀表板總覽邏輯 ---
         async function handleGenerateReport() {
@@ -485,11 +579,12 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.broadcastSenderPresetsSelect.addEventListener('change', () => { if (DOMElements.broadcastSenderPresetsSelect.value) { DOMElements.broadcastSenderNameInput.value = DOMElements.broadcastSenderPresetsSelect.value; } });
         DOMElements.refreshLogBtn.addEventListener('click', loadBroadcastLog);
         DOMElements.broadcastLogContainer.addEventListener('click', handleRecallMail);
+        if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
         if (typeof initializeConfigEditor === 'function') {
-             initializeConfigEditor();
+             initializeConfigEditor(ADMIN_API_URL, adminToken);
         }
         
         // --- 初始執行 ---
