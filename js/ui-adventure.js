@@ -207,6 +207,8 @@ function renderAdventureProgressUI(adventureProgress) {
         `;
     });
     
+    // --- 核心修改處 START ---
+    // 新增一個 div 用來顯示隨機成長結果
     adventureTabContent.innerHTML = `
         <div class="adventure-progress-container">
             <header class="adventure-progress-header">
@@ -230,6 +232,7 @@ function renderAdventureProgressUI(adventureProgress) {
                     <div id="adventure-event-description" class="event-description">
                         
                     </div>
+                    <div id="adventure-random-growth-display" class="random-growth-display"></div>
                     <div id="adventure-event-choices" class="event-choices"></div>
                 </main>
             </div>
@@ -240,6 +243,44 @@ function renderAdventureProgressUI(adventureProgress) {
             </footer>
         </div>
     `;
+
+    const growthDisplayEl = document.getElementById('adventure-random-growth-display');
+    const growthResult = adventureProgress.last_event_growth;
+
+    if (growthResult && growthDisplayEl) {
+        const monster = gameState.playerData.farmedMonsters.find(m => m.id === growthResult.monster_id);
+        let growthHtml = '';
+        if(monster) {
+            const headInfo = { type: '無', rarity: '普通' };
+            const constituentIds = monster.constituent_dna_ids || [];
+            if (constituentIds.length > 0) {
+                const headDnaId = constituentIds[0];
+                const headDnaTemplate = gameState.gameConfigs.dna_fragments.find(dna => dna.id === headDnaId);
+                if (headDnaTemplate) {
+                    headInfo.type = headDnaTemplate.type || '無';
+                    headInfo.rarity = headDnaTemplate.rarity || '普通';
+                }
+            }
+            const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+            const statMap = { 'hp': 'HP', 'mp': 'MP', 'attack': '攻擊', 'defense': '防禦', 'speed': '速度', 'crit': '爆擊' };
+            
+            const gainsText = Object.entries(growthResult.stat_gains)
+                .map(([stat, amount]) => `${statMap[stat] || stat} +${amount}`)
+                .join('、');
+
+            growthHtml = `
+                <div class="growth-result-card">
+                    <div class="avatar" style="background-image: url('${imagePath}')"></div>
+                    <div class="growth-info">
+                        <span class="monster-name">${growthResult.monster_nickname}</span>
+                        <span class="gains-text">${gainsText}</span>
+                    </div>
+                </div>
+            `;
+        }
+        growthDisplayEl.innerHTML = growthHtml;
+    }
+    // --- 核心修改處 END ---
 
     const advanceBtn = document.getElementById('adventure-advance-btn');
     const choicesEl = document.getElementById('adventure-event-choices');
