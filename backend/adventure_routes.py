@@ -7,13 +7,10 @@ from flask import Blueprint, jsonify, request
 # 從專案的其他模組導入
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 from .player_services import get_player_data_service, save_player_data_service
-# --- 核心修改處 START ---
-# 導入新建立的 switch_captain_service 函式
 from .adventure_services import (
     start_expedition_service, get_all_islands_service, advance_floor_service, 
     complete_floor_service, resolve_event_choice_service, switch_captain_service
 )
-# --- 核心修改處 END ---
 # 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
 from .battle_services import simulate_battle_full
 
@@ -117,13 +114,25 @@ def abandon_adventure_route():
             monster_in_farm["hp"] = member["current_hp"]
             monster_in_farm["mp"] = member["current_mp"]
             adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
+    
+    # --- 核心修改處 START ---
+    # 先取得最終的統計數據
+    final_stats = progress.get("expedition_stats")
+    # --- 核心修改處 END ---
 
     progress["is_active"] = False
     player_data["adventure_progress"] = progress
     
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 已成功放棄遠征。")
-        return jsonify({"success": True, "message": "已成功結束本次遠征。"}), 200
+        # --- 核心修改處 START ---
+        # 在回傳的 JSON 中加入 expedition_stats
+        return jsonify({
+            "success": True, 
+            "message": "已成功結束本次遠征。",
+            "expedition_stats": final_stats
+        }), 200
+        # --- 核心修改處 END ---
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
         return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
@@ -320,7 +329,6 @@ def resolve_choice_route():
         else:
             return jsonify({"error": "儲存事件結果失敗。"}), 500
 
-# --- 核心修改處 START ---
 @adventure_bp.route('/switch_captain', methods=['POST'])
 def switch_captain_route():
     """
@@ -354,4 +362,3 @@ def switch_captain_route():
         }), 200
     else:
         return jsonify({"error": "更換隊長後儲存進度失敗。"}), 500
-# --- 核心修改處 END ---
