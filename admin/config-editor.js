@@ -1,14 +1,20 @@
 // admin/config-editor.js
 
-function initializeConfigEditor() {
+function initializeConfigEditor(adminApiUrl, adminToken) {
     // 專門獲取此功能需要的 DOM 元素
     const configFileSelector = document.getElementById('config-file-selector');
     const configsDisplayArea = document.getElementById('game-configs-display');
     const saveConfigBtn = document.getElementById('save-config-btn');
     const configResponseEl = document.getElementById('config-response');
-    const adminToken = localStorage.getItem('admin_token');
-    // 【修改】將常數名稱改為 EDITOR_API_URL 以避免命名衝突
-    const EDITOR_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD'; 
+
+    // 安全檢查，確保 URL 和 Token 都已傳入
+    if (!adminApiUrl || !adminToken) {
+        console.error("設定編輯器初始化失敗：缺少 API URL 或 Token。");
+        if (configsDisplayArea) {
+            configsDisplayArea.value = "錯誤：編輯器未能正確初始化。";
+        }
+        return;
+    }
 
     if (!configFileSelector || !configsDisplayArea || !saveConfigBtn || !configResponseEl) {
         console.warn("Config editor DOM elements are not all present. Aborting initialization.");
@@ -22,8 +28,7 @@ function initializeConfigEditor() {
         configFileSelector.disabled = true;
         configsDisplayArea.value = '正在獲取設定檔列表...';
         try {
-            // 【修改】使用新的 EDITOR_API_URL
-            const response = await fetch(`${EDITOR_API_URL}/admin/list_configs`, {
+            const response = await fetch(`${adminApiUrl}/admin/list_configs`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             const files = await response.json();
@@ -55,15 +60,13 @@ function initializeConfigEditor() {
         configsDisplayArea.value = '正在從伺服器獲取資料...';
         saveConfigBtn.disabled = true;
         try {
-            // 【修改】使用新的 EDITOR_API_URL
-             const response = await fetch(`${EDITOR_API_URL}/admin/get_config?file=${encodeURIComponent(selectedFile)}`, {
+             const response = await fetch(`${adminApiUrl}/admin/get_config?file=${encodeURIComponent(selectedFile)}`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || `伺服器錯誤: ${response.status}`);
             
-            // 由於後端現在可能直接回傳JSON物件，這裡做個判斷來正確顯示
-            const content = (typeof result === 'object' && result.content !== undefined) ? result.content : JSON.stringify(result, null, 2);
+            const content = (typeof result === 'object') ? JSON.stringify(result, null, 2) : result;
             configsDisplayArea.value = content;
             saveConfigBtn.disabled = false;
         } catch (err) {
@@ -88,8 +91,7 @@ function initializeConfigEditor() {
         configResponseEl.style.display = 'none';
         
         try {
-            // 【修改】使用新的 EDITOR_API_URL
-            const response = await fetch(`${EDITOR_API_URL}/admin/save_config`, {
+            const response = await fetch(`${adminApiUrl}/admin/save_config`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
                 body: JSON.stringify({ file: selectedFile, content: content })
