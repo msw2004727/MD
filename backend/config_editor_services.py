@@ -34,7 +34,6 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "skills/wood.json": ("Skills", "skill_database.木"),
 }
 
-# --- 核心修改處 START ---
 # 新增一個列表來定義哪些是本地檔案
 LOCAL_CONFIG_FILES = ["adventure_settings.json", "adventure_islands.json"]
 
@@ -63,7 +62,6 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
         except Exception as e:
             config_editor_logger.error(f"從本地讀取設定檔 '{filename}' 時發生錯誤: {e}", exc_info=True)
             return None, f"讀取本地檔案 {filename} 時發生錯誤。"
-    # --- 核心修改處 END ---
 
     if filename not in CONFIG_FILE_FIRESTORE_MAP:
         return None, f"不支援的設定檔 '{filename}'。"
@@ -140,7 +138,9 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         adv_settings_path = os.path.join(data_dir, 'adventure_settings.json')
         with open(adv_settings_path, 'w', encoding='utf-8') as f:
             json.dump(global_settings, f, indent=2, ensure_ascii=False)
-        config_logger.info(f"已成功儲存全域冒險設定至 '{adv_settings_path}'。")
+        # --- 核心修改處 START ---
+        # 將 config_logger.info 改為 config_editor_logger.info
+        config_editor_logger.info(f"已成功儲存全域冒險設定至 '{adv_settings_path}'。")
 
         islands_path = os.path.join(data_dir, 'adventure_islands.json')
         
@@ -156,7 +156,9 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         
         with open(islands_path, 'w', encoding='utf-8') as f:
             json.dump(islands_data, f, indent=2, ensure_ascii=False)
-        config_logger.info(f"已成功更新並儲存各地區設施設定至 '{islands_path}'。")
+        # 將 config_logger.info 改為 config_editor_logger.info
+        config_editor_logger.info(f"已成功更新並儲存各地區設施設定至 '{islands_path}'。")
+        # --- 核心修改處 END ---
 
         reload_main_app_configs()
         
