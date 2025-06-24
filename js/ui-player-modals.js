@@ -8,7 +8,6 @@ function openSendMailModal(friendUid, friendNickname) {
 
     const currentGold = gameState.playerData?.playerStats?.gold || 0;
 
-    // --- 核心修改處 START ---
     const mailFormHtml = `
         <div id="send-mail-container" class="send-mail-container">
             <p class="recipient-info">正在寫信給：<strong class="text-[var(--accent-color)]">${friendNickname}</strong></p>
@@ -32,8 +31,8 @@ function openSendMailModal(friendUid, friendNickname) {
                         <input type="number" id="mail-gold-input" min="0" max="${currentGold}" placeholder="輸入金額">
                     </div>
                     <div id="mail-fee-display" class="mail-fee-display">
-                        手續費 (1%): 0<br>
-                        總計: 0
+                        <span>手續費 (1%): 0</span>
+                        <span>總計: 0</span>
                     </div>
 
                     <button id="attach-dna-btn" class="button secondary">附加 DNA</button>
@@ -45,7 +44,6 @@ function openSendMailModal(friendUid, friendNickname) {
             </div>
         </div>
     `;
-    // --- 核心修改處 END ---
 
     showConfirmationModal(
         '撰寫信件',
@@ -100,8 +98,6 @@ function openSendMailModal(friendUid, friendNickname) {
         { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
     );
     
-    // --- 核心修改處 START ---
-    // 為新建立的元件綁定事件
     const goldInputEl = document.getElementById('mail-gold-input');
     const feeDisplayEl = document.getElementById('mail-fee-display');
 
@@ -115,7 +111,10 @@ function openSendMailModal(friendUid, friendNickname) {
             }
             const fee = Math.floor(amount * 0.01);
             const total = amount + fee;
-            feeDisplayEl.innerHTML = `手續費 (1%): ${fee.toLocaleString()}<br>總計: <span style="color: var(--danger-color);">${total.toLocaleString()}</span>`;
+            // --- 核心修改處 START ---
+            // 移除換行符 <br>，改用 span 元素包裹，方便 CSS 控制排版
+            feeDisplayEl.innerHTML = `<span>手續費 (1%): ${fee.toLocaleString()}</span><span>總計: <strong style="color: var(--danger-color);">${total.toLocaleString()}</strong></span>`;
+            // --- 核心修改處 END ---
         });
     }
 
@@ -149,26 +148,33 @@ function openSendMailModal(friendUid, friendNickname) {
                 if (attachedDna) {
                     const dnaItemDiv = document.createElement('div');
                     dnaItemDiv.className = 'dna-item occupied';
-                    dnaItemDiv.style.cursor = 'default';
-                    applyDnaItemStyle(dnaItemDiv, attachedDna);
                     
-                    const removeBtn = document.createElement('button');
-                    removeBtn.innerHTML = '&times;';
-                    removeBtn.className = 'button danger text-xs remove-attachment-btn';
-                    removeBtn.onclick = () => {
+                    // --- 核心修改處 START ---
+                    // 讓物品本身可以被點擊以移除
+                    dnaItemDiv.style.cursor = 'pointer'; 
+                    dnaItemDiv.title = '點擊以移除附件';
+                    dnaItemDiv.onclick = () => {
                         attachedDna = null;
                         attachedDnaPreview.innerHTML = '';
                     };
+                    // --- 核心修改處 END ---
+                    
+                    applyDnaItemStyle(dnaItemDiv, attachedDna);
+                    
+                    // --- 核心修改處 START ---
+                    // 移除獨立的刪除按鈕
+                    // const removeBtn = document.createElement('button');
+                    // ... (相關程式碼已刪除)
+                    // --- 核心修改處 END ---
                     
                     attachedDnaPreview.innerHTML = '';
                     attachedDnaPreview.appendChild(dnaItemDiv);
-                    attachedDnaPreview.appendChild(removeBtn);
+                    // 移除 appendChild(removeBtn)
                 }
                 hideModal('feedback-modal');
             });
         });
     });
-    // --- 核心修改處 END ---
 }
 
 async function handleSendFriendRequest(recipientId, buttonElement) {
@@ -323,7 +329,7 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
             if (titleDetails.buffs && Object.keys(titleDetails.buffs).length > 0) {
                 const statDisplayName = {
                     hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
-                    cultivation_item_find_chance: '修煉物品發現機率', cultivation_exp_gain: '修煉經驗提升',
+                    cultivation_item_find_chance: '修煉物品發現率', cultivation_exp_gain: '修煉經驗提升',
                     cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
                     elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
                     leech_skill_effect: '生命吸取效果', mp_regen_per_turn: 'MP每回合恢復',
@@ -624,7 +630,7 @@ async function renderFriendsList() {
                     </div>
                     <div class="friend-actions">
                         <button class="button secondary text-xs send-mail-btn" title="寄信" data-friend-uid="${friend.uid}" data-friend-nickname="${displayName}">✉️</button>
-                        <button class="button secondary text-xs remove-friend-btn" title="移除好友" data-friend-uid="${friend.uid}" data-friend-nickname="${displayName}">❌</button>
+                        <button class="button danger text-xs remove-friend-btn" title="移除好友" data-friend-uid="${friend.uid}" data-friend-nickname="${displayName}">❌</button>
                     </div>
                 </div>
             `
