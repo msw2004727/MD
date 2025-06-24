@@ -39,21 +39,22 @@ app.register_blueprint(config_editor_bp)
 
 
 # --- CORS 配置 (移動至此處) ---
-allowed_origins = [
-    "https://msw2004727.github.io",
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://127.0.0.1:5501",
-    "http://localhost:5501"
-]
-CORS(app,
-     origins=allowed_origins,
-     supports_credentials=True,
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-     expose_headers=["Content-Type", "Authorization"]
-)
-app_logger.info("CORS configured to allow origins: %s", allowed_origins)
+# --- 核心修改處 START ---
+# 調整 CORS 設定以更好地支援 Render.com 部署
+CORS(app, resources={r"/api/*": {
+    "origins": [
+        "https://msw2004727.github.io",
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://127.0.0.1:5501",
+        "http://localhost:5501"
+    ],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"],
+    "supports_credentials": True
+}})
+app_logger.info(f"CORS configured to allow specific origins for /api/* path.")
+# --- 核心修改處 END ---
 
 
 # --- Firebase Admin SDK 初始化 ---
@@ -80,9 +81,9 @@ if not firebase_admin._apps:
         app_logger.info("未設定環境變數憑證，嘗試從本地檔案 '%s' 載入 (適用於本地開發)。", SERVICE_ACCOUNT_KEY_PATH)
         try:
             cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), SERVICE_ACCOUNT_KEY_PATH))
-            app_logger.info("成功從本地檔案 '%s' 創建憑證物件。", SERVICE_ACCOUNT_KEY_PATH)
+            app_logger.info(f"成功從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建憑證物件。")
         except Exception as e:
-            app_logger.error("從本地檔案 '%s' 創建 Firebase 憑證物件失敗: %s", SERVICE_ACCOUNT_KEY_PATH, e, exc_info=True)
+            app_logger.error(f"從本地檔案 '{SERVICE_ACCOUNT_KEY_PATH}' 創建 Firebase 憑證物件失敗: {e}", exc_info=True)
             cred = None
     else:
         app_logger.warning("未找到環境變數或本地服務帳戶金鑰檔案。Firebase 將無法初始化。")
@@ -94,7 +95,7 @@ if not firebase_admin._apps:
             app_logger.info("Firebase Admin SDK 已使用提供的憑證成功初始化。")
             firebase_app_initialized = True
         except Exception as e:
-            app_logger.error("使用提供的憑證初始化 Firebase Admin SDK 失敗: %s", e, exc_info=True)
+            app_logger.error(f"使用提供的憑證初始化 Firebase Admin SDK 失敗: {e}", exc_info=True)
             firebase_app_initialized = False
     else:
         app_logger.error("未能獲取有效的 Firebase 憑證，Firebase Admin SDK 未初始化。")
