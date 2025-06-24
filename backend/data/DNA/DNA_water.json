@@ -1,0 +1,11 @@
+[
+  {"id":"dna_water_c01","name":"寒流水刃","type":"水","rarity":"普通","hp":18,"mp":18,"attack":10,"defense":14,"speed":12,"crit":6,"resistances":{"水":30,"火":-15}},
+  {"id":"dna_water_c02","name":"冰霧水盾","type":"水","rarity":"普通","hp":19,"mp":17,"attack":11,"defense":13,"speed":13,"crit":7,"resistances":{"水":30,"火":-15}},
+  {"id":"dna_water_c03","name":"潮湧藍鰭","type":"水","rarity":"普通","hp":17,"mp":20,"attack":12,"defense":13,"speed":13,"crit":8,"resistances":{"水":30,"火":-15}},
+  {"id":"dna_water_r01","name":"凝浪海珠","type":"水","rarity":"稀有","hp":22,"mp":21,"attack":13,"defense":17,"speed":14,"crit":10,"resistances":{"水":34,"火":-17}},
+  {"id":"dna_water_r02","name":"海皇冰牙","type":"水","rarity":"稀有","hp":21,"mp":23,"attack":12,"defense":19,"speed":15,"crit":9,"resistances":{"水":34,"火":-17}},
+  {"id":"dna_water_r03","name":"波心冰魄","type":"水","rarity":"稀有","hp":20,"mp":22,"attack":14,"defense":17,"speed":16,"crit":11,"resistances":{"水":34,"火":-17}},
+  {"id":"dna_water_e01","name":"深潮幽影","type":"水","rarity":"菁英","hp":25,"mp":24,"attack":16,"defense":20,"speed":15,"crit":12,"resistances":{"水":38,"火":-20}},
+  {"id":"dna_water_e02","name":"冰牙螺旋","type":"水","rarity":"菁英","hp":24,"mp":26,"attack":17,"defense":19,"speed":15,"crit":14,"resistances":{"水":38,"火":-20}},
+  {"id":"dna_water_e03","name":"月漣冰華","type":"水","rarity":"菁英","hp":26,"mp":25,"attack":15,"defense":21,"speed":17,"crit":13,"resistances":{"水":38,"火":-20}}
+]
