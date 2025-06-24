@@ -2,16 +2,39 @@
 //這個檔案將負責處理與玩家、好友、新手指南相關的彈窗內容
 
 function openSendMailModal(friendUid, friendNickname) {
+    // --- 核心修改處 START ---
+    // 暫存要附加的物品與金額
+    let attachedGold = 0;
+    let attachedDna = null; // 一次只能附加一個DNA
+
+    const currentGold = gameState.playerData?.playerStats?.gold || 0;
+
+    // 重新設計彈窗的 HTML 內容
     const mailFormHtml = `
-        <div style="text-align: left; font-size: 0.9rem;">
+        <div id="send-mail-container" style="text-align: left; font-size: 0.9rem;">
             <p style="margin-bottom: 1rem;">正在寫信給：<strong style="color: var(--accent-color);">${friendNickname}</strong></p>
+            
             <div style="margin-bottom: 0.75rem;">
                 <label for="mail-title-input" class="block mb-1 font-semibold">標題：</label>
                 <input type="text" id="mail-title-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" placeholder="輸入信件標題..." maxlength="30">
             </div>
             <div>
                 <label for="mail-content-input" class="block mb-1 font-semibold">內容：</label>
-                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="5" placeholder="輸入信件內容..." maxlength="200"></textarea>
+                <textarea id="mail-content-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="輸入信件內容..." maxlength="200"></textarea>
+            </div>
+
+            <div id="mail-attachment-section" class="mt-4 pt-3 border-t border-dashed border-[var(--border-color)]">
+                <h5 class="font-semibold mb-2">附加禮物</h5>
+                <div class="flex items-center gap-3 mb-3">
+                    <label for="mail-gold-input">🪙 金幣:</label>
+                    <input type="number" id="mail-gold-input" class="p-1 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)] w-24" min="0" max="${currentGold}" placeholder="0">
+                    <span class="text-xs text-[var(--text-secondary)]">您擁有: ${currentGold.toLocaleString()}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <label>🧬 DNA:</label>
+                    <button id="attach-dna-btn" class="button secondary text-xs">選擇DNA</button>
+                    <div id="attached-dna-preview" class="flex items-center gap-2"></div>
+                </div>
             </div>
         </div>
     `;
@@ -22,18 +45,37 @@ function openSendMailModal(friendUid, friendNickname) {
         async () => {
             const title = document.getElementById('mail-title-input').value.trim();
             const content = document.getElementById('mail-content-input').value.trim();
+            const goldInput = document.getElementById('mail-gold-input').value;
+            attachedGold = parseInt(goldInput, 10) || 0;
 
             if (!title || !content) {
                 showFeedbackModal('錯誤', '信件標題和內容不能為空。');
                 return;
             }
+            if (attachedGold < 0) {
+                showFeedbackModal('錯誤', '附加金額不能為負數。');
+                return;
+            }
+             if (attachedGold > currentGold) {
+                showFeedbackModal('錯誤', '附加金額超過您擁有的金幣數量。');
+                return;
+            }
+
+            const payload = {};
+            if (attachedGold > 0) {
+                payload.gold = attachedGold;
+            }
+            if (attachedDna) {
+                payload.items = [{ type: 'dna', data: attachedDna }];
+            }
 
             showFeedbackModal('寄送中...', `正在將您的信件送往 ${friendNickname} 的信箱...`, true);
             try {
-                const result = await sendMail(friendUid, title, content);
+                const result = await sendMail(friendUid, title, content, payload);
                 if (result && result.success) {
                     hideModal('feedback-modal');
                     showFeedbackModal('成功', '信件已成功寄出！');
+                    await refreshPlayerData(); // 寄送成功後刷新自己的資料(金幣和物品)
                 } else {
                     throw new Error(result.error || '未知的錯誤');
                 }
@@ -44,6 +86,58 @@ function openSendMailModal(friendUid, friendNickname) {
         },
         { confirmButtonClass: 'primary', confirmButtonText: '寄出' }
     );
+
+    // 為新建立的「選擇DNA」按鈕綁定事件
+    const attachDnaBtn = document.getElementById('attach-dna-btn');
+    const attachedDnaPreview = document.getElementById('attached-dna-preview');
+
+    attachDnaBtn.addEventListener('click', () => {
+        const inventory = gameState.playerData.playerOwnedDNA.filter(Boolean); // 過濾掉空槽位
+        if (inventory.length === 0) {
+            showFeedbackModal('提示', '您的庫存中沒有可附加的DNA。');
+            return;
+        }
+
+        let inventoryHtml = '<div class="inventory-grid" style="max-height: 300px; overflow-y: auto;">';
+        inventory.forEach(dna => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'dna-item occupied mail-attach-dna-item';
+            itemDiv.dataset.dnaId = dna.id;
+            applyDnaItemStyle(itemDiv, dna);
+            inventoryHtml += itemDiv.outerHTML;
+        });
+        inventoryHtml += '</div>';
+
+        showFeedbackModal('選擇要附加的DNA', inventoryHtml, false, null, [{ text: '取消', class: 'secondary' }]);
+
+        document.querySelectorAll('.mail-attach-dna-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const dnaId = item.dataset.dnaId;
+                attachedDna = inventory.find(d => d.id === dnaId);
+
+                if (attachedDna) {
+                    const dnaItemDiv = document.createElement('div');
+                    dnaItemDiv.className = 'dna-item occupied';
+                    applyDnaItemStyle(dnaItemDiv, attachedDna);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'button danger text-xs';
+                    removeBtn.style.marginLeft = '8px';
+                    removeBtn.onclick = () => {
+                        attachedDna = null;
+                        attachedDnaPreview.innerHTML = '';
+                    };
+                    
+                    attachedDnaPreview.innerHTML = '';
+                    attachedDnaPreview.appendChild(dnaItemDiv);
+                    attachedDnaPreview.appendChild(removeBtn);
+                }
+                hideModal('feedback-modal');
+            });
+        });
+    });
+    // --- 核心修改處 END ---
 }
 
 async function handleSendFriendRequest(recipientId, buttonElement) {
@@ -200,8 +294,8 @@ function updatePlayerInfoModal(playerData, gameConfigs) {
                     hp: 'HP', mp: 'MP', attack: '攻擊', defense: '防禦', speed: '速度', crit: '爆擊率', evasion: '閃避率',
                     cultivation_item_find_chance: '修煉物品發現機率', cultivation_exp_gain: '修煉經驗提升',
                     cultivation_time_reduction: '修煉時間縮短', score_gain_boost: '積分獲取提升',
-                    elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒系傷害提升',
-                    leech_skill_effect: '吸血效果提升', mp_regen_per_turn: 'MP每回合恢復',
+                    elemental_damage_boost: '元素傷害提升', poison_damage_boost: '毒素傷害提升',
+                    leech_skill_effect: '生命吸取效果', mp_regen_per_turn: 'MP每回合恢復',
                     dna_return_rate_on_disassemble: '分解DNA返還率', fire_resistance: '火系抗性',
                     water_resistance: '水系抗性', wood_resistance: '木系抗性', gold_resistance: '金系抗性',
                     earth_resistance: '土系抗性', light_resistance: '光系抗性', dark_resistance: '暗系抗性'
@@ -489,8 +583,6 @@ async function renderFriendsList() {
                 const nowInSeconds = Date.now() / 1000;
                 const isOnline = lastSeen && (nowInSeconds - lastSeen < 300); 
 
-                // --- 核心修改處 START ---
-                // 移除 onclick="..."，改用 class 和 data-* 屬性
                 return `
                 <div class="friend-item-card">
                     <div class="friend-info">
@@ -508,11 +600,8 @@ async function renderFriendsList() {
             }).join('')}
         </div>
     `;
-    // --- 核心修改處 END ---
 }
 
-// --- 核心修改處 START ---
-// 新增一個函式，用於在檔案載入時設定事件監聽器
 function initializePlayerModalEventHandlers() {
     const friendsListContainer = document.getElementById('friends-list-display-area');
     if (friendsListContainer) {
@@ -548,6 +637,4 @@ function initializePlayerModalEventHandlers() {
     }
 }
 
-// 在檔案的最後，等待 DOM 載入完成後執行事件綁定
 document.addEventListener('DOMContentLoaded', initializePlayerModalEventHandlers);
-// --- 核心修改處 END ---
