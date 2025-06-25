@@ -19,6 +19,7 @@
             <a href="#" class="nav-item" data-target="cs-mailbox">客服信箱</a>
             <a href="#" class="nav-item" data-target="adventure-island-settings">冒險島設定</a>
             <a href="#" class="nav-item" data-target="champion-guardians-settings">冠軍守衛</a>
+            <a href="#" class="nav-item" data-target="cultivation-settings">修煉設定</a>
             <a href="#" class="nav-item" data-target="game-mechanics">遊戲機制</a>
             <a href="#" class="nav-item" data-target="elemental-advantage">屬性相剋</a>
             <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
@@ -214,6 +215,40 @@
                         </div>
                         <div id="champion-guardians-response" class="admin-response-message" style="display: none;"></div>
                     </div>
+                </div>
+            </div>
+            <div id="cultivation-settings" class="content-panel">
+                <h2 class="content-header">修煉設定</h2>
+                <div class="dashboard-grid single-column">
+                    <div class="data-section">
+                        <h3>DNA 拾獲設定</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="cult-dna-find-chance">基礎拾獲機率 (%)</label>
+                                <input type="number" id="cult-dna-find-chance" class="admin-input" step="0.1" min="0" max="100">
+                                <p class="input-hint">每次修煉結束時，觸發「拾獲DNA」事件的基礎機率。</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="cult-dna-find-divisor">拾獲數量加成 (秒)</label>
+                                <input type="number" id="cult-dna-find-divisor" class="admin-input" step="1" min="1">
+                                <p class="input-hint">修煉時長(秒)除以此數值，結果會增加拾獲數量。預設 1200。</p>
+                            </div>
+                        </div>
+                        <div id="cultivation-loot-table-container">
+                            <p class="placeholder-text">載入中...</p>
+                        </div>
+                    </div>
+
+                    <div class="data-section">
+                        <h3>數值成長設定</h3>
+                        <div id="cultivation-stat-growth-container">
+                             <p class="placeholder-text">載入中...</p>
+                        </div>
+                    </div>
+                    <div class="save-changes-container">
+                        <button id="save-cultivation-settings-btn" class="button success">儲存修煉設定</button>
+                    </div>
+                    <div id="cultivation-settings-response" class="admin-response-message" style="display: none;"></div>
                 </div>
             </div>
 
