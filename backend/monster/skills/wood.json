@@ -1,0 +1,215 @@
+[
+  {
+    "name": "藤鞭抽擊",
+    "description": "揮舞堅韌藤鞭猛力抽擊對手。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      { "type": "damage", "power": 28, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "有25%機率使對手防禦下降。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": -0.1, "is_multiplier": true, "chance": 0.25, "target": "opponent_single", "log_success": "藤鞭削弱了{target}的防禦！" }
+        ]
+      },
+      "10": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      }
+    }
+  },
+  {
+    "name": "葉刃亂舞",
+    "description": "發射銳利葉片連續斬擊對手。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      { "type": "damage", "power": 16, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數增為3次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 3 }
+        ]
+      },
+      "10": {
+        "description": "每次攻擊均有5%機率致使對手中毒。",
+        "add_effects": [
+          { "type": "apply_status", "status_id": "poison", "chance": 0.05, "duration": 2, "target": "opponent_single", "log_success": "{target}被葉片劃傷而中毒！" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "根系強化",
+    "description": "提升自身防禦並持續恢復HP。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "防禦", "amount": 0.2, "is_multiplier": true, "duration": 4, "target": "self", "log_success": "根系強化提升了{performer}的防禦！" },
+      { "type": "heal", "amount": 8, "target": "self", "repeat": 4 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每回合回復量提升，並有20%機率同時解除一種異常狀態。",
+        "heal_add": 3,
+        "add_effects": [
+          { "type": "special", "special_logic_id": "heal_status", "chance": 0.2, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "防禦提升持續時間延長2回合。",
+        "duration_add": 2
+      }
+    }
+  },
+  {
+    "name": "綠能波動",
+    "description": "釋放生命能量波攻擊敵人並有機率恢復自身HP。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 97,
+    "effects": [
+      { "type": "damage", "power": 34, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後自身有30%機率恢復10點HP。",
+        "add_effects": [
+          { "type": "heal", "amount": 10, "chance": 0.3, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "恢復效果提升至20點，並有10%機率解除自身負面狀態。",
+        "heal_add": 10,
+        "add_effects": [
+          { "type": "special", "special_logic_id": "heal_status", "chance": 0.1, "target": "self" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "森羅巨根",
+    "description": "召喚巨根纏繞對手，造成劇烈傷害。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 93,
+    "effects": [
+      { "type": "damage", "power": 50, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "纏繞效果有30%機率使對手防禦降低。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": -0.2, "is_multiplier": true, "chance": 0.3, "target": "opponent_single", "log_success": "森羅巨根削弱了{target}的防禦！" }
+        ]
+      },
+      "10": {
+        "description": "威力提升20點，必中。",
+        "add_power": 20,
+        "accuracy_set": 100
+      }
+    }
+  },
+  {
+    "name": "花雨連斬",
+    "description": "如花瓣般連續斬擊，攻擊次數隨等級提升。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      { "type": "damage", "power": 24, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數增為4次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 4 }
+        ]
+      },
+      "10": {
+        "description": "每次攻擊有10%機率造成對手混亂。",
+        "add_effects": [
+          { "type": "apply_status", "status_id": "confusion", "chance": 0.1, "duration": 2, "target": "opponent_single", "log_success": "花雨亂舞讓{target}陷入混亂！" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "生命恩澤",
+    "description": "提升全體隊友防禦並持續恢復HP。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "防禦", "amount": 0.2, "is_multiplier": true, "duration": 5, "target": "team_allies", "log_success": "生命恩澤提升全體防禦！" },
+      { "type": "heal", "amount": 8, "target": "team_allies", "repeat": 5 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每回合回復量增加，並有20%機率解除異常。",
+        "heal_add": 5,
+        "add_effects": [
+          { "type": "special", "special_logic_id": "heal_status", "chance": 0.2, "target": "team_allies" }
+        ]
+      },
+      "10": {
+        "description": "持續回合增加2回合。",
+        "duration_add": 2
+      }
+    }
+  },
+  {
+    "name": "自然治癒",
+    "description": "使用自然之力大幅恢復自身HP並解除異常。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      { "type": "heal", "amount": 50, "target": "self" },
+      { "type": "special", "special_logic_id": "heal_status", "chance": 1, "target": "self" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "恢復量增加至70點。",
+        "heal_add": 20
+      },
+      "10": {
+        "description": "使用後2回合內，自身受到的傷害減半。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "resist_buff", "attribute": "all", "amount": 0.5, "duration": 2, "target": "self" }
+        ]
+      }
+    }
+  }
+]
