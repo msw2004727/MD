@@ -72,6 +72,27 @@ def admin_login():
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
 
+# --- 核心修改處 START ---
+@admin_bp.route('/save_game_mechanics', methods=['POST', 'OPTIONS'])
+@token_required
+def save_game_mechanics_route():
+    """
+    接收來自前端「遊戲機制」面板的結構化資料，並儲存到 game_mechanics.json。
+    """
+    from .config_editor_services import save_game_mechanics_service
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "請求中缺少設定資料。"}), 400
+    
+    success, error = save_game_mechanics_service(data)
+    
+    if success:
+        return jsonify({"success": True, "message": "遊戲機制設定已成功儲存並重新載入。"}), 200
+    else:
+        return jsonify({"error": error}), 500
+# --- 核心修改處 END ---
+
 @admin_bp.route('/player_data', methods=['GET', 'OPTIONS'])
 @token_required
 def get_admin_player_data_route():
