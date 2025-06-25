@@ -1,4 +1,4 @@
-# backend/analytics_services.py
+# backend/analytics/analytics_services.py
 # 新增的服務檔案：處理遊戲營運數據的紀錄與彙整
 
 import logging
@@ -6,9 +6,9 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 
-# 從專案的其他模組導入
-from . import MD_firebase_config
-from .MD_models import PlayerGameData, GameConfigs
+# 導入專案根目錄的模組
+from .. import MD_firebase_config
+from ..MD_models import PlayerGameData, GameConfigs
 
 # 建立此服務專用的日誌記錄器
 analytics_logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ def log_event(event_type: str, details: Optional[Dict[str, Any]] = None):
         return
 
     try:
+        # 將事件紀錄儲存在一個專門的頂層集合中
         event_log_ref = db.collection('EventLogs').document()
         log_data = {
             "type": event_type,
@@ -53,14 +54,19 @@ def aggregate_daily_data():
     # 4. 將彙整結果寫入 AnalyticsData 集合的今日文件中。
     analytics_logger.info("每日數據彙整程序已觸發（目前為預留功能）。")
     
-    # 這裡可以先放一個假的寫入，方便測試
     db = MD_firebase_config.db
     if not db:
+        analytics_logger.error("數據彙整失敗：Firestore 未初始化。")
         return
 
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    doc_ref = db.collection('AnalyticsData').document(f"daily_{today_str}")
-    doc_ref.set({"placeholder": True, "last_updated": int(time.time())}, merge=True)
+    try:
+        # 作為佔位符，先寫入一個簡單的紀錄，表示此函式已被觸發
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        doc_ref = db.collection('AnalyticsData').document(f"daily_{today_str}")
+        doc_ref.set({"placeholder": True, "last_updated": int(time.time())}, merge=True)
+        analytics_logger.info(f"已為 {today_str} 建立或更新了佔位符統計文件。")
+    except Exception as e:
+        analytics_logger.error(f"寫入佔位符統計文件時發生錯誤: {e}", exc_info=True)
 
 
 def get_analytics_for_range(start_date: str, end_date: str) -> Dict[str, Any]:
@@ -86,7 +92,7 @@ def get_analytics_for_range(start_date: str, end_date: str) -> Dict[str, Any]:
     
     analytics_logger.info(f"正在為日期範圍 {start_date} - {end_date} 獲取分析數據（目前為預留功能）。")
     
-    # 返回一個假的數據結構，以便前端可以先進行開發
+    # 返回一個預設的數據結構，以便前端可以先進行儀表板的開發
     return {
         "date_range": f"{start_date} to {end_date}",
         "summary": { "newUsers": 0, "activeUsers": { "dau": 0 }, "totalPlayers": 0 },
