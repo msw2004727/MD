@@ -206,10 +206,9 @@ body.admin-body {
     padding-left: 0.25rem;
 }
 
-/* --- 核心修改處：修煉設定面板專用樣式 (最終版) --- */
+/* --- 修煉設定面板專用樣式 --- */
 #cultivation-loot-table-container .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 強制兩欄 */
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
     margin-top: 1rem;
 }
@@ -225,4 +224,46 @@ body.admin-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem 1rem;
+}
+
+/* --- 核心修改處：屬性相剋表格專用樣式 --- */
+.table-wrapper {
+    overflow-x: auto;
+    padding-bottom: 1rem; /* 留出捲動軸空間 */
+}
+
+.elemental-chart-table {
+    width: 100%;
+    min-width: 800px; /* 給表格一個最小寬度 */
+    border-collapse: collapse;
+    white-space: nowrap; /* 防止表頭換行 */
+}
+
+.elemental-chart-table th, 
+.elemental-chart-table td {
+    border: 1px solid var(--admin-border-color);
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.elemental-chart-table th {
+    background-color: var(--admin-panel-bg);
+    font-weight: 600;
+}
+
+.elemental-chart-table td {
+    background-color: var(--admin-bg);
+}
+
+.elemental-chart-table .elemental-input {
+    width: 80px; /* 固定寬度，縮小格子 */
+    padding: 8px;
+    text-align: center; /* 數字置中 */
+    -moz-appearance: textfield; /* 隱藏 Firefox 的上下箭頭 */
+}
+
+.elemental-chart-table .elemental-input::-webkit-outer-spin-button,
+.elemental-chart-table .elemental-input::-webkit-inner-spin-button {
+    -webkit-appearance: none; /* 隱藏 Chrome/Safari 的上下箭頭 */
+    margin: 0;
 }
