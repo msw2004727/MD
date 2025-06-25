@@ -206,7 +206,7 @@ body.admin-body {
 }
 
 /* --- 新增：修煉設定面板專用樣式 --- */
-#cultivation-loot-table-grid {
+#cultivation-loot-table-container {
     display: grid;
     /* 響應式網格，最小寬度 200px，最大 1fr，自動填充 */
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
@@ -233,4 +233,8 @@ body.admin-body {
 .cult-rarity-card .form-grid {
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem 1rem;
+}
+
+#cultivation-loot-table-container .form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
