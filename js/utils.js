@@ -1,40 +1,118 @@
 // js/utils.js
-// 存放整個專案可以共用的輔助函式
 
 /**
- * 【重構】根據怪獸資料，生成包含稀有度顏色的完整 HTML 名稱標籤。
- * @param {object} monster - 怪獸物件。
- * @param {object} gameConfigs - 全局遊戲設定檔。
- * @returns {string} 包含樣式和名稱的 HTML 字串。
+ * 格式化基本文字，將特定的 Markdown 符號移除。
+ * @param {string} text - 要格式化的文字。
+ * @returns {string} 格式化後的文字。
  */
-function getMonsterDisplayName(monster, gameConfigs) {
-    if (!monster) return '<span class="text-rarity-common">未知</span>';
+function formatBasicText(text) {
+    if (typeof text !== 'string') return '';
+    // 直接移除 ** 和 * 符號，而不是轉換成 HTML 標籤
+    let formattedText = text
+        .replace(/\*\*/g, '') // 移除雙星號
+        .replace(/\*/g, '');   // 移除單星號
+    return formattedText;
+}
 
-    // 決定要顯示的名稱
-    let displayName = '未知';
-    if (monster.custom_element_nickname) {
-        displayName = monster.custom_element_nickname;
-    } else if (monster.element_nickname_part) {
-        displayName = monster.element_nickname_part;
-    } else if (monster.nickname) {
-        // 作為後備，從完整名稱中提取最後一部分（通常是屬性名）
-        const parts = monster.nickname.match(/[\u4e00-\u9fa5a-zA-Z0-9]+$/);
-        displayName = parts ? parts[0] : monster.nickname;
-    } else {
-        displayName = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+
+/**
+ * 格式化並應用動態樣式到戰報文字。
+ * @param {string} reportText - 戰報文字。
+ * @param {object} playerMonster - 玩家怪獸資料。
+ * @param {object} opponentMonster - 對手怪獸資料。
+ * @returns {string} 格式化後的 HTML 字串。
+ */
+function applyDynamicStylingToBattleReport(reportText, playerMonster, opponentMonster) {
+    if (typeof reportText !== 'string') return '';
+
+    // 基礎格式化，例如換行
+    let formattedText = reportText.replace(/\n/g, '<br>');
+
+    // 關鍵字和對應的 class
+    const keywords = {
+        "獲勝": "highlight-win",
+        "戰敗": "highlight-lose",
+        "平手": "highlight-draw",
+        "致命一擊": "highlight-crit",
+        "效果絕佳": "highlight-super-effective",
+        "閃避": "highlight-dodge",
+        "中毒": "highlight-status",
+        "麻痺": "highlight-status",
+        "混亂": "highlight-status",
+        "睡眠": "highlight-status",
+        "凍結": "highlight-status",
+        "燒傷": "highlight-status",
+        "能力提升": "highlight-buff",
+        "能力下降": "highlight-debuff"
+    };
+
+    // 處理關鍵字高亮
+    for (const [key, value] of Object.entries(keywords)) {
+        const regex = new RegExp(key, "g");
+        formattedText = formattedText.replace(regex, `<span class="${value}">${key}</span>`);
     }
 
-    // 決定稀有度對應的 CSS class
-    const rarityMap = {
-        '普通': 'common',
-        '稀有': 'rare',
-        '菁英': 'elite',
-        '傳奇': 'legendary',
-        '神話': 'mythical'
-    };
-    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-    const rarityClass = `text-rarity-${rarityKey}`;
+    // 處理怪獸名稱高亮
+    if (playerMonster && playerMonster.nickname) {
+        const playerRegex = new RegExp(escapeRegExp(playerMonster.nickname), "g");
+        formattedText = formattedText.replace(playerRegex, `<strong class="player-monster-name">${playerMonster.nickname}</strong>`);
+    }
+    if (opponentMonster && opponentMonster.nickname) {
+        const opponentRegex = new RegExp(escapeRegExp(opponentMonster.nickname), "g");
+        formattedText = formattedText.replace(opponentRegex, `<strong class="opponent-monster-name">${opponentMonster.nickname}</strong>`);
+    }
 
-    // 回傳組合好的 HTML 字串
-    return `<span class="${rarityClass}">${displayName}</span>`;
+    return formattedText;
+}
+
+
+/**
+ * 顯示一個 toast 通知。
+ * @param {string} message - 要顯示的訊息。
+ * @param {('success'|'error'|'info')} type - 通知的類型。
+ * @param {number} duration - 顯示的持續時間（毫秒）。
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        console.error('Toast container not found!');
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    // 讓 toast 動畫進入
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // 設定時間讓 toast 消失
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // 在動畫結束後從 DOM 中移除
+        toast.addEventListener('transitionend', () => toast.remove());
+    }, duration);
+}
+
+/**
+ * 對字串進行轉義，使其可以在正規表達式中使用。
+ * @param {string} string - 要轉義的字串。
+ * @returns {string} 轉義後的字串。
+ */
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * 在數字前補零，使其達到指定長度。
+ * @param {number} num - 要格式化的數字。
+ * @param {number} length - 總長度。
+ * @returns {string} 補零後的字串。
+ */
+function padZero(num, length = 2) {
+    return String(num).padStart(length, '0');
 }
