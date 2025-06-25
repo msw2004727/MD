@@ -212,18 +212,15 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         
         naming_constraints = game_configs.get("naming_constraints", {})
         
-        # --- 核心修改處 START ---
-        # 移除稱號和成就的邏輯，直接傳入空字串
         player_title_part = ""  
         monster_achievement_part = ""
-        # 產生最終暱稱
+        
         full_nickname = generate_monster_full_nickname(
             player_title_part, 
             monster_achievement_part, 
             element_nickname,
             naming_constraints
         )
-        # --- 核心修改處 END ---
 
         stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
         initial_max_hp = int(base_stats.get("hp", 50) * stat_multiplier)
@@ -239,10 +236,14 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "defense": int(base_stats.get("defense", 10) * stat_multiplier),
             "speed": int(base_stats.get("speed", 10) * stat_multiplier),
             "crit": int(base_stats.get("crit", 5) * stat_multiplier),
-            "skills": generated_skills, "rarity": monster_rarity_name, "title": monster_achievement,
+            "skills": generated_skills, "rarity": monster_rarity_name,
+            # --- 核心修改處 START ---
+            # 將錯誤的變數 monster_achievement 改為正確的 monster_achievement_part
+            "title": monster_achievement_part,
+            # --- 核心修改處 END ---
             "custom_element_nickname": None, "description": f"由 {', '.join(dna.get('name', '未知DNA') for dna in combined_dnas_data)} 的力量組合而成。",
             "personality": random.choice(game_configs.get("personalities", [{}])),
-            "creationTime": int(time.time()), "monsterTitles": [monster_achievement], "monsterMedals": 0,
+            "creationTime": int(time.time()), "monsterTitles": [monster_achievement_part], "monsterMedals": 0,
             "farmStatus": {}, "activityLog": [], "healthConditions": [],
             "resistances": {}, "resume": {"wins": 0, "losses": 0},
             "constituent_dna_ids": constituent_dna_template_ids, "cultivation_gains": {},
