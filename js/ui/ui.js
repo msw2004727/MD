@@ -1,5 +1,44 @@
-// js/ui.js
-console.log("DEBUG: ui.js starting to load and define functions."); // Add this line
+// js/ui/ui.js
+console.log("DEBUG: ui.js starting to load and define functions.");
+
+/**
+ * 【新增於此】根據怪獸資料，生成包含稀有度顏色的完整 HTML 名稱標籤。
+ * @param {object} monster - 怪獸物件。
+ * @param {object} gameConfigs - 全局遊戲設定檔。
+ * @returns {string} 包含樣式和名稱的 HTML 字串。
+ */
+function getMonsterDisplayName(monster, gameConfigs) {
+    if (!monster) return '<span class="text-rarity-common">未知</span>';
+
+    // 決定要顯示的名稱
+    let displayName = '未知';
+    if (monster.custom_element_nickname) {
+        displayName = monster.custom_element_nickname;
+    } else if (monster.element_nickname_part) {
+        displayName = monster.element_nickname_part;
+    } else if (monster.nickname) {
+        // 作為後備，從完整名稱中提取最後一部分（通常是屬性名）
+        const parts = monster.nickname.match(/[\u4e00-\u9fa5a-zA-Z0-9]+$/);
+        displayName = parts ? parts[0] : monster.nickname;
+    } else {
+        displayName = monster.elements && monster.elements.length > 0 ? monster.elements[0] : '無';
+    }
+
+    // 決定稀有度對應的 CSS class
+    const rarityMap = {
+        '普通': 'common',
+        '稀有': 'rare',
+        '菁英': 'elite',
+        '傳奇': 'legendary',
+        '神話': 'mythical'
+    };
+    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+    const rarityClass = `text-rarity-${rarityKey}`;
+
+    // 回傳組合好的 HTML 字串
+    return `<span class="${rarityClass}">${displayName}</span>`;
+}
+
 
 // 注意：此檔案會依賴 gameState (來自 js/game-state.js) 和其他輔助函數
 // 這個檔案現在是UI系統的核心，負責主畫面渲染和通用彈窗的顯示/隱藏。
@@ -35,7 +74,6 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
     if (targetContent) {
         targetContent.classList.add('active');
 
-        // --- 核心修改處 START ---
         // 根據切換的頁籤，觸發特定的UI渲染函式
         if (targetTabId === 'friends-list-content') {
             if (typeof renderFriendsList === 'function') {
@@ -53,7 +91,6 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
                 renderMedicalStation();
             }
         }
-        // --- 核心修改處 END ---
     }
 }
 // =============================================================
@@ -171,24 +208,18 @@ function initializeDOMElements() {
         snapshotBarsContainer: document.getElementById('snapshot-bars-container'),
         snapshotHpFill: document.getElementById('snapshot-hp-fill'),
         snapshotMpFill: document.getElementById('snapshot-mp-fill'),
-
-        // --- 核心修改處 START ---
-        // 新增 Mailbox 和 Medical Station 相關的 DOM 元素
         mailboxModal: document.getElementById('mailbox-modal'),
         mailListContainer: document.getElementById('mailbox-list-container'),
         refreshMailboxBtn: document.getElementById('refresh-mailbox-btn'),
         deleteReadMailsBtn: document.getElementById('delete-read-mails-btn'),
-        
         mailReaderModal: document.getElementById('mail-reader-modal'),
         mailReaderTitle: document.getElementById('mail-reader-title'),
         mailReaderSender: document.getElementById('mail-reader-sender'),
         mailReaderTimestamp: document.getElementById('mail-reader-timestamp'),
         mailReaderBody: document.getElementById('mail-reader-modal')?.querySelector('.mail-content-text'),
         mailReaderAttachmentsContainer: document.getElementById('mail-reader-attachments'),
-        
         medicalStationHeaders: document.getElementById('medical-station-headers'),
         medicalStationList: document.getElementById('medical-station-list'),
-        // --- 核心修改處 END ---
     };
     console.log("DOMElements initialized in ui.js");
 }
