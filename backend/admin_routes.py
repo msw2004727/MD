@@ -2,6 +2,7 @@
 import os
 import jwt
 import json
+import uuid  # 新增：用於生成唯一的稱號ID
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Blueprint, jsonify, request, current_app
@@ -72,7 +73,6 @@ def admin_login():
     else:
         return jsonify({'success': False, 'error': '密碼錯誤'}), 401
 
-# --- 核心修改處 START ---
 @admin_bp.route('/save_game_mechanics', methods=['POST', 'OPTIONS'])
 @token_required
 def save_game_mechanics_route():
@@ -91,7 +91,6 @@ def save_game_mechanics_route():
         return jsonify({"success": True, "message": "遊戲機制設定已成功儲存並重新載入。"}), 200
     else:
         return jsonify({"error": error}), 500
-# --- 核心修改處 END ---
 
 @admin_bp.route('/player_data', methods=['GET', 'OPTIONS'])
 @token_required
@@ -292,3 +291,66 @@ def delete_cs_mail_route(mail_id):
     except Exception as e:
         current_app.logger.error(f"刪除客服信件 {mail_id} 時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "刪除信件時發生內部錯誤。"}), 500
+
+@admin_bp.route('/grant_exclusive_title', methods=['POST', 'OPTIONS'])
+@token_required
+def grant_exclusive_title_route():
+    """
+    授予一位玩家一個客製化的專屬稱號。
+    """
+    from .player_services import get_player_data_service, save_player_data_service
+    from .mail_services import add_mail_to_player
+
+    data = request.get_json()
+    player_uid = data.get('player_uid')
+    title_name = data.get('title_name')
+    title_desc = data.get('title_description')
+    buffs_str = data.get('buffs_json', '{}')
+
+    if not all([player_uid, title_name, title_desc]):
+        return jsonify({"error": "請求中缺少 player_uid、title_name 或 title_description。"}), 400
+
+    try:
+        buffs = json.loads(buffs_str)
+        if not isinstance(buffs, dict):
+            raise json.JSONDecodeError("Buffs 不是一個有效的 JSON 物件。", buffs_str, 0)
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"稱號加成 (Buffs) 的 JSON 格式不正確: {e}"}), 400
+
+    game_configs = current_app.config.get('MD_GAME_CONFIGS', {})
+    player_data, _ = get_player_data_service(player_uid, None, game_configs)
+
+    if not player_data:
+        return jsonify({"error": f"找不到 UID 為 {player_uid} 的玩家資料。"}), 404
+
+    # 創建一個獨一無二的稱號物件
+    new_title = {
+        "id": f"exclusive_{str(uuid.uuid4())[:8]}",
+        "name": title_name,
+        "description": title_desc,
+        "condition": {"type": "exclusive_award"},
+        "buffs": buffs
+    }
+
+    if "titles" not in player_data["playerStats"]:
+        player_data["playerStats"]["titles"] = []
+    
+    # 將新稱號加到玩家的稱號列表最前面
+    player_data["playerStats"]["titles"].insert(0, new_title)
+    
+    # 寄送一封通知信給玩家
+    mail_content = f"恭喜您！由於您的卓越表現，管理員特別授予您獨一無二的專屬稱號：「{title_name}」。\n\n效果：{json.dumps(buffs, ensure_ascii=False)}\n\n此稱號已加入您的收藏，您現在可以前往玩家資訊面板中裝備它！"
+    mail_template = {
+        "type": "reward",
+        "title": "一份來自管理員的特別禮物！",
+        "content": mail_content,
+        "sender_name": "遊戲管理員",
+        "payload": {"reward_type": "title", "title_data": new_title}
+    }
+    add_mail_to_player(player_data, mail_template)
+
+    if save_player_data_service(player_uid, player_data):
+        current_app.logger.info(f"管理員已成功授予玩家 {player_uid} 稱號: '{title_name}'")
+        return jsonify({"success": True, "message": f"已成功授予玩家「{player_data.get('nickname')}」專屬稱號「{title_name}」。"}), 200
+    else:
+        return jsonify({"error": "授予稱號後儲存玩家資料失敗。"}), 500
