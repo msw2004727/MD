@@ -1,0 +1,11 @@
+[
+  {"id":"dna_dark_c01","name":"夜幕魔眼","type":"暗","rarity":"普通","hp":10,"mp":18,"attack":18,"defense":9,"speed":16,"crit":11,"resistances":{"暗":25,"光":-20}},
+  {"id":"dna_dark_c02","name":"幽影突襲","type":"暗","rarity":"普通","hp":12,"mp":17,"attack":16,"defense":8,"speed":17,"crit":12,"resistances":{"暗":25,"光":-20}},
+  {"id":"dna_dark_c03","name":"魅影黑角","type":"暗","rarity":"普通","hp":13,"mp":19,"attack":15,"defense":10,"speed":18,"crit":11,"resistances":{"暗":25,"光":-20}},
+  {"id":"dna_dark_r01","name":"噬魂鬼影","type":"暗","rarity":"稀有","hp":13,"mp":22,"attack":22,"defense":11,"speed":20,"crit":14,"resistances":{"暗":29,"光":-24}},
+  {"id":"dna_dark_r02","name":"黑曜冥吼","type":"暗","rarity":"稀有","hp":15,"mp":21,"attack":21,"defense":13,"speed":21,"crit":15,"resistances":{"暗":29,"光":-24}},
+  {"id":"dna_dark_r03","name":"狂影魔狼","type":"暗","rarity":"稀有","hp":16,"mp":20,"attack":23,"defense":14,"speed":22,"crit":15,"resistances":{"暗":29,"光":-24}},
+  {"id":"dna_dark_e01","name":"漆黑之翼","type":"暗","rarity":"菁英","hp":16,"mp":26,"attack":26,"defense":14,"speed":24,"crit":17,"resistances":{"暗":34,"光":-28}},
+  {"id":"dna_dark_e02","name":"恐懼深淵","type":"暗","rarity":"菁英","hp":18,"mp":27,"attack":28,"defense":16,"speed":25,"crit":18,"resistances":{"暗":34,"光":-28}},
+  {"id":"dna_dark_e03","name":"黑影皇者","type":"暗","rarity":"菁英","hp":17,"mp":28,"attack":27,"defense":15,"speed":26,"crit":19,"resistances":{"暗":34,"光":-28}}
+]

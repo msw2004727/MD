@@ -1,0 +1,337 @@
+[
+  {
+    "name": "閃光",
+    "description": "發出強光，有80%機率降低對手命中率。",
+    "type": "光",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 80,
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "命中",
+        "amount": -10,
+        "is_multiplier": false,
+        "target": "opponent_single",
+        "log_success": "強光讓{target}的眼睛睜不開，{stat}下降了{amount}點！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果提升為「100%降低對手命中率(-12)」。",
+        "accuracy_set": 100,
+        "amount_set": -12
+      },
+      "10": {
+        "description": "同時有20%機率使對手陷入「混亂」狀態。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "confusion",
+            "chance": 0.2,
+            "duration": 2,
+            "target": "opponent_single",
+            "log_success": "閃光使{target}陷入了混亂！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "神聖之劍",
+    "description": "用神聖的劍攻擊，無視對手的防禦和閃避提升。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "ignore_defense_buffs",
+        "power": 60,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "對暗屬性敵人必定爆擊。"
+      }
+    }
+  },
+  {
+    "name": "信號光束",
+    "description": "發射奇特的信號光束，有20%機率使對手陷入「混亂」狀態。",
+    "type": "光",
+    "rarity": "普通",
+    "skill_category": "遠程",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 35,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "confusion",
+        "chance": 0.2,
+        "duration": 2,
+        "target": "opponent_single",
+        "log_success": "{target}被奇特的光線照到，陷入了混亂！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "「混亂」機率提升至35%。",
+        "chance_add": 0.15
+      },
+      "10": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      }
+    }
+  },
+  {
+    "name": "月亮之力",
+    "description": "藉助月亮的力量攻擊，有機會降低對手特攻。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 62,
+        "target": "opponent_single"
+      },
+      {
+        "type": "stat_change",
+        "stat": "特攻",
+        "amount": -0.15,
+        "is_multiplier": true,
+        "chance": 0.25,
+        "target": "opponent_single",
+        "log_success": "月亮之力削弱了{target}的{stat}！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "降低對手特攻的機率提升至40%。",
+        "chance_add": 0.15
+      },
+      "10": {
+        "description": "MP消耗減少3點。",
+        "mp_cost_reduce": 3
+      }
+    }
+  },
+  {
+    "name": "魔法閃耀",
+    "description": "釋放強烈光芒攻擊所有對手。",
+    "type": "光",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 40,
+        "target": "opponent_all"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "同時降低所有對手的命中率。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "命中",
+            "amount": -10,
+            "target": "opponent_all",
+            "log_success": "強光讓對手全體的{stat}下降了{amount}點！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "破壞光線",
+    "description": "發射極具破壞力的光線，下一回合無法行動。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 20,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 80,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "recharge_turn"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "若此招擊倒對手，則無須休息。"
+      },
+      "10": {
+        "description": "威力提升至100。",
+        "add_power": 20
+      }
+    }
+  },
+  {
+    "name": "治癒波動",
+    "description": "釋放治癒波動，恢復目標40點生命值。",
+    "type": "光",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "heal",
+        "heal_amount": 40,
+        "target": "self",
+        "log_success": "{performer}被治癒波動包圍，回復了{amount}點HP！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "治療量提升至60點。",
+        "amount_add": 20
+      },
+      "10": {
+        "description": "同時清除目標所有異常狀態。"
+      }
+    }
+  },
+  {
+    "name": "光牆",
+    "description": "5回合內，我方受到的特殊攻擊傷害減半。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "light_screen",
+        "duration": 5,
+        "target": "team_allies",
+        "log_success": "一道光牆在我方場上出現了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
+      },
+      "10": {
+        "description": "光牆存在時，我方全體特攻提升。"
+      }
+    }
+  },
+  {
+    "name": "光子噴湧",
+    "description": "比較攻擊和特攻，用較高的一項造成傷害。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "photon_geyser",
+        "power": 65,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "使用後，自身較低的一項攻擊數值會獲得提升。"
+      }
+    }
+  },
+  {
+    "name": "鏡面屬性",
+    "description": "將自身屬性變得和對手一樣。",
+    "type": "光",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "reflect_type",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "複製屬性的同時，也複製對手的能力變化。"
+      },
+      "10": {
+        "description": "使用後，自身速度大幅提升。"
+      }
+    }
+  },
+  {
+    "name": "力量戲法",
+    "description": "交換自身的攻擊和防禦數值。",
+    "type": "光",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "power_trick",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "交換後，額外提升攻擊力20點。"
+      },
+      "10": {
+        "description": "效果持續5回合，5回合後換回。"
+      }
+    }
+  }
+]

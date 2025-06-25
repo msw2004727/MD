@@ -1,0 +1,11 @@
+[
+  {"id":"dna_wind_c01","name":"疾風破空","type":"風","rarity":"普通","hp":10,"mp":14,"attack":14,"defense":9,"speed":26,"crit":12,"resistances":{"風":30,"土":-10}},
+  {"id":"dna_wind_c02","name":"旋羽颶斬","type":"風","rarity":"普通","hp":11,"mp":15,"attack":15,"defense":10,"speed":24,"crit":11,"resistances":{"風":30,"土":-10}},
+  {"id":"dna_wind_c03","name":"颶氣飛輪","type":"風","rarity":"普通","hp":12,"mp":13,"attack":13,"defense":11,"speed":25,"crit":13,"resistances":{"風":30,"土":-10}},
+  {"id":"dna_wind_r01","name":"天鷹迅羽","type":"風","rarity":"稀有","hp":12,"mp":17,"attack":18,"defense":11,"speed":31,"crit":15,"resistances":{"風":33,"土":-13}},
+  {"id":"dna_wind_r02","name":"雲間奔雷","type":"風","rarity":"稀有","hp":14,"mp":16,"attack":17,"defense":13,"speed":30,"crit":14,"resistances":{"風":33,"土":-13}},
+  {"id":"dna_wind_r03","name":"風刃鳴雷","type":"風","rarity":"稀有","hp":13,"mp":18,"attack":16,"defense":12,"speed":32,"crit":16,"resistances":{"風":33,"土":-13}},
+  {"id":"dna_wind_e01","name":"疾速颶狼","type":"風","rarity":"菁英","hp":14,"mp":20,"attack":22,"defense":14,"speed":36,"crit":18,"resistances":{"風":37,"土":-15}},
+  {"id":"dna_wind_e02","name":"狂風魔翼","type":"風","rarity":"菁英","hp":16,"mp":21,"attack":24,"defense":16,"speed":35,"crit":17,"resistances":{"風":37,"土":-15}},
+  {"id":"dna_wind_e03","name":"風王烈爪","type":"風","rarity":"菁英","hp":15,"mp":19,"attack":23,"defense":15,"speed":38,"crit":19,"resistances":{"風":37,"土":-15}}
+]

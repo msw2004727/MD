@@ -1,0 +1,203 @@
+[
+  {
+    "name": "土石猛擊",
+    "description": "操控巨石重擊對手，力量沉重。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 93,
+    "effects": [
+      { "type": "damage", "power": 34, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中有20%機率使對手防禦下降。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": -0.1, "is_multiplier": true, "chance": 0.2, "target": "opponent_single", "log_success": "土石重擊削弱了{target}的防禦！" }
+        ]
+      },
+      "10": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      }
+    }
+  },
+  {
+    "name": "地裂衝鋒",
+    "description": "用震動大地的力量猛衝敵人。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 97,
+    "effects": [
+      { "type": "damage", "power": 28, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "爆擊率提高10%。",
+        "add_crit": 10
+      },
+      "10": {
+        "description": "攻擊後自身防禦提升10%。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": 0.1, "is_multiplier": true, "target": "self", "log_success": "地裂衝鋒增強自身防禦！" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "岩壁庇護",
+    "description": "召喚堅固岩壁守護自身，大幅提升防禦。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "防禦", "amount": 0.3, "is_multiplier": true, "duration": 4, "target": "self", "log_success": "岩壁庇護大幅提升了{performer}的防禦！" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續期間內，每回合自動恢復5HP。",
+        "add_effects": [
+          { "type": "heal", "amount": 5, "repeat": 4, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "防禦提升持續回合增加2回合。",
+        "duration_add": 2
+      }
+    }
+  },
+  {
+    "name": "地脈震盪",
+    "description": "釋放大地之力，震盪傷害全體敵人。",
+    "type": "土",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 11,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      { "type": "damage", "power": 36, "target": "opponent_all" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中有15%機率讓敵方全體速度下降。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "速度", "amount": -0.1, "is_multiplier": true, "chance": 0.15, "target": "opponent_all", "log_success": "地脈震盪讓敵方速度下降！" }
+        ]
+      },
+      "10": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      }
+    }
+  },
+  {
+    "name": "巨石粉碎",
+    "description": "用巨大岩石粉碎敵人，造成沉重打擊。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      { "type": "damage", "power": 58, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中有25%機率造成對手「暈眩」。",
+        "add_effects": [
+          { "type": "apply_status", "status_id": "stun", "chance": 0.25, "duration": 1, "target": "opponent_single", "log_success": "巨石粉碎擊暈了{target}！" }
+        ]
+      },
+      "10": {
+        "description": "威力提升20點。",
+        "add_power": 20
+      }
+    }
+  },
+  {
+    "name": "大地強襲",
+    "description": "猛烈拍擊大地產生衝擊波傷害敵人。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": 92,
+    "effects": [
+      { "type": "damage", "power": 45, "target": "opponent_all" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "爆擊率再提升15%。",
+        "add_crit": 15
+      },
+      "10": {
+        "description": "命中後全體敵人防禦下降5%。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": -0.05, "is_multiplier": true, "target": "opponent_all", "log_success": "大地強襲削弱了敵方防禦！" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "磐石守護",
+    "description": "大幅提升自身防禦並獲得減傷護盾。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "stat_change", "stat": "防禦", "amount": 0.4, "is_multiplier": true, "duration": 5, "target": "self", "log_success": "磐石守護大幅提升了{performer}的防禦！" },
+      { "type": "special", "special_logic_id": "resist_buff", "attribute": "all", "amount": 0.25, "duration": 2, "target": "self" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "減傷護盾持續回合+2。",
+        "duration_add": 2
+      },
+      "10": {
+        "description": "防禦提升效果再強化10%。",
+        "amount_add": 0.1
+      }
+    }
+  },
+  {
+    "name": "大地裂變",
+    "description": "引發地面龜裂，強力魔法傷害並有機率擊退敵人。",
+    "type": "土",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      { "type": "damage", "power": 65, "target": "opponent_all" },
+      { "type": "apply_status", "status_id": "knockback", "chance": 0.2, "duration": 1, "target": "opponent_all", "log_success": "{target}被大地裂變震飛！" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "擊退機率提升至30%。",
+        "chance_add": 0.1
+      },
+      "10": {
+        "description": "技能必中且每次擊退可令敵人下一回合優先度-2。",
+        "accuracy_set": 100,
+        "add_effects": [
+          { "type": "stat_change", "stat": "priority", "amount": -2, "is_multiplier": false, "target": "opponent_all", "log_success": "{target}行動優先度下降！" }
+        ]
+      }
+    }
+  }
+]

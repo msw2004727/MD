@@ -1,0 +1,500 @@
+[
+  {
+    "name": "藤鞭",
+    "description": "使用藤蔓像鞭子一樣抽打對手。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 6,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 28,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊距離變長，可攻擊後排敵人。"
+      },
+      "10": {
+        "description": "威力提升15點，有20%機率吸取少量生命。",
+        "add_power": 15,
+        "add_effects": [
+          {
+            "type": "leech",
+            "power": 0,
+            "leech_percentage": 10,
+            "chance": 0.2,
+            "target": "opponent_single",
+            "log_success": "{performer}的藤蔓上的尖刺吸取了{target}的生命！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "種子機關槍",
+    "description": "連續射出2-5顆種子。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "遠程",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "multi_hit",
+        "power": 10,
+        "min_hits": 2,
+        "max_hits": 5,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "最低射擊次數提升為3次。",
+        "min_hits_set": 3
+      },
+      "10": {
+        "description": "每次射擊都有機率降低對手防禦。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": -0.05,
+            "is_multiplier": true,
+            "chance": 0.15,
+            "target": "opponent_single",
+            "log_success": "種子擊中了{target}的弱點，使其{stat}下降了{amount}%！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "吸取",
+    "description": "吸取對手生命，回復造成傷害15%的HP。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "leech",
+        "power": 30,
+        "leech_percentage": 15,
+        "target": "opponent_single",
+        "log_success": "{performer}從{target}身上吸取了生命！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "吸取HP比例提升至25%。",
+        "leech_percentage_add": 10
+      },
+      "10": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      }
+    }
+  },
+  {
+    "name": "生長",
+    "description": "小幅提升自身的攻擊力。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "攻擊",
+        "amount": 0.15,
+        "is_multiplier": true,
+        "target": "self",
+        "log_success": "{performer}開始生長，{stat}提升了{amount}%！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果提升為「攻擊力與速度小幅提升」。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "速度",
+            "amount": 0.15,
+            "is_multiplier": true,
+            "target": "self",
+            "log_success": "同時{stat}也提升了{amount}%！"
+          }
+        ]
+      },
+      "10": {
+        "description": "變為群體效果，提升我方全體攻擊力。",
+        "target_set": "team_allies"
+      }
+    }
+  },
+  {
+    "name": "滾動",
+    "description": "縮成一團滾動攻擊。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 5,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "rollout",
+        "power": 25,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每成功使用一次，威力增加5點，最多3次。"
+      },
+      "10": {
+        "description": "附加15%爆擊率。",
+        "add_crit": 15
+      }
+    }
+  },
+  {
+    "name": "催眠粉",
+    "description": "灑出粉末，有75%機率使對手陷入「睡眠」狀態。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "特殊",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 75,
+    "effects": [
+      {
+        "type": "apply_status",
+        "status_id": "sleep",
+        "chance": 1,
+        "duration": 2,
+        "target": "opponent_single",
+        "log_success": "{target}吸入了催眠粉，睡著了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升至85%。",
+        "accuracy_set": 85
+      },
+      "10": {
+        "description": "同時有20%機率使對手陷入「中毒」狀態。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "poison",
+            "chance": 0.2,
+            "target": "opponent_single",
+            "log_success": "粉末中還帶有毒素！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "煩惱種子",
+    "description": "植入種子，使對手的特性變為「不眠」。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "worry_seed",
+        "target": "opponent_single",
+        "log_success": "{target}被植入了煩惱種子，變得無法入睡！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "額外每回合造成少量傷害。"
+      },
+      "10": {
+        "description": "同時降低對手攻擊與特攻。"
+      }
+    }
+  },
+  {
+    "name": "自然恩惠",
+    "description": "根據攜帶的果實，技能屬性與威力會變化。",
+    "type": "木",
+    "rarity": "普通",
+    "skill_category": "其他",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "natural_gift",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力獲得20%的加成。"
+      },
+      "10": {
+        "description": "使用後不會消耗果實。"
+      }
+    }
+  },
+  {
+    "name": "寄生吸取",
+    "description": "近身攻擊並吸取對手生命，回復造成傷害25%的HP。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "leech",
+        "power": 50,
+        "leech_percentage": 25,
+        "target": "opponent_single",
+        "log_success": "{performer}吸取了{target}的生命力！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "吸取HP比例提升至35%。",
+        "leech_percentage_add": 10
+      },
+      "10": {
+        "description": "吸取時，有30%機率同時吸取少量MP。"
+      }
+    }
+  },
+  {
+    "name": "日光束",
+    "description": "蓄力一回合，下一回合發射強力光束。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 100,
+    "phases": [
+      {
+        "turn": 1,
+        "effects": [
+          {
+            "type": "special",
+            "special_logic_id": "charge"
+          }
+        ],
+        "log": "{performer}正在聚集陽光！"
+      },
+      {
+        "turn": 2,
+        "effects": [
+          {
+            "type": "damage",
+            "power": 70,
+            "target": "opponent_single"
+          }
+        ],
+        "log": "{performer}發射了強力的日光束！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "蓄力回合中，自身防禦力與特防提升。"
+      },
+      "10": {
+        "description": "在「晴天」天氣下無需蓄力，立即發射。"
+      }
+    }
+  },
+  {
+    "name": "終極吸取",
+    "description": "大量吸取對手生命，回復造成傷害30%的HP。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "leech",
+        "power": 55,
+        "leech_percentage": 30,
+        "target": "opponent_single",
+        "log_success": "{performer}發動終極吸取，回復了大量生命！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "吸取HP比例提升至40%。",
+        "leech_percentage_add": 10
+      },
+      "10": {
+        "description": "若此招擊倒對手，則回復所有MP。"
+      }
+    }
+  },
+  {
+    "name": "扎根",
+    "description": "扎根於地面，每回合回復生命，但無法交換。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "ingrain",
+        "target": "self",
+        "log_success": "{performer}將根扎進了大地！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "每回合回復量增加。"
+      },
+      "10": {
+        "description": "扎根狀態下，免疫所有強制位移技能。"
+      }
+    }
+  },
+  {
+    "name": "木槌",
+    "description": "用堅硬的木槌重擊對手，自身會受到25%的反傷。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "recoil",
+        "recoil_factor": 0.25
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "反傷比例降低至15%。",
+        "recoil_factor_set": 0.15
+      },
+      "10": {
+        "description": "威力永久提升20點。",
+        "add_power": 20
+      }
+    }
+  },
+  {
+    "name": "億萬噸吸收",
+    "description": "強力吸取生命，回復量為造成傷害的一半。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "特殊",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "leech",
+        "power": 70,
+        "leech_percentage": 50,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "吸取HP比例提升至60%。",
+        "leech_percentage_add": 10
+      },
+      "10": {
+        "description": "威力提升10點，MP消耗降低3點。",
+        "add_power": 10,
+        "mp_cost_reduce": 3
+      }
+    }
+  },
+  {
+    "name": "青草場地",
+    "description": "5回合內，地面上的怪獸每回合回復HP，草屬性技能威力提升。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "grassy_terrain",
+        "duration": 5,
+        "target": "all",
+        "log_success": "青草覆蓋了整個場地！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
+      },
+      "10": {
+        "description": "場地存在時，我方全體免疫「地震」傷害。"
+      }
+    }
+  },
+  {
+    "name": "森林詛咒",
+    "description": "為對手增加「草」屬性。",
+    "type": "木",
+    "rarity": "稀有",
+    "skill_category": "其他",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "forests_curse",
+        "target": "opponent_single",
+        "log_success": "{target}被森林詛咒，增加了草屬性！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "使用後，對手所有抗性下降。"
+      },
+      "10": {
+        "description": "使用後，自身回復少量HP。"
+      }
+    }
+  }
+]

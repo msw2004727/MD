@@ -1,0 +1,570 @@
+[
+  {
+    "name": "毒針",
+    "description": "用帶毒的針刺攻擊，有30%機率使對手「中毒」。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 5,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 25,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "poison",
+        "chance": 0.3,
+        "target": "opponent_single",
+        "log_success": "{target}被毒針刺中，中毒了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "中毒機率提升至50%。",
+        "chance_add": 0.2
+      },
+      "10": {
+        "description": "威力提升10點，可攻擊2次。",
+        "add_power": 10,
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "multi_hit",
+            "hits": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "毒霧",
+    "description": "釋放毒霧，使對手全體陷入「中毒」狀態。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "apply_status",
+        "status_id": "poison",
+        "chance": 1,
+        "target": "opponent_all",
+        "log_success": "毒霧籠罩了對手全體！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升。",
+        "add_accuracy": 10
+      },
+      "10": {
+        "description": "毒霧持續3回合，進入場地的敵人也會中毒。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "field_effect",
+            "field_id": "toxic_fog",
+            "duration": 3
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "溶解液",
+    "description": "噴射酸性液體，有20%機率降低對手防禦。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "遠程",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 35,
+        "target": "opponent_single"
+      },
+      {
+        "type": "stat_change",
+        "stat": "防禦",
+        "amount": -0.15,
+        "is_multiplier": true,
+        "chance": 0.2,
+        "target": "opponent_single",
+        "log_success": "{target}的防禦被溶解液腐蝕，{stat}下降了{amount}%！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "降低防禦的機率提升至40%。",
+        "chance_add": 0.2
+      }
+    }
+  },
+  {
+    "name": "毒素牙",
+    "description": "用含有毒素的牙齒啃咬，35%機率造成強力中毒。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 95,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 40,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "badly_poisoned",
+        "chance": 0.35,
+        "target": "opponent_single",
+        "log_success": "{target}被毒牙咬中，中了劇毒！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "造成強力中毒的機率提升至50%。",
+        "chance_add": 0.15
+      },
+      "10": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      }
+    }
+  },
+  {
+    "name": "毒液衝擊",
+    "description": "對已經中毒的敵人，威力會加倍。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "venom_drench",
+        "power": 50,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升至55。",
+        "add_power": 5
+      },
+      "10": {
+        "description": "對中毒的敵人必定爆擊。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "crit_on_poisoned"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "盤蜷",
+    "description": "盤繞身體，提升自身攻擊、防禦和命中率。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": [
+          "攻擊",
+          "防禦",
+          "命中"
+        ],
+        "amount": [
+          10,
+          10,
+          10
+        ],
+        "target": "self",
+        "log_success": "{performer}盤蜷起來，集中了精神！攻擊、防禦、命中提升！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "提升的數值增加。",
+        "amount_add": 5
+      },
+      "10": {
+        "description": "使用後，下一次攻擊的威力提升20%。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "next_attack_boost",
+            "power_multiplier": 1.2,
+            "duration": 1
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "清除之煙",
+    "description": "噴出特殊的煙霧，清除對手所有的能力等級變化。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "clear_smog",
+        "target": "opponent_single",
+        "log_success": "{performer}噴出清除之煙，將{target}的能力變化還原了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "使用後，自身閃避率提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "閃避",
+            "amount": 10,
+            "target": "self",
+            "log_success": "{performer}的身影變得模糊！"
+          }
+        ]
+      },
+      "10": {
+        "description": "同時對對手造成少量傷害。",
+        "add_effects": [
+          {
+            "type": "damage",
+            "power": 20,
+            "target": "opponent_single"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "胃液",
+    "description": "潑灑胃液，消除對手的個性效果。",
+    "type": "毒",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 7,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "gastro_acid",
+        "target": "opponent_single",
+        "log_success": "{target}被潑灑了胃液，個性效果消失了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "效果持續3回合。",
+        "duration_set": 3
+      },
+      "10": {
+        "description": "使用後，對手的防禦力下降。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": -0.1,
+            "is_multiplier": true,
+            "target": "opponent_single",
+            "log_success": "{target}的防禦被胃液腐蝕，下降了{amount}%！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "劇毒陷阱",
+    "description": "在對手場地設置陷阱，使交換上場的怪獸陷入強力中毒。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "特殊",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "toxic_spikes",
+        "target": "opponent_side"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "可設置兩層陷阱，第二層會額外扣除HP。"
+      },
+      "10": {
+        "description": "踩到陷阱的怪獸同時會被降低速度。"
+      }
+    }
+  },
+  {
+    "name": "十字毒刃",
+    "description": "用帶毒的雙刃交叉斬擊，爆擊率高。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "crit_chance_modifier": 15,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "爆擊率再次提升。",
+        "crit_chance_modifier_add": 15
+      },
+      "10": {
+        "description": "爆擊時100%使對手陷入強力中毒。"
+      }
+    }
+  },
+  {
+    "name": "生化裝甲",
+    "description": "覆蓋生化裝甲，大幅提升防禦力，並免疫中毒狀態。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "stat_change",
+        "stat": "防禦",
+        "amount": 0.4,
+        "is_multiplier": true,
+        "duration": 5,
+        "target": "self",
+        "log_success": "{performer}覆蓋上生化裝甲，{stat}大幅提升了{amount}%！"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "status_immunity",
+        "status_to_block": "poison",
+        "duration": 5,
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "裝甲狀態下，每回合回復少量HP。"
+      },
+      "10": {
+        "description": "裝甲破碎時，會對攻擊者造成傷害並使其「中毒」。"
+      }
+    }
+  },
+  {
+    "name": "污泥炸彈",
+    "description": "投擲充滿毒素的污泥炸彈，40%機率使對手「中毒」。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "遠程",
+    "mp_cost": 13,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 65,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "poison",
+        "chance": 0.4,
+        "target": "opponent_single",
+        "log_success": "{target}被污泥炸彈擊中，中毒了！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "爆炸會濺射到鄰近目標，造成一半傷害。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "splash_damage",
+            "splash_factor": 0.5
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "垃圾射擊",
+    "description": "將垃圾壓縮後射出，命中率較低但威力強大。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 18,
+    "priority": 0,
+    "accuracy": 70,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 75,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升。",
+        "add_accuracy": 15
+      },
+      "10": {
+        "description": "擊中時30%機率使對手「中毒」。",
+        "add_effects": [
+          {
+            "type": "apply_status",
+            "status_id": "poison",
+            "chance": 0.3,
+            "target": "opponent_single",
+            "log_success": "垃圾中的毒素滲入了{target}體內！"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "毒液浸泡",
+    "description": "將對手的屬性變為單一的「毒」屬性。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "soak",
+        "soak_type": "毒",
+        "target": "opponent_single",
+        "log_success": "{target}被毒液浸泡，變成了毒屬性！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "變化屬性的同時，偷取對手少量HP。",
+        "add_effects": [
+          {
+            "type": "leech",
+            "power": 15,
+            "leech_percentage": 100,
+            "target": "opponent_single"
+          }
+        ]
+      },
+      "10": {
+        "description": "使用後，自身特攻提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "特攻",
+            "amount": 0.2,
+            "is_multiplier": true,
+            "target": "self"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "碉堡",
+    "description": "進入防守姿態，使接觸到自己的對手陷入「中毒」狀態。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "其他",
+    "mp_cost": 16,
+    "priority": 4,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "bunker_down",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "防守時也能抵擋部分特殊攻擊。"
+      },
+      "10": {
+        "description": "防守成功時，回復自身少量MP。"
+      }
+    }
+  },
+  {
+    "name": "劇毒鎖鏈",
+    "description": "用毒素鎖鏈綑綁對手，100%造成強力中毒。",
+    "type": "毒",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "badly_poisoned",
+        "chance": 1,
+        "target": "opponent_single",
+        "log_success": "{target}被劇毒鎖鏈緊緊纏繞！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "被鎖鏈綑綁的敵人，每回合速度會下降。"
+      }
+    }
+  }
+]

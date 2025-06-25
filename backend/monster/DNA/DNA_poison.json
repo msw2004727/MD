@@ -1,0 +1,11 @@
+[
+  {"id":"dna_poison_c01","name":"劇毒針雨","type":"毒","rarity":"普通","hp":14,"mp":12,"attack":20,"defense":8,"speed":15,"crit":10,"resistances":{"毒":30,"光":-10}},
+  {"id":"dna_poison_c02","name":"毒瘴蔓毒","type":"毒","rarity":"普通","hp":15,"mp":11,"attack":21,"defense":9,"speed":16,"crit":9,"resistances":{"毒":30,"光":-10}},
+  {"id":"dna_poison_c03","name":"腐息劇孢","type":"毒","rarity":"普通","hp":16,"mp":10,"attack":19,"defense":10,"speed":14,"crit":10,"resistances":{"毒":30,"光":-10}},
+  {"id":"dna_poison_r01","name":"毒牙黑鱗","type":"毒","rarity":"稀有","hp":17,"mp":15,"attack":25,"defense":10,"speed":18,"crit":13,"resistances":{"毒":34,"光":-13}},
+  {"id":"dna_poison_r02","name":"幻毒蛛皇","type":"毒","rarity":"稀有","hp":18,"mp":14,"attack":24,"defense":12,"speed":17,"crit":12,"resistances":{"毒":34,"光":-13}},
+  {"id":"dna_poison_r03","name":"猩紅沼獸","type":"毒","rarity":"稀有","hp":19,"mp":13,"attack":23,"defense":11,"speed":19,"crit":13,"resistances":{"毒":34,"光":-13}},
+  {"id":"dna_poison_e01","name":"劇孢蠍將","type":"毒","rarity":"菁英","hp":20,"mp":18,"attack":30,"defense":12,"speed":21,"crit":16,"resistances":{"毒":38,"光":-15}},
+  {"id":"dna_poison_e02","name":"腐毒花王","type":"毒","rarity":"菁英","hp":21,"mp":17,"attack":32,"defense":13,"speed":20,"crit":17,"resistances":{"毒":38,"光":-15}},
+  {"id":"dna_poison_e03","name":"穿心毒蟲","type":"毒","rarity":"菁英","hp":22,"mp":16,"attack":31,"defense":14,"speed":22,"crit":15,"resistances":{"毒":38,"光":-15}}
+]

@@ -1,0 +1,11 @@
+[
+  {"id":"dna_gold_c01","name":"鐵衛鋒斧","type":"金","rarity":"普通","hp":15,"mp":10,"attack":14,"defense":23,"speed":10,"crit":7,"resistances":{"金":30,"火":-10}},
+  {"id":"dna_gold_c02","name":"鎧甲重擊","type":"金","rarity":"普通","hp":16,"mp":11,"attack":15,"defense":22,"speed":12,"crit":8,"resistances":{"金":30,"火":-10}},
+  {"id":"dna_gold_c03","name":"鋼刃輪切","type":"金","rarity":"普通","hp":17,"mp":12,"attack":16,"defense":21,"speed":13,"crit":7,"resistances":{"金":30,"火":-10}},
+  {"id":"dna_gold_r01","name":"金晶壁壘","type":"金","rarity":"稀有","hp":18,"mp":13,"attack":17,"defense":27,"speed":14,"crit":10,"resistances":{"金":34,"火":-13}},
+  {"id":"dna_gold_r02","name":"銅甲碎盾","type":"金","rarity":"稀有","hp":19,"mp":14,"attack":19,"defense":26,"speed":12,"crit":11,"resistances":{"金":34,"火":-13}},
+  {"id":"dna_gold_r03","name":"銀鱗刀牙","type":"金","rarity":"稀有","hp":20,"mp":15,"attack":18,"defense":25,"speed":15,"crit":11,"resistances":{"金":34,"火":-13}},
+  {"id":"dna_gold_e01","name":"重鎧金蹄","type":"金","rarity":"菁英","hp":21,"mp":16,"attack":20,"defense":32,"speed":14,"crit":12,"resistances":{"金":38,"火":-16}},
+  {"id":"dna_gold_e02","name":"鋒輪斬鐵","type":"金","rarity":"菁英","hp":23,"mp":18,"attack":21,"defense":31,"speed":16,"crit":14,"resistances":{"金":38,"火":-16}},
+  {"id":"dna_gold_e03","name":"金剛巨錘","type":"金","rarity":"菁英","hp":22,"mp":17,"attack":23,"defense":29,"speed":17,"crit":13,"resistances":{"金":38,"火":-16}}
+]

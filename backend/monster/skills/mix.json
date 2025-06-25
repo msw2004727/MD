@@ -1,0 +1,469 @@
+[
+  {
+    "name": "模仿",
+    "description": "複製對手上一回合使用的技能。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 5,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "mimic",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "複製的技能威力提升10%。"
+      },
+      "10": {
+        "description": "可儲存複製的技能，直到戰鬥結束。"
+      }
+    }
+  },
+  {
+    "name": "揮指",
+    "description": "隨機使用遊戲中存在的任意一個技能。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "其他",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "metronome",
+        "target": "random"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "較不容易使出效果不好的技能。"
+      },
+      "10": {
+        "description": "隨機使出的技能MP消耗減少50%。"
+      }
+    }
+  },
+  {
+    "name": "混亂光線",
+    "description": "發射奇特光線，80%機率使對手陷入「混亂」狀態。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 80,
+    "effects": [
+      {
+        "type": "apply_status",
+        "status_id": "confusion",
+        "chance": 1,
+        "duration": 3,
+        "target": "opponent_single",
+        "log_success": "{performer}發射奇特的光線，使{target}陷入了混亂！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中率提升至100%。",
+        "accuracy_set": 100
+      },
+      "10": {
+        "description": "「混亂」狀態持續時間增加1回合。",
+        "duration_add": 1
+      }
+    }
+  },
+  {
+    "name": "力量戲法",
+    "description": "將自身的攻擊和防禦數值進行交換。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "變化",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "power_trick",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "交換後，攻擊力額外提升10點。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "攻擊",
+            "amount": 10
+          }
+        ]
+      },
+      "10": {
+        "description": "交換後，速度也獲得提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "速度",
+            "amount": 20
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "幻象光",
+    "description": "製造幻象攻擊，有25%機率使對手「混亂」。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 40,
+        "target": "opponent_single"
+      },
+      {
+        "type": "apply_status",
+        "status_id": "confusion",
+        "chance": 0.25,
+        "target": "opponent_single",
+        "log_success": "幻象光迷惑了{target}，使其陷入混亂！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升10點。",
+        "add_power": 10
+      },
+      "10": {
+        "description": "混亂機率提升至40%。",
+        "chance_add": 0.15
+      }
+    }
+  },
+  {
+    "name": "秘密之力",
+    "description": "根據戰鬥場地，會有不同的追加效果。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "物理",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 50,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "secret_power"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "追加效果的觸發率提升。"
+      },
+      "10": {
+        "description": "威力提升20點。",
+        "add_power": 20
+      }
+    }
+  },
+  {
+    "name": "白噪音",
+    "description": "5回合內，防止我方全體陷入「睡眠」狀態。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "safeguard",
+        "status_to_block": [
+          "sleep"
+        ],
+        "duration": 5,
+        "target": "team_allies",
+        "log_success": "{performer}發出白噪音，保護了我方全體！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
+      },
+      "10": {
+        "description": "同時防止「混亂」狀態。",
+        "status_to_block_add": [
+          "confusion"
+        ]
+      }
+    }
+  },
+  {
+    "name": "點穴",
+    "description": "隨機大幅提升自身某一項能力。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "acupressure",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "有機率一次提升兩項能力。"
+      },
+      "10": {
+        "description": "提升的能力必定是目前最需要的。"
+      }
+    }
+  },
+  {
+    "name": "次元斬",
+    "description": "扭曲空間進行斬擊，爆擊率高。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "物理",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 55,
+        "crit_chance_modifier": 15,
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "攻擊時無視對手的防禦提升效果。",
+        "add_effects": [
+          {
+            "type": "special",
+            "special_logic_id": "ignore_defense_buffs"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "特性交換",
+    "description": "與對手交換彼此的「個性」。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "skill_swap",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "交換後，偷取對手少量隨機數值。"
+      },
+      "10": {
+        "description": "交換後，清除自身所有負面狀態。"
+      }
+    }
+  },
+  {
+    "name": "同步干擾",
+    "description": "發出干擾波，若自身處於異常狀態，則讓對手也陷入相同狀態。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "damage",
+        "power": 60,
+        "target": "opponent_single"
+      },
+      {
+        "type": "special",
+        "special_logic_id": "synchronoise"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "威力提升15點。",
+        "add_power": 15
+      },
+      "10": {
+        "description": "100%使對手陷入相同狀態。"
+      }
+    }
+  },
+  {
+    "name": "鏡面外衣",
+    "description": "製造一個能反彈一次特殊攻擊的外衣。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 18,
+    "priority": -5,
+    "accuracy": 100,
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "mirror_coat",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "可抵擋一次任何類型的攻擊。"
+      },
+      "10": {
+        "description": "成功反彈後，自身特攻大幅提升。"
+      }
+    }
+  },
+  {
+    "name": "騙術空間",
+    "description": "5回合內，速度慢的怪獸比速度快的先行動。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "變化",
+    "mp_cost": 20,
+    "priority": -7,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "trick_room",
+        "duration": 5,
+        "target": "all",
+        "log_success": "空間被扭曲了！速度的規則發生了逆轉！"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "持續時間延長至7回合。",
+        "duration_add": 2
+      },
+      "10": {
+        "description": "空間展開時，我方全體防禦提升。",
+        "add_effects": [
+          {
+            "type": "stat_change",
+            "stat": "防禦",
+            "amount": 0.2,
+            "is_multiplier": true,
+            "target": "team_allies"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "力量平分",
+    "description": "與對手平分彼此的攻擊和特攻。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "power_split",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "平分後，自身獲得少量攻擊和特攻加成。"
+      },
+      "10": {
+        "description": "使用後，對手攻擊和特攻下降。"
+      }
+    }
+  },
+  {
+    "name": "防守平分",
+    "description": "與對手平分彼此的防禦和特防。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 15,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "guard_split",
+        "target": "opponent_single"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "平分後，自身獲得少量防禦和特防加成。"
+      },
+      "10": {
+        "description": "使用後，對手防禦和特防下降。"
+      }
+    }
+  },
+  {
+    "name": "最終贈禮",
+    "description": "自身陷入瀕死時，將自身持有的道具轉送給隊友。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "其他",
+    "mp_cost": 25,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      {
+        "type": "special",
+        "special_logic_id": "final_gambit",
+        "target": "self"
+      }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "轉送道具時，同時回復隊友少量HP。"
+      },
+      "10": {
+        "description": "自身不會陷入瀕死，而是以1HP存活。"
+      }
+    }
+  }
+]
