@@ -235,7 +235,7 @@ def generate_adventure_story(player: PlayerGameData, monster: Monster, adventure
     return DEFAULT_ADVENTURE_STORY
 
 
-def generate_battle_summary(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> str:
+def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> str:
     """
     根據戰鬥結果，生成戰報總結。
     """
