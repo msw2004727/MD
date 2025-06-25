@@ -6,9 +6,7 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
     const configsDisplayArea = document.getElementById('game-configs-display');
     const saveConfigBtn = document.getElementById('save-config-btn');
     const configResponseEl = document.getElementById('config-response');
-    // --- 核心修改處 START ---
     const configSearchInput = document.getElementById('config-search-input');
-    // --- 核心修改處 END ---
 
     // 安全檢查，確保 URL 和 Token 都已傳入
     if (!adminApiUrl || !adminToken) {
@@ -115,6 +113,22 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
     }
     
     // --- 核心修改處 START ---
+    /**
+     * 模糊搜尋函式。
+     * @param {string} searchTerm - 使用者輸入的搜尋詞。
+     * @param {string} text - 要被搜尋的完整文字 (此處為檔名)。
+     * @returns {boolean} - 如果找到匹配則返回 true，否則返回 false。
+     */
+    function fuzzyMatch(searchTerm, text) {
+        let searchIndex = 0;
+        for (let i = 0; i < text.length && searchIndex < searchTerm.length; i++) {
+            if (text[i] === searchTerm[searchIndex]) {
+                searchIndex++;
+            }
+        }
+        return searchIndex === searchTerm.length;
+    }
+
     function filterConfigFiles() {
         const searchTerm = configSearchInput.value.toLowerCase();
         const options = configFileSelector.options;
@@ -122,7 +136,9 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
         for (let i = 1; i < options.length; i++) { // 從 1 開始，跳過 "請選擇"
             const option = options[i];
             const fileName = option.text.toLowerCase();
-            if (fileName.includes(searchTerm)) {
+            
+            // 使用新的模糊搜尋函式
+            if (fuzzyMatch(searchTerm, fileName)) {
                 option.style.display = '';
             } else {
                 option.style.display = 'none';
@@ -134,9 +150,7 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
     // 事件綁定
     configFileSelector.addEventListener('change', loadSelectedConfig);
     saveConfigBtn.addEventListener('click', handleSaveConfig);
-    // --- 核心修改處 START ---
     configSearchInput.addEventListener('input', filterConfigFiles);
-    // --- 核心修改處 END ---
 
     // 初始載入
     loadAndPopulateConfigsDropdown();
