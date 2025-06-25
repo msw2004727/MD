@@ -1,0 +1,211 @@
+[
+  {
+    "name": "混元衝擊",
+    "description": "融合多重元素之力發動近戰攻擊。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 8,
+    "priority": 0,
+    "accuracy": 96,
+    "effects": [
+      { "type": "damage", "power": 30, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "隨機提升自身一項能力值。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.1, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "威力提升12點。",
+        "add_power": 12
+      }
+    }
+  },
+  {
+    "name": "幻象連斬",
+    "description": "幻象分身連斬敵人，難以防備。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "近戰",
+    "mp_cost": 9,
+    "priority": 0,
+    "accuracy": 98,
+    "effects": [
+      { "type": "damage", "power": 17, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數變為3次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 3 }
+        ]
+      },
+      "10": {
+        "description": "每次攻擊提升自身隨機能力值5%。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.05, "target": "self" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "渾沌護體",
+    "description": "隨機提升自身一項能力並回復HP。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "輔助",
+    "mp_cost": 10,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.12, "duration": 4, "target": "self" },
+      { "type": "heal", "amount": 10, "target": "self" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "回復量+10，並再隨機提升一項能力。",
+        "heal_add": 10,
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.12, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "效果持續回合+2。",
+        "duration_add": 2
+      }
+    }
+  },
+  {
+    "name": "萬象波動",
+    "description": "多重屬性波動攻擊敵方全體。",
+    "type": "混",
+    "rarity": "普通",
+    "skill_category": "魔法",
+    "mp_cost": 12,
+    "priority": 0,
+    "accuracy": 94,
+    "effects": [
+      { "type": "damage", "power": 30, "target": "opponent_all" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "隨機使一名敵人防禦下降。",
+        "add_effects": [
+          { "type": "stat_change", "stat": "防禦", "amount": -0.1, "is_multiplier": true, "target": "opponent_random" }
+        ]
+      },
+      "10": {
+        "description": "技能必中並提升威力10點。",
+        "accuracy_set": 100,
+        "add_power": 10
+      }
+    }
+  },
+  {
+    "name": "幻元爆擊",
+    "description": "以混合能量重擊對手，力量隨機強化。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 14,
+    "priority": 0,
+    "accuracy": 97,
+    "effects": [
+      { "type": "damage", "power": 50, "target": "opponent_single" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "命中後隨機一項能力值提升20%。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.2, "target": "self" }
+        ]
+      },
+      "10": {
+        "description": "威力提升20點。",
+        "add_power": 20
+      }
+    }
+  },
+  {
+    "name": "亂流斬擊",
+    "description": "亂流切割敵人，每次命中提升隨機能力值。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "近戰",
+    "mp_cost": 17,
+    "priority": 0,
+    "accuracy": 97,
+    "effects": [
+      { "type": "damage", "power": 22, "target": "opponent_single", "repeat": 2 }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "攻擊次數增為4次。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "multi_hit", "hits": 4 }
+        ]
+      },
+      "10": {
+        "description": "每次命中均隨機提升自身一項能力。",
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_stat_up", "amount": 0.08, "target": "self" }
+        ]
+      }
+    }
+  },
+  {
+    "name": "萬象護盾",
+    "description": "大幅提升全體隊友隨機能力並恢復HP。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "輔助",
+    "mp_cost": 16,
+    "priority": 0,
+    "accuracy": "auto",
+    "effects": [
+      { "type": "special", "special_logic_id": "random_team_stat_up", "amount": 0.2, "duration": 4, "target": "team_allies" },
+      { "type": "heal", "amount": 12, "target": "team_allies" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "再隨機提升一項能力，恢復量+8。",
+        "heal_add": 8,
+        "add_effects": [
+          { "type": "special", "special_logic_id": "random_team_stat_up", "amount": 0.2, "target": "team_allies" }
+        ]
+      },
+      "10": {
+        "description": "持續回合再+2。",
+        "duration_add": 2
+      }
+    }
+  },
+  {
+    "name": "元素湧現",
+    "description": "釋放多重屬性能量攻擊全體敵人並隨機造成異常。",
+    "type": "混",
+    "rarity": "稀有",
+    "skill_category": "魔法",
+    "mp_cost": 19,
+    "priority": 0,
+    "accuracy": 90,
+    "effects": [
+      { "type": "damage", "power": 46, "target": "opponent_all" },
+      { "type": "special", "special_logic_id": "random_status_all", "chance": 0.3, "target": "opponent_all" }
+    ],
+    "level_milestones": {
+      "5": {
+        "description": "隨機異常機率提升至50%。",
+        "chance_add": 0.2
+      },
+      "10": {
+        "description": "技能必中並提升傷害14點。",
+        "accuracy_set": 100,
+        "add_power": 14
+      }
+    }
+  }
+]

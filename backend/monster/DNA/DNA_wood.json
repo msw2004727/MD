@@ -1,0 +1,11 @@
+[
+  {"id":"dna_wood_c01","name":"樹靈蔓延","type":"木","rarity":"普通","hp":22,"mp":13,"attack":10,"defense":19,"speed":8,"crit":5,"resistances":{"木":25,"毒":-10}},
+  {"id":"dna_wood_c02","name":"藤刺纏繞","type":"木","rarity":"普通","hp":23,"mp":12,"attack":11,"defense":17,"speed":10,"crit":6,"resistances":{"木":25,"毒":-10}},
+  {"id":"dna_wood_c03","name":"幼芽翠葉","type":"木","rarity":"普通","hp":24,"mp":11,"attack":12,"defense":16,"speed":9,"crit":6,"resistances":{"木":25,"毒":-10}},
+  {"id":"dna_wood_r01","name":"葉影花爆","type":"木","rarity":"稀有","hp":26,"mp":15,"attack":13,"defense":23,"speed":9,"crit":7,"resistances":{"木":29,"毒":-13}},
+  {"id":"dna_wood_r02","name":"千枝靈藤","type":"木","rarity":"稀有","hp":28,"mp":13,"attack":14,"defense":22,"speed":10,"crit":8,"resistances":{"木":29,"毒":-13}},
+  {"id":"dna_wood_r03","name":"青蔓護甲","type":"木","rarity":"稀有","hp":27,"mp":14,"attack":15,"defense":21,"speed":12,"crit":9,"resistances":{"木":29,"毒":-13}},
+  {"id":"dna_wood_e01","name":"森魂樹冠","type":"木","rarity":"菁英","hp":29,"mp":18,"attack":16,"defense":27,"speed":11,"crit":8,"resistances":{"木":33,"毒":-16}},
+  {"id":"dna_wood_e02","name":"棘根巨藤","type":"木","rarity":"菁英","hp":31,"mp":17,"attack":17,"defense":28,"speed":12,"crit":10,"resistances":{"木":33,"毒":-16}},
+  {"id":"dna_wood_e03","name":"翠甲藤霸","type":"木","rarity":"菁英","hp":30,"mp":16,"attack":18,"defense":29,"speed":13,"crit":9,"resistances":{"木":33,"毒":-16}}
+]

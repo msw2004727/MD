@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>愛獸協會儀表板</title>
+    <link href="../css/theme.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/layout.css?v=0.4.1.1" rel="stylesheet">
+    <link href="../css/buttons.css?v=0.4.1.1" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+        }
+        .admin-login-container {
+            width: 100%;
+            max-width: 360px; 
+            padding: 2.5rem; 
+            background-color: var(--bg-panel);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .admin-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+        }
+        .admin-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            box-sizing: border-box; 
+        }
+        .admin-error-message {
+            color: var(--danger-color);
+            margin-bottom: 15px;
+            min-height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-login-container">
+        <h1 class="admin-title">怪獸保護協會</h1>
+        <p id="admin-error" class="admin-error-message"></p>
+        <input type="password" id="admin-password" class="admin-input" placeholder="請輸入管理員密碼">
+        <button id="admin-login-btn" class="button primary" style="width: 100%;">登入</button>
+    </div>
+
+    <script src="../js/config.js?v=0.4.1.1"></script>
+    <script>
+        const loginBtn = document.getElementById('admin-login-btn');
+        const passwordInput = document.getElementById('admin-password');
+        const errorEl = document.getElementById('admin-error');
+        
+        const ADMIN_API_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api/MD';
+
+        async function handleAdminLogin() {
+            const password = passwordInput.value;
+            if (!password) {
+                errorEl.textContent = '密碼不能為空。';
+                return;
+            }
+            errorEl.textContent = '';
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登入中...';
+
+            try {
+                const response = await fetch(`${ADMIN_API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password: password }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    localStorage.setItem('admin_token', result.token);
+                    window.location.href = 'dashboard.html'; 
+                } else {
+                    throw new Error(result.error || '登入失敗');
+                }
+            } catch (err) {
+                errorEl.textContent = err.message;
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登入';
+            }
+        }
+
+        loginBtn.addEventListener('click', handleAdminLogin);
+        passwordInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handleAdminLogin();
+            }
+        });
+    </script>
+</body>
+</html>

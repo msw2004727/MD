@@ -1,0 +1,484 @@
+[
+  {
+    "event_id": "RUINS_001",
+    "event_type": "puzzle",
+    "name": "古代機關門",
+    "description_template": "一扇由巨大石塊和精密齒輪構成的大門擋住了去路。門上有一個面板，上面刻畫著代表不同元素的符文。",
+    "choices": [
+      {
+        "choice_id": "RUINS_001_A",
+        "text": "嘗試按「火、水、土」的順序觸碰符文",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "令人驚訝的是，順序完全正確！大門發出轟隆聲，緩緩開啟，門後是一條通往遺跡寶庫的密道！ [獲得：金幣 x250, 菁英混之DNA x1] 🏛️",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 250 }, { "effect": "give_item", "item_type": "dna", "item_pool_id": "mix_elite", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "符文亮了一下，但什麼也沒發生，看來順序不對。🤔",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "錯誤的順序觸發了防禦機關！牆壁中射出灼熱的射線！ [損失：隊伍全員HP -800] 🔥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -800 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_001_B",
+        "text": "讓金屬性怪獸嘗試破解機關",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "金屬性怪獸對機械有著天生的直覺，它找到了機關的弱點並成功將其短路，大門應聲而開。👍",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "機關太過複雜，怪獸嘗試了半天也無法破解。⚙️",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "在破解過程中，怪獸觸發了反制電流，受到了強烈的電擊！ [損失：防禦最高者HP -600] ⚡",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest_def", "amount": -600 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_002",
+    "event_type": "encounter",
+    "name": "失控的守衛魔像",
+    "description_template": "一個身上長滿青苔，但雙眼依然閃爍著紅光的古代魔像，搖搖晃晃地向你們走來，嘴裡斷斷續續地說著「…入侵者…排除…」。",
+    "choices": [
+      {
+        "choice_id": "RUINS_002_A",
+        "text": "與它戰鬥",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "你們擊敗了失控的魔像，從它的殘骸中找到了一塊完好的能量核心。 [獲得：菁英金之DNA x1] 🤖",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_elite", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "魔像非常堅固，在一番激戰後，它因為能量耗盡而停止了運作。 [損失：隊伍全員HP -500] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -500 }]
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "這具魔像比看起來的要強大得多！你們被它打得狼狽不堪。 [損失：隊伍全員HP -1000] 😵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -1000 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_002_B",
+        "text": "嘗試修復它的核心",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 20,
+            "story_fragment": "{monster_name}小心翼翼地靠近，用自己的能量穩定住了魔像的核心。魔像眼中的紅光熄滅，為了感謝你們，它打開了一條密道。 [獲得：金幣 x150] 💖",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 150 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "你們的嘗試沒有成功，但也沒有激怒它。魔像無視你們，繼續巡邏去了。🚶‍♂️",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 50,
+            "story_fragment": "你們的觸碰被視為敵意行為，魔像的核心能量發生了小規模爆炸！ [損失：隊伍全員HP -700] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -700 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_003",
+    "event_type": "resource",
+    "name": "能量池",
+    "description_template": "你們發現一個巨大的圓形房間，中央是一個發著幽藍色光芒的能量池，似乎是整個遺跡的動力源。",
+    "choices": [
+      {
+        "choice_id": "RUINS_003_A",
+        "text": "讓怪獸吸收能量",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "怪獸們吸收了純淨的能量，感覺魔力完全恢復，甚至有所增強！ [獲得：隊伍全員MP全滿, 特攻暫時提升] ✨",
+            "effects": [{ "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 9999 }, { "effect": "apply_temp_buff", "stat": "special_attack", "amount": 15, "duration": 5 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "能量太過溫和，怪獸們只是泡得很舒服，沒有實質性的增強。 [獲得：隊伍全員MP +50] 😌",
+            "effects": [{ "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 50 }]
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "池中的能量極不穩定，怪獸吸收後產生了排斥反應，陷入了混亂！ [減益：隊伍全員陷入混亂] 🌀",
+            "effects": [{ "effect": "apply_status", "status_id": "confusion", "duration": 2, "target": "team_all" }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_003_B",
+        "text": "打撈池底的物品",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "你們成功從池底打撈出一個被能量浸潤的古代遺物。 [獲得：菁英混之DNA x1] 🏆",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "mix_elite", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 30,
+            "story_fragment": "池底空空如也，什麼都沒有。🤷‍♀️",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "你們的打撈行為觸動了防禦機制，能量池發出衝擊波，將你們彈開。 [損失：隊伍全員HP -400] 🌊",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_004",
+    "event_type": "story",
+    "name": "全息投影紀錄",
+    "description_template": "你們觸碰了一塊水晶，啟動了一段全息投影。影像中，一位古代科學家正在記錄著什麼，但語言完全無法理解。",
+    "choices": [
+      {
+        "choice_id": "RUINS_004_A",
+        "text": "繼續觀看",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 20,
+            "story_fragment": "在影像的最後，科學家展示了一種從未見過的怪獸合成公式！你們將其牢牢記下。 [特殊獎勵：發現新配方] 📜",
+            "effects": [{ "effect": "discover_recipe", "recipe_id": "ancient_secret_01" }]
+          },
+          {
+            "type": "neutral", "weight": 80,
+            "story_fragment": "你們看完了整段紀錄，但除了驚嘆於古代科技外，沒有任何實質收穫。😮",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_004_B",
+        "text": "關閉投影",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們擔心觸發警報，於是關閉了投影。🤫",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_005",
+    "event_type": "trap",
+    "name": "壓力地板",
+    "description_template": "這片大廳的地板似乎是由一塊塊壓力板構成的，{monster_name}踩上去一塊後，遠處傳來了機關的聲響。",
+    "choices": [
+      {
+        "choice_id": "RUINS_005_A",
+        "text": "按照特定順序踩踏",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 30,
+            "story_fragment": "你們瞎貓碰上死耗子，竟然猜對了正確的順序！一扇暗門打開，裡面是一箱珍貴的DNA。 [獲得：菁英DNA x2] 🎉",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "any_elite", "quantity": 2 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "你們嘗試了幾種組合，但似乎都沒有效果。👣",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "錯誤的順序觸發了陷阱，整個房間開始充滿麻痺氣體！ [減益：隊伍全員陷入麻痺] ⚡",
+            "effects": [{ "effect": "apply_status", "status_id": "paralysis", "duration": 2, "target": "team_all" }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_005_B",
+        "text": "尋找並破壞控制核心",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "你們找到了陷阱的控制核心，並成功將其破壞，安全地通過了大廳。👍",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "你們沒能找到核心，但發現了一條可以繞過大廳的安全小路。😮‍💨",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "在尋找核心時，你們不小心踩錯了壓力板，觸發了落石陷阱！ [損失：隊伍全員HP -600] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -600 }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_006",
+    "event_type": "choice_dilemma",
+    "name": "時間暫停裝置",
+    "description_template": "你們發現一個奇怪的裝置，上面有一個巨大的紅色按鈕。旁邊的銘牌寫著：「啟動後，周圍的時間將暫停一小段時間」。",
+    "choices": [
+      {
+        "choice_id": "RUINS_006_A",
+        "text": "按下按鈕",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "時間真的暫停了！你們獲得了額外的休息時間，全隊狀態完全恢復！ [獲得：隊伍全員HP/MP全滿] ⏳",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 9999 }, { "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 9999 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "按鈕按下去後，裝置閃爍了幾下就熄滅了，看來是壞了。🔧",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "裝置似乎出了故障，時間的流速變得極不穩定，你們的怪獸也受到了影響。 [減益：隊伍速度暫時大幅下降] 🐌",
+            "effects": [{ "effect": "apply_temp_debuff", "stat": "speed", "amount": -30, "duration": 4 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_006_B",
+        "text": "不要亂碰古代科技",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們明智地決定不去亂碰來路不明的裝置。🧐",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_007",
+    "event_type": "resource",
+    "name": "武器陳列室",
+    "description_template": "你們走進一個房間，牆上掛滿了各種古代兵器，雖然大多已經鏽蝕，但仍散發著驚人的能量。",
+    "choices": [
+      {
+        "choice_id": "RUINS_007_A",
+        "text": "拿走一把看起來最完好的武器",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 60,
+            "story_fragment": "你們選了一把能量波動最強的劍，它隨後化為了純粹的DNA碎片。 [獲得：菁英金之DNA x1] ⚔️",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_elite", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "你們剛拿起武器，它就在手中化為了鐵鏽。😶",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 20,
+            "story_fragment": "你們觸碰武器時觸發了警報，房間的大門立刻關閉，你們費了很大力氣才逃出來。 [損失：隊伍全員HP -500] 🚨",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -500 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_007_B",
+        "text": "只收集散落的碎片",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 80,
+            "story_fragment": "你們收集了一些從兵器上剝落的金屬碎片，它們依然蘊含著力量。 [獲得：稀有金之DNA x1] ✨",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "gold_rare", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "地上的碎片都已經完全失去了能量。😔",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_008",
+    "event_type": "story",
+    "name": "巨獸的骸骨",
+    "description_template": "大廳的中央，躺著一具不知名巨獸的骸骨，體型比你們見過的任何生物都要龐大。",
+    "choices": [
+      {
+        "choice_id": "RUINS_008_A",
+        "text": "向強者致意",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 50,
+            "story_fragment": "你們的敬意似乎喚醒了殘存的意志，一道光芒注入{monster_name}體內。 [增益：防禦力暫時提升] 🙏",
+            "effects": [{ "effect": "apply_temp_buff", "stat": "defense", "amount": 20, "duration": 3 }]
+          },
+          {
+            "type": "neutral", "weight": 50,
+            "story_fragment": "你們在骸骨前靜立片刻，感受著遠古的滄桑，然後繼續前進。😌",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_008_B",
+        "text": "從骸骨上取下一塊",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 40,
+            "story_fragment": "你們成功取下了一塊龍骨，它蘊含著強大的土屬性能量。 [獲得：菁英土之DNA x1] 🦴",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "earth_elite", "quantity": 1 }]
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "骸骨太過堅硬，你們無法取下任何部分。💪",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 40,
+            "story_fragment": "骸骨中殘存的怨念化為詛咒，攻擊了你們！ [減益：隊伍全員陷入詛咒] 💀",
+            "effects": [{ "effect": "apply_status", "status_id": "curse", "duration": 3, "target": "team_all" }]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_009",
+    "event_type": "encounter",
+    "name": "休眠的古代兵器",
+    "description_template": "一個巨大的金屬球體懸浮在房間中央，表面平滑無比，似乎處於休眠狀態。",
+    "choices": [
+      {
+        "choice_id": "RUINS_009_A",
+        "text": "注入能量嘗試喚醒",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "你們的能量被吸收，球體打開了一個小口，吐出了一塊傳奇級的DNA碎片！ [獲得：傳奇DNA x1] [損失：隊伍全員MP -50] 🌟",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "any_legendary", "quantity": 1 }, { "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": -50 }]
+          },
+          {
+            "type": "neutral", "weight": 40,
+            "story_fragment": "你們的能量石沉大海，球體沒有任何反應。 [損失：隊伍全員MP -30] 💧",
+            "effects": [{ "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": -30 }]
+          },
+          {
+            "type": "negative", "weight": 50,
+            "story_fragment": "錯誤的能量類型導致了過載！球體釋放出強力的衝擊波！ [損失：隊伍全員HP -800] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -800 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_009_B",
+        "text": "繞開它",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 0, "story_fragment": "", "effects": []
+          },
+          {
+            "type": "neutral", "weight": 100,
+            "story_fragment": "你們選擇不去打擾這個沉睡的古代兵器。🤫",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 0, "story_fragment": "", "effects": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "event_id": "RUINS_010",
+    "event_type": "trap",
+    "name": "鏡子迷宮",
+    "description_template": "你們走進了一個由無數鏡子構成的房間，到處都是你們和{monster_name}的倒影，完全分不清方向。",
+    "choices": [
+      {
+        "choice_id": "RUINS_010_A",
+        "text": "相信直覺，隨便選一條路走",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 10,
+            "story_fragment": "你們的運氣好到爆表，一次就走對了出口！🎉",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 60,
+            "story_fragment": "你們在裡面繞了很久，最後還是找到了出口，但大家都頭昏眼花。😵‍💫",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 30,
+            "story_fragment": "你們在裡面迷路了，還撞上了好幾次鏡子。 [損失：隊伍全員HP -400] 🤕",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
+          }
+        ]
+      },
+      {
+        "choice_id": "RUINS_010_B",
+        "text": "讓暗屬性怪獸來帶路",
+        "outcomes": [
+          {
+            "type": "positive", "weight": 70,
+            "story_fragment": "暗屬性怪獸不受幻象迷惑，很快就帶領你們走出了迷宮。😎",
+            "effects": []
+          },
+          {
+            "type": "neutral", "weight": 20,
+            "story_fragment": "雖然花了一點時間，但暗屬性怪獸最終還是找到了正確的道路。👍",
+            "effects": []
+          },
+          {
+            "type": "negative", "weight": 10,
+            "story_fragment": "這裡的幻象太強了，連暗屬性怪獸都被迷惑，帶著你們撞上了牆。 [損失：隊伍全員HP -200] 🧱",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
+          }
+        ]
+      }
+    ]
+  }
+]
