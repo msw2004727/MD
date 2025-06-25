@@ -43,7 +43,19 @@
                     <p>目前系統時間: <span id="current-time-overview"></span></p>
                     <p>後端伺服器運行正常。</p>
                 </div>
-            </div>
+
+                <div class="data-section" style="border-color: var(--danger-color);">
+                    <h3 style="color: var(--danger-color);">危險操作區</h3>
+                    <p class="input-hint" style="margin-bottom: 1.5rem;">
+                        請注意：此區域的操作將會對遊戲數據造成永久性、不可逆的影響。請僅在完全了解後果的情況下使用。
+                    </p>
+                    <div class="form-group">
+                        <label for="wipe-all-data-btn">清除所有玩家數據</label>
+                        <p class="input-hint">此操作將會刪除所有玩家的帳號、怪獸、DNA、進度等所有資料，伺服器將恢復到初始狀態。</p>
+                        <button id="wipe-all-data-btn" class="button danger" style="max-width: 250px; margin-top: 0.5rem;">執行清除程序...</button>
+                    </div>
+                </div>
+                </div>
             
             <div id="player-management" class="content-panel">
                 <h2 class="content-header">玩家管理</h2>
