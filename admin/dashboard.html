@@ -48,13 +48,14 @@
 
                 <div class="data-section" style="border-color: var(--danger-color);">
                     <h3 style="color: var(--danger-color);">危險操作區</h3>
-                    <p class="input-hint" style="margin-bottom: 1.5rem;">
+                    <p class="input-hint" style="margin-bottom: 1rem;">
                         請注意：此區域的操作將會對遊戲數據造成永久性、不可逆的影響。請僅在完全了解後果的情況下使用。
                     </p>
                     <div class="form-group">
                         <label for="wipe-all-data-btn">清除所有玩家數據</label>
                         <p class="input-hint">此操作將會刪除所有玩家的帳號、怪獸、DNA、進度等所有資料，伺服器將恢復到初始狀態。</p>
                         <button id="wipe-all-data-btn" class="button danger" style="max-width: 250px; margin-top: 0.5rem;">執行清除程序...</button>
+                        <div id="wipe-status" style="margin-top: 15px; font-weight: bold;"></div>
                     </div>
                 </div>
 
@@ -345,5 +346,63 @@
     <script src="dashboard.js?v=0.4.1.2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="analytics.js?v=0.4.1.2"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const wipeButton = document.getElementById('wipe-all-data-btn'); // 修正 ID 以匹配 HTML
+        if(wipeButton) {
+            wipeButton.addEventListener('click', function() {
+                const statusDiv = document.getElementById('wipe-status');
+                statusDiv.textContent = '';
+                
+                // 第一重確認
+                const confirmation1 = prompt("極度危險！此操作將清除所有玩家的帳號、怪獸、DNA、進度等資料。若確定，請輸入 '確認清除所有資料'");
+                if (confirmation1 !== '確認清除所有資料') {
+                    statusDiv.textContent = '操作已取消。';
+                    statusDiv.style.color = 'gray';
+                    return;
+                }
+    
+                // 第二重確認
+                const confirmation2 = confirm("最後警告：此動作無法復原！真的要清除所有玩家的遊戲資料嗎？");
+                if (!confirmation2) {
+                    statusDiv.textContent = '操作已取消。';
+                    statusDiv.style.color = 'gray';
+                    return;
+                }
+    
+                statusDiv.textContent = '正在向伺服器發送清除指令...';
+                statusDiv.style.color = 'orange';
+                this.disabled = true;
+
+                // 注意：此 API 端點 '/api/MD/admin/wipe_all_data' 尚未建立
+                fetch('/api/MD/admin/wipe_all_data', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.textContent = '清除成功：' + data.message;
+                        statusDiv.style.color = 'green';
+                        alert('資料清除成功！');
+                    } else {
+                        statusDiv.textContent = '清除失敗：' + (data.error || '未知錯誤');
+                        statusDiv.style.color = 'red';
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error wiping data:', error);
+                    statusDiv.textContent = '執行發生嚴重錯誤，請檢查瀏覽器控制台與後台日誌。';
+                    statusDiv.style.color = 'red';
+                    this.disabled = false;
+                });
+            });
+        }
+    });
+    </script>
     </body>
 </html>
