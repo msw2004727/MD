@@ -1,95 +1,73 @@
-backend/
-├── adventure/
-│   ├── bosses/
-│   │   ├── bosses_abandoned_mine.json       # 「廢棄礦坑」的BOSS資料
-│   │   ├── bosses_ancient_ruins.json      # 「古代遺跡」的BOSS資料
-│   │   ├── bosses_novice_forest.json      # 「新手森林」的BOSS資料
-│   │   └── bosses_tidal_cave.json         # 「潮汐洞穴」的BOSS資料
-│   ├── events/
-│   │   ├── adventure_events_cave.json     # 「潮汐洞穴」的隨機事件
-│   │   ├── adventure_events_forest.json   # 「新手森林」的隨機事件
-│   │   ├── adventure_events_mine.json     # 「廢棄礦坑」的隨機事件
-│   │   └── adventure_events_ruins.json    # 「古代遺跡」的隨機事件
-│   ├── adventure_growth_settings.json     # 「冒險島」中怪獸隨機成長的機率與數值設定
-│   ├── adventure_islands.json             # 「冒險島」的島嶼、設施、費用等主要設定
-│   └── adventure_settings.json            # 「冒險島」的全域設定，如BOSS成長率、通關獎勵
-│
-├── battle/
-│   ├── battle_highlights.json             # 戰鬥AI戰報的風格與隨機標籤資料庫
-│   └── status_effects.json                # 定義如中毒、麻痺等所有戰鬥狀態效果
-│
-├── monster/
-│   ├── DNA/
-│   │   ├── DNA_dark.json                  # 「暗」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_earth.json                 # 「土」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_fire.json                  # 「火」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_gold.json                  # 「金」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_light.json                 # 「光」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_mix.json                   # 「混」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_none.json                  # 「無」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_poison.json                # 「毒」屬性DNA碎片的基礎數值資料
-│   │   ├── DNA_water.json                 # 「水」屬性DNA碎片的基礎數值資料
-│   │   └── DNA_wind.json                  # 「風」屬性DNA碎片的基礎數值資料
-│   ├── skills/
-│   │   ├── dark.json                      # 「暗」屬性所有技能的詳細資料
-│   │   ├── earth.json                     # 「土」屬性所有技能的詳細資料
-│   │   ├── fire.json                      # 「火」屬性所有技能的詳細資料
-│   │   ├── gold.json                      # 「金」屬性所有技能的詳細資料
-│   │   ├── light.json                     # 「光」屬性所有技能的詳細資料
-│   │   ├── mix.json                       # 「混」屬性所有技能的詳細資料
-│   │   ├── none.json                      # 「無」屬性所有技能的詳細資料
-│   │   ├── poison.json                    # 「毒」屬性所有技能的詳細資料
-│   │   ├── water.json                     # 「水」屬性所有技能的詳細資料
-│   │   └── wood.json                      # 「木」屬性所有技能的詳細資料
-│   ├── dna_fragments.json                 # 所有DNA碎片的基礎數值、屬性和描述
-│   ├── element_nicknames.json             # 各元素在不同稀有度下的預設暱稱庫
-│   └── personalities.csv                  # 怪獸的個性、描述及對應的技能使用偏好
-│
-├── system/
-│   ├── champion_guardians.json            # 冠軍殿堂空位時的NPC守衛怪獸資料
-│   ├── cultivation_stories.json           # 修煉（掛機）時隨機生成的冒險故事文本
-│   ├── newbie_guide.json                  # 新手指南的內容，顯示在遊戲內的說明彈窗
-│   └── titles.json                        # 玩家可獲得的所有稱號及其解鎖條件與加成
-│
-├── logs/
-│   └── game_log.html                      # 後端伺服器運行的日誌紀錄檔
-│
-├── tests/
-│   ├── test_battle_simulation.py          # 測試戰鬥模擬的核心邏輯
-│   ├── test_monster_combination.py        # 測試怪獸合成服務的邏輯
-│   ├── test_monster_cultivation.py        # 測試怪獸修煉及成長的邏輯
-│   └── test_post_battle_services.py       # 測試戰後結算服務的邏輯
-│
-├── MD_ai_services.py                      # 串接 AI 模型，為遊戲生成各種文字內容
-├── MD_config_services.py                  # 從本地檔案載入所有遊戲核心設定
-├── MD_firebase_config.py                  # 設定並提供全域的 Firebase 資料庫實例
-├── MD_models.py                         # 定義遊戲中所有資料結構 (如怪獸、玩家、技能) 的型別
-├── MD_populate_gamedata.py                # 將本地遊戲設定資料一次性匯入到 Firestore 的腳本
-├── MD_routes.py                         # 定義遊戲核心功能的主要API路由
-├── admin_routes.py                      # 定義後台管理功能相關的API路由
-├── adventure_models.py                    # 定義「冒險島」功能的資料結構
-├── adventure_routes.py                    # 定義與「冒險島」功能相關的API路由
-├── adventure_services.py                  # 提供「冒險島」功能的核心服務邏輯
-├── battle_services.py                     # 處理核心戰鬥模擬的邏輯
-├── champion_routes.py                     # 定義與冠軍殿堂相關的API路由 (讀取、挑戰)
-├── champion_services.py                   # 提供讀取和更新冠軍殿堂資料的服務
-├── config_editor_routes.py                # 定義後台「設定編輯器」的API路由
-├── config_editor_services.py              # 提供後台「設定編輯器」的讀寫服務
-├── friend_services.py                     # 處理好友請求、同意/拒絕、雙向移除等核心服務
-├── leaderboard_search_services.py         # 提供排行榜查詢和玩家搜尋的服務
-├── logging_config.py                      # 設定後端日誌系統的格式與輸出
-├── mail_routes.py                         # 定義與信箱功能相關的API路由
-├── mail_services.py                       # 提供新增、刪除、寄送信件等核心服務
-├── main.py                                # Flask 應用程式主進入點，初始化伺服器
-├── monster_absorption_services.py         # 處理戰鬥勝利後吸收敵方怪獸能力的邏輯
-├── monster_chat_services.py               # 處理與怪獸 AI 聊天及互動的服務
-├── monster_combination_services.py        # 處理 DNA 組合、生成新怪獸的核心服務
-├── monster_cultivation_services.py        # 處理怪獸修煉（掛機）的成長與結果結算
-├── monster_disassembly_services.py        # 處理分解怪獸以回收 DNA 的服務
-├── monster_healing_services.py            # 提供治療怪獸、使用 DNA 充能的服務
-├── monster_nickname_services.py           # 處理更新怪獸自訂暱稱的服務
-├── player_services.py                     # 處理玩家資料的讀取、儲存、初始化等核心服務
-├── post_battle_services.py                # 處理戰鬥結束後的數據更新與獎勵結算
-├── requirements.txt                       # 列出後端所需的 Python 套件
-├── serviceAccountKey.json                 # Firebase 服務帳戶的憑證金鑰
-└── utils_services.py                      # 存放可共用的輔助函式，如暱稱生成、經驗值計算等
+專案結構圖 (Project Structure)
+---------------------------------
+
+/
+|
+|-- backend/                       # 後端應用程式主要資料夾
+|   |
+|   |-- __init__.py                # 將 backend 資料夾標記為一個 Python 套件
+|   |
+|   |-- main.py                    # Flask 應用的主入口檔案，初始化 App 和 Blueprint
+|   |
+|   |-- admin_routes.py            # 定義後台管理介面 (Admin Panel) 的所有網頁路由 (Routes)
+|   |
+|   |-- auth_routes.py             # 定義使用者身份驗證相關的路由，如登入、註冊、登出
+|   |
+|   |-- game_routes.py             # 定義核心遊戲邏輯的 API 路由
+|   |
+|   |-- models.py                  # 定義資料庫模型 (Schema)，使用 SQLAlchemy 與資料庫互動
+|   |
+|   |-- database.py                # 處理資料庫連線設定與 Session 管理
+|   |
+|   |-- config.py                  # 存放應用程式的設定，例如資料庫路徑、密鑰等
+|   |
+|   |-- services/                  # 服務層，存放主要的商業邏輯，讓路由檔案保持簡潔
+|   |   |-- __init__.py
+|   |   |-- user_service.py        # 處理使用者相關的邏輯 (新增、查詢、更新、刪除)
+|   |   |-- character_service.py   # 處理遊戲角色相關的邏輯
+|   |   |-- item_service.py        # 處理遊戲物品相關的邏輯
+|   |   |-- quest_service.py       # 處理遊戲任務相關的邏輯
+|   |   |-- transaction_service.py # 處理交易或內購相關的邏輯
+|   |
+|   |-- analytics/                 # 數據分析相關模組
+|   |   |-- __init__.py
+|   |   |-- analytics_services.py  # 提供數據分析相關的服務，如計算 DAU, MAU 等指標
+|   |
+|   `-- utils/                     # 工具函式模組
+|       |-- __init__.py
+|       `-- helpers.py             # 存放可重用的輔助函式
+|
+|-- frontend/                      # 前端檔案主要資料夾
+|   |
+|   |-- templates/                 # 存放所有由 Flask 渲染的 HTML 模板
+|   |   |-- index.html             # 遊戲主頁面
+|   |   |-- login.html             # 使用者登入頁面
+|   |   |-- register.html          # 使用者註冊頁面
+|   |   |
+|   |   `-- admin/                 # 後台管理介面的相關模板
+|   |       |-- dashboard.html     # 後台儀表板
+|   |       |-- users.html         # 使用者管理頁面
+|   |       |-- characters.html    # 角色管理頁面
+|   |       |-- items.html         # 物品管理頁面
+|   |       |-- quests.html        # 任務管理頁面
+|   |       |-- transactions.html  # 交易管理頁面
+|   |       `-- edit_user.html     # 新增或編輯使用者的表單頁面
+|   |
+|   `-- static/                    # 存放靜態檔案，如 CSS, JavaScript, 圖片等
+|       |
+|       |-- css/                   # 存放 CSS 樣式表
+|       |   `-- style.css          # 主要的樣式檔案
+|       |
+|       `-- js/                    # 存放 JavaScript 檔案
+|           |-- main.js            # 主要的遊戲前端邏輯
+|           `-- api.js             # 專門用來與後端 API 溝通的函式庫
+|
+|-- tests/                         # 自動化測試資料夾
+|   |-- __init__.py
+|   `-- test_api.py                # 針對 API 進行測試的腳本
+|
+|-- .gitignore                     # Git 版本控制的忽略清單，避免將不必要的檔案上傳
+|
+|-- README.md                      # 專案的說明檔案，介紹如何安裝、設定與執行
+|
+`-- requirements.txt               # 記錄專案所有 Python 相依套件與版本，方便部署
