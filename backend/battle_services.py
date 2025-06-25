@@ -488,7 +488,6 @@ def simulate_battle_full(
 
     now_gmt8_str = datetime.now(gmt8).strftime("%Y-%m-%d %H:%M:%S")
     
-    # --- 核心修改處 START ---
     player_monster_nickname = player_monster.get('nickname', '您的怪獸')
     opponent_monster_nickname = opponent_monster.get('nickname', '對手')
 
@@ -504,10 +503,28 @@ def simulate_battle_full(
 
     player_activity_log = {"time": now_gmt8_str, "message": player_message}
     opponent_activity_log = {"time": now_gmt8_str, "message": opponent_message}
-    # --- 核心修改處 END ---
 
     battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
-    ai_report = generate_battle_report_content(player_monster_data, opponent_monster_data, {"winner_id": winner_id}, all_raw_log_messages)
+    
+    # --- 核心修改處 START ---
+    # 準備傳遞給 generate_battle_report_content 的參數
+    temp_battle_result_for_ai = {"winner_name": player_monster_nickname if winner_id == player_monster['id'] else opponent_monster_nickname,
+                                 "loser_name": opponent_monster_nickname if winner_id == player_monster['id'] else player_monster_nickname,
+                                 "total_rounds": turn_num,
+                                 "log": [{"message": msg} for msg in all_raw_log_messages]}
+
+    player1_name_for_ai = player_data.get('nickname', '玩家') if player_data else '玩家'
+    player2_name_for_ai = opponent_player_data.get('nickname', '對手') if opponent_player_data else '對手'
+
+    # 使用正確的參數順序呼叫AI函式
+    ai_report = generate_battle_report_content(
+        battle_result=temp_battle_result_for_ai,
+        monster1_name=player_monster_nickname,
+        monster2_name=opponent_monster_nickname,
+        player1_name=player1_name_for_ai,
+        player2_name=player2_name_for_ai
+    )
+    # --- 核心修改處 END ---
 
     final_battle_result: BattleResult = {
         "winner_id": winner_id, "loser_id": loser_id, "raw_full_log": all_raw_log_messages,
