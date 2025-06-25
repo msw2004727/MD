@@ -1,4 +1,4 @@
-// js/ui-champions.js
+// js/ui/ui-champions.js
 // 負責渲染「冠軍殿堂」區塊的 UI
 
 /**
@@ -181,16 +181,26 @@ function renderChampionSlots(championsData) {
 
         if (monster) {
             slot.classList.add('occupied');
-            const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
-            const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
-            if (imagePath) {
-                const img = document.createElement('img');
-                img.src = imagePath;
-                img.alt = monster.nickname || '怪獸頭像';
-                avatarDiv.appendChild(img);
+            
+            // --- 核心修改處 START ---
+            // 判斷是否為 NPC 守衛
+            if (monster.isNPC) {
+                // 如果是 NPC，不顯示圖片，只顯示文字
+                avatarDiv.innerHTML = `<span class="champion-placeholder-text">守護者</span>`;
             } else {
-                 avatarDiv.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
+                // 如果是玩家怪獸，正常顯示頭像
+                const headInfo = monster.head_dna_info || { type: '無', rarity: '普通' };
+                const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+                if (imagePath) {
+                    const img = document.createElement('img');
+                    img.src = imagePath;
+                    img.alt = monster.nickname || '怪獸頭像';
+                    avatarDiv.appendChild(img);
+                } else {
+                     avatarDiv.innerHTML = `<span class="champion-placeholder-text">無頭像</span>`;
+                }
             }
+            // --- 核心修改處 END ---
             
             const ownerTag = document.createElement('span');
             ownerTag.className = 'champion-owner-tag';
@@ -198,10 +208,7 @@ function renderChampionSlots(championsData) {
 
             const monsterNameSpan = document.createElement('span');
             monsterNameSpan.className = 'champion-monster-name';
-            // --- 核心修改處 START ---
-            // 使用 innerHTML 來渲染帶有顏色的名稱
             monsterNameSpan.innerHTML = getMonsterDisplayName(monster, gameState.gameConfigs);
-            // --- 核心修改處 END ---
             
             identityContainer.appendChild(ownerTag);
             identityContainer.appendChild(document.createTextNode(' 的 '));
@@ -241,7 +248,8 @@ function renderChampionSlots(championsData) {
                 }
             }
         } else {
-            slot.classList.remove('occupied'); // 確保空位沒有 occupied class
+            // 這個分支現在理論上不會被觸發，因為後端會填入守衛資料，但保留以防萬一
+            slot.classList.remove('occupied'); 
             avatarDiv.innerHTML = `<span class="champion-placeholder-text">虛位以待</span>`;
             const rankNames = { 1: '冠軍', 2: '亞軍', 3: '季軍', 4: '殿軍' };
             const placeholderName = document.createElement('span');
