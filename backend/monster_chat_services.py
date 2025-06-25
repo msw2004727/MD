@@ -187,7 +187,11 @@ def generate_monster_interaction_response_service(
 """
 
     try:
-        from .MD_ai_services import DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, DEFAULT_CHAT_REPLY
+        # --- 核心修改處 START ---
+        # 移除此處多餘的 import 語句，因為檔案頂部已經導入
+        # from .MD_ai_services import DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, DEFAULT_CHAT_REPLY
+        # --- 核心修改處 END ---
+        
         if not DEEPSEEK_API_KEY:
             chat_logger.error("DeepSeek API 金鑰未設定。")
             return None
@@ -230,8 +234,6 @@ def generate_monster_interaction_response_service(
         chat_logger.error(f"生成互動回應時發生錯誤: {e}", exc_info=True)
         return None
 
-# --- 核心修改處 START ---
-# 將這個被遺漏的函式加回來
 def generate_monster_chat_response_service(
     player_id: str,
     monster_id: str,
@@ -284,7 +286,6 @@ def generate_monster_chat_response_service(
     
     chat_logger.info(f"成功為怪獸 {monster_id} 生成聊天回應。")
     return result
-# --- 核心修改處 END ---
 
 def get_ai_chat_completion(
     monster_data: Monster,
