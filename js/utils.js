@@ -1,4 +1,5 @@
 // js/utils.js
+// 存放整個專案可以共用的輔助函式
 
 /**
  * 格式化基本文字，將特定的 Markdown 符號移除。
@@ -11,57 +12,6 @@ function formatBasicText(text) {
     let formattedText = text
         .replace(/\*\*/g, '') // 移除雙星號
         .replace(/\*/g, '');   // 移除單星號
-    return formattedText;
-}
-
-
-/**
- * 格式化並應用動態樣式到戰報文字。
- * @param {string} reportText - 戰報文字。
- * @param {object} playerMonster - 玩家怪獸資料。
- * @param {object} opponentMonster - 對手怪獸資料。
- * @returns {string} 格式化後的 HTML 字串。
- */
-function applyDynamicStylingToBattleReport(reportText, playerMonster, opponentMonster) {
-    if (typeof reportText !== 'string') return '';
-
-    // 基礎格式化，例如換行
-    let formattedText = reportText.replace(/\n/g, '<br>');
-
-    // 關鍵字和對應的 class
-    const keywords = {
-        "獲勝": "highlight-win",
-        "戰敗": "highlight-lose",
-        "平手": "highlight-draw",
-        "致命一擊": "highlight-crit",
-        "效果絕佳": "highlight-super-effective",
-        "閃避": "highlight-dodge",
-        "中毒": "highlight-status",
-        "麻痺": "highlight-status",
-        "混亂": "highlight-status",
-        "睡眠": "highlight-status",
-        "凍結": "highlight-status",
-        "燒傷": "highlight-status",
-        "能力提升": "highlight-buff",
-        "能力下降": "highlight-debuff"
-    };
-
-    // 處理關鍵字高亮
-    for (const [key, value] of Object.entries(keywords)) {
-        const regex = new RegExp(key, "g");
-        formattedText = formattedText.replace(regex, `<span class="${value}">${key}</span>`);
-    }
-
-    // 處理怪獸名稱高亮
-    if (playerMonster && playerMonster.nickname) {
-        const playerRegex = new RegExp(escapeRegExp(playerMonster.nickname), "g");
-        formattedText = formattedText.replace(playerRegex, `<strong class="player-monster-name">${playerMonster.nickname}</strong>`);
-    }
-    if (opponentMonster && opponentMonster.nickname) {
-        const opponentRegex = new RegExp(escapeRegExp(opponentMonster.nickname), "g");
-        formattedText = formattedText.replace(opponentRegex, `<strong class="opponent-monster-name">${opponentMonster.nickname}</strong>`);
-    }
-
     return formattedText;
 }
 
