@@ -85,24 +85,23 @@ def generate_monster_introduction(monster: Monster) -> str:
     """
     為指定的怪獸生成一段引人入勝的介紹。
     """
+    # 提取怪獸的主要元素和性格
+    primary_element = monster.get("elements", ["無"])[0]
+    personality_name = monster.get("personality", {}).get("name", "未知的")
+
     prompt = f"""
 請你扮演一位知識淵博的「怪獸生態學家」，為一隻新發現的怪獸撰寫一段引人入勝的「圖鑑介紹」。
 請嚴格遵守以下規則：
 1.  **風格**：請使用繁體中文，文筆要兼具學術感與故事性，像是國家地理頻道的旁白。
 2.  **長度**：嚴格限制在 80 到 120 字之間。
-3.  **內容**：介紹必須圍繞這隻怪獸的「性格」、「主要元素屬性」和「身體部位特徵」來展開。
+3.  **內容**：介紹必須圍繞這隻怪獸的「性格」、「主要元素屬性」和「名稱特徵」來展開。
 4.  **禁止事項**：絕對不要在介紹中提及任何關於「數值（HP, MP, ATK, DEF, ...）」或「技能名稱」的字眼。
 
 **怪獸資料如下：**
--   **名稱**: {monster.nickname}
--   **主要元素**: {monster.main_element}
--   **性格**: {', '.join(monster.personality)}
--   **身體部位**:
-    -   頭部: {monster.parts.head.name} ({monster.parts.head.element}屬性)
-    -   左臂: {monster.parts.left_arm.name} ({monster.parts.left_arm.element}屬性)
-    -   右臂: {monster.parts.right_arm.name} ({monster.parts.right_arm.element}屬性)
-    -   左腿: {monster.parts.left_leg.name} ({monster.parts.left_leg.element}屬性)
-    -   右腿: {monster.parts.right_leg.name} ({monster.parts.right_leg.element}屬性)
+-   **名稱**: {monster.get('nickname')}
+-   **主要元素**: {primary_element}
+-   **性格**: {personality_name}
+-   **稀有度**: {monster.get('rarity')}
 
 現在，請開始你的創作：
 """
@@ -126,14 +125,14 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
     """
     # 準備技能資訊
     skill_details = []
-    for skill_info in monster.skills:
-        skill_id = skill_info.get('id')
+    for skill_info in monster.get("skills", []):
+        skill_name = skill_info.get('name')
         skill_level = skill_info.get('level', 1)
-        if skill_id:
-            skill_data = game_configs.get_skill_data(skill_id)
-            if skill_data:
-                skill_details.append(f"{skill_data.get('name', skill_id)} (Lv.{skill_level})")
+        if skill_name:
+            skill_details.append(f"{skill_name} (Lv.{skill_level})")
 
+    # --- 核心修改處 START ---
+    # 修正了錯誤的屬性存取方式，並修復了 .def 的語法錯誤。
     prompt = f"""
 請你扮演一位資深的「怪獸培育師」，為一位新手玩家的怪獸提供「綜合評價與培養建議」。
 請遵循以下指南：
@@ -145,16 +144,16 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
     -   **培養建議**：基於以上分析，給出 1-2 條具體的培養方向建議。例如，建議優先提升哪個屬性，或者建議與什麼樣的隊友搭配。
 
 **怪獸資料：**
--   **名稱**: {monster.nickname}
--   **主要元素**: {monster.main_element}
--   **性格**: {', '.join(monster.personality)}
+-   **名稱**: {monster.get('nickname')}
+-   **主要元素**: {monster.get('elements', ['無'])[0]}
+-   **性格**: {monster.get('personality', {}).get('name')}
 -   **屬性**:
-    -   HP: {monster.stats.hp}
-    -   MP: {monster.stats.mp}
-    -   ATK: {monster.stats.atk}
-    -   DEF: {monster.stats.def}
-    -   SPD: {monster.stats.spd}
-    -   EVD: {monster.stats.evd}
+    -   HP: {monster.get('hp', 0)}
+    -   MP: {monster.get('mp', 0)}
+    -   ATK: {monster.get('attack', 0)}
+    -   DEF: {monster.get('defense', 0)}
+    -   SPD: {monster.get('speed', 0)}
+    -   CRIT: {monster.get('crit', 0)}%
 -   **技能**: {', '.join(skill_details) if skill_details else "無"}
 
 **輸出格式範本（請嚴格遵守）：**
@@ -170,6 +169,7 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
 **培養建議**：
 （在這裡填寫你的建議）
 """
+    # --- 核心修改處 END ---
 
     payload = {
         "model": DEEPSEEK_MODEL,
@@ -180,7 +180,6 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
     
     response_json = _call_deepseek_api(payload)
     if response_json and response_json.get("choices"):
-        # 移除可能出現的 "好的，這是一份為您準備的評價報告：" 等前導語
         content = response_json["choices"][0]["message"]["content"].strip()
         if "【評價報告】" in content:
             return content.split("【評價報告】", 1)[1].strip()
@@ -209,12 +208,12 @@ def generate_adventure_story(player: PlayerGameData, monster: Monster, adventure
 請你扮演一位「吟遊詩人」，將一段怪獸的冒險經歷譜寫成一小段生動的冒險故事。
 請遵循以下規則：
 1.  **風格**：使用繁體中文，文筆要富有想像力和畫面感，像是在朗讀一篇冒險小說的片段。
-2.  **視角**：以怪獸 `{monster.nickname}` 為故事的主角。
+2.  **視角**：以怪獸 `{monster.get('nickname')}` 為故事的主角。
 3.  **長度**：嚴格控制在 100 到 150 字之間。
 4.  **內容**：故事必須巧妙地融合以下所有「冒險日誌」中的元素。
 
 **冒險日誌：**
--   **主角**: 怪獸 `{monster.nickname}` (主人是 `{player.nickname}`)
+-   **主角**: 怪獸 `{monster.get('nickname')}` (主人是 `{player.get('nickname')}`)
 -   **冒險地點**: {island_name}
 -   **經歷事件**: {events_text}
 -   **最終收穫**: 找到的物品: {items_summary}
@@ -298,7 +297,8 @@ def generate_battle_summary(battle_result: Dict[str, Any], monster1_name: str, m
                 ai_logger.warning("AI 生成的內容中未找到預期格式的標籤。")
                 # 新增備用方案：如果 AI 忘記加標籤，我們手動從標籤池裡隨機選一個
                 try:
-                    with open('backend/data/battle_highlights.json', 'r', encoding='utf-8') as f:
+                    data_dir = os.path.join(os.path.dirname(__file__), 'data')
+                    with open(os.path.join(data_dir, 'battle_highlights.json'), 'r', encoding='utf-8') as f:
                         highlights_data = json.load(f)
                         if highlights_data.get("tags"):
                            random_tag = random.choice(highlights_data["tags"])
@@ -329,7 +329,7 @@ def generate_battle_summary(battle_result: Dict[str, Any], monster1_name: str, m
     
     growth_info_parts = []
     if absorption_details.get("stat_gains"):
-        growth_details = [f\"{stat.upper()} +{gain}\" for stat, gain in absorption_details["stat_gains"].items()]
+        growth_details = [f"\"{stat.upper()} +{gain}\"" for stat, gain in absorption_details["stat_gains"].items()]
         growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
 
     final_report = {
@@ -354,12 +354,12 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
     """
     
     # 建立一個簡潔的性格描述
-    personality_summary = f"你是 {monster.nickname}，你的性格是：{','.join(monster.personality)}。"
+    personality_summary = f"你是 {monster.get('nickname')}，你的性格是：{monster.get('personality', {}).get('name')}。"
 
     # 建立系統提示
     system_prompt = (
-        f"你是一隻名為'{monster.nickname}'的怪獸，你的主人是'{player_nickname}'。"
-        f"你的性格特質是：{', '.join(monster.personality)}。"
+        f"你是一隻名為'{monster.get('nickname')}'的怪獸，你的主人是'{player_nickname}'。"
+        f"你的性格特質是：{monster.get('personality', {}).get('name')}。"
         "請根據你的性格和以下的對話歷史，用繁體中文、非常簡短且口語化的方式回應。"
         "你的回答嚴格限制在 30 個字以內。不要使用 '*' 或任何 markdown 語法，就像在聊天一樣直接說話。"
     )
@@ -378,9 +378,9 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
     # 組合對話歷史
     messages = [{"role": "system", "content": system_prompt}]
     for entry in chat_history[-6:]:  # 取最近的6條對話
-        # DeepSeek 的角色是 'user' 和 'assistant'
-        role = 'assistant' if entry.role == 'model' else 'user'
-        messages.append({"role": role, "content": entry.parts[0]})
+        role = entry.get('role', 'user') # 預設為 user
+        content = entry.get('content', '')
+        messages.append({"role": role, "content": content})
     
     # 如果有互動，將其作為最後一條用戶訊息加入
     if interaction_prompt:
@@ -401,6 +401,120 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
 
     # 互動類型的預設回應
     if interaction_type:
-        return f"({monster.nickname}好像在想些什麼...)"
+        return f"({monster.get('nickname')}好像在想些什麼...)"
     # 一般對話的預設回應
     return "（牠好像不想說話...）"
+
+def generate_monster_ai_details(monster: Monster) -> Dict[str, str]:
+    """
+    一個統一的函式，同時生成介紹和評價。
+    """
+    from .MD_config_services import load_all_game_configs_from_firestore
+    game_configs = load_all_game_configs_from_firestore()
+
+    # 準備技能資訊
+    skill_details = []
+    for skill_info in monster.get("skills", []):
+        skill_name = skill_info.get('name')
+        skill_level = skill_info.get('level', 1)
+        if skill_name:
+            skill_details.append(f"{skill_name} (Lv.{skill_level})")
+
+    prompt = f"""
+請你扮演一位資深的「怪獸培育師」，為一隻新發現的怪獸撰寫「圖鑑介紹」和「綜合評價」。
+請嚴格遵守以下規則：
+1.  **風格**：使用繁體中文，文筆要兼具學術感與故事性。
+2.  **禁止事項**：絕對不要在介紹中提及任何關於「數值（HP, MP, ATK, DEF, ...）」或「技能名稱」的字眼。
+3.  **格式**：請嚴格按照下面的「--- 소개 ---」和「--- 평가 ---」分隔格式輸出，不要有任何多餘的文字。
+
+**怪獸資料如下：**
+-   **名稱**: {monster.get('nickname')}
+-   **主要元素**: {monster.get('elements', ['無'])[0]}
+-   **性格**: {monster.get('personality', {}).get('name')}
+-   **稀有度**: {monster.get('rarity')}
+
+--- 소개 ---
+（請在此處撰寫 80 到 120 字的圖鑑介紹，圍繞怪獸的元素、性格和可能的生態習性展開。）
+
+--- 평가 ---
+（請在此處撰寫 80 到 120 字的綜合評價與培養建議，基於怪獸的屬性（HP: {monster.get('hp')}, 攻擊: {monster.get('attack')}, 防禦: {monster.get('defense')}）、技能組合 ({', '.join(skill_details) if skill_details else "無"}) 和性格，提出 1-2 條具體的培養方向。）
+"""
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500,
+        "temperature": 0.8,
+    }
+    
+    response_json = _call_deepseek_api(payload)
+    
+    if response_json and response_json.get("choices"):
+        content = response_json["choices"][0]["message"]["content"].strip()
+        parts = content.split("--- 평가 ---")
+        if len(parts) == 2:
+            intro = parts[0].replace("--- 소개 ---", "").strip()
+            evaluation = parts[1].strip()
+            return {
+                "aiIntroduction": intro,
+                "aiEvaluation": evaluation
+            }
+    
+    return DEFAULT_AI_RESPONSES.copy()
+    
+# --- 核心修改處：新增 _get_world_knowledge_context 函式 ---
+def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs, player_data: PlayerGameData, current_monster_id: str) -> Optional[Dict[str, Any]]:
+    """
+    根據玩家的提問，從遊戲設定中查找相關知識。
+    """
+    query = player_message.lower()
+    context = ""
+    source = None
+
+    # 1. 檢查是否在問關於技能的問題
+    all_skills = [skill for skills_by_type in game_configs.get("skills", {}).values() for skill in skills_by_type]
+    for skill in all_skills:
+        if skill['name'].lower() in query:
+            context = f"技能「{skill['name']}」的說明：{skill.get('description', '暫無說明。')} 類型：{skill['type']}屬性，{skill.get('skill_category', '未知')}類。"
+            source = f"技能: {skill['name']}"
+            return {"source": source, "context": context}
+
+    # 2. 檢查是否在問關於怪獸的問題 (自己的或其他)
+    all_player_monsters = player_data.get("farmedMonsters", [])
+    for monster in all_player_monsters:
+        monster_name_part = monster.get('element_nickname_part') or monster.get('nickname')
+        if monster_name_part and monster_name_part.lower() in query:
+            is_self = monster['id'] == current_monster_id
+            if is_self:
+                context = f"關於我自己的事嗎？我是一隻{monster.get('rarity')}{monster.get('elements', ['無'])[0]}屬性的怪獸，我的個性是{monster.get('personality', {}).get('name')}。"
+            else:
+                context = f"你問到「{monster_name_part}」嗎？牠是和我一起待在農場的夥伴。牠是一隻{monster.get('rarity')}{monster.get('elements', ['無'])[0]}屬性的怪獸。"
+            source = f"怪獸: {monster_name_part}"
+            return {"source": source, "context": context}
+            
+    # 3. 檢查是否在問關於遊戲概念的問題
+    game_concepts = {
+        "屬性克制": "在這個世界，屬性克制很重要！例如火剋木，水剋火。用對了屬性，打起架來會輕鬆很多喔！",
+        "合成": "我們可以把5個DNA碎片合在一起，變成一隻新的怪獸夥伴！",
+        "修煉": "修煉可以讓我們變強，不只HP、攻擊這些會成長，技能也會升級！",
+        "DNA": "DNA碎片是組成我們的基本材料，聽說稀有度越高的DNA，合出來的夥伴就越厲害！"
+    }
+    for concept, explanation in game_concepts.items():
+        if concept.lower() in query:
+            context = explanation
+            source = f"遊戲概念: {concept}"
+            return {"source": source, "context": context}
+
+    return None
+
+def _get_bond_level_tone_instruction(bond_points: int) -> str:
+    """根據感情值，決定AI的語氣指示。"""
+    if bond_points <= -76:
+        return "你和主人的關係極度惡劣，充滿了敵意和不耐煩。你可能會直接拒絕回答問題，或者用簡短、尖銳的詞語來回應。"
+    elif bond_points <= -11:
+        return "你和主人的關係非常冷淡和疏遠。你會用『喔』、『嗯』、『隨便』這類詞語，字裡行間透露出不感興趣。"
+    elif bond_points <= 10:
+        return "你和主人的關係很普通，主要根據你的天生個性來回應。"
+    elif bond_points <= 75:
+        return "你和主人的關係相當不錯，語氣友善且熱心。你會更願意分享資訊，在句末可能會加上一些溫和的表情符號。"
+    else:
+        return "你和主人的關係非常親密，充滿了信任感和熱情。你會稱呼玩家為『摯友』或『夥伴』，並在回答中充滿依賴感。"
