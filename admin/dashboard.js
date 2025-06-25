@@ -66,6 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 growthResponseEl: document.getElementById('adventure-growth-settings-response'),
             },
 
+            // 冠軍守衛設定
+            guardianSettings: {
+                container: document.getElementById('champion-guardians-container'),
+                saveBtn: document.getElementById('save-champion-guardians-btn'),
+                responseEl: document.getElementById('champion-guardians-response'),
+            },
+
             // 設定檔
             configFileSelector: document.getElementById('config-file-selector'),
             configDisplayArea: document.getElementById('game-configs-display'),
@@ -159,6 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadCsMail();
             } else if (targetId === 'adventure-island-settings') {
                 loadAdventureSettings();
+            } else if (targetId === 'champion-guardians-settings') {
+                loadChampionGuardians();
             } else if (targetId === 'game-configs') {
                 if (typeof initializeConfigEditor === 'function') {
                     initializeConfigEditor(ADMIN_API_URL, adminToken);
@@ -794,6 +803,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveGrowthBtn.textContent = '儲存隨機成長設定';
             }
         }
+
+        async function loadChampionGuardians() {
+            const container = DOMElements.guardianSettings.container;
+            container.innerHTML = '<p class="placeholder-text">載入中...</p>';
+            try {
+                const guardians = await fetchAdminAPI('/get_config?file=system/champion_guardians.json');
+                let html = '';
+                for (const rank in guardians) {
+                    const guardian = guardians[rank];
+                    html += `
+                        <div class="facility-settings-card">
+                            <h4>${guardian.nickname} (Rank ${rank.replace('rank','')})</h4>
+                            <div class="form-grid">
+                                <div class="form-group"><label>HP</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="initial_max_hp" value="${guardian.initial_max_hp}"></div>
+                                <div class="form-group"><label>MP</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="initial_max_mp" value="${guardian.initial_max_mp}"></div>
+                                <div class="form-group"><label>攻擊</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="attack" value="${guardian.attack}"></div>
+                                <div class="form-group"><label>防禦</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="defense" value="${guardian.defense}"></div>
+                                <div class="form-group"><label>速度</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="speed" value="${guardian.speed}"></div>
+                                <div class="form-group"><label>爆擊</label><input type="number" class="admin-input guardian-stat" data-rank="${rank}" data-stat="crit" value="${guardian.crit}"></div>
+                            </div>
+                        </div>`;
+                }
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = `<p style="color: var(--danger-color);">載入冠軍守衛設定失敗：${err.message}</p>`;
+            }
+        }
+
+        async function handleSaveChampionGuardians() {
+            const { container, saveBtn, responseEl } = DOMElements.guardianSettings;
+            const newGuardianData = {};
+            container.querySelectorAll('.guardian-stat').forEach(input => {
+                const rank = input.dataset.rank;
+                const stat = input.dataset.stat;
+                if (!newGuardianData[rank]) newGuardianData[rank] = {};
+                newGuardianData[rank][stat] = parseInt(input.value, 10);
+            });
+            saveBtn.disabled = true;
+            saveBtn.textContent = '儲存中...';
+            responseEl.style.display = 'none';
+            try {
+                const result = await fetchAdminAPI('/save_champion_guardians', { method: 'POST', body: JSON.stringify(newGuardianData) });
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+            } catch (err) {
+                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存守衛設定變更';
+            }
+        }
         
         async function handleGenerateReport() {
             DOMElements.generateReportBtn.disabled = true;
@@ -1042,6 +1104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (DOMElements.advSettings.saveGrowthBtn) { DOMElements.advSettings.saveGrowthBtn.addEventListener('click', handleSaveAdventureGrowthSettings); }
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
+        if (DOMElements.guardianSettings.saveBtn) { DOMElements.guardianSettings.saveBtn.addEventListener('click', handleSaveChampionGuardians); }
         
         if (typeof initializeConfigEditor === 'function') {
              initializeConfigEditor(ADMIN_API_URL, adminToken);
