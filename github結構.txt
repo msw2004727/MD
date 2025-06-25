@@ -1,0 +1,95 @@
+backend/
+├── adventure/
+│   ├── bosses/
+│   │   ├── bosses_abandoned_mine.json       # 「廢棄礦坑」的BOSS資料
+│   │   ├── bosses_ancient_ruins.json      # 「古代遺跡」的BOSS資料
+│   │   ├── bosses_novice_forest.json      # 「新手森林」的BOSS資料
+│   │   └── bosses_tidal_cave.json         # 「潮汐洞穴」的BOSS資料
+│   ├── events/
+│   │   ├── adventure_events_cave.json     # 「潮汐洞穴」的隨機事件
+│   │   ├── adventure_events_forest.json   # 「新手森林」的隨機事件
+│   │   ├── adventure_events_mine.json     # 「廢棄礦坑」的隨機事件
+│   │   └── adventure_events_ruins.json    # 「古代遺跡」的隨機事件
+│   ├── adventure_growth_settings.json     # 「冒險島」中怪獸隨機成長的機率與數值設定
+│   ├── adventure_islands.json             # 「冒險島」的島嶼、設施、費用等主要設定
+│   └── adventure_settings.json            # 「冒險島」的全域設定，如BOSS成長率、通關獎勵
+│
+├── battle/
+│   ├── battle_highlights.json             # 戰鬥AI戰報的風格與隨機標籤資料庫
+│   └── status_effects.json                # 定義如中毒、麻痺等所有戰鬥狀態效果
+│
+├── monster/
+│   ├── DNA/
+│   │   ├── DNA_dark.json                  # 「暗」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_earth.json                 # 「土」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_fire.json                  # 「火」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_gold.json                  # 「金」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_light.json                 # 「光」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_mix.json                   # 「混」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_none.json                  # 「無」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_poison.json                # 「毒」屬性DNA碎片的基礎數值資料
+│   │   ├── DNA_water.json                 # 「水」屬性DNA碎片的基礎數值資料
+│   │   └── DNA_wind.json                  # 「風」屬性DNA碎片的基礎數值資料
+│   ├── skills/
+│   │   ├── dark.json                      # 「暗」屬性所有技能的詳細資料
+│   │   ├── earth.json                     # 「土」屬性所有技能的詳細資料
+│   │   ├── fire.json                      # 「火」屬性所有技能的詳細資料
+│   │   ├── gold.json                      # 「金」屬性所有技能的詳細資料
+│   │   ├── light.json                     # 「光」屬性所有技能的詳細資料
+│   │   ├── mix.json                       # 「混」屬性所有技能的詳細資料
+│   │   ├── none.json                      # 「無」屬性所有技能的詳細資料
+│   │   ├── poison.json                    # 「毒」屬性所有技能的詳細資料
+│   │   ├── water.json                     # 「水」屬性所有技能的詳細資料
+│   │   └── wood.json                      # 「木」屬性所有技能的詳細資料
+│   ├── dna_fragments.json                 # 所有DNA碎片的基礎數值、屬性和描述
+│   ├── element_nicknames.json             # 各元素在不同稀有度下的預設暱稱庫
+│   └── personalities.csv                  # 怪獸的個性、描述及對應的技能使用偏好
+│
+├── system/
+│   ├── champion_guardians.json            # 冠軍殿堂空位時的NPC守衛怪獸資料
+│   ├── cultivation_stories.json           # 修煉（掛機）時隨機生成的冒險故事文本
+│   ├── newbie_guide.json                  # 新手指南的內容，顯示在遊戲內的說明彈窗
+│   └── titles.json                        # 玩家可獲得的所有稱號及其解鎖條件與加成
+│
+├── logs/
+│   └── game_log.html                      # 後端伺服器運行的日誌紀錄檔
+│
+├── tests/
+│   ├── test_battle_simulation.py          # 測試戰鬥模擬的核心邏輯
+│   ├── test_monster_combination.py        # 測試怪獸合成服務的邏輯
+│   ├── test_monster_cultivation.py        # 測試怪獸修煉及成長的邏輯
+│   └── test_post_battle_services.py       # 測試戰後結算服務的邏輯
+│
+├── MD_ai_services.py                      # 串接 AI 模型，為遊戲生成各種文字內容
+├── MD_config_services.py                  # 從本地檔案載入所有遊戲核心設定
+├── MD_firebase_config.py                  # 設定並提供全域的 Firebase 資料庫實例
+├── MD_models.py                         # 定義遊戲中所有資料結構 (如怪獸、玩家、技能) 的型別
+├── MD_populate_gamedata.py                # 將本地遊戲設定資料一次性匯入到 Firestore 的腳本
+├── MD_routes.py                         # 定義遊戲核心功能的主要API路由
+├── admin_routes.py                      # 定義後台管理功能相關的API路由
+├── adventure_models.py                    # 定義「冒險島」功能的資料結構
+├── adventure_routes.py                    # 定義與「冒險島」功能相關的API路由
+├── adventure_services.py                  # 提供「冒險島」功能的核心服務邏輯
+├── battle_services.py                     # 處理核心戰鬥模擬的邏輯
+├── champion_routes.py                     # 定義與冠軍殿堂相關的API路由 (讀取、挑戰)
+├── champion_services.py                   # 提供讀取和更新冠軍殿堂資料的服務
+├── config_editor_routes.py                # 定義後台「設定編輯器」的API路由
+├── config_editor_services.py              # 提供後台「設定編輯器」的讀寫服務
+├── friend_services.py                     # 處理好友請求、同意/拒絕、雙向移除等核心服務
+├── leaderboard_search_services.py         # 提供排行榜查詢和玩家搜尋的服務
+├── logging_config.py                      # 設定後端日誌系統的格式與輸出
+├── mail_routes.py                         # 定義與信箱功能相關的API路由
+├── mail_services.py                       # 提供新增、刪除、寄送信件等核心服務
+├── main.py                                # Flask 應用程式主進入點，初始化伺服器
+├── monster_absorption_services.py         # 處理戰鬥勝利後吸收敵方怪獸能力的邏輯
+├── monster_chat_services.py               # 處理與怪獸 AI 聊天及互動的服務
+├── monster_combination_services.py        # 處理 DNA 組合、生成新怪獸的核心服務
+├── monster_cultivation_services.py        # 處理怪獸修煉（掛機）的成長與結果結算
+├── monster_disassembly_services.py        # 處理分解怪獸以回收 DNA 的服務
+├── monster_healing_services.py            # 提供治療怪獸、使用 DNA 充能的服務
+├── monster_nickname_services.py           # 處理更新怪獸自訂暱稱的服務
+├── player_services.py                     # 處理玩家資料的讀取、儲存、初始化等核心服務
+├── post_battle_services.py                # 處理戰鬥結束後的數據更新與獎勵結算
+├── requirements.txt                       # 列出後端所需的 Python 套件
+├── serviceAccountKey.json                 # Firebase 服務帳戶的憑證金鑰
+└── utils_services.py                      # 存放可共用的輔助函式，如暱稱生成、經驗值計算等
