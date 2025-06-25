@@ -53,6 +53,8 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: Dict[str, Any] = {
     "absorption_config": {}, "cultivation_config": {}, "elemental_advantage_chart": {},
 }
 
+player_services_logger = logging.getLogger(__name__)
+
 def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict[str, Any]) -> Dict[str, Any]:
     """為新玩家初始化遊戲資料。"""
     player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
@@ -105,8 +107,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
     
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
 
-    # --- 核心修改處 START ---
-    # 在產生完所有初始資料後，新增一封歡迎信件
     welcome_mail_title = f"歡迎來到怪獸異世界，{nickname}！"
     welcome_mail_content = """
 嘿，新來的訓練師！我是你的嚮導，泡泡龍！嗶啵！🫧
@@ -133,7 +133,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
     
     add_mail_to_player(new_player_data, welcome_mail_template)
     player_services_logger.info(f"已為新玩家 {nickname} 新增一封歡迎信件。")
-    # --- 核心修改處 END ---
 
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {len([d for d in initial_dna_owned if d])} 個初始 DNA。")
     return new_player_data
@@ -208,8 +207,12 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                         break
                 
                 if player_rank > 0 and champion_slot_info:
+                    # --- 核心修改處 START ---
+                    # 使用 .get() 並提供預設值 0，避免在資料不存在時崩潰
                     last_reward_timestamp = player_stats.get("last_champion_reward_timestamp", 0)
                     occupied_timestamp = champion_slot_info.get("occupiedTimestamp", 0)
+                    # --- 核心修改處 END ---
+                    
                     start_time = max(last_reward_timestamp, occupied_timestamp)
                     current_time = int(time.time())
                     seconds_per_day = 86400
