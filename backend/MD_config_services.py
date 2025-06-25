@@ -2,8 +2,29 @@
 
 import os
 import logging
+from .MD_firebase_config import db # 新增：引入Firestore資料庫連線
 
 logger = logging.getLogger(__name__)
+
+# --- 新增：從Firestore載入遊戲設定的函式 ---
+def load_all_game_configs_from_firestore():
+    """
+    從Firestore的 'game_configs' 集合中載入所有遊戲設定。
+    這會在伺服器啟動時執行，將設定載入到記憶體中。
+    """
+    try:
+        configs = {}
+        docs = db.collection('game_configs').stream()
+        for doc in docs:
+            configs[doc.id] = doc.to_dict()
+        logger.info("成功從Firestore載入所有遊戲設定。")
+        return configs
+    except Exception as e:
+        logger.error(f"從Firestore載入遊戲設定時發生嚴重錯誤: {e}", exc_info=True)
+        # 如果設定檔沒成功載入，伺服器必須停止運作，所以拋出例外
+        raise
+
+# --- 以下是上次新增的，給後台編輯器用的函式 ---
 
 # 獲取當前檔案(MD_config_services.py)所在的目錄 (backend)
 # 然後獲取其父目錄，也就是整個專案的根目錄
