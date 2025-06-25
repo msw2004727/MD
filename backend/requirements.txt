@@ -1,9 +1,7 @@
-# backend/requirements.txt
-Flask
-firebase-admin
-Flask-CORS
-gunicorn
-pytest
-PyJWT
-noise
-pytz # 新增：用於時區處理
+Flask==3.1.1
+Flask-Cors==6.0.1
+gunicorn==23.0.0
+firebase-admin==6.9.0
+python-dotenv==1.0.1  # <-- 新增這一行
+PyJWT==2.10.1
+requests
