@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 總覽
             generateReportBtn: document.getElementById('generate-report-btn'),
             overviewReportContainer: document.getElementById('overview-report-container'),
+            wipeAllDataBtn: document.getElementById('wipe-all-data-btn'), // **<-- 新增**
             
             // 玩家管理
             searchInput: document.getElementById('player-search-input'),
@@ -75,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
             logDisplayContainer: document.getElementById('log-display-container'),
             refreshLogsBtn: document.getElementById('refresh-logs-btn'),
 
-            // --- 核心修改處 START ---
             // 遊戲機制
             mechanics: {
                 critMultiplier: document.getElementById('mech-crit-multiplier'),
@@ -91,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn: document.getElementById('save-mechanics-btn'),
                 responseEl: document.getElementById('mechanics-response'),
             }
-            // --- 核心修改處 END ---
         };
 
         // --- 通用函式 ---
@@ -163,10 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetId === 'log-monitoring') {
                 loadAndDisplayLogs();
                 logIntervalId = setInterval(loadAndDisplayLogs, 10000);
-            // --- 核心修改處 START ---
             } else if (targetId === 'game-mechanics') {
                 loadGameMechanics();
-            // --- 核心修改處 END ---
             }
         }
 
@@ -763,6 +760,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // --- 核心修改處 START ---
+        // **新增**：清除所有玩家資料的處理函式
+        async function handleWipeAllData() {
+            // 第一層確認
+            if (!confirm('您確定要啟動清除所有玩家資料的程序嗎？\n這是一個無法復原的毀滅性操作！')) {
+                return;
+            }
+
+            // 第二層：要求輸入密碼
+            const enteredPassword = prompt('為確保安全，請輸入您的管理員登入密碼：');
+            if (enteredPassword === null) { // 使用者按下取消
+                return;
+            }
+            if (!enteredPassword) {
+                alert('密碼不能為空。操作已取消。');
+                return;
+            }
+
+            // 第三層：要求輸入特定字串
+            const confirmationPhrase = '確認清除所有資料';
+            const finalConfirmation = prompt(`這是最後的警告！此操作將刪除所有玩家帳號與遊戲資料。\n\n如果您完全了解後果，請在下方輸入「${confirmationPhrase}」來繼續：`);
+            if (finalConfirmation !== confirmationPhrase) {
+                alert('確認字串輸入錯誤。操作已取消。');
+                return;
+            }
+
+            // 執行API請求
+            DOMElements.wipeAllDataBtn.disabled = true;
+            DOMElements.wipeAllDataBtn.textContent = '清除中...請勿關閉視窗';
+            
+            try {
+                // 注意：API 端點 `/wipe_all_data` 尚未建立，這一步會失敗
+                const result = await fetchAdminAPI('/wipe_all_data', {
+                    method: 'POST',
+                    body: JSON.stringify({ password: enteredPassword })
+                });
+
+                alert(result.message || '操作成功完成！');
+                // 清除成功後可以考慮自動登出或刷新頁面
+                localStorage.removeItem('admin_token');
+                window.location.reload();
+
+            } catch (err) {
+                alert(`清除失敗：${err.message}`);
+            } finally {
+                DOMElements.wipeAllDataBtn.disabled = false;
+                DOMElements.wipeAllDataBtn.textContent = '執行清除程序...';
+            }
+        }
+        // --- 核心修改處 END ---
+
         // 遊戲機制面板的邏輯
         async function loadGameMechanics() {
             const { responseEl, saveBtn, ...mechInputs } = DOMElements.mechanics;
@@ -845,7 +892,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存機制設定';
             }
         }
-        // --- 核心修改處 END ---
 
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
@@ -887,10 +933,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // --- 核心修改處 START ---
+        // 為新按鈕綁定事件
+        if (DOMElements.wipeAllDataBtn) {
+            DOMElements.wipeAllDataBtn.addEventListener('click', handleWipeAllData);
+        }
+        // --- 核心修改處 END ---
+        
         if (DOMElements.mechanics.saveBtn) {
             DOMElements.mechanics.saveBtn.addEventListener('click', handleSaveGameMechanics);
         }
-        // --- 核心修改處 END ---
 
         // --- 初始執行 ---
         updateTime();
