@@ -90,6 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 elementBias: document.getElementById('mech-element-bias'),
                 saveBtn: document.getElementById('save-mechanics-btn'),
                 responseEl: document.getElementById('mechanics-response'),
+            },
+            
+            // 屬性相剋面板的元素
+            elementalAdvantage: {
+                container: document.getElementById('elemental-advantage-table-container'),
+                saveBtn: document.getElementById('save-elemental-chart-btn'),
+                responseEl: document.getElementById('elemental-chart-response'),
             }
         };
 
@@ -164,6 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 logIntervalId = setInterval(loadAndDisplayLogs, 10000);
             } else if (targetId === 'game-mechanics') {
                 loadGameMechanics();
+            } else if (targetId === 'elemental-advantage') { 
+                loadAndRenderElementalChart(); 
             }
         }
 
@@ -306,7 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 await fetchAndDisplayPlayerData(query);
             } else {
                 try {
-                    // 改用 fetch 直接呼叫正確的 API 路徑
                     const response = await fetch(`${ADMIN_API_URL}/players/search?nickname=${encodeURIComponent(query)}&limit=10`, {
                         headers: { 'Authorization': `Bearer ${adminToken}` }
                     });
@@ -375,7 +383,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // --- 核心修改處 START ---
         async function handleGrantExclusiveTitle() {
             if (!currentPlayerData) {
                 alert('請先查詢一位玩家以授予稱號。');
@@ -392,7 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (buffsJson === null) return;
             
             try {
-                // 驗證 JSON 格式
                 JSON.parse(buffsJson);
             } catch (e) {
                 alert(`加成效果的 JSON 格式不正確：${e.message}`);
@@ -414,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                 });
                 alert(result.message);
-                // 成功後重新載入玩家資料以顯示新稱號
                 await fetchAndDisplayPlayerData(currentPlayerData.uid);
             } catch (err) {
                 alert(`授予失敗：${err.message}`);
@@ -423,7 +428,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.textContent = '授予專屬稱號';
             }
         }
-        // --- 核心修改處 END ---
 
         // --- 廣播系統邏輯 ---
         async function loadBroadcastLog() {
@@ -624,7 +628,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, growthFacilitiesContainer, growthStatsContainer } = DOMElements.advSettings;
             if (!bossMultiplierInput || !growthFacilitiesContainer) return;
 
-            // 清空舊內容
             bossMultiplierInput.value = '';
             baseGoldInput.value = '';
             bonusGoldInput.value = '';
@@ -634,21 +637,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             try {
-                // --- 核心修改處 START ---
-                // 將請求的檔名加上正確的路徑
                 const [advSettings, islandsData, growthSettings] = await Promise.all([
                     fetchAdminAPI('/get_config?file=adventure/adventure_settings.json'),
                     fetchAdminAPI('/get_config?file=adventure/adventure_islands.json'),
                     fetchAdminAPI('/get_config?file=adventure/adventure_growth_settings.json')
                 ]);
-                // --- 核心修改處 END ---
 
-                // 渲染全域參數
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
                 baseGoldInput.value = advSettings.floor_clear_base_gold || 50;
                 bonusGoldInput.value = advSettings.floor_clear_bonus_gold_per_floor || 10;
                 
-                // 渲染設施入場費
                 if (islandsData && Array.isArray(islandsData)) {
                     facilitiesContainer.innerHTML = islandsData.map(island => `
                         <div class="facility-settings-card" data-island-id="${island.islandId}">
@@ -665,7 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     facilitiesContainer.innerHTML = '<p class="placeholder-text">找不到設施資料。</p>';
                 }
                 
-                // 渲染隨機成長參數
                 if (growthSettings && growthSettings.facilities) {
                     const facilityNames = {};
                     islandsData.forEach(island => island.facilities.forEach(f => { facilityNames[f.facilityId] = f.name; }));
@@ -758,7 +755,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 stat_weights: {}
             };
 
-            // 收集各地區設施的成長機率和點數
             growthFacilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
                 const id = input.dataset.facilityId;
                 if (!newGrowthSettings.facilities[id]) {
@@ -771,7 +767,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            // 收集各項能力的成長權重
             growthStatsContainer.querySelectorAll('input[data-stat-name]').forEach(input => {
                 const stat = input.dataset.statName;
                 newGrowthSettings.stat_weights[stat] = parseInt(input.value, 10);
@@ -799,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveGrowthBtn.textContent = '儲存隨機成長設定';
             }
         }
-        // --- 儀表板總覽邏輯 ---
+        
         async function handleGenerateReport() {
             DOMElements.generateReportBtn.disabled = true;
             DOMElements.generateReportBtn.textContent = '生成中...';
@@ -855,7 +850,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // 遊戲機制面板的邏輯
         async function loadGameMechanics() {
             const { responseEl, saveBtn, ...mechInputs } = DOMElements.mechanics;
             Object.values(mechInputs).forEach(input => input.disabled = true);
@@ -937,6 +931,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存機制設定';
             }
         }
+        
+        async function loadAndRenderElementalChart() {
+            const container = DOMElements.elementalAdvantage.container;
+            if (!container) return;
+
+            container.innerHTML = '<p class="placeholder-text">正在載入屬性克制表...</p>';
+
+            try {
+                const chartData = await fetchAdminAPI('/get_config?file=battle/elemental_advantage_chart.json');
+                const elements = ["火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"];
+                
+                let tableHTML = '<div class="table-wrapper"><table class="elemental-chart-table"><thead><tr><th>攻擊方 ↓</th>';
+                elements.forEach(def => {
+                    tableHTML += `<th>${def} (防)</th>`;
+                });
+                tableHTML += '</tr></thead><tbody>';
+
+                elements.forEach(atk => {
+                    tableHTML += `<tr><td>${atk} (攻)</td>`;
+                    elements.forEach(def => {
+                        const value = chartData[atk]?.[def] ?? 1.0;
+                        tableHTML += `<td><input type="number" class="admin-input elemental-input" data-atk="${atk}" data-def="${def}" value="${value}" step="0.1"></td>`;
+                    });
+                    tableHTML += '</tr>';
+                });
+                
+                tableHTML += '</tbody></table></div>';
+                container.innerHTML = tableHTML;
+
+            } catch (err) {
+                container.innerHTML = `<p class="placeholder-text" style="color:var(--danger-color);">載入克制表失敗：${err.message}</p>`;
+            }
+        }
+
+        async function handleSaveElementalChart() {
+            const container = DOMElements.elementalAdvantage.container;
+            const saveBtn = DOMElements.elementalAdvantage.saveBtn;
+            const responseEl = DOMElements.elementalAdvantage.responseEl;
+            
+            const newChartData = {};
+            const inputs = container.querySelectorAll('.elemental-input');
+            
+            inputs.forEach(input => {
+                const atk = input.dataset.atk;
+                const def = input.dataset.def;
+                const value = parseFloat(input.value) || 1.0;
+
+                if (!newChartData[atk]) {
+                    newChartData[atk] = {};
+                }
+                newChartData[atk][def] = value;
+            });
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = '儲存中...';
+            responseEl.style.display = 'none';
+
+            try {
+                const result = await fetchAdminAPI('/save_elemental_advantage', {
+                    method: 'POST',
+                    body: JSON.stringify(newChartData)
+                });
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+            } catch (err) {
+                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存屬性克制表';
+            }
+        }
 
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
@@ -945,11 +1012,10 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
         DOMElements.searchResultsContainer.addEventListener('click', (e) => { const item = e.target.closest('.search-result-item'); if (item && item.dataset.uid) { fetchAndDisplayPlayerData(item.dataset.uid); } });
         
-        // 核心修改處：將玩家資料區塊的點擊事件委派到一個處理函式
         DOMElements.dataDisplay.addEventListener('click', (e) => { 
             if (e.target.id === 'save-player-data-btn') handleSavePlayerData(); 
             if (e.target.id === 'send-player-mail-btn') handleSendPlayerMail(); 
-            if (e.target.id === 'grant-exclusive-title-btn') handleGrantExclusiveTitle(); // 新增的事件
+            if (e.target.id === 'grant-exclusive-title-btn') handleGrantExclusiveTitle();
         });
 
         if (DOMElements.playerLogFilters) {
@@ -989,6 +1055,10 @@ document.addEventListener('DOMContentLoaded', function() {
             DOMElements.mechanics.saveBtn.addEventListener('click', handleSaveGameMechanics);
         }
 
+        if (DOMElements.elementalAdvantage.saveBtn) {
+            DOMElements.elementalAdvantage.saveBtn.addEventListener('click', handleSaveElementalChart);
+        }
+
         // --- 初始執行 ---
         updateTime();
         setInterval(updateTime, 1000);
@@ -996,6 +1066,5 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSenderPresets();
     }
 
-    // 執行主初始化函式
     initializeApp();
 });
