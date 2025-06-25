@@ -204,3 +204,33 @@ body.admin-body {
 .log-message {
     padding-left: 0.25rem;
 }
+
+/* --- 新增：修煉設定面板專用樣式 --- */
+#cultivation-loot-table-grid {
+    display: grid;
+    /* 響應式網格，最小寬度 200px，最大 1fr，自動填充 */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.cult-rarity-card {
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+}
+.cult-rarity-card h5 {
+    grid-column: 1 / -1;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-border-color);
+    color: var(--admin-accent-hover);
+    font-size: 1.1rem;
+}
+
+/* 確保稀有度機率設定為兩欄 */
+.cult-rarity-card .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem;
+}
