@@ -10,15 +10,18 @@ import copy
 
 from datetime import datetime, timedelta, timezone
 
+# --- 核心修改處 START ---
+# 將導入的 Rarity 和 Recipe 修改為正確的名稱 RarityNames 和 MonsterRecipe
 from .MD_models import (
     PlayerGameData, PlayerStats, PlayerOwnedDNA,
     Monster, Skill, DNAFragment, RarityDetail, Personality,
-    GameConfigs, ElementTypes, MonsterFarmStatus, MonsterAIDetails, MonsterResume,
+    GameConfigs, ElementTypes, RarityNames, MonsterRecipe,
     HealthCondition, AbsorptionConfig, CultivationConfig, SkillCategory, NamingConstraints,
-    ValueSettings, RarityNames, MonsterRecipe
+    ValueSettings, MonsterAIDetails, MonsterResume
 )
+# --- 核心修改處 END ---
+
 from .MD_ai_services import generate_monster_ai_details
-# 【修改】從 player_services 導入我們之前建立的日誌新增函式
 from .player_services import _add_player_log
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 
@@ -141,7 +144,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
         
         return {"monster": new_monster_instance}
@@ -281,7 +283,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
 
         return {"monster": new_monster_instance}
