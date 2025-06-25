@@ -101,13 +101,10 @@ def _generate_story_from_library(
     item_list_str = "、".join([item.get('name', '神秘碎片') for item in items_obtained]) if items_obtained else "神秘物品"
     new_skill_name_str = learned_new_skill_template.get('name', '神秘技能') if learned_new_skill_template else "新招式"
     
-    # --- 核心修改處 START ---
-    # 新增一個更安全的寫法來提取技能名稱
     trained_skills_list = [
         parts[1] for log in skill_updates_log 
         if "技能" in log and "領悟" not in log and len(parts := log.split("'")) > 1
     ]
-    # --- 核心修改處 END ---
     
     trained_skills_str = "、".join(trained_skills_list) or "各種技巧"
     return final_story.format(
@@ -151,15 +148,12 @@ def complete_cultivation_service(
     interaction_stats = monster_to_update.setdefault("interaction_stats", {})
     interaction_stats["cultivation_count"] = interaction_stats.get("cultivation_count", 0) + 1
 
-    # --- 核心修改處 START ---
-    # 從新的設定檔讀取修煉規則
     mechanics_config = game_configs.get("game_mechanics", {})
     cultivation_rules = mechanics_config.get("cultivation_rules", {})
     diminishing_base = cultivation_rules.get("diminishing_returns_base", 0.75)
     time_window = cultivation_rules.get("diminishing_returns_time_window_seconds", 3600)
     base_bond_gain = cultivation_rules.get("base_bond_gain_on_completion", 3)
     exp_duration_divisor = cultivation_rules.get("exp_gain_duration_divisor", 60)
-    # --- 核心修改處 END ---
 
     current_time = int(time.time())
     last_cult_time = interaction_stats.get("last_cultivation_timestamp", 0)
@@ -173,9 +167,7 @@ def complete_cultivation_service(
     interaction_stats["last_cultivation_timestamp"] = current_time
     interaction_stats["cultivation_count_in_window"] = count_in_window
     
-    # --- 核心修改處 START ---
     diminishing_multiplier = diminishing_base ** (count_in_window - 1)
-    # --- 核心修改處 END ---
     monster_cultivation_services_logger.info(f"修煉衰減機制: 第 {count_in_window} 次, 獎勵乘數為 {diminishing_multiplier:.2f}")
 
     from .utils_services import update_bond_with_diminishing_returns
@@ -215,9 +207,7 @@ def complete_cultivation_service(
         for skill in current_skills:
             if skill.get("level", 1) >= max_skill_lvl: continue
             
-            # --- 核心修改處 START ---
             exp_gained = int((random.randint(exp_gain_min, exp_gain_max) + int(duration_seconds / exp_duration_divisor)) * diminishing_multiplier)
-            # --- 核心修改處 END ---
 
             if exp_gained > 0:
                 skill["current_exp"] = skill.get("current_exp", 0) + exp_gained
@@ -236,7 +226,7 @@ def complete_cultivation_service(
             potential_new_skills: List[Skill] = []
             current_skill_names = {s.get("name") for s in current_skills}
             potential_new_skills.extend(all_skills_db.get(primary_element, []))
-            if primary_element != "無":
+            if primary_element != "無" and "無" in all_skills_db:
                 potential_new_skills.extend(all_skills_db.get("無", []))
             learnable_skills = [s for s in potential_new_skills if s.get("name") not in current_skill_names]
             rare_learnable_skills = [s for s in learnable_skills if s.get("rarity") == "稀有"]
@@ -257,11 +247,14 @@ def complete_cultivation_service(
             element_bias_list = current_location_bias.get("element_bias", [])
             final_growth_weights = {**growth_weights_map}
             
-            # --- 核心修改處 START ---
             elemental_bias_multiplier = cultivation_rules.get("elemental_bias_multiplier", 1.2)
             if monster_primary_element in element_bias_list:
                 for stat_key in final_growth_weights:
                     final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * elemental_bias_multiplier)
+            
+            # --- 核心修改處 START ---
+            # 從權重字典中移除 'crit'
+            final_growth_weights.pop('crit', None)
             # --- 核心修改處 END ---
 
             if final_growth_weights and sum(final_growth_weights.values()) > 0:
@@ -271,10 +264,8 @@ def complete_cultivation_service(
                 if not isinstance(cultivation_gains, dict): cultivation_gains = {}
                 for _ in range(growth_chances):
                     chosen_stat = random.choices(stats_pool, weights=weights, k=1)[0]
-                    # --- 核心修改處 START ---
                     gain_range = cultivation_rules.get("stat_growth_points_per_chance", [1, 2])
                     gain_amount = random.randint(gain_range[0], gain_range[1])
-                    # --- 核心修改處 END ---
                     cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + gain_amount
                     skill_updates_log.append(f"💪 基礎能力 '{chosen_stat.upper()}' 潛力提升了 {gain_amount} 點！")
                 monster_to_update["cultivation_gains"] = cultivation_gains
