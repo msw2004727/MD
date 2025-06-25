@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # 【修改】從直接引用 db 物件，而不是不存在的函式
 from backend.MD_firebase_config import db
 
-def populate_data_from_list(collection_name, data_list):
+def populate_data(collection_name, data_list):
     """
     【修改】從一個字典列表讀取資料並上傳到 Firestore。
     - 每個字典會成為一個 Document。
@@ -23,6 +23,7 @@ def populate_data_from_list(collection_name, data_list):
     batch = db.batch()
     count = 0
     for item_data in data_list:
+        # 確保 item_data 是字典並且有 'id' 鍵
         if isinstance(item_data, dict) and 'id' in item_data:
             # 確保 ID 是字串格式
             doc_id = str(item_data['id'])
@@ -43,12 +44,13 @@ def load_and_populate(file_path, collection_name):
     """從 JSON 檔案載入資料並上傳到 Firestore Collection。"""
     try:
         # 修正路徑，確保是從專案根目錄開始找
-        full_path = os.path.join(os.path.dirname(__file__), '..', file_path)
+        full_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', file_path))
+        
         with open(full_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
         print(f"\n正在處理檔案: {file_path} -> 上傳至 Collection: '{collection_name}'")
-        populate_data_from_list(collection_name, data)
+        populate_data(collection_name, data)
 
     except FileNotFoundError:
         print(f"錯誤: 找不到檔案 {full_path}")
@@ -65,42 +67,46 @@ if __name__ == '__main__':
         
     print("資料庫客戶端已連接，開始上傳遊戲設定資料...")
 
-    # 定義技能檔案的路徑
+    # 定義技能檔案的路徑 (Collection 名稱改為與 Firestore 一致)
     skill_files = {
-        'Skills_dark': 'backend/monster/skills/dark.json',
-        'Skills_earth': 'backend/monster/skills/earth.json',
-        'Skills_fire': 'backend/monster/skills/fire.json',
-        'Skills_gold': 'backend/monster/skills/gold.json',
-        'Skills_light': 'backend/monster/skills/light.json',
-        'Skills_mix': 'backend/monster/skills/mix.json',
-        'Skills_none': 'backend/monster/skills/none.json',
-        'Skills_poison': 'backend/monster/skills/poison.json',
-        'Skills_water': 'backend/monster/skills/water.json',
-        'Skills_wind': 'backend/monster/skills/wind.json',
-        'Skills_wood': 'backend/monster/skills/wood.json'
+        'Skills': 'backend/monster/skills/all_skills_combined.json', # 假設有一個合併的檔案
     }
 
     # 定義 DNA 檔案的路徑
     dna_files = {
-        'DNA_dark': 'backend/monster/DNA/DNA_dark.json',
-        'DNA_earth': 'backend/monster/DNA/DNA_earth.json',
-        'DNA_fire': 'backend/monster/DNA/DNA_fire.json',
-        'DNA_gold': 'backend/monster/DNA/DNA_gold.json',
-        'DNA_light': 'backend/monster/DNA/DNA_light.json',
-        'DNA_mix': 'backend/monster/DNA/DNA_mix.json',
-        'DNA_none': 'backend/monster/DNA/DNA_none.json',
-        'DNA_poison': 'backend/monster/DNA/DNA_poison.json',
-        'DNA_water': 'backend/monster/DNA/DNA_water.json',
-        'DNA_wind': 'backend/monster/DNA/DNA_wind.json',
-        'DNA_wood': 'backend/monster/DNA/DNA_wood.json'
+        'DNAFragments': 'backend/monster/DNA/all_dna_fragments_combined.json', # 假設有一個合併的檔案
     }
     
-    # 【修改】上傳技能資料
-    for collection, path in skill_files.items():
-        load_and_populate(path, collection)
+    # 這裡的邏輯需要調整，因為 Firestore 的結構是將所有技能/DNA存在單一文件內
+    # 以下為一個更符合您目前 Firestore 設計的上傳邏輯範例
+    
+    # 上傳合併後的技能資料
+    try:
+        skills_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'backend/monster/skills'))
+        all_skills_data = {}
+        for filename in os.listdir(skills_path):
+            if filename.endswith('.json'):
+                element_name = filename.replace('.json', '')
+                with open(os.path.join(skills_path, filename), 'r', encoding='utf-8') as f:
+                    all_skills_data[element_name] = json.load(f)
+        
+        db.collection('MD_GameConfigs').document('Skills').set({"skill_database": all_skills_data})
+        print("\n成功將所有技能資料合併並上傳至 MD_GameConfigs/Skills 文件。")
+    except Exception as e:
+        print(f"\n上傳技能資料時發生錯誤: {e}")
 
-    # 【修改】上傳 DNA 資料
-    for collection, path in dna_files.items():
-        load_and_populate(path, collection)
+    # 上傳合併後的DNA資料
+    try:
+        dna_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'backend/monster/DNA'))
+        all_dna_data = []
+        for filename in os.listdir(dna_path):
+            if filename.endswith('.json'):
+                with open(os.path.join(dna_path, filename), 'r', encoding='utf-8') as f:
+                    all_dna_data.extend(json.load(f))
+        
+        db.collection('MD_GameConfigs').document('DNAFragments').set({"all_fragments": all_dna_data})
+        print("成功將所有DNA資料合併並上傳至 MD_GameConfigs/DNAFragments 文件。")
+    except Exception as e:
+        print(f"上傳DNA資料時發生錯誤: {e}")
         
     print("\n所有資料上傳任務執行完畢。")
