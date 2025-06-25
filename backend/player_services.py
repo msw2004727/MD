@@ -11,8 +11,9 @@ import random
 
 import math
 
-# 從 player_services 導入 _add_player_log
+# 從 utils_services 導入共用函式
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
+from .mail_services import add_mail_to_player # 新增：導入郵件服務
 
 # 將 _add_player_log 函式移回此檔案
 def _add_player_log(player_data: Dict[str, Any], category: str, message: str):
@@ -103,7 +104,37 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
     }
     
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
+
+    # --- 核心修改處 START ---
+    # 在產生完所有初始資料後，新增一封歡迎信件
+    welcome_mail_title = f"歡迎來到怪獸異世界，{nickname}！"
+    welcome_mail_content = """
+嘿，新來的訓練師！我是你的嚮導，泡泡龍！嗶啵！🫧
+
+<b>【遊戲目標】</b>
+這個世界的終極目標，就是打造出獨一無二、宇宙最強的怪獸，在「排行榜」的「冠軍殿堂」中佔有一席之地！去收集、合成、培育你最獨特的夥伴吧！
+
+<b>【基礎提示】</b>
+<ul>
+    <li>🧬 **DNA合成**: 一切的起點！試著將5個DNA碎片拖曳到上方的組合槽，點擊「怪獸合成」，看看會誕生出什麼驚喜！</li>
+    <li>🏡 **怪獸農場**: 合成出的怪獸會出現在這裡。記得點擊怪獸下方的「出戰」按鈕，才能讓牠代表你進行各種挑戰喔！</li>
+    <li>⚔️ **挑戰對手**: 點擊主畫面左下角的「天梯」按鈕，進入「怪獸排行榜」，挑選一個對手，開始你的第一場戰鬥吧！</li>
+</ul>
+
+遇到困難時，別忘了點擊主畫面左側的「🔰」新手指南按鈕喔！祝你好運，嗶啵！
+"""
+
+    welcome_mail_template = {
+        "type": "system_message",
+        "title": welcome_mail_title,
+        "content": welcome_mail_content,
+        "sender_name": "嚮導泡泡龍",
+    }
     
+    add_mail_to_player(new_player_data, welcome_mail_template)
+    player_services_logger.info(f"已為新玩家 {nickname} 新增一封歡迎信件。")
+    # --- 核心修改處 END ---
+
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {len([d for d in initial_dna_owned if d])} 個初始 DNA。")
     return new_player_data
 
@@ -247,28 +278,22 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if farmed_monsters:
                 naming_constraints = game_configs.get("naming_constraints", {})
                 
-                # --- 核心修改處 START ---
-                # 在此處的遷移邏輯中，我們不再需要玩家稱號，直接傳入空字串
                 for monster in farmed_monsters:
-                    # 檢查舊的命名結構是否存在，如果存在才進行遷移
                     if "player_title_part" in monster or "achievement_part" in monster:
                         needs_migration_save = True
                         
-                        # 保留舊的零件部分，以防未來需要
                         if "player_title_part" not in monster:
                              monster["player_title_part"] = ""
                         if "achievement_part" not in monster:
                             monster["achievement_part"] = "新秀"
                         
-                        # 生成新的、僅包含屬性名的暱稱
                         monster["nickname"] = generate_monster_full_nickname(
-                            "", # 玩家稱號部分留空
-                            "", # 怪獸成就部分留空
+                            "", 
+                            "", 
                             monster.get("element_nickname_part", monster.get("elements", ["無"])[0]),
                             naming_constraints
                         )
-                # --- 核心修改處 END ---
-
+            
             for dna_list_key in ["playerOwnedDNA", "dnaCombinationSlots"]:
                 dna_list = player_game_data_dict.get(dna_list_key, [])
                 for i, dna_item in enumerate(dna_list):
