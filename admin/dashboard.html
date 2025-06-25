@@ -17,7 +17,9 @@
             <a href="#" class="nav-item" data-target="player-management">玩家管理</a>
             <a href="#" class="nav-item" data-target="mail-system">群發信件</a>
             <a href="#" class="nav-item" data-target="cs-mailbox">客服信箱</a>
-            <a href="#" class="nav-item" data-target="adventure-island-settings">冒險島設定</a> <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
+            <a href="#" class="nav-item" data-target="adventure-island-settings">冒險島設定</a>
+            <a href="#" class="nav-item" data-target="game-mechanics">遊戲機制</a>
+            <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
             <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
         </nav>
         <div class="navbar-actions">
@@ -182,6 +184,76 @@
                         <div id="adventure-growth-settings-response" class="admin-response-message" style="display: none;"></div>
                     </div>
                     </div>
+            </div>
+
+            <div id="game-mechanics" class="content-panel">
+                <h2 class="content-header">遊戲機制設定</h2>
+                <div class="dashboard-grid single-column">
+                    <div class="data-section">
+                        <h3>戰鬥公式</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="mech-crit-multiplier">爆擊傷害倍率</label>
+                                <input type="number" id="mech-crit-multiplier" class="admin-input" step="0.1">
+                                <p class="input-hint">爆擊時，傷害會乘以這個數字。預設為 1.5 (即150%)。</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="mech-dmg-formula-base">傷害公式基礎乘數</label>
+                                <input type="number" id="mech-dmg-formula-base" class="admin-input" step="0.01">
+                                <p class="input-hint">傷害計算中的一個基礎係數。預設為 0.5。</p>
+                            </div>
+                             <div class="form-group">
+                                <label for="mech-dmg-formula-scaling">傷害公式攻擊力加成</label>
+                                <input type="number" id="mech-dmg-formula-scaling" class="admin-input" step="0.01">
+                                <p class="input-hint">傷害計算中，攻擊力額外提供的加成。預設為 0.1。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="data-section">
+                        <h3>修煉規則</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="mech-cult-diminish-base">連續修煉衰減基數</label>
+                                <input type="number" id="mech-cult-diminish-base" class="admin-input" step="0.01">
+                                <p class="input-hint">每次連續修煉，獎勵會乘以這個數字。小於1為衰減，預設 0.75。</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="mech-cult-diminish-window">連續修煉判定窗口(秒)</label>
+                                <input type="number" id="mech-cult-diminish-window" class="admin-input" step="1">
+                                <p class="input-hint">超過這個時間未修煉，連續次數會重置。預設 3600 秒 (1小時)。</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="mech-cult-bond-gain">完成修煉的基礎感情值</label>
+                                <input type="number" id="mech-cult-bond-gain" class="admin-input" step="1">
+                                <p class="input-hint">每次完成修煉，可獲得的基礎感情點數。預設為 3。</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="mech-exp-gain-divisor">經驗值時間除數</label>
+                                <input type="number" id="mech-exp-gain-divisor" class="admin-input" step="1">
+                                <p class="input-hint">修煉時長(秒)除以此數值，結果會加入經驗值計算。預設 60。</p>
+                            </div>
+                             <div class="form-group">
+                                <label for="mech-stat-points-min">屬性成長點數(最小)</label>
+                                <input type="number" id="mech-stat-points-min" class="admin-input" step="1">
+                                <p class="input-hint">每次觸發屬性成長時，隨機獲得的最小點數。預設 1。</p>
+                            </div>
+                             <div class="form-group">
+                                <label for="mech-stat-points-max">屬性成長點數(最大)</label>
+                                <input type="number" id="mech-stat-points-max" class="admin-input" step="1">
+                                <p class="input-hint">每次觸發屬性成長時，隨機獲得的最大點數。預設 2。</p>
+                            </div>
+                             <div class="form-group">
+                                <label for="mech-element-bias">修煉地點元素加成</label>
+                                <input type="number" id="mech-element-bias" class="admin-input" step="0.01">
+                                <p class="input-hint">若怪獸屬性符合修煉地點，其屬性成長權重會乘以這個倍率。預設 1.2。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="save-changes-container">
+                        <button id="save-mechanics-btn" class="button success">儲存機制設定</button>
+                    </div>
+                    <div id="mechanics-response" class="admin-response-message" style="display: none;"></div>
+                </div>
             </div>
             <div id="game-configs" class="content-panel">
                 <h2 class="content-header">遊戲設定</h2>
