@@ -12,8 +12,7 @@ from . import MD_firebase_config
 
 config_editor_logger = logging.getLogger(__name__)
 
-# --- 核心修改處 START ---
-# 更新 Firestore 的檔案路徑映射，以對應新的資料夾結構
+# Firestore 的檔案路徑映射，已更新為新的資料夾結構
 CONFIG_FILE_FIRESTORE_MAP = {
     # system/
     "system/titles.json": ("Titles", "player_titles"),
@@ -43,28 +42,26 @@ CONFIG_FILE_FIRESTORE_MAP = {
 LOCAL_CONFIG_FILES = (
     os.path.join("adventure", "adventure_settings.json"),
     os.path.join("adventure", "adventure_islands.json"),
-    os.path.join("adventure", "adventure_growth_settings.json")
+    os.path.join("adventure", "adventure_growth_settings.json"),
+    # --- 核心修改處 START ---
+    "game_mechanics.json" # game_mechanics.json 位於 data/ 的根目錄
+    # --- 核心修改處 END ---
 )
-# --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
     all_configs = list(CONFIG_FILE_FIRESTORE_MAP.keys()) + list(LOCAL_CONFIG_FILES)
-    # 使用 os.path.normpath 確保路徑格式一致 (例如，將 a/b/c.json 和 a\\b\\c.json 視為相同)
     return sorted(list(set([os.path.normpath(p) for p in all_configs])))
 
 def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Optional[str]]:
     """
-    【重構】讀取指定設定檔的內容，支援本地檔案和 Firestore。
+    讀取指定設定檔的內容，支援本地檔案和 Firestore。
     """
     db = MD_firebase_config.db
     if not db:
         return None, "資料庫服務未初始化。"
         
-    # --- 核心修改處 START ---
-    # 規格化傳入的檔名以匹配列表中的路徑格式
     normalized_filename = os.path.normpath(filename)
-    # --- 核心修改處 END ---
 
     if normalized_filename in LOCAL_CONFIG_FILES:
         try:
@@ -164,7 +161,7 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
         reload_main_app_configs()
         return True, None
     except Exception as e:
-        config_editor_logger.error(f"儲存設定檔 '{normalized_filename}' 到 Firestore 時發生錯誤: {e}", exc_info=True)
+        config_editor_logger.error(f"儲存設定檔 '{filename}' 到 Firestore 時發生錯誤: {e}", exc_info=True)
         return False, "儲存檔案到 Firestore 時發生伺服器內部錯誤。"
 
 def save_adventure_settings_service(global_settings: Dict, facilities_settings: List) -> tuple[bool, Optional[str]]:
@@ -210,10 +207,7 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
         data_dir = os.path.join(os.path.dirname(__file__), 'data')
-        # --- 核心修改處 START ---
-        # 更新儲存路徑
         file_path = os.path.join(data_dir, 'adventure', 'adventure_growth_settings.json')
-        # --- 核心修改處 END ---
 
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(growth_settings, f, indent=2, ensure_ascii=False)
@@ -228,6 +222,35 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
     except Exception as e:
         config_editor_logger.error(f"儲存冒險島成長設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存冒險島成長設定時發生伺服器內部錯誤。"
+
+# --- 核心修改處 START ---
+def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[str]]:
+    """
+    將新的遊戲機制設定儲存到 game_mechanics.json 檔案。
+    """
+    try:
+        # 簡單驗證資料結構
+        required_keys = ["battle_formulas", "cultivation_rules", "absorption_rules"]
+        if not all(key in mechanics_data for key in required_keys):
+            return False, "傳入的資料格式不正確，缺少必要的頂層鍵。"
+
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        file_path = os.path.join(data_dir, 'game_mechanics.json')
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(mechanics_data, f, indent=2, ensure_ascii=False)
+        
+        config_editor_logger.info(f"遊戲機制設定已成功儲存至 '{file_path}'。")
+        
+        # 重新載入主應用的設定，讓變更即時生效
+        reload_main_app_configs()
+        
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存遊戲機制設定時發生錯誤: {e}", exc_info=True)
+        return False, "儲存遊戲機制設定時發生伺服器內部錯誤。"
+# --- 核心修改處 END ---
 
 
 def reload_main_app_configs():
