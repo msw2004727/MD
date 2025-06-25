@@ -204,6 +204,13 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
+    # --- 核心修改處 START ---
+    battle_formulas = game_configs.get("game_mechanics", {}).get("battle_formulas", {})
+    base_multiplier = battle_formulas.get("damage_formula_base_multiplier", 0.5)
+    attack_scaling = battle_formulas.get("damage_formula_attack_scaling", 0.1)
+    crit_multiplier = battle_formulas.get("crit_multiplier", 1.5)
+    # --- 核心修改處 END ---
+
     for effect in effects:
         effect_target_monster = performer if effect.get("target") == "self" else target
         
@@ -223,11 +230,14 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             attack_stat = attacker_stats.get("attack", 1)
             element_multiplier = _calculate_elemental_advantage(skill["type"], target.get("elements", []), game_configs)
 
-            raw_damage = max(1, (power * (attack_stat / defense_stat) * 0.5) + (attack_stat * 0.1))
+            # --- 核心修改處 START ---
+            # 使用從設定檔讀取的參數來計算傷害
+            raw_damage = max(1, (power * (attack_stat / defense_stat) * base_multiplier) + (attack_stat * attack_scaling))
             final_damage = int(raw_damage * element_multiplier)
 
             if action_details.get("is_crit"):
-                final_damage = int(final_damage * game_configs.get("value_settings", {}).get("crit_multiplier", 1.5))
+                final_damage = int(final_damage * crit_multiplier)
+            # --- 核心修改處 END ---
 
             effect_target_monster["current_hp"] = max(0, effect_target_monster.get("current_hp", 0) - final_damage)
             action_details["damage_dealt"] = action_details.get("damage_dealt", 0) + final_damage
