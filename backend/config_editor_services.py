@@ -18,7 +18,10 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "system/titles.json": ("Titles", "player_titles"),
     "system/champion_guardians.json": ("ChampionGuardians", "guardians"),
     "system/newbie_guide.json": ("NewbieGuide", "guide_entries"),
-    "system/cultivation_stories.json": ("CultivationStories", "story_library"), # 新增
+    "system/cultivation_stories.json": ("CultivationStories", "story_library"),
+    "system/Rarities.json": ("Rarities", "dna_rarities"),
+    "system/ValueSettings.json": ("ValueSettings", None),
+    "system/CultivationSettings.json": ("CultivationSettings", None),
     # battle/
     "battle/battle_highlights.json": ("BattleHighlights", None),
     "battle/status_effects.json": ("StatusEffects", "effects_list"),
@@ -38,10 +41,6 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
-    # settings/
-    "settings/Rarities.json": ("Rarities", "dna_rarities"), # 新增
-    "settings/ValueSettings.json": ("ValueSettings", None), # 新增
-    "settings/CultivationSettings.json": ("CultivationSettings", None) # 新增
 }
 
 # 本地設定檔的路徑也更新
@@ -321,7 +320,6 @@ def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[boo
         config_editor_logger.error(f"儲存冠軍守衛資料時發生錯誤: {e}", exc_info=True)
         return False, "儲存冠軍守衛資料時發生伺服器內部錯誤。"
 
-# --- 新增 START ---
 def save_cultivation_settings_service(settings_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
     """
     將新的修煉設定儲存到 CultivationSettings 文件。
@@ -341,7 +339,6 @@ def save_cultivation_settings_service(settings_data: Dict[str, Any]) -> tuple[bo
     except Exception as e:
         config_editor_logger.error(f"儲存修煉設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存修煉設定時發生伺服器內部錯誤。"
-# --- 新增 END ---
 
 def reload_main_app_configs():
     try:
