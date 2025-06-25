@@ -661,13 +661,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
                 
-                if (islandsData && Array.isArray(islandsData)) {
-                    facilitiesContainer.innerHTML = islandsData.map(island => `
-                        <div class="facility-settings-card" data-island-id="${island.islandId}">
-                            <h4>${island.islandName || '未知島嶼'}</h4>
-                            ${(island.facilities || []).map(facility => `
+                // --- 核心修改處 START ---
+                if (islandsData && Array.isArray(islandsData) && islandsData.length > 0) {
+                    const facilities = islandsData[0].facilities || [];
+                    
+                    let facilitiesHtml = '<div class="four-column-grid">';
+                    
+                    facilities.forEach(facility => {
+                        facilitiesHtml += `
+                            <div class="facility-column-card">
+                                <h4>${facility.name}</h4>
                                 <div class="form-group">
-                                    <label for="facility-cost-${facility.facilityId}">${facility.name} - 入場費</label>
+                                    <label for="facility-cost-${facility.facilityId}">入場費</label>
                                     <input type="number" id="facility-cost-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.cost || 0}">
                                 </div>
                                 <div class="form-group">
@@ -678,12 +683,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <label for="facility-bonus-gold-${facility.facilityId}">通關額外獎勵</label>
                                     <input type="number" id="facility-bonus-gold-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.floor_clear_bonus_gold_per_floor || 0}">
                                 </div>
-                            `).join('')}
-                        </div>
-                    `).join('');
+                            </div>
+                        `;
+                    });
+
+                    facilitiesHtml += '</div>';
+                    facilitiesContainer.innerHTML = facilitiesHtml;
                 } else {
                     facilitiesContainer.innerHTML = '<p class="placeholder-text">找不到設施資料。</p>';
                 }
+                // --- 核心修改處 END ---
                 
                 if (growthSettings && growthSettings.facilities) {
                     const facilityNames = {};
@@ -734,15 +743,21 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             const facilitiesSettings = [];
-            facilitiesContainer.querySelectorAll('div[data-facility-id]').forEach(card => {
-                const facilityId = card.querySelector('input[data-facility-id]').dataset.facilityId;
-                facilitiesSettings.push({
-                    id: facilityId,
-                    cost: parseInt(card.querySelector(`#facility-cost-${facilityId}`).value, 10) || 0,
-                    floor_clear_base_gold: parseInt(card.querySelector(`#facility-base-gold-${facilityId}`).value, 10) || 0,
-                    floor_clear_bonus_gold_per_floor: parseInt(card.querySelector(`#facility-bonus-gold-${facilityId}`).value, 10) || 0,
-                });
+            // --- 核心修改處 START ---
+            // 修改 querySelector 以匹配新的 HTML 結構
+            facilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
+                const facilityId = input.dataset.facilityId;
+                // 防止重複添加
+                if (!facilitiesSettings.some(f => f.id === facilityId)) {
+                    facilitiesSettings.push({
+                        id: facilityId,
+                        cost: parseInt(document.getElementById(`facility-cost-${facilityId}`).value, 10) || 0,
+                        floor_clear_base_gold: parseInt(document.getElementById(`facility-base-gold-${facilityId}`).value, 10) || 0,
+                        floor_clear_bonus_gold_per_floor: parseInt(document.getElementById(`facility-bonus-gold-${facilityId}`).value, 10) || 0,
+                    });
+                }
             });
+            // --- 核心修改處 END ---
 
             saveBtn.disabled = true;
             saveBtn.textContent = '儲存中...';
@@ -1086,10 +1101,7 @@ document.addEventListener('DOMContentLoaded', function() {
             lootTableContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             statGrowthContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             try {
-                // --- 核心修改處 START ---
-                // 將請求的路徑從 settings/ 改為 system/
                 const settings = await fetchAdminAPI('/get_config?file=system/CultivationSettings.json');
-                // --- 核心修改處 END ---
                 
                 dnaFindChanceInput.value = (settings.dna_find_chance * 100).toFixed(1);
                 dnaFindDivisorInput.value = settings.dna_find_duration_divisor;
