@@ -92,7 +92,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
+        data_file_path = os.path.join(os.path.dirname(__file__), '..', 'adventure', 'adventure_islands.json')
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
@@ -297,9 +297,22 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
 
     current_floor = progress.get("current_floor", 1)
     
-    adv_settings = game_configs.get("adventure_settings", {})
-    base_gold = adv_settings.get("floor_clear_base_gold", 50)
-    bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
+    # --- 核心修改處 START ---
+    # 改為從設施資料中讀取獨立的獎勵設定
+    facility_id = progress.get("facility_id")
+    all_islands = game_configs.get("adventure_islands", [])
+    facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == facility_id), None)
+    
+    # 讀取獨立設定，如果找不到，則使用舊的全域設定作為後備
+    if facility_data:
+        base_gold = facility_data.get("floor_clear_base_gold", 50)
+        bonus_per_floor = facility_data.get("floor_clear_bonus_gold_per_floor", 10)
+    else:
+        adv_settings = game_configs.get("adventure_settings", {})
+        base_gold = adv_settings.get("floor_clear_base_gold", 50)
+        bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
+    # --- 核心修改處 END ---
+
     gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
     
     stats = progress.get("expedition_stats")
@@ -325,11 +338,8 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     """
     處理玩家對事件做出的選擇，並返回結果。
     """
-    # --- 核心修改處 START ---
-    # 增加日誌記錄，並對傳入的 choice_id 進行清理
     cleaned_choice_id = choice_id.strip()
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: '{cleaned_choice_id}' (原始: '{choice_id}')")
-    # --- 核心修改處 END ---
     
     progress = player_data.get("adventure_progress")
     if not progress or not progress.get("is_active"):
@@ -347,8 +357,6 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
 
     chosen_outcome = None
     
-    # --- 核心修改處 START ---
-    # 增加日誌，並在比對時也對事件中的 choice_id 進行清理
     adventure_logger.info(f"正在當前事件 '{current_event.get('name')}' 中尋找選項...")
     for choice in current_event.get("choices", []):
         event_choice_id = choice.get("choice_id", "").strip()
@@ -370,17 +378,13 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
             chosen_outcome = random.choices(outcome_pool, weights=weights, k=1)[0]
             adventure_logger.info(f"  - 已根據權重選擇結果。")
             break
-    # --- 核心修改處 END ---
             
     team_members = progress.get("expedition_team", [])
     monster_for_story = random.choice(team_members) if team_members else {"nickname": "隊伍"}
     monster_name_for_story = monster_for_story.get("nickname", "隊伍")
             
     if not chosen_outcome:
-        # --- 核心修改處 START ---
-        # 增加更詳細的日誌，以便追蹤為何沒有選擇任何結果
         adventure_logger.warning(f"事件處理完畢，但 'chosen_outcome' 仍為 None。將返回預設訊息。事件: {current_event.get('name')}, 玩家選擇: {cleaned_choice_id}")
-        # --- 核心修改處 END ---
         outcome_story = "你們的選擇似乎沒有引起任何變化。"
     else:
         raw_story_fragment = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
