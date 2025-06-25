@@ -11,7 +11,7 @@ import random
 
 import math
 
-# 從 player_services 導入 _add_player_log
+# 從 utils_services 導入共用函式
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 
 # 將 _add_player_log 函式移回此檔案
@@ -81,8 +81,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
 
     if dna_fragments_templates:
         # --- 核心修改處 START ---
-        # 篩選出僅為 "普通" 等級的 DNA
-        common_dna_pool = [dna for dna in dna_fragments_templates if dna.get("rarity") == "普通"]
+        # 嚴格篩選出僅為 "普通" 等級的 DNA
+        common_dna_pool = [dna for dna in dna_fragments_templates if dna.get('rarity') == "普通"]
         
         selected_dna = []
         if common_dna_pool:
@@ -91,7 +91,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
             selected_dna = random.sample(common_dna_pool, num_to_select)
             player_services_logger.info(f"為新玩家 {nickname} 隨機選擇了 {num_to_select} 個普通DNA。")
         else:
-            player_services_logger.warning("在遊戲設定中找不到任何'普通'稀有度的DNA，將無法給予初始DNA。")
+            player_services_logger.warning("在遊戲設定中找不到任何'普通'稀有度的DNA，新玩家將不會獲得任何初始DNA。")
 
         for i, template in enumerate(selected_dna):
             instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
