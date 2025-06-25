@@ -15,9 +15,14 @@
     "speed": 100,
     "crit": 10,
     "skills": [
-      { "name": "泰山壓頂", "level": 5 },
-      { "name": "變硬", "level": 5 },
-      { "name": "落石", "level": 7 }
+      {
+        "name": "均衡直拳",
+        "level": 9
+      },
+      {
+        "name": "土石猛擊",
+        "level": 8
+      }
     ],
     "personality": { "name": "頑固的" },
     "score": 800
@@ -38,9 +43,18 @@
     "speed": 200,
     "crit": 15,
     "skills": [
-      { "name": "鐵頭功", "level": 7 },
-      { "name": "鋼翼", "level": 8 },
-      { "name": "空氣斬", "level": 8 }
+      {
+        "name": "鐵拳重擊",
+        "level": 9
+      },
+      {
+        "name": "疾風猛擊",
+        "level": 9
+      },
+      {
+        "name": "鋼刃斬擊",
+        "level": 8
+      }
     ],
     "personality": { "name": "可靠的" },
     "score": 1200
@@ -61,9 +75,18 @@
     "speed": 300,
     "crit": 20,
     "skills": [
-      { "name": "神聖之劍", "level": 8 },
-      { "name": "鏡面外衣", "level": 7 },
-      { "name": "同步干擾", "level": 7 }
+      {
+        "name": "光芒突刺",
+        "level": 10
+      },
+      {
+        "name": "混元衝擊",
+        "level": 9
+      },
+      {
+        "name": "聖輝斬擊",
+        "level": 9
+      }
     ],
     "personality": { "name": "冷静的" },
     "score": 1800
@@ -84,9 +107,18 @@
     "speed": 500,
     "crit": 25,
     "skills": [
-      { "name": "欺詐", "level": 10 },
-      { "name": "大字爆", "level": 10 },
-      { "name": "詭計", "level": 8 }
+      {
+        "name": "暗影突襲",
+        "level": 10
+      },
+      {
+        "name": "火焰拳",
+        "level": 10
+      },
+      {
+        "name": "爆炎衝",
+        "level": 9
+      }
     ],
     "personality": { "name": "傲慢的" },
     "score": 2500
