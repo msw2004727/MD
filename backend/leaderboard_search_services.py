@@ -12,8 +12,6 @@ from .MD_models import (
 
 # 從 MD_firebase_config 導入 db 實例，因為這裡的服務需要與 Firestore 互動
 from . import MD_firebase_config
-# --- 核心修改處：移除不再使用的 FieldFilter 導入 ---
-# from google.cloud.firestore_v1.field_path import FieldPath 
 
 leaderboard_search_services_logger = logging.getLogger(__name__)
 
@@ -53,10 +51,12 @@ def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[
     all_selected_monsters: List[Monster] = []
     try:
         users_ref = db.collection('users')
-        # ----- BUG 修正邏輯 START -----
-        # 預先載入所有 DNA 範本，避免在迴圈中重複讀取
-        all_dna_templates = game_configs.get("dna_fragments", [])
-        # ----- BUG 修正邏輯 END -----
+        
+        # --- 核心修改處 START ---
+        # 預先載入所有 DNA 範本，並轉換成以 ID 為鍵的字典，以便快速查找
+        all_dna_templates_list = game_configs.get("dna_fragments", [])
+        dna_templates_map = {dna['id']: dna for dna in all_dna_templates_list}
+        # --- 核心修改處 END ---
 
         for user_doc in users_ref.stream(): 
             game_data_doc_ref = user_doc.reference.collection('gameData').document('main')
@@ -75,22 +75,21 @@ def get_all_player_selected_monsters_service(game_configs: GameConfigs) -> List[
                                 monster_copy["owner_nickname"] = player_nickname # type: ignore
                                 monster_copy["owner_id"] = user_doc.id # type: ignore
                                 
-                                # ----- BUG 修正邏輯 START -----
-                                # 尋找怪獸頭部對應的 DNA 資訊
-                                head_dna_info = { "type": "無", "rarity": "普通" } # 設定預設值
+                                # --- 核心修改處 START ---
+                                # 優化查詢頭像 DNA 的邏輯
+                                head_dna_info = { "type": "無", "rarity": "普通" } 
                                 constituent_ids = monster_copy.get("constituent_dna_ids", [])
                                 
-                                # 根據遊戲規則，第一個 DNA (索引 0) 對應頭部
                                 if constituent_ids:
                                     head_dna_id = constituent_ids[0]
-                                    head_dna_template = next((dna for dna in all_dna_templates if dna.get("id") == head_dna_id), None)
+                                    # 直接從預載的 map 中查找，效率更高
+                                    head_dna_template = dna_templates_map.get(head_dna_id)
                                     if head_dna_template:
                                         head_dna_info["type"] = head_dna_template.get("type", "無")
                                         head_dna_info["rarity"] = head_dna_template.get("rarity", "普通")
                                 
-                                # 將頭部 DNA 的資訊附加到回傳的怪獸物件中
                                 monster_copy["head_dna_info"] = head_dna_info # type: ignore
-                                # ----- BUG 修正邏輯 END -----
+                                # --- 核心修改處 END ---
 
                                 if "farmStatus" not in monster_copy:
                                     monster_copy["farmStatus"] = {"isTraining": False, "isBattling": False} # type: ignore
