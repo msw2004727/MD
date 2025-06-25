@@ -258,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="data-section"><h3>持有怪獸</h3>${monstersHtml}</div>
                 <div class="data-section"><h3>DNA庫存</h3>${dnaHtml}</div>
                 <div class="save-changes-container">
+                    <button id="grant-exclusive-title-btn" class="button action">授予專屬稱號</button>
                     <button id="send-player-mail-btn" class="button secondary">寄送系統信件</button>
                     <button id="save-player-data-btn" class="button success">儲存玩家數值變更</button>
                 </div>
@@ -373,6 +374,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.disabled = false;
             }
         }
+        
+        // --- 核心修改處 START ---
+        async function handleGrantExclusiveTitle() {
+            if (!currentPlayerData) {
+                alert('請先查詢一位玩家以授予稱號。');
+                return;
+            }
+
+            const titleName = prompt(`請為玩家「${currentPlayerData.nickname}」輸入專屬稱號的名稱：`);
+            if (!titleName) { alert('稱號名稱不能為空。'); return; }
+
+            const titleDesc = prompt(`請輸入稱號「${titleName}」的描述：`);
+            if (!titleDesc) { alert('稱號描述不能為空。'); return; }
+
+            const buffsJson = prompt('請輸入稱號的加成效果 (JSON格式)，例如：\n{"attack": 10, "hp": 50}\n如果沒有加成，請輸入 {}', '{}');
+            if (buffsJson === null) return;
+            
+            try {
+                // 驗證 JSON 格式
+                JSON.parse(buffsJson);
+            } catch (e) {
+                alert(`加成效果的 JSON 格式不正確：${e.message}`);
+                return;
+            }
+
+            const btn = document.getElementById('grant-exclusive-title-btn');
+            btn.disabled = true;
+            btn.textContent = '授予中...';
+
+            try {
+                const result = await fetchAdminAPI('/grant_exclusive_title', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        player_uid: currentPlayerData.uid,
+                        title_name: titleName,
+                        title_description: titleDesc,
+                        buffs_json: buffsJson
+                    })
+                });
+                alert(result.message);
+                // 成功後重新載入玩家資料以顯示新稱號
+                await fetchAndDisplayPlayerData(currentPlayerData.uid);
+            } catch (err) {
+                alert(`授予失敗：${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '授予專屬稱號';
+            }
+        }
+        // --- 核心修改處 END ---
 
         // --- 廣播系統邏輯 ---
         async function loadBroadcastLog() {
@@ -762,17 +813,13 @@ document.addEventListener('DOMContentLoaded', function() {
             finally { DOMElements.generateReportBtn.disabled = false; DOMElements.generateReportBtn.textContent = '重新生成全服數據報表'; }
         }
         
-        // --- 核心修改處 START ---
-        // **新增**：清除所有玩家資料的處理函式
         async function handleWipeAllData() {
-            // 第一層確認
             if (!confirm('您確定要啟動清除所有玩家資料的程序嗎？\n這是一個無法復原的毀滅性操作！')) {
                 return;
             }
 
-            // 第二層：要求輸入密碼
             const enteredPassword = prompt('為確保安全，請輸入您的管理員登入密碼：');
-            if (enteredPassword === null) { // 使用者按下取消
+            if (enteredPassword === null) { 
                 return;
             }
             if (!enteredPassword) {
@@ -780,7 +827,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // 第三層：要求輸入特定字串
             const confirmationPhrase = '確認清除所有資料';
             const finalConfirmation = prompt(`這是最後的警告！此操作將刪除所有玩家帳號與遊戲資料。\n\n如果您完全了解後果，請在下方輸入「${confirmationPhrase}」來繼續：`);
             if (finalConfirmation !== confirmationPhrase) {
@@ -788,19 +834,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // 執行API請求
             DOMElements.wipeAllDataBtn.disabled = true;
             DOMElements.wipeAllDataBtn.textContent = '清除中...請勿關閉視窗';
             
             try {
-                // 注意：API 端點 `/wipe_all_data` 尚未建立，這一步會失敗
                 const result = await fetchAdminAPI('/wipe_all_data', {
                     method: 'POST',
                     body: JSON.stringify({ password: enteredPassword })
                 });
 
                 alert(result.message || '操作成功完成！');
-                // 清除成功後可以考慮自動登出或刷新頁面
                 localStorage.removeItem('admin_token');
                 window.location.reload();
 
@@ -811,7 +854,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 DOMElements.wipeAllDataBtn.textContent = '執行清除程序...';
             }
         }
-        // --- 核心修改處 END ---
 
         // 遊戲機制面板的邏輯
         async function loadGameMechanics() {
@@ -887,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 responseEl.textContent = result.message;
                 responseEl.className = 'admin-response-message success';
             } catch (err) {
-                responseEl.textContent = `儲存失败：${err.message}`;
+                responseEl.textContent = `儲存失敗：${err.message}`;
                 responseEl.className = 'admin-response-message error';
             } finally {
                 responseEl.style.display = 'block';
@@ -902,10 +944,14 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.searchBtn.addEventListener('click', searchPlayer);
         DOMElements.searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') searchPlayer(); });
         DOMElements.searchResultsContainer.addEventListener('click', (e) => { const item = e.target.closest('.search-result-item'); if (item && item.dataset.uid) { fetchAndDisplayPlayerData(item.dataset.uid); } });
+        
+        // 核心修改處：將玩家資料區塊的點擊事件委派到一個處理函式
         DOMElements.dataDisplay.addEventListener('click', (e) => { 
             if (e.target.id === 'save-player-data-btn') handleSavePlayerData(); 
             if (e.target.id === 'send-player-mail-btn') handleSendPlayerMail(); 
+            if (e.target.id === 'grant-exclusive-title-btn') handleGrantExclusiveTitle(); // 新增的事件
         });
+
         if (DOMElements.playerLogFilters) {
             DOMElements.playerLogFilters.addEventListener('click', (e) => {
                 if (e.target.tagName === 'BUTTON') {
@@ -935,12 +981,9 @@ document.addEventListener('DOMContentLoaded', function() {
              initializeConfigEditor(ADMIN_API_URL, adminToken);
         }
         
-        // --- 核心修改處 START ---
-        // 為新按鈕綁定事件
         if (DOMElements.wipeAllDataBtn) {
             DOMElements.wipeAllDataBtn.addEventListener('click', handleWipeAllData);
         }
-        // --- 核心修改處 END ---
         
         if (DOMElements.mechanics.saveBtn) {
             DOMElements.mechanics.saveBtn.addEventListener('click', handleSaveGameMechanics);
