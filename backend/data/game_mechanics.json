@@ -11,15 +11,21 @@
     "diminishing_returns_time_window_seconds": 3600,
     "base_bond_gain_on_completion": 3,
     "exp_gain_duration_divisor": 60,
-    "stat_growth_points_per_chance": [1, 2],
+    "stat_growth_points_per_chance": [
+      1,
+      2
+    ],
     "elemental_bias_multiplier": 1.2
   },
   "absorption_rules": {
     "comment": "戰後吸收系統規則 (目前停用)",
     "score_ratio_min_cap": 0.5,
-    "score_ratio_max_cap": 2.0,
-    "stat_gain_variance": [0.8, 1.2],
-    "max_gain_multiplier_for_non_hpmp": 2.0,
+    "score_ratio_max_cap": 2,
+    "stat_gain_variance": [
+      0.8,
+      1.2
+    ],
+    "max_gain_multiplier_for_non_hpmp": 2,
     "max_hpmp_stat_growth_on_absorb": 1.05,
     "bonus_hpmp_stat_growth_on_absorb": 0.5
   }
