@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 總覽
             generateReportBtn: document.getElementById('generate-report-btn'),
             overviewReportContainer: document.getElementById('overview-report-container'),
-            wipeAllDataBtn: document.getElementById('wipe-all-data-btn'), // **<-- 新增**
+            wipeAllDataBtn: document.getElementById('wipe-all-data-btn'),
             
             // 玩家管理
             searchInput: document.getElementById('player-search-input'),
@@ -142,9 +142,19 @@ document.addEventListener('DOMContentLoaded', function() {
             DOMElements.navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
             DOMElements.contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
             
+            // --- 核心修改處 START ---
+            // 修改後的頁籤切換邏輯
             if (targetId === 'dashboard-home') {
                 if (DOMElements.overviewReportContainer.innerHTML.includes('點擊按鈕')) {
                     handleGenerateReport();
+                }
+            } else if (targetId === 'analytics-dashboard') {
+                // 當切換到營運儀表板時，才呼叫它的初始化函式
+                if (typeof window.initializeAnalyticsDashboard === 'function') {
+                    window.initializeAnalyticsDashboard();
+                } else {
+                    console.error("analytics.js 或 initializeAnalyticsDashboard 函式未載入。");
+                    alert("營運儀表板模組載入失敗，請檢查控制台。");
                 }
             } else if (targetId === 'mail-system') {
                 loadBroadcastLog();
@@ -165,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetId === 'game-mechanics') {
                 loadGameMechanics();
             }
+            // --- 核心修改處 END ---
         }
 
         // --- 日誌監控邏輯 ---
@@ -759,8 +770,7 @@ document.addEventListener('DOMContentLoaded', function() {
             finally { DOMElements.generateReportBtn.disabled = false; DOMElements.generateReportBtn.textContent = '重新生成全服數據報表'; }
         }
         
-        // --- 核心修改處 START ---
-        // **新增**：清除所有玩家資料的處理函式
+        // --- 清除所有玩家資料的處理函式 ---
         async function handleWipeAllData() {
             // 第一層確認
             if (!confirm('您確定要啟動清除所有玩家資料的程序嗎？\n這是一個無法復原的毀滅性操作！')) {
@@ -779,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // 第三層：要求輸入特定字串
             const confirmationPhrase = '確認清除所有資料';
-            const finalConfirmation = prompt(`這是最後的警告！此操作將刪除所有玩家帳號與遊戲資料。\n\n如果您完全了解後果，請在下方輸入「${confirmationPhrase}」來繼續：`);
+            const finalConfirmation = prompt(`這是最後的警告！此操作將刪除所有玩家資料。\n\n如果您完全了解後果，請在下方輸入「${confirmationPhrase}」來繼續：`);
             if (finalConfirmation !== confirmationPhrase) {
                 alert('確認字串輸入錯誤。操作已取消。');
                 return;
@@ -808,7 +818,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 DOMElements.wipeAllDataBtn.textContent = '執行清除程序...';
             }
         }
-        // --- 核心修改處 END ---
 
         // 遊戲機制面板的邏輯
         async function loadGameMechanics() {
@@ -932,12 +941,9 @@ document.addEventListener('DOMContentLoaded', function() {
              initializeConfigEditor(ADMIN_API_URL, adminToken);
         }
         
-        // --- 核心修改處 START ---
-        // 為新按鈕綁定事件
         if (DOMElements.wipeAllDataBtn) {
             DOMElements.wipeAllDataBtn.addEventListener('click', handleWipeAllData);
         }
-        // --- 核心修改處 END ---
         
         if (DOMElements.mechanics.saveBtn) {
             DOMElements.mechanics.saveBtn.addEventListener('click', handleSaveGameMechanics);
