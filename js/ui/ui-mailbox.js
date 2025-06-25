@@ -1,25 +1,14 @@
 // js/ui-mailbox.js
 // 處理信箱系統的 UI 渲染與互動邏輯
 
-// --- DOM 元素定義 ---
-let mailboxDOMElements = {};
-
-function initializeMailboxDOMElements() {
-    mailboxDOMElements = {
-        mailboxModal: document.getElementById('mailbox-modal'),
-        mailListContainer: document.getElementById('mailbox-list-container'),
-        refreshMailboxBtn: document.getElementById('refresh-mailbox-btn'),
-        deleteReadMailsBtn: document.getElementById('delete-read-mails-btn'),
-        
-        mailReaderModal: document.getElementById('mail-reader-modal'),
-        mailReaderTitle: document.getElementById('mail-reader-title'),
-        mailReaderSender: document.getElementById('mail-reader-sender'),
-        mailReaderTimestamp: document.getElementById('mail-reader-timestamp'),
-        mailReaderBody: document.getElementById('mail-reader-modal').querySelector('.mail-content-text'),
-        mailReaderAttachmentsContainer: document.getElementById('mail-reader-attachments'),
-        mailReaderCloseBtn: document.getElementById('mail-reader-modal').querySelector('.button[data-modal-id="mail-reader-modal"]')
-    };
-}
+// --- 核心修改處 START ---
+// 不再需要此檔案獨立的 DOMElements 物件和初始化函式
+// let mailboxDOMElements = {};
+//
+// function initializeMailboxDOMElements() {
+//    ...
+// }
+// --- 核心修改處 END ---
 
 
 /**
@@ -71,7 +60,6 @@ function injectMailboxStyles() {
         body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
              background-color: var(--danger-hover-light);
         }
-        /* --- 核心修改處 START --- */
         /* 附件區塊樣式 */
         #mail-reader-attachments {
             margin-top: 1rem;
@@ -125,7 +113,6 @@ function injectMailboxStyles() {
             color: var(--rarity-legendary-text);
             font-size: 1rem;
         }
-        /* --- 核心修改處 END --- */
     `;
     document.head.appendChild(style);
 }
@@ -156,7 +143,10 @@ async function handleFriendResponse(mailId, action) {
 
 
 function renderMailboxList(mails) {
-    const container = mailboxDOMElements.mailListContainer;
+    // --- 核心修改處 START ---
+    // 改用全局的 DOMElements 物件
+    const container = DOMElements.mailListContainer;
+    // --- 核心修改處 END ---
     if (!container) return;
 
     if (!mails || mails.length === 0) {
@@ -172,12 +162,9 @@ function renderMailboxList(mails) {
         const senderName = mail.sender_name || '系統訊息';
         const mailStatusLight = `<div class="mail-status-light ${statusClass}" title="${statusClass === 'unread' ? '未讀' : '已讀'}"></div>`;
 
-        // --- 核心修改處 START ---
-        // 修正了 'payload' 變數未定義的錯誤，應使用 'mail.payload'
         const hasPayload = mail.payload && ((mail.payload.gold && mail.payload.gold > 0) || (mail.payload.items && mail.payload.items.length > 0));
         const attachmentClass = hasPayload ? 'has-attachment' : '';
         let mailItemClass = `mail-item ${statusClass} ${attachmentClass}`;
-        // --- 核心修改處 END ---
 
         if (mail.type === 'friend_request') {
             mailItemClass += ' friend-request-item';
@@ -221,25 +208,25 @@ async function openMailReader(mailId) {
     }
 
     const senderName = mail.sender_name || '系統通知';
-    mailboxDOMElements.mailReaderTitle.textContent = mail.title;
+    // --- 核心修改處 START ---
+    // 改用全局的 DOMElements 物件
+    DOMElements.mailReaderTitle.textContent = mail.title;
     
     if (senderName === '系統通知') {
-        mailboxDOMElements.mailReaderSender.innerHTML = `<strong style="color: gold;">${senderName}</strong>`;
+        DOMElements.mailReaderSender.innerHTML = `<strong style="color: gold;">${senderName}</strong>`;
     } else {
-        mailboxDOMElements.mailReaderSender.textContent = senderName;
+        DOMElements.mailReaderSender.textContent = senderName;
     }
     
-    mailboxDOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ').replace(/\n/g, '<br>');
+    DOMElements.mailReaderBody.innerHTML = mail.content.replace(/\\n/g, ' ').replace(/\n/g, '<br>');
 
-    mailboxDOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
+    DOMElements.mailReaderTimestamp.textContent = new Date(mail.timestamp * 1000).toLocaleString();
 
-    // --- 核心修改處 START ---
-    // 渲染附件區塊
-    const attachmentsContainer = mailboxDOMElements.mailReaderAttachmentsContainer;
-    const footer = mailboxDOMElements.mailReaderModal.querySelector('.modal-footer');
+    const attachmentsContainer = DOMElements.mailReaderAttachmentsContainer;
+    const footer = DOMElements.mailReaderModal.querySelector('.modal-footer');
+    // --- 核心修改處 END ---
     
     const payload = mail.payload;
-    // 修正了附件判斷邏輯，使其更明確
     const hasAttachments = payload && ((payload.gold && payload.gold > 0) || (payload.items && payload.items.length > 0));
 
     if (hasAttachments) {
@@ -287,9 +274,8 @@ async function openMailReader(mailId) {
             footer.innerHTML = `<button class="button secondary" onclick="hideModal('mail-reader-modal')">關閉</button>`;
         }
     }
-    // --- 核心修改處 END ---
 
-    const closeButton = mailboxDOMElements.mailReaderModal.querySelector('.modal-close');
+    const closeButton = DOMElements.mailReaderModal.querySelector('.modal-close');
     if (closeButton) {
         closeButton.classList.add('system-notification-close-btn');
     }
@@ -333,7 +319,6 @@ async function handleDeleteMail(mailId, event) {
     );
 }
 
-// --- 核心修改處 START ---
 async function handleClaimAttachments(mailId) {
     if (!mailId) return;
 
@@ -359,14 +344,15 @@ async function handleClaimAttachments(mailId) {
         showFeedbackModal('領取失敗', `無法領取附件：${error.message}`);
     }
 }
-// --- 核心修改處 END ---
 
 function initializeMailboxEventHandlers() {
-    initializeMailboxDOMElements();
+    // --- 核心修改處 START ---
+    // initializeMailboxDOMElements(); // 這行已不再需要
+    // --- 核心修改處 END ---
     injectMailboxStyles();
     
-    if (mailboxDOMElements.refreshMailboxBtn) {
-        mailboxDOMElements.refreshMailboxBtn.onclick = async () => {
+    if (DOMElements.refreshMailboxBtn) {
+        DOMElements.refreshMailboxBtn.onclick = async () => {
             showFeedbackModal('刷新中...', '正在重新收取信件...', true);
             await refreshPlayerData();
             renderMailboxList(gameState.playerData?.mailbox || []);
@@ -375,8 +361,8 @@ function initializeMailboxEventHandlers() {
         };
     }
 
-    if (mailboxDOMElements.deleteReadMailsBtn) {
-        mailboxDOMElements.deleteReadMailsBtn.onclick = async () => {
+    if (DOMElements.deleteReadMailsBtn) {
+        DOMElements.deleteReadMailsBtn.onclick = async () => {
             const readMails = gameState.playerData?.mailbox?.filter(m => m.is_read) || [];
             if (readMails.length === 0) {
                 showFeedbackModal('提示', '沒有已讀的信件可以刪除。');
@@ -429,19 +415,17 @@ function initializeMailboxEventHandlers() {
         });
     }
 
-    setupMailboxEventListeners(mailboxDOMElements.mailListContainer);
+    setupMailboxEventListeners(DOMElements.mailListContainer);
 
-    if (mailboxDOMElements.mailReaderModal) {
-        mailboxDOMElements.mailReaderModal.addEventListener('click', (event) => {
+    if (DOMElements.mailReaderModal) {
+        DOMElements.mailReaderModal.addEventListener('click', (event) => {
             const replyBtn = event.target.closest('.reply-mail-btn');
             const closeBtn = event.target.closest('.modal-close');
-            // --- 核心修改處 START ---
             const claimBtn = event.target.closest('#claim-attachments-btn');
 
             if (claimBtn) {
                 handleClaimAttachments(claimBtn.dataset.mailId);
             } else if (replyBtn) {
-            // --- 核心修改處 END ---
                 const senderId = replyBtn.dataset.senderId;
                 const senderName = replyBtn.dataset.senderName;
                 if (senderId && senderName && typeof openSendMailModal === 'function') {
