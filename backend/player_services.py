@@ -11,20 +11,11 @@ import random
 
 import math
 
-# --- 核心修改處 START ---
-# 移除從 utils_services 導入 _add_player_log
+# 從 player_services 導入 _add_player_log
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
-# --- 核心修改處 END ---
 
-from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry, PlayerLogEntry
-from .champion_services import get_champions_data, update_champions_document
-
-player_services_logger = logging.getLogger(__name__)
-
-
-# --- 核心修改處 START ---
 # 將 _add_player_log 函式移回此檔案
-def _add_player_log(player_data: PlayerGameData, category: str, message: str):
+def _add_player_log(player_data: Dict[str, Any], category: str, message: str):
     """
     為指定的玩家資料物件新增一條日誌。
     """
@@ -37,18 +28,17 @@ def _add_player_log(player_data: PlayerGameData, category: str, message: str):
         # 從最舊的日誌開始移除 (pop(0) 移除列表頭部)
         player_data["playerLogs"] = player_data["playerLogs"][-(MAX_LOGS-1):]
 
-    new_log: PlayerLogEntry = {
+    new_log: Dict[str, Any] = {
         "timestamp": int(time.time()),
         "category": category,
         "message": message,
     }
     # 將新日誌加到列表尾部
     player_data["playerLogs"].append(new_log)
-# --- 核心修改處 END ---
 
 
 # --- 預設遊戲設定 (保持不變) ---
-DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
+DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: Dict[str, Any] = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
     "skills": {}, 
@@ -62,7 +52,7 @@ DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "absorption_config": {}, "cultivation_config": {}, "elemental_advantage_chart": {},
 }
 
-def initialize_new_player_data(player_id: str, nickname: str, game_configs: GameConfigs) -> PlayerGameData:
+def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict[str, Any]) -> Dict[str, Any]:
     """為新玩家初始化遊戲資料。"""
     player_services_logger.info(f"為新玩家 {nickname} (ID: {player_id}) 初始化遊戲資料。")
     
@@ -72,7 +62,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     if not default_title_object:
         default_title_object = {"id": "title_001", "name": "新手", "description": "踏入怪獸異世界的第一步。", "condition": {"type": "default", "value": 0}, "buffs": {}}
 
-    player_stats: PlayerStats = {
+    player_stats: Dict[str, Any] = {
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0, "titles": [default_title_object], 
         "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname,
         "equipped_title_id": default_title_object["id"], "gold": game_configs.get("value_settings", {}).get("starting_gold", 500),
@@ -82,25 +72,34 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
         "flawless_victories": 0, "special_victories": {}, "last_champion_reward_timestamp": 0
     }
 
-    value_settings: ValueSettings = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"]) # type: ignore
+    value_settings: Dict[str, Any] = game_configs.get("value_settings", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["value_settings"])
     max_inventory_slots = value_settings.get("max_inventory_slots", 12)
-    initial_dna_owned: List[Optional[PlayerOwnedDNA]] = [None] * max_inventory_slots
+    initial_dna_owned: List[Optional[Dict[str, Any]]] = [None] * max_inventory_slots
 
-    dna_fragments_templates: List[DNAFragment] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["dna_fragments"]) # type: ignore
+    dna_fragments_templates: List[Dict[str, Any]] = game_configs.get("dna_fragments", DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER["dna_fragments"])
     num_initial_dna = 6
 
     if dna_fragments_templates:
-        eligible_dna_templates = [dna for dna in dna_fragments_templates if dna.get("rarity") in ["普通", "稀有"]]
-        if not eligible_dna_templates: eligible_dna_templates = list(dna_fragments_templates) 
-        for i in range(min(num_initial_dna, len(eligible_dna_templates), max_inventory_slots)):
-            if not eligible_dna_templates: break
-            template = random.choice(eligible_dna_templates)
-            instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
-            owned_dna_item: PlayerOwnedDNA = {**template, "id": instance_id, "baseId": template["id"]} # type: ignore
-            initial_dna_owned[i] = owned_dna_item
-            pass
+        # --- 核心修改處 START ---
+        # 篩選出僅為 "普通" 等級的 DNA
+        common_dna_pool = [dna for dna in dna_fragments_templates if dna.get("rarity") == "普通"]
+        
+        selected_dna = []
+        if common_dna_pool:
+            # 從普通DNA池中隨機選擇，確保不重複
+            num_to_select = min(len(common_dna_pool), num_initial_dna)
+            selected_dna = random.sample(common_dna_pool, num_to_select)
+            player_services_logger.info(f"為新玩家 {nickname} 隨機選擇了 {num_to_select} 個普通DNA。")
+        else:
+            player_services_logger.warning("在遊戲設定中找不到任何'普通'稀有度的DNA，將無法給予初始DNA。")
 
-    new_player_data: PlayerGameData = {
+        for i, template in enumerate(selected_dna):
+            instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
+            owned_dna_item: Dict[str, Any] = {**template, "id": instance_id, "baseId": template["id"]}
+            initial_dna_owned[i] = owned_dna_item
+        # --- 核心修改處 END ---
+
+    new_player_data: Dict[str, Any] = {
         "playerOwnedDNA": initial_dna_owned, "farmedMonsters": [], "playerStats": player_stats,
         "nickname": nickname, "lastSave": int(time.time()), "lastSeen": int(time.time()),
         "selectedMonsterId": None, "friends": [], "dnaCombinationSlots": [None] * 5,
@@ -109,10 +108,10 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
     
-    player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
+    player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {len([d for d in initial_dna_owned if d])} 個初始 DNA。")
     return new_player_data
 
-def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], bool]:
+def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], bool]:
     """獲取玩家遊戲資料，如果不存在則初始化並儲存。返回 (玩家資料, 是否為新玩家) 的元組。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
@@ -169,6 +168,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if is_self_request:
                 _add_player_log(player_game_data_dict, "系統", "玩家登入或活動。")
 
+                from .champion_services import get_champions_data
                 champions_data = get_champions_data()
                 player_rank = 0
                 champion_slot_info = None
@@ -238,7 +238,10 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                     all_titles_config = game_configs.get("titles", [])
                     default_title_obj = next((t for t in all_titles_config if t.get("id") == "title_001"), None)
                     if default_title_obj:
-                        player_stats["titles"] = [default_title_obj]
+                        if "titles" not in player_stats or not isinstance(player_stats["titles"], list):
+                            player_stats["titles"] = []
+                        if not any(t.get("id") == default_title_obj["id"] for t in player_stats["titles"]):
+                            player_stats["titles"].insert(0, default_title_obj)
                         default_equip_id = default_title_obj["id"]
                 if default_equip_id:
                     player_stats["equipped_title_id"] = default_equip_id
@@ -265,7 +268,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                         if monster.get("custom_element_nickname"):
                             monster["element_nickname_part"] = monster["custom_element_nickname"]
                         else:
-                            primary_element: ElementTypes = monster.get("elements", ["無"])[0] 
+                            primary_element: "ElementTypes" = monster.get("elements", ["無"])[0] 
                             monster_rarity = monster.get("rarity", "普通")
                             rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
                             possible_nicknames = rarity_specific_nicknames.get(monster_rarity, [primary_element])
@@ -293,7 +296,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             if len(loaded_dna) < max_inventory_slots: loaded_dna.extend([None] * (max_inventory_slots - len(loaded_dna)))
             elif len(loaded_dna) > max_inventory_slots: loaded_dna = loaded_dna[:max_inventory_slots]
 
-            player_game_data: PlayerGameData = {
+            player_game_data: Dict[str, Any] = {
                 "playerOwnedDNA": loaded_dna, "farmedMonsters": player_game_data_dict.get("farmedMonsters", []),
                 "playerStats": player_stats, "nickname": authoritative_nickname,
                 "lastSave": player_game_data_dict.get("lastSave", int(time.time())),
@@ -321,7 +324,7 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         player_services_logger.error(f"獲取玩家資料時發生錯誤 ({player_id}): {e}", exc_info=True)
         return None, False
 
-def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
+def save_player_data_service(player_id: str, game_data: Dict[str, Any]) -> bool:
     """儲存玩家遊戲資料到 Firestore，並同步更新頂層的 lastSeen。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
@@ -334,11 +337,12 @@ def save_player_data_service(player_id: str, game_data: PlayerGameData) -> bool:
         current_data_doc = db.collection('users').document(player_id).collection('gameData').document('main').get()
         if current_data_doc.exists:
             current_data = current_data_doc.to_dict()
-            old_selected_id = current_data.get("selectedMonsterId")
+            old_selected_id = current_data.get("selectedMonsterId") if current_data else None
             new_selected_id = game_data.get("selectedMonsterId")
 
             if old_selected_id and old_selected_id != new_selected_id:
                 player_services_logger.info(f"玩家 {player_id} 更換出戰怪獸：從 {old_selected_id} 更換為 {new_selected_id}。檢查冠軍席位...")
+                from .champion_services import get_champions_data, update_champions_document
                 champions_data = get_champions_data()
                 was_champion = False
                 for i in range(1, 5):
@@ -450,7 +454,7 @@ def get_friends_statuses_service(friend_ids: List[str]) -> Dict[str, Optional[in
 
     return statuses
 
-def add_note_service(player_data: PlayerGameData, target_type: str, note_content: str, monster_id: Optional[str] = None) -> Optional[PlayerGameData]:
+def add_note_service(player_data: Dict[str, Any], target_type: str, note_content: str, monster_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """新增一條註記到玩家或指定的怪獸。"""
     if not note_content.strip():
         player_services_logger.warning("嘗試新增一條空的註記，操作已取消。")
@@ -460,7 +464,7 @@ def add_note_service(player_data: PlayerGameData, target_type: str, note_content
         player_services_logger.warning(f"註記內容長度超過100字元上限 (長度: {len(note_content)})，操作已取消。")
         return None 
 
-    new_note: NoteEntry = {"timestamp": int(time.time()), "content": note_content}
+    new_note: Dict[str, Any] = {"timestamp": int(time.time()), "content": note_content}
 
     if target_type == "player":
         if "playerNotes" not in player_data or not isinstance(player_data.get("playerNotes"), list):
