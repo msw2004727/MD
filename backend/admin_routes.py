@@ -64,7 +64,7 @@ def admin_login():
 @admin_bp.route('/player_data', methods=['GET', 'OPTIONS'])
 @token_required
 def get_admin_player_data_route():
-    from .player_services import get_player_data_service
+    from .services.player_services import get_player_data_service
     uid = request.args.get('uid')
     if not uid:
         return jsonify({"error": "請求中缺少玩家 UID"}), 400
@@ -79,7 +79,7 @@ def get_admin_player_data_route():
 @admin_bp.route('/player_data/<string:uid>', methods=['POST', 'OPTIONS'])
 @token_required
 def update_admin_player_data_route(uid):
-    from .player_services import save_player_data_service
+    from .services.player_services import save_player_data_service
     data_to_save = request.get_json()
     if not data_to_save:
         return jsonify({"error": "請求中沒有要儲存的資料"}), 400
@@ -235,7 +235,6 @@ def recall_mail_route():
         current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @admin_bp.route('/delete_cs_mail/<string:mail_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
 def delete_cs_mail_route(mail_id):
@@ -261,4 +260,3 @@ def delete_cs_mail_route(mail_id):
     except Exception as e:
         current_app.logger.error(f"刪除客服信件 {mail_id} 時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "刪除信件時發生內部錯誤。"}), 500
-# --- 核心修改處 END ---

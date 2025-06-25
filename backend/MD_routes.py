@@ -13,7 +13,12 @@ from typing import List, Dict, Any, Tuple
 
 from flask_cors import cross_origin
 
-from .player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
+# --- 核心修改處 START ---
+# 更新 services 的 import 路徑
+from .services.player_services import get_player_data_service, save_player_data_service, draw_free_dna, get_friends_statuses_service, add_note_service
+from .services.MD_config_services import load_all_game_configs_from_firestore
+# --- 核心修改處 END ---
+
 from .friend_services import send_friend_request_service, respond_to_friend_request_service, remove_friend_service
 from .monster_combination_services import combine_dna_service 
 from .monster_nickname_services import update_monster_custom_element_nickname_service
@@ -28,7 +33,6 @@ from .leaderboard_search_services import (
     search_players_service,
     get_all_player_selected_monsters_service
 )
-from .MD_config_services import load_all_game_configs_from_firestore
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs
 from .post_battle_services import process_battle_results
 
@@ -39,7 +43,10 @@ routes_logger = logging.getLogger(__name__)
 def _get_game_configs_data_from_app_context():
     if 'MD_GAME_CONFIGS' not in current_app.config:
         routes_logger.warning("MD_GAME_CONFIGS 未在 current_app.config 中找到，將嘗試即時載入。")
-        from .MD_config_services import load_all_game_configs_from_firestore as load_configs_inner
+        # --- 核心修改處 START ---
+        # 更新 services 的 import 路徑
+        from .services.MD_config_services import load_all_game_configs_from_firestore as load_configs_inner
+        # --- 核心修改處 END ---
         current_app.config['MD_GAME_CONFIGS'] = load_configs_inner()
     return current_app.config['MD_GAME_CONFIGS']
 

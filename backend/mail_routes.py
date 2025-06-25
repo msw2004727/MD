@@ -5,10 +5,10 @@ import logging
 from flask import Blueprint, jsonify, request
 
 # 從專案的其他模組導入
-from .player_services import get_player_data_service, save_player_data_service
 # --- 核心修改處 START ---
-# 導入新建立的 send_mail_to_player_service 與 claim_mail_attachments_service 服務
-from .mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read, send_mail_to_player_service, claim_mail_attachments_service
+# 更新 services 的 import 路徑
+from .services.player_services import get_player_data_service, save_player_data_service
+from .services.mail_services import add_mail_to_player, delete_mail_from_player, mark_mail_as_read, send_mail_to_player_service, claim_mail_attachments_service
 # --- 核心修改處 END ---
 from .MD_routes import _get_authenticated_user_id, _get_game_configs_data_from_app_context
 
@@ -103,7 +103,7 @@ def send_mail_route():
         return jsonify({"error": "請求中缺少必要的欄位 (recipient_id, title, content)。"}), 400
 
     # 呼叫服務層的寄信函式
-    success = send_mail_to_player_service(
+    success, error_msg = send_mail_to_player_service(
         sender_id=sender_id,
         sender_nickname=sender_nickname,
         recipient_id=recipient_id,
@@ -118,7 +118,6 @@ def send_mail_route():
         # 服務層內部會記錄詳細錯誤，這裡只返回通用失敗訊息
         return jsonify({"error": "寄信失敗，可能是收件人不存在或伺服器內部錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @mail_bp.route('/<mail_id>/claim', methods=['POST'])
 def claim_attachments_route(mail_id: str):
     """
@@ -149,4 +148,3 @@ def claim_attachments_route(mail_id: str):
         return jsonify(response_data), 200
     else:
         return jsonify({"error": "領取附件後儲存玩家資料失敗。"}), 500
-# --- 核心修改處 END ---
