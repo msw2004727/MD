@@ -39,7 +39,8 @@ CONFIG_FILE_FIRESTORE_MAP = {
 LOCAL_CONFIG_FILES = (
     "adventure_settings.json", 
     "adventure_islands.json",
-    "adventure_growth_settings.json"
+    "adventure_growth_settings.json",
+    "game_mechanics.json"
 )
 # --- 核心修改處 END ---
 
