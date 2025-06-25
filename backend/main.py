@@ -15,15 +15,13 @@ import logging
 
 from backend.logging_config import setup_logging
 
-# --- 【核心修改處】導入所有功能的藍圖 ---
+# 導入所有功能的藍圖
 from backend.MD_routes import md_bp
 from backend.champion_routes import champion_bp 
 from backend.mail_routes import mail_bp
 from backend.adventure_routes import adventure_bp 
 from backend.admin_routes import admin_bp
 from backend.config_editor_routes import config_editor_bp
-# --- 新增：導入 analytics_bp ---
-from backend.analytics.analytics_routes import analytics_bp
 
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
@@ -32,29 +30,31 @@ setup_logging()
 app_logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
-# --- 【核心修改處】註冊所有藍圖 ---
+# 註冊所有藍圖
 app.register_blueprint(md_bp)
 app.register_blueprint(champion_bp) 
 app.register_blueprint(mail_bp)
 app.register_blueprint(adventure_bp)
 app.register_blueprint(admin_bp) 
 app.register_blueprint(config_editor_bp)
-# --- 新增：註冊 analytics_bp ---
-app.register_blueprint(analytics_bp)
 
 
-# --- CORS 配置 (移動至此處) ---
+# --- 核心修改處 START ---
+# 在 CORS 設定中，加入您新的遊戲網址
 CORS(app, resources={r"/api/*": {
     "origins": [
-        "https://msw2004727.github.io",
-        re.compile(r"http://localhost:.*"), # 允許所有來自 localhost 的請求
-        re.compile(r"http://127.0.0.1:.*") # 允許所有來自 127.0.0.1 的請求
+        "https://msw2004727.github.io",          # 舊的網址 (建議保留一段時間)
+        "https://msw2004727.github.io/Mai",      # 您部署前端的新網址
+        "https://msw2004727.github.io/Mai/",     # 同上，加上斜線以確保相容性
+        re.compile(r"http://localhost:.*"),      # 允許本地開發測試
+        re.compile(r"http://127.0.0.1:.*")     # 允許本地開發測試
     ],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization"],
     "supports_credentials": True
 }})
 app_logger.info(f"CORS configured to allow specific origins for /api/* path.")
+# --- 核心修改處 END ---
 
 
 # --- Firebase Admin SDK 初始化 ---
