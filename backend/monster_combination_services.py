@@ -10,6 +10,11 @@ import copy
 
 from datetime import datetime, timedelta, timezone
 
+# --- 核心修改處 START ---
+# 導入我們新的事件紀錄服務
+from .analytics.analytics_services import log_event
+# --- 核心修改處 END ---
+
 from .MD_models import (
     PlayerGameData, PlayerStats, PlayerOwnedDNA,
     Monster, Skill, DNAFragment, RarityDetail, Personality,
@@ -141,9 +146,19 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
         
+        # --- 核心修改處 START ---
+        # 紀錄怪獸合成事件
+        log_event('monster_created', {
+            'uid': player_id,
+            'rarity': new_monster_instance.get('rarity'),
+            'elements': new_monster_instance.get('elements'),
+            'source': 'combination'
+        })
+        log_event('combination_completed', {'uid': player_id, 'is_new_recipe': False})
+        # --- 核心修改處 END ---
+
         return {"monster": new_monster_instance}
 
     else:
@@ -281,7 +296,17 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
+
+        # --- 核心修改處 START ---
+        # 紀錄怪獸合成事件 (新配方)
+        log_event('monster_created', {
+            'uid': player_id,
+            'rarity': new_monster_instance.get('rarity'),
+            'elements': new_monster_instance.get('elements'),
+            'source': 'combination'
+        })
+        log_event('combination_completed', {'uid': player_id, 'is_new_recipe': True})
+        # --- 核心修改處 END ---
 
         return {"monster": new_monster_instance}
