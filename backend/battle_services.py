@@ -89,7 +89,8 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
         player_stats = player_data.get("playerStats", {})
         equipped_id = player_stats.get("equipped_title_id")
         if equipped_id:
-            equipped_title = next((t for t in player_stats.get("titles", []) if t.get("id") == equipped_id), None)
+            all_titles_config = game_configs.get("titles", [])
+            equipped_title = next((t for t in all_titles_config if t.get("id") == equipped_id), None)
             if equipped_title and equipped_title.get("buffs"):
                 title_buffs = equipped_title.get("buffs", {})
 
@@ -220,7 +221,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             
             if special_logic_id == "ignore_defense_buffs":
                 defense_stat = max(1, target.get("defense", 1))
-                log_parts.append(f" 攻擊無視了 **{target['nickname']}** 的防禦提升！")
+                log_parts.append(f" 攻擊無視了 {target['nickname']} 的防禦提升！")
             else:
                 defense_stat = max(1, defender_stats.get("defense", 1))
 
@@ -241,11 +242,11 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             if element_multiplier > 1.0: advantage_text = " 效果絕佳！"
             elif element_multiplier < 1.0: advantage_text = " 效果不太好..."
 
-            log_parts.append(f"對 **{target['nickname']}** 造成了 <damage>{final_damage}</damage> 點傷害。{advantage_text}")
+            log_parts.append(f"對 {target['nickname']} 造成了 <damage>{final_damage}</damage> 點傷害。{advantage_text}")
 
         elif effect.get("type") == "apply_status":
             if random.random() <= effect.get("chance", 1.0):
-                all_conditions_templates = game_configs.get("health_conditions", [])
+                all_conditions_templates = game_configs.get("status_effects", [])
                 status_template = next((s for s in all_conditions_templates if s.get("id") == effect.get("status_id")), None)
                 if status_template and not any(cond.get("id") == effect.get("status_id") for cond in effect_target_monster.get("healthConditions", [])):
                     duration_str = str(effect.get("duration", status_template.get("duration_turns", "1")))
@@ -301,7 +302,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
                 recoil_damage = int(damage_dealt * recoil_factor)
                 if recoil_damage > 0:
                     performer["current_hp"] = max(0, performer.get("current_hp", 0) - recoil_damage)
-                    log_parts.append(f" **{performer['nickname']}**也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
+                    log_parts.append(f" {performer['nickname']}也因反作用力受到了 <damage>{recoil_damage}</damage> 點傷害！")
             
             elif special_id == "sandstorm":
                 duration = effect.get("duration", 5)
@@ -320,7 +321,7 @@ def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> 
     if not monster.get("healthConditions"):
         return skip_turn, log_messages
 
-    all_conditions_templates = game_configs.get("health_conditions", [])
+    all_conditions_templates = game_configs.get("status_effects", [])
     new_conditions = []
     for active_condition in monster.get("healthConditions", []):
         condition_template = next((c for c in all_conditions_templates if c.get("id") == active_condition.get("id")), None)
@@ -328,19 +329,19 @@ def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> 
 
         if condition_template.get("chance_to_skip_turn", 0) > 0 and random.random() < condition_template["chance_to_skip_turn"]:
             skip_turn = True
-            log_messages.append(f"- **{monster['nickname']}** 因**{condition_template['name']}**狀態而無法行動！")
+            log_messages.append(f"- {monster['nickname']} 因{condition_template['name']}狀態而無法行動！")
 
         effects = condition_template.get("effects", {})
         if effects.get("hp_per_turn", 0) != 0:
             hp_change = effects["hp_per_turn"]
             monster["current_hp"] = max(0, monster.get("current_hp", 0) + hp_change)
-            log_messages.append(f"- **{monster['nickname']}** 因**{condition_template['name']}**狀態{'損失' if hp_change < 0 else '恢復'}了 <damage>{abs(hp_change)}</damage> 點HP。")
+            log_messages.append(f"- {monster['nickname']} 因{condition_template['name']}狀態{'損失' if hp_change < 0 else '恢復'}了 <damage>{abs(hp_change)}</damage> 點HP。")
             
         if active_condition.get("duration", 99) > 1:
             active_condition["duration"] -= 1
             new_conditions.append(active_condition)
         else:
-            log_messages.append(f"- **{monster['nickname']}** 的**{condition_template['name']}**狀態解除了。")
+            log_messages.append(f"- {monster['nickname']} 的{condition_template['name']}狀態解除了。")
             
     monster["healthConditions"] = new_conditions
     return skip_turn, log_messages
@@ -358,7 +359,7 @@ def _process_end_of_turn_effects(battle_state: Dict[str, Any], player_monster: M
             if "土" not in monster.get("elements", []) and "金" not in monster.get("elements", []):
                 damage = math.floor(monster.get("initial_max_hp", 100) / 16)
                 monster["current_hp"] = max(0, monster.get("current_hp", 0) - damage)
-                log_parts.append(f"- **{monster['nickname']}** 被沙塵暴捲入，受到了 <damage>{damage}</damage> 點傷害。")
+                log_parts.append(f"- {monster['nickname']} 被沙塵暴捲入，受到了 <damage>{damage}</damage> 點傷害。")
 
     if weather.get("duration", 0) > 0:
         weather["duration"] -= 1
@@ -450,16 +451,16 @@ def simulate_battle_full(
             effective_skill = get_effective_skill_with_level(chosen_skill_template, chosen_skill_template.get("level", 1))
 
             performer["current_mp"] -= effective_skill.get("mp_cost", 0)
-            log_parts = [f"- **{performer['nickname']}** 使用了 Lv{effective_skill.get('level', 1)} **{effective_skill['name']}**！"]
+            log_parts = [f"- {performer['nickname']} 使用了 Lv{effective_skill.get('level', 1)} {effective_skill['name']}！"]
             action_details = {"performer_data": performer_pd, "target_data": target_pd}
 
             accuracy = effective_skill.get("accuracy", 95)
             if accuracy != "auto" and random.randint(1, 100) > accuracy:
-                log_parts.append(f" 但是攻擊被 **{target['nickname']}** 閃過了！")
+                log_parts.append(f" 但是攻擊被 {target['nickname']} 閃過了！")
             else:
                 is_crit = random.randint(1, 100) <= _get_monster_current_stats(performer, performer_pd, game_configs)["crit"]
                 action_details["is_crit"] = is_crit
-                if is_crit: log_parts.append(" **是會心一擊！**")
+                if is_crit: log_parts.append(" 是會心一擊！")
 
                 _apply_skill_effects(performer, target, effective_skill, effective_skill.get("effects", []), game_configs, action_details, log_parts, battle_state)
 
