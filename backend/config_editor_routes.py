@@ -120,3 +120,25 @@ def save_adventure_growth_settings_route():
             return jsonify({"error": error}), 500
             
     return secured_save_adventure_growth_settings()
+
+# --- 核心修改處 START ---
+@config_editor_bp.route('/save_elemental_advantage', methods=['POST', 'OPTIONS'])
+def save_elemental_advantage_route():
+    from .admin_routes import token_required
+    from .config_editor_services import save_elemental_advantage_service
+    
+    @token_required
+    def secured_save_elemental_advantage():
+        chart_data = request.get_json()
+        if not chart_data:
+            return jsonify({"error": "請求中缺少克制表資料。"}), 400
+        
+        success, error = save_elemental_advantage_service(chart_data)
+        
+        if success:
+            return jsonify({"success": True, "message": "屬性克制表已成功儲存並重新載入。"}), 200
+        else:
+            return jsonify({"error": error}), 500
+            
+    return secured_save_elemental_advantage()
+# --- 核心修改處 END ---
