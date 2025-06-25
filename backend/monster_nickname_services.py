@@ -89,19 +89,15 @@ def update_monster_custom_element_nickname_service(
 
     element_nickname_part_for_full_name = monster_to_update["element_nickname_part"]
 
-    # ----- BUG 修正邏輯 START -----
-    # 直接從怪獸物件本身讀取它誕生時的「玩家稱號」和「怪獸成就」，而不是重新抓取玩家當前的稱號
-    player_title_part = monster_to_update.get("player_title_part", "新手")
-    monster_achievement_part = monster_to_update.get("achievement_part", "新秀")
-    # ----- BUG 修正邏輯 END -----
-
-    # 使用正確的、儲存在怪獸身上的零件來重新組合完整名稱
+    # --- 核心修改處 START ---
+    # 使用空字串作為參數，以符合新的命名規則
     monster_to_update["nickname"] = generate_monster_full_nickname(
-        player_title_part, 
-        monster_achievement_part, 
+        "", 
+        "", 
         element_nickname_part_for_full_name, # type: ignore
         naming_constraints
     )
+    # --- 核心修改處 END ---
 
     player_data["farmedMonsters"][monster_idx] = monster_to_update # type: ignore
     monster_nickname_services_logger.info(f"怪獸 {monster_id} 的自定義屬性名已在服務層更新為 '{monster_to_update['custom_element_nickname']}'，完整暱稱更新為 '{monster_to_update['nickname']}'。等待路由層儲存。")
