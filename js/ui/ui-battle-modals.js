@@ -23,12 +23,6 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         return;
     }
 
-    // --- 核心修改處 START ---
-    // 移除此處多餘的變數宣告，將在需要時直接呼叫共用函式
-    // const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
-    // const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
-    // --- 核心修改處 END ---
-
     function formatBasicText(text) {
         if (!text) return '';
         return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -44,10 +38,6 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         if (!text) return '(內容為空)';
         let styledText = text;
 
-        // --- 核心修改處 START ---
-        // 移除舊的、重複的 replaceName 函式與其呼叫
-        
-        // 使用新的、統一的邏輯
         if (playerMon && playerMon.nickname) {
             const playerStyledName = getMonsterDisplayName(playerMon, gameState.gameConfigs);
             const searchRegex = new RegExp(playerMon.nickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
@@ -58,7 +48,6 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
             const searchRegex = new RegExp(opponentMon.nickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
             styledText = styledText.replace(searchRegex, opponentStyledName);
         }
-        // --- 核心修改處 END ---
         
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
@@ -82,6 +71,11 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
             }
         });
 
+        // --- 核心修改處 START ---
+        // 新增此行，將剩餘未被處理的 **文字** 轉換為 <strong>文字</strong>
+        styledText = styledText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // --- 核心修改處 END ---
+        
         styledText = styledText.replace(/<damage>(.*?)<\/damage>/g, '<span class="battle-damage-value">-$1</span>');
         styledText = styledText.replace(/<heal>(.*?)<\/heal>/g, '<span class="battle-heal-value">+$1</span>');
 
@@ -105,10 +99,7 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
     const renderMonsterStats = (monster, isPlayer) => {
         if (!monster) return '<div>對手資料錯誤</div>';
         
-        // --- 核心修改處 START ---
-        // 在函式內部直接呼叫共用函式，確保每次都拿到正確的HTML
         const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
-        // --- 核心修改處 END ---
 
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
@@ -227,11 +218,8 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         const playerRarityKey = playerMonsterData.rarity ? (rarityMap[playerMonsterData.rarity] || 'common') : 'common';
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityMap[opponentMonsterData.rarity] || 'common') : 'common';
         
-        // --- 核心修改處 START ---
-        // 呼叫共用函式來獲取顯示名稱
         const playerDisplayNameForTurn = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
         const opponentDisplayNameForTurn = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
-        // --- 核心修改處 END ---
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             const playerStatusTags = createStatusTagsHTML(turn.playerStatus.statusText);
