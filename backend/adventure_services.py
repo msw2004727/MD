@@ -92,7 +92,10 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        data_file_path = os.path.join(os.path.dirname(__file__), '..', 'adventure', 'adventure_islands.json')
+        # --- 核心修改處 START ---
+        # 修正檔案路徑，移除 '..'，讓路徑從 backend/ 指向 backend/adventure/
+        data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
+        # --- 核心修改處 END ---
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
