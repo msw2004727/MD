@@ -1,3 +1,5 @@
+// admin/dashboard.js
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // 將所有初始化和事件綁定邏輯封裝在一個主函式中
@@ -72,6 +74,24 @@ document.addEventListener('DOMContentLoaded', function() {
             // 日誌監控
             logDisplayContainer: document.getElementById('log-display-container'),
             refreshLogsBtn: document.getElementById('refresh-logs-btn'),
+
+            // --- 核心修改處 START ---
+            // 遊戲機制
+            mechanics: {
+                critMultiplier: document.getElementById('mech-crit-multiplier'),
+                dmgFormulaBase: document.getElementById('mech-dmg-formula-base'),
+                dmgFormulaScaling: document.getElementById('mech-dmg-formula-scaling'),
+                cultDiminishBase: document.getElementById('mech-cult-diminish-base'),
+                cultDiminishWindow: document.getElementById('mech-cult-diminish-window'),
+                cultBondGain: document.getElementById('mech-cult-bond-gain'),
+                expGainDivisor: document.getElementById('mech-exp-gain-divisor'),
+                statPointsMin: document.getElementById('mech-stat-points-min'),
+                statPointsMax: document.getElementById('mech-stat-points-max'),
+                elementBias: document.getElementById('mech-element-bias'),
+                saveBtn: document.getElementById('save-mechanics-btn'),
+                responseEl: document.getElementById('mechanics-response'),
+            }
+            // --- 核心修改處 END ---
         };
 
         // --- 通用函式 ---
@@ -143,6 +163,10 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetId === 'log-monitoring') {
                 loadAndDisplayLogs();
                 logIntervalId = setInterval(loadAndDisplayLogs, 10000);
+            // --- 核心修改處 START ---
+            } else if (targetId === 'game-mechanics') {
+                loadGameMechanics();
+            // --- 核心修改處 END ---
             }
         }
 
@@ -675,7 +699,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // --- 核心修改處 START ---
         async function handleSaveAdventureGrowthSettings() {
             const { growthFacilitiesContainer, growthStatsContainer, saveGrowthBtn, growthResponseEl } = DOMElements.advSettings;
             
@@ -725,8 +748,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveGrowthBtn.textContent = '儲存隨機成長設定';
             }
         }
-        // --- 核心修改處 END ---
-
         // --- 儀表板總覽邏輯 ---
         async function handleGenerateReport() {
             DOMElements.generateReportBtn.disabled = true;
@@ -741,6 +762,91 @@ document.addEventListener('DOMContentLoaded', function() {
             finally { DOMElements.generateReportBtn.disabled = false; DOMElements.generateReportBtn.textContent = '重新生成全服數據報表'; }
         }
         
+        // --- 核心修改處 START ---
+        // 遊戲機制面板的邏輯
+        async function loadGameMechanics() {
+            const { responseEl, saveBtn, ...mechInputs } = DOMElements.mechanics;
+            Object.values(mechInputs).forEach(input => input.disabled = true);
+            responseEl.style.display = 'none';
+
+            try {
+                const data = await fetchAdminAPI('/get_config?file=game_mechanics.json');
+                
+                mechInputs.critMultiplier.value = data.battle_formulas.crit_multiplier;
+                mechInputs.dmgFormulaBase.value = data.battle_formulas.damage_formula_base_multiplier;
+                mechInputs.dmgFormulaScaling.value = data.battle_formulas.damage_formula_attack_scaling;
+                
+                mechInputs.cultDiminishBase.value = data.cultivation_rules.diminishing_returns_base;
+                mechInputs.cultDiminishWindow.value = data.cultivation_rules.diminishing_returns_time_window_seconds;
+                mechInputs.cultBondGain.value = data.cultivation_rules.base_bond_gain_on_completion;
+                mechInputs.expGainDivisor.value = data.cultivation_rules.exp_gain_duration_divisor;
+                mechInputs.statPointsMin.value = data.cultivation_rules.stat_growth_points_per_chance[0];
+                mechInputs.statPointsMax.value = data.cultivation_rules.stat_growth_points_per_chance[1];
+                mechInputs.elementBias.value = data.cultivation_rules.elemental_bias_multiplier;
+
+                Object.values(mechInputs).forEach(input => input.disabled = false);
+            } catch (err) {
+                responseEl.textContent = `載入遊戲機制設定失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+                responseEl.style.display = 'block';
+            }
+        }
+        
+        async function handleSaveGameMechanics() {
+            const { responseEl, saveBtn, ...mechInputs } = DOMElements.mechanics;
+            
+            const newData = {
+                battle_formulas: {
+                    comment: "戰鬥相關公式參數",
+                    crit_multiplier: parseFloat(mechInputs.critMultiplier.value),
+                    damage_formula_base_multiplier: parseFloat(mechInputs.dmgFormulaBase.value),
+                    damage_formula_attack_scaling: parseFloat(mechInputs.dmgFormulaScaling.value)
+                },
+                cultivation_rules: {
+                    comment: "修煉系統相關規則",
+                    diminishing_returns_base: parseFloat(mechInputs.cultDiminishBase.value),
+                    diminishing_returns_time_window_seconds: parseInt(mechInputs.cultDiminishWindow.value, 10),
+                    base_bond_gain_on_completion: parseInt(mechInputs.cultBondGain.value, 10),
+                    exp_gain_duration_divisor: parseInt(mechInputs.expGainDivisor.value, 10),
+                    stat_growth_points_per_chance: [
+                        parseInt(mechInputs.statPointsMin.value, 10),
+                        parseInt(mechInputs.statPointsMax.value, 10)
+                    ],
+                    elemental_bias_multiplier: parseFloat(mechInputs.elementBias.value)
+                },
+                absorption_rules: {
+                    comment: "戰後吸收系統規則 (目前停用)",
+                    score_ratio_min_cap: 0.5,
+                    score_ratio_max_cap: 2.0,
+                    stat_gain_variance: [0.8, 1.2],
+                    max_gain_multiplier_for_non_hpmp: 2.0,
+                    max_hpmp_stat_growth_on_absorb: 1.05,
+                    bonus_hpmp_stat_growth_on_absorb: 0.5
+                }
+            };
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '儲存中...';
+            responseEl.style.display = 'none';
+
+            try {
+                const result = await fetchAdminAPI('/save_game_mechanics', {
+                    method: 'POST',
+                    body: JSON.stringify(newData)
+                });
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+            } catch (err) {
+                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存機制設定';
+            }
+        }
+        // --- 核心修改處 END ---
+
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
         DOMElements.logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'index.html'; });
@@ -772,9 +878,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (DOMElements.refreshCsMailBtn) { DOMElements.refreshCsMailBtn.addEventListener('click', loadCsMail); }
         if (DOMElements.csMailContainer) { DOMElements.csMailContainer.addEventListener('click', handleCsMailActions); }
         if (DOMElements.advSettings.saveBtn) { DOMElements.advSettings.saveBtn.addEventListener('click', handleSaveAdventureSettings); } 
-        // --- 核心修改處 START ---
         if (DOMElements.advSettings.saveGrowthBtn) { DOMElements.advSettings.saveGrowthBtn.addEventListener('click', handleSaveAdventureGrowthSettings); }
-        // --- 核心修改處 END ---
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         
@@ -782,6 +886,12 @@ document.addEventListener('DOMContentLoaded', function() {
              initializeConfigEditor(ADMIN_API_URL, adminToken);
         }
         
+        // --- 核心修改處 START ---
+        if (DOMElements.mechanics.saveBtn) {
+            DOMElements.mechanics.saveBtn.addEventListener('click', handleSaveGameMechanics);
+        }
+        // --- 核心修改處 END ---
+
         // --- 初始執行 ---
         updateTime();
         setInterval(updateTime, 1000);
