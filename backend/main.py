@@ -3,9 +3,7 @@
 
 import os
 import sys
-# --- 核心修改處 START ---
-import re # 導入正規表示式模組
-# --- 核心修改處 END ---
+import re 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -24,6 +22,8 @@ from backend.mail_routes import mail_bp
 from backend.adventure_routes import adventure_bp 
 from backend.admin_routes import admin_bp
 from backend.config_editor_routes import config_editor_bp
+# --- 新增：導入 analytics_bp ---
+from backend.analytics.analytics_routes import analytics_bp
 
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
@@ -39,11 +39,11 @@ app.register_blueprint(mail_bp)
 app.register_blueprint(adventure_bp)
 app.register_blueprint(admin_bp) 
 app.register_blueprint(config_editor_bp)
+# --- 新增：註冊 analytics_bp ---
+app.register_blueprint(analytics_bp)
 
 
 # --- CORS 配置 (移動至此處) ---
-# --- 核心修改處 START ---
-# 調整 CORS 設定以更好地支援 Render.com 部署
 CORS(app, resources={r"/api/*": {
     "origins": [
         "https://msw2004727.github.io",
@@ -55,7 +55,6 @@ CORS(app, resources={r"/api/*": {
     "supports_credentials": True
 }})
 app_logger.info(f"CORS configured to allow specific origins for /api/* path.")
-# --- 核心修改處 END ---
 
 
 # --- Firebase Admin SDK 初始化 ---
