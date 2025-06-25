@@ -10,7 +10,7 @@
     "diminishing_returns_base": 0.75,
     "diminishing_returns_time_window_seconds": 3600,
     "base_bond_gain_on_completion": 3,
-    "exp_gain_duration_divisor": 60,
+    "exp_gain_duration_divisor": 900,
     "stat_growth_points_per_chance": [
       1,
       2
