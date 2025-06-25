@@ -121,7 +121,27 @@ def save_adventure_growth_settings_route():
             
     return secured_save_adventure_growth_settings()
 
-# --- 核心修改處 START ---
+@config_editor_bp.route('/save_game_mechanics', methods=['POST', 'OPTIONS'])
+def save_game_mechanics_route():
+    from .admin_routes import token_required
+    from .config_editor_services import save_game_mechanics_service
+    
+    @token_required
+    def secured_save_game_mechanics():
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "請求中缺少設定資料。"}), 400
+        
+        success, error = save_game_mechanics_service(data)
+        
+        if success:
+            return jsonify({"success": True, "message": "遊戲機制設定已成功儲存並重新載入。"}), 200
+        else:
+            return jsonify({"error": error}), 500
+
+    return secured_save_game_mechanics()
+
+
 @config_editor_bp.route('/save_elemental_advantage', methods=['POST', 'OPTIONS'])
 def save_elemental_advantage_route():
     from .admin_routes import token_required
@@ -141,4 +161,23 @@ def save_elemental_advantage_route():
             return jsonify({"error": error}), 500
             
     return secured_save_elemental_advantage()
-# --- 核心修改處 END ---
+
+@config_editor_bp.route('/save_champion_guardians', methods=['POST', 'OPTIONS'])
+def save_champion_guardians_route():
+    from .admin_routes import token_required
+    from .config_editor_services import save_champion_guardians_service
+    
+    @token_required
+    def secured_save_champion_guardians():
+        guardians_data = request.get_json()
+        if not guardians_data:
+            return jsonify({"error": "請求中缺少守衛資料。"}), 400
+        
+        success, error = save_champion_guardians_service(guardians_data)
+        
+        if success:
+            return jsonify({"success": True, "message": "冠軍守衛資料已成功儲存並重新載入。"}), 200
+        else:
+            return jsonify({"error": error}), 500
+            
+    return secured_save_champion_guardians()
