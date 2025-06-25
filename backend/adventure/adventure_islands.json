@@ -16,7 +16,9 @@
         "level_range": [1, 10],
         "cost": 1,
         "event_pool_id": "events_forest",
-        "boss_pool_id": "bosses_novice_forest.json"
+        "boss_pool_id": "bosses_novice_forest.json",
+        "floor_clear_base_gold": 20,
+        "floor_clear_bonus_gold_per_floor": 5
       },
       {
         "facilityId": "facility_002",
@@ -26,7 +28,9 @@
         "level_range": [8, 20],
         "cost": 50,
         "event_pool_id": "events_mine",
-        "boss_pool_id": "bosses_abandoned_mine.json"
+        "boss_pool_id": "bosses_abandoned_mine.json",
+        "floor_clear_base_gold": 50,
+        "floor_clear_bonus_gold_per_floor": 10
       },
       {
         "facilityId": "facility_003",
@@ -36,7 +40,9 @@
         "level_range": [15, 30],
         "cost": 100,
         "event_pool_id": "events_cave",
-        "boss_pool_id": "bosses_tidal_cave.json"
+        "boss_pool_id": "bosses_tidal_cave.json",
+        "floor_clear_base_gold": 80,
+        "floor_clear_bonus_gold_per_floor": 15
       },
       {
         "facilityId": "facility_004",
@@ -46,7 +52,9 @@
         "level_range": [25, 40],
         "cost": 300,
         "event_pool_id": "events_ruins",
-        "boss_pool_id": "bosses_ancient_ruins.json"
+        "boss_pool_id": "bosses_ancient_ruins.json",
+        "floor_clear_base_gold": 120,
+        "floor_clear_bonus_gold_per_floor": 25
       }
     ]
   }
