@@ -95,7 +95,7 @@ def initialize_firebase_for_script():
 
 def populate_game_configs():
     """
-    將遊戲設定資料寫入 Firestore 的 MD_GameConfigs 集合。
+    將遊戲設定資料一次性匯入到 Firestore 的 MD_GameConfigs 集合。
     """
     if not initialize_firebase_for_script():
         script_logger.error("錯誤：Firebase 未成功初始化。無法執行資料填充。")
@@ -109,15 +109,15 @@ def populate_game_configs():
     db_client = firestore_db_instance
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
     
-    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-    
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-        script_logger.info(f"已建立 'data' 資料夾於: {data_dir}")
+    # --- 核心修改處 START ---
+    # 將基礎路徑從 'data' 改為指向 backend/
+    base_dir = os.path.dirname(__file__)
+    # --- 核心修改處 END ---
 
     # --- 載入 DNA 碎片資料 ---
     try:
-        dna_fragments_path = os.path.join(data_dir, 'dna_fragments.json')
+        # 更新路徑
+        dna_fragments_path = os.path.join(base_dir, 'monster', 'dna_fragments.json')
         with open(dna_fragments_path, 'r', encoding='utf-8') as f:
             dna_fragments_data = json.load(f)
         script_logger.info(f"成功從 {dna_fragments_path} 載入 {len(dna_fragments_data)} 種 DNA 碎片資料。")
@@ -129,7 +129,8 @@ def populate_game_configs():
 
     # --- 載入技能資料 (從拆分檔案) ---
     try:
-        skills_dir = os.path.join(data_dir, 'skills')
+        # 更新路徑
+        skills_dir = os.path.join(base_dir, 'monster', 'skills')
         if not os.path.exists(skills_dir):
             os.makedirs(skills_dir)
             script_logger.warning(f"技能資料夾 'skills' 不存在，已自動建立於: {skills_dir}。請將技能檔案放入此處。")
@@ -167,7 +168,8 @@ def populate_game_configs():
     # --- 載入個性資料 (從CSV) ---
     personalities_data = []
     try:
-        personalities_path = os.path.join(data_dir, 'personalities.csv')
+        # 更新路徑
+        personalities_path = os.path.join(base_dir, 'monster', 'personalities.csv')
         with open(personalities_path, mode='r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             skill_preference_keys = SKILL_CATEGORIES
@@ -191,7 +193,7 @@ def populate_game_configs():
         db_client.collection('MD_GameConfigs').document('Personalities').set({'types': personalities_data})
         script_logger.info("成功寫入 Personalities 資料。")
     except FileNotFoundError:
-        script_logger.error(f"錯誤: 找不到個性設定檔 {personalities_path}。請確認檔案已放置在 'backend/data/' 資料夾中並命名為 'personalities.csv'。")
+        script_logger.error(f"錯誤: 找不到個性設定檔 {personalities_path}。請確認檔案已放置在 'backend/monster/' 資料夾中並命名為 'personalities.csv'。")
         return
     except Exception as e:
         script_logger.error(f"處理 Personalities 資料失敗: {e}")
@@ -199,7 +201,8 @@ def populate_game_configs():
 
     # --- 載入修煉故事資料 ---
     try:
-        stories_path = os.path.join(data_dir, 'cultivation_stories.json')
+        # 更新路徑
+        stories_path = os.path.join(base_dir, 'system', 'cultivation_stories.json')
         with open(stories_path, 'r', encoding='utf-8') as f:
             stories_data = json.load(f)
         script_logger.info(f"成功從 {stories_path} 載入 {len(stories_data)} 個地點的修煉故事資料。")
@@ -212,7 +215,8 @@ def populate_game_configs():
 
     # --- 載入冠軍守門員資料 ---
     try:
-        guardians_path = os.path.join(data_dir, 'champion_guardians.json')
+        # 更新路徑
+        guardians_path = os.path.join(base_dir, 'system', 'champion_guardians.json')
         with open(guardians_path, 'r', encoding='utf-8') as f:
             guardians_data = json.load(f)
         script_logger.info(f"成功從 {guardians_path} 載入冠軍守門員資料。")
@@ -225,7 +229,8 @@ def populate_game_configs():
 
     # --- 載入狀態效果資料 (從 status_effects.json) ---
     try:
-        status_effects_path = os.path.join(data_dir, 'status_effects.json')
+        # 更新路徑
+        status_effects_path = os.path.join(base_dir, 'battle', 'status_effects.json')
         with open(status_effects_path, 'r', encoding='utf-8') as f:
             status_effects_data = json.load(f)
         script_logger.info(f"成功從 {status_effects_path} 載入 {len(status_effects_data)} 個狀態效果資料。")
@@ -240,7 +245,8 @@ def populate_game_configs():
         
     # --- 載入戰鬥亮點資料 (從 battle_highlights.json) ---
     try:
-        highlights_path = os.path.join(data_dir, 'battle_highlights.json')
+        # 更新路徑
+        highlights_path = os.path.join(base_dir, 'battle', 'battle_highlights.json')
         with open(highlights_path, 'r', encoding='utf-8') as f:
             highlights_data = json.load(f)
         script_logger.info(f"成功從 {highlights_path} 載入戰鬥亮點資料。")
@@ -253,7 +259,8 @@ def populate_game_configs():
 
     # --- 載入冒險島資料 ---
     try:
-        islands_path = os.path.join(data_dir, 'adventure_islands.json')
+        # 更新路徑
+        islands_path = os.path.join(base_dir, 'adventure', 'adventure_islands.json')
         with open(islands_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
         script_logger.info(f"成功從 {islands_path} 載入冒險島資料。")
@@ -263,9 +270,6 @@ def populate_game_configs():
         script_logger.warning(f"提示: 找不到冒險島設定檔 {islands_path}，將跳過此項。")
     except Exception as e:
         script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
-
-    # --- 【核心修改處】移除對 adventure_events.json 和 adventure_bosses.json 的讀取 ---
-
 
     # --- 寫入其他設定 ---
     
@@ -281,7 +285,8 @@ def populate_game_configs():
 
     # --- 載入並寫入稱號資料 (從 titles.json) ---
     try:
-        titles_path = os.path.join(data_dir, 'titles.json')
+        # 更新路徑
+        titles_path = os.path.join(base_dir, 'system', 'titles.json')
         with open(titles_path, 'r', encoding='utf-8') as f:
             titles_data_from_json = json.load(f)
         script_logger.info(f"成功從 {titles_path} 載入 {len(titles_data_from_json)} 個稱號資料。")
@@ -303,7 +308,8 @@ def populate_game_configs():
 
     # --- 載入並寫入元素預設名 (從 element_nicknames.json) ---
     try:
-        nicknames_path = os.path.join(data_dir, 'element_nicknames.json')
+        # 更新路徑
+        nicknames_path = os.path.join(base_dir, 'monster', 'element_nicknames.json')
         with open(nicknames_path, 'r', encoding='utf-8') as f:
             element_nicknames_data = json.load(f)
         script_logger.info(f"成功從 {nicknames_path} 載入元素暱稱資料。")
@@ -325,7 +331,8 @@ def populate_game_configs():
 
     # 新手指南資料 (NewbieGuide)
     try:
-        guide_path = os.path.join(data_dir, 'newbie_guide.json')
+        # 更新路徑
+        guide_path = os.path.join(base_dir, 'system', 'newbie_guide.json')
         with open(guide_path, 'r', encoding='utf-8') as f:
             newbie_guide_data = json.load(f)
         script_logger.info(f"成功從 {guide_path} 載入新手指南資料。")
