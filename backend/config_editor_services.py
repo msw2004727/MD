@@ -21,6 +21,7 @@ CONFIG_FILE_FIRESTORE_MAP = {
     # battle/
     "battle/battle_highlights.json": ("BattleHighlights", None),
     "battle/status_effects.json": ("StatusEffects", "effects_list"),
+    "battle/elemental_advantage_chart.json": ("ElementalAdvantageChart", None), # 新增：讓這個檔案也能被通用編輯器讀取
     # monster/
     "monster/dna_fragments.json": ("DNAFragments", "all_fragments"),
     "monster/element_nicknames.json": ("ElementNicknames", "nicknames"),
@@ -43,7 +44,8 @@ LOCAL_CONFIG_FILES = (
     os.path.join("adventure", "adventure_settings.json"),
     os.path.join("adventure", "adventure_islands.json"),
     os.path.join("adventure", "adventure_growth_settings.json"),
-    "game_mechanics.json"
+    "game_mechanics.json",
+    os.path.join("battle", "elemental_advantage_chart.json") # 新增：也讓它可以被本地讀取
 )
 
 def list_editable_configs() -> list[str]:
@@ -63,17 +65,11 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
 
     if normalized_filename in LOCAL_CONFIG_FILES:
         try:
-            # --- 核心修改處 START ---
-            # 修正基礎路徑，直接指向 backend/
             data_dir = os.path.dirname(os.path.abspath(__file__))
-            # --- 核心修改處 END ---
             file_path = os.path.join(data_dir, normalized_filename)
             
             if not os.path.exists(file_path):
-                # --- 核心修改處 START ---
-                # 移除之前的 fallback 邏輯，因為主設定檔加載器已經會處理，這裡應該要能直接讀到檔案
                 return None, f"本地設定檔 '{normalized_filename}' 不存在。"
-                # --- 核心修改處 END ---
                 
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = json.load(f)
@@ -127,10 +123,7 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     if normalized_filename in LOCAL_CONFIG_FILES:
         try:
             parsed_content = json.loads(content_str)
-            # --- 核心修改處 START ---
-            # 修正基礎路徑，直接指向 backend/
             data_dir = os.path.dirname(os.path.abspath(__file__))
-            # --- 核心修改處 END ---
             file_path = os.path.join(data_dir, normalized_filename)
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(parsed_content, f, indent=2, ensure_ascii=False)
@@ -172,10 +165,7 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
         return False, "儲存檔案到 Firestore 時發生伺服器內部錯誤。"
 
 def save_adventure_settings_service(global_settings: Dict, facilities_settings: List) -> tuple[bool, Optional[str]]:
-    # --- 核心修改處 START ---
-    # 修正基礎路徑，直接指向 backend/
     data_dir = os.path.dirname(__file__)
-    # --- 核心修改處 END ---
     
     try:
         adv_settings_path = os.path.join(data_dir, 'adventure', 'adventure_settings.json')
@@ -215,10 +205,7 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
         if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
-        # --- 核心修改處 START ---
-        # 修正基礎路徑，直接指向 backend/
         data_dir = os.path.dirname(__file__)
-        # --- 核心修改處 END ---
         file_path = os.path.join(data_dir, 'adventure', 'adventure_growth_settings.json')
 
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -243,10 +230,7 @@ def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[st
         if not all(key in mechanics_data for key in required_keys):
             return False, "傳入的資料格式不正確，缺少必要的頂層鍵。"
 
-        # --- 核心修改處 START ---
-        # 修正基礎路徑，直接指向 backend/
         data_dir = os.path.dirname(__file__)
-        # --- 核心修改處 END ---
         file_path = os.path.join(data_dir, 'game_mechanics.json')
 
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -261,6 +245,33 @@ def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[st
     except Exception as e:
         config_editor_logger.error(f"儲存遊戲機制設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存遊戲機制設定時發生伺服器內部錯誤。"
+
+# --- 核心修改處 START ---
+def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    """
+    將新的屬性克制表儲存到 elemental_advantage_chart.json 檔案。
+    """
+    try:
+        # 基本的格式驗證
+        if not isinstance(chart_data, dict):
+            return False, "傳入的資料格式不正確，應為一個字典。"
+
+        data_dir = os.path.dirname(__file__)
+        file_path = os.path.join(data_dir, 'battle', 'elemental_advantage_chart.json')
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(chart_data, f, indent=2, ensure_ascii=False)
+        
+        config_editor_logger.info(f"屬性克制表已成功儲存至 '{file_path}'。")
+        
+        reload_main_app_configs() # 通知主程式重新載入設定
+        
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存屬性克制表時發生錯誤: {e}", exc_info=True)
+        return False, "儲存屬性克制表時發生伺服器內部錯誤。"
+# --- 核心修改處 END ---
 
 
 def reload_main_app_configs():
