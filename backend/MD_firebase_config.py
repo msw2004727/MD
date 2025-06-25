@@ -1,34 +1,49 @@
-# MD_firebase_config.py
-# 這個檔案現在只提供一個 db 變數，它將由主應用程式 (main.py) 來設定。
-# 不再進行獨立的 Firebase 初始化。
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
+import logging
+import os
+import json
 
-# 引入 firestore 只是為了類型提示，如果您的環境支援
+# --- Firebase Initialization ---
 try:
-    from firebase_admin import firestore # type: ignore
-except ImportError:
-    pass # 在沒有 firebase_admin 的環境中，這會失敗，但 db 仍然可以被設定為 None 或客戶端實例
+    # 從環境變數 'FIREBASE_CREDENTIALS_JSON' 讀取憑證的 JSON 字串
+    cred_json_str = os.environ.get('FIREBASE_CREDENTIALS_JSON')
 
-db = None # 初始化為 None
+    if not cred_json_str:
+        # 如果在環境中找不到這個變數，就記錄一個嚴重錯誤並讓程式啟動失敗
+        # 這樣可以立刻知道是環境設定出了問題
+        logging.critical("CRITICAL ERROR: FIREBASE_CREDENTIALS_JSON environment variable not set.")
+        raise ValueError("FIREBASE_CREDENTIALS_JSON is not set in the environment. The application cannot start.")
 
-def set_firestore_client(firestore_client):
-    """
-    由主應用程式 (main.py) 呼叫，以設定全域 Firestore 客戶端。
-    """
-    global db
-    db = firestore_client
-    if db:
-        print("MD_firebase_config: Firestore client 已成功設定。")
+    # 將 JSON 字串解析成 Python 的字典格式
+    cred_json = json.loads(cred_json_str)
+
+    # 使用解析後的字典來建立 Firebase 憑證物件
+    cred = credentials.Certificate(cred_json)
+
+    # 初始化 Firebase App
+    # 檢查是否已經初始化，避免重複初始化
+    if not firebase_admin._apps:
+        firebase_admin.initialize_app(cred)
+        logging.info("Firebase has been initialized successfully from environment variables.")
     else:
-        print("MD_firebase_config: 嘗試設定 Firestore client，但提供的是 None 或設定失敗。")
+        logging.info("Firebase app already initialized.")
 
-# 移除 initialize_firebase() 函式和底部的 db = initialize_firebase()
-# 確保沒有其他程式碼會嘗試在這裡初始化 Firebase
+    db = firestore.client()
 
-if __name__ == '__main__':
-    # 這個區塊現在僅用於說明，因為初始化已移至 main.py
-    print("MD_firebase_config.py 被直接執行。")
-    if db:
-        print("db 變數已被設定 (可能由外部設定)。")
-    else:
-        print("db 變數目前為 None。它需要由主應用程式設定。")
+except Exception as e:
+    logging.error(f"FATAL: Error initializing Firebase: {e}")
+    # 在初始化失敗時，將 db 設為 None，讓後續操作能安全地失敗
+    db = None
 
+def verify_token(token):
+    """Verifies the Firebase ID token."""
+    if not db:
+        logging.error("Firebase not initialized, cannot verify token.")
+        return None
+    try:
+        decoded_token = auth.verify_id_token(token)
+        return decoded_token
+    except Exception as e:
+        logging.error(f"Error verifying token: {e}")
+        return None
