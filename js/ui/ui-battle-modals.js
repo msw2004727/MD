@@ -1,4 +1,4 @@
-// js/ui-battle-modals.js
+// js/ui/ui-battle-modals.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
 function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData, customFooterActions = null) {
@@ -23,8 +23,11 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         return;
     }
 
-    const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
-    const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
+    // --- 核心修改處 START ---
+    // 移除此處多餘的變數宣告，將在需要時直接呼叫共用函式
+    // const playerDisplayName = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
+    // const opponentDisplayName = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
+    // --- 核心修改處 END ---
 
     function formatBasicText(text) {
         if (!text) return '';
@@ -41,25 +44,21 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         if (!text) return '(內容為空)';
         let styledText = text;
 
-        const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
-
-        const replaceName = (fullNickname, shortName, rarity) => {
-            const monRarityKey = rarity ? (rarityMap[rarity] || 'common') : 'common';
-            const monColorClass = `text-rarity-${monRarityKey}`;
-            
-            const escapedNickname = fullNickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-            const searchRegex = new RegExp(`(?:\\*\\*)?${escapedNickname}(?:\\*\\*)?`, 'g');
-            const replacement = `<span class="${monColorClass}" style="font-weight: bold;">${shortName}</span>`;
-            
-            styledText = styledText.replace(searchRegex, replacement);
-        };
-
+        // --- 核心修改處 START ---
+        // 移除舊的、重複的 replaceName 函式與其呼叫
+        
+        // 使用新的、統一的邏輯
         if (playerMon && playerMon.nickname) {
-            replaceName(playerMon.nickname, playerDisplayName, playerMon.rarity);
+            const playerStyledName = getMonsterDisplayName(playerMon, gameState.gameConfigs);
+            const searchRegex = new RegExp(playerMon.nickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
+            styledText = styledText.replace(searchRegex, playerStyledName);
         }
         if (opponentMon && opponentMon.nickname) {
-            replaceName(opponentMon.nickname, opponentDisplayName, opponentMon.rarity);
+            const opponentStyledName = getMonsterDisplayName(opponentMon, gameState.gameConfigs);
+            const searchRegex = new RegExp(opponentMon.nickname.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"), 'g');
+            styledText = styledText.replace(searchRegex, opponentStyledName);
         }
+        // --- 核心修改處 END ---
         
         const allSkills = [];
         if (playerMon && playerMon.skills) allSkills.push(...playerMon.skills);
@@ -69,6 +68,7 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         uniqueSkillNames.forEach(skillName => {
             const skillInfo = allSkills.find(s => s.name === skillName);
             if (skillInfo) {
+                const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
                 const skillRarityKey = skillInfo.rarity ? (rarityMap[skillInfo.rarity] || 'common') : 'common';
                 const skillColorClass = `text-rarity-${skillRarityKey}`;
                 
@@ -102,8 +102,14 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         modalContent.insertBefore(battleHeaderBanner, modalContent.firstChild);
     }
 
-    const renderMonsterStats = (monster, displayName, isPlayer) => {
+    const renderMonsterStats = (monster, isPlayer) => {
         if (!monster) return '<div>對手資料錯誤</div>';
+        
+        // --- 核心修改處 START ---
+        // 在函式內部直接呼叫共用函式，確保每次都拿到正確的HTML
+        const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
+        // --- 核心修改處 END ---
+
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
         const personalityName = monster.personality?.name?.replace('的', '') || '未知';
@@ -134,8 +140,8 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         <div class="report-section battle-intro-section">
             <h4 class="report-section-title">戰鬥對陣</h4>
             <div class="monster-vs-container">
-                <div class="player-side-card">${renderMonsterStats(playerMonsterData, playerDisplayName, true)}</div>
-                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, opponentDisplayName, false)}</div>
+                <div class="player-side-card">${renderMonsterStats(playerMonsterData, true)}</div>
+                <div class="opponent-side-card">${renderMonsterStats(opponentMonsterData, false)}</div>
             </div>
         </div>
     `;
@@ -220,12 +226,18 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
         const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
         const playerRarityKey = playerMonsterData.rarity ? (rarityMap[playerMonsterData.rarity] || 'common') : 'common';
         const opponentRarityKey = opponentMonsterData.rarity ? (rarityMap[opponentMonsterData.rarity] || 'common') : 'common';
+        
+        // --- 核心修改處 START ---
+        // 呼叫共用函式來獲取顯示名稱
+        const playerDisplayNameForTurn = getMonsterDisplayName(playerMonsterData, gameState.gameConfigs);
+        const opponentDisplayNameForTurn = getMonsterDisplayName(opponentMonsterData, gameState.gameConfigs);
+        // --- 核心修改處 END ---
 
         if (turn.playerStatus.hp && turn.playerStatus.mp) {
             const playerStatusTags = createStatusTagsHTML(turn.playerStatus.statusText);
             statusHtml += `
                 <div class="font-bold text-rarity-${playerRarityKey} monster-name-container">
-                    <span>⚔️ ${playerDisplayName}</span>
+                    <span>⚔️ ${playerDisplayNameForTurn}</span>
                     <div class="status-tags-wrapper">${playerStatusTags}</div>
                 </div>
                 ${createStatusBar('HP', turn.playerStatus.hp.current, turn.playerStatus.hp.max, 'var(--success-color)')}
@@ -236,7 +248,7 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
             const opponentStatusTags = createStatusTagsHTML(turn.opponentStatus.statusText);
             statusHtml += `
                 <div class="font-bold mt-2 text-rarity-${opponentRarityKey} monster-name-container">
-                    <span>🛡️ ${opponentDisplayName}</span>
+                    <span>🛡️ ${opponentDisplayNameForTurn}</span>
                     <div class="status-tags-wrapper">${opponentStatusTags}</div>
                 </div>
                 ${createStatusBar('HP', turn.opponentStatus.hp.current, turn.opponentStatus.hp.max, 'var(--success-color)')}
@@ -334,18 +346,15 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
                 footer.appendChild(button);
             });
         } else {
-            // --- 核心修改處 START ---
             const defaultButton = document.createElement('button');
             defaultButton.id = 'close-battle-log-btn';
             defaultButton.className = 'button secondary';
             defaultButton.textContent = '關閉';
-            // 為預設按鈕綁定關閉事件
             defaultButton.onclick = () => {
                 hideModal('battle-log-modal');
                 refreshPlayerData();
             };
             footer.appendChild(defaultButton);
-            // --- 核心修改處 END ---
         }
     }
 
