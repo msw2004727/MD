@@ -366,7 +366,6 @@ def _process_end_of_turn_effects(battle_state: Dict[str, Any], player_monster: M
             log_parts.append(f"- {weather_type} 停止了。")
             battle_state["weather"] = None
 
-
 def simulate_battle_full(
     player_monster_data: Monster,
     opponent_monster_data: Monster,
@@ -501,29 +500,25 @@ def simulate_battle_full(
 
     battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
     
-    # --- 核心修改處 START ---
-    # 建立一個新的 battle_result 物件傳給 AI
-    battle_result_for_ai = {
-        "winner_id": winner_id,
-        "winner_name": player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname'],
-        "loser_name": opponent_monster['nickname'] if winner_id == player_monster['id'] else player_monster['nickname'],
-        "total_rounds": turn_num -1, # turn_num 在結束時會多1
-        "log": all_raw_log_messages
-    }
-    
     # 準備呼叫 AI 服務所需的玩家暱稱
     player1_name = player_data.get('nickname', '玩家1') if player_data else '玩家1'
     player2_name = opponent_player_data.get('nickname', 'NPC對手') if opponent_player_data else 'NPC對手'
     
-    # 使用修正後的參數順序來呼叫
-    ai_report = generate_battle_report_content(
+    battle_result_for_ai = {
+        "winner_id": winner_id,
+        "winner_name": player_monster['nickname'] if winner_id == player_monster['id'] else opponent_monster['nickname'],
+        "loser_name": opponent_monster['nickname'] if winner_id == player_monster['id'] else player_monster['nickname'],
+        "total_rounds": turn_num - 1 if turn_num > 1 else 1,
+        "log": all_raw_log_messages
+    }
+
+    ai_report_content = generate_battle_report_content(
         battle_result=battle_result_for_ai,
         monster1_name=player_monster['nickname'],
         monster2_name=opponent_monster['nickname'],
         player1_name=player1_name,
         player2_name=player2_name
     )
-    # --- 核心修改處 END ---
 
     final_battle_result: BattleResult = {
         "winner_id": winner_id, "loser_id": loser_id, "raw_full_log": all_raw_log_messages,
@@ -533,7 +528,7 @@ def simulate_battle_full(
         "battle_highlights": battle_highlights,
         "log_entries": [],
         "battle_end": True,
-        "ai_battle_report_content": ai_report
+        "ai_battle_report_content": ai_report_content
     }
     
     return final_battle_result
