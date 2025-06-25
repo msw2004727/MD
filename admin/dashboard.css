@@ -206,10 +206,10 @@ body.admin-body {
     padding-left: 0.25rem;
 }
 
-/* --- 新增：修煉設定面板專用樣式 (重構版) --- */
-#cultivation-loot-table-container > .form-grid {
+/* --- 核心修改處：修煉設定面板專用樣式 (最終版) --- */
+#cultivation-loot-table-container .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr); /* 強制兩欄 */
     gap: 1.5rem;
     margin-top: 1rem;
 }
@@ -219,14 +219,6 @@ body.admin-body {
     border: 1px solid var(--admin-border-color);
     border-radius: 8px;
     padding: 1rem;
-}
-.cult-rarity-card h5 {
-    grid-column: 1 / -1;
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--admin-border-color);
-    color: var(--admin-accent-hover);
-    font-size: 1.1rem;
 }
 
 #cultivation-loot-table-container .facility-settings-card .form-grid {
