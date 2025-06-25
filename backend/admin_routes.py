@@ -8,15 +8,16 @@ from datetime import datetime, timedelta
 from .admin_auth_services import ADMIN_SECRET_KEY, create_admin_token
 
 # Import analytics services
-from .analytics.analytics_services import (
-    get_dau, 
-    get_mau, 
-    get_new_users, 
-    get_paying_users, 
-    get_revenue, 
-    get_retention_rate, 
-    get_player_growth # <-- 已修正名稱
-)
+# 【移除】以下導入的函式在 analytics_services.py 中不存在，因此移除
+# from .analytics.analytics_services import (
+#     get_dau,
+#     get_mau,
+#     get_new_users,
+#     get_paying_users,
+#     get_revenue,
+#     get_retention_rate,
+#     get_player_growth
+# )
 
 admin_bp = Blueprint('admin', __name__, template_folder='../admin', static_folder='../admin')
 
@@ -85,39 +86,39 @@ def save_config_file(filename):
         return jsonify({"message": "File saved successfully"})
     return jsonify({"error": "Failed to save file"}), 500
 
-# Analytics API Endpoints
-@admin_bp.route('/api/admin/analytics/dau')
-@login_required
-def dau_data():
-    return jsonify(get_dau())
+# 【註解】Analytics API Endpoints - 由於服務函式不存在，暫時註解掉所有相關的 API 路由
+# @admin_bp.route('/api/admin/analytics/dau')
+# @login_required
+# def dau_data():
+#     return jsonify(get_dau())
 
-@admin_bp.route('/api/admin/analytics/mau')
-@login_required
-def mau_data():
-    return jsonify(get_mau())
+# @admin_bp.route('/api/admin/analytics/mau')
+# @login_required
+# def mau_data():
+#     return jsonify(get_mau())
 
-@admin_bp.route('/api/admin/analytics/new-users')
-@login_required
-def new_users_data():
-    return jsonify(get_new_users())
+# @admin_bp.route('/api/admin/analytics/new-users')
+# @login_required
+# def new_users_data():
+#     return jsonify(get_new_users())
 
-@admin_bp.route('/api/admin/analytics/paying-users')
-@login_required
-def paying_users_data():
-    return jsonify(get_paying_users())
+# @admin_bp.route('/api/admin/analytics/paying-users')
+# @login_required
+# def paying_users_data():
+#     return jsonify(get_paying_users())
 
-@admin_bp.route('/api/admin/analytics/revenue')
-@login_required
-def revenue_data():
-    return jsonify(get_revenue())
+# @admin_bp.route('/api/admin/analytics/revenue')
+# @login_required
+# def revenue_data():
+#     return jsonify(get_revenue())
 
-@admin_bp.route('/api/admin/analytics/retention')
-@login_required
-def retention_data():
-    return jsonify(get_retention_rate())
+# @admin_bp.route('/api/admin/analytics/retention')
+# @login_required
+# def retention_data():
+#     return jsonify(get_retention_rate())
 
-@admin_bp.route('/api/admin/analytics/player-growth')
-@login_required
-def player_growth_data():
-    data = get_player_growth() # <-- 已修正函式呼叫
-    return jsonify(data)
+# @admin_bp.route('/api/admin/analytics/player-growth')
+# @login_required
+# def player_growth_data():
+#     data = get_player_growth()
+#     return jsonify(data)
