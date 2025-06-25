@@ -19,6 +19,7 @@
             <a href="#" class="nav-item" data-target="cs-mailbox">客服信箱</a>
             <a href="#" class="nav-item" data-target="adventure-island-settings">冒險島設定</a>
             <a href="#" class="nav-item" data-target="game-mechanics">遊戲機制</a>
+            <a href="#" class="nav-item" data-target="elemental-advantage">屬性相剋</a>
             <a href="#" class="nav-item" data-target="game-configs">遊戲設定</a>
             <a href="#" class="nav-item" data-target="log-monitoring">日誌監控</a>
         </nav>
@@ -265,6 +266,20 @@
                         <button id="save-mechanics-btn" class="button success">儲存機制設定</button>
                     </div>
                     <div id="mechanics-response" class="admin-response-message" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="elemental-advantage" class="content-panel">
+                <h2 class="content-header">屬性相剋設定</h2>
+                <div class="data-section">
+                    <h3>傷害倍率調整</h3>
+                    <p class="input-hint">請直接在下表中修改攻擊方對防守方的傷害倍率。預設值為 1.0 (無加成/減傷)。</p>
+                    <div id="elemental-advantage-table-container" style="margin-top: 1.5rem; overflow-x: auto;">
+                        </div>
+                    <div class="save-changes-container">
+                        <button id="save-elemental-chart-btn" class="button success">儲存屬性克制表</button>
+                    </div>
+                    <div id="elemental-chart-response" class="admin-response-message" style="display: none;"></div>
                 </div>
             </div>
             <div id="game-configs" class="content-panel">
