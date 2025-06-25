@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // 總覽
             generateReportBtn: document.getElementById('generate-report-btn'),
             overviewReportContainer: document.getElementById('overview-report-container'),
-            wipeAllDataBtn: document.getElementById('wipe-all-data-btn'), // **<-- 新增**
+            wipeAllDataBtn: document.getElementById('wipe-all-data-btn'),
             
             // 玩家管理
             searchInput: document.getElementById('player-search-input'),
@@ -583,11 +583,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             try {
+                // --- 核心修改處 START ---
+                // 將請求的檔名加上正確的路徑
                 const [advSettings, islandsData, growthSettings] = await Promise.all([
-                    fetchAdminAPI('/get_config?file=adventure_settings.json'),
-                    fetchAdminAPI('/get_config?file=adventure_islands.json'),
-                    fetchAdminAPI('/get_config?file=adventure_growth_settings.json')
+                    fetchAdminAPI('/get_config?file=adventure/adventure_settings.json'),
+                    fetchAdminAPI('/get_config?file=adventure/adventure_islands.json'),
+                    fetchAdminAPI('/get_config?file=adventure/adventure_growth_settings.json')
                 ]);
+                // --- 核心修改處 END ---
 
                 // 渲染全域參數
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
@@ -621,11 +624,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             <h4>${facilityNames[id] || id}</h4>
                             <div class="form-group">
                                 <label for="growth-chance-${id}">成長觸發機率 (%)</label>
-                                <input type="number" id="growth-chance-${id}" data-facility-id="${id}" data-setting="growth_chance" class="admin-input" value="${(settings.growth_chance * 100).toFixed(1)}" step="0.1" min="0" max="100">
+                                <input type="number" id="growth-chance-${id}" data-facility-id="${id}" data-setting="growth_chance" class="admin-input" value="${((settings.growth_chance || 0) * 100).toFixed(1)}" step="0.1" min="0" max="100">
                             </div>
                              <div class="form-group">
                                 <label for="growth-points-${id}">成長點數</label>
-                                <input type="number" id="growth-points-${id}" data-facility-id="${id}" data-setting="growth_points" class="admin-input" value="${settings.growth_points}" step="1" min="0">
+                                <input type="number" id="growth-points-${id}" data-facility-id="${id}" data-setting="growth_points" class="admin-input" value="${settings.growth_points || 0}" step="1" min="0">
                             </div>
                         </div>
                     `).join('');
@@ -640,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     statsHtml += Object.entries(growthSettings.stat_weights).map(([stat, weight]) => `
                         <div class="form-group">
                             <label for="stat-weight-${stat}">${stat.toUpperCase()}</label>
-                            <input type="number" id="stat-weight-${stat}" data-stat-name="${stat}" class="admin-input" value="${weight}" step="1" min="0">
+                            <input type="number" id="stat-weight-${stat}" data-stat-name="${stat}" class="admin-input" value="${weight || 0}" step="1" min="0">
                         </div>
                     `).join('');
                     statsHtml += `</div>`;
@@ -884,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 responseEl.textContent = result.message;
                 responseEl.className = 'admin-response-message success';
             } catch (err) {
-                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.textContent = `儲存失败：${err.message}`;
                 responseEl.className = 'admin-response-message error';
             } finally {
                 responseEl.style.display = 'block';
