@@ -12,6 +12,7 @@ from .MD_models import Skill, GameConfigs, ValueSettings, NamingConstraints
 # 移除 _add_player_log 函式，它將被搬到 player_services.py
 # --- 核心修改處 END ---
 
+
 # --- 新增：感情值計算的共用函式 START ---
 def update_bond_with_diminishing_returns(
     interaction_stats: Dict[str, Any],
@@ -55,28 +56,25 @@ def update_bond_with_diminishing_returns(
 
 
 def generate_monster_full_nickname(
-    player_title: str,
-    monster_achievement: str,
+    player_title: str, # 雖然不再使用，但保留參數以向下相容
+    monster_achievement: str, # 雖然不再使用，但保留參數以向下相容
     element_nickname: str,
     naming_constraints: NamingConstraints
 ) -> str:
     """
-    根據玩家稱號、怪獸成就和元素暱稱，生成完整的怪獸暱稱。
+    生成怪獸的暱稱，現在只使用屬性名。
     """
-    max_len_player_title = naming_constraints.get("max_player_title_len", 5)
-    max_len_monster_achievement = naming_constraints.get("max_monster_achievement_len", 5)
-    max_len_element_nickname = naming_constraints.get("max_element_nickname_len", 5)
+    # 舊的稱號與成就部分被移除
+    # p_title = player_title[:max_len_player_title]
+    # m_achieve = monster_achievement[:max_len_monster_achievement]
     
-    p_title = player_title[:max_len_player_title]
-    m_achieve = monster_achievement[:max_len_monster_achievement]
+    # 直接使用並處理屬性暱稱
+    max_len_element_nickname = naming_constraints.get("max_element_nickname_len", 5)
     e_nick = element_nickname[:max_len_element_nickname]
     
-    full_nickname = f"{p_title}{m_achieve}{e_nick}"
+    # 完整的暱稱現在就是屬性暱稱
+    full_nickname = e_nick
     
-    max_total_len = naming_constraints.get("max_monster_full_nickname_len", 20)
-    if len(full_nickname) > max_total_len:
-        full_nickname = full_nickname[:max_total_len-1] + "…"
-        
     return full_nickname
 
 
@@ -100,10 +98,10 @@ def get_effective_skill_with_level(skill_template: Skill, level: int) -> Skill:
     effective_skill = copy.deepcopy(skill_template)
     effective_skill['level'] = level
 
-    if 'power' in effective_skill and effective_skill['power'] > 0:
+    if 'power' in effective_skill and isinstance(effective_skill['power'], (int, float)) and effective_skill['power'] > 0:
         effective_skill['power'] = math.floor(effective_skill['power'] * (1 + (level - 1) * 0.08))
 
-    if 'mp_cost' in effective_skill and effective_skill['mp_cost'] > 0:
+    if 'mp_cost' in effective_skill and isinstance(effective_skill['mp_cost'], (int, float)) and effective_skill['mp_cost'] > 0:
         reduction = math.floor((level - 1) / 2)
         effective_skill['mp_cost'] = max(0, effective_skill['mp_cost'] - reduction)
     
