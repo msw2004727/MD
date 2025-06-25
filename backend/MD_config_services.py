@@ -1,115 +1,68 @@
 # backend/MD_config_services.py
 # 負責載入所有遊戲設定檔
 
-import json
-import os
-import csv
-from typing import Dict, Any, List
+import logging
+from typing import Dict, Any
+from . import MD_firebase_config
+
+config_services_logger = logging.getLogger(__name__)
 
 def load_all_game_configs_from_firestore() -> Dict[str, Any]:
     """
-    從多個 JSON 和 CSV 檔案載入所有遊戲設定。
+    從 Firestore 的 MD_GameConfigs 集合中載入所有遊戲設定。
     """
+    db = MD_firebase_config.db
+    if not db:
+        config_services_logger.error("Firestore 資料庫未初始化，無法載入遊戲設定。")
+        return {}
+
+    config_services_logger.info("正在從 Firestore 載入遊戲核心設定...")
     configs: Dict[str, Any] = {}
-    # --- 核心修改處 START ---
-    # 將基礎目錄從 'backend/data' 改為 'backend/'，以符合您目前的檔案結構
-    data_dir = os.path.dirname(__file__)
-    # --- 核心修改處 END ---
-
-    # 定義要載入的設定檔和對應的鍵名，路徑已更新為新的資料夾結構
-    config_files_to_load = [
-        # monster 資料夾
-        ("dna_fragments", os.path.join("monster", "dna_fragments.json")),
-        ("element_nicknames", os.path.join("monster", "element_nicknames.json")),
-        # battle 資料夾
-        ("status_effects", os.path.join("battle", "status_effects.json")),
-        ("battle_highlights", os.path.join("battle", "battle_highlights.json")),
-        # system 資料夾
-        ("titles", os.path.join("system", "titles.json")),
-        ("champion_guardians", os.path.join("system", "champion_guardians.json")),
-        ("newbie_guide", os.path.join("system", "newbie_guide.json")),
-        ("cultivation_stories", os.path.join("system", "cultivation_stories.json")),
-        # adventure 資料夾
-        ("adventure_settings", os.path.join("adventure", "adventure_settings.json")),
-        ("adventure_islands", os.path.join("adventure", "adventure_islands.json")),
-        ("adventure_growth_settings", os.path.join("adventure", "adventure_growth_settings.json")),
-        ("game_mechanics", "game_mechanics.json"), # 新增讀取遊戲機制檔案
-        # adventure/bosses 子資料夾
-        ("bosses_novice_forest", os.path.join("adventure", "bosses", "bosses_novice_forest.json")),
-        ("bosses_abandoned_mine", os.path.join("adventure", "bosses", "bosses_abandoned_mine.json")),
-        ("bosses_tidal_cave", os.path.join("adventure", "bosses", "bosses_tidal_cave.json")),
-        ("bosses_ancient_ruins", os.path.join("adventure", "bosses", "bosses_ancient_ruins.json"))
-    ]
     
-    # 載入 JSON 檔案
-    for key, filename in config_files_to_load:
-        try:
-            with open(os.path.join(data_dir, filename), 'r', encoding='utf-8') as f:
-                configs[key] = json.load(f)
-        except FileNotFoundError:
-            print(f"警告: 找不到設定檔 {filename}")
-            # 如果是 game_mechanics.json 找不到，則提供一份預設結構
-            if key == 'game_mechanics':
-                configs[key] = {
-                    "battle_formulas": {"crit_multiplier": 1.5, "damage_formula_base_multiplier": 0.5, "damage_formula_attack_scaling": 0.1},
-                    "cultivation_rules": {"diminishing_returns_base": 0.75, "diminishing_returns_time_window_seconds": 3600, "base_bond_gain_on_completion": 3, "exp_gain_duration_divisor": 60, "stat_growth_points_per_chance": [1, 2], "elemental_bias_multiplier": 1.2},
-                    "absorption_rules": {"score_ratio_min_cap": 0.5, "score_ratio_max_cap": 2.0, "stat_gain_variance": [0.8, 1.2], "max_gain_multiplier_for_non_hpmp": 2.0, "max_hpmp_stat_growth_on_absorb": 1.05, "bonus_hpmp_stat_growth_on_absorb": 0.5}
-                }
-            else:
-                configs[key] = [] if 'islands' in key or 'fragments' in key else {}
-        except json.JSONDecodeError:
-            print(f"警告: 解析設定檔 {filename} 失敗")
-            configs[key] = [] if 'islands' in key or 'fragments' in key else {}
+    # 這個映射表定義了 Firestore 文件名、它在最終 configs 字典中對應的鍵名，以及需要提取的特定欄位
+    doc_to_key_map = {
+        "DNAFragments": ("dna_fragments", "all_fragments"),
+        "Skills": ("skills", "skill_database"),
+        "Personalities": ("personalities", "types"),
+        "Titles": ("titles", "player_titles"),
+        "NewbieGuide": ("newbie_guide", "guide_entries"),
+        "StatusEffects": ("status_effects", "effects_list"),
+        "ElementNicknames": ("element_nicknames", "nicknames"),
+        "MonsterAchievementsList": ("monster_achievements_list", "achievements"),
+        "CultivationStories": ("cultivation_stories", "story_library"),
+        "ChampionGuardians": ("champion_guardians", "guardians"),
+        "AdventureIslands": ("adventure_islands", "islands"),
+        # 對於那些整個文件就是設定的，欄位名設為 None
+        "Rarities": ("rarities", "dna_rarities"),
+        "NamingConstraints": ("naming_constraints", None),
+        "ValueSettings": ("value_settings", None),
+        "AbsorptionSettings": ("absorption_settings", None),
+        "CultivationSettings": ("cultivation_settings", None),
+        "ElementalAdvantageChart": ("elemental_advantage_chart", None),
+        "BattleHighlights": ("battle_highlights", None),
+        # 注意: NPCMonsters 等其他大型或不常變動的資料可視情況決定是否在此處載入
+    }
 
-    # 載入所有事件檔案 (從 adventure/events/ 子資料夾)
-    events_dir = os.path.join(data_dir, "adventure", "events")
-    if os.path.exists(events_dir):
-        configs["adventure_events"] = {}
-        for filename in os.listdir(events_dir):
-            if filename.startswith('adventure_events_') and filename.endswith('.json'):
-                try:
-                    with open(os.path.join(events_dir, filename), 'r', encoding='utf-8') as f:
-                        # 使用檔名作為 key
-                        configs["adventure_events"][filename] = json.load(f)
-                except Exception as e:
-                    print(f"警告: 載入事件檔案 {filename} 失敗: {e}")
-    else:
-        print(f"警告: 找不到事件資料夾 {events_dir}")
-        configs["adventure_events"] = {}
-
-
-    # 載入技能檔案 (從 monster/skills/ 子資料夾)
-    skills_dir = os.path.join(data_dir, 'monster', 'skills')
-    if os.path.exists(skills_dir):
-        configs['skills'] = {}
-        for filename in os.listdir(skills_dir):
-            if filename.endswith('.json'):
-                element_en_name = filename.split('.')[0]
-                element_map = {
-                    "fire": "火", "water": "水", "wood": "木", "gold": "金", "earth": "土",
-                    "light": "光", "dark": "暗", "poison": "毒", "wind": "風", "none": "無", "mix": "混"
-                }
-                # 我們只處理有對應中文的檔案
-                if element_en_name in element_map:
-                    element_zh_name = element_map[element_en_name]
-                    try:
-                        with open(os.path.join(skills_dir, filename), 'r', encoding='utf-8') as f:
-                            configs['skills'][element_zh_name] = json.load(f)
-                    except Exception as e:
-                        print(f"警告: 載入技能檔案 {filename} 失敗: {e}")
-    else:
-        print(f"警告: 找不到技能資料夾 {skills_dir}")
-        configs['skills'] = {}
-
-
-    # 載入 CSV 檔案 (從 monster/ 資料夾)
     try:
-        csv_path = os.path.join(data_dir, 'monster', 'personalities.csv')
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            configs['personalities'] = [row for row in reader]
-    except FileNotFoundError:
-        print(f"警告: 找不到 personalities.csv 於路徑 {csv_path}")
-        configs['personalities'] = []
-    
-    return configs
+        docs = db.collection('MD_GameConfigs').stream()
+        firestore_data = {doc.id: doc.to_dict() for doc in docs}
+
+        for doc_name, (config_key, field_name) in doc_to_key_map.items():
+            if doc_name in firestore_data:
+                doc_content = firestore_data[doc_name]
+                if doc_content: # 確保文件內容不為空
+                    if field_name:
+                        # 如果指定了 field_name，則只提取該欄位的內容
+                        configs[config_key] = doc_content.get(field_name, {})
+                    else:
+                        # 如果 field_name 為 None，則將整個文件內容作為設定
+                        configs[config_key] = doc_content
+            else:
+                config_services_logger.warning(f"在 Firestore 的 MD_GameConfigs 中找不到文件: '{doc_name}'，將跳過此項設定。")
+
+        config_services_logger.info("已成功從 Firestore 組合遊戲設定。")
+        return configs
+
+    except Exception as e:
+        config_services_logger.error(f"從 Firestore 載入遊戲設定時發生嚴重錯誤: {e}", exc_info=True)
+        return {}
