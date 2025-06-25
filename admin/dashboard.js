@@ -73,6 +73,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 responseEl: document.getElementById('champion-guardians-response'),
             },
 
+            // 修煉設定
+            cultivationSettings: {
+                dnaFindChanceInput: document.getElementById('cult-dna-find-chance'),
+                dnaFindDivisorInput: document.getElementById('cult-dna-find-divisor'),
+                lootTableContainer: document.getElementById('cultivation-loot-table-container'),
+                statGrowthContainer: document.getElementById('cultivation-stat-growth-container'),
+                saveBtn: document.getElementById('save-cultivation-settings-btn'),
+                responseEl: document.getElementById('cultivation-settings-response'),
+            },
+
             // 設定檔
             configFileSelector: document.getElementById('config-file-selector'),
             configDisplayArea: document.getElementById('game-configs-display'),
@@ -168,6 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadAdventureSettings();
             } else if (targetId === 'champion-guardians-settings') {
                 loadChampionGuardians();
+            } else if (targetId === 'cultivation-settings') {
+                loadCultivationSettings();
             } else if (targetId === 'game-configs') {
                 if (typeof initializeConfigEditor === 'function') {
                     initializeConfigEditor(ADMIN_API_URL, adminToken);
@@ -1067,6 +1079,89 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        async function loadCultivationSettings() {
+            const { dnaFindChanceInput, dnaFindDivisorInput, lootTableContainer, statGrowthContainer } = DOMElements.cultivationSettings;
+            lootTableContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
+            statGrowthContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
+            try {
+                const settings = await fetchAdminAPI('/get_config?file=settings/CultivationSettings.json');
+                dnaFindChanceInput.value = (settings.dna_find_chance * 100).toFixed(1);
+                dnaFindDivisorInput.value = settings.dna_find_duration_divisor;
+
+                const rarities = ["普通", "稀有", "菁英", "傳奇", "神話"];
+                let lootTableHtml = '<h4>拾獲DNA稀有度機率 (總和需為100)</h4>';
+                lootTableHtml += '<div class="form-grid">';
+                for (const rarity of rarities) {
+                    lootTableHtml += `<div class="facility-settings-card" data-monster-rarity="${rarity}"><h5>怪獸稀有度: ${rarity}</h5>`;
+                    const table = settings.dna_find_loot_table[rarity] || {};
+                    for (const lootRarity of rarities) {
+                        lootTableHtml += `<div class="form-group"><label>${lootRarity} (%)</label><input type="number" class="admin-input cult-loot-chance" data-loot-rarity="${lootRarity}" value="${(table[lootRarity] || 0) * 100}"></div>`;
+                    }
+                    lootTableHtml += '</div>';
+                }
+                lootTableHtml += '</div>';
+                lootTableContainer.innerHTML = lootTableHtml;
+
+                let statGrowthHtml = '<h4>各修煉地點數值成長權重</h4>';
+                for (const locId in settings.location_biases) {
+                    const loc = settings.location_biases[locId];
+                    statGrowthHtml += `<div class="facility-settings-card" data-location-id="${locId}"><h5>${loc.name}</h5>`;
+                    statGrowthHtml += '<div class="form-grid">';
+                    for (const stat in loc.stat_growth_weights) {
+                        statGrowthHtml += `<div class="form-group"><label>${stat.toUpperCase()}</label><input type="number" class="admin-input cult-stat-weight" data-stat="${stat}" value="${loc.stat_growth_weights[stat]}"></div>`;
+                    }
+                    statGrowthHtml += '</div></div>';
+                }
+                statGrowthContainer.innerHTML = statGrowthHtml;
+            } catch (err) {
+                lootTableContainer.innerHTML = `<p style="color: var(--danger-color);">載入失敗：${err.message}</p>`;
+                statGrowthContainer.innerHTML = '';
+            }
+        }
+
+        async function handleSaveCultivationSettings() {
+            const { dnaFindChanceInput, dnaFindDivisorInput, lootTableContainer, statGrowthContainer, saveBtn, responseEl } = DOMElements.cultivationSettings;
+            const newSettings = {
+                dna_find_chance: parseFloat(dnaFindChanceInput.value) / 100,
+                dna_find_duration_divisor: parseInt(dnaFindDivisorInput.value, 10),
+                dna_find_loot_table: {},
+                location_biases: {}
+            };
+            lootTableContainer.querySelectorAll('.facility-settings-card').forEach(card => {
+                const monsterRarity = card.dataset.monsterRarity;
+                newSettings.dna_find_loot_table[monsterRarity] = {};
+                card.querySelectorAll('.cult-loot-chance').forEach(input => {
+                    const lootRarity = input.dataset.lootRarity;
+                    newSettings.dna_find_loot_table[monsterRarity][lootRarity] = parseFloat(input.value) / 100;
+                });
+            });
+            statGrowthContainer.querySelectorAll('.facility-settings-card').forEach(card => {
+                const locId = card.dataset.locationId;
+                newSettings.location_biases[locId] = { name: card.querySelector('h5').textContent, stat_growth_weights: {}, element_bias: [] }; // Assume element_bias is not edited here
+                card.querySelectorAll('.cult-stat-weight').forEach(input => {
+                    const stat = input.dataset.stat;
+                    newSettings.location_biases[locId].stat_growth_weights[stat] = parseInt(input.value, 10);
+                });
+            });
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = '儲存中...';
+            responseEl.style.display = 'none';
+            try {
+                const result = await fetchAdminAPI('/save_cultivation_settings', { method: 'POST', body: JSON.stringify(newSettings) });
+                responseEl.textContent = result.message;
+                responseEl.className = 'admin-response-message success';
+            } catch (err) {
+                responseEl.textContent = `儲存失敗：${err.message}`;
+                responseEl.className = 'admin-response-message error';
+            } finally {
+                responseEl.style.display = 'block';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '儲存修煉設定';
+            }
+        }
+
+
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
         DOMElements.logoutBtn.addEventListener('click', () => { localStorage.removeItem('admin_token'); window.location.href = 'index.html'; });
@@ -1105,6 +1200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         DOMElements.generateReportBtn.addEventListener('click', handleGenerateReport);
         if (DOMElements.refreshLogsBtn) { DOMElements.refreshLogsBtn.addEventListener('click', loadAndDisplayLogs); }
         if (DOMElements.guardianSettings.saveBtn) { DOMElements.guardianSettings.saveBtn.addEventListener('click', handleSaveChampionGuardians); }
+        if (DOMElements.cultivationSettings.saveBtn) { DOMElements.cultivationSettings.saveBtn.addEventListener('click', handleSaveCultivationSettings); }
         
         if (typeof initializeConfigEditor === 'function') {
              initializeConfigEditor(ADMIN_API_URL, adminToken);
