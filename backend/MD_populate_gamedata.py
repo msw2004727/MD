@@ -109,27 +109,39 @@ def populate_game_configs():
     db_client = firestore_db_instance
     script_logger.info("開始填充/更新遊戲設定資料到 Firestore...")
     
-    # --- 核心修改處 START ---
-    # 將基礎路徑從 'data' 改為指向 backend/
     base_dir = os.path.dirname(__file__)
-    # --- 核心修改處 END ---
 
-    # --- 載入 DNA 碎片資料 ---
+    # --- 載入 DNA 碎片資料 (已修正) ---
+    all_dna_fragments = []
     try:
-        # 更新路徑
-        dna_fragments_path = os.path.join(base_dir, 'monster', 'dna_fragments.json')
-        with open(dna_fragments_path, 'r', encoding='utf-8') as f:
-            dna_fragments_data = json.load(f)
-        script_logger.info(f"成功從 {dna_fragments_path} 載入 {len(dna_fragments_data)} 種 DNA 碎片資料。")
-        db_client.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': dna_fragments_data})
+        dna_fragments_dir = os.path.join(base_dir, 'monster', 'DNA')
+        if not os.path.exists(dna_fragments_dir):
+            script_logger.error(f"錯誤: 找不到 DNA 資料夾: {dna_fragments_dir}")
+            return
+
+        for filename in os.listdir(dna_fragments_dir):
+            if filename.endswith('.json'):
+                file_path = os.path.join(dna_fragments_dir, filename)
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    dna_data = json.load(f)
+                    if isinstance(dna_data, list):
+                        all_dna_fragments.extend(dna_data)
+                    else:
+                        script_logger.warning(f"警告: {filename} 格式不正確，應為 JSON 列表。")
+                script_logger.info(f"成功從 {filename} 載入 {len(dna_data)} 筆 DNA 資料。")
+
+        script_logger.info(f"總共載入 {len(all_dna_fragments)} 種 DNA 碎片資料。")
+        db_client.collection('MD_GameConfigs').document('DNAFragments').set({'all_fragments': all_dna_fragments})
         script_logger.info("成功寫入 DNAFragments 資料。")
     except Exception as e:
-        script_logger.error(f"處理 DNAFragments 資料失敗: {e}")
+        script_logger.error(f"處理 DNAFragments 資料夾失敗: {e}", exc_info=True)
         return
+    
+    # 重新命名 dna_fragments_data 以符合後續程式碼的變數名稱
+    dna_fragments_data = all_dna_fragments
 
     # --- 載入技能資料 (從拆分檔案) ---
     try:
-        # 更新路徑
         skills_dir = os.path.join(base_dir, 'monster', 'skills')
         if not os.path.exists(skills_dir):
             os.makedirs(skills_dir)
@@ -168,7 +180,6 @@ def populate_game_configs():
     # --- 載入個性資料 (從CSV) ---
     personalities_data = []
     try:
-        # 更新路徑
         personalities_path = os.path.join(base_dir, 'monster', 'personalities.csv')
         with open(personalities_path, mode='r', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -201,7 +212,6 @@ def populate_game_configs():
 
     # --- 載入修煉故事資料 ---
     try:
-        # 更新路徑
         stories_path = os.path.join(base_dir, 'system', 'cultivation_stories.json')
         with open(stories_path, 'r', encoding='utf-8') as f:
             stories_data = json.load(f)
@@ -215,7 +225,6 @@ def populate_game_configs():
 
     # --- 載入冠軍守門員資料 ---
     try:
-        # 更新路徑
         guardians_path = os.path.join(base_dir, 'system', 'champion_guardians.json')
         with open(guardians_path, 'r', encoding='utf-8') as f:
             guardians_data = json.load(f)
@@ -229,7 +238,6 @@ def populate_game_configs():
 
     # --- 載入狀態效果資料 (從 status_effects.json) ---
     try:
-        # 更新路徑
         status_effects_path = os.path.join(base_dir, 'battle', 'status_effects.json')
         with open(status_effects_path, 'r', encoding='utf-8') as f:
             status_effects_data = json.load(f)
@@ -245,7 +253,6 @@ def populate_game_configs():
         
     # --- 載入戰鬥亮點資料 (從 battle_highlights.json) ---
     try:
-        # 更新路徑
         highlights_path = os.path.join(base_dir, 'battle', 'battle_highlights.json')
         with open(highlights_path, 'r', encoding='utf-8') as f:
             highlights_data = json.load(f)
@@ -259,7 +266,6 @@ def populate_game_configs():
 
     # --- 載入冒險島資料 ---
     try:
-        # 更新路徑
         islands_path = os.path.join(base_dir, 'adventure', 'adventure_islands.json')
         with open(islands_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
@@ -285,7 +291,6 @@ def populate_game_configs():
 
     # --- 載入並寫入稱號資料 (從 titles.json) ---
     try:
-        # 更新路徑
         titles_path = os.path.join(base_dir, 'system', 'titles.json')
         with open(titles_path, 'r', encoding='utf-8') as f:
             titles_data_from_json = json.load(f)
@@ -308,7 +313,6 @@ def populate_game_configs():
 
     # --- 載入並寫入元素預設名 (從 element_nicknames.json) ---
     try:
-        # 更新路徑
         nicknames_path = os.path.join(base_dir, 'monster', 'element_nicknames.json')
         with open(nicknames_path, 'r', encoding='utf-8') as f:
             element_nicknames_data = json.load(f)
@@ -331,7 +335,6 @@ def populate_game_configs():
 
     # 新手指南資料 (NewbieGuide)
     try:
-        # 更新路徑
         guide_path = os.path.join(base_dir, 'system', 'newbie_guide.json')
         with open(guide_path, 'r', encoding='utf-8') as f:
             newbie_guide_data = json.load(f)
