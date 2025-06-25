@@ -1,201 +1,81 @@
 # backend/analytics/analytics_services.py
-import logging
-from datetime import datetime, timedelta, timezone
-import os
-from collections import Counter
-from ..MD_firebase_config import db
 
+from backend.MD_firebase_config import db
+from datetime import datetime, time
+import pytz
+import logging
+
+# 獲取日誌記錄器實例
 logger = logging.getLogger(__name__)
 
-def get_kpi_metrics():
-    """獲取儀表板的關鍵績效指標 (KPI)。"""
+def get_dau():
+    """
+    計算每日活躍使用者 (DAU)。
+    活躍使用者的定義是今天有登入過的玩家。
+    """
     try:
-        # 1. 總用戶數
-        players_ref = db.collection('players')
-        total_users = len(list(players_ref.stream()))
+        # 定義UTC時區
+        utc = pytz.UTC
 
-        # 2. 每日活躍用戶 (DAU)
-        # 定義：過去24小時內有活動紀錄的玩家
-        gmt8 = timezone(timedelta(hours=8))
-        twenty_four_hours_ago = datetime.now(gmt8) - timedelta(hours=24)
-        active_users = set()
+        # 獲取當前的UTC日期
+        today_utc = datetime.now(utc).date()
         
-        all_players = players_ref.stream()
-        for player in all_players:
-            player_data = player.to_dict()
-            activity_logs = player_data.get('activity_log', [])
-            if any(datetime.fromisoformat(log['time']) > twenty_four_hours_ago.isoformat() for log in activity_logs if 'time' in log):
-                active_users.add(player.id)
+        # 定義今天的開始與結束時間 (UTC)
+        start_of_day = datetime.combine(today_utc, time.min, tzinfo=utc)
+        end_of_day = datetime.combine(today_utc, time.max, tzinfo=utc)
+
+        # 查詢Firestore中 last_login 在今天範圍內的使用者
+        users_ref = db.collection('users')
+        query = users_ref.where('last_login', '>=', start_of_day).where('last_login', '<=', end_of_day)
         
-        daily_active_users = len(active_users)
+        # 獲取查詢結果的文件數量
+        active_users = query.get()
+        dau_count = len(active_users)
 
-        # 3. 總怪獸數
-        monsters_ref = db.collection('monsters')
-        total_monsters = len(list(monsters_ref.stream()))
-
-        # 4. 今日戰鬥數
-        battles_ref = db.collection('battle_logs')
-        start_of_today = datetime.now(gmt8).replace(hour=0, minute=0, second=0, microsecond=0)
+        logger.info(f"成功計算DAU {today_utc.isoformat()}: {dau_count} 位使用者。")
         
-        query = battles_ref.where('timestamp', '>=', start_of_today.isoformat())
-        battles_today = len(list(query.stream()))
+        return {"date": today_utc.isoformat(), "dau": dau_count}
 
-        return {
-            "total_users": total_users,
-            "daily_active_users": daily_active_users,
-            "total_monsters": total_monsters,
-            "battles_today": battles_today
-        }
     except Exception as e:
-        logger.error(f"Error getting KPI metrics: {e}")
-        return {"error": str(e)}
-
-def get_recent_activities(limit=20):
-    """獲取最近的玩家活動紀錄。"""
-    try:
-        all_activities = []
-        players_ref = db.collection('players')
-        all_players = players_ref.stream()
-
-        for player in all_players:
-            player_data = player.to_dict()
-            player_nickname = player_data.get('nickname', '未知玩家')
-            activity_logs = player_data.get('activity_log', [])
-            for log in activity_logs:
-                if 'time' in log and 'message' in log:
-                    all_activities.append({
-                        "nickname": player_nickname,
-                        "message": log['message'],
-                        "time": log['time']
-                    })
-
-        # 按時間倒序排序
-        all_activities.sort(key=lambda x: x['time'], reverse=True)
-
-        return all_activities[:limit]
-    except Exception as e:
-        logger.error(f"Error getting recent activities: {e}")
-        return {"error": str(e)}
-
-def get_error_logs(lines=50):
-    """從日誌檔案中讀取最後幾行錯誤日誌。"""
-    try:
-        log_file_path = os.path.join('logs', 'app.log')
-        if not os.path.exists(log_file_path):
-            return ["日誌檔案 'logs/app.log' 不存在。"]
-        
-        with open(log_file_path, 'r', encoding='utf-8') as f:
-            # 讀取所有行，並只保留包含 'ERROR' 或 'CRITICAL' 的行
-            error_lines = [line.strip() for line in f if 'ERROR' in line or 'CRITICAL' in line]
-
-        # 返回最後 N 行
-        return error_lines[-lines:]
-    except Exception as e:
-        logger.error(f"Error reading log file: {e}")
-        return [f"讀取日誌檔案時發生錯誤: {e}"]
+        logger.error(f"計算DAU時發生錯誤: {e}", exc_info=True)
+        # 回傳錯誤訊息
+        return {"error": "無法計算DAU", "details": str(e)}, 500
 
 
-def get_user_growth_data():
-    """獲取用戶增長數據。"""
-    try:
-        users_ref = db.collection('players')
-        users = users_ref.stream()
-        
-        growth_data = Counter()
-        for user in users:
-            data = user.to_dict()
-            created_at_str = data.get('createdAt')
-            if created_at_str:
-                # Assuming ISO format string
-                created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
-                date_key = created_at.strftime('%Y-%m-%d')
-                growth_data[date_key] += 1
-        
-        # Sort by date
-        sorted_growth = sorted(growth_data.items())
-        labels = [item[0] for item in sorted_growth]
-        data = [item[1] for item in sorted_growth]
-        
-        return {"labels": labels, "data": data}
-    except Exception as e:
-        logger.error(f"Error in get_user_growth_data: {e}")
-        return {"labels": [], "data": []}
+def get_mau():
+    # TODO: Implement MAU calculation
+    return {"month": "2024-07", "mau": 1200}
 
-def get_monster_distribution_data():
-    """獲取怪獸稀有度和元素分佈數據。"""
-    try:
-        monsters_ref = db.collection('monsters')
-        monsters = monsters_ref.stream()
-        
-        rarity_dist = Counter()
-        element_dist = Counter()
-        
-        for monster in monsters:
-            data = monster.to_dict()
-            rarity_dist[data.get('rarity', '未知')] += 1
-            elements = data.get('elements', ['未知'])
-            for element in elements:
-                element_dist[element] += 1
+def get_new_users():
+    # TODO: Implement new user calculation
+    return {"date": "2024-07-29", "new_users": 25}
 
-        rarity_labels = list(rarity_dist.keys())
-        rarity_data = list(rarity_dist.values())
-        
-        element_labels = list(element_dist.keys())
-        element_data = list(element_dist.values())
+def get_paying_users():
+    # TODO: Implement paying user calculation
+    return {"date": "2024-07-29", "paying_users": 10}
 
-        return {
-            "rarity": {"labels": rarity_labels, "data": rarity_data},
-            "elements": {"labels": element_labels, "data": element_data}
-        }
-    except Exception as e:
-        logger.error(f"Error in get_monster_distribution_data: {e}")
-        return {"rarity": {"labels": [], "data": []}, "elements": {"labels": [], "data": []}}
+def get_revenue():
+    # TODO: Implement revenue calculation
+    return {"date": "2024-07-29", "revenue": 150.75}
 
-def get_battle_activity_data():
-    """獲取戰鬥活動數據。"""
-    try:
-        logs_ref = db.collection('battle_logs')
-        # Get logs from the last 30 days
-        thirty_days_ago = datetime.now() - timedelta(days=30)
-        logs = logs_ref.where('timestamp', '>=', thirty_days_ago.isoformat()).stream()
-        
-        battle_counts = Counter()
-        for log in logs:
-            data = log.to_dict()
-            timestamp_str = data.get('timestamp')
-            if timestamp_str:
-                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                date_key = timestamp.strftime('%Y-%m-%d')
-                battle_counts[date_key] += 1
+def get_retention_rate():
+    # TODO: Implement retention rate calculation
+    return {
+        "start_date": "2024-07-01",
+        "end_date": "2024-07-07",
+        "retention_rate": 0.35
+    }
 
-        sorted_battles = sorted(battle_counts.items())
-        labels = [item[0] for item in sorted_battles]
-        data = [item[1] for item in sorted_battles]
+def get_player_growth():
+    # TODO: Implement player growth calculation
+    return {
+        "labels": ["Week 1", "Week 2", "Week 3", "Week 4"],
+        "data": [100, 150, 220, 300]
+    }
 
-        return {"labels": labels, "data": data}
-    except Exception as e:
-        logger.error(f"Error in get_battle_activity_data: {e}")
-        return {"labels": [], "data": []}
-
-def get_economic_data():
-    """獲取遊戲內經濟數據 (例如 DNA 碎片)。"""
-    try:
-        players_ref = db.collection('players')
-        players = players_ref.stream()
-        
-        dna_distribution = Counter()
-        for player in players:
-            data = player.to_dict()
-            inventory = data.get('inventory', {})
-            dna_fragments = inventory.get('dna_fragments', {})
-            for dna_type, count in dna_fragments.items():
-                dna_distribution[dna_type] += count
-        
-        sorted_dna = sorted(dna_distribution.items(), key=lambda item: item[1], reverse=True)
-        labels = [item[0] for item in sorted_dna]
-        data = [item[1] for item in sorted_dna]
-
-        return {"labels": labels, "data": data}
-    except Exception as e:
-        logger.error(f"Error in get_economic_data: {e}")
-        return {"labels": [], "data": []}
+def get_top_spending_players():
+    # TODO: Implement top spending players calculation
+    return [
+        {"player_id": "player123", "total_spent": 50.00},
+        {"player_id": "player456", "total_spent": 45.50}
+    ]
