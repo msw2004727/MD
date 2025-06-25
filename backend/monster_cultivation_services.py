@@ -21,6 +21,12 @@ from .player_services import get_player_data_service, save_player_data_service #
 # 新增：導入新的共用函式
 from .utils_services import calculate_exp_to_next_level, get_effective_skill_with_level
 
+# --- 核心修改處 START ---
+# 導入我們新的事件紀錄服務
+from .analytics.analytics_services import log_event
+# --- 核心修改處 END ---
+
+
 monster_cultivation_services_logger = logging.getLogger(__name__)
 
 # --- 預設遊戲設定 (省略，與上次相同) ---
@@ -356,6 +362,24 @@ def complete_cultivation_service(
     player_data["farmedMonsters"][monster_idx] = monster_to_update
     
     if save_player_data_service(player_id, player_data):
+        # --- 核心修改處 START ---
+        # 在成功儲存修煉結果後，紀錄事件
+        try:
+            event_data = {
+                'uid': player_id,
+                'monster_id': monster_id,
+                'cultivation_location': training_location,
+                'duration_seconds': duration_seconds,
+                'stat_gains': monster_to_update.get("cultivation_gains", {}),
+                'items_obtained_count': len(items_obtained),
+                'new_skill_learned': True if learned_new_skill_template else False,
+                'diminishing_multiplier': diminishing_multiplier
+            }
+            log_event('cultivation_completed', event_data)
+        except Exception as e:
+            monster_cultivation_services_logger.error(f"為玩家 {player_id} 紀錄 cultivation_completed 事件時失敗: {e}", exc_info=True)
+        # --- 核心修改處 END ---
+
         return {
             "success": True,
             "updated_monster": monster_to_update,
