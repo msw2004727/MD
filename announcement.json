@@ -15,37 +15,20 @@
       "type": "columns",
       "columns": [
         {
-          "title": "目前0.4.1v已實裝內容：",
+          "title": "目前0.5.0v已實裝內容：",
           "items": [
-            { "text": "冒險島持續打磨優化中", "color": "success" },
-            { "text": "站內信件功能完善", "color": "success" },
-            { "text": "基礎治療功能", "color": "success" },
-            { "text": "優化農場顯示方式", "color": "success" },
-            { "text": "與怪獸協商關閉技能", "color": "success" },
-            { "text": "第一階段技能優化", "color": "success" },
-            { "text": "元素抗性計算調整", "color": "success" },
-            { "text": "合成規則調整", "color": "success" },
-            { "text": "錢幣系統", "color": "success" },
-            { "text": "冠軍殿堂開放挑戰", "color": "success" },
-            { "text": "怪獸顯示頭像功能", "color": "success" },
-            { "text": "怪獸牽絆系統", "color": "success", "size": "large" },
-            { "text": "戰鬥邏輯升級", "color": "success" },
-            { "text": "怪獸素材已補完", "color": "success" },
-            { "text": "AI怪獸聊天", "color": "success" },
-            { "text": "好友功能", "color": "success" },
-            { "text": "排行榜挑戰", "color": "success" },
-            { "text": "修煉系統 (養成)", "color": "success" },
-            { "text": "DNA合成", "color": "success" }
+            { "text": "遊戲持續不定時更新與優化", "color": "success" },
+            { "text": "6/26正式OB開放測試中", "color": "success" }
           ]
         },
         {
           "title": "接下來開發目標：",
           "items": [
-            { "text": "持續完善圖片可愛風格", "color": "accent" },
-            { "text": "技能與機率調整", "color": "accent" },
-            { "text": "訓練場", "color": "accent" },
-            { "text": "交易所", "color": "accent" },
-            { "text": "醫療站", "color": "accent" },
+            { "text": "持續完善圖片風格", "color": "accent" },
+            { "text": "家園系統企劃中", "color": "accent" },
+            { "text": "訓練場搭建中", "color": "accent" },
+            { "text": "交易所商人陸續進駐", "color": "accent" },
+            { "text": "醫療站醫護人員實習中", "color": "accent" },
             { "text": "怪獸情感族譜", "color": "accent" }
           
           ]
