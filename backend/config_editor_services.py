@@ -18,10 +18,11 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "system/titles.json": ("Titles", "player_titles"),
     "system/champion_guardians.json": ("ChampionGuardians", "guardians"),
     "system/newbie_guide.json": ("NewbieGuide", "guide_entries"),
+    "system/cultivation_stories.json": ("CultivationStories", "story_library"), # 新增
     # battle/
     "battle/battle_highlights.json": ("BattleHighlights", None),
     "battle/status_effects.json": ("StatusEffects", "effects_list"),
-    "battle/elemental_advantage_chart.json": ("ElementalAdvantageChart", None), # 新增：讓這個檔案也能被通用編輯器讀取
+    "battle/elemental_advantage_chart.json": ("ElementalAdvantageChart", None),
     # monster/
     "monster/dna_fragments.json": ("DNAFragments", "all_fragments"),
     "monster/element_nicknames.json": ("ElementNicknames", "nicknames"),
@@ -37,6 +38,10 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
+    # settings/
+    "settings/Rarities.json": ("Rarities", "dna_rarities"), # 新增
+    "settings/ValueSettings.json": ("ValueSettings", None), # 新增
+    "settings/CultivationSettings.json": ("CultivationSettings", None) # 新增
 }
 
 # 本地設定檔的路徑也更新
@@ -315,6 +320,28 @@ def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[boo
     except Exception as e:
         config_editor_logger.error(f"儲存冠軍守衛資料時發生錯誤: {e}", exc_info=True)
         return False, "儲存冠軍守衛資料時發生伺服器內部錯誤。"
+
+# --- 新增 START ---
+def save_cultivation_settings_service(settings_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    """
+    將新的修煉設定儲存到 CultivationSettings 文件。
+    """
+    try:
+        if not isinstance(settings_data, dict):
+            return False, "傳入的資料格式不正確，應為一個字典。"
+
+        db = MD_firebase_config.db
+        doc_ref = db.collection('MD_GameConfigs').document('CultivationSettings')
+        doc_ref.set(settings_data, merge=True) # 使用 merge=True 以只更新傳入的欄位
+        
+        config_editor_logger.info(f"修煉設定已成功更新至 Firestore。")
+        reload_main_app_configs()
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存修煉設定時發生錯誤: {e}", exc_info=True)
+        return False, "儲存修煉設定時發生伺服器內部錯誤。"
+# --- 新增 END ---
 
 def reload_main_app_configs():
     try:
