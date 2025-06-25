@@ -154,7 +154,7 @@
     "description_template": "你們發現一輛廢棄的礦車停在軌道上，旁邊有一個分岔的軌道控制器。",
     "choices": [
       {
-        "choice_id": "RUINS_004_A",
+        "choice_id": "MINE_004_A",
         "text": "推動礦車，讓它沿著左邊軌道前進",
         "outcomes": [
           {
@@ -175,7 +175,7 @@
         ]
       },
       {
-        "choice_id": "RUINS_004_B",
+        "choice_id": "MINE_004_B",
         "text": "扳動控制器，讓礦車去右邊",
         "outcomes": [
           {
