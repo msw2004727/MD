@@ -429,7 +429,7 @@ def draw_free_dna() -> Optional[List[Dict[str, Any]]]:
 
         all_dna_fragments = game_configs['dna_fragments']
         
-        allowed_rarities = {"普通", "稀有"}
+        allowed_rarities = {"普通"}
         filtered_pool = [dna for dna in all_dna_fragments if dna.get('rarity') in allowed_rarities]
 
         if not filtered_pool:
