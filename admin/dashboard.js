@@ -1084,7 +1084,11 @@ document.addEventListener('DOMContentLoaded', function() {
             lootTableContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             statGrowthContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             try {
-                const settings = await fetchAdminAPI('/get_config?file=settings/CultivationSettings.json');
+                // --- 核心修改處 START ---
+                // 將請求的路徑從 settings/ 改為 system/
+                const settings = await fetchAdminAPI('/get_config?file=system/CultivationSettings.json');
+                // --- 核心修改處 END ---
+                
                 dnaFindChanceInput.value = (settings.dna_find_chance * 100).toFixed(1);
                 dnaFindDivisorInput.value = settings.dna_find_duration_divisor;
 
