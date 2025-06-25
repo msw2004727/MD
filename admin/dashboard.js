@@ -142,14 +142,11 @@ document.addEventListener('DOMContentLoaded', function() {
             DOMElements.navItems.forEach(item => item.classList.toggle('active', item.dataset.target === targetId));
             DOMElements.contentPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
             
-            // --- 核心修改處 START ---
-            // 修改後的頁籤切換邏輯
             if (targetId === 'dashboard-home') {
                 if (DOMElements.overviewReportContainer.innerHTML.includes('點擊按鈕')) {
                     handleGenerateReport();
                 }
             } else if (targetId === 'analytics-dashboard') {
-                // 當切換到營運儀表板時，才呼叫它的初始化函式
                 if (typeof window.initializeAnalyticsDashboard === 'function') {
                     window.initializeAnalyticsDashboard();
                 } else {
@@ -175,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (targetId === 'game-mechanics') {
                 loadGameMechanics();
             }
-            // --- 核心修改處 END ---
         }
 
         // --- 日誌監控邏輯 ---
@@ -594,11 +590,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             try {
+                // --- 核心修改處 START ---
+                // 將檔名修正為包含完整路徑的格式
                 const [advSettings, islandsData, growthSettings] = await Promise.all([
-                    fetchAdminAPI('/get_config?file=adventure_settings.json'),
-                    fetchAdminAPI('/get_config?file=adventure_islands.json'),
-                    fetchAdminAPI('/get_config?file=adventure_growth_settings.json')
+                    fetchAdminAPI('/get_config?file=adventure/adventure_settings.json'),
+                    fetchAdminAPI('/get_config?file=adventure/adventure_islands.json'),
+                    fetchAdminAPI('/get_config?file=adventure/adventure_growth_settings.json')
                 ]);
+                // --- 核心修改處 END ---
 
                 // 渲染全域參數
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
