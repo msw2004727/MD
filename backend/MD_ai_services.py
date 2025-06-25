@@ -13,7 +13,6 @@ import re # 匯入正規表達式模組
 # 從專案的其他模組導入必要的模型
 from .MD_models import Monster, PlayerGameData, ChatHistoryEntry, GameConfigs
 
-
 # 設定日誌記錄器
 ai_logger = logging.getLogger(__name__)
 
@@ -27,42 +26,26 @@ DEFAULT_AI_RESPONSES = {
     "aiIntroduction": "關於這隻怪獸的起源眾說紛紜，只知道牠是在一次強烈的元素碰撞中意外誕生的。",
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
-
-# --- 核心修改處 START ---
-# 新增缺少的 DEFAULT_CHAT_REPLY 變數
 DEFAULT_CHAT_REPLY = "（...）"
-# --- 核心修改處 END ---
-
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗。這次的冒險充滿了未知與謎團，許多細節都模糊不清，無法被準確記錄下來。"
 DEFAULT_BATTLE_SUMMARY = "AI 戰報總結生成失敗。這場戰鬥的過程太過激烈，快到無法看清細節，只留下了勝利或失敗的結果。"
 
 def initialize_ai_services():
     """從環境變數中初始化 AI 服務所需的 API 金鑰"""
     global DEEPSEEK_API_KEY
-    # 只從我們在 Render 設定的環境變數 'AI_API_KEY' 讀取
     DEEPSEEK_API_KEY = os.environ.get('AI_API_KEY')
     
     if DEEPSEEK_API_KEY:
         ai_logger.info("成功從環境變數 AI_API_KEY 載入 API 金鑰。")
     else:
-        # 如果環境變數中沒有，則記錄警告，AI 功能將無法使用
         ai_logger.warning("未設定 AI_API_KEY 環境變數，所有 AI 功能將被禁用。")
 
-# 在模組載入時執行初始化
 initialize_ai_services()
 
 
 def _call_deepseek_api(payload: Dict[str, Any], max_retries: int = 2, timeout: int = 60) -> Optional[Dict[str, Any]]:
     """
     內部函數，用於呼叫 DeepSeek API 並處理重試邏輯。
-
-    Args:
-        payload: 要發送給 API 的請求體。
-        max_retries: 最大重試次數。
-        timeout: 請求超時時間（秒）。
-
-    Returns:
-        成功時返回 API 的 JSON 響應，失敗時返回 None。
     """
     if not DEEPSEEK_API_KEY:
         ai_logger.warning("未提供 DeepSeek API 金鑰，無法呼叫 API。")
@@ -76,12 +59,12 @@ def _call_deepseek_api(payload: Dict[str, Any], max_retries: int = 2, timeout: i
     for attempt in range(max_retries + 1):
         try:
             response = requests.post(DEEPSEEK_API_URL, headers=headers, json=payload, timeout=timeout)
-            response.raise_for_status()  # 如果狀態碼不是 2xx，則拋出 HTTPError
+            response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
             ai_logger.error(f"呼叫 DeepSeek API 失敗 (第 {attempt + 1} 次嘗試): {e}")
             if attempt < max_retries:
-                time.sleep(2 ** attempt)  # 指數退避
+                time.sleep(2 ** attempt)
             else:
                 return None
     return None
@@ -90,7 +73,6 @@ def generate_monster_introduction(monster: Monster) -> str:
     """
     為指定的怪獸生成一段引人入勝的介紹。
     """
-    # 提取怪獸的主要元素和性格
     primary_element = monster.get("elements", ["無"])[0]
     personality_name = monster.get("personality", {}).get("name", "未知的")
 
@@ -128,7 +110,6 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
     """
     根據怪獸的綜合數據，生成培養建議。
     """
-    # 準備技能資訊
     skill_details = []
     for skill_info in monster.get("skills", []):
         skill_name = skill_info.get('name')
@@ -236,19 +217,16 @@ def generate_adventure_story(player: PlayerGameData, monster: Monster, adventure
 
     return DEFAULT_ADVENTURE_STORY
 
-
-def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> str:
+def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> Dict[str, str]:
     """
     根據戰鬥結果，生成戰報總結。
     """
     winner_name = battle_result.get("winner_name", "未知")
-    loser_name = battle_result.get("loser_name", "未知")
     total_rounds = battle_result.get("total_rounds", 0)
 
-    # 提取戰鬥亮點
     highlights = []
     for log in battle_result.get("log", []):
-        if log.get("highlight"):
+        if isinstance(log, dict) and log.get("highlight"):
             highlights.append(log["message"])
     highlights_text = " ".join(highlights) if highlights else "戰鬥過程平淡無奇。"
 
@@ -258,7 +236,7 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
 1.  **風格**：使用繁體中文，語氣要熱血沸騰，充滿動感和張力，彷彿在解說一場精彩的比賽。
 2.  **長度**：嚴格控制在 100 到 150 字之間。
 3.  **內容**：戰報必須清晰地交代「參賽雙方」、「勝負結果」，並生動地描寫「戰鬥中的一兩個亮點時刻」。
-4.  **附加任務**：在總結的最後，請加上一個獨特的 Hashtag 標籤，格式為 `#<四字成語或熱血詞彙>之戰`。
+4.  **禁止事項**：不要包含任何 Hashtag。
 
 **戰鬥情報：**
 -   **參賽方 A**: 玩家 `{player1_name}` 的怪獸 `{monster1_name}`
@@ -276,45 +254,16 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         "max_tokens": 300,
         "temperature": 0.85,
     }
-
+    
     ai_summary = DEFAULT_BATTLE_SUMMARY
-    ai_tags = []
     
     try:
         response_json = _call_deepseek_api(payload, timeout=45)
         if response_json and response_json.get("choices"):
             content = response_json["choices"][0]["message"]["content"].strip()
-            
-            tag_match = re.search(r'(#\S+之戰)', content)
-            if tag_match:
-                tag = tag_match.group(1)
-                ai_summary = content.replace(tag, '').strip()
-                ai_tags.append(tag)
-                ai_logger.info(f"成功提取標籤: {tag}")
-            else:
-                ai_summary = content
-                ai_logger.warning("AI 生成的內容中未找到預期格式的標籤。")
-                try:
-                    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-                    with open(os.path.join(data_dir, 'battle_highlights.json'), 'r', encoding='utf-8') as f:
-                        highlights_data = json.load(f)
-                        if highlights_data.get("tags"):
-                           random_tag = random.choice(highlights_data["tags"])
-                           ai_tags.append(f"#{random_tag}之戰")
-                           ai_logger.info(f"AI 未生成標籤，已隨機選取備用標籤: {ai_tags[-1]}")
-                except Exception as file_e:
-                    ai_logger.error(f"讀取備用標籤檔案 battle_highlights.json 時出錯: {file_e}")
-
-            if len(ai_summary) < 20 and len(content) > 20:
-                 ai_summary = content.strip() 
-                 ai_logger.warning("偵測到 summary 過短，已還原。")
-        
+            ai_summary = content
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
-
-    if ai_tags:
-        tags_str = " ".join(ai_tags)
-        ai_summary += f"\n\n{tags_str}"
 
     absorption_details = battle_result.get("absorption_details", {})
     loot_info_parts = []
@@ -328,18 +277,12 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
 
     final_report = {
-        "ai_summary": ai_summary,
+        "battle_summary": ai_summary,
         "loot_info": " ".join(loot_info_parts),
         "growth_info": " ".join(growth_info_parts),
     }
 
-    full_report_str = final_report["ai_summary"]
-    if final_report["loot_info"]:
-        full_report_str += f'\n\n{final_report["loot_info"]}'
-    if final_report["growth_info"]:
-        full_report_str += f'\n{final_report["growth_info"]}'
-        
-    return full_report_str.strip()
+    return final_report
 
 
 def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry], player_nickname: str, interaction_type: Optional[str] = None) -> str:
