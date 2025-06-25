@@ -65,9 +65,12 @@ def start_adventure_route():
         if not player_data:
             return jsonify({"error": "找不到玩家資料。"}), 404
 
+        # --- 核心修改處 START ---
+        # 更新呼叫，將 user_id 傳遞給服務層
         updated_player_data, error_msg = start_expedition_service(
-            player_data, island_id, facility_id, team_monster_ids, game_configs
+            user_id, player_data, island_id, facility_id, team_monster_ids, game_configs
         )
+        # --- 核心修改處 END ---
 
         if error_msg:
             return jsonify({"error": error_msg}), 400
@@ -115,24 +118,18 @@ def abandon_adventure_route():
             monster_in_farm["mp"] = member["current_mp"]
             adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
     
-    # --- 核心修改處 START ---
-    # 先取得最終的統計數據
     final_stats = progress.get("expedition_stats")
-    # --- 核心修改處 END ---
 
     progress["is_active"] = False
     player_data["adventure_progress"] = progress
     
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 已成功放棄遠征。")
-        # --- 核心修改處 START ---
-        # 在回傳的 JSON 中加入 expedition_stats
         return jsonify({
             "success": True, 
             "message": "已成功結束本次遠征。",
             "expedition_stats": final_stats
         }), 200
-        # --- 核心修改處 END ---
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
         return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
