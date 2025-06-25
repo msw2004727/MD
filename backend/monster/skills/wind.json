@@ -199,4 +199,12 @@
         ]
       },
       "10": {
-        "descr
+        "description": "威力提升15點，並有10%機率使對手陷入混亂。",
+        "add_power": 15,
+        "add_effects": [
+          { "type": "apply_status", "status_id": "confusion", "chance": 0.1, "duration": 2, "target": "opponent_all", "log_success": "龍捲風的亂流讓敵方陷入混亂！" }
+        ]
+      }
+    }
+  }
+]
