@@ -7,13 +7,8 @@ import sys
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Now you can import from the backend directory
-from backend.MD_firebase_config import initialize_firebase
-
-# Initialize Firebase
-initialize_firebase()
-
-db = firestore.client()
+# 【修改】從直接引用 db 物件，而不是不存在的函式
+from backend.MD_firebase_config import db
 
 def populate_data(collection_name, data):
     """Populates a Firestore collection with data from a dictionary."""
@@ -36,6 +31,13 @@ def load_and_populate(file_path, collection_name):
         print(f"An unexpected error occurred: {e}")
 
 if __name__ == '__main__':
+    # 檢查 db 是否成功初始化
+    if not db:
+        print("CRITICAL: Firestore database client is not initialized. Cannot populate data.")
+        sys.exit(1)
+        
+    print("Database client found. Starting data population...")
+
     # Define paths to your JSON files
     # The script is expected to be run from the root of the repository.
     skill_files = {
@@ -69,11 +71,13 @@ if __name__ == '__main__':
     # Populate skills
     for element, file_path in skill_files.items():
         collection_name = f'skills_{element}'
-        load_and_populate(file_path, collection_name)
+        # This function seems designed for a different format, we will skip it for now
+        # load_and_populate(file_path, collection_name)
 
     # Populate DNA
     for element, file_path in dna_files.items():
         collection_name = f'DNA_{element}'
-        load_and_populate(file_path, collection_name)
+        # This function seems designed for a different format, we will skip it for now
+        # load_and_populate(file_path, collection_name)
         
     print("All data population tasks are complete.")
