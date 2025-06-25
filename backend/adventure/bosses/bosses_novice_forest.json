@@ -5,9 +5,9 @@
     "description": "在森林中玩火的淘氣小鬼，脾氣一點就著。",
     "rarity": "普通",
     "elements": ["火"],
-    "initial_max_hp": 1000, "hp": 1000, "initial_max_mp": 500, "mp": 500,
-    "attack": 110, "defense": 90, "speed": 100, "crit": 10,
-    "personality": { "name": "急躁的" }, "score": 600,
+    "initial_max_hp": 300, "hp": 300, "initial_max_mp": 150, "mp": 150,
+    "attack": 33, "defense": 27, "speed": 30, "crit": 10,
+    "personality": { "name": "急躁的" }, "score": 180,
     "skills": [
       {
         "name": "火焰拳",
@@ -29,9 +29,9 @@
     "description": "守護著森林水源的溫和精靈，但會對污染水源者予以懲罰。",
     "rarity": "普通",
     "elements": ["水"],
-    "initial_max_hp": 1100, "hp": 1100, "initial_max_mp": 600, "mp": 600,
-    "attack": 90, "defense": 100, "speed": 110, "crit": 10,
-    "personality": { "name": "溫和的" }, "score": 610,
+    "initial_max_hp": 330, "hp": 330, "initial_max_mp": 180, "mp": 180,
+    "attack": 27, "defense": 30, "speed": 33, "crit": 10,
+    "personality": { "name": "溫和的" }, "score": 183,
     "skills": [
       {
         "name": "水流衝擊",
@@ -53,9 +53,9 @@
     "description": "吸收了過多森林能量而巨大化的蘑菇，會散播奇怪的孢子。",
     "rarity": "普通",
     "elements": ["木"],
-    "initial_max_hp": 1200, "hp": 1200, "initial_max_mp": 400, "mp": 400,
-    "attack": 100, "defense": 110, "speed": 90, "crit": 10,
-    "personality": { "name": "懶散的" }, "score": 620,
+    "initial_max_hp": 360, "hp": 360, "initial_max_mp": 120, "mp": 120,
+    "attack": 30, "defense": 33, "speed": 27, "crit": 10,
+    "personality": { "name": "懶散的" }, "score": 186,
     "skills": [
       {
         "name": "藤鞭抽擊",
@@ -77,9 +77,9 @@
     "description": "喜歡收集閃亮東西的甲蟲，把廢棄的鐵片當作自己的盔甲。",
     "rarity": "普通",
     "elements": ["金"],
-    "initial_max_hp": 900, "hp": 900, "initial_max_mp": 300, "mp": 300,
-    "attack": 120, "defense": 130, "speed": 60, "crit": 12,
-    "personality": { "name": "頑固的" }, "score": 630,
+    "initial_max_hp": 270, "hp": 270, "initial_max_mp": 90, "mp": 90,
+    "attack": 36, "defense": 39, "speed": 18, "crit": 12,
+    "personality": { "name": "頑固的" }, "score": 189,
     "skills": [
       {
         "name": "鐵拳重擊",
@@ -101,9 +101,9 @@
     "description": "由森林的泥土聚集而成的小魔像，動作遲緩但很有力氣。",
     "rarity": "普通",
     "elements": ["土"],
-    "initial_max_hp": 1300, "hp": 1300, "initial_max_mp": 200, "mp": 200,
-    "attack": 110, "defense": 120, "speed": 70, "crit": 10,
-    "personality": { "name": "遲鈍的" }, "score": 610,
+    "initial_max_hp": 390, "hp": 390, "initial_max_mp": 60, "mp": 60,
+    "attack": 33, "defense": 36, "speed": 21, "crit": 10,
+    "personality": { "name": "遲鈍的" }, "score": 183,
     "skills": [
       {
         "name": "土石猛擊",
@@ -125,9 +125,9 @@
     "description": "追逐陽光而生的向日葵魔物，能發射微弱的光彈。",
     "rarity": "普通",
     "elements": ["光"],
-    "initial_max_hp": 1000, "hp": 1000, "initial_max_mp": 700, "mp": 700,
-    "attack": 100, "defense": 90, "speed": 110, "crit": 11,
-    "personality": { "name": "開朗的" }, "score": 615,
+    "initial_max_hp": 300, "hp": 300, "initial_max_mp": 210, "mp": 210,
+    "attack": 30, "defense": 27, "speed": 33, "crit": 11,
+    "personality": { "name": "開朗的" }, "score": 185,
     "skills": [
       {
         "name": "光芒突刺",
@@ -149,9 +149,9 @@
     "description": "躲在樹蔭下的影子生物，非常害怕光線，受驚時會胡亂攻擊。",
     "rarity": "普通",
     "elements": ["暗"],
-    "initial_max_hp": 950, "hp": 950, "initial_max_mp": 500, "mp": 500,
-    "attack": 115, "defense": 85, "speed": 120, "crit": 12,
-    "personality": { "name": "膽小的" }, "score": 625,
+    "initial_max_hp": 285, "hp": 285, "initial_max_mp": 150, "mp": 150,
+    "attack": 35, "defense": 26, "speed": 36, "crit": 12,
+    "personality": { "name": "膽小的" }, "score": 188,
     "skills": [
       {
         "name": "暗影突襲",
@@ -173,9 +173,9 @@
     "description": "以有毒的漿果為食，身體充滿了微弱毒素的史萊姆。",
     "rarity": "普通",
     "elements": ["毒"],
-    "initial_max_hp": 1150, "hp": 1150, "initial_max_mp": 450, "mp": 450,
-    "attack": 95, "defense": 105, "speed": 95, "crit": 10,
-    "personality": { "name": "悠哉的" }, "score": 605,
+    "initial_max_hp": 345, "hp": 345, "initial_max_mp": 135, "mp": 135,
+    "attack": 29, "defense": 32, "speed": 29, "crit": 10,
+    "personality": { "name": "悠哉的" }, "score": 182,
     "skills": [
       {
         "name": "毒牙咬擊",
@@ -197,9 +197,9 @@
     "description": "隨風滾動的植物精靈，能揚起惱人的沙塵。",
     "rarity": "普通",
     "elements": ["風"],
-    "initial_max_hp": 900, "hp": 900, "initial_max_mp": 600, "mp": 600,
-    "attack": 100, "defense": 90, "speed": 130, "crit": 11,
-    "personality": { "name": "自由的" }, "score": 620,
+    "initial_max_hp": 270, "hp": 270, "initial_max_mp": 180, "mp": 180,
+    "attack": 30, "defense": 27, "speed": 39, "crit": 11,
+    "personality": { "name": "自由的" }, "score": 186,
     "skills": [
       {
         "name": "疾風猛擊",
@@ -221,9 +221,9 @@
     "description": "一頭非常、非常普通的野豬，但牠看起來心情不太好。",
     "rarity": "普通",
     "elements": ["無"],
-    "initial_max_hp": 1250, "hp": 1250, "initial_max_mp": 100, "mp": 100,
-    "attack": 125, "defense": 100, "speed": 100, "crit": 10,
-    "personality": { "name": "勇敢的" }, "score": 625,
+    "initial_max_hp": 375, "hp": 375, "initial_max_mp": 30, "mp": 30,
+    "attack": 38, "defense": 30, "speed": 30, "crit": 10,
+    "personality": { "name": "勇敢的" }, "score": 188,
     "skills": [
       {
         "name": "均衡直拳",
@@ -245,9 +245,9 @@
     "description": "一顆搞不清楚自己是什麼屬性的蛋，會隨機釋放微弱的能量。",
     "rarity": "普通",
     "elements": ["混"],
-    "initial_max_hp": 1050, "hp": 1050, "initial_max_mp": 800, "mp": 800,
-    "attack": 100, "defense": 100, "speed": 100, "crit": 10,
-    "personality": { "name": "迷糊的" }, "score": 610,
+    "initial_max_hp": 315, "hp": 315, "initial_max_mp": 240, "mp": 240,
+    "attack": 30, "defense": 30, "speed": 30, "crit": 10,
+    "personality": { "name": "迷糊的" }, "score": 183,
     "skills": [
       {
         "name": "混元衝擊",
