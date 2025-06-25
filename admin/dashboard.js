@@ -55,8 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // 冒險島設定
             advSettings: {
                 bossMultiplierInput: document.getElementById('boss-difficulty-multiplier'),
-                baseGoldInput: document.getElementById('floor-clear-base-gold'),
-                bonusGoldInput: document.getElementById('floor-clear-bonus-gold'),
                 facilitiesContainer: document.getElementById('adventure-facilities-container'),
                 saveBtn: document.getElementById('save-adventure-settings-btn'),
                 responseEl: document.getElementById('adventure-settings-response'),
@@ -398,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await fetchAdminAPI(`/send_mail_to_player`, { method: 'POST', body: JSON.stringify({ recipient_id: currentPlayerData.uid, title, content, sender_name: senderName.trim() || '遊戲管理員' }) });
                 alert(result.message);
             } catch (err) {
-                alert(`發送失敗：${err.message}`);
+                alert(`發送失败：${err.message}`);
             } finally {
                 btn.disabled = false;
             }
@@ -646,16 +644,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         async function loadAdventureSettings() {
-            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, growthFacilitiesContainer, growthStatsContainer } = DOMElements.advSettings;
+            const { bossMultiplierInput, facilitiesContainer, growthFacilitiesContainer, growthStatsContainer } = DOMElements.advSettings;
             if (!bossMultiplierInput || !growthFacilitiesContainer) return;
 
             bossMultiplierInput.value = '';
-            baseGoldInput.value = '';
-            bonusGoldInput.value = '';
             facilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             growthFacilitiesContainer.innerHTML = '<p class="placeholder-text">載入中...</p>';
             growthStatsContainer.innerHTML = '';
-
 
             try {
                 const [advSettings, islandsData, growthSettings] = await Promise.all([
@@ -665,8 +660,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 ]);
 
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
-                baseGoldInput.value = advSettings.floor_clear_base_gold || 50;
-                bonusGoldInput.value = advSettings.floor_clear_bonus_gold_per_floor || 10;
                 
                 if (islandsData && Array.isArray(islandsData)) {
                     facilitiesContainer.innerHTML = islandsData.map(island => `
@@ -676,6 +669,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="form-group">
                                     <label for="facility-cost-${facility.facilityId}">${facility.name} - 入場費</label>
                                     <input type="number" id="facility-cost-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.cost || 0}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="facility-base-gold-${facility.facilityId}">通關基礎金幣</label>
+                                    <input type="number" id="facility-base-gold-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.floor_clear_base_gold || 0}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="facility-bonus-gold-${facility.facilityId}">通關額外獎勵</label>
+                                    <input type="number" id="facility-bonus-gold-${facility.facilityId}" data-facility-id="${facility.facilityId}" class="admin-input" value="${facility.floor_clear_bonus_gold_per_floor || 0}">
                                 </div>
                             `).join('')}
                         </div>
@@ -726,19 +727,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         async function handleSaveAdventureSettings() {
-            const { bossMultiplierInput, baseGoldInput, bonusGoldInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
+            const { bossMultiplierInput, facilitiesContainer, saveBtn, responseEl } = DOMElements.advSettings;
             
             const globalSettings = {
                 boss_difficulty_multiplier_per_floor: parseFloat(bossMultiplierInput.value) || 1.1,
-                floor_clear_base_gold: parseInt(baseGoldInput.value, 10) || 50,
-                floor_clear_bonus_gold_per_floor: parseInt(bonusGoldInput.value, 10) || 10,
             };
 
             const facilitiesSettings = [];
-            facilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
+            facilitiesContainer.querySelectorAll('div[data-facility-id]').forEach(card => {
+                const facilityId = card.querySelector('input[data-facility-id]').dataset.facilityId;
                 facilitiesSettings.push({
-                    id: input.dataset.facilityId,
-                    cost: parseInt(input.value, 10) || 0
+                    id: facilityId,
+                    cost: parseInt(card.querySelector(`#facility-cost-${facilityId}`).value, 10) || 0,
+                    floor_clear_base_gold: parseInt(card.querySelector(`#facility-base-gold-${facilityId}`).value, 10) || 0,
+                    floor_clear_bonus_gold_per_floor: parseInt(card.querySelector(`#facility-bonus-gold-${facilityId}`).value, 10) || 0,
                 });
             });
 
