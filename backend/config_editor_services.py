@@ -44,8 +44,7 @@ LOCAL_CONFIG_FILES = (
     os.path.join("adventure", "adventure_settings.json"),
     os.path.join("adventure", "adventure_islands.json"),
     os.path.join("adventure", "adventure_growth_settings.json"),
-    "game_mechanics.json",
-    os.path.join("battle", "elemental_advantage_chart.json") # 新增：也讓它可以被本地讀取
+    "game_mechanics.json"
 )
 
 def list_editable_configs() -> list[str]:
@@ -246,7 +245,6 @@ def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[st
         config_editor_logger.error(f"儲存遊戲機制設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存遊戲機制設定時發生伺服器內部錯誤。"
 
-# --- 核心修改處 START ---
 def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
     """
     將新的屬性克制表儲存到 elemental_advantage_chart.json 檔案。
@@ -271,7 +269,6 @@ def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, 
     except Exception as e:
         config_editor_logger.error(f"儲存屬性克制表時發生錯誤: {e}", exc_info=True)
         return False, "儲存屬性克制表時發生伺服器內部錯誤。"
-# --- 核心修改處 END ---
 
 
 def reload_main_app_configs():
