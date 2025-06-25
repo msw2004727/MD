@@ -1,8 +1,9 @@
-# 修改後的 requirements.txt
+# backend/requirements.txt
 Flask
 firebase-admin
 Flask-CORS
-gunicorn  # Render.com 需要這個來運行您的應用
-pytest    # 用於自動化測試的框架
+gunicorn
+pytest
+PyJWT
 noise
-PyJWT     # 新增：後台管理員 Token 驗證所需的套件
+pytz # 新增：用於時區處理
