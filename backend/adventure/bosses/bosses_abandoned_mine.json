@@ -9,8 +9,14 @@
     "attack": 220, "defense": 180, "speed": 200, "crit": 15,
     "personality": { "name": "暴躁的" }, "score": 1250,
     "skills": [
-      { "name": "爆炎衝", "level": 7 },
-      { "name": "熔化", "level": 7 }
+      {
+        "name": "火焰拳",
+        "level": 7
+      },
+      {
+        "name": "爆炎衝",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -27,8 +33,14 @@
     "attack": 190, "defense": 200, "speed": 210, "crit": 16,
     "personality": { "name": "冷静的" }, "score": 1220,
     "skills": [
-      { "name": "高壓水炮", "level": 7 },
-      { "name": "黑霧", "level": 7 }
+      {
+        "name": "水流衝擊",
+        "level": 7
+      },
+      {
+        "name": "泡沫連彈",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -45,8 +57,14 @@
     "attack": 180, "defense": 240, "speed": 180, "crit": 14,
     "personality": { "name": "沉默的" }, "score": 1280,
     "skills": [
-      { "name": "木槌", "level": 8 },
-      { "name": "硬化", "level": 8 }
+      {
+        "name": "藤鞭抽擊",
+        "level": 8
+      },
+      {
+        "name": "葉刃亂舞",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -63,8 +81,14 @@
     "attack": 230, "defense": 280, "speed": 190, "crit": 15,
     "personality": { "name": "忠誠的" }, "score": 1300,
     "skills": [
-      { "name": "鐵壁", "level": 7 },
-      { "name": "鐵頭", "level": 8 }
+      {
+        "name": "鐵拳重擊",
+        "level": 7
+      },
+      {
+        "name": "鋼刃斬擊",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -81,8 +105,14 @@
     "attack": 210, "defense": 250, "speed": 200, "crit": 13,
     "personality": { "name": "頑固的" }, "score": 1260,
     "skills": [
-      { "name": "挖洞", "level": 8 },
-      { "name": "岩石封鎖", "level": 7 }
+      {
+        "name": "土石猛擊",
+        "level": 8
+      },
+      {
+        "name": "地裂衝鋒",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -99,8 +129,14 @@
     "attack": 200, "defense": 190, "speed": 230, "crit": 18,
     "personality": { "name": "優雅的" }, "score": 1240,
     "skills": [
-      { "name": "信號光束", "level": 8 },
-      { "name": "光牆", "level": 7 }
+      {
+        "name": "光芒突刺",
+        "level": 8
+      },
+      {
+        "name": "聖輝斬擊",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -117,8 +153,14 @@
     "attack": 240, "defense": 170, "speed": 250, "crit": 20,
     "personality": { "name": "狡猾的" }, "score": 1280,
     "skills": [
-      { "name": "惡意追擊", "level": 7 },
-      { "name": "偷盜", "level": 8 }
+      {
+        "name": "暗影突襲",
+        "level": 7
+      },
+      {
+        "name": "噬魂連擊",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -135,8 +177,14 @@
     "attack": 200, "defense": 200, "speed": 200, "crit": 15,
     "personality": { "name": "善變的" }, "score": 1200,
     "skills": [
-      { "name": "污泥炸彈", "level": 7 },
-      { "name": "清除之煙", "level": 7 }
+      {
+        "name": "毒牙咬擊",
+        "level": 7
+      },
+      {
+        "name": "腐蝕連拳",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -153,8 +201,14 @@
     "attack": 180, "defense": 180, "speed": 280, "crit": 18,
     "personality": { "name": "活潑的" }, "score": 1230,
     "skills": [
-      { "name": "空氣斬", "level": 8 },
-      { "name": "順風", "level": 7 }
+      {
+        "name": "疾風猛擊",
+        "level": 8
+      },
+      {
+        "name": "旋風連斬",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -171,8 +225,14 @@
     "attack": 250, "defense": 220, "speed": 180, "crit": 15,
     "personality": { "name": "貪吃的" }, "score": 1240,
     "skills": [
-      { "name": "泰山壓頂", "level": 7 },
-      { "name": "必殺門牙", "level": 7 }
+      {
+        "name": "均衡直拳",
+        "level": 7
+      },
+      {
+        "name": "穩重連擊",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
@@ -189,8 +249,14 @@
     "attack": 210, "defense": 210, "speed": 210, "crit": 17,
     "personality": { "name": "隨和的" }, "score": 1250,
     "skills": [
-      { "name": "三角攻擊", "level": 7 },
-      { "name": "鏡面屬性", "level": 7 }
+      {
+        "name": "混元衝擊",
+        "level": 7
+      },
+      {
+        "name": "幻象連斬",
+        "level": 7
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 100, "max": 150, "chance": 1.0 } ],
