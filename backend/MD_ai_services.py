@@ -237,17 +237,16 @@ def generate_adventure_story(player: PlayerGameData, monster: Monster, adventure
     return DEFAULT_ADVENTURE_STORY
 
 
-def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> str:
+def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name: str, monster2_name: str, player1_name: str, player2_name: str) -> Dict[str, Any]:
     """
-    根據戰鬥結果，生成戰報總結。
+    根據戰鬥結果，生成結構化的戰報內容 (總結、戰利品資訊、成長資訊)。
     """
     winner_name = battle_result.get("winner_name", "未知")
-    loser_name = battle_result.get("loser_name", "未知")
     total_rounds = battle_result.get("total_rounds", 0)
 
-    # 提取戰鬥亮點
     highlights = []
     for log in battle_result.get("log", []):
+        # 假設 highlight 資訊被標記在 log 條目中
         if log.get("highlight"):
             highlights.append(log["message"])
     highlights_text = " ".join(highlights) if highlights else "戰鬥過程平淡無奇。"
@@ -258,7 +257,7 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
 1.  **風格**：使用繁體中文，語氣要熱血沸騰，充滿動感和張力，彷彿在解說一場精彩的比賽。
 2.  **長度**：嚴格控制在 100 到 150 字之間。
 3.  **內容**：戰報必須清晰地交代「參賽雙方」、「勝負結果」，並生動地描寫「戰鬥中的一兩個亮點時刻」。
-4.  **附加任務**：在總結的最後，請加上一個獨特的 Hashtag 標籤，格式為 `#<四字成語或熱血詞彙>之戰`。
+4.  **禁止事項**: 絕對不要自己加上 #Hashtag。
 
 **戰鬥情報：**
 -   **參賽方 A**: 玩家 `{player1_name}` 的怪獸 `{monster1_name}`
@@ -276,46 +275,16 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         "max_tokens": 300,
         "temperature": 0.85,
     }
-
-    ai_summary = DEFAULT_BATTLE_SUMMARY
-    ai_tags = []
     
+    ai_summary = DEFAULT_BATTLE_SUMMARY
     try:
         response_json = _call_deepseek_api(payload, timeout=45)
         if response_json and response_json.get("choices"):
-            content = response_json["choices"][0]["message"]["content"].strip()
-            
-            tag_match = re.search(r'(#\S+之戰)', content)
-            if tag_match:
-                tag = tag_match.group(1)
-                ai_summary = content.replace(tag, '').strip()
-                ai_tags.append(tag)
-                ai_logger.info(f"成功提取標籤: {tag}")
-            else:
-                ai_summary = content
-                ai_logger.warning("AI 生成的內容中未找到預期格式的標籤。")
-                try:
-                    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-                    with open(os.path.join(data_dir, 'battle_highlights.json'), 'r', encoding='utf-8') as f:
-                        highlights_data = json.load(f)
-                        if highlights_data.get("tags"):
-                           random_tag = random.choice(highlights_data["tags"])
-                           ai_tags.append(f"#{random_tag}之戰")
-                           ai_logger.info(f"AI 未生成標籤，已隨機選取備用標籤: {ai_tags[-1]}")
-                except Exception as file_e:
-                    ai_logger.error(f"讀取備用標籤檔案 battle_highlights.json 時出錯: {file_e}")
-
-            if len(ai_summary) < 20 and len(content) > 20:
-                 ai_summary = content.strip() 
-                 ai_logger.warning("偵測到 summary 過短，已還原。")
-        
+            ai_summary = response_json["choices"][0]["message"]["content"].strip()
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
 
-    if ai_tags:
-        tags_str = " ".join(ai_tags)
-        ai_summary += f"\n\n{tags_str}"
-
+    # 準備戰利品和成長資訊
     absorption_details = battle_result.get("absorption_details", {})
     loot_info_parts = []
     if absorption_details.get("extracted_dna_templates"):
@@ -324,22 +293,18 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
     
     growth_info_parts = []
     if absorption_details.get("stat_gains"):
-        growth_details = [f"\"{stat.upper()} +{gain}\"" for stat, gain in absorption_details["stat_gains"].items()]
+        growth_details = [f"**{stat.upper()} +{gain}**" for stat, gain in absorption_details["stat_gains"].items()]
         growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
 
+    # --- 核心修改處 START ---
+    # 修正函式返回值，確保返回的是一個字典而不是字串
     final_report = {
-        "ai_summary": ai_summary,
+        "battle_summary": ai_summary,
         "loot_info": " ".join(loot_info_parts),
         "growth_info": " ".join(growth_info_parts),
     }
-
-    full_report_str = final_report["ai_summary"]
-    if final_report["loot_info"]:
-        full_report_str += f'\n\n{final_report["loot_info"]}'
-    if final_report["growth_info"]:
-        full_report_str += f'\n{final_report["growth_info"]}'
-        
-    return full_report_str.strip()
+    return final_report
+    # --- 核心修改處 END ---
 
 
 def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry], player_nickname: str, interaction_type: Optional[str] = None) -> str:
