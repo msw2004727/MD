@@ -270,6 +270,51 @@ def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, 
         config_editor_logger.error(f"儲存屬性克制表時發生錯誤: {e}", exc_info=True)
         return False, "儲存屬性克制表時發生伺服器內部錯誤。"
 
+def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    """
+    將新的冠軍守衛資料儲存到 champion_guardians.json 檔案。
+    """
+    try:
+        # 從 Firestore 讀取原始檔案以保留不變的欄位
+        doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP["system/champion_guardians.json"]
+        
+        db = MD_firebase_config.db
+        if not db:
+            return False, "資料庫服務未初始化。"
+            
+        doc_ref = db.collection('MD_GameConfigs').document(doc_name)
+        doc = doc_ref.get()
+
+        if not doc.exists:
+            return False, "找不到原始的冠軍守衛設定檔。"
+        
+        full_data = doc.to_dict()
+        original_guardians = full_data.get(field_path, {}) if field_path else full_data
+
+        # 用傳入的新數值更新資料
+        for rank, new_stats in guardians_data.items():
+            if rank in original_guardians:
+                for stat, value in new_stats.items():
+                    original_guardians[rank][stat] = value
+                    # 如果是HP或MP，同時更新 hp 和 initial_max_hp
+                    if stat == 'initial_max_hp':
+                        original_guardians[rank]['hp'] = value
+                    if stat == 'initial_max_mp':
+                        original_guardians[rank]['mp'] = value
+
+        # 更新回 Firestore
+        if field_path:
+            doc_ref.update({field_path: original_guardians})
+        else:
+            doc_ref.set(original_guardians)
+
+        config_editor_logger.info(f"冠軍守衛資料已成功更新至 Firestore。")
+        reload_main_app_configs()
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存冠軍守衛資料時發生錯誤: {e}", exc_info=True)
+        return False, "儲存冠軍守衛資料時發生伺服器內部錯誤。"
 
 def reload_main_app_configs():
     try:
