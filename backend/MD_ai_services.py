@@ -28,6 +28,11 @@ DEFAULT_AI_RESPONSES = {
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
+# --- 核心修改處 START ---
+# 新增缺少的 DEFAULT_CHAT_REPLY 變數
+DEFAULT_CHAT_REPLY = "（...）"
+# --- 核心修改處 END ---
+
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗。這次的冒險充滿了未知與謎團，許多細節都模糊不清，無法被準確記錄下來。"
 DEFAULT_BATTLE_SUMMARY = "AI 戰報總結生成失敗。這場戰鬥的過程太過激烈，快到無法看清細節，只留下了勝利或失敗的結果。"
 
