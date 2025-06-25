@@ -5,9 +5,9 @@
     "description": "棲息在礦坑地熱區的巨蜥，皮膚如同流動的熔岩。",
     "rarity": "稀有",
     "elements": ["火"],
-    "initial_max_hp": 2200, "hp": 2200, "initial_max_mp": 1000, "mp": 1000,
-    "attack": 220, "defense": 180, "speed": 200, "crit": 15,
-    "personality": { "name": "暴躁的" }, "score": 1250,
+    "initial_max_hp": 1100, "hp": 1100, "initial_max_mp": 500, "mp": 500,
+    "attack": 110, "defense": 90, "speed": 100, "crit": 15,
+    "personality": { "name": "暴躁的" }, "score": 625,
     "skills": [
       {
         "name": "火焰拳",
@@ -29,9 +29,9 @@
     "description": "由地下水脈匯聚而成的精怪，能用高壓水柱切開岩石。",
     "rarity": "稀有",
     "elements": ["水"],
-    "initial_max_hp": 2000, "hp": 2000, "initial_max_mp": 1200, "mp": 1200,
-    "attack": 190, "defense": 200, "speed": 210, "crit": 16,
-    "personality": { "name": "冷静的" }, "score": 1220,
+    "initial_max_hp": 1000, "hp": 1000, "initial_max_mp": 600, "mp": 600,
+    "attack": 95, "defense": 100, "speed": 105, "crit": 16,
+    "personality": { "name": "冷静的" }, "score": 610,
     "skills": [
       {
         "name": "水流衝擊",
@@ -53,9 +53,9 @@
     "description": "被封印在岩層中數千年的古老樹精，身體已如岩石般堅硬。",
     "rarity": "稀有",
     "elements": ["木"],
-    "initial_max_hp": 2400, "hp": 2400, "initial_max_mp": 800, "mp": 800,
-    "attack": 180, "defense": 240, "speed": 180, "crit": 14,
-    "personality": { "name": "沉默的" }, "score": 1280,
+    "initial_max_hp": 1200, "hp": 1200, "initial_max_mp": 400, "mp": 400,
+    "attack": 90, "defense": 120, "speed": 90, "crit": 14,
+    "personality": { "name": "沉默的" }, "score": 640,
     "skills": [
       {
         "name": "藤鞭抽擊",
@@ -77,9 +77,9 @@
     "description": "礦脈中誕生的黃金生命體，守護著最珍貴的礦藏。",
     "rarity": "稀有",
     "elements": ["金"],
-    "initial_max_hp": 1800, "hp": 1800, "initial_max_mp": 900, "mp": 900,
-    "attack": 230, "defense": 280, "speed": 190, "crit": 15,
-    "personality": { "name": "忠誠的" }, "score": 1300,
+    "initial_max_hp": 900, "hp": 900, "initial_max_mp": 450, "mp": 450,
+    "attack": 115, "defense": 140, "speed": 95, "crit": 15,
+    "personality": { "name": "忠誠的" }, "score": 650,
     "skills": [
       {
         "name": "鐵拳重擊",
@@ -101,9 +101,9 @@
     "description": "巨大的鑽岩蟲，能輕易地在堅硬的岩盤中穿梭。",
     "rarity": "稀有",
     "elements": ["土"],
-    "initial_max_hp": 2600, "hp": 2600, "initial_max_mp": 700, "mp": 700,
-    "attack": 210, "defense": 250, "speed": 200, "crit": 13,
-    "personality": { "name": "頑固的" }, "score": 1260,
+    "initial_max_hp": 1300, "hp": 1300, "initial_max_mp": 350, "mp": 350,
+    "attack": 105, "defense": 125, "speed": 100, "crit": 13,
+    "personality": { "name": "頑固的" }, "score": 630,
     "skills": [
       {
         "name": "土石猛擊",
@@ -125,9 +125,9 @@
     "description": "由礦洞深處巨大水晶的意識所化成，能折射出炫目光線。",
     "rarity": "稀有",
     "elements": ["光"],
-    "initial_max_hp": 1900, "hp": 1900, "initial_max_mp": 1400, "mp": 1400,
-    "attack": 200, "defense": 190, "speed": 230, "crit": 18,
-    "personality": { "name": "優雅的" }, "score": 1240,
+    "initial_max_hp": 950, "hp": 950, "initial_max_mp": 700, "mp": 700,
+    "attack": 100, "defense": 95, "speed": 115, "crit": 18,
+    "personality": { "name": "優雅的" }, "score": 620,
     "skills": [
       {
         "name": "光芒突刺",
@@ -149,9 +149,9 @@
     "description": "躲藏在礦坑黑暗角落的生物，擅長從背後偷襲。",
     "rarity": "稀有",
     "elements": ["暗"],
-    "initial_max_hp": 1800, "hp": 1800, "initial_max_mp": 1100, "mp": 1100,
-    "attack": 240, "defense": 170, "speed": 250, "crit": 20,
-    "personality": { "name": "狡猾的" }, "score": 1280,
+    "initial_max_hp": 900, "hp": 900, "initial_max_mp": 550, "mp": 550,
+    "attack": 120, "defense": 85, "speed": 125, "crit": 20,
+    "personality": { "name": "狡猾的" }, "score": 640,
     "skills": [
       {
         "name": "暗影突襲",
@@ -173,9 +173,9 @@
     "description": "從礦脈裂縫中滲出的有毒氣體所形成的生命體。",
     "rarity": "稀有",
     "elements": ["毒"],
-    "initial_max_hp": 2100, "hp": 2100, "initial_max_mp": 1300, "mp": 1300,
-    "attack": 200, "defense": 200, "speed": 200, "crit": 15,
-    "personality": { "name": "善變的" }, "score": 1200,
+    "initial_max_hp": 1050, "hp": 1050, "initial_max_mp": 650, "mp": 650,
+    "attack": 100, "defense": 100, "speed": 100, "crit": 15,
+    "personality": { "name": "善變的" }, "score": 600,
     "skills": [
       {
         "name": "毒牙咬擊",
@@ -197,9 +197,9 @@
     "description": "在狹窄礦道中高速穿梭的風之精靈，能掀起刺骨的坑道風。",
     "rarity": "稀有",
     "elements": ["風"],
-    "initial_max_hp": 1900, "hp": 1900, "initial_max_mp": 1000, "mp": 1000,
-    "attack": 180, "defense": 180, "speed": 280, "crit": 18,
-    "personality": { "name": "活潑的" }, "score": 1230,
+    "initial_max_hp": 950, "hp": 950, "initial_max_mp": 500, "mp": 500,
+    "attack": 90, "defense": 90, "speed": 140, "crit": 18,
+    "personality": { "name": "活潑的" }, "score": 615,
     "skills": [
       {
         "name": "疾風猛擊",
@@ -221,9 +221,9 @@
     "description": "因以魔法礦石為食而變得異常巨大的老鼠，沒有特殊能力但皮糙肉厚。",
     "rarity": "稀有",
     "elements": ["無"],
-    "initial_max_hp": 2500, "hp": 2500, "initial_max_mp": 500, "mp": 500,
-    "attack": 250, "defense": 220, "speed": 180, "crit": 15,
-    "personality": { "name": "貪吃的" }, "score": 1240,
+    "initial_max_hp": 1250, "hp": 1250, "initial_max_mp": 250, "mp": 250,
+    "attack": 125, "defense": 110, "speed": 90, "crit": 15,
+    "personality": { "name": "貪吃的" }, "score": 620,
     "skills": [
       {
         "name": "均衡直拳",
@@ -245,9 +245,9 @@
     "description": "一條同時蘊含多種衝突能量的礦脈，在魔法作用下活了過來。",
     "rarity": "稀有",
     "elements": ["混"],
-    "initial_max_hp": 2200, "hp": 2200, "initial_max_mp": 1500, "mp": 1500,
-    "attack": 210, "defense": 210, "speed": 210, "crit": 17,
-    "personality": { "name": "隨和的" }, "score": 1250,
+    "initial_max_hp": 1100, "hp": 1100, "initial_max_mp": 750, "mp": 750,
+    "attack": 105, "defense": 105, "speed": 105, "crit": 17,
+    "personality": { "name": "隨和的" }, "score": 625,
     "skills": [
       {
         "name": "混元衝擊",
