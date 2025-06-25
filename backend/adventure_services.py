@@ -62,6 +62,11 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
         adventure_logger.warning("在 adventure_growth_settings.json 中找不到 stat_weights 設定。")
         return None
     
+    # --- 核心修改處 START ---
+    # 從權重字典中移除 'crit'
+    stat_weights_config.pop('crit', None)
+    # --- 核心修改處 END ---
+    
     stats_to_grow = list(stat_weights_config.keys())
     weights = list(stat_weights_config.values())
     
@@ -90,10 +95,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        # --- 核心修改處 START ---
-        # 將路徑中的 'data' 移除，並指向新的 'adventure' 資料夾
         data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
-        # --- 核心修改處 END ---
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
