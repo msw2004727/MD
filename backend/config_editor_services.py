@@ -34,7 +34,6 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "skills/wood.json": ("Skills", "skill_database.木"),
 }
 
-# --- 核心修改處 START ---
 # 將本地檔案列表從 list '[]' 改為 tuple '()'
 LOCAL_CONFIG_FILES = (
     "adventure_settings.json", 
@@ -42,7 +41,6 @@ LOCAL_CONFIG_FILES = (
     "adventure_growth_settings.json",
     "game_mechanics.json"
 )
-# --- 核心修改處 END ---
 
 def list_editable_configs() -> list[str]:
     """列出所有可透過後台編輯的設定檔名稱。"""
@@ -220,6 +218,34 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
         config_editor_logger.error(f"儲存冒險島成長設定時發生錯誤: {e}", exc_info=True)
         return False, "儲存冒險島成長設定時發生伺服器內部錯誤。"
 
+# --- 核心修改處 START ---
+def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[str]]:
+    """
+    將新的遊戲機制設定儲存到 game_mechanics.json 檔案。
+    """
+    try:
+        # 簡單驗證資料結構
+        required_keys = ["battle_formulas", "cultivation_rules", "absorption_rules"]
+        if not all(key in mechanics_data for key in required_keys):
+            return False, "傳入的資料格式不正確，缺少必要的頂層鍵。"
+
+        data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        file_path = os.path.join(data_dir, 'game_mechanics.json')
+
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(mechanics_data, f, indent=2, ensure_ascii=False)
+        
+        config_editor_logger.info(f"遊戲機制設定已成功儲存至 '{file_path}'。")
+        
+        # 重新載入主應用的設定，讓變更即時生效
+        reload_main_app_configs()
+        
+        return True, None
+
+    except Exception as e:
+        config_editor_logger.error(f"儲存遊戲機制設定時發生錯誤: {e}", exc_info=True)
+        return False, "儲存遊戲機制設定時發生伺服器內部錯誤。"
+# --- 核心修改處 END ---
 
 def reload_main_app_configs():
     try:
