@@ -12,6 +12,10 @@ from typing import List, Dict, Optional, Any, Tuple
 # 從各自正確的檔案導入模型
 from .MD_models import PlayerGameData, GameConfigs, Monster
 from .adventure_models import AdventureProgress, ExpeditionMemberStatus, AdventureFacility, AdventureIsland, ExpeditionStats, ExpeditionGrowthResult
+# --- 核心修改處 START ---
+# 導入我們新的事件紀錄服務
+from .analytics.analytics_services import log_event
+# --- 核心修改處 END ---
 
 # 建立此服務專用的日誌記錄器
 adventure_logger = logging.getLogger(__name__)
@@ -90,10 +94,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        # --- 核心修改處 START ---
-        # 將路徑中的 'data' 移除，並指向新的 'adventure' 資料夾
         data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
-        # --- 核心修改處 END ---
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
@@ -116,6 +117,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
         return []
 
 def start_expedition_service(
+    player_id: str, # 新增 player_id 參數
     player_data: PlayerGameData, 
     island_id: str, 
     facility_id: str, 
@@ -199,6 +201,25 @@ def start_expedition_service(
     }
     player_data["adventure_progress"] = adventure_progress
     
+    # --- 核心修改處 START ---
+    # 在成功建立遠征後，紀錄事件
+    try:
+        log_event('expedition_started', {
+            'uid': player_id,
+            'facility_id': facility_id,
+            'cost': cost,
+            'team_size': len(team_monster_ids),
+            'team_monster_ids': team_monster_ids
+        })
+        log_event('gold_sink', {
+            'uid': player_id,
+            'amount': cost,
+            'source': 'expedition_entry_fee'
+        })
+    except Exception as e:
+        adventure_logger.error(f"為玩家 {player_id} 紀錄 expedition_started 或 gold_sink 事件失敗: {e}", exc_info=True)
+    # --- 核心修改處 END ---
+
     adventure_logger.info(f"玩家 {player_data.get('nickname')} 的遠征已成功建立。")
     return player_data, None
 
