@@ -1,102 +1,201 @@
 # backend/analytics/analytics_services.py
-# 新增的服務檔案：處理遊戲營運數據的紀錄與彙整
-
 import logging
-import time
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, Optional, List
+import os
+from collections import Counter
+from ..MD_firebase_config import db
 
-# 導入專案根目錄的模組
-from .. import MD_firebase_config
-from ..MD_models import PlayerGameData, GameConfigs
+logger = logging.getLogger(__name__)
 
-# 建立此服務專用的日誌記錄器
-analytics_logger = logging.getLogger(__name__)
-
-def log_event(event_type: str, details: Optional[Dict[str, Any]] = None):
-    """
-    向 Firestore 中的 EventLogs 集合寫入一條新的事件紀錄。
-    這是一個中央日誌函式，將被遊戲中各個服務呼叫。
-
-    Args:
-        event_type (str): 事件的類型，例如 'user_registered', 'monster_created'。
-        details (dict, optional): 包含與事件相關的額外資料。
-    """
-    db = MD_firebase_config.db
-    if not db:
-        analytics_logger.error("Firestore 資料庫未初始化，無法紀錄事件。")
-        return
-
+def get_kpi_metrics():
+    """獲取儀表板的關鍵績效指標 (KPI)。"""
     try:
-        # 將事件紀錄儲存在一個專門的頂層集合中
-        event_log_ref = db.collection('EventLogs').document()
-        log_data = {
-            "type": event_type,
-            "timestamp": int(time.time()),
-            "details": details or {}
+        # 1. 總用戶數
+        players_ref = db.collection('players')
+        total_users = len(list(players_ref.stream()))
+
+        # 2. 每日活躍用戶 (DAU)
+        # 定義：過去24小時內有活動紀錄的玩家
+        gmt8 = timezone(timedelta(hours=8))
+        twenty_four_hours_ago = datetime.now(gmt8) - timedelta(hours=24)
+        active_users = set()
+        
+        all_players = players_ref.stream()
+        for player in all_players:
+            player_data = player.to_dict()
+            activity_logs = player_data.get('activity_log', [])
+            if any(datetime.fromisoformat(log['time']) > twenty_four_hours_ago.isoformat() for log in activity_logs if 'time' in log):
+                active_users.add(player.id)
+        
+        daily_active_users = len(active_users)
+
+        # 3. 總怪獸數
+        monsters_ref = db.collection('monsters')
+        total_monsters = len(list(monsters_ref.stream()))
+
+        # 4. 今日戰鬥數
+        battles_ref = db.collection('battle_logs')
+        start_of_today = datetime.now(gmt8).replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        query = battles_ref.where('timestamp', '>=', start_of_today.isoformat())
+        battles_today = len(list(query.stream()))
+
+        return {
+            "total_users": total_users,
+            "daily_active_users": daily_active_users,
+            "total_monsters": total_monsters,
+            "battles_today": battles_today
         }
-        event_log_ref.set(log_data)
-        analytics_logger.info(f"成功紀錄事件: {event_type}")
     except Exception as e:
-        analytics_logger.error(f"紀錄事件 '{event_type}' 時發生錯誤: {e}", exc_info=True)
+        logger.error(f"Error getting KPI metrics: {e}")
+        return {"error": str(e)}
 
-
-def aggregate_daily_data():
-    """
-    彙整 EventLogs 中的原始數據，計算並儲存每日的營運統計資料。
-    注意：此函式的完整邏輯將在後續步驟中實現。
-    這將是每日排程任務 (Cron Job) 要呼叫的核心函式。
-    """
-    # 待辦事項：
-    # 1. 查詢過去24小時內的所有 EventLogs。
-    # 2. 根據事件類型進行分類和計數。
-    # 3. 處理需要掃描全體玩家的數據（如現存怪獸數量）。
-    # 4. 將彙整結果寫入 AnalyticsData 集合的今日文件中。
-    analytics_logger.info("每日數據彙整程序已觸發（目前為預留功能）。")
-    
-    db = MD_firebase_config.db
-    if not db:
-        analytics_logger.error("數據彙整失敗：Firestore 未初始化。")
-        return
-
+def get_recent_activities(limit=20):
+    """獲取最近的玩家活動紀錄。"""
     try:
-        # 作為佔位符，先寫入一個簡單的紀錄，表示此函式已被觸發
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        doc_ref = db.collection('AnalyticsData').document(f"daily_{today_str}")
-        doc_ref.set({"placeholder": True, "last_updated": int(time.time())}, merge=True)
-        analytics_logger.info(f"已為 {today_str} 建立或更新了佔位符統計文件。")
+        all_activities = []
+        players_ref = db.collection('players')
+        all_players = players_ref.stream()
+
+        for player in all_players:
+            player_data = player.to_dict()
+            player_nickname = player_data.get('nickname', '未知玩家')
+            activity_logs = player_data.get('activity_log', [])
+            for log in activity_logs:
+                if 'time' in log and 'message' in log:
+                    all_activities.append({
+                        "nickname": player_nickname,
+                        "message": log['message'],
+                        "time": log['time']
+                    })
+
+        # 按時間倒序排序
+        all_activities.sort(key=lambda x: x['time'], reverse=True)
+
+        return all_activities[:limit]
     except Exception as e:
-        analytics_logger.error(f"寫入佔位符統計文件時發生錯誤: {e}", exc_info=True)
+        logger.error(f"Error getting recent activities: {e}")
+        return {"error": str(e)}
+
+def get_error_logs(lines=50):
+    """從日誌檔案中讀取最後幾行錯誤日誌。"""
+    try:
+        log_file_path = os.path.join('logs', 'app.log')
+        if not os.path.exists(log_file_path):
+            return ["日誌檔案 'logs/app.log' 不存在。"]
+        
+        with open(log_file_path, 'r', encoding='utf-8') as f:
+            # 讀取所有行，並只保留包含 'ERROR' 或 'CRITICAL' 的行
+            error_lines = [line.strip() for line in f if 'ERROR' in line or 'CRITICAL' in line]
+
+        # 返回最後 N 行
+        return error_lines[-lines:]
+    except Exception as e:
+        logger.error(f"Error reading log file: {e}")
+        return [f"讀取日誌檔案時發生錯誤: {e}"]
 
 
-def get_analytics_for_range(start_date: str, end_date: str) -> Dict[str, Any]:
-    """
-    從 AnalyticsData 集合中獲取指定時間範圍內的彙整數據。
+def get_user_growth_data():
+    """獲取用戶增長數據。"""
+    try:
+        users_ref = db.collection('players')
+        users = users_ref.stream()
+        
+        growth_data = Counter()
+        for user in users:
+            data = user.to_dict()
+            created_at_str = data.get('createdAt')
+            if created_at_str:
+                # Assuming ISO format string
+                created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                date_key = created_at.strftime('%Y-%m-%d')
+                growth_data[date_key] += 1
+        
+        # Sort by date
+        sorted_growth = sorted(growth_data.items())
+        labels = [item[0] for item in sorted_growth]
+        data = [item[1] for item in sorted_growth]
+        
+        return {"labels": labels, "data": data}
+    except Exception as e:
+        logger.error(f"Error in get_user_growth_data: {e}")
+        return {"labels": [], "data": []}
 
-    Args:
-        start_date (str): 開始日期 (格式 YYYY-MM-DD)
-        end_date (str): 結束日期 (格式 YYYY-MM-DD)
+def get_monster_distribution_data():
+    """獲取怪獸稀有度和元素分佈數據。"""
+    try:
+        monsters_ref = db.collection('monsters')
+        monsters = monsters_ref.stream()
+        
+        rarity_dist = Counter()
+        element_dist = Counter()
+        
+        for monster in monsters:
+            data = monster.to_dict()
+            rarity_dist[data.get('rarity', '未知')] += 1
+            elements = data.get('elements', ['未知'])
+            for element in elements:
+                element_dist[element] += 1
 
-    Returns:
-        一個包含加總後統計數據的字典。
-    """
-    db = MD_firebase_config.db
-    if not db:
-        analytics_logger.error("Firestore 資料庫未初始化，無法獲取分析數據。")
-        return {}
-    
-    # 待辦事項：
-    # 1. 根據日期範圍查詢 AnalyticsData 中的文件。
-    # 2. 將多天的數據進行加總。
-    # 3. 回傳一個彙整後的結果物件。
-    
-    analytics_logger.info(f"正在為日期範圍 {start_date} - {end_date} 獲取分析數據（目前為預留功能）。")
-    
-    # 返回一個預設的數據結構，以便前端可以先進行儀表板的開發
-    return {
-        "date_range": f"{start_date} to {end_date}",
-        "summary": { "newUsers": 0, "activeUsers": { "dau": 0 }, "totalPlayers": 0 },
-        "monsterEcology": { "created": {}, "existing": {}, "nearDeathEvents": {}, "healEvents": {} },
-        "playerEngagement": { "totalBattles": 0, "totalCombinations": 0, "aiChatMessages": 0, "cultivationByLocation": {} },
-        "economy": { "goldFaucets": {}, "goldSinks": {}, "totalGoldInServer": 0 }
-    }
+        rarity_labels = list(rarity_dist.keys())
+        rarity_data = list(rarity_dist.values())
+        
+        element_labels = list(element_dist.keys())
+        element_data = list(element_dist.values())
+
+        return {
+            "rarity": {"labels": rarity_labels, "data": rarity_data},
+            "elements": {"labels": element_labels, "data": element_data}
+        }
+    except Exception as e:
+        logger.error(f"Error in get_monster_distribution_data: {e}")
+        return {"rarity": {"labels": [], "data": []}, "elements": {"labels": [], "data": []}}
+
+def get_battle_activity_data():
+    """獲取戰鬥活動數據。"""
+    try:
+        logs_ref = db.collection('battle_logs')
+        # Get logs from the last 30 days
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        logs = logs_ref.where('timestamp', '>=', thirty_days_ago.isoformat()).stream()
+        
+        battle_counts = Counter()
+        for log in logs:
+            data = log.to_dict()
+            timestamp_str = data.get('timestamp')
+            if timestamp_str:
+                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                date_key = timestamp.strftime('%Y-%m-%d')
+                battle_counts[date_key] += 1
+
+        sorted_battles = sorted(battle_counts.items())
+        labels = [item[0] for item in sorted_battles]
+        data = [item[1] for item in sorted_battles]
+
+        return {"labels": labels, "data": data}
+    except Exception as e:
+        logger.error(f"Error in get_battle_activity_data: {e}")
+        return {"labels": [], "data": []}
+
+def get_economic_data():
+    """獲取遊戲內經濟數據 (例如 DNA 碎片)。"""
+    try:
+        players_ref = db.collection('players')
+        players = players_ref.stream()
+        
+        dna_distribution = Counter()
+        for player in players:
+            data = player.to_dict()
+            inventory = data.get('inventory', {})
+            dna_fragments = inventory.get('dna_fragments', {})
+            for dna_type, count in dna_fragments.items():
+                dna_distribution[dna_type] += count
+        
+        sorted_dna = sorted(dna_distribution.items(), key=lambda item: item[1], reverse=True)
+        labels = [item[0] for item in sorted_dna]
+        data = [item[1] for item in sorted_dna]
+
+        return {"labels": labels, "data": data}
+    except Exception as e:
+        logger.error(f"Error in get_economic_data: {e}")
+        return {"labels": [], "data": []}
