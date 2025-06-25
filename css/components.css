@@ -1,0 +1,1226 @@
+/* css/components.css */
+
+/* Panel title styles */
+.panel-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 5px;
+}
+.panel-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.panel-title-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+@media (min-width: 768px) {
+    .panel-title { font-size: 1.25rem; }
+}
+
+/* DNA items, slots, and related elements */
+.dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    transition: background-color 0.2s, box-shadow 0.2s, border-color 0.2s, color 0.2s, transform 0.2s; /* 新增 transform */
+    position: relative;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-sizing: border-box;
+    word-break: break-all;
+}
+.dna-item {
+    cursor: grab;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 0 8px rgba(255,255,255,0.05);
+    font-weight: 500;
+}
+.dna-item .dna-rarity-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    text-transform: uppercase;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.dna-slot, .temp-backpack-slot { cursor: pointer; }
+.inventory-slot-empty, .temp-backpack-slot.empty {
+    color: var(--text-secondary);
+    border-style: dashed;
+    border-width: 2px;
+    cursor: default;
+    background-color: color-mix(in srgb, var(--bg-primary) 70%, transparent);
+}
+
+.inventory-delete-slot {
+    background-color: color-mix(in srgb, var(--danger-color) 20%, transparent) !important;
+    color: var(--danger-color) !important;
+    border: 2px dashed var(--danger-color) !important;
+    cursor: pointer;
+    font-weight: bold;
+}
+.inventory-delete-slot .delete-slot-main-text {
+    font-size: 1rem;
+    display: block;
+}
+.inventory-delete-slot .delete-slot-sub-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+}
+
+.inventory-delete-slot.drag-over {
+    background-color: color-mix(in srgb, var(--danger-color) 40%, transparent) !important;
+    border-color: var(--danger-hover-dark) !important;
+    color: var(--button-danger-text-dark) !important;
+}
+body.light-theme .inventory-delete-slot.drag-over {
+    border-color: var(--danger-hover-light) !important;
+    color: var(--button-danger-text-light) !important;
+}
+
+@media (min-width: 768px) {
+    .dna-item, .dna-slot, .inventory-slot-empty, .temp-backpack-slot, .inventory-delete-slot {
+        padding: 10px;
+        font-size: 0.9rem;
+        min-height: 65px;
+    }
+}
+
+/* 核心修改：將所有懸停效果的規則統一，並且只對有 .occupied class 的元素生效 */
+.dna-item.occupied:hover,
+.dna-slot.occupied:hover,
+.temp-backpack-slot.occupied:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent-color) 40%, transparent);
+    transform: translateY(-2px);
+}
+
+.dna-slot.occupied, .temp-backpack-slot.occupied {
+    border-style: solid;
+}
+.inventory-slot-empty.drag-over, .temp-backpack-slot.empty.drag-over {
+    border-color: var(--accent-color);
+    background-color: var(--accent-hover);
+}
+
+.dna-panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+body.light-theme .dna-panel-title { color: #0550ae; }
+.dna-panel-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+body.light-theme .dna-panel-hint { color: #424a53; }
+
+.scrolling-hints-container {
+    height: 22px;
+    overflow: hidden;
+    position: relative;
+    background-color: var(--bg-primary);
+    border-radius: 4px;
+    padding: 0 10px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.3s, border-color 0.3s;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.scrolling-hint-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    animation-name: scrollHint;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    opacity: 0;
+    transform: translateY(100%);
+}
+
+.tab-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 4px;
+    margin-bottom: 15px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+@media (min-width: 768px) {
+    .tab-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+    .tab-button {
+        flex-grow: 0;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+}
+.tab-button {
+    padding: 8px 10px;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, background-color 0.2s;
+    white-space: nowrap;
+    text-align: center;
+    border-radius: 4px;
+}
+.tab-button.active {
+    color: var(--accent-color);
+    background-color: var(--bg-panel);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.tab-button:not(.active):hover {
+    background-color: var(--border-color);
+    color: var(--text-primary);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+.leaderboard-table th, .leaderboard-table td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+.leaderboard-table th {
+    color: var(--accent-color);
+    font-weight: 500;
+    cursor: pointer;
+}
+.leaderboard-table th:hover { color: var(--accent-hover); }
+.leaderboard-table td { color: var(--text-primary); }
+.leaderboard-table .leaderboard-element-cell span { font-weight: bold; }
+.leaderboard-table tr:last-child td { border-bottom: none; }
+.leaderboard-table tr:hover td {
+    background-color: var(--bg-slot);
+}
+body.light-theme .leaderboard-table tr:hover td {
+    background-color: #f8f9fa;
+}
+.leaderboard-table .challenge-btn-cell {
+    width: 80px;
+    text-align: center;
+}
+.leaderboard-table th .sort-arrow {
+    margin-left: 5px;
+    opacity: 0.5;
+}
+.leaderboard-table th .sort-arrow.active {
+    opacity: 1;
+    color: var(--accent-hover);
+}
+
+.auth-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 25px;
+}
+.auth-input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* Monster Snapshot Styles */
+.monster-snapshot-area {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 8px;
+    min-height: 230px;
+}
+@media (min-width: 768px) {
+    .monster-snapshot-area {
+        min-height: 270px;
+    }
+}
+#monster-snapshot-base-bg,
+#monster-snapshot-body-silhouette,
+#monster-parts-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+}
+#monster-snapshot-base-bg {
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#monster-snapshot-body-silhouette {
+    z-index: 2;
+    max-width: 75%;
+    max-height: 75%;
+}
+#monster-parts-container {
+    z-index: 3;
+    width: 60%; 
+    height: 75%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-areas:
+        "head head"
+        "lArm rArm"
+        "lLeg rLeg";
+    gap: 5px;
+}
+.monster-part {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 6px; 
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.monster-part.empty-part {
+    border-style: dashed;
+    border-width: 2px;
+    background-color: color-mix(in srgb, var(--bg-primary) 30%, transparent);
+}
+#monster-part-head { grid-area: head; }
+#monster-part-left-arm { grid-area: lArm; }
+#monster-part-right-arm { grid-area: rArm; }
+#monster-part-left-leg { grid-area: lLeg; }
+#monster-part-right-leg { grid-area: rLeg; }
+
+.monster-part-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    display: none; 
+    align-items: flex-start;
+    padding: 4px;
+    box-sizing: border-box;
+    border-radius: 6px;
+}
+
+/* Default alignment (top-left) */
+#monster-part-head .monster-part-overlay,
+#monster-part-left-arm .monster-part-overlay,
+#monster-part-left-leg .monster-part-overlay {
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/* Right-side alignment */
+#monster-part-right-arm .monster-part-overlay,
+#monster-part-right-leg .monster-part-overlay {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.monster-part-overlay .dna-name-text {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    text-shadow: 0 0 3px rgba(0,0,0,0.8);
+    word-break: break-all;
+    line-height: 1.2;
+}
+
+.monster-part-overlay .fallback-text {
+    font-size: 0.75rem; /* xs size */
+    font-weight: normal;
+    color: var(--text-secondary);
+    text-shadow: none;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.monster-part-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.monster-part-image.active {
+    opacity: 1;
+}
+
+.snapshot-info-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 10px;
+    right: 10px;
+    z-index: 4;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+}
+.snapshot-info-left { text-align: left; }
+.snapshot-info-right { text-align: right; }
+
+#snapshot-main-content {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.5em;
+    width: 90%;
+}
+
+#snapshot-achievement-title {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+#snapshot-nickname {
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+#snapshot-evaluation {
+    font-size: 0.875rem;
+    font-weight: normal;
+    color: var(--success-color);
+}
+#snapshot-win-loss {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    z-index: 4;
+    background-color: color-mix(in srgb, var(--bg-panel) 70%, transparent);
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+#snapshot-win-loss span { display: block; }
+
+.farm-col-info .monster-name-display {
+    font-weight: bold;
+    font-size: 1rem;
+}
+.farm-col-info .monster-details-display {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.farm-col-score .score-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.farm-col-score .score-value {
+    font-weight: bold;
+    color: var(--success-color);
+}
+#cultivation-monster-name.text-rarity-common { color: var(--rarity-common-text) !important; }
+#cultivation-monster-name.text-rarity-rare { color: var(--rarity-rare-text) !important; }
+#cultivation-monster-name.text-rarity-elite { color: var(--rarity-elite-text) !important; }
+#cultivation-monster-name.text-rarity-legendary { color: var(--rarity-legendary-text) !important; }
+#cultivation-monster-name.text-rarity-mythical { color: var(--rarity-mythical-text) !important; }
+
+.snapshot-bar {
+    height: 8px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+.snapshot-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.4s ease-in-out;
+}
+.snapshot-hp-bar .snapshot-bar-fill {
+    background-color: var(--success-color);
+}
+.snapshot-mp-bar .snapshot-bar-fill {
+    background-color: var(--accent-color);
+}
+
+.friend-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+.friend-item-card:last-child {
+    margin-bottom: 0;
+}
+.friend-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.online-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.online-status.online {
+    background-color: var(--success-color);
+    box-shadow: 0 0 5px var(--success-color);
+}
+.online-status.offline {
+    background-color: var(--text-secondary);
+}
+.friend-name-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: color 0.2s;
+}
+.friend-name-link:hover {
+    color: var(--accent-color);
+}
+.friend-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#snapshot-bars-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100px;
+    pointer-events: auto;
+}
+
+@media (max-width: 767px) {
+    #snapshot-bars-container {
+        width: 50px;
+    }
+}
+
+/* Cultivation Location Selection */
+.cultivation-locations-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Default to vertical layout for narrow screens */
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.cultivation-location-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cultivation-location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    border-color: var(--accent-color);
+}
+
+.cultivation-location-card img {
+    width: 100%;
+    max-width: 200px; /* Limit image size */
+    height: auto;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+}
+
+.cultivation-location-card h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.cultivation-location-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex-grow: 1; /* Allow text to take up space */
+}
+
+/* Responsive layout for wider screens */
+@media (min-width: 768px) {
+    .cultivation-locations-container {
+        grid-template-columns: repeat(3, 1fr); /* 3 columns for wide screens */
+    }
+}
+/* DNA Draw Results Modal Styles */
+#dna-draw-results-grid {
+    display: flex;
+    flex-wrap: wrap; /* 允許卡片在空間不足時換行 */
+    gap: 1rem; /* 設定卡片之間的間隔 */
+    justify-content: center; /* 水平置中所有卡片 */
+    padding-top: 1rem;
+}
+
+.dna-draw-result-item {
+    display: flex;
+    flex-direction: column; /* 讓卡片內的元素垂直堆疊 */
+    align-items: center;   /* 水平置中卡片內的元素 */
+    text-align: center;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-primary);
+    min-width: 130px;    /* 每張卡的最小寬度 */
+    flex-basis: 130px;   /* flex佈局的基礎寬度 */
+    flex-grow: 1;        /* 允許卡片伸展以填滿空間 */
+    max-width: 160px;    /* 防止卡片變得過寬 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.dna-draw-result-item .dna-name {
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.dna-draw-result-item .dna-type {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem; /* 與下方元素的間距 */
+}
+
+.dna-draw-result-item .dna-rarity {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1rem; /* 與按鈕的間距 */
+}
+
+/* The applyDnaItemStyle function sets the color for rarity, so this is just a base */
+.text-rarity-common { color: var(--rarity-common-text); }
+.text-rarity-rare { color: var(--rarity-rare-text); }
+.text-rarity-elite { color: var(--rarity-elite-text); }
+.text-rarity-legendary { color: var(--rarity-legendary-text); }
+.text-rarity-mythical { color: var(--rarity-mythical-text); }
+
+.dna-draw-result-item .add-drawn-dna-to-backpack-btn {
+    width: 100%;
+    margin-top: auto; /* 將按鈕推至卡片底部 */
+}
+
+/* Player Info Modal - Monsters Table */
+.player-monsters-table {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+}
+.player-monsters-header, .player-monster-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr; /* 怪獸名佔較大空間 */
+    gap: 0.5rem;
+    padding: 0.5rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+.player-monsters-header {
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom-width: 2px;
+}
+.player-monster-row:last-child {
+    border-bottom: none;
+}
+.player-monster-row:hover {
+    background-color: var(--bg-primary);
+}
+.sortable-header {
+    cursor: pointer;
+    position: relative;
+    padding-right: 15px; /* 留出空間給箭頭 */
+    user-select: none;
+}
+.sortable-header::after {
+    content: ' ';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    opacity: 0.5;
+}
+.sortable-header.asc::after {
+    border-bottom-color: var(--accent-color);
+    opacity: 1;
+}
+.sortable-header.desc::after {
+    border-top-color: var(--accent-color);
+    opacity: 1;
+}
+.monster-name-cell {
+    text-align: left;
+    font-weight: 500;
+}
+.monster-score-cell, .monster-winrate-cell {
+    text-align: center;
+    font-size: 0.9em;
+}
+.monster-score-cell {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+/* Jiggle Mode Animation and Delete Button */
+@keyframes jiggle {
+    0% { transform: rotate(-2.5deg); }
+    50% { transform: rotate(2.5deg); }
+    100% { transform: rotate(-2.5deg); }
+}
+
+.jiggle-mode {
+    animation: jiggle 0.15s infinite linear;
+}
+
+.delete-item-btn {
+    display: none; /* 預設隱藏 */
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background-color: var(--danger-color);
+    color: white;
+    border: 2px solid var(--bg-panel);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+}
+
+.jiggle-mode .delete-item-btn {
+    display: flex; /* 在抖動模式下顯示 */
+}
+
+.dna-name-text {
+    display: block;
+}
+
+.monster-part .dna-name-text {
+    font-size: 0.8rem;
+    font-weight: normal;
+    padding: 0 2px;
+    line-height: 1.2;
+}
+
+/* --- Styling for Training Results Items --- */
+
+/* Override the .inventory-grid layout specifically for the training results modal */
+#training-items-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem; /* Match the gap from the draw modal */
+}
+
+/* Style the wrapper for each item to control its size in the flex container */
+#training-items-grid .dna-item-wrapper {
+    min-width: 130px;
+    flex-basis: 130px;
+    flex-grow: 1;
+    max-width: 160px;
+    display: flex; /* Ensure the inner item can fill it */
+}
+
+/* Adjust the actual item card to fill the wrapper and have consistent padding */
+#training-items-grid .dna-item {
+    width: 100%;
+    padding: 1rem; /* Increase padding to match the draw modal item */
+    justify-content: space-between;
+}
+
+/* Adjust button inside the card */
+#training-items-grid .pickup-btn {
+    margin-top: auto;
+}
+
+/* --- 【新增】強制隱藏沒有圖片時的後備文字 --- */
+.monster-part-overlay .fallback-text {
+    display: none !important;
+}
+
+/* --- 【新增】新版選擇彈窗樣式 --- */
+.selection-container {
+    display: flex;
+    flex-direction: column; /* 手機上預設為垂直堆疊 */
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .selection-container {
+        flex-direction: row; /* 在較寬的螢幕上改為水平排列 */
+    }
+}
+
+.selection-column {
+    flex: 1; /* 讓兩個欄位平分寬度 */
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.selection-banner-placeholder {
+    width: 100%;
+    height: 180px; /* Banner 的高度 */
+    background-color: var(--bg-slot);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border: 2px dashed var(--border-color);
+}
+
+.selection-banner-placeholder::after {
+    content: 'Banner';
+}
+
+.selection-description-box {
+    width: 100%;
+    min-height: 80px; /* 說明欄的最小高度 */
+    background-color: var(--bg-slot);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* 【新增】聊天互動按鈕樣式 */
+.chat-interact-btn {
+    background: var(--button-secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%; /* 圓形 */
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem; /* Emoji size */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.chat-interact-btn:hover {
+    background-color: var(--button-secondary-hover-bg);
+    transform: scale(1.1);
+}
+
+.chat-interact-btn:active {
+    transform: scale(0.95);
+}
+
+/* 【新增】怪獸互動 - 感情條樣式 */
+.bond-bar-container {
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+}
+.bond-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    padding: 0 5px;
+    margin-bottom: 4px;
+}
+.bond-bar {
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(to right, 
+        var(--danger-color), 
+        var(--text-secondary) 45% 55%, 
+        var(--success-color)
+    );
+    border-radius: 6px;
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+.bond-bar-marker {
+    width: 4px;
+    height: 16px; /* 比進度條高一點，更顯眼 */
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 2px;
+    position: absolute;
+    top: -3px; /* 垂直置中 */
+    transform: translateX(-50%);
+    transition: left 0.5s ease-out;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+/* --- 新增：排行榜頭像樣式 --- */
+.leaderboard-avatar-cell {
+    width: 40px; /* 頭像欄位的寬度 */
+    height: 40px; /* 頭像欄位的高度 */
+    padding: 0 !important;
+}
+
+.leaderboard-avatar-container {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%; /* 圓形頭像框 */
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    overflow: hidden; /* 隱藏超出頭像框的圖片部分 */
+    position: relative;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+}
+
+.leaderboard-avatar-image {
+    width: 150%; /* 讓背景圖片比框大，以便只顯示中間部分 */
+    height: 150%;
+    background-size: cover; /* 縮放圖片以完全覆蓋容器 */
+    background-position: center; /* 將圖片置中 */
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 確保圖片絕對置中 */
+}
+
+/* --- 新增：確認出戰彈窗的狀態條 --- */
+.confirm-stat-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px; /* 與上方文字的間距 */
+    width: 100%;
+}
+
+.confirm-stat-bar {
+    height: 8px;
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+
+.confirm-stat-bar-fill {
+    height: 100%;
+    width: 0%; /* Default width */
+    border-radius: 2px;
+    transition: width 0.4s ease-in-out;
+}
+
+.confirm-stat-bar.hp .confirm-stat-bar-fill {
+    background-color: var(--success-color);
+}
+
+.confirm-stat-bar.mp .confirm-stat-bar-fill {
+    background-color: var(--accent-color);
+}
+
+/* --- 玩家貨幣面板樣式 (已修改) --- */
+.player-currency-panel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    padding: 2px 10px; /* 減少垂直padding，讓欄位變細 */
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 180px;
+    margin-left: auto;
+    margin-right: 5px;
+    margin-top: -12px; /* 負外距，使其向上移動，拉近與上方元素的距離 */
+    margin-bottom: -8px; /* 負外距，拉近與下方元素的距離 */
+    position: relative;
+    z-index: 5;
+}
+
+.player-currency-panel .currency-icon {
+    font-size: 1rem; /* 調整圖示大小 */
+    margin-left: 4px;
+}
+
+#player-currency-amount {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--rarity-legendary-text);
+    letter-spacing: 0.5px;
+    font-family: 'Inter', monospace;
+}
+
+/* --- 新增：怪獸快照頭部呼吸動畫 --- */
+@keyframes head-breath {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.10);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+#monster-part-head .monster-part-image.active {
+  animation: head-breath 2s infinite alternate ease-in-out;
+  transform-origin: center bottom; /* 讓縮放中心在底部中間，看起來更像在呼吸 */
+}
+
+/* --- 【新增與修改】怪獸農場卡片式佈局樣式 --- */
+.farm-card-grid {
+    display: grid;
+    /* 響應式網格，最小寬度 110px，最大 1fr，自動填充 */
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.75rem;
+}
+
+.monster-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem; /* 內部元件的間距 */
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
+}
+
+.monster-card.deployed {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px -2px color-mix(in srgb, var(--accent-color) 60%, transparent);
+}
+
+.monster-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.monster-card-name {
+    font-size: 0.875rem; /* 【修改】從 0.75rem 放大為 0.875rem (sm) */
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.monster-card-avatar {
+    width: 60px; /* 【修改】從 80px 縮小為 60px */
+    height: 60px; /* 【修改】從 80px 縮小為 60px */
+    border-radius: 50%;
+    background-color: var(--bg-slot);
+    background-size: cover; /* 【修改】從 150% 改為 cover */
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 2px solid var(--border-color);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+}
+
+.monster-card-deploy-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-text);
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: -12px; /* 讓按鈕稍微蓋在頭像上 */
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.monster-card-deploy-btn:hover {
+    transform: scale(1.1);
+}
+
+.monster-card-deploy-btn.deployed {
+    background-color: var(--button-success-bg);
+    color: var(--button-success-text);
+    cursor: not-allowed;
+}
+
+/* 【新增】怪獸狀態樣式 */
+.monster-card-status {
+    font-size: 0.75rem; /* xs */
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: center;
+    min-height: 18px; /* 避免內容變化時跳動 */
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+}
+
+
+.monster-card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.monster-card-actions .button {
+    padding: 5px; /* 縮小按鈕內距 */
+    font-size: 0.75rem; /* xs */
+    white-space: nowrap;
+}
+
+/* --- 核心修改處 START --- */
+/* 好友列表中，移除好友按鈕的樣式 */
+.friend-actions .remove-friend-btn {
+    color: var(--danger-color);
+}
+
+.friend-actions .remove-friend-btn:hover {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+    border-color: var(--danger-hover-dark);
+}
+
+body.light-theme .friend-actions .remove-friend-btn:hover {
+    border-color: var(--danger-hover-light);
+}
+
+/* 農場排序按鈕與下拉選單樣式 */
+.farm-sort-container {
+    position: relative;
+    display: inline-block;
+}
+
+#farm-sort-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    min-width: 90px;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: var(--bg-panel);
+    min-width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 10;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 0;
+    right: 0; /* Align to the right of the button */
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-menu .dropdown-item {
+    color: var(--text-primary);
+    padding: 8px 12px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: var(--accent-hover);
+    color: var(--button-primary-text);
+}
+/* --- 核心修改處 END --- */

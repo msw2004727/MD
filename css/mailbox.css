@@ -1,0 +1,377 @@
+/* css/mailbox.css */
+/* 存放所有信箱系統相關的樣式 */
+
+/* 快照區塊上的信箱按鈕 */
+#snapshot-mail-btn {
+    position: relative; /* 為了讓小紅點可以定位 */
+}
+
+/* 新信件提示小紅點 */
+.notification-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background-color: var(--danger-color);
+    border-radius: 50%;
+    border: 2px solid var(--bg-panel);
+    box-shadow: 0 0 5px var(--danger-color);
+    display: none; /* 預設隱藏 */
+}
+
+/* 主信箱彈窗的列表容器 */
+#mailbox-list-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+/* 每一封信件的橫列樣式 */
+.mail-item {
+    display: grid;
+    grid-template-columns: 20px 1fr auto; /* 狀態燈 | 標題區塊 | 動作按鈕 */
+    gap: 1rem;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.mail-item:hover {
+    background-color: var(--bg-slot);
+}
+
+/* 信件狀態燈 */
+.mail-status-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mail-status-light.read {
+    background-color: var(--text-secondary);
+}
+
+.mail-status-light.unread {
+    background-color: var(--success-color);
+    box-shadow: 0 0 6px var(--success-color);
+}
+
+/* 信件標題 */
+.mail-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+/* 已讀信件的標題樣式 */
+.mail-item.read .mail-title {
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* 刪除按鈕 */
+.mail-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.mail-delete-btn:hover {
+    background-color: var(--bg-slot);
+    color: var(--danger-color);
+}
+
+
+/* 讀信彈窗的內容區域 */
+#mail-reader-body {
+    min-height: 200px;
+    line-height: 1.7;
+}
+
+#mail-reader-body .mail-content-text {
+    background-color: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+#mail-reader-body .friend-request-info {
+    text-align: center;
+    padding: 1rem;
+}
+
+.mail-item.friend-request-item {
+    display: grid;
+    grid-template-columns: 20px 1fr; /* 狀態燈 | 主內容 */
+    align-items: center;
+    gap: 1rem;
+}
+.friend-request-item .mail-content-wrapper {
+    display: flex;
+    flex-wrap: wrap; /* 允許內容換行 */
+    justify-content: space-between; /* 兩端對齊 */
+    align-items: center;
+    gap: 0.75rem 1rem; /* 垂直和水平間距 */
+    width: 100%;
+}
+.friend-request-item .friend-request-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0; /* 防止按鈕被壓縮 */
+}
+
+/* 系統通知信件的關閉按鈕樣式 */
+#mail-reader-modal .modal-close.system-notification-close-btn {
+    background-color: var(--danger-color);
+    color: var(--button-danger-text);
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    line-height: 28px;
+    text-align: center;
+    border-radius: 50%;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    border: 1px solid var(--danger-hover-dark);
+}
+#mail-reader-modal .modal-close.system-notification-close-btn:hover {
+    background-color: var(--danger-hover-dark);
+    color: var(--button-danger-text);
+}
+body.light-theme #mail-reader-modal .modal-close.system-notification-close-btn:hover {
+     background-color: var(--danger-hover-light);
+}
+
+/* 附件區塊樣式 */
+#mail-reader-attachments {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+#mail-attachments-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    justify-content: center;
+}
+.mail-attachment-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    min-width: 80px;
+}
+.mail-attachment-item .dna-item {
+    width: 50px;
+    height: 50px;
+    font-size: 0.7rem;
+    min-height: 0;
+    cursor: default;
+}
+.attachment-gold {
+    font-weight: bold;
+    color: gold;
+}
+/* 信件列表附件圖示 */
+.mail-title-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    flex-grow: 1;
+}
+.mail-attachment-icon {
+    font-size: 1rem;
+    color: var(--rarity-legendary-text);
+}
+.mail-item.has-attachment .mail-title::after {
+    content: '🎁';
+    margin-left: 8px;
+    color: var(--rarity-legendary-text);
+    font-size: 1rem;
+}
+
+/* --- 寄信彈窗樣式 --- */
+.send-mail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.send-mail-container .recipient-info {
+    text-align: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
+}
+
+.send-mail-container .mail-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.send-mail-container .mail-input-group label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-left: 4px;
+}
+
+.send-mail-container .mail-input-group input,
+.send-mail-container .mail-input-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    box-sizing: border-box; 
+}
+
+.mail-attachment-section {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-slot);
+    text-align: center;
+}
+
+.attachment-title {
+    font-weight: 600;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.attachment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    align-items: stretch; 
+}
+
+.attachment-gold-wrapper {
+    grid-column: 1 / 2;
+    display: flex; 
+    align-items: center; 
+    background-color: var(--bg-primary); 
+    border: 1px solid var(--border-color); 
+    border-radius: 4px; 
+    padding-left: 8px; 
+}
+
+.attachment-gold-wrapper .gold-icon { 
+    font-size: 1.2rem;
+    margin-right: 4px;
+    color: gold;
+}
+
+#mail-gold-input {
+    flex-grow: 1; 
+    padding: 6px 8px;
+    background-color: transparent !important; 
+    border: none; 
+    color: gold; 
+    font-weight: bold;
+}
+
+#mail-gold-input:focus { 
+    outline: none;
+    box-shadow: none;
+}
+
+/* --- 核心修改處 START --- */
+.mail-fee-display {
+    grid-column: 2 / 3;
+    padding: 6px 8px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    text-align: center;
+    /* 改為 flexbox 以控制換行 */
+    display: flex;
+    flex-wrap: wrap; /* 允許換行 */
+    justify-content: center;
+    align-items: center;
+    gap: 0 0.5em; /* 僅設定水平間距 */
+}
+/* --- 核心修改處 END --- */
+
+#attach-dna-btn {
+    grid-column: 1 / 2;
+}
+
+#attach-item-btn {
+    grid-column: 2 / 3;
+}
+
+/* --- 核心修改處 START --- */
+.attached-dna-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 讓物品置中 */
+    gap: 0.5rem;
+    min-height: 50px;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+/* --- 核心修改處 END --- */
+
+.attached-dna-preview:empty {
+    display: none;
+}
+
+.attached-dna-preview .dna-item {
+    width: 50px;
+    height: 50px;
+    font-size: 0.7rem;
+    min-height: 0;
+    flex-shrink: 0;
+}
+
+/* --- 核心修改處 START --- */
+/* 移除刪除按鈕的樣式，因為它不再被使用 */
+/*
+.attached-dna-preview .remove-attachment-btn {
+    padding: 4px 8px;
+    line-height: 1;
+    min-width: auto;
+    border-radius: 50%;
+}
+*/
+/* --- 核心修改處 END --- */
+
+.mail-inventory-selection .mail-attach-dna-item {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.mail-inventory-selection .mail-attach-dna-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px var(--accent-color);
+}
