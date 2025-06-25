@@ -14,6 +14,11 @@ champion_logger = logging.getLogger(__name__)
 # Firestore 中的集合與文件名稱
 CHAMPIONS_COLLECTION = "MD_SystemData"
 CHAMPIONS_DOCUMENT = "Champions"
+# --- 核心修改處 START ---
+# 新增：定義冠軍守衛設定檔在 Firestore 中的位置
+GUARDIANS_CONFIG_COLLECTION = "MD_GameConfigs"
+GUARDIANS_CONFIG_DOCUMENT = "ChampionGuardians"
+# --- 核心修改處 END ---
 
 def get_champions_data() -> ChampionsData:
     """
@@ -51,8 +56,9 @@ def get_champions_data() -> ChampionsData:
 
 def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
     """
-    獲取四個冠軍席位的完整怪獸資料，並附加擁有者與在位時間戳資訊。
-    這是一個高階服務，會整合冠軍資料和玩家怪獸資料。
+    獲取四個冠軍席位的完整資料。
+    如果席位被玩家佔領，則返回玩家怪獸資料。
+    如果席位為空，則從 Firestore 讀取對應的 NPC 守衛資料。
     """
     champions_info = get_champions_data()
     
@@ -63,17 +69,30 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
 
     full_details: List[Optional[Dict[str, Any]]] = [None] * 4
     
-    # 【修改】預先載入 DNA 範本以供查詢
     try:
         dna_templates_doc = db.collection('MD_GameConfigs').document('DNAFragments').get()
         all_dna_templates = dna_templates_doc.to_dict().get('all_fragments', []) if dna_templates_doc.exists else []
     except Exception as e:
         champion_logger.error(f"無法從 Firestore 載入 DNA 範本: {e}")
         all_dna_templates = []
+
+    # --- 核心修改處 START ---
+    # 預先載入守衛資料
+    try:
+        guardians_doc = db.collection(GUARDIANS_CONFIG_COLLECTION).document(GUARDIANS_CONFIG_DOCUMENT).get()
+        guardians_data = guardians_doc.to_dict().get("guardians", {}) if guardians_doc.exists else {}
+        champion_logger.info("成功預先載入冠軍守衛資料。")
+    except Exception as e:
+        champion_logger.error(f"無法從 Firestore 載入冠軍守衛資料: {e}")
+        guardians_data = {}
+    # --- 核心修改處 END ---
     
     owners_to_fetch: Dict[str, List[Dict[str, Any]]] = {}
     for i in range(1, 5):
-        slot_info: Optional[ChampionSlot] = champions_info.get(f"rank{i}")
+        rank_key = f"rank{i}"
+        slot_info: Optional[ChampionSlot] = champions_info.get(rank_key)
+
+        # 如果席位被玩家佔領
         if slot_info and slot_info.get("ownerId"):
             owner_id = slot_info["ownerId"]
             if owner_id not in owners_to_fetch:
@@ -83,6 +102,16 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
                 "monster_id": slot_info["monsterId"],
                 "occupied_timestamp": slot_info.get("occupiedTimestamp")
             })
+        # --- 核心修改處 START ---
+        # 如果席位為空，則填入對應的守衛資料
+        else:
+            guardian_monster = guardians_data.get(rank_key)
+            if guardian_monster:
+                guardian_monster_copy = guardian_monster.copy()
+                guardian_monster_copy['owner_nickname'] = "殿堂守護者" # 附加顯示資訊
+                full_details[i - 1] = guardian_monster_copy
+                champion_logger.info(f"席位 {rank_key} 為空，已填入守衛 '{guardian_monster_copy.get('nickname')}'。")
+        # --- 核心修改處 END ---
 
     if owners_to_fetch:
         for owner_id, monsters_to_find in owners_to_fetch.items():
@@ -102,7 +131,6 @@ def get_full_champion_details_service() -> List[Optional[Dict[str, Any]]]:
                             found_monster["owner_nickname"] = player_game_data.get("nickname", "未知玩家")
                             found_monster["occupiedTimestamp"] = item.get("occupied_timestamp")
                             
-                            # 【新增】補上查詢頭像 DNA 的邏輯
                             head_dna_info = { "type": "無", "rarity": "普通" } 
                             constituent_ids = found_monster.get("constituent_dna_ids", [])
                             if constituent_ids:
