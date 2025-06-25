@@ -26,8 +26,6 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
     if not facility_id:
         return None
 
-    # --- 核心修改處 START ---
-    # 從 game_configs 讀取成長設定，而不是使用固定的 difficulty_map
     growth_settings = game_configs.get("adventure_growth_settings", {})
     facility_difficulty = growth_settings.get("facilities", {}).get(facility_id)
     
@@ -36,7 +34,6 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
         return None 
     
     chance_to_trigger = facility_difficulty.get("growth_chance", 0)
-    # --- 核心修改處 END ---
     
     roll = random.random()
     adventure_logger.info(f"隨機成長檢定：設施 {facility_id} (機率: {chance_to_trigger*100}%)，擲骰結果: {roll:.4f}")
@@ -59,8 +56,6 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
         adventure_logger.warning(f"隨機成長：在農場中找不到怪獸 {monster_id_to_grow}")
         return None
 
-    # --- 核心修改處 START ---
-    # 從設定檔讀取成長點數和屬性權重
     points_to_distribute = facility_difficulty.get("growth_points", 0)
     stat_weights_config = growth_settings.get("stat_weights", {})
     if not stat_weights_config:
@@ -69,7 +64,6 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
     
     stats_to_grow = list(stat_weights_config.keys())
     weights = list(stat_weights_config.values())
-    # --- 核心修改處 END ---
     
     gains_log: Dict[str, int] = {}
     cultivation_gains = monster_in_farm.setdefault("cultivation_gains", {})
@@ -96,7 +90,10 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        data_file_path = os.path.join(os.path.dirname(__file__), 'data', 'adventure_islands.json')
+        # --- 核心修改處 START ---
+        # 將路徑中的 'data' 移除，並指向新的 'adventure' 資料夾
+        data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
+        # --- 核心修改處 END ---
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
