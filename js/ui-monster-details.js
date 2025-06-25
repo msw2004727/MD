@@ -20,13 +20,15 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     
+    // --- 核心修改處 START ---
+    // 重新加入 rarityKey 的定義
+    const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
+    // --- 核心修改處 END ---
+    
     const monsterNameHtml = getMonsterDisplayName(monster, gameState.gameConfigs);
     const editableNickname = monster.custom_element_nickname || monster.element_nickname_part || '';
     
-    // --- 核心修改處 START ---
-    // 使用 ?. (Optional Chaining) 來安全地存取可能不存在的屬性，防止錯誤
     const isOwnMonster = gameState.playerData?.farmedMonsters?.some(m => m.id === monster.id) ?? false;
-    // --- 核心修改處 END ---
 
     DOMElements.monsterInfoModalHeader.innerHTML = `
         <div id="monster-nickname-display-container" class="monster-nickname-display-container">
