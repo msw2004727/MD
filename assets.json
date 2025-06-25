@@ -82,7 +82,8 @@
     },
     "logos": {
       "comment": "Logo 或其他圖標",
-      "loadingIcon": "https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true"
+      "loadingIcon": "https://github.com/msw2004727/MD/blob/main/images/logo01.png?raw=true",
+      "lineIcon": "https://github.com/msw2004727/MD/blob/main/images/line.png?raw=true"
     },
     "selectionBanners": {
       "comment": "天梯選擇彈窗橫幅",
