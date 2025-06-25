@@ -181,3 +181,25 @@ def save_champion_guardians_route():
             return jsonify({"error": error}), 500
             
     return secured_save_champion_guardians()
+
+# --- 新增 START ---
+@config_editor_bp.route('/save_cultivation_settings', methods=['POST', 'OPTIONS'])
+def save_cultivation_settings_route():
+    from .admin_routes import token_required
+    from .config_editor_services import save_cultivation_settings_service
+
+    @token_required
+    def secured_save_cultivation_settings():
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "請求中缺少設定資料。"}), 400
+        
+        success, error = save_cultivation_settings_service(data)
+        
+        if success:
+            return jsonify({"success": True, "message": "修煉設定已成功儲存並重新載入。"}), 200
+        else:
+            return jsonify({"error": error}), 500
+            
+    return secured_save_cultivation_settings()
+# --- 新增 END ---
