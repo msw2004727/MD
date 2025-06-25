@@ -11,7 +11,7 @@ import random
 
 import math
 
-# 從 utils_services 導入共用函式
+# 從 player_services 導入 _add_player_log
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 
 # 將 _add_player_log 函式移回此檔案
@@ -80,13 +80,10 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
     num_initial_dna = 6
 
     if dna_fragments_templates:
-        # --- 核心修改處 START ---
-        # 嚴格篩選出僅為 "普通" 等級的 DNA
         common_dna_pool = [dna for dna in dna_fragments_templates if dna.get('rarity') == "普通"]
         
         selected_dna = []
         if common_dna_pool:
-            # 從普通DNA池中隨機選擇，確保不重複
             num_to_select = min(len(common_dna_pool), num_initial_dna)
             selected_dna = random.sample(common_dna_pool, num_to_select)
             player_services_logger.info(f"為新玩家 {nickname} 隨機選擇了 {num_to_select} 個普通DNA。")
@@ -97,7 +94,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
             instance_id = f"dna_{player_id}_{int(time.time() * 1000)}_{i}"
             owned_dna_item: Dict[str, Any] = {**template, "id": instance_id, "baseId": template["id"]}
             initial_dna_owned[i] = owned_dna_item
-        # --- 核心修改處 END ---
 
     new_player_data: Dict[str, Any] = {
         "playerOwnedDNA": initial_dna_owned, "farmedMonsters": [], "playerStats": player_stats,
@@ -249,32 +245,30 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
 
             farmed_monsters = player_game_data_dict.get("farmedMonsters", [])
             if farmed_monsters:
-                element_nicknames_map = game_configs.get("element_nicknames", {})
                 naming_constraints = game_configs.get("naming_constraints", {})
-                player_current_title_name = "新手"
-                equipped_id = player_stats.get("equipped_title_id")
-                owned_titles = player_stats.get("titles", [])
-                if equipped_id:
-                    equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
-                    if equipped_title_obj: player_current_title_name = equipped_title_obj.get("name", "新手")
-                elif owned_titles and isinstance(owned_titles[0], dict):
-                    player_current_title_name = owned_titles[0].get("name", "新手")
                 
+                # --- 核心修改處 START ---
+                # 在此處的遷移邏輯中，我們不再需要玩家稱號，直接傳入空字串
                 for monster in farmed_monsters:
-                    if "player_title_part" not in monster:
+                    # 檢查舊的命名結構是否存在，如果存在才進行遷移
+                    if "player_title_part" in monster or "achievement_part" in monster:
                         needs_migration_save = True
-                        monster["player_title_part"] = player_current_title_name
-                        monster["achievement_part"] = monster.get("title", "新秀")
-                        if monster.get("custom_element_nickname"):
-                            monster["element_nickname_part"] = monster["custom_element_nickname"]
-                        else:
-                            primary_element: "ElementTypes" = monster.get("elements", ["無"])[0] 
-                            monster_rarity = monster.get("rarity", "普通")
-                            rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
-                            possible_nicknames = rarity_specific_nicknames.get(monster_rarity, [primary_element])
-                            monster["element_nickname_part"] = possible_nicknames[0] if possible_nicknames else primary_element
-                        monster["nickname"] = generate_monster_full_nickname(monster["player_title_part"], monster["achievement_part"], monster["element_nickname_part"], naming_constraints)
-            
+                        
+                        # 保留舊的零件部分，以防未來需要
+                        if "player_title_part" not in monster:
+                             monster["player_title_part"] = ""
+                        if "achievement_part" not in monster:
+                            monster["achievement_part"] = "新秀"
+                        
+                        # 生成新的、僅包含屬性名的暱稱
+                        monster["nickname"] = generate_monster_full_nickname(
+                            "", # 玩家稱號部分留空
+                            "", # 怪獸成就部分留空
+                            monster.get("element_nickname_part", monster.get("elements", ["無"])[0]),
+                            naming_constraints
+                        )
+                # --- 核心修改處 END ---
+
             for dna_list_key in ["playerOwnedDNA", "dnaCombinationSlots"]:
                 dna_list = player_game_data_dict.get(dna_list_key, [])
                 for i, dna_item in enumerate(dna_list):
