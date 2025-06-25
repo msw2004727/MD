@@ -13,8 +13,11 @@ from firebase_admin import firestore
 
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
 
-ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'your_super_secret_admin_key_12345')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'msw2004727')
+# --- 核心修改處：從環境變數讀取金鑰與密碼 ---
+# 從環境變數讀取，不再提供程式碼內的預設值
+ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'default_jwt_secret_for_dev_only')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+# --- 核心修改處 END ---
 
 def token_required(f):
     @wraps(f)
@@ -49,9 +52,17 @@ def admin_login():
         return jsonify({'status': 'ok'}), 200
         
     data = request.get_json()
+
+    # --- 核心修改處：增強密碼驗證邏輯 ---
+    if not ADMIN_PASSWORD:
+        current_app.logger.error("後台管理員密碼未在環境變數中設定，登入功能已禁用。")
+        return jsonify({'error': '後台登入功能未啟用。'}), 503 # 503 Service Unavailable
+
     if not data or 'password' not in data:
         return jsonify({'error': '缺少密碼'}), 400
+    
     if data['password'] == ADMIN_PASSWORD:
+    # --- 核心修改處 END ---
         token = jwt.encode({
             'user': 'admin',
             'exp': datetime.now(tz=timezone.utc) + timedelta(hours=8)
@@ -235,7 +246,6 @@ def recall_mail_route():
         current_app.logger.error(f"回收廣播信件時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "回收信件時發生內部錯誤。"}), 500
 
-# --- 核心修改處 START ---
 @admin_bp.route('/delete_cs_mail/<string:mail_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
 def delete_cs_mail_route(mail_id):
@@ -261,4 +271,3 @@ def delete_cs_mail_route(mail_id):
     except Exception as e:
         current_app.logger.error(f"刪除客服信件 {mail_id} 時發生錯誤: {e}", exc_info=True)
         return jsonify({"error": "刪除信件時發生內部錯誤。"}), 500
-# --- 核心修改處 END ---
