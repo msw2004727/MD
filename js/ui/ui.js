@@ -171,6 +171,24 @@ function initializeDOMElements() {
         snapshotBarsContainer: document.getElementById('snapshot-bars-container'),
         snapshotHpFill: document.getElementById('snapshot-hp-fill'),
         snapshotMpFill: document.getElementById('snapshot-mp-fill'),
+
+        // --- 核心修改處 START ---
+        // 新增 Mailbox 和 Medical Station 相關的 DOM 元素
+        mailboxModal: document.getElementById('mailbox-modal'),
+        mailListContainer: document.getElementById('mailbox-list-container'),
+        refreshMailboxBtn: document.getElementById('refresh-mailbox-btn'),
+        deleteReadMailsBtn: document.getElementById('delete-read-mails-btn'),
+        
+        mailReaderModal: document.getElementById('mail-reader-modal'),
+        mailReaderTitle: document.getElementById('mail-reader-title'),
+        mailReaderSender: document.getElementById('mail-reader-sender'),
+        mailReaderTimestamp: document.getElementById('mail-reader-timestamp'),
+        mailReaderBody: document.getElementById('mail-reader-modal')?.querySelector('.mail-content-text'),
+        mailReaderAttachmentsContainer: document.getElementById('mail-reader-attachments'),
+        
+        medicalStationHeaders: document.getElementById('medical-station-headers'),
+        medicalStationList: document.getElementById('medical-station-list'),
+        // --- 核心修改處 END ---
     };
     console.log("DOMElements initialized in ui.js");
 }
