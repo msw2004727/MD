@@ -92,10 +92,7 @@ def get_all_islands_service() -> List[Dict[str, Any]]:
     """
     adventure_logger.info("正在從 adventure_islands.json 讀取島嶼資料...")
     try:
-        # --- 核心修改處 START ---
-        # 修正檔案路徑，移除 '..'，讓路徑從 backend/ 指向 backend/adventure/
         data_file_path = os.path.join(os.path.dirname(__file__), 'adventure', 'adventure_islands.json')
-        # --- 核心修改處 END ---
         
         with open(data_file_path, 'r', encoding='utf-8') as f:
             islands_data = json.load(f)
@@ -300,13 +297,10 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
 
     current_floor = progress.get("current_floor", 1)
     
-    # --- 核心修改處 START ---
-    # 改為從設施資料中讀取獨立的獎勵設定
     facility_id = progress.get("facility_id")
     all_islands = game_configs.get("adventure_islands", [])
     facility_data = next((fac for island in all_islands for fac in island.get("facilities", []) if fac.get("facilityId") == facility_id), None)
     
-    # 讀取獨立設定，如果找不到，則使用舊的全域設定作為後備
     if facility_data:
         base_gold = facility_data.get("floor_clear_base_gold", 50)
         bonus_per_floor = facility_data.get("floor_clear_bonus_gold_per_floor", 10)
@@ -314,7 +308,6 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
         adv_settings = game_configs.get("adventure_settings", {})
         base_gold = adv_settings.get("floor_clear_base_gold", 50)
         bonus_per_floor = adv_settings.get("floor_clear_bonus_gold_per_floor", 10)
-    # --- 核心修改處 END ---
 
     gold_reward = base_gold + ((current_floor -1) * bonus_per_floor)
     
