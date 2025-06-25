@@ -136,8 +136,6 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
         if skill_name:
             skill_details.append(f"{skill_name} (Lv.{skill_level})")
 
-    # --- 核心修改處 START ---
-    # 修正了錯誤的屬性存取方式，並修復了 .def 的語法錯誤。
     prompt = f"""
 請你扮演一位資深的「怪獸培育師」，為一位新手玩家的怪獸提供「綜合評價與培養建議」。
 請遵循以下指南：
@@ -174,7 +172,6 @@ def generate_monster_evaluation(monster: Monster, game_configs: GameConfigs) -> 
 **培養建議**：
 （在這裡填寫你的建議）
 """
-    # --- 核心修改處 END ---
 
     payload = {
         "model": DEEPSEEK_MODEL,
@@ -288,19 +285,15 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         if response_json and response_json.get("choices"):
             content = response_json["choices"][0]["message"]["content"].strip()
             
-            # --- 核心修改處 START ---
-            # 尋找 Hashtag
             tag_match = re.search(r'(#\S+之戰)', content)
             if tag_match:
                 tag = tag_match.group(1)
-                # 從正文中移除標籤
                 ai_summary = content.replace(tag, '').strip()
                 ai_tags.append(tag)
                 ai_logger.info(f"成功提取標籤: {tag}")
             else:
                 ai_summary = content
                 ai_logger.warning("AI 生成的內容中未找到預期格式的標籤。")
-                # 新增備用方案：如果 AI 忘記加標籤，我們手動從標籤池裡隨機選一個
                 try:
                     data_dir = os.path.join(os.path.dirname(__file__), 'data')
                     with open(os.path.join(data_dir, 'battle_highlights.json'), 'r', encoding='utf-8') as f:
@@ -312,16 +305,13 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
                 except Exception as file_e:
                     ai_logger.error(f"讀取備用標籤檔案 battle_highlights.json 時出錯: {file_e}")
 
-            # 增加一個檢查，如果 summary 意外地變得很短，可能是AI只返回了標籤
             if len(ai_summary) < 20 and len(content) > 20:
-                 ai_summary = content.strip() # 如果發生這種情況，還原成原始輸出
+                 ai_summary = content.strip() 
                  ai_logger.warning("偵測到 summary 過短，已還原。")
-            # --- 核心修改處 END ---
         
     except Exception as e:
         ai_logger.error(f"呼叫 DeepSeek API 生成戰報總結時發生錯誤: {e}", exc_info=True)
 
-    # 將標籤附加到總結後面
     if ai_tags:
         tags_str = " ".join(ai_tags)
         ai_summary += f"\n\n{tags_str}"
@@ -343,7 +333,6 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         "growth_info": " ".join(growth_info_parts),
     }
 
-    # 組合最終的完整報告字串
     full_report_str = final_report["ai_summary"]
     if final_report["loot_info"]:
         full_report_str += f'\n\n{final_report["loot_info"]}'
@@ -358,10 +347,8 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
     根據怪獸的性格和對話歷史生成回應。
     """
     
-    # 建立一個簡潔的性格描述
     personality_summary = f"你是 {monster.get('nickname')}，你的性格是：{monster.get('personality', {}).get('name')}。"
 
-    # 建立系統提示
     system_prompt = (
         f"你是一隻名為'{monster.get('nickname')}'的怪獸，你的主人是'{player_nickname}'。"
         f"你的性格特質是：{monster.get('personality', {}).get('name')}。"
@@ -369,7 +356,6 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
         "你的回答嚴格限制在 30 個字以內。不要使用 '*' 或任何 markdown 語法，就像在聊天一樣直接說話。"
     )
 
-    # 處理特定的互動類型
     interaction_prompt = ""
     if interaction_type == 'greeting':
         interaction_prompt = "你的主人剛來看你，跟他打個招呼吧。"
@@ -380,14 +366,12 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
     elif interaction_type == 'kiss':
         interaction_prompt = "你的主人親了你一下，請根據你的性格回應。"
 
-    # 組合對話歷史
     messages = [{"role": "system", "content": system_prompt}]
-    for entry in chat_history[-6:]:  # 取最近的6條對話
-        role = entry.get('role', 'user') # 預設為 user
+    for entry in chat_history[-6:]:
+        role = entry.get('role', 'user') 
         content = entry.get('content', '')
         messages.append({"role": role, "content": content})
     
-    # 如果有互動，將其作為最後一條用戶訊息加入
     if interaction_prompt:
         messages.append({"role": "user", "content": interaction_prompt})
 
@@ -395,19 +379,16 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
         "model": DEEPSEEK_MODEL,
         "messages": messages,
         "max_tokens": 60,
-        "temperature": 1.1, # 稍高的溫度讓對話更多樣化
+        "temperature": 1.1, 
     }
     
     response_json = _call_deepseek_api(payload, timeout=20)
     if response_json and response_json.get("choices"):
         content = response_json["choices"][0]["message"]["content"].strip()
-        # 再次清理，確保沒有多餘的符號
         return re.sub(r'[\*\'"]', '', content)
 
-    # 互動類型的預設回應
     if interaction_type:
         return f"({monster.get('nickname')}好像在想些什麼...)"
-    # 一般對話的預設回應
     return "（牠好像不想說話...）"
 
 def generate_monster_ai_details(monster: Monster) -> Dict[str, str]:
@@ -417,7 +398,6 @@ def generate_monster_ai_details(monster: Monster) -> Dict[str, str]:
     from .MD_config_services import load_all_game_configs_from_firestore
     game_configs = load_all_game_configs_from_firestore()
 
-    # 準備技能資訊
     skill_details = []
     for skill_info in monster.get("skills", []):
         skill_name = skill_info.get('name')
@@ -466,7 +446,6 @@ def generate_monster_ai_details(monster: Monster) -> Dict[str, str]:
     
     return DEFAULT_AI_RESPONSES.copy()
     
-# --- 核心修改處：新增 _get_world_knowledge_context 函式 ---
 def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs, player_data: PlayerGameData, current_monster_id: str) -> Optional[Dict[str, Any]]:
     """
     根據玩家的提問，從遊戲設定中查找相關知識。
@@ -475,7 +454,6 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
     context = ""
     source = None
 
-    # 1. 檢查是否在問關於技能的問題
     all_skills = [skill for skills_by_type in game_configs.get("skills", {}).values() for skill in skills_by_type]
     for skill in all_skills:
         if skill['name'].lower() in query:
@@ -483,7 +461,6 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
             source = f"技能: {skill['name']}"
             return {"source": source, "context": context}
 
-    # 2. 檢查是否在問關於怪獸的問題 (自己的或其他)
     all_player_monsters = player_data.get("farmedMonsters", [])
     for monster in all_player_monsters:
         monster_name_part = monster.get('element_nickname_part') or monster.get('nickname')
@@ -496,7 +473,6 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
             source = f"怪獸: {monster_name_part}"
             return {"source": source, "context": context}
             
-    # 3. 檢查是否在問關於遊戲概念的問題
     game_concepts = {
         "屬性克制": "在這個世界，屬性克制很重要！例如火剋木，水剋火。用對了屬性，打起架來會輕鬆很多喔！",
         "合成": "我們可以把5個DNA碎片合在一起，變成一隻新的怪獸夥伴！",
