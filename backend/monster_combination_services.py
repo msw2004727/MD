@@ -25,7 +25,7 @@ from .utils_services import generate_monster_full_nickname, calculate_exp_to_nex
 monster_combination_services_logger = logging.getLogger(__name__)
 
 # --- 預設遊戲設定 (保持不變) ---
-DEFAULT_GAME_CONFIGS_FOR_COMBINATION: GameConfigs = {
+DEFAULT_GAME_CONFIGS_FOR_COMBINATION: Dict[str, Any] = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
     "skills": {"無": [{"name":"撞擊", "power":10, "crit":5, "probability":100, "type":"無", "baseLevel":1, "mp_cost":0, "skill_category":"物理"}]},
@@ -46,7 +46,7 @@ def _generate_combination_key(dna_template_ids: List[str]) -> str:
     sorted_ids = sorted(dna_template_ids)
     return "_".join(sorted_ids)
 
-def _calculate_final_resistances(base_resistances: Dict[str, int], game_configs: GameConfigs) -> Dict[str, int]:
+def _calculate_final_resistances(base_resistances: Dict[str, int], game_configs: Dict[str, Any]) -> Dict[str, int]:
     """根據克制關係計算最終的元素抗性。"""
     chart = game_configs.get("elemental_advantage_chart", {})
     final_res = base_resistances.copy()
@@ -72,7 +72,7 @@ def _calculate_final_resistances(base_resistances: Dict[str, int], game_configs:
     return {k: v for k, v in final_res.items() if v != 0}
 
 
-def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_configs: GameConfigs, player_data: PlayerGameData, player_id: str) -> Optional[Dict[str, Any]]:
+def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_configs: Dict[str, Any], player_data: Dict[str, Any], player_id: str) -> Optional[Dict[str, Any]]:
     """根據前端傳來的、已在組合槽中的完整 DNA 物件列表來生成新的怪獸。"""
     from .MD_firebase_config import db as firestore_db_instance
     if not firestore_db_instance:
@@ -85,7 +85,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         monster_combination_services_logger.warning("DNA 組合請求中的 DNA 物件列表為空。")
         return None
 
-    combined_dnas_data: List[DNAFragment] = []
+    combined_dnas_data: List[Dict[str, Any]] = []
     constituent_dna_template_ids: List[str] = []
     valid_dna_objects = [dna for dna in dna_objects_from_request if dna and isinstance(dna, dict)]
     
@@ -119,8 +119,8 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
 
     if recipe_doc.exists:
         monster_combination_services_logger.info(f"配方 '{combination_key}' 已存在，直接讀取。")
-        recipe_data: MonsterRecipe = recipe_doc.to_dict() # type: ignore
-        fixed_monster_data: Monster = recipe_data.get("resultingMonsterData") # type: ignore
+        recipe_data: Dict[str, Any] = recipe_doc.to_dict()
+        fixed_monster_data: Dict[str, Any] = recipe_data.get("resultingMonsterData")
         if not fixed_monster_data:
             monster_combination_services_logger.error(f"組合庫中的配方 '{combination_key}' 缺少 'resultingMonsterData'。")
             return None
@@ -141,7 +141,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["mp"] = new_monster_instance.get("initial_max_mp", 1)
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
         
         return {"monster": new_monster_instance}
@@ -205,17 +204,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             else:
                 monster_combination_services_logger.error("連預設的'無'屬性技能都找不到，怪獸將沒有技能！")
 
-        player_stats = player_data.get("playerStats", {})
-        player_title = "新手" 
-        equipped_id = player_stats.get("equipped_title_id")
-        owned_titles = player_stats.get("titles", [])
-        if equipped_id:
-            equipped_title_obj = next((t for t in owned_titles if t.get("id") == equipped_id), None)
-            if equipped_title_obj: player_title = equipped_title_obj.get("name", "新手")
-        elif owned_titles and isinstance(owned_titles[0], dict):
-             player_title = owned_titles[0].get("name", "新手")
-        
-        monster_achievement = random.choice(game_configs.get("monster_achievements_list", ["新秀"]))
         element_nicknames_map = game_configs.get("element_nicknames", {})
         rarity_specific_nicknames = element_nicknames_map.get(primary_element, {})
         possible_nicknames = rarity_specific_nicknames.get(monster_rarity_name, [primary_element])
@@ -223,15 +211,27 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         element_nickname = random.choice(possible_nicknames)
         
         naming_constraints = game_configs.get("naming_constraints", {})
-        full_nickname = generate_monster_full_nickname(player_title, monster_achievement, element_nickname, naming_constraints)
+        
+        # --- 核心修改處 START ---
+        # 移除稱號和成就的邏輯，直接傳入空字串
+        player_title_part = ""  
+        monster_achievement_part = ""
+        # 產生最終暱稱
+        full_nickname = generate_monster_full_nickname(
+            player_title_part, 
+            monster_achievement_part, 
+            element_nickname,
+            naming_constraints
+        )
+        # --- 核心修改處 END ---
 
         stat_multiplier = monster_rarity_data.get("statMultiplier", 1.0)
         initial_max_hp = int(base_stats.get("hp", 50) * stat_multiplier)
         initial_max_mp = int(base_stats.get("mp", 20) * stat_multiplier)
         
-        standard_monster_data: Monster = {
+        standard_monster_data: Dict[str, Any] = {
             "id": f"template_{combination_key}", "nickname": full_nickname,
-            "player_title_part": player_title, "achievement_part": monster_achievement,
+            "player_title_part": player_title_part, "achievement_part": monster_achievement_part,
             "element_nickname_part": element_nickname, "elements": elements_present,
             "elementComposition": element_composition, "hp": initial_max_hp, "mp": initial_max_mp,
             "initial_max_hp": initial_max_hp, "initial_max_mp": initial_max_mp,
@@ -281,7 +281,6 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["farmStatus"] = {"active": False, "isBattling": False, "isTraining": False, "completed": False}
         new_monster_instance["activityLog"] = [{"time": now_gmt8_str, "message": "誕生於神秘的 DNA 組合，首次發現新配方。"}]
         
-        # 【新增】記錄合成日誌
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
 
         return {"monster": new_monster_instance}
