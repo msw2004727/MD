@@ -12,17 +12,18 @@ import random
 import math
 
 # --- 核心修改處 START ---
-# 導入我們新的事件紀錄服務
-from .analytics.analytics_services import log_event
+# 移除從 utils_services 導入 _add_player_log
+from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 # --- 核心修改處 END ---
 
-from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 from .MD_models import PlayerGameData, PlayerStats, PlayerOwnedDNA, GameConfigs, NamingConstraints, ValueSettings, DNAFragment, Monster, ElementTypes, NoteEntry, PlayerLogEntry
 from .champion_services import get_champions_data, update_champions_document
 
 player_services_logger = logging.getLogger(__name__)
 
 
+# --- 核心修改處 START ---
+# 將 _add_player_log 函式移回此檔案
 def _add_player_log(player_data: PlayerGameData, category: str, message: str):
     """
     為指定的玩家資料物件新增一條日誌。
@@ -30,8 +31,10 @@ def _add_player_log(player_data: PlayerGameData, category: str, message: str):
     if "playerLogs" not in player_data or not isinstance(player_data.get("playerLogs"), list):
         player_data["playerLogs"] = []
     
+    # 限制日誌最多只保留最近的 50 條
     MAX_LOGS = 50
     if len(player_data["playerLogs"]) >= MAX_LOGS:
+        # 從最舊的日誌開始移除 (pop(0) 移除列表頭部)
         player_data["playerLogs"] = player_data["playerLogs"][-(MAX_LOGS-1):]
 
     new_log: PlayerLogEntry = {
@@ -39,9 +42,12 @@ def _add_player_log(player_data: PlayerGameData, category: str, message: str):
         "category": category,
         "message": message,
     }
+    # 將新日誌加到列表尾部
     player_data["playerLogs"].append(new_log)
+# --- 核心修改處 END ---
 
 
+# --- 預設遊戲設定 (保持不變) ---
 DEFAULT_GAME_CONFIGS_FOR_UTILS_PLAYER: GameConfigs = {
     "dna_fragments": [], 
     "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
@@ -104,12 +110,6 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
     
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
-
-    # --- 核心修改處 START ---
-    # 在此處呼叫事件紀錄函式
-    log_event('user_registered', {'uid': player_id})
-    # --- 核心修改處 END ---
-
     return new_player_data
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], bool]:
@@ -312,10 +312,6 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         new_player_data = initialize_new_player_data(player_id, authoritative_nickname, game_configs)
         
         if save_player_data_service(player_id, new_player_data):
-            # --- 核心修改處 START ---
-            # 當新玩家資料成功儲存後，紀錄事件 (此段邏輯已在 initialize_new_player_data 中處理，此處確保一致性)
-            # log_event('user_registered', {'uid': player_id}) # 其實在上面函式內已經呼叫了，這裡可以省略
-            # --- 核心修改處 END ---
             return new_player_data, True
         else:
             player_services_logger.error(f"為新玩家 {player_id} 初始化資料後，首次儲存失敗！")
