@@ -1,81 +1,102 @@
 # backend/analytics/analytics_services.py
+# 新增的服務檔案：處理遊戲營運數據的紀錄與彙整
 
-from backend.MD_firebase_config import db
-from datetime import datetime, time
-import pytz
 import logging
+import time
+from datetime import datetime, timedelta, timezone
+from typing import Dict, Any, Optional, List
 
-# 獲取日誌記錄器實例
-logger = logging.getLogger(__name__)
+# 導入專案根目錄的模組
+from .. import MD_firebase_config
+from ..MD_models import PlayerGameData, GameConfigs
 
-def get_dau():
+# 建立此服務專用的日誌記錄器
+analytics_logger = logging.getLogger(__name__)
+
+def log_event(event_type: str, details: Optional[Dict[str, Any]] = None):
     """
-    計算每日活躍使用者 (DAU)。
-    活躍使用者的定義是今天有登入過的玩家。
+    向 Firestore 中的 EventLogs 集合寫入一條新的事件紀錄。
+    這是一個中央日誌函式，將被遊戲中各個服務呼叫。
+
+    Args:
+        event_type (str): 事件的類型，例如 'user_registered', 'monster_created'。
+        details (dict, optional): 包含與事件相關的額外資料。
     """
+    db = MD_firebase_config.db
+    if not db:
+        analytics_logger.error("Firestore 資料庫未初始化，無法紀錄事件。")
+        return
+
     try:
-        # 定義UTC時區
-        utc = pytz.UTC
-
-        # 獲取當前的UTC日期
-        today_utc = datetime.now(utc).date()
-        
-        # 定義今天的開始與結束時間 (UTC)
-        start_of_day = datetime.combine(today_utc, time.min, tzinfo=utc)
-        end_of_day = datetime.combine(today_utc, time.max, tzinfo=utc)
-
-        # 查詢Firestore中 last_login 在今天範圍內的使用者
-        users_ref = db.collection('users')
-        query = users_ref.where('last_login', '>=', start_of_day).where('last_login', '<=', end_of_day)
-        
-        # 獲取查詢結果的文件數量
-        active_users = query.get()
-        dau_count = len(active_users)
-
-        logger.info(f"成功計算DAU {today_utc.isoformat()}: {dau_count} 位使用者。")
-        
-        return {"date": today_utc.isoformat(), "dau": dau_count}
-
+        # 將事件紀錄儲存在一個專門的頂層集合中
+        event_log_ref = db.collection('EventLogs').document()
+        log_data = {
+            "type": event_type,
+            "timestamp": int(time.time()),
+            "details": details or {}
+        }
+        event_log_ref.set(log_data)
+        analytics_logger.info(f"成功紀錄事件: {event_type}")
     except Exception as e:
-        logger.error(f"計算DAU時發生錯誤: {e}", exc_info=True)
-        # 回傳錯誤訊息
-        return {"error": "無法計算DAU", "details": str(e)}, 500
+        analytics_logger.error(f"紀錄事件 '{event_type}' 時發生錯誤: {e}", exc_info=True)
 
 
-def get_mau():
-    # TODO: Implement MAU calculation
-    return {"month": "2024-07", "mau": 1200}
+def aggregate_daily_data():
+    """
+    彙整 EventLogs 中的原始數據，計算並儲存每日的營運統計資料。
+    注意：此函式的完整邏輯將在後續步驟中實現。
+    這將是每日排程任務 (Cron Job) 要呼叫的核心函式。
+    """
+    # 待辦事項：
+    # 1. 查詢過去24小時內的所有 EventLogs。
+    # 2. 根據事件類型進行分類和計數。
+    # 3. 處理需要掃描全體玩家的數據（如現存怪獸數量）。
+    # 4. 將彙整結果寫入 AnalyticsData 集合的今日文件中。
+    analytics_logger.info("每日數據彙整程序已觸發（目前為預留功能）。")
+    
+    db = MD_firebase_config.db
+    if not db:
+        analytics_logger.error("數據彙整失敗：Firestore 未初始化。")
+        return
 
-def get_new_users():
-    # TODO: Implement new user calculation
-    return {"date": "2024-07-29", "new_users": 25}
+    try:
+        # 作為佔位符，先寫入一個簡單的紀錄，表示此函式已被觸發
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        doc_ref = db.collection('AnalyticsData').document(f"daily_{today_str}")
+        doc_ref.set({"placeholder": True, "last_updated": int(time.time())}, merge=True)
+        analytics_logger.info(f"已為 {today_str} 建立或更新了佔位符統計文件。")
+    except Exception as e:
+        analytics_logger.error(f"寫入佔位符統計文件時發生錯誤: {e}", exc_info=True)
 
-def get_paying_users():
-    # TODO: Implement paying user calculation
-    return {"date": "2024-07-29", "paying_users": 10}
 
-def get_revenue():
-    # TODO: Implement revenue calculation
-    return {"date": "2024-07-29", "revenue": 150.75}
+def get_analytics_for_range(start_date: str, end_date: str) -> Dict[str, Any]:
+    """
+    從 AnalyticsData 集合中獲取指定時間範圍內的彙整數據。
 
-def get_retention_rate():
-    # TODO: Implement retention rate calculation
+    Args:
+        start_date (str): 開始日期 (格式 YYYY-MM-DD)
+        end_date (str): 結束日期 (格式 YYYY-MM-DD)
+
+    Returns:
+        一個包含加總後統計數據的字典。
+    """
+    db = MD_firebase_config.db
+    if not db:
+        analytics_logger.error("Firestore 資料庫未初始化，無法獲取分析數據。")
+        return {}
+    
+    # 待辦事項：
+    # 1. 根據日期範圍查詢 AnalyticsData 中的文件。
+    # 2. 將多天的數據進行加總。
+    # 3. 回傳一個彙整後的結果物件。
+    
+    analytics_logger.info(f"正在為日期範圍 {start_date} - {end_date} 獲取分析數據（目前為預留功能）。")
+    
+    # 返回一個預設的數據結構，以便前端可以先進行儀表板的開發
     return {
-        "start_date": "2024-07-01",
-        "end_date": "2024-07-07",
-        "retention_rate": 0.35
+        "date_range": f"{start_date} to {end_date}",
+        "summary": { "newUsers": 0, "activeUsers": { "dau": 0 }, "totalPlayers": 0 },
+        "monsterEcology": { "created": {}, "existing": {}, "nearDeathEvents": {}, "healEvents": {} },
+        "playerEngagement": { "totalBattles": 0, "totalCombinations": 0, "aiChatMessages": 0, "cultivationByLocation": {} },
+        "economy": { "goldFaucets": {}, "goldSinks": {}, "totalGoldInServer": 0 }
     }
-
-def get_player_growth():
-    # TODO: Implement player growth calculation
-    return {
-        "labels": ["Week 1", "Week 2", "Week 3", "Week 4"],
-        "data": [100, 150, 220, 300]
-    }
-
-def get_top_spending_players():
-    # TODO: Implement top spending players calculation
-    return [
-        {"player_id": "player123", "total_spent": 50.00},
-        {"player_id": "player456", "total_spent": 45.50}
-    ]
