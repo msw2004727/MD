@@ -62,10 +62,7 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
         adventure_logger.warning("在 adventure_growth_settings.json 中找不到 stat_weights 設定。")
         return None
     
-    # --- 核心修改處 START ---
-    # 從權重字典中移除 'crit'
     stat_weights_config.pop('crit', None)
-    # --- 核心修改處 END ---
     
     stats_to_grow = list(stat_weights_config.keys())
     weights = list(stat_weights_config.values())
@@ -328,7 +325,12 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
     """
     處理玩家對事件做出的選擇，並返回結果。
     """
-    adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: {choice_id}...")
+    # --- 核心修改處 START ---
+    # 增加日誌記錄，並對傳入的 choice_id 進行清理
+    cleaned_choice_id = choice_id.strip()
+    adventure_logger.info(f"玩家 {player_data.get('nickname')} 對事件做出了選擇: '{cleaned_choice_id}' (原始: '{choice_id}')")
+    # --- 核心修改處 END ---
+    
     progress = player_data.get("adventure_progress")
     if not progress or not progress.get("is_active"):
         return {"success": False, "error": "沒有正在進行的遠征。"}
@@ -344,23 +346,41 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
         del progress["last_event_growth"]
 
     chosen_outcome = None
+    
+    # --- 核心修改處 START ---
+    # 增加日誌，並在比對時也對事件中的 choice_id 進行清理
+    adventure_logger.info(f"正在當前事件 '{current_event.get('name')}' 中尋找選項...")
     for choice in current_event.get("choices", []):
-        if choice.get("choice_id") == choice_id:
+        event_choice_id = choice.get("choice_id", "").strip()
+        adventure_logger.info(f"  - 正在檢查選項ID: '{event_choice_id}' ...")
+        
+        if event_choice_id == cleaned_choice_id:
+            adventure_logger.info(f"  ✓ 成功匹配選項 '{event_choice_id}'!")
             outcomes = choice.get("outcomes", [])
-            if not outcomes: break
-            
+            if not outcomes:
+                adventure_logger.warning("  ! 匹配的選項沒有 'outcomes' 列表。")
+                break
+
             outcome_pool = [o for o in outcomes if o.get("weight", 0) > 0]
-            if not outcome_pool: break
-            
+            if not outcome_pool:
+                adventure_logger.warning("  ! 'outcomes' 列表中沒有任何權重>0的有效結果。")
+                break
+
             weights = [o["weight"] for o in outcome_pool]
             chosen_outcome = random.choices(outcome_pool, weights=weights, k=1)[0]
+            adventure_logger.info(f"  - 已根據權重選擇結果。")
             break
+    # --- 核心修改處 END ---
             
     team_members = progress.get("expedition_team", [])
     monster_for_story = random.choice(team_members) if team_members else {"nickname": "隊伍"}
     monster_name_for_story = monster_for_story.get("nickname", "隊伍")
             
     if not chosen_outcome:
+        # --- 核心修改處 START ---
+        # 增加更詳細的日誌，以便追蹤為何沒有選擇任何結果
+        adventure_logger.warning(f"事件處理完畢，但 'chosen_outcome' 仍為 None。將返回預設訊息。事件: {current_event.get('name')}, 玩家選擇: {cleaned_choice_id}")
+        # --- 核心修改處 END ---
         outcome_story = "你們的選擇似乎沒有引起任何變化。"
     else:
         raw_story_fragment = chosen_outcome.get("story_fragment", "什麼事都沒發生。")
