@@ -1,0 +1,72 @@
+/* admin/analytics.css - 營運儀表板專用樣式 */
+
+/* 儀表板控制區塊樣式 */
+#analytics-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+#analytics-controls .form-group {
+    margin-bottom: 0;
+}
+
+/* 核心指標 (KPI) 卡片網格 */
+#analytics-kpi-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+#analytics-kpi-cards .kpi-card {
+    background-color: var(--admin-panel-bg);
+    border: 1px solid var(--admin-border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.kpi-card .kpi-title {
+    font-size: 1rem;
+    color: var(--text-color-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.kpi-card .kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* 數據表格樣式 */
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.analytics-table th,
+.analytics-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--admin-border-color);
+}
+
+.analytics-table th {
+    background-color: var(--admin-panel-bg);
+    font-weight: 600;
+}
+
+.analytics-table tbody tr:hover {
+    background-color: var(--admin-panel-bg-hover);
+}
+
+/* 圖表容器 */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-top: 1rem;
+}
