@@ -32,6 +32,11 @@ def load_all_game_configs_from_firestore() -> Dict[str, Any]:
         "CultivationStories": ("cultivation_stories", "story_library"),
         "ChampionGuardians": ("champion_guardians", "guardians"),
         "AdventureIslands": ("adventure_islands", "islands"),
+        # --- 核心修改處 START ---
+        # 新增冒險事件與BOSS的讀取規則
+        "AdventureEvents": ("adventure_events", None),
+        "AdventureBosses": ("adventure_bosses", None),
+        # --- 核心修改處 END ---
         # 對於那些整個文件就是設定的，欄位名設為 None
         "Rarities": ("rarities", "dna_rarities"),
         "NamingConstraints": ("naming_constraints", None),
