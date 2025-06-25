@@ -9,9 +9,14 @@
     "attack": 520, "defense": 450, "speed": 400, "crit": 25,
     "personality": { "name": "暴躁的" }, "score": 2550,
     "skills": [
-      { "name": "煉獄之火", "level": 10 },
-      { "name": "大字爆", "level": 10 },
-      { "name": "龍之舞", "level": 8 }
+      {
+        "name": "火焰拳",
+        "level": 10
+      },
+      {
+        "name": "爆炎衝",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -28,9 +33,14 @@
     "attack": 480, "defense": 500, "speed": 380, "crit": 22,
     "personality": { "name": "傲慢的" }, "score": 2600,
     "skills": [
-      { "name": "絕對零度", "level": 9 },
-      { "name": "鹽水", "level": 10 },
-      { "name": "生命水滴", "level": 10 }
+      {
+        "name": "水流衝擊",
+        "level": 8
+      },
+      {
+        "name": "激流突刺",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -47,9 +57,18 @@
     "attack": 460, "defense": 550, "speed": 360, "crit": 20,
     "personality": { "name": "溫和的" }, "score": 2580,
     "skills": [
-      { "name": "木槌", "level": 10 },
-      { "name": "青草場地", "level": 9 },
-      { "name": "扎根", "level": 10 }
+      {
+        "name": "藤鞭抽擊",
+        "level": 10
+      },
+      {
+        "name": "葉刃亂舞",
+        "level": 9
+      },
+      {
+        "name": "森羅巨根",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -66,9 +85,14 @@
     "attack": 550, "defense": 600, "speed": 320, "crit": 24,
     "personality": { "name": "冷静的" }, "score": 2700,
     "skills": [
-      { "name": "鐵壁", "level": 10 },
-      { "name": "重磅衝撞", "level": 9 },
-      { "name": "破滅之願", "level": 8 }
+      {
+        "name": "鐵拳重擊",
+        "level": 10
+      },
+      {
+        "name": "金剛碎擊",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -85,9 +109,18 @@
     "attack": 500, "defense": 580, "speed": 300, "crit": 20,
     "personality": { "name": "頑固的" }, "score": 2650,
     "skills": [
-      { "name": "地裂", "level": 8 },
-      { "name": "地震", "level": 9 },
-      { "name": "集沙", "level": 10 }
+      {
+        "name": "土石猛擊",
+        "level": 10
+      },
+      {
+        "name": "地裂衝鋒",
+        "level": 9
+      },
+      {
+        "name": "巨石粉碎",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -104,9 +137,14 @@
     "attack": 510, "defense": 460, "speed": 480, "crit": 26,
     "personality": { "name": "傲慢的" }, "score": 2550,
     "skills": [
-      { "name": "神聖之劍", "level": 10 },
-      { "name": "破壞光線", "level": 8 },
-      { "name": "高速移動", "level": 9 }
+      {
+        "name": "光芒突刺",
+        "level": 10
+      },
+      {
+        "name": "聖輝斬擊",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -123,9 +161,18 @@
     "attack": 530, "defense": 440, "speed": 460, "crit": 28,
     "personality": { "name": "狡猾的" }, "score": 2620,
     "skills": [
-      { "name": "地獄突刺", "level": 9 },
-      { "name": "詭計", "level": 9 },
-      { "name": "欺詐", "level": 10 }
+      {
+        "name": "暗影突襲",
+        "level": 10
+      },
+      {
+        "name": "噬魂連擊",
+        "level": 9
+      },
+      {
+        "name": "幽冥絕擊",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -142,9 +189,14 @@
     "attack": 500, "defense": 470, "speed": 410, "crit": 23,
     "personality": { "name": "憤怒的" }, "score": 2520,
     "skills": [
-      { "name": "垃圾射擊", "level": 9 },
-      { "name": "劇毒鎖鏈", "level": 9 },
-      { "name": "盤蜷", "level": 10 }
+      {
+        "name": "毒牙咬擊",
+        "level": 10
+      },
+      {
+        "name": "蛇王毒擊",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -161,9 +213,14 @@
     "attack": 470, "defense": 450, "speed": 530, "crit": 25,
     "personality": { "name": "急躁的" }, "score": 2600,
     "skills": [
-      { "name": "暴風", "level": 10 },
-      { "name": "破空斬", "level": 9 },
-      { "name": "順風", "level": 10 }
+      {
+        "name": "疾風猛擊",
+        "level": 10
+      },
+      {
+        "name": "颶風強襲",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -180,9 +237,14 @@
     "attack": 510, "defense": 510, "speed": 350, "crit": 22,
     "personality": { "name": "可靠的" }, "score": 2550,
     "skills": [
-      { "name": "捨身衝撞", "level": 9 },
-      { "name": "巨聲", "level": 9 },
-      { "name": "集氣", "level": 10 }
+      {
+        "name": "均衡直拳",
+        "level": 10
+      },
+      {
+        "name": "穩重連擊",
+        "level": 9
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
@@ -199,9 +261,14 @@
     "attack": 490, "defense": 470, "speed": 450, "crit": 24,
     "personality": { "name": "善變的" }, "score": 2600,
     "skills": [
-      { "name": "騙術空間", "level": 9 },
-      { "name": "力量平分", "level": 8 },
-      { "name": "揮指", "level": 10 }
+      {
+        "name": "混元衝擊",
+        "level": 10
+      },
+      {
+        "name": "幻象連斬",
+        "level": 8
+      }
     ],
     "loot_table": {
       "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
