@@ -4,10 +4,8 @@
 import logging
 from flask import Blueprint, jsonify, request
 
-# --- 核心修改處 START ---
 # 從專案的其他模組導入
-from .services.champion_services import get_full_champion_details_service
-# --- 核心修改處 END ---
+from .champion_services import get_full_champion_details_service
 # 為了驗證玩家身分，我們需要從現有的路由檔案中導入驗證函式
 from .MD_routes import _get_authenticated_user_id 
 

@@ -1,15 +1,13 @@
-# backend/services/friend_services.py
+# backend/friend_services.py
 # 新增的服務檔案：專門處理好友系統的核心邏輯，如發送請求、回應請求等。
 
 import logging
 from typing import Optional, Dict, Any
 
 # 從專案的其他模組導入
-# --- 核心修改處 START ---
 from .mail_services import send_mail_to_player_service, delete_mail_from_player
+from .MD_models import PlayerGameData
 from .player_services import get_player_data_service, save_player_data_service
-# --- 核心修改處 END ---
-from ..MD_models import PlayerGameData
 
 
 # 設定日誌記錄器
@@ -47,7 +45,7 @@ def send_friend_request_service(
     }
 
     # 呼叫現有的信箱服務來發送信件
-    success, _ = send_mail_to_player_service(
+    success = send_mail_to_player_service(
         sender_id=sender_id,
         sender_nickname=sender_nickname,
         recipient_id=recipient_id,
@@ -146,6 +144,7 @@ def respond_to_friend_request_service(
     return True
 
 
+# --- 核心修改處 START ---
 def remove_friend_service(remover_id: str, friend_to_remove_id: str) -> bool:
     """
     雙向移除好友。
@@ -195,3 +194,4 @@ def remove_friend_service(remover_id: str, friend_to_remove_id: str) -> bool:
     except Exception as e:
         friend_services_logger.error(f"在儲存雙向移除好友的資料時發生錯誤: {e}", exc_info=True)
         return False
+# --- 核心修改處 END ---
