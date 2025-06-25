@@ -1,30 +1,29 @@
 // js/ui-medical.js
 // 這個新檔案專門處理「醫療站」頁籤的UI渲染與相關更新。
 
-let medicalStationElements = {};
-
-/**
- * 初始化醫療站頁籤所需的 DOM 元素。
- */
-function initializeMedicalStationDOMElements() {
-    medicalStationElements = {
-        headersContainer: document.getElementById('medical-station-headers'),
-        listContainer: document.getElementById('medical-station-list'),
-        wrapper: document.getElementById('medical-station-table-wrapper')
-    };
-}
+// --- 核心修改處 START ---
+// 不再需要此檔案獨立的 DOMElements 物件和初始化函式
+// let medicalStationElements = {};
+//
+// function initializeMedicalStationDOMElements() {
+//    ...
+// }
+// --- 核心修改處 END ---
 
 /**
  * 渲染醫療站的怪獸列表。
  */
 function renderMedicalStation() {
     // --- 核心修改處 START ---
-    // 確保 DOM 元素在每次渲染時都重新獲取，而不是依賴初始化時的狀態
-    initializeMedicalStationDOMElements();
+    // 不再需要手動呼叫初始化，因為 DOMElements 已在 ui.js 中全局初始化
+    // initializeMedicalStationDOMElements();
     // --- 核心修改處 END ---
     
-    const headersContainer = medicalStationElements.headersContainer;
-    const listContainer = medicalStationElements.listContainer;
+    // --- 核心修改處 START ---
+    // 改用全局的 DOMElements 物件
+    const headersContainer = DOMElements.medicalStationHeaders;
+    const listContainer = DOMElements.medicalStationList;
+    // --- 核心修改處 END ---
 
     if (!listContainer || !headersContainer) {
         console.error("renderMedicalStation Error: Medical station containers not found.");
