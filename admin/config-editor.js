@@ -6,6 +6,9 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
     const configsDisplayArea = document.getElementById('game-configs-display');
     const saveConfigBtn = document.getElementById('save-config-btn');
     const configResponseEl = document.getElementById('config-response');
+    // --- 核心修改處 START ---
+    const configSearchInput = document.getElementById('config-search-input');
+    // --- 核心修改處 END ---
 
     // 安全檢查，確保 URL 和 Token 都已傳入
     if (!adminApiUrl || !adminToken) {
@@ -16,7 +19,7 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
         return;
     }
 
-    if (!configFileSelector || !configsDisplayArea || !saveConfigBtn || !configResponseEl) {
+    if (!configFileSelector || !configsDisplayArea || !saveConfigBtn || !configResponseEl || !configSearchInput) {
         console.warn("Config editor DOM elements are not all present. Aborting initialization.");
         return;
     }
@@ -110,10 +113,30 @@ function initializeConfigEditor(adminApiUrl, adminToken) {
             saveConfigBtn.textContent = '儲存設定變更';
         }
     }
+    
+    // --- 核心修改處 START ---
+    function filterConfigFiles() {
+        const searchTerm = configSearchInput.value.toLowerCase();
+        const options = configFileSelector.options;
+        
+        for (let i = 1; i < options.length; i++) { // 從 1 開始，跳過 "請選擇"
+            const option = options[i];
+            const fileName = option.text.toLowerCase();
+            if (fileName.includes(searchTerm)) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        }
+    }
+    // --- 核心修改處 END ---
 
     // 事件綁定
     configFileSelector.addEventListener('change', loadSelectedConfig);
     saveConfigBtn.addEventListener('click', handleSaveConfig);
+    // --- 核心修改處 START ---
+    configSearchInput.addEventListener('input', filterConfigFiles);
+    // --- 核心修改處 END ---
 
     // 初始載入
     loadAndPopulateConfigsDropdown();
