@@ -104,6 +104,12 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Game
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
     
     player_services_logger.info(f"新玩家 {nickname} 資料初始化完畢，獲得 {num_initial_dna} 個初始 DNA。")
+
+    # --- 核心修改處 START ---
+    # 在此處呼叫事件紀錄函式
+    log_event('user_registered', {'uid': player_id})
+    # --- 核心修改處 END ---
+
     return new_player_data
 
 def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], game_configs: GameConfigs) -> Tuple[Optional[PlayerGameData], bool]:
@@ -307,8 +313,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
         
         if save_player_data_service(player_id, new_player_data):
             # --- 核心修改處 START ---
-            # 當新玩家資料成功儲存後，紀錄事件
-            log_event('user_registered', {'uid': player_id})
+            # 當新玩家資料成功儲存後，紀錄事件 (此段邏輯已在 initialize_new_player_data 中處理，此處確保一致性)
+            # log_event('user_registered', {'uid': player_id}) # 其實在上面函式內已經呼叫了，這裡可以省略
             # --- 核心修改處 END ---
             return new_player_data, True
         else:
