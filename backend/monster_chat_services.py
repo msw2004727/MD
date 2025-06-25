@@ -16,11 +16,15 @@ from .player_services import get_player_data_service
 # 從共用函式庫導入感情值計算工具
 from .utils_services import update_bond_with_diminishing_returns
 
-# 從 MD_ai_services 導入必要的變數與函式
+# --- 核心修改處 START ---
+# 從 MD_ai_services 的導入列表中，移除會導致錯誤的 DEFAULT_CHAT_REPLY
 from .MD_ai_services import (
     DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, 
-    DEFAULT_CHAT_REPLY, _get_world_knowledge_context, ai_logger
+    _get_world_knowledge_context, ai_logger
 )
+# 直接在此處定義預設回覆，切斷有問題的依賴
+DEFAULT_CHAT_REPLY = "（...）"
+# --- 核心修改處 END ---
 
 # 設定日誌記錄器
 chat_logger = logging.getLogger(__name__)
@@ -187,11 +191,6 @@ def generate_monster_interaction_response_service(
 """
 
     try:
-        # --- 核心修改處 START ---
-        # 移除此處多餘的 import 語句，因為檔案頂部已經導入
-        # from .MD_ai_services import DEEPSEEK_API_KEY, DEEPSEEK_MODEL, DEEPSEEK_API_URL, DEFAULT_CHAT_REPLY
-        # --- 核心修改處 END ---
-        
         if not DEEPSEEK_API_KEY:
             chat_logger.error("DeepSeek API 金鑰未設定。")
             return None
