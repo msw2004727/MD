@@ -18,7 +18,6 @@ from .MD_models import (
     ValueSettings, RarityNames, MonsterRecipe
 )
 from .MD_ai_services import generate_monster_ai_details
-# 【修改】從 player_services 導入我們之前建立的日誌新增函式
 from .player_services import _add_player_log
 from .utils_services import generate_monster_full_nickname, calculate_exp_to_next_level, get_effective_skill_with_level
 
@@ -117,6 +116,9 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         "gift_count": 0, "bond_level": 1, "bond_points": 0
     }
 
+    # 檢查是否為首次合成
+    is_first_monster = not player_data.get("farmedMonsters")
+    
     if recipe_doc.exists:
         monster_combination_services_logger.info(f"配方 '{combination_key}' 已存在，直接讀取。")
         recipe_data: Dict[str, Any] = recipe_doc.to_dict()
@@ -142,6 +144,12 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         new_monster_instance["resume"] = {"wins": 0, "losses": 0}
         
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
+        
+        # === 新增：自動出戰邏輯 ===
+        if is_first_monster:
+            player_data["selectedMonsterId"] = new_monster_instance["id"]
+            _add_player_log(player_data, "系統", f"您的第一隻怪獸 「{new_monster_instance.get('nickname', '未知怪獸')}」 已自動設定為出戰狀態。")
+            monster_combination_services_logger.info(f"玩家 {player_id} 的第一隻怪獸 {new_monster_instance['id']} 已自動設為出戰。")
         
         return {"monster": new_monster_instance}
 
@@ -237,10 +245,7 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
             "speed": int(base_stats.get("speed", 10) * stat_multiplier),
             "crit": int(base_stats.get("crit", 5) * stat_multiplier),
             "skills": generated_skills, "rarity": monster_rarity_name,
-            # --- 核心修改處 START ---
-            # 將錯誤的變數 monster_achievement 改為正確的 monster_achievement_part
             "title": monster_achievement_part,
-            # --- 核心修改處 END ---
             "custom_element_nickname": None, "description": f"由 {', '.join(dna.get('name', '未知DNA') for dna in combined_dnas_data)} 的力量組合而成。",
             "personality": random.choice(game_configs.get("personalities", [{}])),
             "creationTime": int(time.time()), "monsterTitles": [monster_achievement_part], "monsterMedals": 0,
@@ -284,4 +289,10 @@ def combine_dna_service(dna_objects_from_request: List[Dict[str, Any]], game_con
         
         _add_player_log(player_data, "合成", f"成功合成了新怪獸：「{new_monster_instance.get('nickname', '未知怪獸')}」")
 
+        # === 新增：自動出戰邏輯 ===
+        if is_first_monster:
+            player_data["selectedMonsterId"] = new_monster_instance["id"]
+            _add_player_log(player_data, "系統", f"您的第一隻怪獸 「{new_monster_instance.get('nickname', '未知怪獸')}」 已自動設定為出戰狀態。")
+            monster_combination_services_logger.info(f"玩家 {player_id} 的第一隻怪獸 {new_monster_instance['id']} 已自動設為出戰。")
+            
         return {"monster": new_monster_instance}
