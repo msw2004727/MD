@@ -186,7 +186,10 @@ def complete_cultivation_service(
     monster_to_update["farmStatus"]["trainingDuration"] = None
     monster_to_update["farmStatus"]["trainingLocation"] = None
 
-    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
+    # --- 核心修改處 START ---
+    # 將 "cultivation_config" 改為 "cultivation_settings"
+    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_settings", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
+    # --- 核心修改處 END ---
     
     skill_updates_log: List[str] = []
     items_obtained: List[DNAFragment] = []
@@ -234,16 +237,13 @@ def complete_cultivation_service(
                 learned_new_skill_template = random.choice(rare_learnable_skills)
                 skill_updates_log.append(f"🌟 怪獸領悟了新技能：'{learned_new_skill_template.get('name')}' (等級1)！")
 
-        stat_divisor = cultivation_cfg.get("stat_growth_duration_divisor", 900)
+        stat_divisor = cultivation_rules.get("stat_growth_duration_divisor", 900)
         base_growth_chances = max(1, math.floor(duration_seconds / stat_divisor))
         growth_chances = math.floor(base_growth_chances * diminishing_multiplier)
         
-        # === 核心修正處 START ===
-        # 將 location_configs, current_location_bias, 和 element_bias_list 的定義移到更高的作用域
-        location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
+        location_configs = cultivation_cfg.get("location_biases", {})
         current_location_bias = location_configs.get(training_location, {})
         element_bias_list = current_location_bias.get("element_bias", [])
-        # === 核心修正處 END ===
 
         if growth_chances > 0:
             default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
