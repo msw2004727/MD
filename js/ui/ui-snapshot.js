@@ -1,6 +1,78 @@
-// js/ui-ui-snapshot.js
-// (此檔案其他部分保持不變，只修改 handleChallengeMonsterClick 函式)
-// ... (檔案開頭的其他程式碼保持不變) ...
+// js/ui/ui-snapshot.js
+// 這個檔案專門處理主畫面上方「怪獸快照」面板的渲染與更新。
+
+function updateMailNotificationDot() {
+    const dot = document.getElementById('mail-notification-dot');
+    if (!dot) return;
+
+    const hasUnread = gameState.playerData?.mailbox?.some(mail => !mail.is_read);
+    dot.style.display = hasUnread ? 'block' : 'none';
+}
+
+
+function getMonsterImagePathForSnapshot(primaryElement, rarity) {
+    const colors = {
+        '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
+        '金': 'FFD700/000000', '土': 'D2B48C/000000', '光': 'F8F8FF/000000',
+        '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
+        '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
+    };
+    const colorPair = colors[primaryElement] || colors['無'];
+    return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
+}
+
+function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
+    if (typeof monsterPartAssets === 'undefined') {
+        return null;
+    }
+
+    const partData = monsterPartAssets[partName];
+    if (!partData) {
+        return monsterPartAssets.globalDefault; 
+    }
+
+    if (partData[dnaType] && partData[dnaType][dnaRarity]) {
+        return partData[dnaType][dnaRarity];
+    }
+    if (partData[dnaType] && partData[dnaType].default) {
+        return partData[dnaType].default;
+    }
+    if (partData.default) {
+        return partData.default;
+    }
+
+    return monsterPartAssets.globalDefault; 
+}
+
+
+function clearMonsterBodyPartsDisplay() {
+    const partsMap = {
+        Head: DOMElements.monsterPartHead,
+        LeftArm: DOMElements.monsterPartLeftArm,
+        RightArm: DOMElements.monsterPartRightArm,
+        LeftLeg: DOMElements.monsterPartLeftLeg,
+        RightLeg: DOMElements.monsterPartRightLeg,
+    };
+    for (const partName in partsMap) {
+        const partElement = partsMap[partName];
+        if (partElement) {
+            partElement.classList.add('empty-part');
+            
+            const imgElement = partElement.querySelector('.monster-part-image');
+            if (imgElement) {
+                imgElement.style.display = 'none';
+                imgElement.src = '';
+                imgElement.classList.remove('active');
+            }
+
+            const overlayElement = partElement.querySelector('.monster-part-overlay');
+            if(overlayElement) {
+                overlayElement.style.display = 'none';
+            }
+        }
+    }
+    if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
+}
 
 function updateMonsterSnapshot(monster) {
     if (!DOMElements.monsterSnapshotArea || !DOMElements.snapshotNickname || !DOMElements.snapshotWinLoss ||
@@ -81,17 +153,14 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(guideBtn);
 
-    // === 核心修改處 START ===
     // 綜合選單按鈕
     const selectionBtn = document.createElement('button');
     selectionBtn.id = 'snapshot-selection-modal-btn';
     selectionBtn.title = '綜合選單';
     selectionBtn.innerHTML = '🪜';
-    // 在 className 中加入新的動畫類別
-    selectionBtn.className = 'corner-button snapshot-button-pulse'; 
+    selectionBtn.className = 'corner-button pulse-effect'; // 使用新的 class 名稱
     selectionBtn.style.cssText = 'position: absolute; bottom: 116px; left: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5;';
     DOMElements.monsterSnapshotArea.appendChild(selectionBtn);
-    // === 核心修改處 END ===
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
@@ -157,12 +226,12 @@ function updateMonsterSnapshot(monster) {
                     
                     textElement.textContent = dnaData.name || '';
                     textElement.className = 'dna-name-text';
-                    textElement.style.color = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
+                    textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
 
                     let hasExactImage = false;
                     let imgPath = '';
 
-                    if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.type][dnaData.rarity]) {
+                    if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.rarity]) {
                         hasExactImage = true;
                         imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
                     }
