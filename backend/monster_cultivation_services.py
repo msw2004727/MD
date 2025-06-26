@@ -17,7 +17,7 @@ from .MD_models import (
 # 從 MD_firebase_config 導入 db 實例
 from . import MD_firebase_config
 # 從 player_services 導入 get_player_data_service
-from .player_services import get_player_data_service, save_player_data_service # 確保這裡也導入 save_player_data_service
+from .player_services import get_player_data_service, save_player_data_service
 # 新增：導入新的共用函式
 from .utils_services import calculate_exp_to_next_level, get_effective_skill_with_level
 
@@ -26,9 +26,9 @@ monster_cultivation_services_logger = logging.getLogger(__name__)
 # --- 預設遊戲設定 (省略，與上次相同) ---
 DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "dna_fragments": [], 
-    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}}, # type: ignore
-    "skills": {"無": [{"name":"撞擊", "power":10, "crit":5, "probability":100, "type":"無", "baseLevel":1, "mp_cost":0, "skill_category":"物理"}]}, # type: ignore
-    "personalities": [{"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰":1.0}}], # type: ignore
+    "rarities": {"COMMON": {"name": "普通", "textVarKey":"c", "statMultiplier":1.0, "skillLevelBonus":0, "resistanceBonus":1, "value_factor":10}},
+    "skills": {"無": [{"name":"撞擊", "power":10, "crit":5, "probability":100, "type":"無", "baseLevel":1, "mp_cost":0, "skill_category":"物理"}]},
+    "personalities": [{"name": "標準", "description": "一個標準的怪獸個性。", "colorDark": "#888888", "colorLight":"#AAAAAA", "skill_preferences": {"近戰":1.0}}],
     "titles": [],
     "monster_achievements_list": [],
     "element_nicknames": {},
@@ -48,8 +48,8 @@ DEFAULT_GAME_CONFIGS_FOR_CULTIVATION: GameConfigs = {
     "absorption_config": {},
     "cultivation_config": {
         "skill_exp_base_multiplier": 100, "new_skill_chance": 0.1,
-        "skill_exp_gain_range": (10,30), "max_skill_level": 10,
-        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1}, # type: ignore
+        "skill_exp_gain_range": (15,75), "max_skill_level": 10,
+        "new_skill_rarity_bias": {"普通": 0.6, "稀有": 0.3, "菁英": 0.1},
         "stat_growth_weights": {"hp": 30, "mp": 25, "attack": 20, "defense": 20, "speed": 15, "crit": 10},
         "stat_growth_duration_divisor": 900,
         "dna_find_chance": 0.5,
@@ -186,7 +186,7 @@ def complete_cultivation_service(
     monster_to_update["farmStatus"]["trainingDuration"] = None
     monster_to_update["farmStatus"]["trainingLocation"] = None
 
-    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"]) # type: ignore
+    cultivation_cfg: CultivationConfig = game_configs.get("cultivation_config", DEFAULT_GAME_CONFIGS_FOR_CULTIVATION["cultivation_config"])
     
     skill_updates_log: List[str] = []
     items_obtained: List[DNAFragment] = []
@@ -252,10 +252,7 @@ def complete_cultivation_service(
                 for stat_key in final_growth_weights:
                     final_growth_weights[stat_key] = int(final_growth_weights[stat_key] * elemental_bias_multiplier)
             
-            # --- 核心修改處 START ---
-            # 從權重字典中移除 'crit'
             final_growth_weights.pop('crit', None)
-            # --- 核心修改處 END ---
 
             if final_growth_weights and sum(final_growth_weights.values()) > 0:
                 stats_pool = list(final_growth_weights.keys())
@@ -279,6 +276,15 @@ def complete_cultivation_service(
             num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
             monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
             loot_table = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
+
+            # === 核心修正處 START ===
+            # 在物品掉落區塊，重新定義一次 training_location 和 element_bias_list
+            # 確保即使前面的邏輯區塊沒有執行，這裡也能正確獲取到修煉地點的元素偏好
+            location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
+            current_location_bias = location_configs.get(training_location, {})
+            element_bias_list = current_location_bias.get("element_bias", [])
+            # === 核心修正處 END ===
+
             all_dna_templates = game_configs.get("dna_fragments", [])
             monster_elements = monster_to_update.get("elements", ["無"])
             dna_pool = []
