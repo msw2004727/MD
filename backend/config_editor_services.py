@@ -41,12 +41,14 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
+    # === 修改：將冒險島設定移至此處 ===
     "adventure/adventure_settings.json": ("AdventureSettings", None),
     "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None)
 }
 
 # 本地設定檔的路徑也更新
 LOCAL_CONFIG_FILES = (
+    # === 移除 adventure_growth_settings.json ===
     os.path.join("adventure", "adventure_islands.json"),
     "game_mechanics.json"
 )
@@ -174,9 +176,6 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         return False, "資料庫服務未初始化。"
     
     try:
-        # === 核心修改處 ===
-        # 將 .set(global_settings) 修改為 .set(global_settings, merge=True)
-        # 這會告訴 Firestore 只更新 global_settings 中存在的欄位，而保留文件中其他的欄位不變。
         db.collection('MD_GameConfigs').document('AdventureSettings').set(global_settings, merge=True)
         config_editor_logger.info(f"已成功合併更新全域冒險設定至 Firestore 的 'AdventureSettings' 文件。")
 
@@ -190,6 +189,9 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
                 for facility in island.get('facilities', []):
                     if facility.get('facilityId') == facility_update.get('id'):
                         facility['cost'] = facility_update.get('cost', facility['cost'])
+                        # === 新增：同時更新通關獎勵 ===
+                        facility['floor_clear_base_gold'] = facility_update.get('floor_clear_base_gold', facility.get('floor_clear_base_gold', 50))
+                        facility['floor_clear_bonus_gold_per_floor'] = facility_update.get('floor_clear_bonus_gold_per_floor', facility.get('floor_clear_bonus_gold_per_floor', 10))
                         break
         
         with open(islands_path, 'w', encoding='utf-8') as f:
@@ -216,6 +218,7 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
         if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
+        # === 修改：寫入 Firestore 而不是本地檔案 ===
         doc_ref = db.collection('MD_GameConfigs').document('AdventureGrowthSettings')
         doc_ref.set(growth_settings)
         
