@@ -238,13 +238,17 @@ def complete_cultivation_service(
         base_growth_chances = max(1, math.floor(duration_seconds / stat_divisor))
         growth_chances = math.floor(base_growth_chances * diminishing_multiplier)
         
+        # === 核心修正處 START ===
+        # 將 location_configs, current_location_bias, 和 element_bias_list 的定義移到更高的作用域
+        location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
+        current_location_bias = location_configs.get(training_location, {})
+        element_bias_list = current_location_bias.get("element_bias", [])
+        # === 核心修正處 END ===
+
         if growth_chances > 0:
-            location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
-            current_location_bias = location_configs.get(training_location, {})
             default_stat_growth_weights = cultivation_cfg.get("stat_growth_weights", {})
             growth_weights_map = current_location_bias.get("stat_growth_weights", default_stat_growth_weights)
             monster_primary_element = monster_to_update.get("elements", ["無"])[0]
-            element_bias_list = current_location_bias.get("element_bias", [])
             final_growth_weights = {**growth_weights_map}
             
             elemental_bias_multiplier = cultivation_rules.get("elemental_bias_multiplier", 1.2)
@@ -276,15 +280,7 @@ def complete_cultivation_service(
             num_items = 1 + math.floor(duration_seconds / dna_find_divisor)
             monster_rarity: RarityNames = monster_to_update.get("rarity", "普通")
             loot_table = cultivation_cfg.get("dna_find_loot_table", {}).get(monster_rarity, {"普通": 1.0})
-
-            # === 核心修正處 START ===
-            # 在物品掉落區塊，重新定義一次 training_location 和 element_bias_list
-            # 確保即使前面的邏輯區塊沒有執行，這裡也能正確獲取到修煉地點的元素偏好
-            location_configs = game_configs.get("cultivation_config", {}).get("location_biases", {})
-            current_location_bias = location_configs.get(training_location, {})
-            element_bias_list = current_location_bias.get("element_bias", [])
-            # === 核心修正處 END ===
-
+            
             all_dna_templates = game_configs.get("dna_fragments", [])
             monster_elements = monster_to_update.get("elements", ["無"])
             dna_pool = []
