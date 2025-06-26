@@ -752,19 +752,25 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                 try {
                     showFeedbackModal('戰鬥中...', '正在激烈交鋒...', true);
                     
-                    const { battle_result: battleResult } = await simulateBattle({
+                    const response = await simulateBattle({
                         player_monster_data: playerMonster,
                         opponent_monster_data: opponentMonster,
                         opponent_owner_id: ownerId,
                         opponent_owner_nickname: ownerNickname
                     });
 
+                    const battleResult = response.battle_result;
+                    
+                    hideModal('feedback-modal');
+                    // === 核心修改處 ===
+                    showBattleLogModal(battleResult, playerMonster, opponentMonster);
+                    
                     await refreshPlayerData(); 
                     updateMonsterSnapshot(getSelectedMonster()); 
-
-                    showBattleLogModal(battleResult);
-
-                    hideModal('feedback-modal');
+                    
+                    if (battleResult.newly_awarded_titles && battleResult.newly_awarded_titles.length > 0) {
+                        checkAndShowNewTitleModal(battleResult); 
+                    }
 
                 } catch (battleError) {
                     showFeedbackModal('戰鬥失敗', `模擬戰鬥時發生錯誤: ${battleError.message}`);
