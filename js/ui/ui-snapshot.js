@@ -158,7 +158,7 @@ function updateMonsterSnapshot(monster) {
     selectionBtn.id = 'snapshot-selection-modal-btn';
     selectionBtn.title = '綜合選單';
     selectionBtn.innerHTML = '🪜';
-    selectionBtn.className = 'corner-button pulse-effect'; // 使用新的 class 名稱
+    selectionBtn.className = 'corner-button pulse-effect';
     selectionBtn.style.cssText = 'position: absolute; bottom: 116px; left: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5;';
     DOMElements.monsterSnapshotArea.appendChild(selectionBtn);
 
@@ -228,22 +228,17 @@ function updateMonsterSnapshot(monster) {
                     textElement.className = 'dna-name-text';
                     textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
 
-                    let hasExactImage = false;
-                    let imgPath = '';
-
-                    if (monsterPartAssets && monsterPartAssets[partKey] && monsterPartAssets[partKey][dnaData.type] && monsterPartAssets[partKey][dnaData.rarity]) {
-                        hasExactImage = true;
-                        imgPath = monsterPartAssets[partKey][dnaData.type][dnaData.rarity];
-                    }
-
-                    if (hasExactImage) {
-                        imgElement.src = imgPath;
-                    } else {
-                        imgElement.src = 'images/parts/transparent.png';
-                    }
+                    // === 核心修改處 START ===
+                    // 取得圖片路徑
+                    const imgPath = getMonsterPartImagePath(partKey, dnaData.type, dnaData.rarity);
                     
-                    imgElement.style.display = 'block';
-                    imgElement.classList.add('active');
+                    // 只有在真的有圖片路徑時，才顯示圖片
+                    if (imgPath && imgPath !== monsterPartAssets.globalDefault) {
+                        imgElement.src = imgPath;
+                        imgElement.style.display = 'block';
+                        imgElement.classList.add('active');
+                    }
+                    // === 核心修改處 END ===
                 }
             }
         });
