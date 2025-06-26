@@ -566,9 +566,10 @@ body.light-theme .leaderboard-table tr:hover td {
     }
 }
 
+/* Cultivation Location Selection */
 .cultivation-locations-container {
     display: grid;
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -594,7 +595,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .cultivation-location-card img {
     width: 100%;
-    max-width: 200px; 
+    max-width: 200px;
     height: auto;
     border-radius: 6px;
     margin-bottom: 0.75rem;
@@ -613,7 +614,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.85rem;
     color: var(--text-secondary);
     line-height: 1.5;
-    flex-grow: 1; 
+    flex-grow: 1;
 }
 
 @media (min-width: 768px) {
@@ -621,28 +622,28 @@ body.light-theme .leaderboard-table tr:hover td {
         grid-template-columns: repeat(3, 1fr);
     }
 }
-
+/* DNA Draw Results Modal Styles */
 #dna-draw-results-grid {
     display: flex;
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
     gap: 1rem;
-    justify-content: center; 
+    justify-content: center;
     padding-top: 1rem;
 }
 
 .dna-draw-result-item {
     display: flex;
-    flex-direction: column; 
-    align-items: center;  
+    flex-direction: column;
+    align-items: center;
     text-align: center;
     padding: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--bg-primary);
-    min-width: 130px;    
-    flex-basis: 130px;   
-    flex-grow: 1;        
-    max-width: 160px;    
+    min-width: 130px;
+    flex-basis: 130px;
+    flex-grow: 1;
+    max-width: 160px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
@@ -655,13 +656,13 @@ body.light-theme .leaderboard-table tr:hover td {
 .dna-draw-result-item .dna-type {
     font-size: 0.8rem;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem; 
+    margin-bottom: 0.5rem;
 }
 
 .dna-draw-result-item .dna-rarity {
     font-size: 0.9rem;
     font-weight: 500;
-    margin-bottom: 1rem; 
+    margin-bottom: 1rem;
 }
 
 .text-rarity-common { color: var(--rarity-common-text); }
@@ -672,9 +673,10 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .dna-draw-result-item .add-drawn-dna-to-backpack-btn {
     width: 100%;
-    margin-top: auto; 
+    margin-top: auto;
 }
 
+/* Player Info Modal - Monsters Table */
 .player-monsters-table {
     display: flex;
     flex-direction: column;
@@ -702,7 +704,7 @@ body.light-theme .leaderboard-table tr:hover td {
 .sortable-header {
     cursor: pointer;
     position: relative;
-    padding-right: 15px; 
+    padding-right: 15px;
     user-select: none;
 }
 .sortable-header::after {
@@ -735,6 +737,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-weight: bold;
 }
 
+/* Jiggle Mode Animation and Delete Button */
 @keyframes jiggle {
     0% { transform: rotate(-2.5deg); }
     50% { transform: rotate(2.5deg); }
@@ -746,7 +749,7 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .delete-item-btn {
-    display: none;
+    display: none; 
     position: absolute;
     top: -8px;
     right: -8px;
@@ -768,7 +771,7 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .jiggle-mode .delete-item-btn {
-    display: flex; 
+    display: flex;
 }
 
 .dna-name-text {
@@ -786,7 +789,7 @@ body.light-theme .leaderboard-table tr:hover td {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 1rem; 
+    gap: 1rem;
 }
 
 #training-items-grid .dna-item-wrapper {
@@ -794,12 +797,12 @@ body.light-theme .leaderboard-table tr:hover td {
     flex-basis: 130px;
     flex-grow: 1;
     max-width: 160px;
-    display: flex; 
+    display: flex;
 }
 
 #training-items-grid .dna-item {
     width: 100%;
-    padding: 1rem; 
+    padding: 1rem;
     justify-content: space-between;
 }
 
@@ -813,18 +816,18 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .selection-container {
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     gap: 1.5rem;
 }
 
 @media (min-width: 768px) {
     .selection-container {
-        flex-direction: row; 
+        flex-direction: row;
     }
 }
 
 .selection-column {
-    flex: 1; 
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -836,7 +839,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .selection-banner-placeholder {
     width: 100%;
-    height: 180px; 
+    height: 180px;
     background-color: var(--bg-slot);
     border-radius: 6px;
     display: flex;
@@ -853,7 +856,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .selection-description-box {
     width: 100%;
-    min-height: 80px; 
+    min-height: 80px;
     background-color: var(--bg-slot);
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -868,7 +871,7 @@ body.light-theme .leaderboard-table tr:hover td {
     border-radius: 50%;
     width: 40px;
     height: 40px;
-    font-size: 1.25rem; 
+    font-size: 1.25rem;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -920,46 +923,45 @@ body.light-theme .leaderboard-table tr:hover td {
     border: 1px solid black;
     border-radius: 2px;
     position: absolute;
-    top: -3px; 
+    top: -3px;
     transform: translateX(-50%);
     transition: left 0.5s ease-out;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
-
 .leaderboard-avatar-cell {
-    width: 40px; 
-    height: 40px; 
+    width: 40px;
+    height: 40px;
     padding: 0 !important;
 }
 
 .leaderboard-avatar-container {
     width: 36px;
     height: 36px;
-    border-radius: 50%; 
+    border-radius: 50%;
     background-color: var(--bg-slot);
     border: 1px solid var(--border-color);
-    overflow: hidden; 
+    overflow: hidden;
     position: relative;
     box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
 }
 
 .leaderboard-avatar-image {
-    width: 150%; 
+    width: 150%;
     height: 150%;
-    background-size: cover; 
-    background-position: center; 
+    background-size: cover;
+    background-position: center;
     background-repeat: no-repeat;
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); 
+    transform: translate(-50%, -50%);
 }
 
 .confirm-stat-bar-container {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-top: 8px; 
+    margin-top: 8px;
     width: 100%;
 }
 
@@ -974,7 +976,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 .confirm-stat-bar-fill {
     height: 100%;
-    width: 0%; 
+    width: 0%;
     border-radius: 2px;
     transition: width 0.4s ease-in-out;
 }
@@ -992,21 +994,21 @@ body.light-theme .leaderboard-table tr:hover td {
     align-items: center;
     justify-content: flex-end;
     gap: 0.4rem;
-    padding: 2px 10px; 
+    padding: 2px 10px;
     background-color: var(--bg-slot);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     max-width: 180px;
     margin-left: auto;
     margin-right: 5px;
-    margin-top: -12px; 
-    margin-bottom: -8px; 
+    margin-top: -12px;
+    margin-bottom: -8px;
     position: relative;
     z-index: 5;
 }
 
 .player-currency-panel .currency-icon {
-    font-size: 1rem; 
+    font-size: 1rem;
     margin-left: 4px;
 }
 
@@ -1032,7 +1034,7 @@ body.light-theme .leaderboard-table tr:hover td {
 
 #monster-part-head .monster-part-image.active {
   animation: head-breath 2s infinite alternate ease-in-out;
-  transform-origin: center bottom; 
+  transform-origin: center bottom;
 }
 
 .farm-card-grid {
@@ -1074,11 +1076,11 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .monster-card-avatar {
-    width: 60px; 
+    width: 60px;
     height: 60px;
     border-radius: 50%;
     background-color: var(--bg-slot);
-    background-size: cover; 
+    background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border: 2px solid var(--border-color);
@@ -1096,7 +1098,7 @@ body.light-theme .leaderboard-table tr:hover td {
     font-size: 0.8rem;
     font-weight: bold;
     cursor: pointer;
-    margin-top: -12px; 
+    margin-top: -12px;
     z-index: 2;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     transition: all 0.2s;
@@ -1117,7 +1119,7 @@ body.light-theme .leaderboard-table tr:hover td {
     color: var(--text-secondary);
     font-weight: 500;
     text-align: center;
-    min-height: 18px; 
+    min-height: 18px;
     line-height: 1;
     display: flex;
     flex-direction: column;
@@ -1136,8 +1138,8 @@ body.light-theme .leaderboard-table tr:hover td {
 }
 
 .monster-card-actions .button {
-    padding: 5px; 
-    font-size: 0.75rem; 
+    padding: 5px;
+    font-size: 0.75rem;
     white-space: nowrap;
 }
 
@@ -1197,23 +1199,24 @@ body.light-theme .friend-actions .remove-friend-btn:hover {
     color: var(--button-primary-text);
 }
 
-/* === 新增：脈動動畫 === */
 @keyframes pulse-animation {
     0% {
         transform: scale(1);
-        box-shadow: 0 0 5px color-mix(in srgb, var(--rarity-legendary-text) 30%, transparent);
+        box-shadow: 0 0 5px color-mix(in srgb, var(--accent-color) 40%, transparent);
+        border-color: var(--border-color);
     }
     50% {
         transform: scale(1.1);
-        box-shadow: 0 0 12px color-mix(in srgb, var(--rarity-legendary-text) 70%, transparent);
+        box-shadow: 0 0 12px 2px color-mix(in srgb, var(--accent-color) 80%, transparent);
+        border-color: var(--accent-color);
     }
     100% {
         transform: scale(1);
-        box-shadow: 0 0 5px color-mix(in srgb, var(--rarity-legendary-text) 30%, transparent);
+        box-shadow: 0 0 5px color-mix(in srgb, var(--accent-color) 40%, transparent);
+        border-color: var(--border-color);
     }
 }
 
-.snapshot-button-pulse {
+#snapshot-selection-modal-btn.pulse-effect {
     animation: pulse-animation 2s infinite ease-in-out;
-    border-color: var(--rarity-legendary-text);
 }
