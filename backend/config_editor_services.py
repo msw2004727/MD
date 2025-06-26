@@ -41,16 +41,14 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
-    # === 修改：將冒險島設定移至此處 ===
     "adventure/adventure_settings.json": ("AdventureSettings", None),
-    "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None)
+    "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None),
+    "adventure/adventure_islands.json": ("AdventureIslands", "islands")
 }
 
 # 本地設定檔的路徑也更新
 LOCAL_CONFIG_FILES = (
-    # === 移除 adventure_growth_settings.json ===
-    os.path.join("adventure", "adventure_islands.json"),
-    "game_mechanics.json"
+    "game_mechanics.json",
 )
 
 def list_editable_configs() -> list[str]:
@@ -170,33 +168,34 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
         return False, "儲存檔案到 Firestore 時發生伺服器內部錯誤。"
 
 def save_adventure_settings_service(global_settings: Dict, facilities_settings: List) -> tuple[bool, Optional[str]]:
-    data_dir = os.path.dirname(__file__)
     db = MD_firebase_config.db
     if not db:
         return False, "資料庫服務未初始化。"
     
     try:
+        # 儲存全域設定
         db.collection('MD_GameConfigs').document('AdventureSettings').set(global_settings, merge=True)
         config_editor_logger.info(f"已成功合併更新全域冒險設定至 Firestore 的 'AdventureSettings' 文件。")
 
-        islands_path = os.path.join(data_dir, 'adventure', 'adventure_islands.json')
+        # === 新增：讀取、修改、並寫回設施設定 ===
+        islands_doc_ref = db.collection('MD_GameConfigs').document('AdventureIslands')
+        islands_doc = islands_doc_ref.get()
+        if not islands_doc.exists:
+            return False, "找不到 AdventureIslands 設定檔，無法更新設施費用。"
         
-        with open(islands_path, 'r', encoding='utf-8') as f:
-            islands_data = json.load(f)
+        islands_data = islands_doc.to_dict().get('islands', [])
 
         for facility_update in facilities_settings:
             for island in islands_data:
                 for facility in island.get('facilities', []):
                     if facility.get('facilityId') == facility_update.get('id'):
-                        facility['cost'] = facility_update.get('cost', facility['cost'])
-                        # === 新增：同時更新通關獎勵 ===
+                        facility['cost'] = facility_update.get('cost', facility.get('cost', 0))
                         facility['floor_clear_base_gold'] = facility_update.get('floor_clear_base_gold', facility.get('floor_clear_base_gold', 50))
                         facility['floor_clear_bonus_gold_per_floor'] = facility_update.get('floor_clear_bonus_gold_per_floor', facility.get('floor_clear_bonus_gold_per_floor', 10))
                         break
         
-        with open(islands_path, 'w', encoding='utf-8') as f:
-            json.dump(islands_data, f, indent=2, ensure_ascii=False)
-        config_editor_logger.info(f"已成功更新並儲存各地區設施設定至 '{islands_path}'。")
+        islands_doc_ref.set({'islands': islands_data})
+        config_editor_logger.info(f"已成功更新並儲存各地區設施設定至 Firestore 的 'AdventureIslands' 文件。")
 
         reload_main_app_configs()
         
@@ -218,11 +217,10 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
         if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
-        # === 修改：寫入 Firestore 而不是本地檔案 ===
         doc_ref = db.collection('MD_GameConfigs').document('AdventureGrowthSettings')
-        doc_ref.set(growth_settings)
+        doc_ref.set(growth_settings, merge=True)
         
-        config_editor_logger.info(f"冒險島成長設定已成功儲存至 Firestore 的 'AdventureGrowthSettings' 文件。")
+        config_editor_logger.info(f"冒險島成長設定已成功合併更新至 Firestore 的 'AdventureGrowthSettings' 文件。")
         
         reload_main_app_configs()
         
@@ -241,7 +239,7 @@ def save_game_mechanics_service(mechanics_data: Dict) -> tuple[bool, Optional[st
         if not all(key in mechanics_data for key in required_keys):
             return False, "傳入的資料格式不正確，缺少必要的頂層鍵。"
 
-        data_dir = os.path.dirname(__file__)
+        data_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(data_dir, 'game_mechanics.json')
 
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -265,7 +263,7 @@ def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, 
         if not isinstance(chart_data, dict):
             return False, "傳入的資料格式不正確，應為一個字典。"
 
-        data_dir = os.path.dirname(__file__)
+        data_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(data_dir, 'battle', 'elemental_advantage_chart.json')
 
         with open(file_path, 'w', encoding='utf-8') as f:
