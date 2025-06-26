@@ -137,7 +137,6 @@ def populate_game_configs():
         script_logger.error(f"處理 DNAFragments 資料夾失敗: {e}", exc_info=True)
         return
     
-    # 重新命名 dna_fragments_data 以符合後續程式碼的變數名稱
     dna_fragments_data = all_dna_fragments
 
     # --- 載入技能資料 (從拆分檔案) ---
@@ -155,7 +154,7 @@ def populate_game_configs():
 
         for filename in os.listdir(skills_dir):
             if filename.endswith('.json'):
-                element_en = filename[:-5] # 移除 .json
+                element_en = filename[:-5] 
                 element_zh = element_map.get(element_en)
                 if not element_zh:
                     script_logger.warning(f"跳過未知的技能檔名: {filename}")
@@ -175,7 +174,6 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 Skills 資料夾失敗: {e}", exc_info=True)
         return
-
 
     # --- 載入個性資料 (從CSV) ---
     personalities_data = []
@@ -277,7 +275,28 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
 
-    # --- 新增：載入冒險事件資料 ---
+    # === 新增：自動建立 AdventureSettings 和 AdventureGrowthSettings ===
+    try:
+        # 處理 AdventureSettings
+        adv_settings_path = os.path.join(base_dir, 'adventure', 'adventure_settings.json')
+        with open(adv_settings_path, 'r', encoding='utf-8') as f:
+            adv_settings_data = json.load(f)
+        db_client.collection('MD_GameConfigs').document('AdventureSettings').set(adv_settings_data)
+        script_logger.info(f"成功從 {adv_settings_path} 載入並寫入 AdventureSettings 資料。")
+
+        # 處理 AdventureGrowthSettings
+        growth_settings_path = os.path.join(base_dir, 'adventure', 'adventure_growth_settings.json')
+        with open(growth_settings_path, 'r', encoding='utf-8') as f:
+            growth_settings_data = json.load(f)
+        db_client.collection('MD_GameConfigs').document('AdventureGrowthSettings').set(growth_settings_data)
+        script_logger.info(f"成功從 {growth_settings_path} 載入並寫入 AdventureGrowthSettings 資料。")
+    except FileNotFoundError as e:
+        script_logger.error(f"錯誤: 找不到冒險島相關設定檔 ({e.filename})，請確認檔案存在。")
+    except Exception as e:
+        script_logger.error(f"處理冒險島詳細設定時發生錯誤: {e}", exc_info=True)
+    # === 新增結束 ===
+
+    # --- 載入冒險事件資料 ---
     try:
         adventure_events_data = {}
         events_dir = os.path.join(base_dir, 'adventure', 'events')
@@ -292,7 +311,7 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 AdventureEvents 資料夾失敗: {e}", exc_info=True)
 
-    # --- 新增：載入冒險BOSS資料 ---
+    # --- 載入冒險BOSS資料 ---
     try:
         adventure_bosses_data = {}
         bosses_dir = os.path.join(base_dir, 'adventure', 'bosses')
@@ -464,10 +483,9 @@ def populate_game_configs():
     _monster_achievements = monster_achievements_data
     _element_nicknames = element_nicknames_data
 
-    # 檢查 skill_database_data 是否為空，避免在空的字典上操作
     if not skill_database_data:
         script_logger.error("技能資料庫為空，無法為 NPC 生成技能。")
-        npc_monsters_data = [] # 如果沒有技能資料，則不創建 NPC
+        npc_monsters_data = [] 
     else:
         npc_monsters_data = [
             {
