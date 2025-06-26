@@ -41,17 +41,13 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
-    # === 新增 ===
     "adventure/adventure_settings.json": ("AdventureSettings", None),
     "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None)
 }
 
 # 本地設定檔的路徑也更新
 LOCAL_CONFIG_FILES = (
-    # === 移除 ===
-    # os.path.join("adventure", "adventure_settings.json"),
     os.path.join("adventure", "adventure_islands.json"),
-    # os.path.join("adventure", "adventure_growth_settings.json"),
     "game_mechanics.json"
 )
 
@@ -178,9 +174,11 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
         return False, "資料庫服務未初始化。"
     
     try:
-        # === 修改：寫入 Firestore 而不是本地檔案 ===
-        db.collection('MD_GameConfigs').document('AdventureSettings').set(global_settings)
-        config_editor_logger.info(f"已成功儲存全域冒險設定至 Firestore 的 'AdventureSettings' 文件。")
+        # === 核心修改處 ===
+        # 將 .set(global_settings) 修改為 .set(global_settings, merge=True)
+        # 這會告訴 Firestore 只更新 global_settings 中存在的欄位，而保留文件中其他的欄位不變。
+        db.collection('MD_GameConfigs').document('AdventureSettings').set(global_settings, merge=True)
+        config_editor_logger.info(f"已成功合併更新全域冒險設定至 Firestore 的 'AdventureSettings' 文件。")
 
         islands_path = os.path.join(data_dir, 'adventure', 'adventure_islands.json')
         
@@ -218,7 +216,6 @@ def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool,
         if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
-        # === 修改：寫入 Firestore 而不是本地檔案 ===
         doc_ref = db.collection('MD_GameConfigs').document('AdventureGrowthSettings')
         doc_ref.set(growth_settings)
         
