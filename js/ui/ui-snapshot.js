@@ -1,78 +1,6 @@
-// js/ui-snapshot.js
-// 這個檔案專門處理主畫面上方「怪獸快照」面板的渲染與更新。
-
-function updateMailNotificationDot() {
-    const dot = document.getElementById('mail-notification-dot');
-    if (!dot) return;
-
-    const hasUnread = gameState.playerData?.mailbox?.some(mail => !mail.is_read);
-    dot.style.display = hasUnread ? 'block' : 'none';
-}
-
-
-function getMonsterImagePathForSnapshot(primaryElement, rarity) {
-    const colors = {
-        '火': 'FF6347/FFFFFF', '水': '1E90FF/FFFFFF', '木': '228B22/FFFFFF',
-        '金': 'FFD700/000000', '土': 'D2B48C/000000', '光': 'F8F8FF/000000',
-        '暗': 'A9A9A9/FFFFFF', '毒': '9932CC/FFFFFF', '風': '87CEEB/000000',
-        '混': '778899/FFFFFF', '無': 'D3D3D3/000000'
-    };
-    const colorPair = colors[primaryElement] || colors['無'];
-    return `https://placehold.co/120x90/${colorPair}?text=${encodeURIComponent(primaryElement)}&font=noto-sans-tc`;
-}
-
-function getMonsterPartImagePath(partName, dnaType, dnaRarity) {
-    if (typeof monsterPartAssets === 'undefined') {
-        return null;
-    }
-
-    const partData = monsterPartAssets[partName];
-    if (!partData) {
-        return monsterPartAssets.globalDefault; 
-    }
-
-    if (partData[dnaType] && partData[dnaType][dnaRarity]) {
-        return partData[dnaType][dnaRarity];
-    }
-    if (partData[dnaType] && partData[dnaType].default) {
-        return partData[dnaType].default;
-    }
-    if (partData.default) {
-        return partData.default;
-    }
-
-    return monsterPartAssets.globalDefault; 
-}
-
-
-function clearMonsterBodyPartsDisplay() {
-    const partsMap = {
-        Head: DOMElements.monsterPartHead,
-        LeftArm: DOMElements.monsterPartLeftArm,
-        RightArm: DOMElements.monsterPartRightArm,
-        LeftLeg: DOMElements.monsterPartLeftLeg,
-        RightLeg: DOMElements.monsterPartRightLeg,
-    };
-    for (const partName in partsMap) {
-        const partElement = partsMap[partName];
-        if (partElement) {
-            partElement.classList.add('empty-part');
-            
-            const imgElement = partElement.querySelector('.monster-part-image');
-            if (imgElement) {
-                imgElement.style.display = 'none';
-                imgElement.src = '';
-                imgElement.classList.remove('active');
-            }
-
-            const overlayElement = partElement.querySelector('.monster-part-overlay');
-            if(overlayElement) {
-                overlayElement.style.display = 'none';
-            }
-        }
-    }
-    if (DOMElements.monsterPartsContainer) DOMElements.monsterPartsContainer.classList.add('empty-snapshot');
-}
+// js/ui-ui-snapshot.js
+// (此檔案其他部分保持不變，只修改 handleChallengeMonsterClick 函式)
+// ... (檔案開頭的其他程式碼保持不變) ...
 
 function updateMonsterSnapshot(monster) {
     if (!DOMElements.monsterSnapshotArea || !DOMElements.snapshotNickname || !DOMElements.snapshotWinLoss ||
@@ -86,7 +14,7 @@ function updateMonsterSnapshot(monster) {
     const buttonsToClean = [
         '#snapshot-monster-details-btn', '#snapshot-player-details-btn', '#snapshot-guide-btn',
         '#snapshot-combined-leaderboard-btn', '#snapshot-selection-modal-btn', '#snapshot-mail-btn',
-        '#snapshot-line-link' // 新增：清理新的 LINE 按鈕
+        '#snapshot-line-link'
     ];
     buttonsToClean.forEach(selector => {
         const btn = DOMElements.monsterSnapshotArea.querySelector(selector);
@@ -117,7 +45,6 @@ function updateMonsterSnapshot(monster) {
     mailBtn.style.cssText = 'position: absolute; bottom: 44px; right: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5;';
     DOMElements.monsterSnapshotArea.appendChild(mailBtn);
     
-    // --- 核心修改處 START ---
     // LINE 按鈕
     const lineLink = document.createElement('a');
     lineLink.id = 'snapshot-line-link';
@@ -126,16 +53,15 @@ function updateMonsterSnapshot(monster) {
     lineLink.rel = 'noopener noreferrer';
     lineLink.title = '加入 LINE 社群';
     lineLink.className = 'corner-button';
-    lineLink.style.cssText = 'position: absolute; bottom: 80px; right: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5; padding: 4px;'; // 增加 padding
+    lineLink.style.cssText = 'position: absolute; bottom: 80px; right: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5; padding: 4px;';
 
     const lineIcon = document.createElement('img');
     lineIcon.src = gameState.assetPaths?.images?.logos?.lineIcon || '';
     lineIcon.alt = 'LINE';
-    lineIcon.style.cssText = 'width: 100%; height: 100%; object-fit: contain;'; // 確保圖片縮放
+    lineIcon.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
 
     lineLink.appendChild(lineIcon);
     DOMElements.monsterSnapshotArea.appendChild(lineLink);
-    // --- 核心修改處 END ---
 
     // 新手上路按鈕
     const guideBtn = document.createElement('button');
@@ -155,14 +81,17 @@ function updateMonsterSnapshot(monster) {
     };
     DOMElements.monsterSnapshotArea.appendChild(guideBtn);
 
+    // === 核心修改處 START ===
     // 綜合選單按鈕
     const selectionBtn = document.createElement('button');
     selectionBtn.id = 'snapshot-selection-modal-btn';
     selectionBtn.title = '綜合選單';
     selectionBtn.innerHTML = '🪜';
-    selectionBtn.className = 'corner-button';
+    // 在 className 中加入新的動畫類別
+    selectionBtn.className = 'corner-button snapshot-button-pulse'; 
     selectionBtn.style.cssText = 'position: absolute; bottom: 116px; left: 8px; width: 32px; height: 32px; font-size: 0.9rem; z-index: 5;';
     DOMElements.monsterSnapshotArea.appendChild(selectionBtn);
+    // === 核心修改處 END ===
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
 
@@ -228,7 +157,7 @@ function updateMonsterSnapshot(monster) {
                     
                     textElement.textContent = dnaData.name || '';
                     textElement.className = 'dna-name-text';
-                    textElement.style.color = `var(--rarity-${dnaRarityKey}-text, var(--text-primary))`;
+                    textElement.style.color = `var(--rarity-${rarityKey}-text, var(--text-primary))`;
 
                     let hasExactImage = false;
                     let imgPath = '';
