@@ -41,13 +41,17 @@ CONFIG_FILE_FIRESTORE_MAP = {
     "monster/skills/water.json": ("Skills", "skill_database.水"),
     "monster/skills/wind.json": ("Skills", "skill_database.風"),
     "monster/skills/wood.json": ("Skills", "skill_database.木"),
+    # === 新增 ===
+    "adventure/adventure_settings.json": ("AdventureSettings", None),
+    "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None)
 }
 
 # 本地設定檔的路徑也更新
 LOCAL_CONFIG_FILES = (
-    os.path.join("adventure", "adventure_settings.json"),
+    # === 移除 ===
+    # os.path.join("adventure", "adventure_settings.json"),
     os.path.join("adventure", "adventure_islands.json"),
-    os.path.join("adventure", "adventure_growth_settings.json"),
+    # os.path.join("adventure", "adventure_growth_settings.json"),
     "game_mechanics.json"
 )
 
@@ -169,12 +173,14 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
 
 def save_adventure_settings_service(global_settings: Dict, facilities_settings: List) -> tuple[bool, Optional[str]]:
     data_dir = os.path.dirname(__file__)
+    db = MD_firebase_config.db
+    if not db:
+        return False, "資料庫服務未初始化。"
     
     try:
-        adv_settings_path = os.path.join(data_dir, 'adventure', 'adventure_settings.json')
-        with open(adv_settings_path, 'w', encoding='utf-8') as f:
-            json.dump(global_settings, f, indent=2, ensure_ascii=False)
-        config_editor_logger.info(f"已成功儲存全域冒險設定至 '{adv_settings_path}'。")
+        # === 修改：寫入 Firestore 而不是本地檔案 ===
+        db.collection('MD_GameConfigs').document('AdventureSettings').set(global_settings)
+        config_editor_logger.info(f"已成功儲存全域冒險設定至 Firestore 的 'AdventureSettings' 文件。")
 
         islands_path = os.path.join(data_dir, 'adventure', 'adventure_islands.json')
         
@@ -202,19 +208,21 @@ def save_adventure_settings_service(global_settings: Dict, facilities_settings: 
 
 def save_adventure_growth_settings_service(growth_settings: Dict) -> tuple[bool, Optional[str]]:
     """
-    將新的冒險島成長設定儲存到 adventure_growth_settings.json 檔案。
+    將新的冒險島成長設定儲存到 Firestore 的 AdventureGrowthSettings 文件。
     """
+    db = MD_firebase_config.db
+    if not db:
+        return False, "資料庫服務未初始化。"
+        
     try:
         if "facilities" not in growth_settings or "stat_weights" not in growth_settings:
             return False, "傳入的資料格式不正確，缺少 'facilities' 或 'stat_weights' 鍵。"
 
-        data_dir = os.path.dirname(__file__)
-        file_path = os.path.join(data_dir, 'adventure', 'adventure_growth_settings.json')
-
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(growth_settings, f, indent=2, ensure_ascii=False)
+        # === 修改：寫入 Firestore 而不是本地檔案 ===
+        doc_ref = db.collection('MD_GameConfigs').document('AdventureGrowthSettings')
+        doc_ref.set(growth_settings)
         
-        config_editor_logger.info(f"冒險島成長設定已成功儲存至 '{file_path}'。")
+        config_editor_logger.info(f"冒險島成長設定已成功儲存至 Firestore 的 'AdventureGrowthSettings' 文件。")
         
         reload_main_app_configs()
         
@@ -254,7 +262,6 @@ def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, 
     將新的屬性克制表儲存到 elemental_advantage_chart.json 檔案。
     """
     try:
-        # 基本的格式驗證
         if not isinstance(chart_data, dict):
             return False, "傳入的資料格式不正確，應為一個字典。"
 
@@ -266,7 +273,7 @@ def save_elemental_advantage_service(chart_data: Dict[str, Any]) -> tuple[bool, 
         
         config_editor_logger.info(f"屬性克制表已成功儲存至 '{file_path}'。")
         
-        reload_main_app_configs() # 通知主程式重新載入設定
+        reload_main_app_configs()
         
         return True, None
 
@@ -279,7 +286,6 @@ def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[boo
     將新的冠軍守衛資料儲存到 champion_guardians.json 檔案。
     """
     try:
-        # 從 Firestore 讀取原始檔案以保留不變的欄位
         doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP["system/champion_guardians.json"]
         
         db = MD_firebase_config.db
@@ -295,18 +301,15 @@ def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[boo
         full_data = doc.to_dict()
         original_guardians = full_data.get(field_path, {}) if field_path else full_data
 
-        # 用傳入的新數值更新資料
         for rank, new_stats in guardians_data.items():
             if rank in original_guardians:
                 for stat, value in new_stats.items():
                     original_guardians[rank][stat] = value
-                    # 如果是HP或MP，同時更新 hp 和 initial_max_hp
                     if stat == 'initial_max_hp':
                         original_guardians[rank]['hp'] = value
                     if stat == 'initial_max_mp':
                         original_guardians[rank]['mp'] = value
 
-        # 更新回 Firestore
         if field_path:
             doc_ref.update({field_path: original_guardians})
         else:
@@ -330,7 +333,7 @@ def save_cultivation_settings_service(settings_data: Dict[str, Any]) -> tuple[bo
 
         db = MD_firebase_config.db
         doc_ref = db.collection('MD_GameConfigs').document('CultivationSettings')
-        doc_ref.set(settings_data, merge=True) # 使用 merge=True 以只更新傳入的欄位
+        doc_ref.set(settings_data, merge=True)
         
         config_editor_logger.info(f"修煉設定已成功更新至 Firestore。")
         reload_main_app_configs()
