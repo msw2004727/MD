@@ -275,7 +275,7 @@ def populate_game_configs():
     except Exception as e:
         script_logger.error(f"處理 AdventureIslands 資料失敗: {e}")
 
-    # === 新增：自動建立 AdventureSettings 和 AdventureGrowthSettings ===
+    # === 修改：自動建立 AdventureSettings 和 AdventureGrowthSettings ===
     try:
         # 處理 AdventureSettings
         adv_settings_path = os.path.join(base_dir, 'adventure', 'adventure_settings.json')
@@ -294,7 +294,7 @@ def populate_game_configs():
         script_logger.error(f"錯誤: 找不到冒險島相關設定檔 ({e.filename})，請確認檔案存在。")
     except Exception as e:
         script_logger.error(f"處理冒險島詳細設定時發生錯誤: {e}", exc_info=True)
-    # === 新增結束 ===
+    # === 修改結束 ===
 
     # --- 載入冒險事件資料 ---
     try:
