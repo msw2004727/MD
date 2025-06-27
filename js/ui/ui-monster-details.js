@@ -20,10 +20,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
 
     const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
     
-    // --- 核心修改處 START ---
-    // 重新加入 rarityKey 的定義
     const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-    // --- 核心修改處 END ---
     
     const monsterNameHtml = getMonsterDisplayName(monster, gameState.gameConfigs);
     const editableNickname = monster.custom_element_nickname || monster.element_nickname_part || '';
@@ -242,11 +239,22 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
     `;
 
-    const gains = monster.cultivation_gains || {};
-    const getGainHtml = (statName) => {
-        const gain = gains[statName] || 0;
+    // 綠色修煉加成
+    const cultivationGains = monster.cultivation_gains || {};
+    const getCultivationGainHtml = (statName) => {
+        const gain = cultivationGains[statName] || 0;
         if (gain > 0) {
             return ` <span style="color: var(--success-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
+        }
+        return '';
+    };
+
+    // === 新增：藍色冒險加成 ===
+    const adventureGains = monster.adventure_gains || {};
+    const getAdventureGainHtml = (statName) => {
+        const gain = adventureGains[statName] || 0;
+        if (gain > 0) {
+            return ` <span style="color: var(--accent-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
         }
         return '';
     };
@@ -302,12 +310,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
+                    {/* === 核心修改處 START === */}
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getCultivationGainHtml('hp')}${getAdventureGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getCultivationGainHtml('mp')}${getAdventureGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getCultivationGainHtml('attack')}${getAdventureGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getCultivationGainHtml('defense')}${getAdventureGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getCultivationGainHtml('speed')}${getAdventureGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getCultivationGainHtml('crit')}${getAdventureGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
+                    {/* === 核心修改處 END === */}
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
@@ -401,7 +411,6 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                             await refreshPlayerData();
                             const updatedMonster = gameState.playerData.farmedMonsters.find(m => m.id === monsterId);
                             if (updatedMonster) {
-                                // 核心修改處：只更新內容，不自動切換分頁
                                 updateMonsterInfoModal(updatedMonster, gameConfigs);
                             }
                         }
