@@ -32,7 +32,7 @@ def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
 
     farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
 
-    for member in progress["expedition_team"]:
+    for member in progress.get("expedition_team", []):
         monster = farmed_monsters_map.get(member["monster_id"])
         if monster and "adventure_gains" in monster:
             gains = monster.get("adventure_gains", {})
@@ -42,14 +42,15 @@ def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
             adventure_routes_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
             
             # 將 adventure_gains 的數值加到 cultivation_gains 中
-            # 這樣可以統一由一個欄位來管理所有額外成長，簡化前端顯示邏輯
-            cultivation_gains = monster.setdefault("cultivation_gains", {})
-            for stat, value in gains.items():
-                cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
+            # 這段邏輯是問題的根源，現在將其移除，確保數據分離
+            # cultivation_gains = monster.setdefault("cultivation_gains", {})
+            # for stat, value in gains.items():
+            #     cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
             
             # 清空冒險成長記錄
-            monster["adventure_gains"] = {}
-    
+            # monster["adventure_gains"] = {}
+            pass # 直接保留 adventure_gains 欄位，不做任何操作
+
     return player_data
 
 @adventure_bp.route('/islands', methods=['GET'])
@@ -145,7 +146,6 @@ def abandon_adventure_route():
             monster_in_farm["mp"] = member["current_mp"]
             adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
     
-    # === 修改：結算所有成長值 ===
     player_data = _finalize_adventure_gains(player_data)
     final_stats = progress.get("expedition_stats")
 
@@ -313,7 +313,6 @@ def resolve_choice_route():
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
         else:
-            # === 修改：戰敗時也要結算成長值 ===
             player_data = _finalize_adventure_gains(player_data)
             farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
             for member in progress.get("expedition_team", []):
