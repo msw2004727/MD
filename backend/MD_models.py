@@ -277,6 +277,8 @@ class Monster(TypedDict):
     resume: NotRequired[MonsterResume]
     constituent_dna_ids: NotRequired[List[str]]
     cultivation_gains: NotRequired[Dict[str, int]]
+    # === 新增 ===
+    adventure_gains: NotRequired[Dict[str, int]]
     monsterNotes: NotRequired[List[NoteEntry]]
     chatHistory: NotRequired[List[ChatHistoryEntry]]
     interaction_stats: NotRequired[MonsterInteractionStats]
@@ -330,7 +332,6 @@ class PlayerGameData(TypedDict):
     mailbox: NotRequired[List[MailItem]]
     adventure_progress: NotRequired[AdventureProgress]
     playerNotes: NotRequired[List[NoteEntry]]
-    # 【新增】玩家個人日誌欄位
     playerLogs: NotRequired[List[PlayerLogEntry]]
 
 class MonsterRecipe(TypedDict):
@@ -402,7 +403,6 @@ class GameConfigs(TypedDict):
     champion_guardians: NotRequired[Dict[str, Any]]
     battle_highlights: NotRequired[Dict[str, Any]]
     adventure_islands: NotRequired[List[Any]] 
-    # 【新增】冒險事件與BOSS資料也應被包含在遊戲核心設定中
     adventure_events: NotRequired[Dict[str, List[Any]]]
     adventure_bosses: NotRequired[Dict[str, List[Any]]]
 
