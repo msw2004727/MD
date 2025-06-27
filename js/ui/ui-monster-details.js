@@ -263,6 +263,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
+    const getAdventureGainHtml = (statName) => {
+        const gain = (monster.adventure_gains || {})[statName] || 0;
+        if (gain > 0) {
+            return ` <span style="color: var(--accent-color); font-size: 0.9em; margin-left: 4px;">+${gain}</span>`;
+        }
+        return '';
+    };
+
     const interactionStats = monster.interaction_stats || {};
     const battleCount = (monster.resume?.wins || 0) + (monster.resume?.losses || 0);
     const bondPoints = interactionStats.bond_points || 0;
@@ -299,12 +307,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getCultivationGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
-                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getCultivationGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
-                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getCultivationGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
-                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getCultivationGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
-                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getCultivationGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
-                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getCultivationGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
+                    <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getCultivationGainHtml('hp')}${getAdventureGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
+                    <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getCultivationGainHtml('mp')}${getAdventureGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
+                    <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getCultivationGainHtml('attack')}${getAdventureGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
+                    <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getCultivationGainHtml('defense')}${getAdventureGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
+                    <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getCultivationGainHtml('speed')}${getAdventureGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
+                    <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getCultivationGainHtml('crit')}${getAdventureGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
@@ -337,6 +345,14 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         </div>
         <p class="creation-time-centered">創建時間: ${new Date(monster.creationTime * 1000).toLocaleString()}</p>
     `;
+
+    detailsBody.querySelectorAll('.dna-item[data-dna-ref-id]').forEach(el => {
+        const dnaId = el.dataset.dnaRefId;
+        const dnaTemplate = gameState.gameConfigs?.dna_fragments.find(d => d.id === dnaId);
+        if (dnaTemplate) {
+            applyDnaItemStyle(el, dnaTemplate);
+        }
+    });
 
     const logsContainer = DOMElements.monsterActivityLogsContainer;
     if (monster.activityLog && monster.activityLog.length > 0) {
