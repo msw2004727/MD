@@ -68,12 +68,15 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
     weights = list(stat_weights_config.values())
     
     gains_log: Dict[str, int] = {}
-    cultivation_gains = monster_in_farm.setdefault("cultivation_gains", {})
+    # === 核心修改處 START ===
+    # 將儲存目標從 cultivation_gains 改為新的 adventure_gains
+    adventure_gains = monster_in_farm.setdefault("adventure_gains", {})
 
     for _ in range(points_to_distribute):
         chosen_stat = random.choices(stats_to_grow, weights=weights, k=1)[0]
-        cultivation_gains[chosen_stat] = cultivation_gains.get(chosen_stat, 0) + 1
+        adventure_gains[chosen_stat] = adventure_gains.get(chosen_stat, 0) + 1
         gains_log[chosen_stat] = gains_log.get(chosen_stat, 0) + 1
+    # === 核心修改處 END ===
 
     adventure_logger.info(f"隨機成長觸發！怪獸 {monster_in_farm.get('nickname')} 獲得了成長: {gains_log}")
     
