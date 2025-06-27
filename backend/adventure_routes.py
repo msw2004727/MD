@@ -11,8 +11,8 @@ from .adventure_services import (
     start_expedition_service, get_all_islands_service, advance_floor_service, 
     complete_floor_service, resolve_event_choice_service, switch_captain_service
 )
-# 導入戰鬥模擬服務，以便在BOSS戰後生成戰報
 from .battle_services import simulate_battle_full
+from .MD_models import PlayerGameData
 
 
 # 建立一個新的藍圖 (Blueprint) 來管理冒險島的路由
@@ -21,6 +21,36 @@ adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure
 # 建立此路由專用的日誌記錄器
 adventure_routes_logger = logging.getLogger(__name__)
 
+# === 新增：結算冒險成長的輔助函式 ===
+def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
+    """
+    結算遠征隊伍所有成員在冒險中獲得的數值成長，並將其永久加到基礎數值上。
+    """
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("expedition_team"):
+        return player_data
+
+    farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
+
+    for member in progress["expedition_team"]:
+        monster = farmed_monsters_map.get(member["monster_id"])
+        if monster and "adventure_gains" in monster:
+            gains = monster.get("adventure_gains", {})
+            if not gains:
+                continue
+
+            adventure_routes_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
+            
+            # 將 adventure_gains 的數值加到 cultivation_gains 中
+            # 這樣可以統一由一個欄位來管理所有額外成長，簡化前端顯示邏輯
+            cultivation_gains = monster.setdefault("cultivation_gains", {})
+            for stat, value in gains.items():
+                cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
+            
+            # 清空冒險成長記錄
+            monster["adventure_gains"] = {}
+    
+    return player_data
 
 @adventure_bp.route('/islands', methods=['GET'])
 def get_islands_route():
@@ -115,24 +145,20 @@ def abandon_adventure_route():
             monster_in_farm["mp"] = member["current_mp"]
             adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
     
-    # --- 核心修改處 START ---
-    # 先取得最終的統計數據
+    # === 修改：結算所有成長值 ===
+    player_data = _finalize_adventure_gains(player_data)
     final_stats = progress.get("expedition_stats")
-    # --- 核心修改處 END ---
 
     progress["is_active"] = False
     player_data["adventure_progress"] = progress
     
     if save_player_data_service(user_id, player_data):
         adventure_routes_logger.info(f"玩家 {user_id} 已成功放棄遠征。")
-        # --- 核心修改處 START ---
-        # 在回傳的 JSON 中加入 expedition_stats
         return jsonify({
             "success": True, 
             "message": "已成功結束本次遠征。",
             "expedition_stats": final_stats
         }), 200
-        # --- 核心修改處 END ---
     else:
         adventure_routes_logger.error(f"玩家 {user_id} 放棄遠征後，儲存資料失敗。")
         return jsonify({"error": "放棄遠征後儲存進度失敗。"}), 500
@@ -287,6 +313,8 @@ def resolve_choice_route():
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
         else:
+            # === 修改：戰敗時也要結算成長值 ===
+            player_data = _finalize_adventure_gains(player_data)
             farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
             for member in progress.get("expedition_team", []):
                 if member["monster_id"] in farmed_monsters_map:
@@ -309,7 +337,6 @@ def resolve_choice_route():
                 return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
 
     else:
-        # 處理一般事件的選擇
         service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
         
         if not service_result.get("success"):
