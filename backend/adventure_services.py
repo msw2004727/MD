@@ -68,15 +68,12 @@ def _handle_random_growth_event(player_data: PlayerGameData, progress: Adventure
     weights = list(stat_weights_config.values())
     
     gains_log: Dict[str, int] = {}
-    # === 核心修改處 START ===
-    # 將儲存目標從 cultivation_gains 改為新的 adventure_gains
     adventure_gains = monster_in_farm.setdefault("adventure_gains", {})
 
     for _ in range(points_to_distribute):
         chosen_stat = random.choices(stats_to_grow, weights=weights, k=1)[0]
         adventure_gains[chosen_stat] = adventure_gains.get(chosen_stat, 0) + 1
         gains_log[chosen_stat] = gains_log.get(chosen_stat, 0) + 1
-    # === 核心修改處 END ===
 
     adventure_logger.info(f"隨機成長觸發！怪獸 {monster_in_farm.get('nickname')} 獲得了成長: {gains_log}")
     
@@ -491,3 +488,37 @@ def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: s
     player_data["adventure_progress"] = progress
     
     return player_data
+
+# --- 核心修改處 START ---
+# 修改 _finalize_adventure_gains 函式，不再合併與清空 adventure_gains
+def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
+    """
+    結算遠征隊伍所有成員在冒險中獲得的數值成長。
+    現在這個函式只會記錄日誌，而不會修改數值。
+    """
+    progress = player_data.get("adventure_progress")
+    if not progress or not progress.get("expedition_team"):
+        return player_data
+
+    farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
+
+    for member in progress.get("expedition_team", []):
+        monster = farmed_monsters_map.get(member["monster_id"])
+        if monster and "adventure_gains" in monster:
+            gains = monster.get("adventure_gains", {})
+            if not gains:
+                continue
+
+            adventure_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
+            
+            # 將 adventure_gains 的數值加到 cultivation_gains 中 (已註解)
+            # cultivation_gains = monster.setdefault("cultivation_gains", {})
+            # for stat, value in gains.items():
+            #     cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
+            
+            # 清空冒險成長記錄 (已註解)
+            # monster["adventure_gains"] = {}
+            pass # 保留 adventure_gains，不做任何事
+
+    return player_data
+# --- 核心修改處 END ---
