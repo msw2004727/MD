@@ -1,4 +1,4 @@
-// js/ui-monster-details.js
+// js/ui/ui-monster-details.js
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
 // 新增一個旗標，確保事件監聽器只會被附加一次
@@ -249,7 +249,7 @@ function updateMonsterInfoModal(monster, gameConfigs) {
         return '';
     };
 
-    // === 新增：藍色冒險加成 ===
+    // 藍色冒險加成
     const adventureGains = monster.adventure_gains || {};
     const getAdventureGainHtml = (statName) => {
         const gain = adventureGains[statName] || 0;
@@ -310,14 +310,12 @@ function updateMonsterInfoModal(monster, gameConfigs) {
                 <div class="details-section" style="margin-bottom: 0.5rem;">
                     <h5 class="details-section-title">基礎屬性</h5>
                     <div class="details-item"><span class="details-label">稀有度:</span> <span class="details-value text-rarity-${rarityKey}">${monster.rarity}</span></div>
-                    {/* === 核心修改處 START === */}
                     <div class="details-item"><span class="details-label">HP:</span> <span class="details-value">${monster.hp}/${monster.initial_max_hp}${getCultivationGainHtml('hp')}${getAdventureGainHtml('hp')}${getTitleBuffHtml('hp')}</span></div>
                     <div class="details-item"><span class="details-label">MP:</span> <span class="details-value">${monster.mp}/${monster.initial_max_mp}${getCultivationGainHtml('mp')}${getAdventureGainHtml('mp')}${getTitleBuffHtml('mp')}</span></div>
                     <div class="details-item"><span class="details-label">攻擊:</span> <span class="details-value">${monster.attack}${getCultivationGainHtml('attack')}${getAdventureGainHtml('attack')}${getTitleBuffHtml('attack')}</span></div>
                     <div class="details-item"><span class="details-label">防禦:</span> <span class="details-value">${monster.defense}${getCultivationGainHtml('defense')}${getAdventureGainHtml('defense')}${getTitleBuffHtml('defense')}</span></div>
                     <div class="details-item"><span class="details-label">速度:</span> <span class="details-value">${monster.speed}${getCultivationGainHtml('speed')}${getAdventureGainHtml('speed')}${getTitleBuffHtml('speed')}</span></div>
                     <div class="details-item"><span class="details-label">爆擊率:</span> <span class="details-value">${monster.crit}%${getCultivationGainHtml('crit')}${getAdventureGainHtml('crit')}${getTitleBuffHtml('crit')}</span></div>
-                    {/* === 核心修改處 END === */}
                     <div class="details-item"><span class="details-label">總評價:</span> <span class="details-value text-[var(--success-color)]">${monster.score || 0}</span></div>
                 </div>
                 ${constituentDnaHtml}
