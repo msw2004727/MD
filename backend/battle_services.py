@@ -82,24 +82,26 @@ def _calculate_elemental_advantage(attacker_element: ElementTypes, defender_elem
     return total_multiplier
 
 def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGameData], game_configs: GameConfigs) -> Dict[str, Any]:
-    gains = monster.get("cultivation_gains", {})
+    cult_gains = monster.get("cultivation_gains", {})
+    adv_gains = monster.get("adventure_gains", {})
     title_buffs = {}
 
     if player_data:
         player_stats = player_data.get("playerStats", {})
         equipped_id = player_stats.get("equipped_title_id")
         if equipped_id:
-            equipped_title = next((t for t in player_stats.get("titles", []) if t.get("id") == equipped_id), None)
+            all_titles_config = game_configs.get("titles", [])
+            equipped_title = next((t for t in all_titles_config if t.get("id") == equipped_id), None)
             if equipped_title and equipped_title.get("buffs"):
                 title_buffs = equipped_title.get("buffs", {})
 
     base_stats = {
-        "attack": monster.get("attack", 0) + gains.get("attack", 0) + title_buffs.get("attack", 0),
-        "defense": monster.get("defense", 0) + gains.get("defense", 0) + title_buffs.get("defense", 0),
-        "speed": monster.get("speed", 0) + gains.get("speed", 0) + title_buffs.get("speed", 0),
-        "crit": monster.get("crit", 0) + gains.get("crit", 0) + title_buffs.get("crit", 0),
-        "initial_max_hp": monster.get("initial_max_hp", 0) + gains.get("hp", 0) + title_buffs.get("hp", 0),
-        "initial_max_mp": monster.get("initial_max_mp", 0) + gains.get("mp", 0) + title_buffs.get("mp", 0),
+        "attack": monster.get("attack", 0) + cult_gains.get("attack", 0) + adv_gains.get("attack", 0) + title_buffs.get("attack", 0),
+        "defense": monster.get("defense", 0) + cult_gains.get("defense", 0) + adv_gains.get("defense", 0) + title_buffs.get("defense", 0),
+        "speed": monster.get("speed", 0) + cult_gains.get("speed", 0) + adv_gains.get("speed", 0) + title_buffs.get("speed", 0),
+        "crit": monster.get("crit", 0) + cult_gains.get("crit", 0) + adv_gains.get("crit", 0) + title_buffs.get("crit", 0),
+        "initial_max_hp": monster.get("initial_max_hp", 0) + cult_gains.get("hp", 0) + adv_gains.get("hp", 0) + title_buffs.get("hp", 0),
+        "initial_max_mp": monster.get("initial_max_mp", 0) + cult_gains.get("mp", 0) + adv_gains.get("mp", 0) + title_buffs.get("mp", 0),
     }
 
     final_attack = (base_stats["attack"] * monster.get("temp_attack_multiplier", 1.0)) + monster.get("temp_attack_modifier", 0)
@@ -121,7 +123,7 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
     }
 
     if monster.get("healthConditions"):
-        all_conditions = game_configs.get("health_conditions", [])
+        all_conditions = game_configs.get("status_effects", [])
         for condition in monster["healthConditions"]:
             condition_template = next((c for c in all_conditions if c.get("id") == condition.get("id")), None)
             if condition_template:
@@ -204,12 +206,10 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
     performer_pd = action_details.get('performer_data')
     target_pd = action_details.get('target_data')
     
-    # --- 核心修改處 START ---
     battle_formulas = game_configs.get("game_mechanics", {}).get("battle_formulas", {})
     base_multiplier = battle_formulas.get("damage_formula_base_multiplier", 0.5)
     attack_scaling = battle_formulas.get("damage_formula_attack_scaling", 0.1)
     crit_multiplier = battle_formulas.get("crit_multiplier", 1.5)
-    # --- 核心修改處 END ---
 
     for effect in effects:
         effect_target_monster = performer if effect.get("target") == "self" else target
@@ -230,14 +230,11 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
             attack_stat = attacker_stats.get("attack", 1)
             element_multiplier = _calculate_elemental_advantage(skill["type"], target.get("elements", []), game_configs)
 
-            # --- 核心修改處 START ---
-            # 使用從設定檔讀取的參數來計算傷害
             raw_damage = max(1, (power * (attack_stat / defense_stat) * base_multiplier) + (attack_stat * attack_scaling))
             final_damage = int(raw_damage * element_multiplier)
 
             if action_details.get("is_crit"):
                 final_damage = int(final_damage * crit_multiplier)
-            # --- 核心修改處 END ---
 
             effect_target_monster["current_hp"] = max(0, effect_target_monster.get("current_hp", 0) - final_damage)
             action_details["damage_dealt"] = action_details.get("damage_dealt", 0) + final_damage
@@ -250,7 +247,7 @@ def _apply_skill_effects(performer: Monster, target: Monster, skill: Skill, effe
 
         elif effect.get("type") == "apply_status":
             if random.random() <= effect.get("chance", 1.0):
-                all_conditions_templates = game_configs.get("health_conditions", [])
+                all_conditions_templates = game_configs.get("status_effects", [])
                 status_template = next((s for s in all_conditions_templates if s.get("id") == effect.get("status_id")), None)
                 if status_template and not any(cond.get("id") == effect.get("status_id") for cond in effect_target_monster.get("healthConditions", [])):
                     duration_str = str(effect.get("duration", status_template.get("duration_turns", "1")))
@@ -325,7 +322,7 @@ def _process_turn_start_effects(monster: Monster, game_configs: GameConfigs) -> 
     if not monster.get("healthConditions"):
         return skip_turn, log_messages
 
-    all_conditions_templates = game_configs.get("health_conditions", [])
+    all_conditions_templates = game_configs.get("status_effects", [])
     new_conditions = []
     for active_condition in monster.get("healthConditions", []):
         condition_template = next((c for c in all_conditions_templates if c.get("id") == active_condition.get("id")), None)
@@ -506,8 +503,6 @@ def simulate_battle_full(
 
     battle_highlights = _extract_battle_highlights(all_raw_log_messages, chosen_style_dict)
     
-    # --- 核心修改處 START ---
-    # 準備傳遞給 generate_battle_report_content 的參數
     temp_battle_result_for_ai = {"winner_name": player_monster_nickname if winner_id == player_monster['id'] else opponent_monster_nickname,
                                  "loser_name": opponent_monster_nickname if winner_id == player_monster['id'] else player_monster_nickname,
                                  "total_rounds": turn_num,
@@ -516,7 +511,6 @@ def simulate_battle_full(
     player1_name_for_ai = player_data.get('nickname', '玩家') if player_data else '玩家'
     player2_name_for_ai = opponent_player_data.get('nickname', '對手') if opponent_player_data else '對手'
 
-    # 使用正確的參數順序呼叫AI函式
     ai_report = generate_battle_report_content(
         battle_result=temp_battle_result_for_ai,
         monster1_name=player_monster_nickname,
@@ -524,7 +518,6 @@ def simulate_battle_full(
         player1_name=player1_name_for_ai,
         player2_name=player2_name_for_ai
     )
-    # --- 核心修改處 END ---
 
     final_battle_result: BattleResult = {
         "winner_id": winner_id, "loser_id": loser_id, "raw_full_log": all_raw_log_messages,
