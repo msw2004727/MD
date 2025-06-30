@@ -11,7 +11,7 @@ function renderTrainingOptions() {
     // 找到我們在 index.html 中預留的容器
     const container = document.getElementById('training-options-container');
     if (!container) {
-        console.error("Training options container not found!");
+        console.error("錯誤：在 HTML 中找不到 #training-options-container 容器。");
         return;
     }
 
@@ -20,7 +20,7 @@ function renderTrainingOptions() {
 
     // 檢查是否有可用的鍛鍊選項
     if (!trainingOptions || trainingOptions.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-500">目前沒有可用的鍛鍊項目。</p>';
+        container.innerHTML = '<p class="text-center text-secondary-dark py-10">目前沒有可用的鍛鍊項目。</p>';
         return;
     }
 
@@ -32,7 +32,15 @@ function renderTrainingOptions() {
 
         // 使用CSS變數來動態設定卡片頂部的顏色
         // 這會對應到我們在 training.css 中設定的 .training-card::before 樣式
-        card.style.setProperty('--card-color', `var(--${option.color.replace('bg-', 'element-')}-text)`);
+        // 我們巧妙地複用了 theme.css 中已有的元素顏色變數
+        const colorVar = `--element-${option.color.replace('bg-', '')}-text`;
+        card.style.setProperty('--card-color', `var(${colorVar})`);
+        
+        const iconContainer = document.createElement('div');
+        iconContainer.className = 'training-card-icon';
+        iconContainer.style.backgroundColor = `var(${colorVar})`;
+        iconContainer.innerHTML = `<i class="${option.icon}"></i>`;
+
 
         // 將秒數轉換為更容易閱讀的格式 (例如：1 小時 30 分鐘)
         const formatTime = (seconds) => {
@@ -47,9 +55,7 @@ function renderTrainingOptions() {
         // 使用模板字符串填充卡片的內部HTML
         card.innerHTML = `
             <div class="training-card-header">
-                <div class="training-card-icon">
-                    <i class="${option.icon}"></i>
-                </div>
+                ${iconContainer.outerHTML}
                 <h3 class="training-card-title">${option.name}</h3>
             </div>
             <p class="training-card-description">${option.description}</p>
@@ -83,7 +89,7 @@ export function initializeTrainingHandlers() {
                 const trainingId = card.dataset.trainingId;
                 // 後續我們將在此處處理點擊卡片後開始訓練的邏輯
                 console.log(`你點擊了訓練項目: ${trainingId}`);
-                // 例如: startTraining(trainingId);
+                showFeedbackModal('提示', `您選擇了訓練項目：${trainingId}。\n\n下一步我們將實作點擊後的確認流程。`);
             }
         });
     }
