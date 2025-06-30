@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const oldScrollHeight = container.scrollHeight;
             const oldScrollTop = container.scrollTop;
             try {
-                const response = await fetch(`${ADMIN_API_URL}/logs`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
+                const response = await fetch(`${ADMIN_API_URL}/logs?_=${new Date().getTime()}`, { headers: { 'Authorization': `Bearer ${adminToken}` } });
                 if (!response.ok) throw new Error(`伺服器錯誤: ${response.status} ${response.statusText}`);
                 
                 const htmlContent = await response.text();
