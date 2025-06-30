@@ -252,7 +252,8 @@ function renderAdventureProgressUI(adventureProgress) {
             const displayName = getMonsterDisplayName(monster, gameState.gameConfigs);
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             const rarityKey = monster.rarity ? (rarityMap[monster.rarity] || 'common') : 'common';
-
+            
+            // --- 核心修改處 START ---
             const headInfo = { type: '無', rarity: '普通' };
             const constituentIds = monster.constituent_dna_ids || [];
             if (constituentIds.length > 0) {
@@ -264,12 +265,15 @@ function renderAdventureProgressUI(adventureProgress) {
                 }
             }
             const imagePath = getMonsterPartImagePath('head', headInfo.type, headInfo.rarity);
+            // --- 核心修改處 END ---
+
             const statMap = { 'hp': 'HP', 'mp': 'MP', 'attack': '攻擊', 'defense': '防禦', 'speed': '速度', 'crit': '爆擊' };
             
             const gainsText = Object.entries(growthResult.stat_gains)
                 .map(([stat, amount]) => `${statMap[stat] || stat} +${amount}`)
                 .join('、');
 
+            // --- 核心修改處 START ---
             growthHtml = `
                 <div class="growth-result-card">
                     <div class="avatar" style="background-image: url('${imagePath}')"></div>
@@ -279,6 +283,7 @@ function renderAdventureProgressUI(adventureProgress) {
                     </div>
                 </div>
             `;
+            // --- 核心修改處 END ---
         }
         growthDisplayEl.innerHTML = growthHtml;
     }
@@ -402,8 +407,6 @@ async function initializeAdventureUI() {
             facilities.forEach(facility => {
                 const card = document.createElement('div');
                 card.className = 'adventure-facility-card';
-                // --- 核心修改處 START ---
-                // 移除了 facility-reward-preview 的 font-weight: bold;
                 card.innerHTML = `
                     <div class="facility-card-header">
                         <h4 class="facility-title">${facility.name || '未知設施'}</h4>
@@ -420,7 +423,6 @@ async function initializeAdventureUI() {
                         <button class="button primary challenge-facility-btn" data-facility-id="${facility.facilityId}">挑戰</button>
                     </div>
                 `;
-                // --- 核心修改處 END ---
                 facilityList.appendChild(card);
             });
         } else {
