@@ -174,28 +174,38 @@ async function handleAdventureChoiceClick(buttonElement) {
             );
 
         } else if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
-            await refreshPlayerData();
-            
             // --- 核心修改處 START ---
-            // 直接從戰鬥結果中獲取對戰雙方的最終資料
-            const finalCaptainMonster = battleResult.player_monster;
-            const finalOpponentMonster = battleResult.opponent_monster;
-            // --- 核心修改處 END ---
+            // 1. 在刷新任何資料前，先從 gameState 獲取戰鬥前的怪獸初始資料
+            const captainId = gameState.playerData.adventure_progress.expedition_team[0].monster_id;
+            const initialCaptainMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainId);
+            const initialOpponentMonster = gameState.currentAdventureEvent?.boss_data;
 
-            if (battleResult && battleResult.winner_id === finalCaptainMonster.id) {
+            // 2. 刷新玩家資料
+            await refreshPlayerData(); 
+            
+            // 3. 檢查初始資料是否存在
+            if (!initialCaptainMonster || !initialOpponentMonster) {
+                console.error("無法從 gameState 中獲取戰鬥前的怪獸初始資料。");
+                showFeedbackModal('錯誤', '無法顯示戰報，遺失了戰鬥前的怪獸資料。');
+                initializeAdventureUI(); // 將UI重置到安全狀態
+                return;
+            }
+
+            // 4. 根據勝負結果，使用正確的初始資料來顯示戰報
+            if (battleResult.winner_id === captainId) { // 勝利
                 gameState.playerData.adventure_progress = updatedProgress;
                 renderAdventureProgressUI(updatedProgress);
-                showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
+                showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster);
 
-            } else if (battleResult && battleResult.winner_id === "平手") {
+            } else if (battleResult.winner_id === "平手") { // 平手
                 const drawActions = [
                     { text: '放棄遠征', class: 'secondary', onClick: () => handleAbandonAdventure() },
                     { text: '再次挑戰', class: 'primary', onClick: () => handleAdventureChoiceClick(buttonElement) }
                 ];
-                showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster, drawActions);
+                showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster, drawActions);
 
-            } else {
-                showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
+            } else { // 戰敗
+                showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster);
                 
                 if (updatedProgress && updatedProgress.expedition_stats) {
                      setTimeout(() => {
@@ -205,7 +215,7 @@ async function handleAdventureChoiceClick(buttonElement) {
                     initializeAdventureUI();
                 }
             }
-
+            // --- 核心修改處 END ---
         } else {
             if (result.updated_player_stats) {
                 gameState.playerData.playerStats = result.updated_player_stats;
