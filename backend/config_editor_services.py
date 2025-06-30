@@ -6,45 +6,50 @@ import json
 import logging
 from flask import current_app
 from typing import Optional, Dict, Any, List, Union
+import re # 新增：導入正規表示式模組
 
 from firebase_admin import firestore
 from . import MD_firebase_config
 
 config_editor_logger = logging.getLogger(__name__)
 
-# Firestore 的檔案路徑映射，已更新為新的資料夾結構
+# --- 核心修改處 START ---
+# 在每個設定檔的元組中，新增第三個元素作為中文註解
 CONFIG_FILE_FIRESTORE_MAP = {
     # system/
-    "system/titles.json": ("Titles", "player_titles"),
-    "system/champion_guardians.json": ("ChampionGuardians", "guardians"),
-    "system/newbie_guide.json": ("NewbieGuide", "guide_entries"),
-    "system/cultivation_stories.json": ("CultivationStories", "story_library"),
-    "system/Rarities.json": ("Rarities", "dna_rarities"),
-    "system/ValueSettings.json": ("ValueSettings", None),
-    "system/CultivationSettings.json": ("CultivationSettings", None),
+    "system/titles.json": ("Titles", "player_titles", "玩家稱號"),
+    "system/champion_guardians.json": ("ChampionGuardians", "guardians", "冠軍殿堂守衛"),
+    "system/newbie_guide.json": ("NewbieGuide", "guide_entries", "新手指南"),
+    "system/cultivation_stories.json": ("CultivationStories", "story_library", "修煉冒險故事"),
+    "system/Rarities.json": ("Rarities", "dna_rarities", "稀有度設定"),
+    "system/ValueSettings.json": ("ValueSettings", None, "通用數值設定"),
+    "system/CultivationSettings.json": ("CultivationSettings", None, "修煉系統設定"),
     # battle/
-    "battle/battle_highlights.json": ("BattleHighlights", None),
-    "battle/status_effects.json": ("StatusEffects", "effects_list"),
-    "battle/elemental_advantage_chart.json": ("ElementalAdvantageChart", None),
+    "battle/battle_highlights.json": ("BattleHighlights", None, "戰鬥亮點風格"),
+    "battle/status_effects.json": ("StatusEffects", "effects_list", "戰鬥狀態效果"),
+    "battle/elemental_advantage_chart.json": ("ElementalAdvantageChart", None, "屬性相剋表"),
     # monster/
-    "monster/dna_fragments.json": ("DNAFragments", "all_fragments"),
-    "monster/element_nicknames.json": ("ElementNicknames", "nicknames"),
+    "monster/dna_fragments.json": ("DNAFragments", "all_fragments", "【已整合】全DNA碎片"),
+    "monster/element_nicknames.json": ("ElementNicknames", "nicknames", "怪獸屬性暱稱"),
     # monster/skills/
-    "monster/skills/dark.json": ("Skills", "skill_database.暗"),
-    "monster/skills/earth.json": ("Skills", "skill_database.土"),
-    "monster/skills/fire.json": ("Skills", "skill_database.火"),
-    "monster/skills/gold.json": ("Skills", "skill_database.金"),
-    "monster/skills/light.json": ("Skills", "skill_database.光"),
-    "monster/skills/mix.json": ("Skills", "skill_database.混"),
-    "monster/skills/none.json": ("Skills", "skill_database.無"),
-    "monster/skills/poison.json": ("Skills", "skill_database.毒"),
-    "monster/skills/water.json": ("Skills", "skill_database.水"),
-    "monster/skills/wind.json": ("Skills", "skill_database.風"),
-    "monster/skills/wood.json": ("Skills", "skill_database.木"),
-    "adventure/adventure_settings.json": ("AdventureSettings", None),
-    "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None),
-    "adventure/adventure_islands.json": ("AdventureIslands", "islands")
+    "monster/skills/dark.json": ("Skills", "skill_database.暗", "【暗】屬性技能"),
+    "monster/skills/earth.json": ("Skills", "skill_database.土", "【土】屬性技能"),
+    "monster/skills/fire.json": ("Skills", "skill_database.火", "【火】屬性技能"),
+    "monster/skills/gold.json": ("Skills", "skill_database.金", "【金】屬性技能"),
+    "monster/skills/light.json": ("Skills", "skill_database.光", "【光】屬性技能"),
+    "monster/skills/mix.json": ("Skills", "skill_database.混", "【混】屬性技能"),
+    "monster/skills/none.json": ("Skills", "skill_database.無", "【無】屬性技能"),
+    "monster/skills/poison.json": ("Skills", "skill_database.毒", "【毒】屬性技能"),
+    "monster/skills/water.json": ("Skills", "skill_database.水", "【水】屬性技能"),
+    "monster/skills/wind.json": ("Skills", "skill_database.風", "【風】屬性技能"),
+    "monster/skills/wood.json": ("Skills", "skill_database.木", "【木】屬性技能"),
+    # adventure/
+    "adventure/adventure_settings.json": ("AdventureSettings", None, "冒險島全域設定"),
+    "adventure/adventure_growth_settings.json": ("AdventureGrowthSettings", None, "冒險島隨機成長"),
+    "adventure/adventure_islands.json": ("AdventureIslands", "islands", "冒險島主要設定")
 }
+# --- 核心修改處 END ---
+
 
 # 本地設定檔的路徑也更新
 LOCAL_CONFIG_FILES = (
@@ -52,9 +57,24 @@ LOCAL_CONFIG_FILES = (
 )
 
 def list_editable_configs() -> list[str]:
-    """列出所有可透過後台編輯的設定檔名稱。"""
-    all_configs = list(CONFIG_FILE_FIRESTORE_MAP.keys()) + list(LOCAL_CONFIG_FILES)
-    return sorted(list(set([os.path.normpath(p) for p in all_configs])))
+    """列出所有可透過後台編輯的設定檔名稱，並附上中文註解。"""
+    all_configs = []
+    # --- 核心修改處 START ---
+    # 修改迴圈以讀取包含註解的元組
+    for path, value_tuple in CONFIG_FILE_FIRESTORE_MAP.items():
+        comment = value_tuple[2] if len(value_tuple) > 2 else "無註解"
+        all_configs.append(f"{os.path.normpath(path)} ({comment})")
+
+    # 為本地檔案也加上註解
+    local_comments = {
+        "game_mechanics.json": "核心遊戲機制"
+    }
+    for path in LOCAL_CONFIG_FILES:
+        comment = local_comments.get(path, "本地設定檔")
+        all_configs.append(f"{os.path.normpath(path)} ({comment})")
+    
+    return sorted(all_configs)
+    # --- 核心修改處 END ---
 
 def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Optional[str]]:
     """
@@ -64,7 +84,14 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
     if not db:
         return None, "資料庫服務未初始化。"
         
-    normalized_filename = os.path.normpath(filename)
+    # --- 核心修改處 START ---
+    # 從 "路徑 (註解)" 的格式中解析出實際的檔案路徑
+    match = re.match(r"([^ (]+)", filename)
+    if not match:
+        return None, f"無效的設定檔名格式: {filename}"
+    parsed_filename = match.group(1)
+    normalized_filename = os.path.normpath(parsed_filename)
+    # --- 核心修改處 END ---
 
     if normalized_filename in LOCAL_CONFIG_FILES:
         try:
@@ -84,7 +111,10 @@ def get_config_content(filename: str) -> tuple[Optional[Union[Dict, List]], Opti
     if normalized_filename not in CONFIG_FILE_FIRESTORE_MAP:
         return None, f"不支援的設定檔 '{normalized_filename}'。"
 
-    doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP[normalized_filename]
+    # --- 核心修改處 START ---
+    # 修改元組解包，以適應新的三元素格式
+    doc_name, field_path, _ = CONFIG_FILE_FIRESTORE_MAP[normalized_filename]
+    # --- 核心修改處 END ---
 
     try:
         doc_ref = db.collection('MD_GameConfigs').document(doc_name)
@@ -121,7 +151,14 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
     if not db:
         return False, "資料庫服務未初始化。"
         
-    normalized_filename = os.path.normpath(filename)
+    # --- 核心修改處 START ---
+    # 從 "路徑 (註解)" 的格式中解析出實際的檔案路徑
+    match = re.match(r"([^ (]+)", filename)
+    if not match:
+        return False, f"無效的設定檔名格式: {filename}"
+    parsed_filename = match.group(1)
+    normalized_filename = os.path.normpath(parsed_filename)
+    # --- 核心修改處 END ---
 
     if normalized_filename in LOCAL_CONFIG_FILES:
         try:
@@ -149,7 +186,10 @@ def save_config_content(filename: str, content_str: str) -> tuple[bool, Optional
         config_editor_logger.error(error_msg)
         return False, error_msg
 
-    doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP[normalized_filename]
+    # --- 核心修改處 START ---
+    # 修改元組解包，以適應新的三元素格式
+    doc_name, field_path, _ = CONFIG_FILE_FIRESTORE_MAP[normalized_filename]
+    # --- 核心修改處 END ---
     
     try:
         doc_ref = db.collection('MD_GameConfigs').document(doc_name)
@@ -284,7 +324,7 @@ def save_champion_guardians_service(guardians_data: Dict[str, Any]) -> tuple[boo
     將新的冠軍守衛資料儲存到 champion_guardians.json 檔案。
     """
     try:
-        doc_name, field_path = CONFIG_FILE_FIRESTORE_MAP["system/champion_guardians.json"]
+        doc_name, field_path, _ = CONFIG_FILE_FIRESTORE_MAP["system/champion_guardians.json"]
         
         db = MD_firebase_config.db
         if not db:
