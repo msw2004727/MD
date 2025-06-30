@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (targetId === 'elemental-advantage' && typeof initializeElementalSettings === 'function') initializeElementalSettings();
             if (targetId === 'log-monitoring') {
                 if (typeof initializeLogMonitoring === 'function') {
-                    logIntervalId = initializeLogMonitoring();
+                    logIntervalId = initializeLogMonitoring(DOMElements);
                 }
             }
             if (targetId === 'game-configs' && typeof initializeConfigEditor === 'function') {
