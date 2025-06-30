@@ -90,8 +90,9 @@ def _get_monster_current_stats(monster: Monster, player_data: Optional[PlayerGam
         player_stats = player_data.get("playerStats", {})
         equipped_id = player_stats.get("equipped_title_id")
         if equipped_id:
-            all_titles_config = game_configs.get("titles", [])
-            equipped_title = next((t for t in all_titles_config if t.get("id") == equipped_id), None)
+            # 修正：直接從 player_stats 的 titles 列表查找，而非從 game_configs
+            all_titles = player_stats.get("titles", [])
+            equipped_title = next((t for t in all_titles if t.get("id") == equipped_id), None)
             if equipped_title and equipped_title.get("buffs"):
                 title_buffs = equipped_title.get("buffs", {})
 
@@ -527,7 +528,9 @@ def simulate_battle_full(
         "battle_highlights": battle_highlights,
         "log_entries": [],
         "battle_end": True,
-        "ai_battle_report_content": ai_report
+        "ai_battle_report_content": ai_report,
+        "player_monster": player_monster,
+        "opponent_monster": opponent_monster
     }
     
     return final_battle_result
