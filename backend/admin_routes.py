@@ -2,28 +2,25 @@
 import os
 import jwt
 import json
-import uuid  # 新增：用於生成唯一的稱號ID
+import uuid
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Blueprint, jsonify, request, current_app
 from firebase_admin import firestore
 
-# --- 核心修改處：將大部分 import 移至函式內部 ---
-# from .player_services import get_player_data_service, save_player_data_service
-# from . import config_editor_services
+# --- 核心修改處 START ---
+# 導入 search_players_service
+from .leaderboard_search_services import search_players_service
+# --- 核心修改處 END ---
 
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/MD/admin')
 
-# --- 核心修改處：從環境變數讀取金鑰與密碼 ---
-# 從環境變數讀取，不再提供程式碼內的預設值
 ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'default_jwt_secret_for_dev_only')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
-# --- 核心修改處 END ---
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # 處理 CORS 預檢請求 (OPTIONS)
         if request.method == 'OPTIONS':
             return jsonify({'status': 'ok'}), 200
             
@@ -48,22 +45,19 @@ def token_required(f):
 
 @admin_bp.route('/login', methods=['POST', 'OPTIONS'])
 def admin_login():
-    # 處理 CORS 預檢請求 (OPTIONS)
     if request.method == 'OPTIONS':
         return jsonify({'status': 'ok'}), 200
         
     data = request.get_json()
 
-    # --- 核心修改處：增強密碼驗證邏輯 ---
     if not ADMIN_PASSWORD:
         current_app.logger.error("後台管理員密碼未在環境變數中設定，登入功能已禁用。")
-        return jsonify({'error': '後台登入功能未啟用。'}), 503 # 503 Service Unavailable
+        return jsonify({'error': '後台登入功能未啟用。'}), 503
 
     if not data or 'password' not in data:
         return jsonify({'error': '缺少密碼'}), 400
     
     if data['password'] == ADMIN_PASSWORD:
-    # --- 核心修改處 END ---
         token = jwt.encode({
             'user': 'admin',
             'exp': datetime.now(tz=timezone.utc) + timedelta(hours=8)
@@ -76,9 +70,6 @@ def admin_login():
 @admin_bp.route('/save_game_mechanics', methods=['POST', 'OPTIONS'])
 @token_required
 def save_game_mechanics_route():
-    """
-    接收來自前端「遊戲機制」面板的結構化資料，並儲存到 game_mechanics.json。
-    """
     from .config_editor_services import save_game_mechanics_service
     
     data = request.get_json()
@@ -269,9 +260,6 @@ def recall_mail_route():
 @admin_bp.route('/delete_cs_mail/<string:mail_id>', methods=['DELETE', 'OPTIONS'])
 @token_required
 def delete_cs_mail_route(mail_id):
-    """
-    刪除一封指定的客服信件。
-    """
     from . import MD_firebase_config
     db = MD_firebase_config.db
     if not db: 
@@ -295,9 +283,6 @@ def delete_cs_mail_route(mail_id):
 @admin_bp.route('/grant_exclusive_title', methods=['POST', 'OPTIONS'])
 @token_required
 def grant_exclusive_title_route():
-    """
-    授予一位玩家一個客製化的專屬稱號。
-    """
     from .player_services import get_player_data_service, save_player_data_service
     from .mail_services import add_mail_to_player
 
@@ -323,7 +308,6 @@ def grant_exclusive_title_route():
     if not player_data:
         return jsonify({"error": f"找不到 UID 為 {player_uid} 的玩家資料。"}), 404
 
-    # 創建一個獨一無二的稱號物件
     new_title = {
         "id": f"exclusive_{str(uuid.uuid4())[:8]}",
         "name": title_name,
@@ -335,10 +319,8 @@ def grant_exclusive_title_route():
     if "titles" not in player_data["playerStats"]:
         player_data["playerStats"]["titles"] = []
     
-    # 將新稱號加到玩家的稱號列表最前面
     player_data["playerStats"]["titles"].insert(0, new_title)
     
-    # 寄送一封通知信給玩家
     mail_content = f"恭喜您！由於您的卓越表現，管理員特別授予您獨一無二的專屬稱號：「{title_name}」。\n\n效果：{json.dumps(buffs, ensure_ascii=False)}\n\n此稱號已加入您的收藏，您現在可以前往玩家資訊面板中裝備它！"
     mail_template = {
         "type": "reward",
@@ -354,3 +336,26 @@ def grant_exclusive_title_route():
         return jsonify({"success": True, "message": f"已成功授予玩家「{player_data.get('nickname')}」專屬稱號「{title_name}」。"}), 200
     else:
         return jsonify({"error": "授予稱號後儲存玩家資料失敗。"}), 500
+
+# --- 核心修改處 START ---
+@admin_bp.route('/players/search', methods=['GET', 'OPTIONS'])
+@token_required
+def admin_search_players_route():
+    """
+    (Admin) 根據暱稱搜尋玩家。
+    """
+    nickname_query = request.args.get('nickname', '').strip()
+    limit_str = request.args.get('limit', '10')
+    try:
+        limit = int(limit_str)
+        if limit <= 0 or limit > 50:
+            limit = 10
+    except ValueError:
+        limit = 10
+    
+    if not nickname_query:
+        return jsonify({"error": "請提供搜尋的暱稱關鍵字。"}), 400
+
+    results = search_players_service(nickname_query, limit)
+    return jsonify({"players": results}), 200
+# --- 核心修改處 END ---
