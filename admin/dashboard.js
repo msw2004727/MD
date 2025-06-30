@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             configFileSelector: document.getElementById('config-file-selector'),
             configDisplayArea: document.getElementById('game-configs-display'),
             saveConfigBtn: document.getElementById('save-config-btn'),
+            exportConfigBtn: document.getElementById('export-config-btn'),
             configResponseEl: document.getElementById('config-response'),
 
             // 日誌監控
@@ -661,7 +662,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 bossMultiplierInput.value = advSettings.boss_difficulty_multiplier_per_floor || 1.1;
                 
-                // --- 核心修改處 START ---
                 if (islandsData && Array.isArray(islandsData) && islandsData.length > 0) {
                     const facilities = islandsData[0].facilities || [];
                     
@@ -692,7 +692,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     facilitiesContainer.innerHTML = '<p class="placeholder-text">找不到設施資料。</p>';
                 }
-                // --- 核心修改處 END ---
                 
                 if (growthSettings && growthSettings.facilities) {
                     const facilityNames = {};
@@ -743,11 +742,8 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             const facilitiesSettings = [];
-            // --- 核心修改處 START ---
-            // 修改 querySelector 以匹配新的 HTML 結構
             facilitiesContainer.querySelectorAll('input[data-facility-id]').forEach(input => {
                 const facilityId = input.dataset.facilityId;
-                // 防止重複添加
                 if (!facilitiesSettings.some(f => f.id === facilityId)) {
                     facilitiesSettings.push({
                         id: facilityId,
@@ -757,7 +753,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
             });
-            // --- 核心修改處 END ---
 
             saveBtn.disabled = true;
             saveBtn.textContent = '儲存中...';
@@ -1178,7 +1173,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存修煉設定';
             }
         }
+        
+        // --- 核心修改處 START ---
+        // 新增匯出按鈕的事件處理函式
+        function handleExportConfig() {
+            const { configFileSelector, configDisplayArea } = DOMElements;
+            const selectedFileOption = configFileSelector.options[configFileSelector.selectedIndex];
+            const fullFileNameStr = selectedFileOption.text;
+            const content = configDisplayArea.value;
 
+            if (!content || content.startsWith('請從上方選擇') || content.startsWith('正在從伺服器')) {
+                alert('沒有可匯出的內容。請先選擇並載入一個設定檔。');
+                return;
+            }
+
+            const match = fullFileNameStr.match(/([^ (]+)/);
+            if (!match) {
+                alert('無法從選項中解析出有效的檔案名稱。');
+                return;
+            }
+            const cleanPath = match[1];
+            const filename = cleanPath.split('/').pop(); // 只取檔名部分
+
+            try {
+                // 驗證內容是否為合法的 JSON
+                JSON.parse(content);
+                const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (e) {
+                alert('匯出失敗：目前的內容不是有效的 JSON 格式，請修正後再試。');
+            }
+        }
+        // --- 核心修改處 END ---
 
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
@@ -1235,6 +1269,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (DOMElements.elementalAdvantage.saveBtn) {
             DOMElements.elementalAdvantage.saveBtn.addEventListener('click', handleSaveElementalChart);
         }
+        
+        // --- 核心修改處 START ---
+        // 為新按鈕綁定事件
+        if(DOMElements.exportConfigBtn) {
+            DOMElements.exportConfigBtn.addEventListener('click', handleExportConfig);
+        }
+        // --- 核心修改處 END ---
 
         // --- 初始執行 ---
         updateTime();
