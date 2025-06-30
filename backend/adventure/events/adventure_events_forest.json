@@ -40,8 +40,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "在追捕過程中，{monster_name}不小心被樹根絆倒，摔了一跤。 [損失：隊伍隨機單體HP -500] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -500 }]
+            "story_fragment": "在追捕過程中，{monster_name}不小心被樹根絆倒，摔了一跤。 [損失：隊伍隨機單體HP -50] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -50 }]
           }
         ]
       }
@@ -59,8 +59,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 80,
-            "story_fragment": "清涼的溪水洗去了隊伍的疲憊，大家感到精神煥發！ [獲得：隊伍全員HP +200]💧",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 200 }]
+            "story_fragment": "清涼的溪水洗去了隊伍的疲憊，大家感到精神煥發！ [獲得：隊伍全員HP +20]💧",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 20 }]
           },
           {
             "type": "neutral", "weight": 20,
@@ -88,8 +88,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "在尋找時，一隻螃蟹夾了{monster_name}的腳一下！ [損失：隊伍隨機單體HP -100] 🦀",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -100 }]
+            "story_fragment": "在尋找時，一隻螃蟹夾了{monster_name}的腳一下！ [損失：隊伍隨機單體HP -10] 🦀",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
           }
         ]
       }
@@ -117,8 +117,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "哎呀！果實有毒！{monster_name}吃完後肚子痛了起來。 [損失：選擇者HP -200] 🤢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "member_who_chose", "amount": -200 }]
+            "story_fragment": "哎呀！果實有毒！{monster_name}吃完後肚子痛了起來。 [損失：選擇者HP -20] 🤢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "member_who_chose", "amount": -20 }]
           }
         ]
       },
@@ -209,8 +209,8 @@
           },
           {
             "type": "negative", "weight": 10,
-            "story_fragment": "火勢有點失控，{monster_name}被燻得灰頭土臉。 [損失：隊伍隨機單體HP -100] 🥵",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -100 }]
+            "story_fragment": "火勢有點失控，{monster_name}被燻得灰頭土臉。 [損失：隊伍隨機單體HP -10] 🥵",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -10 }]
           }
         ]
       },
@@ -225,8 +225,8 @@
           },
           {
             "type": "neutral", "weight": 70,
-            "story_fragment": "隊伍中力量最強的怪獸費了九牛二虎之力才清開道路，消耗了不少體力。 [損失：最強者HP -100] 😥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest", "amount": -100 }]
+            "story_fragment": "隊伍中力量最強的怪獸費了九牛二虎之力才清開道路，消耗了不少體力。 [損失：最強者HP -10] 😥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_strongest", "amount": -10 }]
           },
           {
             "type": "negative", "weight": 20,
@@ -276,8 +276,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "松鼠被激怒了，呼朋引伴從樹上丟下大量果子砸你們！ [損失：隊伍全員HP -100] 🌰",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
+            "story_fragment": "松鼠被激怒了，呼朋引伴從樹上丟下大量果子砸你們！ [損失：隊伍全員HP -10] 🌰",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
           }
         ]
       }
@@ -385,8 +385,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 70,
-            "story_fragment": "樹精很高興，它搖晃樹枝，掉下一些新鮮的漿果給你們吃，恢復了隊伍的體力。 [獲得：隊伍全員HP +250] 🍓",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 250 }]
+            "story_fragment": "樹精很高興，它搖晃樹枝，掉下一些新鮮的漿果給你們吃，恢復了隊伍的體力。 [獲得：隊伍全員HP +25] 🍓",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 25 }]
           },
           {
             "type": "neutral", "weight": 30,
@@ -412,8 +412,8 @@
           },
           {
             "type": "negative", "weight": 20,
-            "story_fragment": "你們的敵意惹惱了樹精，它用藤蔓抽打了你們一下才離開。 [損失：隊伍隨機單體HP -150] 😠",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -150 }]
+            "story_fragment": "你們的敵意惹惱了樹精，它用藤蔓抽打了你們一下才離開。 [損失：隊伍隨機單體HP -15] 😠",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -15 }]
           }
         ]
       }
@@ -455,8 +455,8 @@
           },
           {
             "type": "neutral", "weight": 40,
-            "story_fragment": "你們和捕蠅草纏鬥了一番，最終它縮回了地下。 [損失：隊伍全員HP -100] ⚔️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -100 }]
+            "story_fragment": "你們和捕蠅草纏鬥了一番，最終它縮回了地下。 [損失：隊伍全員HP -10] ⚔️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -10 }]
           },
           {
             "type": "negative", "weight": 40,
@@ -597,8 +597,8 @@
           },
           {
             "type": "negative", "weight": 50,
-            "story_fragment": "你戳得太用力了，負鼠裝死失敗，惱羞成怒咬了{monster_name}一口才逃跑！ [損失：隊伍隨機單體HP -200] 💢",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -200 }]
+            "story_fragment": "你戳得太用力了，負鼠裝死失敗，惱羞成怒咬了{monster_name}一口才逃跑！ [損失：隊伍隨機單體HP -20] 💢",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_random_one", "amount": -20 }]
           }
         ]
       }
@@ -616,8 +616,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 30,
-            "story_fragment": "你們成功偷到了一些蜂蜜，味道好極了！全隊恢復了大量體力！ [獲得：隊伍全員HP +500] 🍯",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 500 }]
+            "story_fragment": "你們成功偷到了一些蜂蜜，味道好極了！全隊恢復了大量體力！ [獲得：隊伍全員HP +50] 🍯",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 50 }]
           },
           {
             "type": "neutral", "weight": 30,
@@ -626,8 +626,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "你們的行動驚動了整個蜂巢！被憤怒的蜂群追了九條街！ [損失：隊伍全員HP -400] 😱",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -400 }]
+            "story_fragment": "你們的行動驚動了整個蜂巢！被憤怒的蜂群追了九條街！ [損失：隊伍全員HP -40] 😱",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -40 }]
           }
         ]
       },
@@ -664,8 +664,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 40,
-            "story_fragment": "雖然五音不全，但你們的誠意打動了怪鳥，它高興地從窩裡丟下一枚閃亮的寶石。 [獲得：金幣 x50]🎶",
-            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 50 }]
+            "story_fragment": "雖然五音不全，但你們的誠意打動了怪鳥，它高興地從窩裡丟下一枚閃亮的寶石。 [獲得：金幣 x5]🎶",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": 5 }]
           },
           {
             "type": "neutral", "weight": 30,
@@ -722,8 +722,8 @@
           },
           {
             "type": "negative", "weight": 40,
-            "story_fragment": "{monster_name}不小心踢到一顆小石頭，吵醒了巨熊！你們被追著打！ [損失：隊伍全員HP -350] 💥",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -350 }]
+            "story_fragment": "{monster_name}不小心踢到一顆小石頭，吵醒了巨熊！你們被追著打！ [損失：隊伍全員HP -35] 💥",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -35 }]
           }
         ]
       },
@@ -760,18 +760,18 @@
         "outcomes": [
           {
             "type": "positive", "weight": 40,
-            "story_fragment": "你買下後，哥布林高興地給了你一個菁英級的混之DNA！物超所值！ [獲得：菁英混之DNA x1] [損失：金幣 x30] 🤑",
-            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "mix_elite", "quantity": 1 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": -30 }]
+            "story_fragment": "你買下後，哥布林高興地給了你一個菁英級的混之DNA！物超所值！ [獲得：菁英混之DNA x1] [損失：金幣 x3] 🤑",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "mix_elite", "quantity": 1 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": -3 }]
           },
           {
             "type": "neutral", "weight": 30,
-            "story_fragment": "你買下後，哥布林給了你一個普通的無屬性DNA，還說「謝謝惠顧」。 [獲得：普通無之DNA x1] [損失：金幣 x30] 😐",
-            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "none_common", "quantity": 1 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": -30 }]
+            "story_fragment": "你買下後，哥布林給了你一個普通的無屬性DNA，還說「謝謝惠顧」。 [獲得：普通無之DNA x1] [損失：金幣 x3] 😐",
+            "effects": [{ "effect": "give_item", "item_type": "dna", "item_pool_id": "none_common", "quantity": 1 }, { "effect": "change_resource", "resource": "gold", "target": "player", "amount": -3 }]
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "你付錢後，哥布林給了你一塊石頭，然後一溜煙跑了。「這是最新的土屬性DNA原型機！」它的聲音從遠方傳來。 [損失：金幣 x30] 💸",
-            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": -30 }]
+            "story_fragment": "你付錢後，哥布林給了你一塊石頭，然後一溜煙跑了。「這是最新的土屬性DNA原型機！」它的聲音從遠方傳來。 [損失：金幣 x3] 💸",
+            "effects": [{ "effect": "change_resource", "resource": "gold", "target": "player", "amount": -3 }]
           }
         ]
       },
@@ -862,8 +862,8 @@
           },
           {
             "type": "negative", "weight": 30,
-            "story_fragment": "這是一個陷阱！你們掉進了一個坑裡！ [損失：隊伍全員HP -200] 🕳️",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -200 }]
+            "story_fragment": "這是一個陷阱！你們掉進了一個坑裡！ [損失：隊伍全員HP -20] 🕳️",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": -20 }]
           }
         ]
       },
@@ -902,8 +902,8 @@
         "outcomes": [
           {
             "type": "positive", "weight": 80,
-            "story_fragment": "你們笨拙的舞姿把大家都逗樂了！快樂的氛圍治癒了隊伍的疲憊。 [獲得：隊伍全員HP/MP +100] 💃",
-            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 100 }, { "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 100 }]
+            "story_fragment": "你們笨拙的舞姿把大家都逗樂了！快樂的氛圍治癒了隊伍的疲憊。 [獲得：隊伍全員HP/MP +10] 💃",
+            "effects": [{ "effect": "change_resource", "resource": "hp", "target": "team_all", "amount": 10 }, { "effect": "change_resource", "resource": "mp", "target": "team_all", "amount": 100 }]
           },
           {
             "type": "neutral", "weight": 20,
