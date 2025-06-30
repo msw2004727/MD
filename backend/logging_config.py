@@ -94,7 +94,6 @@ def setup_logging():
 <head>
     <meta charset="UTF-8">
     <title>遊戲後端日誌</title>
-    <meta http-equiv="refresh" content="5">
     <style>
         body { font-family: 'Courier New', Courier, monospace; background-color: #1a1a1a; color: #f0f0f0; margin: 0; padding: 10px; }
         body { display: flex; flex-direction: column-reverse; }
