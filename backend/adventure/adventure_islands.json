@@ -48,7 +48,7 @@
         "facilityId": "facility_004",
         "name": "古代遺蹟",
         "description": "古老文明的斷垣殘壁，光與暗的力量在此交織，據說有傳說中的DNA存在。",
-        "reward_preview": "困難，(80%)4數值成長",
+        "reward_preview": "困難，(50%)4數值成長",
         "level_range": [25, 40],
         "cost": 300,
         "event_pool_id": "events_ruins",
