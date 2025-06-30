@@ -1173,9 +1173,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 saveBtn.textContent = '儲存修煉設定';
             }
         }
-        
-        // --- 核心修改處 START ---
-        // 新增匯出按鈕的事件處理函式
+
         function handleExportConfig() {
             const { configFileSelector, configDisplayArea } = DOMElements;
             const selectedFileOption = configFileSelector.options[configFileSelector.selectedIndex];
@@ -1212,7 +1210,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('匯出失敗：目前的內容不是有效的 JSON 格式，請修正後再試。');
             }
         }
-        // --- 核心修改處 END ---
 
         // --- 事件綁定 ---
         DOMElements.navItems.forEach(item => item.addEventListener('click', (e) => { e.preventDefault(); switchTab(e.target.dataset.target); }));
@@ -1270,12 +1267,9 @@ document.addEventListener('DOMContentLoaded', function() {
             DOMElements.elementalAdvantage.saveBtn.addEventListener('click', handleSaveElementalChart);
         }
         
-        // --- 核心修改處 START ---
-        // 為新按鈕綁定事件
         if(DOMElements.exportConfigBtn) {
             DOMElements.exportConfigBtn.addEventListener('click', handleExportConfig);
         }
-        // --- 核心修改處 END ---
 
         // --- 初始執行 ---
         updateTime();
