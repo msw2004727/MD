@@ -1,7 +1,6 @@
 // admin/js/admin-logs.js
 
-function initializeLogMonitoring() {
-    const DOMElements = window.DOMElements || initializeDOMElements();
+function initializeLogMonitoring(DOMElements) {
     const adminToken = localStorage.getItem('admin_token');
     const ADMIN_API_URL = 'https://md-server-5wre.onrender.com/api/MD';
     
