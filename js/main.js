@@ -240,10 +240,11 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers', 'initializeAdventureHandlers'
+        'initializeMailboxEventHandlers', 'initializeAdventureHandlers',
+        'initializeTrainingHandlers' // --- 核心修改處 START --- (新增)
     ];
     
-    const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
+    const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function' && typeof self[fnName] !== 'function');
 
     if (undefinedFunctions.length === 0) {
         console.log("所有核心函式已準備就緒，開始初始化應用程式。");
@@ -260,6 +261,7 @@ function attemptToInitializeApp() {
         initializeChatSystem();
         initializeMailboxEventHandlers();
         initializeAdventureHandlers();
+        initializeTrainingHandlers(); // --- 核心修改處 START --- (新增)
 
         setInterval(updateAllTimers, 1000);
 
@@ -279,7 +281,3 @@ document.addEventListener('DOMContentLoaded', attemptToInitializeApp);
 window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
 console.log("Main.js script loaded.");
-
-// NOTE: The IIFE script loader from the original file is omitted here,
-// as the loading is now correctly handled by index.html.
-// This makes main.js cleaner and solely focused on application logic.
