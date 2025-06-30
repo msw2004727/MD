@@ -180,16 +180,6 @@
     text-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
 
-.team-member-card .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-size: cover;
-    background-position: center;
-    flex-shrink: 0;
-    border: 1px solid var(--border-color);
-}
-
 .team-member-card .info {
     flex-grow: 1;
 }
@@ -308,7 +298,6 @@
 .summary-stat-value.text-danger { color: var(--danger-color); }
 .summary-stat-value.text-success { color: var(--success-color); }
 
-/* --- 核心修改處 START --- */
 .random-growth-display {
     padding: 1rem 0;
     margin-top: 1rem;
@@ -328,10 +317,23 @@
     border-left: 4px solid var(--success-color);
     animation: fadeIn 0.5s ease-in-out;
 }
+
+/* --- 核心修改處 START --- */
+/* 將 .team-member-card .avatar 和 .growth-result-card .avatar 的樣式合併 */
+.team-member-card .avatar,
 .growth-result-card .avatar {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-slot); /* 新增背景色作為圖片載入前的底色 */
 }
+/* --- 核心修改處 END --- */
+
 .growth-info {
     display: flex;
     flex-direction: column;
@@ -345,4 +347,3 @@
     color: var(--success-color);
     font-size: 0.9rem;
 }
-/* --- 核心修改處 END --- */
