@@ -28,11 +28,7 @@ DEFAULT_AI_RESPONSES = {
     "aiEvaluation": "AI 綜合評價生成失敗。由於未能全面評估此怪獸，暫時無法給出具體的培養建議。但請相信，每一隻怪獸都有其獨特之處，用心培養，定能發光發熱。"
 }
 
-# --- 核心修改處 START ---
-# 新增缺少的 DEFAULT_CHAT_REPLY 變數
 DEFAULT_CHAT_REPLY = "（...）"
-# --- 核心修改處 END ---
-
 DEFAULT_ADVENTURE_STORY = "AI 冒險故事生成失敗。這次的冒險充滿了未知與謎團，許多細節都模糊不清，無法被準確記錄下來。"
 DEFAULT_BATTLE_SUMMARY = "AI 戰報總結生成失敗。這場戰鬥的過程太過激烈，快到無法看清細節，只留下了勝利或失敗的結果。"
 
@@ -296,15 +292,12 @@ def generate_battle_report_content(battle_result: Dict[str, Any], monster1_name:
         growth_details = [f"**{stat.upper()} +{gain}**" for stat, gain in absorption_details["stat_gains"].items()]
         growth_info_parts.append(f"怪獸成長：吸收了能量，獲得能力提升（{', '.join(growth_details)}）。")
 
-    # --- 核心修改處 START ---
-    # 修正函式返回值，確保返回的是一個字典而不是字串
     final_report = {
         "battle_summary": ai_summary,
         "loot_info": " ".join(loot_info_parts),
         "growth_info": " ".join(growth_info_parts),
     }
     return final_report
-    # --- 核心修改處 END ---
 
 
 def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry], player_nickname: str, interaction_type: Optional[str] = None) -> str:
@@ -312,11 +305,11 @@ def generate_chat_response(monster: Monster, chat_history: List[ChatHistoryEntry
     根據怪獸的性格和對話歷史生成回應。
     """
     
-    personality_summary = f"你是 {monster.get('nickname')}，你的性格是：{monster.get('personality', {}).get('name')}。"
+    personality_summary = f"你是 {monster.get('nickname')}，你的性格是：{monster.get('personality', {}).get('name', '未知的')}。"
 
     system_prompt = (
         f"你是一隻名為'{monster.get('nickname')}'的怪獸，你的主人是'{player_nickname}'。"
-        f"你的性格特質是：{monster.get('personality', {}).get('name')}。"
+        f"你的性格特質是：{monster.get('personality', {}).get('name', '未知')}。"
         "請根據你的性格和以下的對話歷史，用繁體中文、非常簡短且口語化的方式回應。"
         "你的回答嚴格限制在 30 個字以內。不要使用 '*' 或任何 markdown 語法，就像在聊天一樣直接說話。"
     )
@@ -419,6 +412,42 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
     context = ""
     source = None
 
+    # --- 核心修改處 START ---
+    # 新增對「屬性相剋」的查詢邏輯
+    if "克" in query or "剋" in query or "效果" in query:
+        elements = ["火", "水", "木", "金", "土", "光", "暗", "毒", "風", "無", "混"]
+        found_elements = [el for el in elements if el in player_message]
+        if len(found_elements) >= 2:
+            attacker = found_elements[0]
+            defender = found_elements[1]
+            chart = game_configs.get("elemental_advantage_chart", {})
+            multiplier = chart.get(attacker, {}).get(defender, 1.0)
+            
+            if multiplier > 1.0:
+                verdict = f"效果絕佳，有 {multiplier} 倍的加成！"
+            elif multiplier < 1.0:
+                verdict = f"效果不太好，只有 {multiplier} 倍的效果。"
+            else:
+                verdict = "沒有特殊的效果，是一般的傷害。"
+                
+            context = f"關於屬性相剋，根據我的知識，{attacker}屬性攻擊{defender}屬性，{verdict}"
+            source = "屬性相剋表"
+            return {"source": source, "context": context}
+
+    # 新增對「DNA數值」的查詢邏輯
+    all_dna_fragments = game_configs.get("dna_fragments", [])
+    for dna in all_dna_fragments:
+        if dna['name'].lower() in query:
+            stats = [
+                f"HP:{dna.get('hp', 0)}", f"MP:{dna.get('mp', 0)}",
+                f"攻擊:{dna.get('attack', 0)}", f"防禦:{dna.get('defense', 0)}",
+                f"速度:{dna.get('speed', 0)}", f"爆擊:{dna.get('crit', 0)}%"
+            ]
+            context = f"我知道「{dna['name']}」這個DNA碎片！它的數值是：{', '.join(stats)}。這是一個{dna.get('rarity')}的{dna.get('type')}屬性碎片喔。"
+            source = f"DNA碎片: {dna['name']}"
+            return {"source": source, "context": context}
+    # --- 核心修改處 END ---
+
     all_skills = [skill for skills_by_type in game_configs.get("skills", {}).values() for skill in skills_by_type]
     for skill in all_skills:
         if skill['name'].lower() in query:
@@ -439,7 +468,6 @@ def _get_world_knowledge_context(player_message: str, game_configs: GameConfigs,
             return {"source": source, "context": context}
             
     game_concepts = {
-        "屬性克制": "在這個世界，屬性克制很重要！例如火剋木，水剋火。用對了屬性，打起架來會輕鬆很多喔！",
         "合成": "我們可以把5個DNA碎片合在一起，變成一隻新的怪獸夥伴！",
         "修煉": "修煉可以讓我們變強，不只HP、攻擊這些會成長，技能也會升級！",
         "DNA": "DNA碎片是組成我們的基本材料，聽說稀有度越高的DNA，合出來的夥伴就越厲害！"
