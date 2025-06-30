@@ -137,10 +137,10 @@ async function handleAdventureChoiceClick(buttonElement) {
             throw new Error(result?.error || '處理事件時發生未知錯誤。');
         }
         
-        // --- 核心修改處 START ---
         const battleResult = result.battle_result;
         const updatedProgress = result.updated_progress;
         
+        // --- 核心修改處 START ---
         if (result.event_outcome === 'captain_defeated') {
             await refreshPlayerData(); 
             
@@ -163,8 +163,8 @@ async function handleAdventureChoiceClick(buttonElement) {
             await refreshPlayerData();
             
             const currentProgress = gameState.playerData?.adventure_progress;
-            const currentEvent = currentProgress?.current_event;
-            const captainId = currentProgress?.expedition_team?.[0]?.monster_id;
+            const currentEvent = updatedProgress?.current_event; // 使用更新後的進度
+            const captainId = updatedProgress?.expedition_team?.[0]?.monster_id;
             
             const finalCaptainMonster = captainId ? gameState.playerData.farmedMonsters.find(m => m.id === captainId) : null;
             const finalOpponentMonster = currentEvent?.boss_data;
