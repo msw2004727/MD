@@ -176,14 +176,13 @@ async function handleAdventureChoiceClick(buttonElement) {
         } else if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
             await refreshPlayerData();
             
-            const currentProgress = gameState.playerData?.adventure_progress;
-            const currentEvent = updatedProgress?.current_event;
-            const captainId = updatedProgress?.expedition_team?.[0]?.monster_id;
-            
-            const finalCaptainMonster = captainId ? gameState.playerData.farmedMonsters.find(m => m.id === captainId) : null;
-            const finalOpponentMonster = currentEvent?.boss_data;
+            // --- 核心修改處 START ---
+            // 直接從戰鬥結果中獲取對戰雙方的最終資料
+            const finalCaptainMonster = battleResult.player_monster;
+            const finalOpponentMonster = battleResult.opponent_monster;
+            // --- 核心修改處 END ---
 
-            if (battleResult && battleResult.winner_id === captainId) {
+            if (battleResult && battleResult.winner_id === finalCaptainMonster.id) {
                 gameState.playerData.adventure_progress = updatedProgress;
                 renderAdventureProgressUI(updatedProgress);
                 showBattleLogModal(battleResult, finalCaptainMonster, finalOpponentMonster);
