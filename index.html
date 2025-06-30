@@ -23,7 +23,8 @@
             'css/modals.css',
             'css/champions.css',
             'css/mailbox.css',
-            'css/adventure.css'
+            'css/adventure.css',
+            'css/training.css' // --- 核心修改處 START --- (新增 training.css)
         ];
         
         cssFiles.forEach(path => {
@@ -218,9 +219,13 @@
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練場器材進駐中，敬請期待！</p>
+                    <div class="panel-title-container">
+                        <h2 class="panel-title dna-panel-title">🏋️ 訓練場</h2>
+                        <span class="panel-title-hint dna-panel-hint">選擇一個項目來強化您的怪獸！</span>
+                    </div>
+                    <div id="training-options-container" class="training-options-grid mt-4">
+                        </div>
                 </div>
-
                 <div id="exchange-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易所搭建中，敬請期待！</p>
                 </div>
