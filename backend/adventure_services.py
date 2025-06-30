@@ -274,6 +274,13 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
             if team_members:
                 random_monster_name = random.choice(team_members).get("nickname", "你的怪獸")
                 chosen_event["description"] = chosen_event.get("description_template", "").format(monster_name=random_monster_name)
+                
+                # --- 核心修改處 START ---
+                for choice in chosen_event.get("choices", []):
+                    if "text" in choice and isinstance(choice["text"], str):
+                        choice["text"] = choice["text"].format(monster_name=random_monster_name)
+                # --- 核心修改處 END ---
+                
             chosen_event.pop("description_template", None)
             event_data = chosen_event
 
@@ -489,8 +496,7 @@ def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: s
     
     return player_data
 
-# --- 核心修改處 START ---
-# 修改 _finalize_adventure_gains 函式，不再合併與清空 adventure_gains
+
 def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
     """
     結算遠征隊伍所有成員在冒險中獲得的數值成長。
@@ -511,14 +517,6 @@ def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
 
             adventure_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
             
-            # 將 adventure_gains 的數值加到 cultivation_gains 中 (已註解)
-            # cultivation_gains = monster.setdefault("cultivation_gains", {})
-            # for stat, value in gains.items():
-            #     cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
-            
-            # 清空冒險成長記錄 (已註解)
-            # monster["adventure_gains"] = {}
             pass # 保留 adventure_gains，不做任何事
 
     return player_data
-# --- 核心修改處 END ---
