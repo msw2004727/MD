@@ -275,11 +275,9 @@ def advance_floor_service(player_data: PlayerGameData, game_configs: GameConfigs
                 random_monster_name = random.choice(team_members).get("nickname", "你的怪獸")
                 chosen_event["description"] = chosen_event.get("description_template", "").format(monster_name=random_monster_name)
                 
-                # --- 核心修改處 START ---
                 for choice in chosen_event.get("choices", []):
                     if "text" in choice and isinstance(choice["text"], str):
                         choice["text"] = choice["text"].format(monster_name=random_monster_name)
-                # --- 核心修改處 END ---
                 
             chosen_event.pop("description_template", None)
             event_data = chosen_event
@@ -336,6 +334,31 @@ def complete_floor_service(player_data: PlayerGameData, game_configs: GameConfig
         "message": f"恭喜通關第 {current_floor} 層！獲得 {gold_reward} 金幣獎勵！",
         "updated_progress": progress
     }
+
+# --- 核心修改處 START ---
+def _sync_and_finalize_expedition(player_data: PlayerGameData) -> PlayerGameData:
+    """
+    一個新的輔助函式，用於結束遠征時同步隊員狀態並結算成長。
+    """
+    progress = player_data.get("adventure_progress")
+    if not progress:
+        return player_data
+        
+    farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
+    
+    # 同步隊員的HP/MP回農場
+    for member in progress.get("expedition_team", []):
+        monster_in_farm = farmed_monsters_map.get(member["monster_id"])
+        if monster_in_farm:
+            monster_in_farm["hp"] = member.get("current_hp", monster_in_farm["hp"])
+            monster_in_farm["mp"] = member.get("current_mp", monster_in_farm["mp"])
+            adventure_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
+
+    # 結算冒險成長（只記錄日誌）
+    player_data = _finalize_adventure_gains(player_data)
+    
+    return player_data
+# --- 核心修改處 END ---
 
 def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, game_configs: GameConfigs) -> Dict[str, Any]:
     """
@@ -409,6 +432,7 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                         targets_to_affect = []
                         if effect.get("target") == "team_all": targets_to_affect = team_members
                         elif effect.get("target") in ["team_random_one", "member_who_chose", "team_strongest_def", "team_strongest", "team_fastest"] and team_members:
+                            # 為了簡化，目前這些都隨機選擇一個目標
                             targets_to_affect = [random.choice(team_members)]
                         
                         for member in targets_to_affect:
@@ -449,6 +473,31 @@ def resolve_event_choice_service(player_data: PlayerGameData, choice_id: str, ga
                     applied_effects.append({"type": "debuff", "stat": effect.get("stat", "未知")})
 
     progress["current_event"] = None
+
+    # --- 核心修改處 START ---
+    # 檢查隊長是否陣亡
+    if team_members:
+        captain = team_members[0]
+        if captain.get("current_hp", 1) <= 0:
+            adventure_logger.info(f"遠征隊長 {captain.get('nickname')} HP歸零，遠征失敗。")
+            
+            # 呼叫新的輔助函式來處理結束邏輯
+            player_data = _sync_and_finalize_expedition(player_data)
+            final_stats = progress.get("expedition_stats")
+            
+            # 設定遠征為非活動狀態
+            progress["is_active"] = False
+            player_data["adventure_progress"] = progress
+            
+            # 回傳一個新的結果類型，讓路由和前端知道遠征已結束
+            return {
+                "success": True,
+                "event_outcome": "captain_defeated",
+                "outcome_story": f"{outcome_story}\n\n然而，這次的傷害是致命的...遠征隊長 **{captain.get('nickname')}** 倒下了！遠征隊被迫撤退。",
+                "updated_progress": progress,
+                "final_stats": final_stats
+            }
+    # --- 核心修改處 END ---
 
     random_growth_result = _handle_random_growth_event(player_data, progress, game_configs)
     
@@ -496,7 +545,6 @@ def switch_captain_service(player_data: PlayerGameData, monster_id_to_promote: s
     
     return player_data
 
-
 def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
     """
     結算遠征隊伍所有成員在冒險中獲得的數值成長。
@@ -517,6 +565,6 @@ def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
 
             adventure_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
             
-            pass # 保留 adventure_gains，不做任何事
+            pass 
 
     return player_data
