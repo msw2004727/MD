@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《怪獸異世界》遊戲白皮書</title>
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --panel-dark: #161b22;
+            --border-dark: #30363d;
+            --text-primary-dark: #c9d1d9;
+            --text-secondary-dark: #8b949e;
+            --accent-dark: #58a6ff;
+            --success-dark: #3fb950;
+            --danger-dark: #f85149;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: var(--bg-dark);
+            color: var(--text-primary-dark);
+            line-height: 1.7;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 960px;
+            margin: auto;
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        header {
+            padding: 2rem;
+            background-color: var(--bg-dark);
+            text-align: center;
+            border-bottom: 1px solid var(--border-dark);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: var(--accent-dark);
+            letter-spacing: 2px;
+        }
+        header p {
+            margin: 0.5rem 0 0;
+            color: var(--text-secondary-dark);
+            font-size: 1.1rem;
+        }
+        .tabs {
+            display: flex;
+            background-color: var(--bg-dark);
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .tab-button {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary-dark);
+            font-size: 1rem;
+            font-weight: 500;
+            transition: color 0.2s, border-bottom 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            color: var(--accent-dark);
+            border-bottom: 3px solid var(--accent-dark);
+        }
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.5s;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            font-size: 1.75rem;
+            color: var(--accent-dark);
+            border-bottom: 1px solid var(--border-dark);
+            padding-bottom: 0.75rem;
+            margin-top: 0;
+        }
+        h3 {
+            font-size: 1.25rem;
+            color: var(--text-primary-dark);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        ul {
+            list-style-type: '✔️ ';
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 0.75rem;
+        }
+        code {
+            background-color: var(--bg-dark);
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            border-radius: 6px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) {
+            .roadmap-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .roadmap-card {
+            background-color: var(--bg-dark);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-dark);
+        }
+        .roadmap-card h3 {
+            margin-top: 0;
+            color: var(--success-dark);
+        }
+        .roadmap-card.medium h3 { color: #f39c12; }
+        .roadmap-card.long h3 { color: var(--danger-dark); }
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>《怪獸異世界》遊戲白皮書</h1>
+            <p>一個以深度客製化與 AI 互動為核心的怪獸養成遊戲</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'tab-overview')">遊戲總覽</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-gameplay')">核心玩法</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-tech')">技術架構</button>
+            <button class="tab-button" onclick="openTab(event, 'tab-roadmap')">發展藍圖</button>
+        </div>
+
+        <div id="tab-overview" class="tab-content active">
+            <h2>遊戲總覽</h2>
+            <p>《怪獸異世界》是一款深度策略型怪獸養成遊戲，其核心魅力在於無限的可能性。遊戲捨棄了傳統固定的怪獸設計，讓玩家成為真正的「造物主」。透過組合來自不同元素、不同稀有度的「DNA碎片」，玩家可以創造出外觀、數值、技能組合都獨一無二的怪獸夥伴。 </p>
+            <p>遊戲不僅注重策略性的戰鬥與養成，更創新地引入了 AI 互動系統。每一隻怪獸都擁有由 AI 生成的獨特背景故事、評價、以及基於其「個性」和與玩家「牽絆值」的動態聊天回應。這不僅僅是養成，更是一場與您親手創造的數位生命建立情感連結的旅程。 </p>
+            <h3>核心理念</h3>
+            <ul>
+                <li><strong>無限創造：</strong> 透過數百種 DNA 碎片的組合，打造出理論上無限種可能的怪獸。</li>
+                <li><strong>深度策略：</strong> 屬性相剋、技能搭配、個性影響，每一場戰鬥都是對玩家智慧的考驗。</li>
+                <li><strong>情感連結：</strong> 創新的 AI 聊天與互動系統，讓每隻怪獸都成為有血有肉的夥伴。</li>
+                <li><strong>公平競技：</strong> 遊戲內不存在付費變強的機制，所有成長皆來自於遊戲內的努力與策略。</li>
+            </ul>
+        </div>
+
+        <div id="tab-gameplay" class="tab-content">
+            <h2>核心玩法 (已實裝)</h2>
+            
+            <h3>🧬 DNA 合成系統</h3>
+            <p>遊戲的起點與核心。玩家需將 5 個 DNA 碎片放入組合槽進行合成。最終誕生的怪獸，其基礎數值由 5 個 DNA 的總和決定，主屬性由數量最多的元素決定，而稀有度則取決於放入的最高稀有度 DNA。這一設計鼓勵玩家不斷實驗，尋找黃金組合公式。</p>
+
+            <h3>⚔️ 深度戰鬥系統</h3>
+            <p>戰鬥採用回合制。系統會綜合考量怪獸的數值、屬性相剋、技能效果、狀態異常以及由「個性」決定的 AI 行為模式，自動模擬出一場完整的戰鬥。玩家的樂趣在於戰前的策略佈局與戰後的戰報分析，而非手動操作。</p>
+
+            <h3>🏝️ PVE 冒險島</h3>
+            <p>一個充滿隨機性的 PVE 挑戰內容。玩家需組建 1-3 隻怪獸的遠征隊，探索充滿未知事件與強大 BOSS 的樓層式地圖。每一次的選擇都可能帶來獎勵或懲罰，成功擊敗樓層 BOSS 後可獲得金幣與稀有 DNA 等豐厚回報。 </p>
+
+            <h3>💖 AI 互動與情感連結</h3>
+            <p>每隻怪獸都有由 AI 生成的獨特背景故事與養成評價。更重要的是，玩家可以透過專屬的聊天頁籤與怪獸進行 AI 對話。怪獸的回應會根據其「個性」（如勇敢、膽小、傲慢）以及與玩家的「牽絆值」動態變化，從冷漠到親密，建立獨一無二的情感連結。 </p>
+            
+            <h3>🏆 社交與排行榜系統</h3>
+            <p>遊戲內建完整的好友系統，玩家可以搜尋、新增好友，並透過信箱系統進行交流。信箱不僅用於玩家間通訊，也負責接收系統公告、好友請求及每日的冠軍獎勵。玩家可以挑戰「怪獸排行榜」上的對手，爭奪「冠軍殿堂」的榮譽席位。 </p>
+
+        </div>
+
+        <div id="tab-tech" class="tab-content">
+            <h2>技術架構</h2>
+            <div class="tech-stack">
+                <div class="tech-card">
+                    <h3>後端 (Backend)</h3>
+                    <ul>
+                        <li><strong>框架:</strong> <code>Flask</code> (Python) - 輕量、快速，適合快速迭代開發。</li>
+                        <li><strong>部署:</strong> <code>Gunicorn</code> on <code>Render.com</code> - 成熟的 WSGI 伺服器，能穩定地在 PaaS 平台上運行。</li>
+                        <li><strong>資料庫:</strong> <code>Firebase Firestore</code> - NoSQL、雲端託管的資料庫，擴展性強，能靈活應對遊戲資料結構的變化。</li>
+                        <li><strong>AI 模型:</strong> <code>DeepSeek API</code> - 用於生成怪獸的背景故事、評價，以及驅動與怪獸的 AI 聊天互動。</li>
+                    </ul>
+                </div>
+                <div class="tech-card">
+                    <h3>前端 (Frontend)</h3>
+                    <ul>
+                        <li><strong>核心:</strong> <code>Vanilla JavaScript (ES6)</code> - 無框架，提供最大的靈活性與性能，並透過模組化檔案結構進行管理。</li>
+                        <li><strong>樣式:</strong> <code>Pure CSS</code> - 手工編寫的 CSS，實現了深色/淺色主題切換，並針對遊戲風格進行了客製化。</li>
+                        <li><strong>溝通:</strong> <code>Fetch API</code> - 使用瀏覽器原生的 Fetch API 與後端進行非同步數據交換。</li>
+                        <li><strong>認證:</strong> <code>Firebase Authentication</code> - 處理玩家的註冊、登入與身份驗證。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-roadmap" class="tab-content">
+            <h2>發展藍圖</h2>
+            <p>基於目前的穩定架構，我們為《怪獸異世界》規劃了清晰的短、中、長期發展路線，以持續豐富遊戲內容與玩家體驗。</p>
+            <div class="roadmap-grid">
+                <div class="roadmap-card">
+                    <h3>短期計畫 (1-3個月)</h3>
+                    <p><strong>目標：</strong>完善現有功能，豐富核心內容。</p>
+                    <ul>
+                        <li><strong>實裝醫療站：</strong> 開放基因改造、DNA 摘除、藥劑注射等功能。</li>
+                        <li><strong>開放訓練場：</strong> 建立一個可以讓怪獸之間進行無獎勵切磋的場所。</li>
+                        <li><strong>內容擴充：</strong> 大量增加新的 DNA 碎片、技能、冒險事件與 BOSS，提升遊戲可玩性。</li>
+                        <li><strong>UI/UX 優化：</strong> 持續根據玩家回饋，優化操作流程與介面顯示。</li>
+                    </ul>
+                </div>
+                <div class="roadmap-card medium">
+                    <h3>中期計畫 (3-9個月)</h3>
+                    <p><strong>目標：</strong>引入新的核心系統，增強玩家間的互動。</p>
+                    <ul>
+                        <li><strong>PVP 武道大會：</strong> 實裝非同步的玩家對戰系統，建立獨立的PVP天梯與賽季獎勵。</li>
+                        <li><strong>家園/秘密基地系統：</strong> 讓玩家擁有一個可以自由佈置、展示怪獸的個人空間。</li>
+                        <li><strong>交易所商人：</strong> 開放玩家間的物品（如稀有DNA）交易系統，建立健康的遊戲內經濟。</li>
+                        <li><strong>公會系統初版：</strong> 引入基礎的公會創建、成員管理與公會頻道功能。</li>
+                    </ul>
+                </div>
+                <div class="roadmap-card long">
+                    <h3>長期願景 (9個月以上)</h3>
+                    <p><strong>目標：</strong>打造一個可持續發展的、充滿活力的遊戲生態。</p>
+                    <ul>
+                        <li><strong>主線劇情與任務：</strong> 推出帶有豐富劇情的任務線，引導玩家探索異世界的秘密。</li>
+                        <li><strong>多人合作冒險：</strong> 開發需要多名玩家組隊才能挑戰的巨大 BOSS 或特殊副本。</li>
+                        <li><strong>定期線上活動：</strong> 舉辦季節性活動、節日慶典，推出限定的怪獸與獎勵。</li>
+                        <li><strong>怪獸情感族譜：</strong> 建立更深度的怪獸關係系統，例如怪獸間的好感度、組合技等。</li>
+                        <li><strong>跨平台可能性：</strong> 評估並探索將遊戲移植到行動裝置等其他平台的可能性。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+
+</body>
+</html>
