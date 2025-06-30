@@ -11,16 +11,17 @@ import { initializeNoteHandlers } from './ui/ui-notes.js';
 import { initializeChatSystem } from './ui/ui-chat.js';
 import { initializeMailboxEventHandlers } from './ui/ui-mailbox.js';
 import { initializeAdventureHandlers } from './handlers/adventure-handlers.js';
-import { initializeTrainingHandlers } from './ui/ui-training.js'; // 導入我們新建的訓練場處理函式
+import { initializeTrainingHandlers } from './ui/ui-training.js';
 import { RosterAuthListener, logoutUser } from './auth.js';
 import { getGameConfigs, getPlayerData } from './api-client.js';
 import { gameState, updateGameState, getDefaultSelectedMonster } from './game-state.js';
 import { updateMonsterSnapshot } from './ui/ui-snapshot.js';
 import { updateAllTimers, renderMonsterFarm } from './ui/ui-farm.js';
 import { renderPlayerDNAInventory, renderDNACombinationSlots, renderTemporaryBackpack, resetDNACombinationSlots } from './ui/ui-inventory.js';
+// --- 核心修改處 START ---
+// 移除本行最後多餘的逗號
 import { updateMailNotificationDot, checkAndShowNewTitleModal } from './game-logic.js';
 // --- 核心修改處 END ---
-
 
 function clearGameCacheOnExitOrRefresh() {
     console.log("Clearing game cache (sessionStorage and specific localStorage items)...");
@@ -224,9 +225,7 @@ async function onAuthStateChangedHandler(user) {
     }
 }
 
-// --- 核心修改處 START ---
-// 簡化應用程式初始化流程
-functioninitializeApp() {
+function initializeApp() {
     console.log("所有核心模組已導入，開始初始化應用程式。");
     initializeDOMElements(); 
     clearGameCacheOnExitOrRefresh();
@@ -252,7 +251,6 @@ functioninitializeApp() {
 }
 
 document.addEventListener('DOMContentLoaded', initializeApp);
-// --- 核心修改處 END ---
 
 window.addEventListener('beforeunload', clearGameCacheOnExitOrRefresh);
 
