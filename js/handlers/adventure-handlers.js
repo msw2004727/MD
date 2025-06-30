@@ -140,7 +140,6 @@ async function handleAdventureChoiceClick(buttonElement) {
         const battleResult = result.battle_result;
         const updatedProgress = result.updated_progress;
         
-        // --- 核心修改處 START ---
         if (result.event_outcome === 'captain_defeated') {
             await refreshPlayerData(); 
             
@@ -150,20 +149,35 @@ async function handleAdventureChoiceClick(buttonElement) {
             };
             renderAdventureProgressUI(progressForRendering);
 
-            setTimeout(() => {
+            const bannerUrl = 'https://github.com/msw2004727/MD/blob/main/images/BN020.png?raw=true';
+            const messageHtml = `
+                <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
+                    <img src="${bannerUrl}" alt="遠征失敗橫幅" style="max-width: 100%; border-radius: 6px;">
+                </div>
+                <p class="text-center">你的隊伍失去了領導者，無法再繼續前進...</p>
+            `;
+
+            const nextAction = () => {
                 if (result.final_stats && typeof showExpeditionSummaryModal === 'function') {
                     showExpeditionSummaryModal(result.final_stats);
                 } else {
                     initializeAdventureUI();
-                    showFeedbackModal('遠征失敗', '您的隊長在事件中倒下，遠征已結束。');
                 }
-            }, 2500);
+            };
+
+            showFeedbackModal(
+                '隊長重傷，遠征失敗',
+                messageHtml,
+                false,
+                null,
+                [{ text: '查看遠征結算', class: 'primary', onClick: nextAction }]
+            );
 
         } else if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
             await refreshPlayerData();
             
             const currentProgress = gameState.playerData?.adventure_progress;
-            const currentEvent = updatedProgress?.current_event; // 使用更新後的進度
+            const currentEvent = updatedProgress?.current_event;
             const captainId = updatedProgress?.expedition_team?.[0]?.monster_id;
             
             const finalCaptainMonster = captainId ? gameState.playerData.farmedMonsters.find(m => m.id === captainId) : null;
@@ -210,7 +224,6 @@ async function handleAdventureChoiceClick(buttonElement) {
             };
             renderAdventureProgressUI(progressForRendering);
         }
-        // --- 核心修改處 END ---
 
     } catch (error) {
         console.error("處理事件選擇失敗:", error);
