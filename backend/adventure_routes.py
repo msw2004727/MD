@@ -21,37 +21,31 @@ adventure_bp = Blueprint('adventure_bp', __name__, url_prefix='/api/MD/adventure
 # 建立此路由專用的日誌記錄器
 adventure_routes_logger = logging.getLogger(__name__)
 
-# === 新增：結算冒險成長的輔助函式 ===
-def _finalize_adventure_gains(player_data: PlayerGameData) -> PlayerGameData:
+# --- 核心修改處 START ---
+# 將 _finalize_adventure_gains 移到 adventure_services.py 並改名為 _sync_and_finalize_expedition
+def _sync_and_finalize_expedition(player_data: PlayerGameData) -> PlayerGameData:
     """
-    結算遠征隊伍所有成員在冒險中獲得的數值成長，並將其永久加到基礎數值上。
+    一個新的輔助函式，用於結束遠征時同步隊員狀態並結算成長。
     """
     progress = player_data.get("adventure_progress")
-    if not progress or not progress.get("expedition_team"):
+    if not progress:
         return player_data
-
+        
     farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
-
+    
     for member in progress.get("expedition_team", []):
-        monster = farmed_monsters_map.get(member["monster_id"])
-        if monster and "adventure_gains" in monster:
-            gains = monster.get("adventure_gains", {})
-            if not gains:
-                continue
+        monster_in_farm = farmed_monsters_map.get(member["monster_id"])
+        if monster_in_farm:
+            monster_in_farm["hp"] = member.get("current_hp", monster_in_farm["hp"])
+            monster_in_farm["mp"] = member.get("current_mp", monster_in_farm["mp"])
+            adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
 
-            adventure_routes_logger.info(f"正在為怪獸 {monster.get('nickname')} 結算冒險成長: {gains}")
-            
-            # 將 adventure_gains 的數值加到 cultivation_gains 中
-            # 這段邏輯是問題的根源，現在將其移除，確保數據分離
-            # cultivation_gains = monster.setdefault("cultivation_gains", {})
-            # for stat, value in gains.items():
-            #     cultivation_gains[stat] = cultivation_gains.get(stat, 0) + value
-            
-            # 清空冒險成長記錄
-            # monster["adventure_gains"] = {}
-            pass # 直接保留 adventure_gains 欄位，不做任何操作
+    # 結算冒險成長（只記錄日誌）
+    # 這裡的 _finalize_adventure_gains 已經在 adventure_services 中處理了，此處僅同步狀態
+    pass
 
     return player_data
+# --- 核心修改處 END ---
 
 @adventure_bp.route('/islands', methods=['GET'])
 def get_islands_route():
@@ -138,15 +132,7 @@ def abandon_adventure_route():
     if not progress or not progress.get("is_active"):
         return jsonify({"error": "沒有正在進行的遠征可以放棄。"}), 400
 
-    farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
-    for member in progress.get("expedition_team", []):
-        if member["monster_id"] in farmed_monsters_map:
-            monster_in_farm = farmed_monsters_map[member["monster_id"]]
-            monster_in_farm["hp"] = member["current_hp"]
-            monster_in_farm["mp"] = member["current_mp"]
-            adventure_routes_logger.info(f"遠征結束：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
-    
-    player_data = _finalize_adventure_gains(player_data)
+    player_data = _sync_and_finalize_expedition(player_data)
     final_stats = progress.get("expedition_stats")
 
     progress["is_active"] = False
@@ -272,9 +258,30 @@ def resolve_choice_route():
         return jsonify({"error": "找不到玩家資料。"}), 404
         
     progress = player_data.get("adventure_progress", {})
-    current_event = progress.get("current_event", {})
     
-    if current_event.get("event_type") == "boss_encounter":
+    service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
+    
+    if not service_result.get("success"):
+        return jsonify({"error": service_result.get("error", "處理事件選擇失敗。")}), 400
+        
+    player_data["adventure_progress"] = service_result.get("updated_progress")
+
+    # --- 核心修改處 START ---
+    if service_result.get("event_outcome") == "captain_defeated":
+        if save_player_data_service(user_id, player_data):
+            return jsonify({
+                "success": True,
+                "event_outcome": "captain_defeated",
+                "message": "遠征隊長已倒下，遠征結束。",
+                "updated_progress": service_result.get("updated_progress"),
+                "final_stats": service_result.get("final_stats")
+            }), 200
+        else:
+            return jsonify({"error": "遠征結束後儲存進度失敗。"}), 500
+    # --- 核心修改處 END ---
+
+    current_event = progress.get("current_event", {})
+    if current_event and current_event.get("event_type") == "boss_encounter":
         boss_data = current_event.get("boss_data")
         if not boss_data:
             return jsonify({"error": "BOSS 資料遺失，無法開始戰鬥。"}), 500
@@ -313,15 +320,7 @@ def resolve_choice_route():
             else:
                 return jsonify({"error": "擊敗BOSS後儲存進度失敗。"}), 500
         else:
-            player_data = _finalize_adventure_gains(player_data)
-            farmed_monsters_map = {m["id"]: m for m in player_data.get("farmedMonsters", [])}
-            for member in progress.get("expedition_team", []):
-                if member["monster_id"] in farmed_monsters_map:
-                    monster_in_farm = farmed_monsters_map[member["monster_id"]]
-                    monster_in_farm["hp"] = member["current_hp"]
-                    monster_in_farm["mp"] = member["current_mp"]
-                    adventure_routes_logger.info(f"遠征失敗：怪獸 {monster_in_farm.get('nickname')} 的 HP/MP 已同步回農場。")
-            
+            player_data = _sync_and_finalize_expedition(player_data)
             progress["is_active"] = False
             player_data["adventure_progress"] = progress
             if save_player_data_service(user_id, player_data):
@@ -336,20 +335,12 @@ def resolve_choice_route():
                 return jsonify({"error": "戰敗後儲存進度失敗。"}), 500
 
     else:
-        service_result = resolve_event_choice_service(player_data, choice_id, game_configs)
-        
-        if not service_result.get("success"):
-            return jsonify({"error": service_result.get("error", "處理事件選擇失敗。")}), 400
-            
-        updated_progress = service_result.get("updated_progress")
-        player_data["adventure_progress"] = updated_progress
-        
         if save_player_data_service(user_id, player_data):
             return jsonify({
                 "success": True,
                 "event_outcome": "choice_resolved",
                 "outcome_story": service_result.get("outcome_story"),
-                "updated_progress": updated_progress,
+                "updated_progress": player_data["adventure_progress"],
                 "updated_player_stats": player_data.get("playerStats")
             }), 200
         else:
