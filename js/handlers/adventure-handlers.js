@@ -150,12 +150,21 @@ async function handleAdventureChoiceClick(buttonElement) {
             renderAdventureProgressUI(progressForRendering);
 
             const bannerUrl = 'https://github.com/msw2004727/MD/blob/main/images/BN020.png?raw=true';
+            
+            // --- 核心修改處 START ---
+            const eventStory = result.outcome_story || "一場突如其來的災難降臨...";
             const messageHtml = `
                 <div class="feedback-banner" style="text-align: center; margin-bottom: 15px;">
                     <img src="${bannerUrl}" alt="遠征失敗橫幅" style="max-width: 100%; border-radius: 6px;">
                 </div>
+                
+                <div class="event-story-on-failure" style="margin-bottom: 1rem; padding: 0.75rem; background-color: var(--bg-primary); border-radius: 6px; border: 1px solid var(--border-color); text-align: center; font-size: 0.9em; color: var(--text-secondary);">
+                   ${eventStory.replace(/\n/g, '<br>')}
+                </div>
+
                 <p class="text-center">你的隊伍失去了領導者，無法再繼續前進...</p>
             `;
+            // --- 核心修改處 END ---
 
             const nextAction = () => {
                 if (result.final_stats && typeof showExpeditionSummaryModal === 'function') {
@@ -174,37 +183,32 @@ async function handleAdventureChoiceClick(buttonElement) {
             );
 
         } else if (result.event_outcome === 'boss_win' || result.event_outcome === 'boss_loss') {
-            // --- 核心修改處 START ---
-            // 1. 在刷新任何資料前，先從 gameState 獲取戰鬥前的怪獸初始資料
             const captainId = gameState.playerData.adventure_progress.expedition_team[0].monster_id;
             const initialCaptainMonster = gameState.playerData.farmedMonsters.find(m => m.id === captainId);
             const initialOpponentMonster = gameState.currentAdventureEvent?.boss_data;
 
-            // 2. 刷新玩家資料
             await refreshPlayerData(); 
             
-            // 3. 檢查初始資料是否存在
             if (!initialCaptainMonster || !initialOpponentMonster) {
                 console.error("無法從 gameState 中獲取戰鬥前的怪獸初始資料。");
                 showFeedbackModal('錯誤', '無法顯示戰報，遺失了戰鬥前的怪獸資料。');
-                initializeAdventureUI(); // 將UI重置到安全狀態
+                initializeAdventureUI(); 
                 return;
             }
 
-            // 4. 根據勝負結果，使用正確的初始資料來顯示戰報
-            if (battleResult.winner_id === captainId) { // 勝利
+            if (battleResult.winner_id === captainId) { 
                 gameState.playerData.adventure_progress = updatedProgress;
                 renderAdventureProgressUI(updatedProgress);
                 showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster);
 
-            } else if (battleResult.winner_id === "平手") { // 平手
+            } else if (battleResult.winner_id === "平手") {
                 const drawActions = [
                     { text: '放棄遠征', class: 'secondary', onClick: () => handleAbandonAdventure() },
                     { text: '再次挑戰', class: 'primary', onClick: () => handleAdventureChoiceClick(buttonElement) }
                 ];
                 showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster, drawActions);
 
-            } else { // 戰敗
+            } else {
                 showBattleLogModal(battleResult, initialCaptainMonster, initialOpponentMonster);
                 
                 if (updatedProgress && updatedProgress.expedition_stats) {
@@ -215,7 +219,6 @@ async function handleAdventureChoiceClick(buttonElement) {
                     initializeAdventureUI();
                 }
             }
-            // --- 核心修改處 END ---
         } else {
             if (result.updated_player_stats) {
                 gameState.playerData.playerStats = result.updated_player_stats;
