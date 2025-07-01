@@ -260,9 +260,15 @@ def process_battle_results(
             player_data["playerOwnedDNA"] = absorption_result.get("updated_player_owned_dna", player_data.get("playerOwnedDNA"))
 
     # ... (日誌記錄) ...
-    _add_player_log(player_data, "戰鬥", f"挑戰「{opponent_monster_data.get('nickname', '一名對手')}」，您{'<span style=\'color: var(--success-color);\'>獲勝</span>' if is_player_winner else '<span style=\'color: var(--danger-color);\'>戰敗</span>'}了！")
-    if opponent_player_data and opponent_id:
-        _add_player_log(opponent_player_data, "戰鬥", f"「{player_data.get('nickname', '一名挑戰者')}」向您發起挑戰，您{'<span style=\'color: var(--success-color);\'>獲勝</span>' if not is_player_winner else '<span style=\'color: var(--danger-color);\'>戰敗</span>'}了！")
+# 記錄玩家日誌
+win_span = '<span style=\'color: var(--success-color);\'>獲勝</span>'
+loss_span = '<span style=\'color: var(--danger-color);\'>戰敗</span>'
+result_message = win_span if is_player_winner else loss_span
+_add_player_log(player_data, "戰鬥", f"挑戰「{opponent_monster_data.get('nickname', '一名對手')}」，您{result_message}了！")
+
+# 記錄對手日誌
+opponent_result_message = loss_span if is_player_winner else win_span
+_add_player_log(opponent_player_data, "戰鬥", f"「{player_nickname}」向您發起挑戰，您{opponent_result_message}了！")
 
     player_data["playerStats"] = player_stats
     if opponent_player_data:
