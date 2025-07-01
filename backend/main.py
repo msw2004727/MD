@@ -6,7 +6,6 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 # 將 'backend' 目錄添加到 Python 路徑中
-# 這有助於在不同環境中正確解析模組
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # 使用相對路徑導入模組
@@ -27,35 +26,33 @@ setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 啟動時執行的代碼
     print("伺服器啟動...")
-    # 初始化 Firebase
     MD_firebase_config.initialize_firebase()
     yield
-    # 關閉時執行的代碼
     print("伺服器關閉...")
 
 app = FastAPI(lifespan=lifespan)
 
 # 設定 CORS 中介軟體
+# ！！！我們在這裡新增了您的 GitHub Pages 網域！！！
 origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://127.0.0.1:5500",
     "https://monster-dungeon.onrender.com",
-    "https://monsters-dungeon.netlify.app"
+    "https://monsters-dungeon.netlify.app",
+    "https://msw2004727.github.io"  # 新增這一行來允許您的遊戲網站
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允許所有來源，或指定你的前端網域
+    allow_origins=origins,  # 使用我們上面定義的白名單
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],    # 允許所有 HTTP 方法
+    allow_headers=["*"],    # 允許所有 HTTP 標頭
 )
 
 # 掛載 FirebaseAuthMiddleware
-# 注意：這裡我們先不啟用，以方便本地測試。部署時可以根據需要打開。
 # app.add_middleware(FirebaseAuthMiddleware)
 
 # 掛載 API 路由
@@ -73,9 +70,7 @@ app.include_router(exchange_router, prefix="/api/exchange")
 async def root(request: Request):
     return {"message": "歡迎來到怪獸地下城 API"}
 
-# 掛載靜態文件目錄 (如果前端文件與後端一起提供)
-# 這個路徑指向您 GitHub 根目錄下的 'frontend' 資料夾
-# 如果您的前端是獨立部署的，可以移除這段
+# 掛載靜態文件目錄
 static_files_path = os.path.join(os.path.dirname(__file__), '..', 'frontend')
 if os.path.exists(static_files_path):
     app.mount("/", StaticFiles(directory=static_files_path, html=True), name="static")
