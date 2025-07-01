@@ -138,6 +138,7 @@ async function simulateBattle(battleRequestData) {
     if (!battleRequestData || !battleRequestData.player_monster_data || !battleRequestData.opponent_monster_data) {
         throw new Error("simulateBattle 函數需要一個包含 player_monster_data 和 opponent_monster_data 的物件。");
     }
+    // 確保 is_ladder_match 和 challenge_type 被正確傳遞
     return fetchAPI('/battle/simulate', {
         method: 'POST',
         body: JSON.stringify(battleRequestData), 
@@ -495,6 +496,74 @@ async function switchAdventureCaptain(monsterId) {
         body: JSON.stringify({ monster_id: monsterId }),
     });
 }
+
+/**
+ * 獲取交易所的商品列表
+ * @returns {Promise<Array<object>>} 商品列表
+ */
+async function getExchangeListings() {
+    return fetchAPI('/exchange/listings');
+}
+
+/**
+ * 獲取我正在販售的商品列表
+ * @returns {Promise<Array<object>>} 我的商品列表
+ */
+async function getMyExchangeListings() {
+    return fetchAPI('/exchange/my-listings');
+}
+
+/**
+ * 上架一個商品到交易所
+ * @param {string} itemId - 要上架的DNA實例ID
+ * @param {number} price - 定價
+ * @returns {Promise<object>} 後端的回應
+ */
+async function createExchangeListing(itemId, price) {
+    return fetchAPI('/exchange/list', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, price: price }),
+    });
+}
+
+/**
+ * 從交易所下架一個商品
+ * @param {string} listingId - 要下架的商品ID
+ * @returns {Promise<object>} 後端的回應
+ */
+async function cancelExchangeListing(listingId) {
+    return fetchAPI(`/exchange/delist/${listingId}`, {
+        method: 'POST',
+    });
+}
+
+/**
+ * 從交易所購買一個商品
+ * @param {string} listingId - 要購買的商品ID
+ * @returns {Promise<object>} 後端的回應
+ */
+async function purchaseExchangeItem(listingId) {
+    return fetchAPI(`/exchange/buy/${listingId}`, {
+        method: 'POST',
+    });
+}
+
+/**
+ * 尋找一個天梯對手
+ * @param {number} pvpPoints 玩家當前的PVP積分
+ * @param {'weak' | 'equal' | 'strong'} matchType 匹配類型
+ * @returns {Promise<object>} 包含對手資料的物件
+ */
+async function findLadderOpponent(pvpPoints, matchType) {
+    return fetchAPI('/tournament/find_match', {
+        method: 'POST',
+        body: JSON.stringify({ 
+            pvp_points: pvpPoints,
+            match_type: matchType 
+        }),
+    });
+}
+
 // --- 核心修改處 END ---
 
 

@@ -6,11 +6,15 @@ const gameState = {
     playerId: null, // 當前玩家的 ID (通常是 UID)
     playerNickname: "玩家", // 玩家暱稱
     
-    // 定義最大庫存槽位數，與 UI/數據庫保持一致
+    // 定義最大庫存槽位數
     MAX_INVENTORY_SLOTS: 12, 
+    // 【新】定義臨時背包最大槽位數
+    MAX_BACKPACK_SLOTS: 9,
 
     playerData: { // 玩家的遊戲進度資料
         playerOwnedDNA: Array(12).fill(null), // 玩家擁有的 DNA 碎片 (固定 12 格)
+        // 【新】臨時背包移至此處，使其可被存檔
+        temporaryBackpack: [], 
         farmedMonsters: [], // 玩家農場中的怪獸
         playerStats: { // 玩家統計數據
             rank: "N/A",
@@ -25,7 +29,6 @@ const gameState = {
         nickname: "玩家",
         lastSave: null,
         selectedMonsterId: null,
-        // 新增：將組合槽狀態移至此處，使其成為可存檔的玩家資料
         dnaCombinationSlots: [null, null, null, null, null], 
     },
     gameConfigs: null, // 從後端獲取的遊戲核心設定
@@ -45,9 +48,6 @@ const gameState = {
         3: 'leftLeg',
         4: 'rightLeg'
     },
-
-    // 臨時背包
-    temporaryBackpack: [],
 
     // 其他可能需要的狀態
     currentError: null,
@@ -69,6 +69,13 @@ const gameState = {
 
     // 怪獸農場排序設定
     farmSortConfig: { key: 'score', order: 'desc' },
+
+    // 【新】交易所相關狀態
+    exchangeListings: [], // 用於緩存從後端獲取的原始商品列表
+    exchangeSortConfig: { key: 'listedAt', order: 'desc' }, // 當前排序設定
+
+    // 【新】武道大會相關狀態
+    currentDailyChallenges: [], // 當前顯示的每日試煉
 
     // 好友/搜尋相關
     searchedPlayers: [],

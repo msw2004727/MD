@@ -161,7 +161,7 @@ async function initializeGame() {
         }
         
         if (typeof updatePlayerCurrencyDisplay === 'function') {
-            updatePlayerCurrencyDisplay(gameState.playerData.playerStats.gold || 0);
+            updatePlayerCurrencyDisplay(gameState.playerData.playerStats);
         }
 
         if (typeof renderPlayerDNAInventory === 'function') renderPlayerDNAInventory();
@@ -240,7 +240,7 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers', 'initializeAdventureHandlers'
+        'initializeMailboxEventHandlers', 'initializeAdventureHandlers', 'setupExchangeTab'
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -260,6 +260,7 @@ function attemptToInitializeApp() {
         initializeChatSystem();
         initializeMailboxEventHandlers();
         initializeAdventureHandlers();
+        setupExchangeTab();
 
         setInterval(updateAllTimers, 1000);
 

@@ -2,6 +2,10 @@
 //這個檔案將負責處理與怪獸自身相關的彈窗，如詳細資訊、戰鬥日誌、養成結果等
 
 function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData, customFooterActions = null) {
+    console.log("--- showBattleLogModal ---");
+    console.log("Player Monster Data:", JSON.parse(JSON.stringify(playerMonsterData)));
+    console.log("Opponent Monster Data:", JSON.parse(JSON.stringify(opponentMonsterData)));
+
     if (!DOMElements.battleLogArea || !DOMElements.battleLogModal) {
         console.error("Battle log modal elements not found in DOMElements.");
         return;
@@ -302,6 +306,26 @@ function showBattleLogModal(battleResult, playerMonsterData, opponentMonsterData
             <p class="loot-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.loot_info, playerMonsterData, opponentMonsterData))}</p>
             <p class="growth-info-text">${formatBasicText(applyDynamicStylingToBattleReport(battleReportContent.growth_info, playerMonsterData, opponentMonsterData))}</p>
         </div>`;
+
+    // 【新】渲染戰利品區塊
+    const rewards = battleResult.rewards_obtained || [];
+    if (rewards.length > 0) {
+        let rewardsHtml = '<div class="report-section battle-rewards-section">';
+        rewardsHtml += '<h4 class="report-section-title">戰利品</h4><div class="rewards-grid">';
+        
+        rewards.forEach(reward => {
+            if (reward.type === 'gold') {
+                rewardsHtml += `<div class="reward-item"><span>🪙</span><span class="font-bold">${reward.amount.toLocaleString()} 金幣</span></div>`;
+            } else if (reward.type === 'dna') {
+                const dna = reward.item;
+                const rarityKey = (dna.rarity || '普通').toLowerCase();
+                rewardsHtml += `<div class="reward-item"><span class="text-rarity-${rarityKey}">${dna.name}</span><span>(DNA碎片)</span></div>`;
+            }
+        });
+
+        rewardsHtml += '</div></div>';
+        reportContainer.innerHTML += rewardsHtml;
+    }
 
     DOMElements.battleLogArea.appendChild(reportContainer);
 
