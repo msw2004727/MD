@@ -18,8 +18,8 @@
           "title": "目前0.5.0v已實裝內容：",
           "items": [
             { "text": "努力不定時更新與優化", "color": "success" },
-            { "text": "武道大會、交易站打磨中", "color": "success" },
-            { "text": "訓練場籌劃中", "color": "success" },
+            { "text": "交易站已實裝", "color": "success" },
+            { "text": "武道大會半成品打磨中", "color": "success" },
             { "text": "正式OB開放測試中", "color": "success" }
           ]
         },
@@ -29,7 +29,8 @@
             { "text": "持續完善圖片風格", "color": "accent" },
             { "text": "家園系統企劃中", "color": "accent" },
             { "text": "醫療站醫護人員實習中", "color": "accent" },
-            { "text": "怪獸情感族譜", "color": "accent" }
+            { "text": "怪獸情感族譜", "color": "accent" },
+            { "text": "還有更多神秘內容企劃中", "color": "accent" }
           
           ]
         }
