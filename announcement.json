@@ -19,7 +19,7 @@
           "items": [
             { "text": "交易所實裝", "color": "success" },
             { "text": "武道大會實裝", "color": "success" },
-            { "text": "冠軍殿堂換到到武道大會", "color": "success" }
+            { "text": "冠軍殿堂換到到武道大會", "color": "success" },
             { "text": "訓練場籌劃中", "color": "success" },
             { "text": "正式OB開放測試中", "color": "success" }
           ]
