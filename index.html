@@ -13,7 +13,7 @@
 
     <script>
         // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
-        const gameVersion = '0.5.0.0'; 
+        const gameVersion = '0.4.2.3'; 
 
         const cssFiles = [
             'css/theme.css',
@@ -23,8 +23,7 @@
             'css/modals.css',
             'css/champions.css',
             'css/mailbox.css',
-            'css/adventure.css',
-            'css/exchange.css'
+            'css/adventure.css'
         ];
         
         cssFiles.forEach(path => {
@@ -143,14 +142,8 @@
             </div>
 
             <div id="player-currency-panel" class="player-currency-panel">
-                <div class="currency-item">
-                    <span id="player-currency-amount">0</span>
-                    <span class="currency-icon">🪙</span>
-                </div>
-                <div class="currency-item">
-                    <span id="player-pvp-points">0</span>
-                    <span class="currency-icon">⚔️</span>
-                </div>
+                <span id="player-currency-amount">0</span>
+                <span class="currency-icon">🪙</span>
             </div>
 
             <div class="panel">
@@ -158,10 +151,10 @@
                     <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
                     <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪獸農場</button>
                     <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友列表</button>
-                    <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
                     <button class="tab-button" data-tab-target="tournament-content">🥋 武道大會</button>
                     <button class="tab-button" data-tab-target="medical-content">🚑 醫療站</button>
                     <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> 
+                    <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
                     <button class="tab-button" data-tab-target="homestead-content">🏰 秘密基地</button>
                     <button class="tab-button" data-tab-target="guild-content">🏝️ 冒險島</button>
                     </div>
@@ -218,80 +211,7 @@
                 </div>
 
                 <div id="tournament-content" class="tab-content">
-                    <div class="champions-section" style="margin-top: 1rem;">
-                        <h4 class="champions-section-title">👑 冠軍殿堂 👑</h4>
-                        <div class="champions-grid" id="champions-grid-container">
-                            <div class="champion-slot" data-rank="1"></div>
-                            <div class="champion-slot" data-rank="2"></div>
-                            <div class="champion-slot" data-rank="3"></div>
-                            <div class="champion-slot" data-rank="4"></div>
-                        </div>
-                    </div>
-
-                    <!-- 天梯系統 UI -->
-                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
-                        <div class="panel-title-container centered">
-                            <h2 class="panel-title">天梯挑戰</h2>
-                            <button id="ladder-guide-btn" title="說明" class="guide-btn">🔰</button>
-                        </div>
-                        <div id="ladder-rank-display" class="text-center my-4">
-                            <div id="ladder-rank-icon" class="text-5xl">⚔️</div>
-                            <div id="ladder-rank-name" class="text-xl font-bold" style="color: var(--warning-color);">尚未定位</div>
-                            <div class="w-full bg-slot rounded-full h-2.5 mt-2 border border-border-color">
-                                <div id="ladder-rank-progress-bar" class="bg-success-color h-full rounded-full" style="width: 0%"></div>
-                            </div>
-                            <div id="ladder-rank-points" class="text-sm text-secondary mt-1">0 / 100</div>
-                        </div>
-                        <div class="text-center mt-4 grid grid-cols-3 gap-2 px-4">
-                            <button id="find-weak-opponent-btn" class="button secondary text-sm py-2 ladder-match-btn">挑戰弱者</button>
-                            <button id="find-equal-opponent-btn" class="button primary text-sm py-2 ladder-match-btn">實力相當</button>
-                            <button id="find-strong-opponent-btn" class="button danger text-sm py-2 ladder-match-btn">挑戰強者</button>
-                        </div>
-                    </div>
-
-                    <!-- 每日試煉 UI -->
-                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
-                        <div class="panel-title-container centered">
-                            <h2 class="panel-title">每日試煉</h2>
-                            <button id="daily-challenge-guide-btn" title="說明" class="guide-btn">🔰</button>
-                        </div>
-                        <div id="daily-challenges-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                            <!-- 每日試煉內容將由 JS 動態渲染 -->
-                            <p class="text-center text-secondary col-span-full">正在獲取試煉資訊...</p>
-                        </div>
-                    </div>
-
-                    <!-- 特別錦標賽 UI -->
-                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
-                        <div class="panel-title-container centered">
-                            <h2 class="panel-title">特別錦標賽</h2>
-                            <button id="special-tournament-guide-btn" title="說明" class="guide-btn">🔰</button>
-                        </div>
-                        <div id="special-tournament-info" class="text-center mt-4">
-                            <!-- 錦標賽資訊將由 JS 動態渲染 -->
-                            <p class="text-center text-secondary">目前沒有正在舉行的特別錦標賽。</p>
-                        </div>
-                    </div>
-
-                    <!-- 戰鬥通行證 UI -->
-                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
-                        <div class="panel-title-container centered">
-                            <h2 class="panel-title">戰鬥通行證</h2>
-                            <button id="battle-pass-guide-btn" title="說明" class="guide-btn">🔰</button>
-                        </div>
-                        <div id="battle-pass-info" class="mt-4">
-                            <div class="w-full bg-slot rounded-full h-4 border border-border-color p-0.5">
-                                <div id="battle-pass-progress-bar" class="bg-gradient-to-r from-yellow-400 to-red-500 h-full rounded-full" style="width: 25%;"></div>
-                            </div>
-                            <div class="flex justify-between text-sm text-secondary mt-1">
-                                <span id="battle-pass-level">等級 5</span>
-                                <span id="battle-pass-next-reward">下一級: 傳奇DNA碎片</span>
-                            </div>
-                        </div>
-                         <div class="text-center mt-4">
-                            <button id="view-battle-pass-btn" class="button secondary">查看通行證詳情</button>
-                        </div>
-                    </div>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🥋 武道大會正在激烈籌備中，敬請期待！</p>
                 </div>
                 <div id="medical-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🚑 正在招募醫護人員中，敬請期待！</p>
@@ -302,25 +222,7 @@
                 </div>
 
                 <div id="exchange-content" class="tab-content">
-                    <div class="exchange-header" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding: 0 0.5rem;">
-                        <select id="exchange-sort-select" class="button secondary text-xs" style="padding: 4px 8px; height: auto; min-width: auto; -webkit-appearance: none; appearance: none;">
-                            <option value="listedAt_desc">預設排序</option>
-                            <option value="price_asc">價格由低到高</option>
-                            <option value="price_desc">價格由高到低</option>
-                            <option value="rarity_desc">稀有度由高到低</option>
-                            <option value="hp_desc">HP由高到低</option>
-                            <option value="mp_desc">MP由高到低</option>
-                            <option value="attack_desc">攻擊由高到低</option>
-                            <option value="defense_desc">防禦由高到低</option>
-                            <option value="speed_desc">速度由高到低</option>
-                            <option value="crit_desc">爆擊由高到低</option>
-                        </select>
-                        <button id="refresh-exchange-btn" class="button secondary text-xs" title="刷新交易所" style="padding: 4px 8px; line-height: 1; font-size: 1rem; min-width: auto;">🔄</button>
-                        <button id="my-store-btn" class="button secondary">🛒 我的賣場</button>
-                    </div>
-                    <div id="exchange-content-grid" class="exchange-grid">
-                        <!-- 商品卡片將由 ui-exchange.js 動態渲染於此 -->
-                    </div>
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">⚖️ 交易所搭建中，敬請期待！</p>
                 </div>
                 <div id="homestead-content" class="tab-content">
                     <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏰 秘密基地建設中，敬請期待！</p>
@@ -330,51 +232,6 @@
                 </div>
 
                 </div>
-        </div>
-    </div>
-
-    <!-- My Store Modal -->
-    <div id="my-store-modal" class="modal">
-        <div class="modal-content large">
-            <span class="modal-close" data-modal-id="my-store-modal">&times;</span>
-            <h3 class="modal-header">🛒 我的賣場</h3>
-            <div class="modal-body">
-                <div class="my-store-section">
-                    <h4 class="my-store-section-title">可上架的DNA</h4>
-                    <div id="sellable-dna-grid" class="exchange-grid">
-                        <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有可上架的物品。</p>
-                    </div>
-                </div>
-                <div class="my-store-section">
-                    <h4 class="my-store-section-title">正在販售的商品</h4>
-                    <div id="listed-items-grid" class="exchange-grid">
-                         <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有正在販售的商品。</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="exchange-item-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <button class="modal-close-btn" data-modal-id="exchange-item-modal">&times;</button>
-            <div class="modal-header-decorated">
-                <h2 id="modal-dna-name">DNA 名稱</h2>
-                <p id="modal-dna-rarity" class="rarity">稀有度</p>
-            </div>
-            <div class="modal-details">
-                <ul class="modal-stats">
-                    <li><span class="stat-label">HP</span><span id="modal-stat-hp" class="stat-value"></span></li>
-                    <li><span class="stat-label">MP</span><span id="modal-stat-mp" class="stat-value"></span></li>
-                    <li><span class="stat-label">攻擊</span><span id="modal-stat-attack" class="stat-value"></span></li>
-                    <li><span class="stat-label">防禦</span><span id="modal-stat-defense" class="stat-value"></span></li>
-                    <li><span class="stat-label">速度</span><span id="modal-stat-speed" class="stat-value"></span></li>
-                    <li><span class="stat-label">爆擊</span><span id="modal-stat-crit" class="stat-value"></span></li>
-                </ul>
-                <div class="modal-purchase-info">
-                    <!-- 內容由 JS 動態生成 -->
-                </div>
-            </div>
         </div>
     </div>
 
@@ -401,6 +258,45 @@
                 <button id="refresh-monster-leaderboard-btn" class="button secondary text-xs" title="刷新列表">🔄</button>
             </div>
             
+            <div class="champions-section">
+                <h4 class="champions-section-title">冠軍殿堂</h4>
+                <div class="champions-grid" id="champions-grid-container">
+                    <div class="champion-slot" data-rank="1">
+                        <div class="champion-avatar-container">
+                            <span class="champion-crown">👑</span>
+                            <div class="champion-avatar" id="champion-avatar-1"></div>
+                            <div class="champion-reign-duration" id="champion-reign-duration-1"></div>
+                        </div>
+                        <span class="champion-name" id="champion-name-1">冠軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-1" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="2">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-2"></div>
+                            <div class="champion-reign-duration" id="champion-reign-duration-2"></div>
+                        </div>
+                        <span class="champion-name" id="champion-name-2">亞軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-2" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="3">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-3"></div>
+                            <div class="champion-reign-duration" id="champion-reign-duration-3"></div>
+                        </div>
+                        <span class="champion-name" id="champion-name-3">季軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-3" disabled>挑戰</button>
+                    </div>
+                    <div class="champion-slot" data-rank="4">
+                        <div class="champion-avatar-container">
+                            <div class="champion-avatar" id="champion-avatar-4"></div>
+                            <div class="champion-reign-duration" id="champion-reign-duration-4"></div>
+                        </div>
+                        <span class="champion-name" id="champion-name-4">殿軍</span>
+                        <button class="champion-challenge-btn button secondary text-xs" id="champion-challenge-btn-4" disabled>挑戰</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="monster-leaderboard-table-container" class="modal-body">
                 <table id="monster-leaderboard-table" class="leaderboard-table"></table>
             </div>
@@ -704,7 +600,7 @@
 
     <script>
         (function() {
-            const gameVersion = '0.5.0.0'; 
+            const gameVersion = '0.4.2.3'; 
 
             const jsFiles = [
                 // 1. 核心設定與狀態管理
@@ -734,8 +630,6 @@
                 'js/ui/ui-chat.js',
                 'js/ui/ui-mailbox.js',
                 'js/ui/ui-medical.js',
-                'js/ui/ui-exchange.js',
-                'js/ui/ui-tournament.js',
                 'js/ui/ui-adventure.js', 
                 'js/ui/ui-adventure-modals.js',
 
