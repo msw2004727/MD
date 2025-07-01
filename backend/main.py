@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # 使用相對路徑導入模組
 import MD_firebase_config
-from auth_middleware import FirebaseAuthMiddleware
+from auth_middleware import FirebaseAuthMiddleware  # 保持這行
 from admin_routes import router as admin_router
 from MD_routes import router as md_router
 from adventure_routes import router as adventure_router
@@ -34,26 +34,26 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # 設定 CORS 中介軟體
-# ！！！我們在這裡新增了您的 GitHub Pages 網域！！！
 origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://127.0.0.1:5500",
     "https://monster-dungeon.onrender.com",
     "https://monsters-dungeon.netlify.app",
-    "https://msw2004727.github.io"  # 新增這一行來允許您的遊戲網站
+    "https://msw2004727.github.io"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,  # 使用我們上面定義的白名單
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],    # 允許所有 HTTP 方法
-    allow_headers=["*"],    # 允許所有 HTTP 標頭
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# 掛載 FirebaseAuthMiddleware
-# app.add_middleware(FirebaseAuthMiddleware)
+# ！！！掛載 FirebaseAuthMiddleware！！！
+# 我們把這一行的註解拿掉，來正式啟用它
+app.add_middleware(FirebaseAuthMiddleware)
 
 # 掛載 API 路由
 app.include_router(md_router, prefix="/api")
