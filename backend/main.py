@@ -1,80 +1,52 @@
 import os
-import sys
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
-# 將 'backend' 目錄添加到 Python 路徑中
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 這裡我們需要從您的專案中找到原本的路由檔案
+# 根據之前的錯誤日誌，我們知道有這些
+from admin_routes import bp as admin_bp
+# 接下來可能還有 MD_routes, adventure_routes 等，我們先把它們的位置空出來
+# from MD_routes import bp as md_bp
+# from adventure_routes import bp as adventure_bp
+# ...
 
-# 使用相對路徑導入模組
 import MD_firebase_config
-from auth_middleware import FirebaseAuthMiddleware  # 保持這行
-from admin_routes import router as admin_router
-from MD_routes import router as md_router
-from adventure_routes import router as adventure_router
-from champion_routes import router as champion_router
-from tournament_routes import router as tournament_router
-from config_editor_routes import router as config_editor_router
-from mail_routes import router as mail_router
-from exchange_routes import router as exchange_router
-from logging_config import setup_logging
 
-# 設定日誌
-setup_logging()
+# 初始化 Firebase
+MD_firebase_config.initialize_firebase()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("伺服器啟動...")
-    MD_firebase_config.initialize_firebase()
-    yield
-    print("伺服器關閉...")
+# 建立 Flask app
+app = Flask(__name__)
 
-app = FastAPI(lifespan=lifespan)
+# 設定 CORS
+CORS(app, resources={r"/api/*": {"origins": "https://msw2004727.github.io"},
+                     r"/admin/api/*": {"origins": "https://msw2004727.github.io"}},
+     supports_credentials=True)
 
-# 設定 CORS 中介軟體
-origins = [
-    "http://localhost",
-    "http://localhost:8000",
-    "http://127.0.0.1:5500",
-    "https://monster-dungeon.onrender.com",
-    "https://monsters-dungeon.netlify.app",
-    "https://msw2004727.github.io"
-]
+# 註冊藍圖 (Blueprint)，這是 Flask 組織路由的方式
+app.register_blueprint(admin_bp, url_prefix='/admin/api')
+# app.register_blueprint(md_bp, url_prefix='/api')
+# ...
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# 根目錄路由
+@app.route('/')
+def index():
+    return jsonify({"message": "歡迎來到怪獸地下城 API (Flask 版本)"})
 
-# ！！！掛載 FirebaseAuthMiddleware！！！
-# 我們把這一行的註解拿掉，來正式啟用它
-app.add_middleware(FirebaseAuthMiddleware)
+# 全局錯誤處理
+@app.errorhandler(HTTPException)
+def handle_exception(e):
+    """Return JSON instead of HTML for HTTP errors."""
+    response = e.get_response()
+    response.data = jsonify({
+        "code": e.code,
+        "name": e.name,
+        "description": e.description,
+    }).data
+    response.content_type = "application/json"
+    return response
 
-# 掛載 API 路由
-app.include_router(md_router, prefix="/api")
-app.include_router(admin_router, prefix="/admin/api")
-app.include_router(adventure_router, prefix="/api/adventure")
-app.include_router(champion_router, prefix="/api/champion")
-app.include_router(tournament_router, prefix="/api/tournament")
-app.include_router(config_editor_router, prefix="/api/config")
-app.include_router(mail_router, prefix="/api/mail")
-app.include_router(exchange_router, prefix="/api/exchange")
-
-# 根路由
-@app.get("/")
-async def root(request: Request):
-    return {"message": "歡迎來到怪獸地下城 API"}
-
-# 掛載靜態文件目錄
-static_files_path = os.path.join(os.path.dirname(__file__), '..', 'frontend')
-if os.path.exists(static_files_path):
-    app.mount("/", StaticFiles(directory=static_files_path, html=True), name="static")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+# 如果直接執行這個檔案，就用 Flask 內建的伺服器
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8000, debug=True)
