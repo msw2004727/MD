@@ -16,6 +16,7 @@ from .MD_models import (
 )
 from .MD_ai_services import generate_battle_report_content
 from .utils_services import get_effective_skill_with_level
+from .tournament_services import calculate_pvp_points_update
 
 
 battle_logger = logging.getLogger(__name__)
@@ -532,5 +533,5 @@ def simulate_battle_full(
         "player_monster": player_monster,
         "opponent_monster": opponent_monster
     }
-    
+
     return final_battle_result

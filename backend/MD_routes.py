@@ -431,6 +431,28 @@ def remove_friend_route():
     else:
         return jsonify({"error": "移除好友時發生錯誤。"}), 500
 
+def _update_pvp_tier(player_stats: Dict[str, Any]) -> Dict[str, Any]:
+    """根據PVP積分更新玩家的段位。"""
+    points = player_stats.get("pvp_points", 0)
+    # 這邊的段位設定應與前端 ui-tournament.js 中的 tiers 物件保持一致
+    tiers = {
+        "大師": 1500,
+        "鑽石": 1000,
+        "白金": 600,
+        "金牌": 300,
+        "銀牌": 100,
+        "銅牌": 0
+    }
+    
+    current_tier = "尚未定位"
+    for tier, min_points in tiers.items():
+        if points >= min_points:
+            current_tier = tier
+            break
+            
+    player_stats["pvp_tier"] = current_tier
+    return player_stats
+
 @md_bp.route('/battle/simulate', methods=['POST'])
 def simulate_battle_api_route():
     user_id, nickname_from_token, error_response = _get_authenticated_user_id()
@@ -438,16 +460,19 @@ def simulate_battle_api_route():
         return error_response
 
     data = request.json
+    routes_logger.info(f"接收到的 /battle/simulate 請求 body: {data}") # 【最終除錯日誌】
+
     player_monster_data_req = data.get('player_monster_data')
     opponent_monster_data_req = data.get('opponent_monster_data')
     opponent_owner_id_req = data.get('opponent_owner_id')
     opponent_owner_nickname_req = data.get('opponent_owner_nickname')
-
     is_champion_challenge = data.get('is_champion_challenge', False)
     challenged_rank = data.get('challenged_rank', None)
+    is_ladder_match = data.get('is_ladder_match', False)
+    challenge_type = data.get('challenge_type', None)
 
     if not player_monster_data_req or not opponent_monster_data_req:
-        return jsonify({"error": "請求中必須包含兩隻怪獸的資料。"}), 400
+        return jsonify({"error": "請求中必須包含兩隻怪獸的資���。"}), 400
 
     game_configs = _get_game_configs_data_from_app_context()
     if not game_configs:
@@ -461,7 +486,7 @@ def simulate_battle_api_route():
     if not opponent_monster_data_req.get('isNPC') and opponent_owner_id_req:
         opponent_player_data, _ = get_player_data_service(opponent_owner_id_req, opponent_owner_nickname_req, game_configs)
         if not opponent_player_data:
-            routes_logger.warning(f"無法獲取對手玩家 {opponent_owner_id_req} 的資料，戰鬥將在沒有其稱號加成的情況下進行。")
+            routes_logger.warning(f"無法獲取對手玩家 {opponent_owner_id_req} 的資料。")
 
     battle_result: BattleResult = simulate_battle_full( 
         player_monster_data=player_monster_data_req,
@@ -471,9 +496,27 @@ def simulate_battle_api_route():
         opponent_player_data=opponent_player_data
     )
 
-    if battle_result.get("battle_end"):
-        routes_logger.info(f"戰鬥結束，呼叫 post_battle_services 進行結算...")
+    if is_ladder_match and player_data and opponent_player_data:
+        from .tournament_services import calculate_pvp_points_update
+        winner_id = battle_result.get("winner_id")
         
+        # 確保 playerStats 存在
+        player_stats = player_data.setdefault("playerStats", {})
+        opponent_stats = opponent_player_data.setdefault("playerStats", {})
+
+        winner_stats_obj = player_stats if winner_id == user_id else opponent_stats
+        loser_stats_obj = opponent_stats if winner_id == user_id else player_stats
+        
+        gain, loss = calculate_pvp_points_update(winner_stats_obj.get("pvp_points", 1000), loser_stats_obj.get("pvp_points", 1000))
+        
+        battle_result["pvp_points_change"] = {
+            "winner_id": winner_id,
+            "loser_id": battle_result.get("loser_id"),
+            "winner_gain": gain,
+            "loser_loss": loss
+        }
+
+    if battle_result.get("battle_end"):
         post_battle_data = process_battle_results(
             player_id=user_id,
             opponent_id=opponent_owner_id_req,
@@ -484,12 +527,12 @@ def simulate_battle_api_route():
             battle_result=battle_result,
             game_configs=game_configs,
             is_champion_challenge=is_champion_challenge,
-            challenged_rank=challenged_rank
+            challenged_rank=challenged_rank,
+            challenge_type=challenge_type
         )
         
         updated_player_data = post_battle_data.get("updated_player_data")
         newly_awarded_titles = post_battle_data.get("newly_awarded_titles")
-        updated_champions_data = post_battle_data.get("updated_champions_data")
         
         if newly_awarded_titles:
             battle_result["newly_awarded_titles"] = newly_awarded_titles
@@ -498,7 +541,6 @@ def simulate_battle_api_route():
             "success": True, 
             "battle_result": battle_result,
             "updated_player_data": updated_player_data,
-            "updated_champions_data": updated_champions_data
         }), 200
     
     return jsonify({"success": True, "battle_result": battle_result}), 200

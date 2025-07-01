@@ -69,6 +69,7 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
         "rank": "N/A", "wins": 0, "losses": 0, "score": 0, "titles": [default_title_object], 
         "achievements": ["首次登入異世界"], "medals": 0, "nickname": nickname,
         "equipped_title_id": default_title_object["id"], "gold": game_configs.get("value_settings", {}).get("starting_gold", 500),
+        "pvp_points": 1000, "pvp_tier": "尚未定位",
         "current_win_streak": 0, "current_loss_streak": 0, "highest_win_streak": 0,
         "completed_cultivations": 0, "disassembled_monsters": 0, "discovered_recipes": [],
         "highest_rarity_created": "普通", "status_applied_counts": {}, "leech_skill_uses": 0,
@@ -246,6 +247,11 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
             needs_migration_save = False
             if "gold" not in player_stats:
                 player_stats["gold"] = game_configs.get("value_settings", {}).get("starting_gold", 500)
+                needs_migration_save = True
+            
+            if "pvp_points" not in player_stats:
+                player_stats["pvp_points"] = 1000
+                player_stats["pvp_tier"] = "尚未定位"
                 needs_migration_save = True
             
             if "nickname" not in player_stats or player_stats.get("nickname") != authoritative_nickname:
