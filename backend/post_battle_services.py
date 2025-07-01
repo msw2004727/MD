@@ -4,6 +4,7 @@
 import logging
 import time
 from typing import Dict, Any, List, Optional, Tuple
+import random # 新增：導入 random 模組
 
 from .MD_models import PlayerGameData, Monster, BattleResult, GameConfigs, ChampionSlot
 from .player_services import save_player_data_service, _add_player_log
@@ -89,8 +90,6 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
             buffs_text = ""
             if title.get("buffs"):
                 buff_parts = []
-                # --- 核心修改處 START ---
-                # 新增中文名稱對照表
                 stat_name_map = {
                     'hp': 'HP', 'mp': 'MP', 'attack': '攻擊', 'defense': '防禦', 'speed': '速度', 'crit': '爆擊率',
                     'cultivation_item_find_chance': '修煉物品發現率', 'elemental_damage_boost': '元素傷害',
@@ -103,11 +102,9 @@ def _check_and_award_titles(player_data: PlayerGameData, game_configs: GameConfi
                     'mp_regen_per_turn': 'MP每回合恢復'
                 }
                 for stat, value in title["buffs"].items():
-                    # 使用對照表來取得中文名稱，如果找不到則使用原始鍵值
                     name = stat_name_map.get(stat, stat)
                     display_value = f"+{value * 100:.0f}%" if 0 < value < 1 else f"+{value}"
                     buff_parts.append(f"{name}{display_value}")
-                # --- 核心修改處 END ---
                 buffs_text = f" 稱號效果：{ '、'.join(buff_parts) }"
 
             mail_content = f"恭喜您！由於您的卓越表現，您已成功解鎖了新的稱號：「{title.get('name')}」。 描述：{title.get('description', '無')}{buffs_text}"
@@ -152,22 +149,19 @@ def process_battle_results(
     opponent_stats = opponent_player_data.get("playerStats", {}) if opponent_player_data else {}
     is_player_winner = battle_result.get("winner_id") == player_monster_data['id']
 
-    # 【新】如果是每日試煉勝利，則記錄完成時間
     if challenge_type == 'daily' and is_player_winner:
-        challenge_id = opponent_monster_data.get('id') # npc_id 被用作 challenge_id
+        challenge_id = opponent_monster_data.get('id')
         if challenge_id:
             if "daily_challenges_completed" not in player_stats:
                 player_stats["daily_challenges_completed"] = {}
             player_stats["daily_challenges_completed"][challenge_id] = int(time.time())
             post_battle_logger.info(f"玩家 {player_id} 完成了每日試煉 {challenge_id}，已記錄時間戳。")
 
-            # 發放獎勵
             all_challenges = game_configs.get("tournament_config", {}).get("daily_challenges", [])
             challenge_config = next((c for c in all_challenges if c.get("npc_id") == challenge_id), None)
             
             if challenge_config:
                 reward_text = challenge_config.get("rewardText", "")
-                # 解析金幣獎勵
                 import re
                 gold_match = re.search(r'(\d+)\s*🪙', reward_text)
                 if gold_match:
@@ -176,7 +170,6 @@ def process_battle_results(
                     battle_result.setdefault("rewards_obtained", []).append({"type": "gold", "amount": gold_reward})
                     post_battle_logger.info(f"已為玩家 {player_id} 發放每日試煉金幣獎勵: {gold_reward}")
 
-                # 解析DNA獎勵
                 dna_match = re.search(r'隨機(.+?)系DNA', reward_text)
                 if dna_match:
                     element = dna_match.group(1)
@@ -184,7 +177,6 @@ def process_battle_results(
                     dna_pool = [d for d in all_dna if d.get("type") == element]
                     if dna_pool:
                         dna_reward = random.choice(dna_pool)
-                        # 優先放入主庫存，滿了再放臨時背包
                         main_inventory = player_data.get("playerOwnedDNA", [])
                         empty_slot_index = next((i for i, slot in enumerate(main_inventory) if slot is None and i != 11), -1)
                         
@@ -198,7 +190,6 @@ def process_battle_results(
                         battle_result.setdefault("rewards_obtained", []).append({"type": "dna", "item": new_dna_instance})
                         post_battle_logger.info(f"已為玩家 {player_id} 發放每日試煉DNA獎勵: {dna_reward.get('name')}")
 
-    # 處理天梯積分和段位
     if is_ladder_match and opponent_player_data:
         post_battle_logger.info("偵測到PVP積分變動，開始處理...")
         points_change = battle_result["pvp_points_change"]
@@ -216,7 +207,6 @@ def process_battle_results(
         
         post_battle_logger.info(f"天梯結算：玩家 {player_id} 積分變為 {player_stats['pvp_points']} ({player_stats['pvp_tier']}), 對手 {opponent_id} 積分變為 {opponent_stats['pvp_points']} ({opponent_stats['pvp_tier']})")
     
-    # 更新勝敗���次
     if is_player_winner:
         player_stats["wins"] = player_stats.get("wins", 0) + 1
     else:
@@ -228,7 +218,6 @@ def process_battle_results(
         else:
             opponent_stats["losses"] = opponent_stats.get("losses", 0) + 1
     
-    # ... (後續的怪物資料更新等) ...
     player_monster_in_farm = next((m for m in player_data.get("farmedMonsters", []) if m.get("id") == player_monster_data['id']), None)
     if player_monster_in_farm:
         player_monster_in_farm["hp"] = battle_result["player_monster_final_hp"]
@@ -248,9 +237,7 @@ def process_battle_results(
             else: opponent_resume["losses"] += 1
             if battle_result.get("opponent_activity_log"): opponent_monster_in_farm.setdefault("activityLog", []).insert(0, battle_result["opponent_activity_log"])
 
-    # ... (冠軍殿堂邏輯) ...
     if is_champion_challenge and challenged_rank is not None and is_player_winner:
-        # ... (此處省略以保持簡潔)
         pass
 
     if is_player_winner:
@@ -259,16 +246,15 @@ def process_battle_results(
             player_data["farmedMonsters"] = absorption_result.get("updated_player_farm", player_data.get("farmedMonsters"))
             player_data["playerOwnedDNA"] = absorption_result.get("updated_player_owned_dna", player_data.get("playerOwnedDNA"))
 
-    # ... (日誌記錄) ...
-# 記錄玩家日誌
-win_span = '<span style=\'color: var(--success-color);\'>獲勝</span>'
-loss_span = '<span style=\'color: var(--danger-color);\'>戰敗</span>'
-result_message = win_span if is_player_winner else loss_span
-_add_player_log(player_data, "戰鬥", f"挑戰「{opponent_monster_data.get('nickname', '一名對手')}」，您{result_message}了！")
+    win_span = '<span style=\'color: var(--success-color);\'>獲勝</span>'
+    loss_span = '<span style=\'color: var(--danger-color);\'>戰敗</span>'
+    
+    player_result_msg = win_span if is_player_winner else loss_span
+    _add_player_log(player_data, "戰鬥", f"挑戰「{opponent_monster_data.get('nickname', '一名對手')}」，您{player_result_msg}了！")
 
-# 記錄對手日誌
-opponent_result_message = loss_span if is_player_winner else win_span
-_add_player_log(opponent_player_data, "戰鬥", f"「{player_nickname}」向您發起挑戰，您{opponent_result_message}了！")
+    if opponent_player_data and opponent_id:
+        opponent_result_msg = loss_span if is_player_winner else win_span
+        _add_player_log(opponent_player_data, "戰鬥", f"「{player_data.get('nickname', '一名挑戰者')}」向您發起挑戰，您{opponent_result_msg}了！")
 
     player_data["playerStats"] = player_stats
     if opponent_player_data:
