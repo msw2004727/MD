@@ -1,0 +1,278 @@
+[
+  {
+    "id": "ruins_boss_fire",
+    "nickname": "災厄炎龍",
+    "description": "被封印在遺跡深處的古代火龍，每一次呼吸都伴隨著毀滅性的烈焰。",
+    "rarity": "菁英",
+    "elements": ["火"],
+    "initial_max_hp": 4800, "hp": 4800, "initial_max_mp": 2800, "mp": 2800,
+    "attack": 520, "defense": 450, "speed": 400, "crit": 25,
+    "personality": { "name": "暴躁的" }, "score": 2550,
+    "skills": [
+      {
+        "name": "火焰拳",
+        "level": 10
+      },
+      {
+        "name": "爆炎衝",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "fire_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "fire_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_water",
+    "nickname": "洪荒海神",
+    "description": "遠古時代統治海洋的舊神，被封印後力量雖已衰退，但仍能引發滔天洪水。",
+    "rarity": "菁英",
+    "elements": ["水"],
+    "initial_max_hp": 5200, "hp": 5200, "initial_max_mp": 3200, "mp": 3200,
+    "attack": 480, "defense": 500, "speed": 380, "crit": 22,
+    "personality": { "name": "傲慢的" }, "score": 2600,
+    "skills": [
+      {
+        "name": "水流衝擊",
+        "level": 8
+      },
+      {
+        "name": "激流突刺",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "water_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "water_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_wood",
+    "nickname": "世界樹之心",
+    "description": "古代世界樹枯萎後留下的最後生命核心，依然散發著龐大的生命能量。",
+    "rarity": "菁英",
+    "elements": ["木"],
+    "initial_max_hp": 5500, "hp": 5500, "initial_max_mp": 2500, "mp": 2500,
+    "attack": 460, "defense": 550, "speed": 360, "crit": 20,
+    "personality": { "name": "溫和的" }, "score": 2580,
+    "skills": [
+      {
+        "name": "藤鞭抽擊",
+        "level": 10
+      },
+      {
+        "name": "葉刃亂舞",
+        "level": 9
+      },
+      {
+        "name": "森羅巨根",
+        "level": 8
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "wood_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "wood_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_gold",
+    "nickname": "機神・奧米加",
+    "description": "古代文明的最終決戰兵器，其裝甲由無法解析的合金構成。",
+    "rarity": "菁英",
+    "elements": ["金"],
+    "initial_max_hp": 4500, "hp": 4500, "initial_max_mp": 2000, "mp": 2000,
+    "attack": 550, "defense": 600, "speed": 320, "crit": 24,
+    "personality": { "name": "冷静的" }, "score": 2700,
+    "skills": [
+      {
+        "name": "鐵拳重擊",
+        "level": 10
+      },
+      {
+        "name": "金剛碎擊",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "gold_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "gold_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_earth",
+    "nickname": "泰坦巨神兵",
+    "description": "由整座山脈化成的巨神兵，沉睡了數萬年，如今被入侵者喚醒。",
+    "rarity": "菁英",
+    "elements": ["土"],
+    "initial_max_hp": 6000, "hp": 6000, "initial_max_mp": 1500, "mp": 1500,
+    "attack": 500, "defense": 580, "speed": 300, "crit": 20,
+    "personality": { "name": "頑固的" }, "score": 2650,
+    "skills": [
+      {
+        "name": "土石猛擊",
+        "level": 10
+      },
+      {
+        "name": "地裂衝鋒",
+        "level": 9
+      },
+      {
+        "name": "巨石粉碎",
+        "level": 8
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "earth_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "earth_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_light",
+    "nickname": "熾天使",
+    "description": "最高階的天使，手持聖劍，審判一切踏入聖域的凡人。",
+    "rarity": "菁英",
+    "elements": ["光"],
+    "initial_max_hp": 4700, "hp": 4700, "initial_max_mp": 3500, "mp": 3500,
+    "attack": 510, "defense": 460, "speed": 480, "crit": 26,
+    "personality": { "name": "傲慢的" }, "score": 2550,
+    "skills": [
+      {
+        "name": "光芒突刺",
+        "level": 10
+      },
+      {
+        "name": "聖輝斬擊",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "light_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "light_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_dark",
+    "nickname": "墮落魔君",
+    "description": "曾是天界的大天使，因追求極致力量而墮落，統御著暗影軍團。",
+    "rarity": "菁英",
+    "elements": ["暗"],
+    "initial_max_hp": 4600, "hp": 4600, "initial_max_mp": 3000, "mp": 3000,
+    "attack": 530, "defense": 440, "speed": 460, "crit": 28,
+    "personality": { "name": "狡猾的" }, "score": 2620,
+    "skills": [
+      {
+        "name": "暗影突襲",
+        "level": 10
+      },
+      {
+        "name": "噬魂連擊",
+        "level": 9
+      },
+      {
+        "name": "幽冥絕擊",
+        "level": 8
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "dark_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "dark_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_poison",
+    "nickname": "滅世毒龍",
+    "description": "其吐息足以讓整個大陸化為劇毒沼澤的傳說毒龍。",
+    "rarity": "菁英",
+    "elements": ["毒"],
+    "initial_max_hp": 4900, "hp": 4900, "initial_max_mp": 2600, "mp": 2600,
+    "attack": 500, "defense": 470, "speed": 410, "crit": 23,
+    "personality": { "name": "憤怒的" }, "score": 2520,
+    "skills": [
+      {
+        "name": "毒牙咬擊",
+        "level": 10
+      },
+      {
+        "name": "蛇王毒擊",
+        "level": 8
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "poison_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "poison_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_wind",
+    "nickname": "風暴龍王",
+    "description": "棲息於雲端之上的天空霸主，每一次振翅都會引發颶風。",
+    "rarity": "菁英",
+    "elements": ["風"],
+    "initial_max_hp": 4700, "hp": 4700, "initial_max_mp": 2900, "mp": 2900,
+    "attack": 470, "defense": 450, "speed": 530, "crit": 25,
+    "personality": { "name": "急躁的" }, "score": 2600,
+    "skills": [
+      {
+        "name": "疾風猛擊",
+        "level": 10
+      },
+      {
+        "name": "颶風強襲",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "wind_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "wind_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_none",
+    "nickname": "守護巨像",
+    "description": "由古代魔法師創造的無屬性巨像，旨在守護遺跡的核心秘密。",
+    "rarity": "菁英",
+    "elements": ["無"],
+    "initial_max_hp": 5300, "hp": 5300, "initial_max_mp": 1800, "mp": 1800,
+    "attack": 510, "defense": 510, "speed": 350, "crit": 22,
+    "personality": { "name": "可靠的" }, "score": 2550,
+    "skills": [
+      {
+        "name": "均衡直拳",
+        "level": 10
+      },
+      {
+        "name": "穩重連擊",
+        "level": 9
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "none_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "none_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  },
+  {
+    "id": "ruins_boss_mix",
+    "nickname": "失序的奇美拉",
+    "description": "在遺跡中吸收了過多混亂能量而失控的奇美拉，其攻擊完全無法預測。",
+    "rarity": "菁英",
+    "elements": ["混"],
+    "initial_max_hp": 4800, "hp": 4800, "initial_max_mp": 3000, "mp": 3000,
+    "attack": 490, "defense": 470, "speed": 450, "crit": 24,
+    "personality": { "name": "善變的" }, "score": 2600,
+    "skills": [
+      {
+        "name": "混元衝擊",
+        "level": 10
+      },
+      {
+        "name": "幻象連斬",
+        "level": 8
+      }
+    ],
+    "loot_table": {
+      "guaranteed": [ { "type": "gold", "min": 500, "max": 800, "chance": 1.0 } ],
+      "random": [ { "type": "dna", "item_pool_id": "mix_elite", "quantity": 1, "chance": 0.5 }, { "type": "dna", "item_pool_id": "mix_legendary", "quantity": 1, "chance": 0.05 } ]
+    }
+  }
+]

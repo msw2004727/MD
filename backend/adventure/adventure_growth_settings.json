@@ -1,0 +1,28 @@
+{
+  "facilities": {
+    "facility_001": {
+      "growth_chance": 0.30,
+      "growth_points": 1
+    },
+    "facility_002": {
+      "growth_chance": 0.30,
+      "growth_points": 2
+    },
+    "facility_003": {
+      "growth_chance": 0.30,
+      "growth_points": 3
+    },
+    "facility_004": {
+      "growth_chance": 0.50,
+      "growth_points": 4
+    }
+  },
+  "stat_weights": {
+    "hp": 1,
+    "mp": 1,
+    "attack": 1,
+    "defense": 1,
+    "speed": 1,
+    "crit": 0
+  }
+}

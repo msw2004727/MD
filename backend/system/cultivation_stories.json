@@ -1,0 +1,157 @@
+{
+  "gaia": {
+    "tier_25": {
+      "base_story": [
+        "在蓋亞的搖籃中，{monster_name}安靜地度過了一段時光，感受著自然的脈動。雖然沒有特別的發現，但牠感覺自己鍛鍊的{trained_skills}技巧更加穩固了。",
+        "沐浴在柔和的陽光下，{monster_name}在青翠的草地上小憩片刻，為下一次冒險養精蓄銳。牠反覆回味著{trained_skills}的訣竅，覺得受益匪淺。"
+      ],
+      "opening": [
+        "在蓋亞的搖籃中，{monster_name}小心翼翼地探索著，濕潤的空氣中充滿了生命的氣息。",
+        "{monster_name}穿梭在參天的古木之間，陽光透過葉隙灑下斑駁的光點。"
+      ],
+      "event": {
+        "item_found": [
+          "突然，牠的目光被一處閃爍著微光的草叢吸引，走近一看，竟然發現了{item_list}！",
+          "在一棵古老藤蔓的根部，牠找到了一個被遺忘的包裹，裡面裝著{item_list}。"
+        ],
+        "new_skill_learned": [
+          "在一場與原生生物的追逐中，{monster_name}靈光一閃，身體不由自主地使出了全新的招式——{new_skill_name}！",
+          "當牠專心致志地鍛鍊{trained_skills}時，一股新的力量在體內湧現，最終化為了一招強大的{new_skill_name}！"
+        ],
+        "item_and_new_skill": [
+          "真是一趟奇遇！{monster_name}在追逐一隻奇特生物時，不僅在其巢穴發現了{item_list}，還在戰鬥中福至心靈，領悟了{new_skill_name}！"
+        ]
+      },
+      "closing": [
+        "滿載而歸的牠，帶著新的力量與發現，踏上了歸途。",
+        "這次的修煉收穫頗豐，牠對下一次的冒險充滿了期待。"
+      ]
+    },
+    "tier_50": {
+       "base_story": ["{monster_name}在寧靜的溪邊進行了長時間的冥想，雖然沒有奇遇，但牠的{trained_skills}技巧在不斷的反思中變得更加純熟。"],
+       "opening": ["隨著修煉的深入，{monster_name}來到了一片被濃霧籠罩的沼澤地。"],
+       "event": {
+        "item_found": ["在沼澤深處，牠撥開一片巨大的蕨葉，發現了一塊被泥土半掩的{item_list}。"],
+        "new_skill_learned": ["在與沼澤中的鱷魚怪獸周旋時，{monster_name}模仿對方的動作，出乎意料地領悟了{new_skill_name}！"],
+        "item_and_new_skill": ["牠掉進一個隱密的樹洞，洞底不僅有前人留下的{item_list}，牆壁上還刻著{new_skill_name}的修煉圖解！"]
+      },
+       "closing": ["帶著新的發現，牠小心翼翼地離開了這片神秘的沼澤。"]
+    },
+    "tier_75": {
+       "base_story": ["在瀑布下，{monster_name}承受著巨大的水流衝擊，磨練自己的意志與{trained_skills}。這是一場艱苦但收穫滿滿的修行。"],
+       "opening": ["{monster_name}攀上了一座陡峭的山崖，稀薄的空氣和強風讓每一步都充滿挑戰。"],
+       "event": {
+        "item_found": ["在山頂的鷹巢中，牠發現了一枚閃閃發光的{item_list}，想必是巨鷹的收藏品。"],
+        "new_skill_learned": ["在山巔感受風的流動時，{monster_name}的心境與自然合一，從而領悟了蘊含風之力的{new_skill_name}！"],
+        "item_and_new_skill": ["牠無意間闖入一頭沉睡巨熊的洞穴，在屏息逃離的過程中，不僅順手牽羊拿走了{item_list}，極度的緊張感還激發了牠的潛能，學會了{new_skill_name}！"]
+      },
+       "closing": ["完成試煉後，牠站在山巔長嘯一聲，充滿了成就感。"]
+    },
+    "tier_100": {
+      "base_story": [
+        "經過長時間的艱苦修行，{monster_name}的身心都達到了新的境界。牠對{trained_skills}的理解已臻化境，每一次呼吸都與蓋亞的脈動合而為一。雖然沒有遇到特別的奇遇，但這份純粹的成長本身就是最寶貴的財富。"
+      ],
+      "opening": [
+        "在蓋亞搖籃的最深處，{monster_name}挑戰著自己的極限，周圍環繞著最原始也最強大的自然之力。"
+      ],
+      "event": {
+        "item_found": [
+          "在克服了重重險阻，抵達一處無人涉足的秘境後，{monster_name}在古老的祭壇上發現了傳說中的寶物：{item_list}！"
+        ],
+        "new_skill_learned": [
+          "在與守護秘境的強大幻影進行了漫長的戰鬥後，{monster_name}在體力與意志都瀕臨極限的瞬間，突破了瓶頸，領悟了終極奧義：{new_skill_name}！"
+        ],
+        "item_and_new_skill": [
+          "這是一場傳奇般的試煉！牠擊敗了守護神物的古老精魂，不僅贏得了其守護的{item_list}，更在戰鬥中吸收了對方的力量，昇華了自身的技巧，領悟了驚天動地的{new_skill_name}！"
+        ]
+      },
+      "closing": [
+        "帶著足以撼動世界的力量與傳說中的秘寶，{monster_name}的身影消失在森林深處，牠已不再是昨日的自己。"
+      ]
+    }
+  },
+  "sky": {
+    "tier_25": {
+      "base_story": ["在天空的怒火中，{monster_name}頂著烈日進行基礎訓練，汗水浸濕了大地。牠專注於磨練{trained_skills}，感覺受益良多。"],
+      "opening": ["{monster_name}來到一片被風化的紅色岩地，空氣中充滿了熱量與能量的氣息。"],
+      "event": {
+        "item_found": ["在一道被閃電劈開的岩石裂縫中，牠發現了一塊灼熱的{item_list}。"],
+        "new_skill_learned": ["在躲避一場突如其來的沙塵暴時，{monster_name}順勢而為，領悟了操控氣流的技巧{new_skill_name}。"],
+        "item_and_new_skill": ["牠追逐著一隻高速飛行的火鳥，不僅在鳥巢中發現了{item_list}，還在模仿其飛行姿態時學會了{new_skill_name}。"]
+      },
+      "closing": ["感受到體內充盈的能量，{monster_name}結束了這次短暫的修行。"]
+    },
+    "tier_50": {
+      "base_story": ["{monster_name}在熾熱的流沙中艱難跋涉，這對牠的耐力是極大的考驗。牠將這份磨練轉化為對{trained_skills}的深刻理解。"],
+      "opening": ["{monster_name}深入了一座活火山的邊緣，感受著大地的怒吼與熱浪。"],
+      "event": {
+        "item_found": ["在一個冷卻的熔岩通道裡，牠發現了被岩漿包裹的{item_list}。"],
+        "new_skill_learned": ["觀察著熔岩的流動，{monster_name}从中領悟了能量的爆發之道，創造出{new_skill_name}。"],
+        "item_and_new_skill": ["牠與一隻熔岩巨獸對峙，利用智慧引開了牠的注意，從其巢穴中竊取了{item_list}，並在逃跑時激發潛能學會了{new_skill_name}。"]
+      },
+      "closing": ["帶著一身硫磺的氣味和滿滿的收穫，牠離開了這片危險之地。"]
+    },
+    "tier_75": {
+      "base_story": ["在高聳入雲的山峰上，{monster_name}與雷電共舞，用自然的狂暴能量淬鍊自己的{trained_skills}。"],
+      "opening": ["{monster_name}進入了一片永恆白晝的聖光之地，強烈的光芒讓牠幾乎睜不開眼。"],
+      "event": {
+        "item_found": ["在一座由光構成的古老神殿廢墟中，牠找到了被供奉的{item_list}。"],
+        "new_skill_learned": ["沐浴在聖光中，{monster_name}感覺自己的靈魂得到了淨化，從而領悟了神聖的招式{new_skill_name}。"],
+        "item_and_new_skill": ["牠解開了一道光之謎題，打開了隱藏的密室，裡面不僅有寶物{item_list}，牆上還記載著古老的技能{new_skill_name}。"]
+      },
+      "closing": ["感覺自己的力量變得更加純粹，{monster_name}心滿意足地結束了修行。"]
+    },
+    "tier_100": {
+      "base_story": ["在天空神殿的最高處，{monster_name}日復一日地承受著烈風與光能的洗禮。牠的{trained_skills}已與這片天空融為一體，達到了凡人難以企及的境界。"],
+      "opening": ["{monster_name}乘坐著上升氣流，抵達了傳說中的浮空島，這裡是純粹能量的領域。"],
+      "event": {
+        "item_found": ["在浮空島的中央聖殿，牠通過了守護者的考驗，被贈予了天空的秘寶{item_list}。"],
+        "new_skill_learned": ["在與雲端巨龍的搏鬥中，{monster_name}將自身能量提升至極限，最終領悟了能夠撕裂天空的{new_skill_name}！"],
+        "item_and_new_skill": ["這是一場神話般的旅程！牠駕馭著風暴，穿過雷雲，在彩虹的盡頭找到了失落的寶藏{item_list}，並在頓悟中掌握了傳說中的技能{new_skill_name}！"]
+      },
+      "closing": ["牠的身影宛如新的神祇，俯瞰著腳下的大地，帶著無與倫比的力量歸來。"]
+    }
+  },
+  "crystal": {
+    "tier_25": {
+      "base_story": ["在人智的結晶中，{monster_name}穿梭於廢棄的街道，感受著逝去文明的氣息。牠靜下心來，專注於{trained_skills}的練習。"],
+      "opening": ["{monster_name}走進一座被遺忘的鍊金都市，生鏽的齒輪和破碎的管道訴說著往日的輝煌。"],
+      "event": {
+        "item_found": ["在一個廢棄鍊金術士的實驗室裡，牠在一個佈滿灰塵的抽屜中發現了{item_list}。"],
+        "new_skill_learned": ["研究著牆上殘留的鍊成陣，{monster_name}觸發了機關，一股知識湧入腦中，讓牠學會了{new_skill_name}。"],
+        "item_and_new_skill": ["牠啟動了一台失控的鍊金魔偶，在一番周旋後，不僅從魔偶殘骸中找到了{item_list}，還解析了其戰鬥模式，領悟了{new_skill_name}。"]
+      },
+      "closing": ["對古代的智慧充滿敬畏，牠結束了這次短暫的探索之旅。"]
+    },
+    "tier_50": {
+      "base_story": ["{monster_name}在巨大的圖書館廢墟中翻閱著殘破的書籍，雖然文字大多已無法辨認，但牠對{trained_skills}的原理有了更深的體悟。"],
+      "opening": ["{monster_name}來到都市地下的動力核心區，不穩定的能量波動讓空氣都為之震顫。"],
+      "event": {
+        "item_found": ["在一個停止運轉的巨大齒輪旁，牠發現了被當作潤滑劑使用的珍貴{item_list}。"],
+        "new_skill_learned": ["在接觸到洩漏的能量源時，{monster_name}的身體產生了奇妙的變異，意外學會了充滿混沌氣息的{new_skill_name}。"],
+        "item_and_new_skill": ["牠修復了一小部分管線，啟動了隱藏的儲藏室，裡面既有珍稀的{item_list}，也有一張記載著{new_skill_name}的設計藍圖。"]
+      },
+      "closing": ["感受著體內混亂而強大的新力量，牠迅速離開了這個不穩定的是非之地。"]
+    },
+    "tier_75": {
+      "base_story": ["{monster_name}在都市最高的鐘樓頂端，俯瞰著整座死寂的城市，孤獨感讓牠的{trained_skills}磨練得更加專注與致命。"],
+      "opening": ["{monster_name}進入了都市的禁忌研究區，這裡到處都是破碎的培養皿和詭異的影子。"],
+      "event": {
+        "item_found": ["在一個被封印的暗影容器中，牠發現了凝聚成實體的{item_list}。"],
+        "new_skill_learned": ["在與自己影子的戰鬥中，{monster_name}克服了內心的恐懼，從而掌握了駕馭黑暗的技能{new_skill_name}。"],
+        "item_and_new_skill": ["牠觸碰了一面能映照內心的魔鏡，在戰勝了心魔後，不僅獲得了鏡子本身作為{item_list}，還領悟了強大的精神技能{new_skill_name}。"]
+      },
+      "closing": ["對人智的偉大與瘋狂有了新的認識後，牠帶著複雜的心情歸來。"]
+    },
+    "tier_100": {
+      "base_story": ["在人智結晶的中央王座上，{monster_name}靜坐了無數個日夜，消化著這座城市所有的知識與法則。牠的{trained_skills}已不再是單純的技巧，而是化為了牠本能的一部分。"],
+      "opening": ["{monster_name}啟動了都市的最終兵器，一個巨大的自律魔像，並將其作為自己修行的對手。"],
+      "event": {
+        "item_found": ["在擊敗了最終兵器後，牠從其核心中取出了傳說中的賢者之石，那正是{item_list}！"],
+        "new_skill_learned": ["在與巨大魔像的最終對決中，{monster_name}將學到的一切融會貫通，超越了法則的限制，領悟了獨一無二的{new_skill_name}！"],
+        "item_and_new_skill": ["這是一場智慧與力量的終極考驗！牠破解了城市的中央電腦，不僅獲得了其資料庫中儲存的{item_list}，還下載了其戰鬥模擬程式，學會了神一般的技能{new_skill_name}！"]
+      },
+      "closing": ["掌握了古代文明的最高傑作，牠的身影已成為這座都市新的傳說。"]
+    }
+  }
+}

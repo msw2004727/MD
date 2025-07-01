@@ -1,0 +1,243 @@
+/* css/champions.css */
+
+/* 冠軍殿堂區塊的總容器 */
+.champions-section {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 15px -3px color-mix(in srgb, var(--accent-color) 30%, transparent);
+}
+
+/* 區塊標題 */
+.champions-section-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--rarity-legendary-text);
+    margin-bottom: 1rem; /* 縮小與下方獎勵欄的間距 */
+    text-shadow: 0 0 10px var(--rarity-legendary-text);
+    letter-spacing: 2px;
+}
+
+/* --- 核心修改處 START --- */
+/* 每日獎勵資訊欄容器 - 新增最大寬度並置中 */
+.champion-rewards-container {
+    padding: 0.75rem;
+    margin-bottom: 1.5rem; /* 與下方冠軍網格的間距 */
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-slot);
+    max-width: 450px; /* 設定最大寬度 */
+    margin-left: auto;   /* 自動左外距 */
+    margin-right: auto;  /* 自動右外距，實現置中 */
+}
+
+/* 獎勵資訊欄標題 */
+.rewards-title {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    letter-spacing: 1px;
+}
+
+/* 獎勵網格佈局 - 從 grid 改為 flex */
+.rewards-grid {
+    display: flex;
+    flex-wrap: wrap; /* 允許項目在空間不足時換行 */
+    justify-content: space-around; /* 讓項目在容器內均勻分佈 */
+    align-items: center;
+    gap: 0.5rem 1rem;
+}
+
+/* 單個獎勵項目 */
+.reward-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    flex-basis: 80px; /* 提供一個基礎寬度，讓排版更穩定 */
+}
+/* --- 核心修改處 END --- */
+
+/* 獎勵名次文字 */
+.reward-rank {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+}
+
+/* 獎勵金額文字 */
+.reward-value {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--rarity-legendary-text); /* 使用金色來突顯獎勵 */
+}
+
+/* 放置四個名次的網格容器 */
+.champions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    justify-items: center;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+/* 個別名次欄位的通用樣式 */
+.champion-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    width: 100%;
+    min-height: 180px;
+    background-color: var(--bg-slot);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    justify-content: center;
+    position: relative;
+}
+
+/* 當欄位被佔據時的樣式 */
+.champion-slot.occupied {
+    border-style: solid;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* 網格佈局定位 */
+.champion-slot[data-rank="1"] {
+    grid-column: 1 / 3;
+    grid-row: 1 / 2;
+    border-color: var(--rarity-legendary-text);
+}
+
+.champion-slot[data-rank="2"] {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    border-color: silver;
+}
+
+.champion-slot[data-rank="3"] {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    border-color: #cd7f32;
+}
+
+.champion-slot[data-rank="4"] {
+    grid-column: 1 / 3;
+    grid-row: 3 / 4;
+    border-color: var(--accent-color);
+}
+
+
+/* 頭像與皇冠樣式 */
+.champion-avatar-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: visible;
+}
+
+.champion-avatar {
+    width: 100%;
+    height: 100%;
+    border: 3px solid var(--border-color);
+    box-sizing: border-box;
+    background-color: var(--bg-primary);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.champion-avatar img {
+    width: 150%;
+    height: 150%;
+    object-fit: cover;
+}
+
+.champion-crown {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.2rem;
+    color: gold;
+    text-shadow: 0 0 6px rgba(0,0,0,0.6);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.champion-identity-container {
+    display: flex;
+    flex-wrap: wrap; /* 允許換行 */
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem; /* 垂直和水平間距 */
+    min-height: 24px;
+    text-align: center; /* 整體文字置中 */
+}
+
+.champion-owner-tag {
+    background-color: var(--accent-color);
+    color: var(--button-primary-text);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: bold;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.champion-monster-name {
+    font-size: 0.9em;
+}
+
+.champion-reign-duration {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+
+/* 文字與按鈕樣式 */
+.champion-name {
+    font-weight: bold;
+    font-size: 1rem;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.champion-placeholder-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
+.champion-challenge-btn {
+    padding: 6px 18px;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}

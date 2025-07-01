@@ -1,0 +1,159 @@
+[
+  {
+    "id": "confusion",
+    "name": "混亂",
+    "description": "陷入混亂的怪獸在行動時，有50%的機率會攻擊自己。",
+    "icon": "😵",
+    "duration_turns": "2-4",
+    "real_time_effect": "僅限戰鬥中",
+    "confusion_chance": 0.5,
+    "effects": {}
+  },
+  {
+    "id": "paralysis",
+    "name": "麻痺",
+    "description": "陷入麻痺的怪獸速度會大幅下降，且每回合有30%的機率無法行動。",
+    "icon": "⚡",
+    "duration_turns": "2",
+    "real_time_effect": "僅限戰鬥中",
+    "chance_to_skip_turn": 0.3,
+    "effects": {
+      "speed": -20
+    }
+  },
+  {
+    "id": "burn",
+    "name": "燒傷",
+    "description": "陷入燒傷的怪獸每回合會損失生命值，且攻擊力會下降。",
+    "icon": "🔥",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中",
+    "effects": {
+      "hp_per_turn": -5,
+      "attack": -10
+    }
+  },
+  {
+    "id": "freeze",
+    "name": "冰凍",
+    "description": "陷入冰凍的怪獸將無法行動。受到火屬性攻擊時會解除，但傷害會加倍。",
+    "icon": "🧊",
+    "duration_turns": "1",
+    "real_time_effect": "僅限戰鬥中",
+    "chance_to_skip_turn": 1.0,
+    "elemental_vulnerability": {
+      "火": 2.0
+    },
+    "effects": {}
+  },
+  {
+    "id": "poison",
+    "name": "中毒",
+    "description": "陷入中毒的怪獸每回合會損失固定數值的生命值。",
+    "icon": "🤢",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中",
+    "effects": {
+      "hp_per_turn": -8
+    }
+  },
+  {
+    "id": "badly_poisoned",
+    "name": "強力中毒",
+    "description": "陷入強力中毒的怪獸每回合損失的生命值會持續增加。",
+    "icon": "☠️",
+    "duration_turns": "直到戰鬥結束或被治癒",
+    "real_time_effect": "僅限戰鬥中",
+    "effects": {
+      "hp_per_turn": -5,
+      "scaling_dot": true
+    }
+  },
+  {
+    "id": "badly_burned",
+    "name": "強力燒傷",
+    "description": "陷入強力燒傷的怪獸每回合會損失大量生命值，且攻擊力大幅下降，此狀態無法被常規方法解除。",
+    "icon": "🌋",
+    "duration_turns": "直到戰鬥結束",
+    "real_time_effect": "僅限戰鬥中",
+    "effects": {
+      "hp_per_turn": -10,
+      "attack": -15
+    }
+  },
+  {
+    "id": "sound_blocked",
+    "name": "封鎖聲音",
+    "description": "陷入此狀態的怪獸將暫時無法使用任何聲音類別的技能。",
+    "icon": "🔇",
+    "duration_turns": "2",
+    "real_time_effect": "僅限戰鬥中",
+    "blocks_skill_category": "聲音",
+    "effects": {}
+  },
+  {
+    "id": "blind",
+    "name": "失明",
+    "description": "陷入失明的怪獸，其技能命中率會顯著下降。",
+    "icon": "瞽",
+    "duration_turns": "3",
+    "real_time_effect": "僅限戰鬥中",
+    "effects": {
+      "accuracy": -25
+    }
+  },
+  {
+    "id": "sleep",
+    "name": "睡眠",
+    "description": "陷入睡眠的怪獸將無法行動，直到被攻擊或數回合後自動醒來。",
+    "icon": "😴",
+    "duration_turns": "1-3",
+    "real_time_effect": "僅限戰鬥中",
+    "chance_to_skip_turn": 1.0,
+    "effects": {}
+  },
+  {
+    "id": "insomnia",
+    "name": "不眠",
+    "description": "陷入不眠狀態的怪獸將免疫任何「睡眠」效果。",
+    "icon": "👁️",
+    "duration_turns": "直到戰鬥結束",
+    "real_time_effect": "僅限戰鬥中",
+    "immunities": ["sleep"],
+    "effects": {}
+  },
+  {
+    "id": "lucky_blessing",
+    "name": "幸運祝福",
+    "description": "受到祝福的怪獸，在接下來的一段時間內，進行修煉或探索時更容易發現稀有事物。",
+    "icon": "🍀",
+    "duration_turns": "不適用於戰鬥",
+    "real_time_effect": "戰鬥外持續60分鐘",
+    "effects": {
+      "cultivation_item_find_chance": 0.1
+    }
+  },
+  {
+    "id": "fatigue",
+    "name": "過度疲勞",
+    "description": "過於疲勞的怪獸，所有能力值暫時微量下降。需要好好休息才能恢復。",
+    "icon": "😩",
+    "duration_turns": "不適用於戰鬥",
+    "real_time_effect": "戰鬥外持續180分鐘",
+    "effects": {
+      "attack": -5,
+      "defense": -5,
+      "speed": -5
+    }
+  },
+  {
+    "id": "petrified",
+    "name": "石化",
+    "description": "被石化的怪獸將無法進行任何活動，包括戰鬥、修煉。需要特殊的藥劑才能解除。",
+    "icon": "🗿",
+    "duration_turns": "永久（戰鬥中無法行動）",
+    "real_time_effect": "永久（需要治療）",
+    "blocks_all_actions": true,
+    "effects": {}
+  }
+]
