@@ -241,3 +241,24 @@
     font-size: 0.9rem;
     margin-top: 0.5rem;
 }
+
+/* --- 新增：天梯挑戰按鈕在窄視窗下的換行樣式 --- */
+@media (max-width: 400px) {
+    .ladder-match-btn {
+        word-break: break-all; /* 允許在任意字符間換行 */
+        line-height: 1.2; /* 調整行高，讓文字更緊湊 */
+        padding-top: 0.75rem; /* 增加垂直內邊距，讓按鈕更好看 */
+        padding-bottom: 0.75rem;
+    }
+}
+
+/* --- 新增：每日試煉卡片樣式 --- */
+#daily-challenges-grid .panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 確保卡片佔滿網格單元的高度 */
+}
+
+#daily-challenges-grid .panel .button {
+    margin-top: auto; /* 關鍵：將按鈕推向底部 */
+}

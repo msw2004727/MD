@@ -303,11 +303,11 @@ body.light-theme {
 .text-element-無 { color: var(--element-無-text) !important; }
 
 /* Helper classes for rarity text colors */
-.text-rarity-common { color: var(--rarity-common-text); }
-.text-rarity-rare { color: var(--rarity-rare-text); }
-.text-rarity-elite { color: var(--rarity-elite-text); }
-.text-rarity-legendary { color: var(--rarity-legendary-text); }
-.text-rarity-mythical { color: var(--rarity-mythical-text); }
+.text-rarity-common { color: var(--rarity-common-text) !important; }
+.text-rarity-rare { color: var(--rarity-rare-text) !important; }
+.text-rarity-elite { color: var(--rarity-elite-text) !important; }
+.text-rarity-legendary { color: var(--rarity-legendary-text) !important; }
+.text-rarity-mythical { color: var(--rarity-mythical-text) !important; }
 
 /* Global body styles */
 body {

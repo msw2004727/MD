@@ -808,3 +808,45 @@ p.monster-score {
     margin-left: auto;
     margin-right: auto;
 }
+
+/* --- 新增：修煉成果彈窗拾獲物品美化 --- */
+#training-items-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* 水平置中 */
+    gap: 1rem;
+}
+
+#training-items-grid .dna-item-wrapper {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-slot);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#training-items-grid .dna-item {
+    margin: 0; /* 移除 dna-item 可能自帶的 margin */
+}
+
+/* --- 新增：修煉成果橫幅美化 --- */
+.training-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px; /* 設定一個固定的高度 */
+    background-color: var(--bg-slot); /* 使用一個淺色背景作為框架 */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden; /* 確保圖片不會溢出框架 */
+}
+
+.training-banner img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* 確保圖片完整顯示並保持其長寬比 */
+    border-radius: 6px; /* 給圖片本身也加一點圓角 */
+}
