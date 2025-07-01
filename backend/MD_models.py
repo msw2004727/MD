@@ -303,6 +303,8 @@ class PlayerStats(TypedDict):
     nickname: str
     equipped_title_id: NotRequired[Optional[str]]
     gold: NotRequired[int]
+    pvp_points: NotRequired[int]
+    pvp_tier: NotRequired[str]
     current_win_streak: NotRequired[int]
     current_loss_streak: NotRequired[int]
     highest_win_streak: NotRequired[int]
@@ -315,6 +317,7 @@ class PlayerStats(TypedDict):
     flawless_victories: NotRequired[int]
     special_victories: NotRequired[Dict[str, int]]
     last_champion_reward_timestamp: NotRequired[int]
+    daily_challenges_completed: NotRequired[Dict[str, int]]
 
 class PlayerOwnedDNA(DNAFragment):
     pass

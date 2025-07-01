@@ -1,0 +1,30 @@
+{
+    "daily_challenges": [
+        { "id": "daily_fire_c", "name": "火焰的試煉(普通)", "description": "對手：火焰學徒", "rewardText": "獎勵: 250 🪙 + 火系DNA", "icon": "🔥", "npc_id": "npc_fire_c" },
+        { "id": "daily_fire_r", "name": "火焰的試煉(稀有)", "description": "對手：火焰專家", "rewardText": "獎勵: 500 🪙 + 火系DNA", "icon": "🔥", "npc_id": "npc_fire_r" },
+        { "id": "daily_water_c", "name": "流水的試煉(普通)", "description": "對手：流水學徒", "rewardText": "獎勵: 250 🪙 + 水系DNA", "icon": "💧", "npc_id": "npc_water_c" },
+        { "id": "daily_water_r", "name": "流水的試煉(稀有)", "description": "對手：流水專家", "rewardText": "獎勵: 500 🪙 + 水系DNA", "icon": "💧", "npc_id": "npc_water_r" },
+        { "id": "daily_wood_c", "name": "森林的試煉(普通)", "description": "對手：森林學徒", "rewardText": "獎勵: 250 🪙 + 木系DNA", "icon": "🌳", "npc_id": "npc_wood_c" },
+        { "id": "daily_wood_r", "name": "森林的試煉(稀有)", "description": "對手：森林專家", "rewardText": "獎勵: 500 🪙 + 木系DNA", "icon": "🌳", "npc_id": "npc_wood_r" },
+        { "id": "daily_gold_r", "name": "金屬的試煉(稀有)", "description": "對手：金屬專家", "rewardText": "獎勵: 600 🪙 + 金系DNA", "icon": "⚙️", "npc_id": "npc_gold_r" },
+        { "id": "daily_earth_r", "name": "大地的試煉(稀有)", "description": "對手：大地專家", "rewardText": "獎勵: 600 🪙 + 土系DNA", "icon": "⛰️", "npc_id": "npc_earth_r" },
+        { "id": "daily_light_e", "name": "聖光的試煉(菁英)", "description": "對手：聖光大師", "rewardText": "獎勵: 1000 🪙 + 光系DNA", "icon": "✨", "npc_id": "npc_light_e" },
+        { "id": "daily_dark_e", "name": "暗影的試煉(菁英)", "description": "對手：暗影大師", "rewardText": "獎勵: 1000 🪙 + 暗系DNA", "icon": "🌑", "npc_id": "npc_dark_e" },
+        { "id": "daily_poison_r", "name": "劇毒的試煉(稀有)", "description": "對手：毒系專家", "rewardText": "獎勵: 500 🪙 + 毒系DNA", "icon": "☠️", "npc_id": "npc_poison_master" },
+        { "id": "daily_wind_r", "name": "疾風的試煉(稀有)", "description": "對手：風系大師", "rewardText": "獎勵: 500 🪙 + 風系DNA", "icon": "💨", "npc_id": "npc_wind_master" },
+        { "id": "daily_mirror", "name": "神秘的鏡像", "description": "挑戰你自己的鏡像！", "rewardText": "獎勵: 1500 🪙", "icon": "🔮", "npc_id": "npc_mirror_self" }
+    ],
+    "special_tournaments": [
+        {
+            "id": "tourney_01",
+            "name": "新生盃",
+            "description": "限定「稀有」及以下品質的怪獸參加！",
+            "start_date": "2025-07-01T00:00:00Z",
+            "end_date": "2025-07-08T00:00:00Z",
+            "is_active": true,
+            "rules": {
+                "max_rarity": "稀有"
+            }
+        }
+    ]
+}

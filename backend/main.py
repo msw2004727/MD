@@ -24,6 +24,8 @@ from backend.mail_routes import mail_bp
 from backend.adventure_routes import adventure_bp 
 from backend.admin_routes import admin_bp
 from backend.config_editor_routes import config_editor_bp
+from backend.exchange_routes import exchange_bp
+from backend.tournament_routes import tournament_bp
 
 from backend import MD_firebase_config
 from backend.MD_config_services import load_all_game_configs_from_firestore
@@ -39,6 +41,8 @@ app.register_blueprint(mail_bp)
 app.register_blueprint(adventure_bp)
 app.register_blueprint(admin_bp) 
 app.register_blueprint(config_editor_bp)
+app.register_blueprint(exchange_bp)
+app.register_blueprint(tournament_bp)
 
 
 # --- CORS 配置 (移動至此處) ---
@@ -46,6 +50,8 @@ app.register_blueprint(config_editor_bp)
 # 調整 CORS 設定以更好地支援 Render.com 部署
 CORS(app, resources={r"/api/*": {
     "origins": [
+        "https://md-server-5wre.onrender.com",
+        "http://localhost:8000",
         "https://msw2004727.github.io",
         re.compile(r"http://localhost:.*"), # 允許所有來自 localhost 的請求
         re.compile(r"http://127.0.0.1:.*") # 允許所有來自 127.0.0.1 的請求

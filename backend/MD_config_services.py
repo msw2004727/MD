@@ -43,7 +43,9 @@ def load_all_game_configs_from_firestore() -> Dict[str, Any]:
         "ElementalAdvantageChart": ("elemental_advantage_chart", None),
         "BattleHighlights": ("battle_highlights", None),
         "AdventureSettings": ("adventure_settings", None),
-        "AdventureGrowthSettings": ("adventure_growth_settings", None)
+        "AdventureGrowthSettings": ("adventure_growth_settings", None),
+        "TournamentConfig": ("tournament_config", None),
+        "NpcMonsters": ("npc_monsters", "npc_list")
     }
 
     try:
