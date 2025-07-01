@@ -1,4 +1,4 @@
-// js/ui-result-modals.js
+// js/ui/ui-result-modals.js
 // 這個檔案負責處理顯示各種操作「結果」的彈窗。
 
 function showDnaDrawModal(drawnItems) {
@@ -30,6 +30,44 @@ function showDnaDrawModal(drawnItems) {
     }
     showModal('dna-draw-modal');
 }
+
+/**
+ * 【新】將修煉拾獲的DNA優先放入主庫存，滿了再放臨時背包
+ * @param {object} item - 要添加的DNA物品
+ * @returns {{success: boolean, message: string}} - 操作結果
+ */
+function addDnaToInventoryOrBackpack(item) {
+    if (!item || typeof item !== 'object') {
+        console.error("拾取失敗：傳入的物品無效。");
+        return { success: false, message: '物品無效' };
+    }
+
+    const mainInventory = gameState.playerData.playerOwnedDNA;
+    const emptySlotIndex = mainInventory.findIndex((slot, index) => slot === null && index !== 11);
+
+    if (emptySlotIndex !== -1) {
+        // 主庫存有空位
+        const newItemInstance = {
+            ...item,
+            baseId: item.id,
+            id: `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`
+        };
+        
+        // 【關鍵修正】直接在 gameState 中更新數據
+        gameState.playerData.playerOwnedDNA[emptySlotIndex] = newItemInstance;
+        
+        // 直接呼叫渲染函數，使用更新後的 gameState
+        if (typeof renderPlayerDNAInventory === 'function') {
+            renderPlayerDNAInventory();
+        }
+        return { success: true, message: '已加入DNA碎片欄位' };
+    } else {
+        // 主庫存已滿，放入臨時背包
+        addDnaToTemporaryBackpack(item);
+        return { success: true, message: '已加入臨時背包' };
+    }
+}
+
 
 function updateTrainingResultsModal(results, monsterName) {
     if (!DOMElements.trainingResultsModal) return;
@@ -168,10 +206,15 @@ function updateTrainingResultsModal(results, monsterName) {
             if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
                 const item = gameState.lastCultivationResult.items_obtained[itemIndex];
                 if (item) {
-                    addDnaToTemporaryBackpack(item);
-                    gameState.lastCultivationResult.items_obtained[itemIndex] = null;
-                    btn.disabled = true;
-                    btn.textContent = "已拾取";
+                    // 【核心修改】使用新的拾取邏輯
+                    const result = addDnaToInventoryOrBackpack(item);
+                    if (result.success) {
+                        gameState.lastCultivationResult.items_obtained[itemIndex] = null; // 從拾獲列表中移除
+                        btn.disabled = true;
+                        btn.textContent = "已拾取";
+                        // 可以選擇性地顯示一個短暫的回饋
+                        showToast(result.message);
+                    }
                 }
             }
         });

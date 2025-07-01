@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>武道大會內容預覽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 引入遊戲中的核心樣式變數 */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-panel: #161b22;
+            --bg-slot: #010409;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #58a6ff;
+            --success-color: #3fb950;
+            --danger-color: #f85149;
+            --warning-color: #d29922;
+            --rarity-legendary-text: #e3b341;
+            --rarity-mythical-text: #d87ff8;
+        }
+        body {
+            font-family: 'Noto Sans TC', 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 2rem;
+        }
+        .panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .button {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .button.primary { background-color: var(--accent-color); color: white; }
+        .button.secondary { background-color: var(--bg-slot); border: 1px solid var(--border-color); }
+        .button.danger { background-color: var(--danger-color); color: white; }
+        .button:hover { opacity: 0.85; }
+
+        /* 冠軍殿堂樣式 */
+        .champions-section { margin-bottom: 2rem; }
+        .champions-section-title { font-size: 1.25rem; font-weight: 600; color: var(--rarity-legendary-text); text-align: center; margin-bottom: 1.5rem; }
+        .champions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; }
+        .champion-slot { text-align: center; background-color: var(--bg-slot); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .champion-avatar-container { position: relative; width: 80px; height: 80px; margin: 0 auto 0.75rem; }
+        .champion-crown { font-size: 2rem; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); color: var(--rarity-legendary-text); }
+        .champion-avatar { width: 100%; height: 100%; border-radius: 50%; background-color: var(--bg-primary); border: 2px solid var(--rarity-legendary-text); }
+        .champion-name { font-weight: 600; display: block; margin-bottom: 0.25rem; }
+        .champion-owner { font-size: 0.8rem; color: var(--text-secondary); }
+
+        /* 天梯系統樣式 */
+        .ladder-rank-display { text-align: center; margin-bottom: 1.5rem; }
+        .rank-icon { font-size: 4rem; }
+        .rank-name { font-size: 1.5rem; font-weight: bold; color: var(--warning-color); }
+        .rank-progress { width: 100%; background-color: var(--bg-slot); border-radius: 8px; height: 20px; overflow: hidden; border: 1px solid var(--border-color); }
+        .rank-progress-bar { background-color: var(--success-color); height: 100%; width: 60%; text-align: center; color: white; font-size: 0.8rem; line-height: 20px; }
+        .rank-points { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+        /* 挑戰區塊樣式 */
+        .challenge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .challenge-card { background-color: var(--bg-slot); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; }
+        .challenge-card .avatar { width: 60px; height: 60px; border-radius: 50%; background-color: var(--danger-color); margin: 0 auto 0.75rem; }
+        .challenge-reward { font-size: 0.8rem; color: var(--success-color); margin-top: 0.5rem; }
+
+        /* 戰鬥通行證樣式 */
+        .battle-pass-progress { width: 100%; background-color: var(--bg-slot); border-radius: 8px; height: 25px; overflow: hidden; border: 1px solid var(--border-color); padding: 2px; }
+        .battle-pass-bar { background: linear-gradient(90deg, var(--accent-color), var(--rarity-mythical-text)); height: 100%; width: 40%; border-radius: 6px; }
+        .battle-pass-level { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+    </style>
+</head>
+<body>
+
+    <h1 class="text-3xl font-bold text-center mb-8" style="color: var(--text-primary);">🥋 武道大會</h1>
+
+    <!-- 1. 冠軍殿堂 -->
+    <div class="panel">
+        <div class="champions-section">
+            <h3 class="champions-section-title">👑 冠軍殿堂 👑</h3>
+            <div class="champions-grid">
+                <div class="champion-slot">
+                    <div class="champion-avatar-container">
+                        <span class="champion-crown">🥇</span>
+                        <div class="champion-avatar"></div>
+                    </div>
+                    <span class="champion-name">烈焰暴龍</span>
+                    <span class="champion-owner">玩家A</span>
+                </div>
+                <div class="champion-slot">
+                    <div class="champion-avatar-container">
+                        <span class="champion-crown" style="color: silver;">🥈</span>
+                        <div class="champion-avatar" style="border-color: silver;"></div>
+                    </div>
+                    <span class="champion-name">深海巨獸</span>
+                    <span class="champion-owner">玩家B</span>
+                </div>
+                <div class="champion-slot">
+                    <div class="champion-avatar-container">
+                        <span class="champion-crown" style="color: #cd7f32;">🥉</span>
+                        <div class="champion-avatar" style="border-color: #cd7f32;"></div>
+                    </div>
+                    <span class="champion-name">鋼鐵衛士</span>
+                    <span class="champion-owner">玩家C</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 階級積分賽 (天梯系統) -->
+    <div class="panel">
+        <h2 class="panel-title">天梯挑戰</h2>
+        <div class="ladder-rank-display">
+            <div class="rank-icon">🏆</div>
+            <div class="rank-name">黃金 III</div>
+            <div class="rank-progress mt-4">
+                <div class="rank-progress-bar">1250 / 1500</div>
+            </div>
+            <div class="rank-points">再贏 2 場晉級</div>
+        </div>
+        <div class="text-center mt-6">
+            <button class="button primary text-lg px-8 py-3">⚔️ 開始匹配對手</button>
+        </div>
+    </div>
+
+    <!-- 3. 每日/每週挑戰 -->
+    <div class="panel">
+        <h2 class="panel-title">每日試煉</h2>
+        <div class="challenge-grid">
+            <div class="challenge-card">
+                <div class="avatar"></div>
+                <h4 class="font-bold">劇毒的挑戰</h4>
+                <p class="text-sm text-secondary">對手：毒系專家</p>
+                <div class="challenge-reward">獎勵: 500 🪙 + 隨機毒系DNA</div>
+                <button class="button secondary mt-4">挑戰</button>
+            </div>
+            <div class="challenge-card">
+                <div class="avatar" style="background-color: var(--warning-color);"></div>
+                <h4 class="font-bold">速度的極致</h4>
+                <p class="text-sm text-secondary">對手：風系大師</p>
+                <div class="challenge-reward">獎���: 500 🪙 + 隨機風系DNA</div>
+                <button class="button secondary mt-4">挑戰</button>
+            </div>
+            <div class="challenge-card">
+                <div class="avatar" style="background-color: var(--accent-color);"></div>
+                <h4 class="font-bold">神秘的鏡像</h4>
+                <p class="text-sm text-secondary">挑戰你自己的鏡像！</p>
+                <div class="challenge-reward">獎勵: 1000 🪙</div>
+                <button class="button secondary mt-4">挑戰</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 主題錦標賽 -->
+    <div class="panel">
+        <h2 class="panel-title">特別錦標賽</h2>
+        <div class="text-center">
+            <h3 class="text-xl font-bold text-warning-color">新生盃</h3>
+            <p class="text-secondary">限定「稀有」及以下品質的怪獸參加！</p>
+            <p class="mt-2">距離開始還有: <span class="font-bold">2 天 14 小時</span></p>
+            <button class="button danger mt-4">查看詳情</button>
+        </div>
+    </div>
+
+    <!-- 5. 戰鬥通行證 -->
+    <div class="panel">
+        <h2 class="panel-title">戰鬥通行證</h2>
+        <div class="battle-pass-progress">
+            <div class="battle-pass-bar"></div>
+        </div>
+        <div class="battle-pass-level flex justify-between mt-2">
+            <span>等級 25</span>
+            <span>下一獎勵: <span class="font-bold text-rarity-legendary-text">傳奇DNA碎片</span></span>
+        </div>
+    </div>
+
+</body>
+</html>

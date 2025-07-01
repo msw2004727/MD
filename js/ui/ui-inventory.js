@@ -111,11 +111,16 @@ function renderDNACombinationSlots() {
 }
 
 function renderPlayerDNAInventory() {
+    console.log("--- 開始渲染主庫存UI (renderPlayerDNAInventory) ---");
     const container = DOMElements.inventoryItemsContainer;
-    if (!container) return;
+    if (!container) {
+        console.error("渲染錯誤：找不到 inventoryItemsContainer 容器。");
+        return;
+    }
     container.innerHTML = '';
     const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
     const ownedDna = gameState.playerData?.playerOwnedDNA || [];
+    console.log("讀取到的主庫存數據:", JSON.parse(JSON.stringify(ownedDna)));
 
     for (let index = 0; index < MAX_INVENTORY_SLOTS; index++) {
         const item = document.createElement('div');
@@ -168,11 +173,16 @@ function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = 9;
-    const currentTempItems = gameState.temporaryBackpack || [];
+    const MAX_TEMP_SLOTS = gameState.MAX_BACKPACK_SLOTS; // 使用 gameState 中的設定
+    const currentTempItems = gameState.playerData.temporaryBackpack || []; // 從 playerData 中讀取
 
     let tempBackpackArray = new Array(MAX_TEMP_SLOTS).fill(null);
-    currentTempItems.forEach((item, index) => {
+    
+    // 只顯示最新的 MAX_TEMP_SLOTS 個物品
+    const startIndex = Math.max(0, currentTempItems.length - MAX_TEMP_SLOTS);
+    const itemsToDisplay = currentTempItems.slice(startIndex);
+
+    itemsToDisplay.forEach((item, index) => {
         if (index < MAX_TEMP_SLOTS) {
             tempBackpackArray[index] = item;
         }

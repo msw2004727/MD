@@ -88,8 +88,9 @@ function handleDnaMoveIntoInventory(dnaToMove, sourceInfo, targetInventoryIndex,
             gameState.playerData.dnaCombinationSlots[sourceInfo.id] = null;
         }
     } else if (sourceInfo.type === 'temporaryBackpack') {
-        if (sourceInfo.id !== null && sourceInfo.id !== undefined) {
-            gameState.temporaryBackpack[sourceInfo.id] = null;
+        // 【修正】確保從 playerData 中移除
+        if (sourceInfo.id !== null && sourceInfo.id !== undefined && gameState.playerData.temporaryBackpack) {
+            gameState.playerData.temporaryBackpack.splice(sourceInfo.id, 1);
         }
         const baseIdForNewInstance = dnaToMove.baseId || dnaToMove.id || `temp_template_${Date.now()}`;
         dnaToMove = { 
@@ -432,7 +433,7 @@ function addAllCultivationItemsToTempBackpack() {
 }
 
 /**
- * 將指定的 DNA 模板加入臨時背包。
+ * 將指定的 DNA 模板加入臨時背包，採用先進先出（FIFO）的循環隊列邏輯。
  * @param {object} dnaTemplate DNA 模板對象。
  */
 function addDnaToTemporaryBackpack(dnaTemplate) {
@@ -440,37 +441,27 @@ function addDnaToTemporaryBackpack(dnaTemplate) {
         console.warn("addDnaToTemporaryBackpack: 無效的 dnaTemplate 或缺少 id。", dnaTemplate);
         return;
     }
-    const MAX_TEMP_SLOTS = 9;
-    
-    let freeSlotIndex = -1;
-    for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
-        if (gameState.temporaryBackpack[i] === null || gameState.temporaryBackpack[i] === undefined) {
-            freeSlotIndex = i;
-            break;
-        }
+
+    // 【修正】確保從 playerData 中讀取和寫入
+    if (!gameState.playerData.temporaryBackpack) {
+        gameState.playerData.temporaryBackpack = [];
+    }
+    const backpack = gameState.playerData.temporaryBackpack;
+    const MAX_SLOTS = gameState.MAX_BACKPACK_SLOTS;
+
+    // 如果背包已滿或超載，移除最舊的物品
+    while (backpack.length >= MAX_SLOTS) {
+        backpack.shift(); // 移除陣列的第一個元素（最舊的）
     }
 
-    if (freeSlotIndex !== -1) {
-        gameState.temporaryBackpack[freeSlotIndex] = {
-            type: 'dna',
-            data: { ...dnaTemplate },
-        };
-        renderTemporaryBackpack();
-        console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包槽位 ${freeSlotIndex}。`);
-    } else {
-        showFeedbackModal('背包已滿', '臨時背包已滿，無法再拾取物品。請清理後再試。');
-        console.warn("Temporary backpack is full. Cannot add new item.");
-    }
-}
+    // 加入新物品到陣列末尾
+    backpack.push({
+        type: 'dna',
+        data: { ...dnaTemplate },
+    });
 
-/**
- * 清空臨時背包。
- */
-function clearTemporaryBackpack() {
-    const MAX_TEMP_SLOTS = 9;
-    gameState.temporaryBackpack = Array(MAX_TEMP_SLOTS).fill(null);
     renderTemporaryBackpack();
-    console.log("臨時背包已清空。");
+    console.log(`DNA 模板 ${dnaTemplate.name} (ID: ${dnaTemplate.id}) 已加入臨時背包。`);
 }
 
 /**
@@ -478,12 +469,14 @@ function clearTemporaryBackpack() {
  * @param {number} tempBackpackIndex 物品在臨時背包中的索引。
  */
 async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
-    if (tempBackpackIndex < 0 || tempBackpackIndex >= gameState.temporaryBackpack.length) {
-        console.warn("handleMoveFromTempBackpackToInventory: 索引越界。");
+    // 【��正】確保從 playerData 中讀取
+    const backpack = gameState.playerData.temporaryBackpack;
+    if (!backpack || tempBackpackIndex < 0 || tempBackpackIndex >= backpack.length) {
+        console.warn("handleMoveFromTempBackpackToInventory: 索引越界或背包未定義。");
         return;
     }
 
-    const itemToMove = gameState.temporaryBackpack[tempBackpackIndex];
+    const itemToMove = backpack[tempBackpackIndex];
     if (itemToMove && itemToMove.type === 'dna' && itemToMove.data) {
         const MAX_INVENTORY_SLOTS = gameState.MAX_INVENTORY_SLOTS;
         const DELETE_SLOT_INDEX = 11; 
@@ -497,8 +490,10 @@ async function handleMoveFromTempBackpackToInventory(tempBackpackIndex) {
         }
 
         if (freeSlotIndex !== -1) {
-            gameState.temporaryBackpack[tempBackpackIndex] = null;
+            // 從臨時背包中移除
+            backpack.splice(tempBackpackIndex, 1);
             
+            // 添加到主庫存
             gameState.playerData.playerOwnedDNA[freeSlotIndex] = { 
                 ...itemToMove.data, 
                 id: `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
@@ -660,11 +655,20 @@ async function refreshPlayerData() {
             }
             
             if (typeof updatePlayerCurrencyDisplay === 'function') {
-                updatePlayerCurrencyDisplay(playerData.playerStats.gold || 0);
+                updatePlayerCurrencyDisplay(playerData.playerStats);
+            }
+
+            if (typeof renderLadderSection === 'function') {
+                renderLadderSection();
             }
 
             if (typeof checkAndShowNewTitleModal === 'function') {
                 checkAndShowNewTitleModal(playerData);
+            }
+
+            // 【新】刷新天梯UI
+            if (typeof renderLadderSection === 'function') {
+                renderLadderSection();
             }
 
             console.log("玩家資料已刷新並同步至 gameState。");
@@ -684,7 +688,11 @@ async function refreshPlayerData() {
  * @param {string} [ownerId=null] - 如果挑戰的是其他玩家的怪獸，傳入擁有者ID。
  * @param {string} [npcId=null] - 如果挑戰的是NPC，傳入NPC ID。
  */
-async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null) {
+async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, ownerId = null, npcId = null, ownerNickname = null, isLadderMatch = false, challengeType = null) {
+    console.log("--- handleChallengeMonsterClick ---");
+    console.log("Challenge Type:", challengeType);
+    console.log("NPC ID:", npcId);
+
     if(event) event.stopPropagation();
 
     const playerMonsterId = gameState.selectedMonsterId;
@@ -692,7 +700,6 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
         showFeedbackModal('提示', '請先從您的農場選擇一隻出戰怪獸！');
         return;
     }
-
     const playerMonster = getSelectedMonster();
     if (!playerMonster) {
         showFeedbackModal('錯誤', '找不到您選擇的出戰怪獸資料。');
@@ -756,18 +763,36 @@ async function handleChallengeMonsterClick(event, monsterIdToChallenge = null, o
                         player_monster_data: playerMonster,
                         opponent_monster_data: opponentMonster,
                         opponent_owner_id: ownerId,
-                        opponent_owner_nickname: ownerNickname
+                        opponent_owner_nickname: ownerNickname,
+                        is_ladder_match: isLadderMatch,
+                        challenge_type: challengeType // 【新】傳入挑戰類型
                     });
 
                     const battleResult = response.battle_result;
                     
                     hideModal('feedback-modal');
-                    // === 核心修改處 ===
                     showBattleLogModal(battleResult, playerMonster, opponentMonster);
                     
                     await refreshPlayerData(); 
                     updateMonsterSnapshot(getSelectedMonster()); 
                     
+                    if (typeof renderLadderSection === 'function') {
+                        renderLadderSection();
+                    }
+                    
+                    console.log("戰鬥結束。檢查是否需要替換每日試煉...");
+                    console.log("Challenge Type:", challengeType);
+                    console.log("Winner ID:", battleResult.winner_id);
+                    console.log("Player Monster ID:", playerMonster.id);
+                    console.log("NPC ID to replace:", npcId);
+
+                    if (challengeType === 'daily' && battleResult.winner_id === playerMonster.id) {
+                        console.log("條件���足，準備呼叫 replaceCompletedChallenge。");
+                        if (typeof replaceCompletedChallenge === 'function') {
+                            replaceCompletedChallenge(npcId);
+                        }
+                    }
+
                     if (battleResult.newly_awarded_titles && battleResult.newly_awarded_titles.length > 0) {
                         checkAndShowNewTitleModal(battleResult); 
                     }

@@ -41,6 +41,10 @@ function switchTabContent(targetTabId, clickedButton, modalId = null) {
             if (typeof renderFriendsList === 'function') {
                 renderFriendsList();
             }
+        } else if (targetTabId === 'exchange-content') {
+            if (typeof setupExchangeTab === 'function') {
+                setupExchangeTab();
+            }
         } else if (targetTabId === 'guild-content') {
             if (typeof initializeAdventureUI === 'function') {
                 console.log("Switching to Adventure Island, calling initializeAdventureUI...");
@@ -585,6 +589,10 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
         const playerMonster = getSelectedMonster();
         const opponentMonster = gameState.battleTargetMonster;
 
+        console.log("--- 渲染確認出戰彈窗 ---");
+        console.log("Player Monster Data:", JSON.parse(JSON.stringify(playerMonster)));
+        console.log("Opponent Monster Data:", JSON.parse(JSON.stringify(opponentMonster)));
+
         if (playerMonster && opponentMonster) {
             const rarityMap = {'普通':'common', '稀有':'rare', '菁英':'elite', '傳奇':'legendary', '神話':'mythical'};
             
@@ -596,10 +604,20 @@ function showConfirmationModal(title, message, onConfirm, options = {}) {
             
             const bannerUrl = gameState.assetPaths?.images?.modals?.battleConfirmation || '';
 
-            const playerHpPercent = playerMonster.initial_max_hp > 0 ? (playerMonster.hp / playerMonster.initial_max_hp) * 100 : 0;
-            const playerMpPercent = playerMonster.initial_max_mp > 0 ? (playerMonster.mp / playerMonster.initial_max_mp) * 100 : 0;
-            const opponentHpPercent = opponentMonster.initial_max_hp > 0 ? (opponentMonster.hp / opponentMonster.initial_max_hp) * 100 : 0;
-            const opponentMpPercent = opponentMonster.initial_max_mp > 0 ? (opponentMonster.mp / opponentMonster.initial_max_mp) * 100 : 0;
+            const playerHp = playerMonster.hp ?? playerMonster.current_hp ?? 0;
+            const playerMaxHp = playerMonster.initial_max_hp ?? playerHp;
+            const playerMp = playerMonster.mp ?? playerMonster.current_mp ?? 0;
+            const playerMaxMp = playerMonster.initial_max_mp ?? playerMp;
+
+            const opponentHp = opponentMonster.hp ?? opponentMonster.current_hp ?? 0;
+            const opponentMaxHp = opponentMonster.initial_max_hp ?? opponentHp;
+            const opponentMp = opponentMonster.mp ?? opponentMonster.current_mp ?? 0;
+            const opponentMaxMp = opponentMonster.initial_max_mp ?? opponentMp;
+
+            const playerHpPercent = playerMaxHp > 0 ? (playerHp / playerMaxHp) * 100 : 0;
+            const playerMpPercent = playerMaxMp > 0 ? (playerMp / playerMaxMp) * 100 : 0;
+            const opponentHpPercent = opponentMaxHp > 0 ? (opponentHp / opponentMaxHp) * 100 : 0;
+            const opponentMpPercent = opponentMaxMp > 0 ? (opponentMp / opponentMaxMp) * 100 : 0;
 
             bodyHtml = `
                 <div class="confirmation-banner" style="text-align: center; margin-bottom: 1rem;">
@@ -741,14 +759,17 @@ function populateImageAssetSources() {
     console.log("Image asset sources have been populated dynamically.");
 }
 
-function updatePlayerCurrencyDisplay(amount) {
-    const amountElement = document.getElementById('player-currency-amount');
-    if (amountElement) {
-        const numAmount = Number(amount);
-        if (isNaN(numAmount)) {
-            amountElement.textContent = '0';
-            return;
-        }
-        amountElement.textContent = numAmount.toLocaleString('en-US');
+function updatePlayerCurrencyDisplay(playerStats) {
+    const goldAmount = playerStats?.gold ?? 0;
+    const pvpPoints = playerStats?.pvp_points ?? 0;
+
+    const goldElement = document.getElementById('player-currency-amount');
+    if (goldElement) {
+        goldElement.textContent = Number(goldAmount).toLocaleString('en-US');
+    }
+
+    const pvpElement = document.getElementById('player-pvp-points');
+    if (pvpElement) {
+        pvpElement.textContent = Number(pvpPoints).toLocaleString('en-US');
     }
 }

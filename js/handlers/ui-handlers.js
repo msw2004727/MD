@@ -228,6 +228,17 @@ function handleTabSwitching() {
             if (event.target.classList.contains('tab-button')) {
                 const targetTabId = event.target.dataset.tabTarget;
                 switchTabContent(targetTabId, event.target);
+
+                // 【新】根據切換到的頁籤，執行特定的設置函數
+                if (targetTabId === 'exchange-content') {
+                    if (typeof setupExchangeTab === 'function') {
+                        setupExchangeTab();
+                    }
+                } else if (targetTabId === 'tournament-content') {
+                    if (typeof setupTournamentTab === 'function') {
+                        setupTournamentTab();
+                    }
+                }
             }
         });
     }

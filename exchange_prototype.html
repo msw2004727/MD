@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交易所原型</title>
+    <!-- 引入現有的主題CSS，以確保風格統一 -->
+    <link rel="stylesheet" href="./css/theme.css">
+    <style>
+        /* 引入一些基礎樣式，讓原型更接近遊戲內效果 */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 2rem;
+        }
+        .text-rarity-common { color: var(--rarity-common-text); }
+        .text-rarity-rare { color: var(--rarity-rare-text); }
+        .text-rarity-elite { color: var(--rarity-elite-text); }
+        .text-rarity-legendary { color: var(--rarity-legendary-text); }
+        .text-rarity-mythical { color: var(--rarity-mythical-text); }
+
+        /* ��易所主容器 */
+        .exchange-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* 商品卡片 */
+        .dna-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dna-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 卡片頂部 - DNA 視覺表示 */
+        .dna-visual {
+            width: 100%;
+            height: 80px;
+            background-color: var(--bg-slot);
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        /* 卡片中部 - 名稱與稀有度 */
+        .dna-info {
+            text-align: center;
+            flex-grow: 1;
+        }
+        .dna-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .dna-rarity {
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 卡片底部 - 價格與賣家 */
+        .dna-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .dna-price {
+            font-weight: bold;
+            color: gold;
+        }
+
+        /* 彈窗樣式 */
+        .modal-overlay {
+            display: none; /* 預設隱藏 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: var(--bg-panel);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .modal-visual {
+            width: 100%;
+            height: 200px;
+            background-color: var(--bg-slot);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+        .modal-details h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+        .modal-stats {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .modal-stats li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-stats li:last-child {
+            border-bottom: none;
+        }
+        .modal-purchase-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+        }
+        .modal-purchase-info .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: gold;
+        }
+        .modal-purchase-info .buy-button {
+            padding: 0.75rem 1.5rem;
+            background-color: var(--button-success-bg);
+            color: var(--button-success-text);
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            color: white;
+            border: 2px solid var(--bg-panel);
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="exchange-grid">
+        <!-- 範例卡片 -->
+        <div class="dna-card" data-dna-id="dna_fire_r01" style="--rarity-color: var(--rarity-rare-text);">
+            <div class="dna-info">
+                <div class="dna-name">炎牙猛擊</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 1,200</span>
+                <span class="dna-seller">玩家A</span>
+            </div>
+        </div>
+        <div class="dna-card" data-dna-id="dna_water_e01" style="--rarity-color: var(--rarity-elite-text);">
+            <div class="dna-info">
+                <div class="dna-name">深潮幽影</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 5,500</span>
+                <span class="dna-seller">神秘商人</span>
+            </div>
+        </div>
+        <div class="dna-card" data-dna-id="dna_wood_c01" style="--rarity-color: var(--rarity-common-text);">
+            <div class="dna-info">
+                <div class="dna-name">荊棘之種</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 800</span>
+                <span class="dna-seller">新手C</span>
+            </div>
+        </div>
+        <div class="dna-card" data-dna-id="dna_gold_l01" style="--rarity-color: var(--rarity-legendary-text);">
+            <div class="dna-info">
+                <div class="dna-name">奧利哈鋼龍爪</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 25k</span>
+                <span class="dna-seller">收藏家</span>
+            </div>
+        </div>
+        <div class="dna-card" data-dna-id="dna_earth_r02" style="--rarity-color: var(--rarity-rare-text);">
+            <div class="dna-info">
+                <div class="dna-name">玄岩鎧甲</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 1,500</span>
+                <span class="dna-seller">玩家D</span>
+            </div>
+        </div>
+        <div class="dna-card" data-dna-id="dna_light_m01" style="--rarity-color: var(--rarity-mythical-text);">
+            <div class="dna-info">
+                <div class="dna-name">創世之光碎片</div>
+            </div>
+            <div class="dna-footer">
+                <span class="dna-price">🪙 98k</span>
+                <span class="dna-seller">神祕客</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="dna-details-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close-btn">&times;</button>
+            <div class="modal-visual">🧬</div>
+            <div class="modal-details">
+                <h2 id="modal-dna-name">DNA 名稱</h2>
+                <p id="modal-dna-rarity" class="text-rarity-legendary">稀有度</p>
+                <ul class="modal-stats">
+                    <li><span>HP</span><span id="modal-stat-hp">123</span></li>
+                    <li><span>MP</span><span id="modal-stat-mp">45</span></li>
+                    <li><span>攻擊</span><span id="modal-stat-attack">67</span></li>
+                    <li><span>防禦</span><span id="modal-stat-defense">89</span></li>
+                    <li><span>速度</span><span id="modal-stat-speed">10</span></li>
+                    <li><span>爆擊</span><span id="modal-stat-crit">5%</span></li>
+                </ul>
+                <div class="modal-purchase-info">
+                    <div class="price-seller">
+                        <div id="modal-dna-price" class="price">🪙 9,999</div>
+                        <div id="modal-dna-seller" class="seller" style="color: var(--text-secondary); font-size: 0.9rem;">由 玩家B 販售</div>
+                    </div>
+                    <button class="buy-button">購買</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 基礎的彈窗開關邏輯
+        const modal = document.getElementById('dna-details-modal');
+        const closeBtn = document.querySelector('.modal-close-btn');
+        const cards = document.querySelectorAll('.dna-card');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                // 在此處可以根據 card.dataset.dnaId 來填充彈窗內容
+                modal.style.display = 'flex';
+            });
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>
