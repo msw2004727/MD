@@ -17,7 +17,9 @@
         {
           "title": "目前0.5.0v已實裝內容：",
           "items": [
-            { "text": "努力不定時更新與優化", "color": "success" },
+            { "text": "交易所實裝", "color": "success" },
+            { "text": "武道大會實裝", "color": "success" },
+            { "text": "冠軍殿堂換到到武道大會", "color": "success" }
             { "text": "訓練場籌劃中", "color": "success" },
             { "text": "正式OB開放測試中", "color": "success" }
           ]
@@ -27,7 +29,6 @@
           "items": [
             { "text": "持續完善圖片風格", "color": "accent" },
             { "text": "家園系統企劃中", "color": "accent" },
-            { "text": "交易所商人陸續進駐", "color": "accent" },
             { "text": "醫療站醫護人員實習中", "color": "accent" },
             { "text": "怪獸情感族譜", "color": "accent" }
           
