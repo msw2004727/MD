@@ -1,7 +1,0 @@
-Flask
-gunicorn
-firebase-admin
-python-jose[cryptography]
-python-dotenv
-requests
-Flask-Cors
