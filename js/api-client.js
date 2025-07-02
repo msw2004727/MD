@@ -96,10 +96,17 @@ async function savePlayerData(playerId, playerData) {
     if (!playerId || !playerData) {
         throw new Error("保存玩家資料需要 playerId 和 playerData。");
     }
-    return fetchAPI(`/player/${playerId}/save`, {
+    const result = await fetchAPI(`/player/${playerId}/save`, {
         method: 'POST',
         body: JSON.stringify(playerData),
     });
+    if (result && result.success) {
+        // 成功保存後，更新前端的 gameState.playerData
+        if (typeof gameState !== 'undefined') {
+            gameState.playerData = playerData;
+        }
+    }
+    return result;
 }
 
 
