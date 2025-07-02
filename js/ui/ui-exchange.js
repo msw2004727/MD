@@ -78,7 +78,7 @@ function sortAndRenderExchangeListings() {
             <div class="exchange-dna-info">
                 <p class="exchange-dna-name ${rarityClass}">${item.dna.name}</p>
                 <p class="exchange-dna-type ${elementTypeClass}">${elementType}屬性</p>
-                <p class="exchange-dna-rarity ${rarityClass}" style="color: var(--rarity-${rarityKey}-text);">${item.dna.rarity}</p>
+                <p class="exchange-dna-rarity ${rarityClass}">${item.dna.rarity}</p>
                 <p class="exchange-dna-price">🪙 ${item.price.toLocaleString()}</p>
                 <p class="exchange-dna-seller">${item.sellerName}</p>
             </div>
@@ -119,7 +119,7 @@ async function renderMyStoreModal() {
                 <div class="exchange-dna-info">
                 <p class="exchange-dna-name ${rarityClass}">${dna.name}</p>
                 <p class="exchange-dna-type ${elementTypeClass}">${elementType}屬性</p>
-                <p class="exchange-dna-rarity ${rarityClass}" style="color: var(--rarity-${rarityKey}-text);">${dna.rarity}</p>
+                <p class="exchange-dna-rarity ${rarityClass}">${dna.rarity}</p>
             `;
             card.addEventListener('click', () => openListingSetupModal(dna));
             sellableGrid.appendChild(card);
@@ -149,7 +149,7 @@ async function renderMyStoreModal() {
                     <div class="exchange-dna-info">
                         <p class="exchange-dna-name ${rarityClass}">${item.dna.name}</p>
                         <p class="exchange-dna-type ${elementTypeClass}">${elementType}屬性</p>
-                        <p class="exchange-dna-rarity ${rarityClass}" style="color: var(--rarity-${rarityKey}-text);">${item.dna.rarity}</p>
+                        <p class="exchange-dna-rarity ${rarityClass}">${item.dna.rarity}</p>
                         <p class="exchange-dna-price">🪙 ${item.price.toLocaleString()}</p>
                     </div>
                 `;
