@@ -449,8 +449,8 @@ function addDnaToTemporaryBackpack(dnaTemplate) {
     const backpack = gameState.playerData.temporaryBackpack;
     const MAX_SLOTS = gameState.MAX_BACKPACK_SLOTS;
 
-    // 如果背包已滿或超載，移除最舊的物品
-    while (backpack.length >= MAX_SLOTS) {
+    // 如果背包已滿，移除最舊的物品
+    if (backpack.length >= MAX_SLOTS) {
         backpack.shift(); // 移除陣列的第一個元素（最舊的）
     }
 
