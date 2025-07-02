@@ -122,7 +122,10 @@ async function handleItemClick(event) {
             dnaObject = gameState.playerData.dnaCombinationSlots[sourceIndex];
         } else if (sourceType === 'temporaryBackpack') {
             sourceIndex = parseInt(itemElement.dataset.tempItemIndex, 10);
-            dnaObject = gameState.temporaryBackpack[sourceIndex]?.data;
+            // --- 核心修改處 START ---
+            // 從 gameState.playerData.temporaryBackpack 讀取
+            dnaObject = gameState.playerData.temporaryBackpack[sourceIndex]?.data;
+            // --- 核心修改處 END ---
         }
 
         if (!dnaObject) return;
@@ -133,7 +136,10 @@ async function handleItemClick(event) {
             } else if (sourceType === 'combination') {
                 gameState.playerData.dnaCombinationSlots[sourceIndex] = null;
             } else if (sourceType === 'temporaryBackpack') {
-                gameState.temporaryBackpack[sourceIndex] = null;
+                 // --- 核心修改處 START ---
+                // 從 gameState.playerData.temporaryBackpack 刪除
+                gameState.playerData.temporaryBackpack.splice(sourceIndex, 1);
+                // --- 核心修改處 END ---
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
@@ -177,7 +183,10 @@ function handleDragStart(event) {
     } else if (draggedSourceType === 'temporaryBackpack') {
         draggedSourceIndex = parseInt(target.dataset.tempItemIndex, 10);
         if (isNaN(draggedSourceIndex)) { event.preventDefault(); return; }
-        const tempItem = gameState.temporaryBackpack[draggedSourceIndex];
+        // --- 核心修改處 START ---
+        // 從 gameState.playerData.temporaryBackpack 讀取
+        const tempItem = gameState.playerData.temporaryBackpack[draggedSourceIndex];
+        // --- 核心修改處 END ---
         draggedDnaObject = tempItem ? tempItem.data : null;
     }
 
@@ -246,7 +255,10 @@ async function handleDrop(event) {
             } else if (sourceTypeToDelete === 'combination') {
                 gameState.playerData.dnaCombinationSlots[sourceIndexToDelete] = null;
             } else if (sourceTypeToDelete === 'temporaryBackpack') {
-                gameState.temporaryBackpack[sourceIndexToDelete] = null;
+                // --- 核心修改處 START ---
+                // 從 gameState.playerData.temporaryBackpack 刪除
+                gameState.playerData.temporaryBackpack.splice(sourceIndexToDelete, 1);
+                // --- 核心修改處 END ---
             }
             renderAllInventories();
             await savePlayerData(gameState.playerId, gameState.playerData);
@@ -291,11 +303,13 @@ async function handleDrop(event) {
                 handleDragEnd(event);
                 return;
             }
-            gameState.temporaryBackpack[draggedSourceIndex] = null;
-             // --- 【修改】修正 ID 指派的邏輯順序 ---
-             const templateId = dnaDataToMove.id; // 先保存模板ID (例如 'dna_dark_l01')
-             dnaDataToMove.baseId = templateId;    // 將模板ID正確地存入 baseId
-             dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`; // 再生成新的、唯一的實例ID
+            // --- 核心修改處 START ---
+            // 從 gameState.playerData.temporaryBackpack 移除
+            gameState.playerData.temporaryBackpack.splice(draggedSourceIndex, 1);
+            // --- 核心修改處 END ---
+             const templateId = dnaDataToMove.id;
+             dnaDataToMove.baseId = templateId;
+             dnaDataToMove.id = `dna_inst_${gameState.playerId}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         }
         
         gameState.playerData.playerOwnedDNA[targetInventoryIndex] = dnaDataToMove;
@@ -308,7 +322,10 @@ async function handleDrop(event) {
             const MAX_TEMP_SLOTS = gameState.gameConfigs?.value_settings?.max_temp_backpack_slots || 9;
             let freeSlotIndex = -1;
             for (let i = 0; i < MAX_TEMP_SLOTS; i++) {
-                if (!gameState.temporaryBackpack[i]) {
+                // --- 核心修改處 START ---
+                // 從 gameState.playerData.temporaryBackpack 檢查
+                if (!gameState.playerData.temporaryBackpack[i]) {
+                // --- 核心修改處 END ---
                     freeSlotIndex = i;
                     break;
                 }
@@ -321,7 +338,10 @@ async function handleDrop(event) {
                     gameState.playerData.dnaCombinationSlots[draggedSourceIndex] = null;
                 }
                 
-                gameState.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
+                // --- 核心修改處 START ---
+                // 新增到 gameState.playerData.temporaryBackpack
+                gameState.playerData.temporaryBackpack[freeSlotIndex] = { type: 'dna', data: dnaDataToMove };
+                // --- 核心修改處 END ---
                 
                 renderAllInventories();
                 await savePlayerData(gameState.playerId, gameState.playerData);
