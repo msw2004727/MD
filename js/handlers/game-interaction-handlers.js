@@ -66,6 +66,9 @@ async function handleCombineDna() {
             await refreshPlayerData(); 
             resetDNACombinationSlots();
             showFeedbackModal('合成成功！', '', false, newMonster, [{ text: '好的', class: 'primary' }]);
+            if (document.getElementById('my-store-modal').style.display === 'flex') {
+                renderMyStoreModal();
+            }
         } else if (newMonster && newMonster.error) {
             showFeedbackModal('合成失敗', newMonster.error);
         } else {
