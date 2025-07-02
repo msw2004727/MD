@@ -42,7 +42,7 @@
     font-weight: normal;
     font-size: 0.8rem;
     margin-top: 2px;
-    /* Color is inherited from theme.css */
+    color: inherit !important;
 }
 
 /* 為不同稀有度覆蓋邊框顏色 */
