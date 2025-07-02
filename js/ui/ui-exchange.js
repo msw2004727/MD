@@ -346,6 +346,9 @@ function handlePurchaseItemClick(item) {
                     hideModal('exchange-item-modal');
                     showFeedbackModal('購買成功', `您已成功購買「${result.item_name}」！`);
                     renderExchange();
+                    if (document.getElementById('my-store-modal').style.display === 'flex') {
+                        renderMyStoreModal();
+                    }
                 } else {
                     throw new Error(result.error || '未知的錯誤');
                 }
