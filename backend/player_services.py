@@ -103,7 +103,8 @@ def initialize_new_player_data(player_id: str, nickname: str, game_configs: Dict
         "playerOwnedDNA": initial_dna_owned, "farmedMonsters": [], "playerStats": player_stats,
         "nickname": nickname, "lastSave": int(time.time()), "lastSeen": int(time.time()),
         "selectedMonsterId": None, "friends": [], "dnaCombinationSlots": [None] * 5,
-        "mailbox": [], "playerNotes": [], "adventure_progress": None, "playerLogs": [] 
+        "mailbox": [], "playerNotes": [], "adventure_progress": None, "playerLogs": [],
+        "temporaryBackpack": []
     }
     
     _add_player_log(new_player_data, "系統", "帳號創建成功，歡迎來到怪獸異世界！")
@@ -335,7 +336,8 @@ def get_player_data_service(player_id: str, nickname_from_auth: Optional[str], g
                 "mailbox": player_game_data_dict.get("mailbox", []),
                 "playerNotes": player_game_data_dict.get("playerNotes", []),
                 "adventure_progress": player_game_data_dict.get("adventure_progress"),
-                "playerLogs": player_game_data_dict.get("playerLogs", [])
+                "playerLogs": player_game_data_dict.get("playerLogs", []),
+                "temporaryBackpack": player_game_data_dict.get("temporaryBackpack", [])
             }
             return player_game_data, False
         
@@ -399,7 +401,8 @@ def save_player_data_service(player_id: str, game_data: Dict[str, Any]) -> bool:
             "dnaCombinationSlots": game_data.get("dnaCombinationSlots", [None] * 5),
             "playerNotes": game_data.get("playerNotes", []), "mailbox": game_data.get("mailbox", []),
             "adventure_progress": game_data.get("adventure_progress"),
-            "playerLogs": game_data.get("playerLogs", [])
+            "playerLogs": game_data.get("playerLogs", []),
+            "temporaryBackpack": game_data.get("temporaryBackpack", [])
         }
 
         if isinstance(data_to_save["playerStats"], dict) and \

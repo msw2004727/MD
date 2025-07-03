@@ -4,8 +4,10 @@
 import os
 import sys
 # --- 核心修改處 START ---
-import re # 導入正規表示式模組
+from dotenv import load_dotenv
+load_dotenv() # 在所有其他導入之前，從 .env 檔案載入環境變數
 # --- 核心修改處 END ---
+import re # 導入正規表示式模組
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from flask import Flask, jsonify, request, send_from_directory
