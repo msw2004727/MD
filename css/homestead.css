@@ -66,12 +66,22 @@
 /* 設施預覽網格 */
 .homestead-features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    /* 預設為三欄，適用於桌面版 */
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-top: 1.5rem;
     width: 100%;
     max-width: 500px;
 }
+
+/* 當螢幕寬度小於 768px 時，套用此樣式 */
+@media (max-width: 768px) {
+    .homestead-features-grid {
+        /* 改為單欄佈局 */
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* 單個設施預覽卡片 */
 .feature-card {
