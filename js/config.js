@@ -7,7 +7,10 @@
 // const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
 
 // 當您要在本地測試，連接到本地運行的後端時，可以註解掉上面那行，並取消註解下面這行：
-const API_BASE_URL = 'https://md-server-5wre.onrender.com'; // 指向本地後端
+const API_BASE_URL = 'https://md-server-5wre.onrender.com/api/MD';
+const UI_VERSION = 'v=0.5.0';
+
+// console.log("Configuration loaded:", { API_BASE_URL, UI_VERSION })
 // 或者如果您習慣用 localhost:
 // const API_BASE_URL = 'http://localhost:5000/api/MD';
 
