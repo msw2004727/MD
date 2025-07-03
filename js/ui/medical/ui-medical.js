@@ -26,7 +26,7 @@ function initializeMedicalStationHandlers() {
         });
     }
 
-    // 為醫療站內的按鈕添加事件監聽（此處為範例）
+    // 為醫療站內的按鈕添���事件監聽（此處為範例）
     const medicalContent = document.getElementById('medical-content');
     if(medicalContent) {
         medicalContent.addEventListener('click', function(event) {
@@ -34,7 +34,7 @@ function initializeMedicalStationHandlers() {
                 const card = event.target.closest('.medical-card');
                 if (card) {
                     const title = card.querySelector('.medical-card-title').textContent;
-                    console.log(`點擊了「${title}」功能���「開始」按鈕。`);
+                    console.log(`點擊了「${title}」功能的「開始」按鈕。`);
                     // 在此處可以呼叫對應的功能函式
                     // 例如: handleFeatureClick(title);
                 }
@@ -42,4 +42,3 @@ function initializeMedicalStationHandlers() {
         });
     }
 }
-

@@ -240,7 +240,8 @@ function attemptToInitializeApp() {
         'initializeDOMElements', 'RosterAuthListener', 'initializeUIEventHandlers',
         'initializeGameInteractionEventHandlers', 'initializeDragDropEventHandlers',
         'initializeMonsterEventHandlers', 'initializeNoteHandlers', 'initializeChatSystem',
-        'initializeMailboxEventHandlers', 'initializeAdventureHandlers', 'setupExchangeTab'
+        'initializeMailboxEventHandlers', 'initializeAdventureHandlers', 'setupExchangeTab',
+        'initializeMedicalStationHandlers'
     ];
     
     const undefinedFunctions = requiredFunctions.filter(fnName => typeof window[fnName] !== 'function');
@@ -261,6 +262,7 @@ function attemptToInitializeApp() {
         initializeMailboxEventHandlers();
         initializeAdventureHandlers();
         setupExchangeTab();
+        initializeMedicalStationHandlers();
 
         setInterval(updateAllTimers, 1000);
 
