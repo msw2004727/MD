@@ -200,20 +200,36 @@ function updateTrainingResultsModal(results, monsterName) {
     }
 
     modalBody.querySelectorAll('.pickup-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const itemIndex = parseInt(e.target.dataset.itemIndex, 10);
             if (gameState.lastCultivationResult && gameState.lastCultivationResult.items_obtained) {
                 const item = gameState.lastCultivationResult.items_obtained[itemIndex];
                 if (item) {
-                    // 【核心修改】使用新的拾取邏輯
                     const result = addDnaToInventoryOrBackpack(item);
                     if (result.success) {
-                        gameState.lastCultivationResult.items_obtained[itemIndex] = null; // 從拾獲列表中移除
+                        gameState.lastCultivationResult.items_obtained[itemIndex] = null;
                         btn.disabled = true;
                         btn.textContent = "已拾取";
-                        // 可以選擇性地顯示一個短暫的回饋
-                        showToast(result.message);
+                        
+                        // --- 核心修改 START ---
+                        // 在成功拾取後，立刻儲存玩家資料
+                        try {
+                            await savePlayerData(gameState.playerId, gameState.playerData);
+                        } catch (error) {
+                            console.error("拾取物品後存檔失敗:", error);
+                        }
+                        // --- 核心修改 END ---
+                        
+                        const feedbackSpan = document.createElement('span');
+                        feedbackSpan.textContent = '✔️';
+                        feedbackSpan.style.color = 'var(--success-color)';
+                        feedbackSpan.style.marginLeft = '8px';
+                        feedbackSpan.style.fontWeight = 'bold';
+                        btn.parentNode.appendChild(feedbackSpan);
+                        setTimeout(() => {
+                            feedbackSpan.remove();
+                        }, 1500);
                     }
                 }
             }

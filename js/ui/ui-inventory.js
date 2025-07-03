@@ -173,27 +173,32 @@ function renderTemporaryBackpack() {
     const container = DOMElements.temporaryBackpackContainer;
     if (!container) return;
     container.innerHTML = '';
-    const MAX_TEMP_SLOTS = gameState.MAX_BACKPACK_SLOTS; // 使用 gameState 中的設定
-    const currentTempItems = gameState.playerData.temporaryBackpack || []; // 從 playerData 中讀取
+    const MAX_TEMP_SLOTS = gameState.MAX_BACKPACK_SLOTS;
+    const currentTempItems = gameState.playerData.temporaryBackpack || [];
 
     let tempBackpackArray = new Array(MAX_TEMP_SLOTS).fill(null);
     
-    // 只顯示最新的 MAX_TEMP_SLOTS 個物品
-    const startIndex = Math.max(0, currentTempItems.length - MAX_TEMP_SLOTS);
-    const itemsToDisplay = currentTempItems.slice(startIndex);
-
-    itemsToDisplay.forEach((item, index) => {
+    // --- 核心修改 START ---
+    // 直接從索引 0 開始遍歷和填充，確保物品從第一格開始顯示
+    currentTempItems.forEach((item, index) => {
         if (index < MAX_TEMP_SLOTS) {
-            tempBackpackArray[index] = item;
+            tempBackpackArray[index] = {
+                itemData: item,
+                originalIndex: index 
+            };
         }
     });
+    // --- 核心修改 END ---
 
-    tempBackpackArray.forEach((item, index) => {
+    tempBackpackArray.forEach((slotData, screenIndex) => {
         const slot = document.createElement('div');
         slot.classList.add('temp-backpack-slot', 'dna-item');
-        slot.dataset.tempItemIndex = index;
+        slot.dataset.tempItemIndex = screenIndex;
 
-        if (item) {
+        if (slotData) {
+            const item = slotData.itemData;
+            const originalIndex = slotData.originalIndex;
+
             const nameSpan = document.createElement('span');
             nameSpan.classList.add('dna-name-text');
             slot.appendChild(nameSpan);
@@ -202,17 +207,15 @@ function renderTemporaryBackpack() {
             typeSpan.classList.add('dna-type-text');
             slot.appendChild(typeSpan);
             
-            // **核心修改點**
             const elementType = item.data.type || '無';
             const elementCssKey = getElementCssClassKey(elementType);
             typeSpan.textContent = `${elementType}屬性`;
-            typeSpan.className = `dna-type-text text-element-${elementCssKey}`; // 重新設定 class
+            typeSpan.className = `dna-type-text text-element-${elementCssKey}`;
 
             slot.draggable = true;
             slot.dataset.dnaId = item.data.id;
             slot.dataset.dnaBaseId = item.data.baseId;
             slot.dataset.dnaSource = 'temporaryBackpack';
-            slot.onclick = () => handleMoveFromTempBackpackToInventory(index);
             applyDnaItemStyle(slot, item.data);
         } else {
             slot.innerHTML = `<span class="dna-name-text">空位</span>`;

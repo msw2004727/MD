@@ -644,9 +644,19 @@ async function refreshPlayerData() {
     try {
         const playerData = await getPlayerData(gameState.playerId);
         if (playerData) {
-            updateGameState({ playerData: playerData });
+            // --- 核心修改 START ---
+            // 確保在更新 gameState 時，明確地包含 temporaryBackpack
+            updateGameState({ 
+                playerData: {
+                    ...playerData,
+                    temporaryBackpack: playerData.temporaryBackpack || []
+                }
+            });
+            // --- 核心修改 END ---
+            
             renderPlayerDNAInventory();
             renderMonsterFarm();
+            renderTemporaryBackpack(); // 新增：刷新臨時背包的顯示
             const currentSelectedMonster = getSelectedMonster() || getDefaultSelectedMonster();
             updateMonsterSnapshot(currentSelectedMonster);
             
@@ -666,7 +676,6 @@ async function refreshPlayerData() {
                 checkAndShowNewTitleModal(playerData);
             }
 
-            // 【新】刷新天梯UI
             if (typeof renderLadderSection === 'function') {
                 renderLadderSection();
             }

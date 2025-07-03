@@ -113,7 +113,7 @@ function handleDnaDrawModal() {
     });
 
     if (DOMElements.dnaDrawResultsGrid) {
-        DOMElements.dnaDrawResultsGrid.addEventListener('click', (event) => {
+        DOMElements.dnaDrawResultsGrid.addEventListener('click', async (event) => {
             if (event.target.classList.contains('add-drawn-dna-to-backpack-btn')) {
                 const dnaIndex = parseInt(event.target.dataset.dnaIndex, 10);
                 if (gameState.lastDnaDrawResult && gameState.lastDnaDrawResult[dnaIndex]) {
@@ -121,6 +121,15 @@ function handleDnaDrawModal() {
                     addDnaToTemporaryBackpack(dnaTemplate);
                     event.target.disabled = true;
                     event.target.textContent = '已加入';
+
+                    // --- 核心修改 START ---
+                    // 在成功加入背包後，立刻儲存玩家資料
+                    try {
+                        await savePlayerData(gameState.playerId, gameState.playerData);
+                    } catch (error) {
+                        console.error("加入臨時背包後存檔失敗:", error);
+                    }
+                    // --- 核心修改 END ---
                 }
             }
         });
