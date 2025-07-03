@@ -1,0 +1,100 @@
+/* css/homestead.css */
+
+/* 秘密基地主容器 */
+.homestead-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    height: 100%;
+    min-height: 400px; /* 確保在沒有內容時也有一定高度 */
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 背景模糊效果 */
+.homestead-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('https://github.com/msw2004727/MD/blob/main/images/BN001.png?raw=true');
+    background-size: cover;
+    background-position: center;
+    filter: blur(5px) brightness(0.6); /* 模糊並調暗背景 */
+    z-index: 1;
+}
+
+/* 內容容器，確保在背景之上 */
+.homestead-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: color-mix(in srgb, var(--bg-panel) 85%, transparent); /* 半透明面板背景 */
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+/* 主標題 */
+.homestead-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--rarity-legendary-text);
+    text-shadow: 0 0 10px var(--rarity-legendary-text), 0 0 20px rgba(0,0,0,0.7);
+    letter-spacing: 2px;
+}
+
+/* 副標題/描述 */
+.homestead-description {
+    font-size: 1rem;
+    color: var(--text-primary);
+    max-width: 450px;
+    line-height: 1.7;
+}
+
+/* 設施預覽網格 */
+.homestead-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+/* 單個設施預覽卡片 */
+.feature-card {
+    background-color: var(--bg-slot);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.feature-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
