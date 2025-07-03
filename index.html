@@ -1,170 +1,1288 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monster DNA</title>
-    <link rel="stylesheet" href="css/theme.css?v=0.6.0">
-    <link rel="stylesheet" href="css/layout.css?v=0.6.0">
-    <link rel="stylesheet" href="css/components.css?v=0.6.0">
-    <link rel="stylesheet" href="css/buttons.css?v=0.6.0">
-    <link rel="stylesheet" href="css/modals.css?v=0.6.0">
-    <link rel="stylesheet" href="css/homestead.css?v=0.6.0">
-    <link rel="stylesheet" href="css/training.css?v=0.6.0">
-    <link rel="stylesheet" href="css/adventure.css?v=0.6.0">
-    <link rel="stylesheet" href="css/champions.css?v=0.6.0">
-    <link rel="stylesheet" href="css/exchange.css?v=0.6.0">
-    <link rel="stylesheet" href="css/mailbox.css?v=0.6.0">
-    <link rel="stylesheet" href="css/medical.css?v=0.6.0">
+    <title>怪獸異世界</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        // 當您更新遊戲檔案後，只需要修改這個版本號，就能強制所有玩家更新
+        const gameVersion = '0.6.0'; 
+
+        const cssFiles = [
+            'css/theme.css',
+            'css/layout.css',
+            'css/buttons.css',
+            'css/components.css',
+            'css/modals.css',
+            'css/champions.css',
+            'css/mailbox.css',
+            'css/adventure.css',
+            'css/exchange.css',
+            'css/medical.css',
+            'css/homestead.css',
+            'css/training-ground.css'
+        ];
+        
+        cssFiles.forEach(path => {
+            document.write(`<link rel="stylesheet" href="${path}?v=${gameVersion}">`);
+        });
+    </script>
 </head>
 <body>
-    <div id="loading-screen" class="loading-screen">
-        <div class="spinner"></div>
-        <p>載入遊戲中...</p>
+    <div id="auth-screen">
+        <div class="auth-container">
+            <h1 class="auth-title">怪獸異世界</h1>
+            <button id="show-login-form-btn" class="auth-button primary">使用暱稱/密碼登入</button>
+            <button id="show-register-form-btn" class="auth-button secondary highlighted-register">重新開始遊戲 (創建帳號)</button>
+        </div>
     </div>
 
-    <div id="game-container" class="hidden">
-        <header>
-            <h1>Monster DNA</h1>
-            <div id="player-info-brief">
-                <span id="player-name-brief"></span> |
-                <span>金幣: <span id="player-gold-brief"></span></span> |
-                <span class="player-gems-brief-container">寶石: <span id="player-gems-brief"></span></span>
+    <div id="register-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <span class="modal-close" data-modal-id="register-modal">&times;</span> 
+            <h3 class="modal-header">創建您的訓獸師帳號</h3>
+            <div class="modal-body">
+                <input type="text" id="register-nickname" class="auth-input" placeholder="請輸入您的暱稱" required>
+                <input type="password" id="register-password" class="auth-input" placeholder="請設定您的密碼" required>
+                <div id="register-error" class="auth-error-message"></div>
+                <button id="register-submit-btn" class="auth-button success">創建並進入異世界</button>
             </div>
-            <div id="auth-container">
-                <div id="user-info" class="hidden">
-                    <span id="user-email"></span>
-                    <button id="logout-button">登出</button>
-                </div>
-            </div>
-        </header>
-
-        <div class="main-layout">
-            <aside class="sidebar-left">
-                <div id="main-tabs">
-                    <button class="tab-button active" data-tab="homestead-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/homestead_icon.png" alt="家園">
-                        <span>家園</span>
-                    </button>
-                    <button class="tab-button" data-tab="adventure-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/adventure_icon.png" alt="冒險">
-                        <span>冒險</span>
-                    </button>
-                    <button class="tab-button" data-tab="champions-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/champions_icon.png" alt="冠軍之路">
-                        <span>冠軍之路</span>
-                    </button>
-                    <button class="tab-button" data-tab="exchange-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/exchange_icon.png" alt="交易所">
-                        <span>交易所</span>
-                    </button>
-                    <button class="tab-button" data-tab="mailbox-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/mailbox_icon.png" alt="信箱">
-                        <span>信箱</span>
-                        <span id="unread-mail-indicator" class="unread-indicator hidden"></span>
-                    </button>
-                    <button class="tab-button" data-tab="medical-tab">
-                        <img src="https://storage.googleapis.com/monster-dna.appspot.com/assets/images/icons/medical_icon.png" alt="醫療中心">
-                        <span>醫療中心</span>
-                    </button>
-                </div>
-            </aside>
-            <main id="main-content">
-                </main>
-            <aside class="sidebar-right">
-                <div id="monster-inventory-container">
-                    <h3>怪獸倉庫</h3>
-                    <div id="monster-inventory" class="monster-list">
-                        </div>
-                </div>
-                <div id="temp-backpack-container">
-                    <h3>臨時背包</h3>
-                    <div id="temporary-backpack" class="monster-list">
-                        </div>
-                </div>
-            </aside>
         </div>
     </div>
 
     <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <div id="login-form-container">
-                <h2>登入</h2>
-                <input type="email" id="login-email" placeholder="電子郵件" required>
-                <input type="password" id="login-password" placeholder="密碼" required>
-                <button id="login-button">登入</button>
-                <p>沒有帳號？ <a href="#" id="show-register">註冊一個</a></p>
-                <p id="login-error" class="error-message"></p>
-            </div>
-            <div id="register-form-container" class="hidden">
-                <h2>註冊</h2>
-                <input type="email" id="register-email" placeholder="電子郵件" required>
-                <input type="password" id="register-password" placeholder="密碼" required>
-                <input type="text" id="register-username" placeholder="玩家名稱" required>
-                <button id="register-button">註冊</button>
-                <p>已經有帳號？ <a href="#" id="show-login">直接登入</a></p>
-                <p id="register-error" class="error-message"></p>
+        <div class="modal-content" style="max-width: 420px;">
+            <span class="modal-close" data-modal-id="login-modal">&times;</span> 
+            <h3 class="modal-header">訓獸師登入</h3>
+            <div class="modal-body">
+                <input type="text" id="login-nickname" class="auth-input" placeholder="您的暱稱" required>
+                <input type="password" id="login-password" class="auth-input" placeholder="您的密碼" required>
+                <div id="login-error" class="auth-error-message"></div>
+                <button id="login-submit-btn" class="auth-button primary">登入異世界</button>
             </div>
         </div>
     </div>
 
-    <div id="monster-details-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <div id="monster-details-content"></div>
-            <div id="monster-interaction-buttons"></div>
+    <div id="official-announcement-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close" data-modal-id="official-announcement-modal" id="official-announcement-close-x">&times;</span>
+            <h3 class="modal-header">📢 遊戲官方公告</h3>
+            <div class="modal-body">
+                <div id="announcement-ad-banner" style="background-color: var(--bg-slot); border: 1px solid var(--border-color); color: var(--text-primary); text-align: center; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
+                    <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="modals.officialAnnouncement" alt="廣告橫幅" style="max-width: 100%; max-height: 100%; border-radius: 4px;">
+                </div>
+                <div id="announcement-content">
+                    </div>
+            </div>
         </div>
     </div>
 
-    <div id="modal-placeholder"></div>
-    <div id="result-modal-placeholder"></div>
-    <div id="battle-modal-placeholder"></div>
-    <div id="adventure-modal-placeholder"></div>
-    <div id="player-modal-placeholder"></div>
-    <div id="leaderboard-modal-placeholder"></div>
+    <div id="game-container" style="display: none; width:100%; display:flex; flex-direction:column; align-items:center;">
+        <div class="main-container">
+            <button id="main-logout-btn" class="corner-button top-left-button" title="登出">🚪</button>
+            <button id="theme-switcher" class="corner-button top-right-button" title="切換主題">
+                <span id="theme-icon">🌙</span>
+            </button>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+            <div class="monster-snapshot-panel panel">
+                <div id="monster-snapshot-area" class="monster-snapshot-area">
+                    <img id="monster-snapshot-base-bg" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="snapshot.background" alt="怪獸快照背景">
+                    
+                    <img id="monster-snapshot-body-silhouette" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="snapshot.bodySilhouette" alt="怪獸全身輪廓">
 
-    <script src="js/firebase-config.js?v=0.6.0"></script>
-    <script src="js/config.js?v=0.6.0"></script>
-    <script src="js/core/game-state.js?v=0.6.0"></script>
-    <script src="js/core/monster-part-assets.js?v=0.6.0"></script>
-    <script src="js/core/utils.js?v=0.6.0"></script>
+                    <div id="monster-parts-container">
+                        <div id="monster-part-head" class="monster-part">
+                            <div class="monster-part-overlay"><span class="dna-name-text"></span></div>
+                            <img class="monster-part-image" src="" alt="">
+                        </div>
+                        <div id="monster-part-left-arm" class="monster-part">
+                            <div class="monster-part-overlay"><span class="dna-name-text"></span></div>
+                            <img class="monster-part-image" src="" alt="">
+                        </div>
+                        <div id="monster-part-right-arm" class="monster-part">
+                            <div class="monster-part-overlay"><span class="dna-name-text"></span></div>
+                            <img class="monster-part-image" src="" alt="">
+                        </div>
+                        <div id="monster-part-left-leg" class="monster-part">
+                            <div class="monster-part-overlay"><span class="dna-name-text"></span></div>
+                            <img class="monster-part-image" src="" alt="">
+                        </div>
+                        <div id="monster-part-right-leg" class="monster-part">
+                            <div class="monster-part-overlay"><span class="dna-name-text"></span></div>
+                            <img class="monster-part-image" src="" alt="">
+                        </div>
+                    </div>
 
-    <script src="js/api-client.js?v=0.6.0"></script>
+                    <div id="snapshot-main-content" class="snapshot-main-content">
+                        <span id="snapshot-achievement-title">初出茅廬</span>
+                        <span id="snapshot-nickname">-</span>
+                    </div>
+                    
+                    <div id="snapshot-win-loss" class="snapshot-win-loss">
+                        <span>勝: 0</span>
+                        <span>敗: 0</span>
+                    </div>
 
-    <script src="js/ui/ui.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-monster-details.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-monster-modals.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-inventory.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-farm.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-chat.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-notes.js?v=0.6.0"></script>
-    <script src="js/ui/monster/ui-snapshot.js?v=0.6.0"></script>
-    <script src="js/ui/training/ui-training.js?v=0.6.0"></script>
-    <script src="js/ui/adventure/ui-adventure.js?v=0.6.0"></script>
-    <script src="js/ui/adventure/ui-adventure-modals.js?v=0.6.0"></script>
-    <script src="js/ui/tournament/ui-champions.js?v=0.6.0"></script>
-    <script src="js/ui/tournament/ui-tournament.js?v=0.6.0"></script>
-    <script src="js/ui/exchange/ui-exchange.js?v=0.6.0"></script>
-    <script src="js/ui/mailbox/ui-mailbox.js?v=0.6.0"></script>
-    <script src="js/ui/medical/ui-medical.js?v=0.6.0"></script>
-    <script src="js/ui/shared/ui-modals.js?v=0.6.0"></script>
-    <script src="js/ui/shared/ui-result-modals.js?v=0.6.0"></script>
-    <script src="js/ui/battle/ui-battle-modals.js?v=0.6.0"></script>
-    <script src="js/ui/player/ui-player-modals.js?v=0.6.0"></script>
-    <script src="js/ui/tournament/ui-leaderboard-modals.js?v=0.6.0"></script>
+                    <div id="snapshot-bars-container">
+                        <div class="snapshot-bar snapshot-hp-bar"><div id="snapshot-hp-fill" class="snapshot-bar-fill"></div></div>
+                        <div class="snapshot-bar snapshot-mp-bar"><div id="snapshot-mp-fill" class="snapshot-bar-fill"></div></div>
+                    </div>
+                    
+                    <div class="snapshot-info-overlay">
+                        <div class="snapshot-info-left">
+                        </div>
+                        <div class="snapshot-info-right">
+                            <span id="snapshot-evaluation">總評價: 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <script src="js/handlers/drag-drop-handlers.js?v=0.6.0"></script>
-    <script src="js/handlers/ui-handlers.js?v=0.6.0"></script>
-    <script src="js/handlers/monster-handlers.js?v=0.6.0"></script>
-    <script src="js/handlers/adventure-handlers.js?v=0.6.0"></script>
+            <div id="player-currency-panel" class="player-currency-panel">
+                <div class="currency-item">
+                    <span id="player-currency-amount">0</span>
+                    <span class="currency-icon">🪙</span>
+                </div>
+                <div class="currency-item">
+                    <span id="player-pvp-points">0</span>
+                    <span class="currency-icon">⚔️</span>
+                </div>
+            </div>
 
-    <script src="js/auth.js?v=0.6.0"></script>
-    <script src="js/main.js?v=0.6.0"></script>
+            <div class="panel">
+                <div class="tab-buttons" id="dna-farm-tabs">
+                    <button class="tab-button active" data-tab-target="dna-inventory-content">🧬 DNA管理</button>
+                    <button class="tab-button" data-tab-target="monster-farm-content">🏡 怪獸農場</button>
+                    <button class="tab-button" data-tab-target="friends-list-content">🧑‍🤝‍🧑 好友列表</button>
+                    <button class="tab-button" data-tab-target="exchange-content">⚖️ 交易所</button>
+                    <button class="tab-button" data-tab-target="tournament-content">🥋 武道大會</button>
+                    <button class="tab-button" data-tab-target="medical-content">🚑 醫療站</button>
+                    <button class="tab-button" data-tab-target="training-ground-content">🏋️ 訓練場</button> 
+                    <button class="tab-button" data-tab-target="homestead-content">🏰 秘密基地</button>
+                    <button class="tab-button" data-tab-target="guild-content">🏝️ 冒險島</button>
+                    </div>
+
+                <div id="dna-inventory-content" class="tab-content active">
+                    <div id="dna-combination-panel-wrapper" class="panel mb-4">
+                        <h2 class="panel-title dna-panel-title">🧬 DNA組合</h2>
+                        <div id="dna-combination-slots" class="dna-combination-grid mt-2"></div>
+                        <div class="action-buttons-grid dual-buttons mt-3">
+                            <button id="combine-button" class="success action-button-main button" disabled>怪獸合成</button>
+                            <button id="dna-draw-button" class="primary action-button-main button">抽取DNA</button>
+                        </div>
+                    </div>
+                    <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
+                         <h2 class="panel-title dna-panel-title">🔬 DNA碎片</h2>
+                         <button id="inventory-guide-button" title="說明" style="background: var(--button-secondary-bg); border: 1px solid var(--border-color); border-radius: 50%; width: 32px; height: 32px; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">🔰</button>
+                    </div>
+                    <div id="inventory-items" class="inventory-grid mt-2"></div>
+                    <div class="mt-4">
+                        <h3 class="panel-title dna-panel-title text-sm mb-2">🎒 臨時背包（退出就會清空欄位）</h3>
+                        <div id="temporary-backpack-items" class="temp-backpack-grid"></div>
+                    </div>
+                </div>
+
+                <div id="monster-farm-content" class="tab-content">
+                    <div class="panel-title-container" style="border-bottom: none; margin-bottom: 5px;">
+                         <h2 class="panel-title dna-panel-title">🏡 怪獸農場</h2>
+                         <span class="panel-title-hint dna-panel-hint">※最多收納10隻怪獸</span>
+                    </div>
+                    <div id="farm-table-wrapper" style="overflow-x: auto; padding-bottom: 5px;">
+                        <div id="farm-headers" class="farm-header-grid mt-2">
+                        </div>
+                        <div id="farmed-monsters-list">
+                            <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">農場空空如也，快去組合怪獸吧！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="friends-list-content" class="tab-content">
+                    <div class="panel-title-container" style="border-bottom: 1px solid var(--border-color); margin-bottom: 10px; padding-bottom: 10px;">
+                        <h2 class="panel-title dna-panel-title">🔎 搜尋玩家</h2>
+                    </div>
+                    <input type="text" id="friends-tab-search-input" placeholder="輸入玩家暱稱進行搜尋..." class="mb-3" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-primary); color: var(--text-primary);">
+                    <div id="friends-search-results-area" class="mb-4">
+                        </div>
+                    
+                    <div class="panel-title-container" style="display: flex; align-items: center; gap: 0.5rem; justify-content: flex-start; border-bottom: none; margin-bottom: 5px;">
+                         <h2 class="panel-title dna-panel-title">🧑‍🤝‍🧑 好友列表</h2>
+                         <button id="refresh-friends-list-btn" class="button secondary text-xs" title="刷新列表" style="padding: 4px 8px; line-height: 1; font-size: 1rem; min-width: auto;" onclick="if(typeof renderFriendsList === 'function') renderFriendsList()">🔄</button>
+                    </div>
+                    <div id="friends-list-display-area" class="mt-2">
+                        <p class="text-center text-sm text-[var(--text-secondary)] py-4">好友列表空空如也，快去搜尋並新增好友吧！</p>
+                    </div>
+                </div>
+
+                <div id="tournament-content" class="tab-content">
+                    <div class="champions-section" style="margin-top: 1rem;">
+                        <h4 class="champions-section-title">👑 冠軍殿堂 👑</h4>
+                        <div class="champions-grid" id="champions-grid-container">
+                            <div class="champion-slot" data-rank="1"></div>
+                            <div class="champion-slot" data-rank="2"></div>
+                            <div class="champion-slot" data-rank="3"></div>
+                            <div class="champion-slot" data-rank="4"></div>
+                        </div>
+                    </div>
+
+                    <!-- 天梯系統 UI -->
+                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
+                        <div class="panel-title-container centered">
+                            <h2 class="panel-title">天梯挑戰</h2>
+                            <button id="ladder-guide-btn" title="說明" class="guide-btn">🔰</button>
+                        </div>
+                        <div id="ladder-rank-display" class="text-center my-4">
+                            <div id="ladder-rank-icon" class="text-5xl">⚔️</div>
+                            <div id="ladder-rank-name" class="text-xl font-bold" style="color: var(--warning-color);">尚未定位</div>
+                            <div class="w-full bg-slot rounded-full h-2.5 mt-2 border border-border-color">
+                                <div id="ladder-rank-progress-bar" class="bg-success-color h-full rounded-full" style="width: 0%"></div>
+                            </div>
+                            <div id="ladder-rank-points" class="text-sm text-secondary mt-1">0 / 100</div>
+                        </div>
+                        <div class="text-center mt-4 grid grid-cols-3 gap-2 px-4">
+                            <button id="find-weak-opponent-btn" class="button secondary text-sm py-2 ladder-match-btn">挑戰弱者</button>
+                            <button id="find-equal-opponent-btn" class="button primary text-sm py-2 ladder-match-btn">實力相當</button>
+                            <button id="find-strong-opponent-btn" class="button danger text-sm py-2 ladder-match-btn">挑戰強者</button>
+                        </div>
+                    </div>
+
+                    <!-- 每日試煉 UI -->
+                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
+                        <div class="panel-title-container centered">
+                            <h2 class="panel-title">每日試煉</h2>
+                            <button id="daily-challenge-guide-btn" title="說明" class="guide-btn">🔰</button>
+                        </div>
+                        <div id="daily-challenges-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <!-- 每日試煉內容將由 JS 動態渲染 -->
+                            <p class="text-center text-secondary col-span-full">正在獲取試煉資訊...</p>
+                        </div>
+                    </div>
+
+                    <!-- 特別錦標賽 UI -->
+                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
+                        <div class="panel-title-container centered">
+                            <h2 class="panel-title">特別錦標賽</h2>
+                            <button id="special-tournament-guide-btn" title="說明" class="guide-btn">🔰</button>
+                        </div>
+                        <div id="special-tournament-info" class="text-center mt-4">
+                            <!-- 錦標賽資訊將由 JS 動態渲染 -->
+                            <p class="text-center text-secondary">目前沒有正在舉行的特別錦標賽。</p>
+                        </div>
+                    </div>
+
+                    <!-- 戰鬥通行證 UI -->
+                    <div class="panel" style="background-color: var(--bg-primary); margin-top: 2rem;">
+                        <div class="panel-title-container centered">
+                            <h2 class="panel-title">戰鬥通行證</h2>
+                            <button id="battle-pass-guide-btn" title="說明" class="guide-btn">🔰</button>
+                        </div>
+                        <div id="battle-pass-info" class="mt-4">
+                            <div class="w-full bg-slot rounded-full h-4 border border-border-color p-0.5">
+                                <div id="battle-pass-progress-bar" class="bg-gradient-to-r from-yellow-400 to-red-500 h-full rounded-full" style="width: 25%;"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-secondary mt-1">
+                                <span id="battle-pass-level">等級 5</span>
+                                <span id="battle-pass-next-reward">下一級: 傳奇DNA碎片</span>
+                            </div>
+                        </div>
+                         <div class="text-center mt-4">
+                            <button id="view-battle-pass-btn" class="button secondary">查看通行證詳情</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="medical-content" class="tab-content">
+                    <div class="medical-grid">
+                        <!-- Card 1: 改造 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">改造</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 2: 強化 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">強化</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 3: 變種 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">變種</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 4: 摘除 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">摘除</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 5: 研究 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">研究</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 6: 進化 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">進化</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="training-ground-content" class="tab-content">
+                    <div class="training-container">
+                        <div class="training-header">
+                            <h2 class="title">🏋️ 訓練場</h2>
+                            <p class="subtitle">此處提供針對性的強化訓練，可以提升怪獸的技能熟練度、元素抗性或調整戰鬥風格，以應對更多樣的挑戰。</p>
+                        </div>
+                        <div class="training-options-grid">
+                            <!-- 技能熟練度訓練 -->
+                            <div class="training-card">
+                                <div class="icon">📚</div>
+                                <h4 class="name">技能熟練度</h4>
+                                <p class="description">選擇一隻怪獸和牠的一個技能進行集中特訓，可以比一般修煉更快地獲得技能經驗值，加速技能升級。</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                            <!-- 屬性抗性訓練 -->
+                            <div class="training-card">
+                                <div class="icon">🛡️</div>
+                                <h4 class="name">屬性抗性</h4>
+                                <p class="description">消耗特定的元素材料，對怪獸進行針對性強化，永久提升牠對某一屬性的防禦能力。</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                            <!-- 戰鬥風格模擬 -->
+                            <div class="training-card">
+                                <div class="icon">🎯</div>
+                                <h4 class="name">戰鬥風格</h4>
+                                <p class="description">透過與特定AI的模擬戰，調整怪獸的戰鬥AI。想讓膽小的怪獸變得勇敢嗎？從這裡開始！</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="exchange-content" class="tab-content">
+                    <div class="exchange-header" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding: 0 0.5rem;">
+                        <select id="exchange-sort-select" class="button secondary text-xs" style="padding: 4px 8px; height: auto; min-width: auto; -webkit-appearance: none; appearance: none;">
+                            <option value="listedAt_desc">預設排序</option>
+                            <option value="price_asc">價格由低到高</option>
+                            <option value="price_desc">價格由高到低</option>
+                            <option value="rarity_desc">稀有度由高到低</option>
+                            <option value="hp_desc">HP由高到低</option>
+                            <option value="mp_desc">MP由高到低</option>
+                            <option value="attack_desc">攻擊由高到低</option>
+                            <option value="defense_desc">防禦由高到低</option>
+                            <option value="speed_desc">速度由高到低</option>
+                            <option value="crit_desc">爆擊由高到低</option>
+                        </select>
+                        <button id="refresh-exchange-btn" class="button secondary text-xs" title="刷新交易所" style="padding: 4px 8px; line-height: 1; font-size: 1rem; min-width: auto;">🔄</button>
+                        <button id="my-store-btn" class="button secondary">🛒 我的賣場</button>
+                    </div>
+                    <div id="exchange-content-grid" class="exchange-grid">
+                        <!-- 商品卡片將由 ui-exchange.js 動態渲染於此 -->
+                    </div>
+                </div>
+                <div id="homestead-content" class="tab-content">
+                    <div class="homestead-container">
+                        <div class="homestead-content">
+                            <h2 class="homestead-title">🏰 秘密基地建設中 🏰</h2>
+                            <p class="homestead-description">
+                                各位偉大的訓獸師，一個專屬於您與怪獸們的個人空間正在全力建設中！未來，您將可以在此建造功能設施、裝飾您的家園，並與您的怪獸夥伴們進行更親密的互動。
+                            </p>
+                            <div class="homestead-features-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">♨️</div>
+                                    <div class="feature-name">能量溫泉</div>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">🔬</div>
+                                    <div class="feature-name">DNA分析儀</div>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">🏆</div>
+                                    <div class="feature-name">榮譽陳列室</div>
+                                </div>
+                            </div>
+                            <p class="homestead-description" style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;">
+                                敬請期待更多功能的解鎖！
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div id="guild-content" class="tab-content">
+                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏝️ 港口尚未開放，敬請期待！</p>
+                </div>
+
+                </div>
+        </div>
+    </div>
+
+    <!-- My Store Modal -->
+    <div id="my-store-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="my-store-modal">&times;</span>
+            <h3 class="modal-header">🛒 我的賣場</h3>
+            <div class="modal-body">
+                <div class="my-store-section">
+                    <h4 class="my-store-section-title">可上架的DNA</h4>
+                    <div id="sellable-dna-grid" class="exchange-grid">
+                        <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有可上架的物品。</p>
+                    </div>
+                </div>
+                <div class="my-store-section">
+                    <h4 class="my-store-section-title">正在販售的商品</h4>
+                    <div id="listed-items-grid" class="exchange-grid">
+                         <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有正在販售的商品。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exchange-item-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close-btn" data-modal-id="exchange-item-modal">&times;</button>
+            <div class="modal-header-decorated">
+                <h2 id="modal-dna-name">DNA 名稱</h2>
+                <p id="modal-dna-rarity" class="rarity">稀有度</p>
+            </div>
+            <div class="modal-details">
+                <ul class="modal-stats">
+                    <li><span class="stat-label">HP</span><span id="modal-stat-hp" class="stat-value"></span></li>
+                    <li><span class="stat-label">MP</span><span id="modal-stat-mp" class="stat-value"></span></li>
+                    <li><span class="stat-label">攻擊</span><span id="modal-stat-attack" class="stat-value"></span></li>
+                    <li><span class="stat-label">防禦</span><span id="modal-stat-defense" class="stat-value"></span></li>
+                    <li><span class="stat-label">速度</span><span id="modal-stat-speed" class="stat-value"></span></li>
+                    <li><span class="stat-label">爆擊</span><span id="modal-stat-crit" class="stat-value"></span></li>
+                </ul>
+                <div class="modal-purchase-info">
+                    <!-- 內容由 JS 動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="confirmation-modal-close-x" data-modal-id="confirmation-modal">&times;</span>
+            <h3 id="confirmation-modal-title" class="modal-header text-center">⚠️ 提示</h3> 
+            <div id="confirmation-modal-body" class="modal-body">
+                <div id="release-monster-image-placeholder" style="display:none; width:120px; height:90px; margin:10px auto;">
+                    <img id="release-monster-img-preview" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="placeholders.monsterPartDefault" alt="預覽">
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center;"> 
+                <button id="confirm-action-btn" class="button danger">✔️ 確定</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="monster-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="monster-leaderboard-modal">&times;</span>
+            <div class="modal-header-container">
+                <h3 class="modal-header">怪獸排行榜</h3>
+                <button id="refresh-monster-leaderboard-btn" class="button secondary text-xs" title="刷新列表">🔄</button>
+            </div>
+            
+            <div id="monster-leaderboard-table-container" class="modal-body">
+                <table id="monster-leaderboard-table" class="leaderboard-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="player-leaderboard-modal">&times;</span>
+            <h3 class="modal-header">玩家英雄榜</h3>
+            <div id="player-leaderboard-table-container" class="modal-body">
+                <table id="player-leaderboard-table" class="leaderboard-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="monster-info-modal" class="modal">
+        <div class="modal-content large"> 
+            <span class="modal-close" data-modal-id="monster-info-modal">&times;</span>
+            <div id="monster-info-modal-header-content" class="monster-info-header"></div>
+            <div class="tab-buttons" id="monster-info-tabs">
+                <button class="tab-button active" data-tab-target="monster-details-tab" data-parent-modal="monster-info-modal">📜 詳細資訊</button>
+                <button class="tab-button" data-tab-target="monster-logs-tab" data-parent-modal="monster-info-modal">🐾 活動紀錄</button>
+                <button class="tab-button" data-tab-target="monster-notes-tab" data-parent-modal="monster-info-modal">📝 備註</button>
+                <button class="tab-button" data-tab-target="monster-chat-tab" data-parent-modal="monster-info-modal">💬 對話</button>
+            </div>
+            <div id="monster-details-tab" class="tab-content active modal-body"></div>
+            <div id="monster-logs-tab" class="tab-content modal-body">
+                <div id="monster-activity-logs" class="max-h-[300px] overflow-y-auto">
+                    <p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>
+                </div>
+            </div>
+            <div id="monster-notes-tab" class="tab-content modal-body">
+                <div id="monster-notes-display" class="max-h-[250px] overflow-y-auto mb-3 p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)]">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">尚無備註。</p>
+                </div>
+                <textarea id="monster-note-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="為這隻怪獸寫下一些筆記..." maxlength="100"></textarea>
+                <button id="save-monster-note-btn" class="button primary w-full mt-2">儲存備註</button>
+            </div>
+            <div id="monster-chat-tab" class="tab-content modal-body">
+                <div id="chat-log-area" style="height: 350px; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-primary);">
+                </div>
+                <div id="chat-interaction-buttons" class="chat-interaction-buttons" style="display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0;">
+                    <button id="interact-punch-btn" class="chat-interact-btn" title="揍">👊</button>
+                    <button id="interact-pat-btn" class="chat-interact-btn" title="摸">👋</button>
+                    <button id="interact-kiss-btn" class="chat-interact-btn" title="親">😘</button>
+                </div>
+                <div class="chat-input-container" style="display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" class="auth-input" style="flex-grow: 1; margin-bottom: 0;" placeholder="跟牠說點什麼...">
+                    <button id="send-chat-btn" class="button primary" style="white-space: nowrap;">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-info-modal" class="modal">
+        <div class="modal-content large"> 
+            <span class="modal-close" data-modal-id="player-info-modal">&times;</span>
+            <h3 class="modal-header">👤 玩家資訊</h3>
+            <div id="player-info-modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content feedback-wide"> 
+            <span id="feedback-modal-close-x" class="modal-close" data-modal-id="feedback-modal">&times;</span>
+            <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
+            <div id="feedback-modal-body-content" class="modal-body" style="position: relative;">
+                 <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
+                 <img id="feedback-modal-breathing-icon" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="logos.loadingIcon" alt="Loading..." style="display: none;">
+                 <div id="feedback-modal-message"></div>
+                 <div id="feedback-monster-details" style="display:none;" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cultivation-setup-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="cultivation-modal-close-x" data-modal-id="cultivation-setup-modal">&times;</span>
+            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成計畫</h3>
+            <div class="modal-body py-4">
+                <div class="text-center">
+                    <p class="mb-2 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 選擇修煉場所。</p>
+                    <p class="text-sm text-[var(--text-secondary)]">不同的場所有不同的元素加成，請謹慎選擇！</p>
+                </div>
+                <p class="text-center font-bold my-2" style="color: var(--rarity-legendary-text);">點擊卡片前往修練</p>
+                
+                <div class="cultivation-locations-container">
+                    <button class="cultivation-location-card" id="location-gaia" data-location="gaia">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationGaia" alt="蓋亞的搖籃">
+                        <h5>蓋亞的搖籃 (自然系)</h5>
+                        <p>充滿生命氣息的原始叢林，適合木、水、土、毒屬性的怪獸。</p>
+                    </button>
+                    <button class="cultivation-location-card" id="location-sky" data-location="sky">
+                         <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationSky" alt="天空的怒火">
+                        <h5>天空的怒火 (能量系)</h5>
+                        <p>時而烈日曝曬、時而狂風呼嘯的高地，適合火、風、光屬性的怪獸。</p>
+                    </button>
+                    <button class="cultivation-location-card" id="location-crystal" data-location="crystal">
+                         <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationCrystal" alt="人智的結晶">
+                        <h5>人智的結晶 (法則系)</h5>
+                        <p>被遺棄的古代鍊金都市，充滿了人造與形而上的法則元素，適合金、暗、混屬性。</p>
+                    </button>
+                </div>
+                
+                <p class="cultivation-hint text-xs mt-3 text-center" style="line-height: 1.7;">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。修煉期間，怪獸將無法放生或出戰。</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="training-results-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="close-training-results-btn" data-modal-id="training-results-modal">&times;</span>
+            <h3 id="training-results-modal-title" class="modal-header">🎉 修煉成果 🎉</h3>
+            <div class="modal-body">
+                <div class="training-result-section">
+                    <h5>📜 冒險故事</h5>
+                    <p id="training-story-result"></p>
+                </div>
+                <div class="training-result-section">
+                    <h5>📈 成長紀錄</h5>
+                    <div id="training-growth-result"></div>
+                </div>
+                <div class="training-result-section">
+                    <h5>💎 拾獲物品</h5>
+                    <div id="training-items-result" class="mb-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="newbie-guide-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="newbie-guide-modal">&times;</span>
+            <h3 class="modal-header">📖 新手上路指南</h3>
+            <div class="modal-body">
+                <input type="text" id="newbie-guide-search-input" placeholder="搜尋指南內容..." class="mb-4">
+                <div id="newbie-guide-content-area" class="max-h-[50vh] overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <h3 id="reminder-modal-title" class="modal-header text-center">溫馨提醒</h3>
+            <div id="reminder-modal-body" class="modal-body text-center">
+                <p>您有尚未加入背包的修煉拾獲物品，確定要關閉嗎？關閉後未加入的物品將會消失。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="reminder-confirm-close-btn" class="danger button">仍要關閉</button>
+                <button id="reminder-cancel-btn" class="secondary button" data-modal-id="reminder-modal">返回查看</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="friends-list-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="friends-list-modal">&times;</span>
+            <h3 class="modal-header">🧑‍🤝‍🧑 好友名單</h3>
+            <div class="modal-body">
+                <input type="text" id="friends-list-search-input" placeholder="搜尋玩家暱稱..." class="mb-3">
+                <div id="friends-list-container">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">輸入暱稱搜尋其他玩家。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="battle-log-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="battle-log-modal">&times;</span>
+            <h3 class="modal-header">⚔️ 戰鬥記錄 ⚔️</h3>
+            <div id="battle-log-area" class="modal-body"></div>
+            <div class="modal-footer">
+                <button id="close-battle-log-btn" class="secondary button" data-modal-id="battle-log-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dna-draw-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="dna-draw-modal">&times;</span>
+            <h3 class="modal-header">🧬 DNA 抽取結果</h3>
+            <div class="modal-body">
+                <div id="dna-draw-results-grid"></div>
+                <p class="text-sm text-[var(--text-secondary)] mt-3 text-center">點擊物品可將其加入臨時背包��</p>
+            </div>
+            <div class="modal-footer">
+                <button id="close-dna-draw-btn" class="secondary button" data-modal-id="dna-draw-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="selection-modal">&times;</span>
+            <h3 id="selection-modal-title" class="modal-header">天梯-排行榜</h3>
+            <div class="modal-body">
+                <div class="selection-container">
+                    <div id="open-monster-leaderboard-from-selection" class="selection-column" style="cursor: pointer;">
+                        <img class="selection-banner-placeholder" style="object-fit: cover;" data-asset-key="selectionBanners.monsterLeaderboard" alt="怪獸排行榜橫幅">
+                        <div class="selection-description-box" style="display: flex; align-items: center; justify-content: center;">
+                            <p class="text-lg font-bold" style="color: var(--rarity-legendary-text); text-align: center;">怪獸排行榜</p>
+                        </div>
+                    </div>
+                    <div id="open-player-leaderboard-from-selection" class="selection-column" style="cursor: pointer;">
+                        <img class="selection-banner-placeholder" style="object-fit: cover;" data-asset-key="selectionBanners.playerLeaderboard" alt="玩家英雄榜橫幅">
+                        <div class="selection-description-box" style="display: flex; align-items: center; justify-content: center;">
+                            <p class="text-lg font-bold" style="color: var(--rarity-legendary-text); text-align: center;">玩家英雄榜</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="banner-modal" class="modal">
+        <div class="modal-content banner-only">
+            <button class="banner-close-button modal-close" data-modal-id="banner-modal">&times;</button>
+            <div id="banner-modal-content" class="banner-placeholder">
+                </div>
+        </div>
+    </div>
+
+    <div id="mailbox-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="mailbox-modal">&times;</span>
+            <div class="modal-header-container">
+                <h3 class="modal-header">📬 我的信箱</h3>
+                <button id="refresh-mailbox-btn" class="button secondary text-xs" title="刷新信箱">🔄</button>
+            </div>
+            <div class="modal-body" id="mailbox-list-container">
+                <p class="text-center text-sm text-[var(--text-secondary)] py-10">信箱空空如也...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-read-mails-btn" class="button danger text-sm">刪除已讀</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mail-reader-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close system-notification-close-btn" data-modal-id="mail-reader-modal">&times;</span>
+            <h3 id="mail-reader-title" class="modal-header">信件標題</h3>
+            <div id="mail-reader-meta" class="text-sm text-secondary text-center my-2">
+                <span>寄件人: <strong id="mail-reader-sender">系統</strong></span> | 
+                <span>時間: <span id="mail-reader-timestamp"></span></span>
+            </div>
+            <div id="mail-reader-body" class="modal-body">
+                <div class="mail-content-text">
+                    </div>
+                <div id="mail-reader-attachments" class="mt-4" style="display: none;">
+                    <h5 class="details-section-title">附件</h5>
+                    <div id="mail-attachments-container" class="mt-2">
+                        </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" data-modal-id="mail-reader-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="expedition-team-selection-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="expedition-modal-close-x" data-modal-id="expedition-team-selection-modal">&times;</span>
+            <h3 id="team-selection-modal-title" class="modal-header">遠征隊伍編成</h3>
+            <div id="team-selection-modal-body" class="modal-body">
+                <div id="team-selection-facility-info" class="mb-4 p-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md">
+                    </div>
+                <div class="mb-2">
+                    <p class="text-sm text-center">請選擇 1-3 隻怪獸加入您的遠征隊伍。</p>
+                </div>
+                <div id="team-selection-monster-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-expedition-start-btn" class="button primary" disabled>出發遠征</button>
+                </div>
+        </div>
+    </div>
+    
+    <div id="adventure-map-modal" class="modal">
+        <div class="modal-content xlarge"> <span class="modal-close" data-modal-id="adventure-map-modal">&times;</span>
+             <h3 id="adventure-map-title" class="modal-header">探索地圖</h3>
+             <div id="adventure-map-body" class="modal-body" style="height: 75vh; position: relative;">
+                <canvas id="adventure-map-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+                <div id="adventure-map-nodes-container"></div>
+             </div>
+        </div>
+    </div>
+
+    <div id="expedition-summary-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="expedition-summary-modal">&times;</span>
+            <h3 class="modal-header">🧭 遠征總結</h3>
+            <div class="modal-body">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const gameVersion = '0.5.0'; 
+
+            const jsFiles = [
+                // 1. 核心設定與狀態管理
+                'js/api/firebase-config.js',
+                'js/core/config.js',
+                'js/core/game-state.js',
+                'js/api/api-client.js',
+                'js/api/auth.js',
+                'js/core/game-logic.js',
+                'js/core/utils.js',
+                'js/core/monster-part-assets.js',
+
+                // 2. 核心 UI 渲染與元件
+                'js/ui/ui.js',
+                'js/ui/shared/ui-modals.js',
+                'js/ui/shared/ui-result-modals.js',
+                'js/ui/monster/ui-inventory.js',
+                'js/ui/monster/ui-snapshot.js',
+                'js/ui/monster/ui-farm.js',
+                'js/ui/player/ui-player-modals.js',
+                'js/ui/monster/ui-monster-details.js',
+                'js/ui/battle/ui-battle-modals.js',
+                'js/ui/tournament/ui-leaderboard-modals.js',
+                'js/ui/tournament/ui-champions.js',
+                'js/ui/monster/ui-notes.js',
+                'js/ui/monster/ui-chat.js',
+                'js/ui/mailbox/ui-mailbox.js',
+                'js/ui/medical/ui-medical.js',
+                'js/ui/exchange/ui-exchange.js',
+                'js/ui/tournament/ui-tournament.js',
+                'js/ui/adventure/ui-adventure.js', 
+                'js/ui/adventure/ui-adventure-modals.js',
+
+                // 3. 所有事件處理器 (Handlers)
+                'js/handlers/ui-handlers.js',
+                'js/handlers/game-interaction-handlers.js',
+                'js/handlers/drag-drop-handlers.js',
+                'js/handlers/monster-handlers.js',
+                'js/handlers/adventure-handlers.js', 
+
+                // 4. 最後的主進入點
+                'js/main.js'
+            ];
+
+            jsFiles.forEach(path => {
+                document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
+            });
+        })();
+    </script>
+</body>
+</html>
+        </div>
+    </div>
+
+    <!-- My Store Modal -->
+    <div id="my-store-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="my-store-modal">&times;</span>
+            <h3 class="modal-header">🛒 我的賣場</h3>
+            <div class="modal-body">
+                <div class="my-store-section">
+                    <h4 class="my-store-section-title">可上架的DNA</h4>
+                    <div id="sellable-dna-grid" class="exchange-grid">
+                        <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有可上架的物品。</p>
+                    </div>
+                </div>
+                <div class="my-store-section">
+                    <h4 class="my-store-section-title">正在販售的商品</h4>
+                    <div id="listed-items-grid" class="exchange-grid">
+                         <p class="text-center text-sm text-[var(--text-secondary)] py-4 col-span-full">沒有正在販售的商品。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exchange-item-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close-btn" data-modal-id="exchange-item-modal">&times;</button>
+            <div class="modal-header-decorated">
+                <h2 id="modal-dna-name">DNA 名稱</h2>
+                <p id="modal-dna-rarity" class="rarity">稀有度</p>
+            </div>
+            <div class="modal-details">
+                <ul class="modal-stats">
+                    <li><span class="stat-label">HP</span><span id="modal-stat-hp" class="stat-value"></span></li>
+                    <li><span class="stat-label">MP</span><span id="modal-stat-mp" class="stat-value"></span></li>
+                    <li><span class="stat-label">攻擊</span><span id="modal-stat-attack" class="stat-value"></span></li>
+                    <li><span class="stat-label">防禦</span><span id="modal-stat-defense" class="stat-value"></span></li>
+                    <li><span class="stat-label">速度</span><span id="modal-stat-speed" class="stat-value"></span></li>
+                    <li><span class="stat-label">爆擊</span><span id="modal-stat-crit" class="stat-value"></span></li>
+                </ul>
+                <div class="modal-purchase-info">
+                    <!-- 內容由 JS 動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="confirmation-modal-close-x" data-modal-id="confirmation-modal">&times;</span>
+            <h3 id="confirmation-modal-title" class="modal-header text-center">⚠️ 提示</h3> 
+            <div id="confirmation-modal-body" class="modal-body">
+                <div id="release-monster-image-placeholder" style="display:none; width:120px; height:90px; margin:10px auto;">
+                    <img id="release-monster-img-preview" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="placeholders.monsterPartDefault" alt="預覽">
+                </div>
+            </div>
+            <div class="modal-footer" style="justify-content: center;"> 
+                <button id="confirm-action-btn" class="button danger">✔️ 確定</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="monster-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="monster-leaderboard-modal">&times;</span>
+            <div class="modal-header-container">
+                <h3 class="modal-header">怪獸排行榜</h3>
+                <button id="refresh-monster-leaderboard-btn" class="button secondary text-xs" title="刷新列表">🔄</button>
+            </div>
+            
+            <div id="monster-leaderboard-table-container" class="modal-body">
+                <table id="monster-leaderboard-table" class="leaderboard-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-leaderboard-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="player-leaderboard-modal">&times;</span>
+            <h3 class="modal-header">玩家英雄榜</h3>
+            <div id="player-leaderboard-table-container" class="modal-body">
+                <table id="player-leaderboard-table" class="leaderboard-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="monster-info-modal" class="modal">
+        <div class="modal-content large"> 
+            <span class="modal-close" data-modal-id="monster-info-modal">&times;</span>
+            <div id="monster-info-modal-header-content" class="monster-info-header"></div>
+            <div class="tab-buttons" id="monster-info-tabs">
+                <button class="tab-button active" data-tab-target="monster-details-tab" data-parent-modal="monster-info-modal">📜 詳細資訊</button>
+                <button class="tab-button" data-tab-target="monster-logs-tab" data-parent-modal="monster-info-modal">🐾 活動紀錄</button>
+                <button class="tab-button" data-tab-target="monster-notes-tab" data-parent-modal="monster-info-modal">📝 備註</button>
+                <button class="tab-button" data-tab-target="monster-chat-tab" data-parent-modal="monster-info-modal">💬 對話</button>
+            </div>
+            <div id="monster-details-tab" class="tab-content active modal-body"></div>
+            <div id="monster-logs-tab" class="tab-content modal-body">
+                <div id="monster-activity-logs" class="max-h-[300px] overflow-y-auto">
+                    <p class="text-center text-sm text-[var(--text-secondary)] py-4">尚無活動紀錄。</p>
+                </div>
+            </div>
+            <div id="monster-notes-tab" class="tab-content modal-body">
+                <div id="monster-notes-display" class="max-h-[250px] overflow-y-auto mb-3 p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)]">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">尚無備註。</p>
+                </div>
+                <textarea id="monster-note-input" class="w-full p-2 border border-[var(--border-color)] rounded-md bg-[var(--bg-primary)] text-[var(--text-primary)]" rows="4" placeholder="為這隻怪獸寫下一些筆記..." maxlength="100"></textarea>
+                <button id="save-monster-note-btn" class="button primary w-full mt-2">儲存備註</button>
+            </div>
+            <div id="monster-chat-tab" class="tab-content modal-body">
+                <div id="chat-log-area" style="height: 350px; overflow-y: auto; display: flex; flex-direction: column-reverse; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-primary);">
+                </div>
+                <div id="chat-interaction-buttons" class="chat-interaction-buttons" style="display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0;">
+                    <button id="interact-punch-btn" class="chat-interact-btn" title="揍">👊</button>
+                    <button id="interact-pat-btn" class="chat-interact-btn" title="摸">👋</button>
+                    <button id="interact-kiss-btn" class="chat-interact-btn" title="親">😘</button>
+                </div>
+                <div class="chat-input-container" style="display: flex; gap: 10px;">
+                    <input type="text" id="chat-input" class="auth-input" style="flex-grow: 1; margin-bottom: 0;" placeholder="跟牠說點什麼...">
+                    <button id="send-chat-btn" class="button primary" style="white-space: nowrap;">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-info-modal" class="modal">
+        <div class="modal-content large"> 
+            <span class="modal-close" data-modal-id="player-info-modal">&times;</span>
+            <h3 class="modal-header">👤 玩家資訊</h3>
+            <div id="player-info-modal-body" class="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content feedback-wide"> 
+            <span id="feedback-modal-close-x" class="modal-close" data-modal-id="feedback-modal">&times;</span>
+            <h3 id="feedback-modal-title" class="modal-header text-center">處理中...</h3>
+            <div id="feedback-modal-body-content" class="modal-body" style="position: relative;">
+                 <div id="feedback-modal-spinner" class="loading-spinner" style="display: none;"></div>
+                 <img id="feedback-modal-breathing-icon" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="logos.loadingIcon" alt="Loading..." style="display: none;">
+                 <div id="feedback-modal-message"></div>
+                 <div id="feedback-monster-details" style="display:none;" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cultivation-setup-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="cultivation-modal-close-x" data-modal-id="cultivation-setup-modal">&times;</span>
+            <h3 id="cultivation-setup-modal-title" class="modal-header">🌱 怪獸養成計畫</h3>
+            <div class="modal-body py-4">
+                <div class="text-center">
+                    <p class="mb-2 text-base">正在為 <strong id="cultivation-monster-name" class="text-[var(--accent-color)]"></strong> 選擇修煉場所。</p>
+                    <p class="text-sm text-[var(--text-secondary)]">不同的場所有不同的元素加成，請謹慎選擇！</p>
+                </div>
+                <p class="text-center font-bold my-2" style="color: var(--rarity-legendary-text);">點擊卡片前往修練</p>
+                
+                <div class="cultivation-locations-container">
+                    <button class="cultivation-location-card" id="location-gaia" data-location="gaia">
+                        <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationGaia" alt="蓋亞的搖籃">
+                        <h5>蓋亞的搖籃 (自然系)</h5>
+                        <p>充滿生命氣息的原始叢林，適合木、水、土、毒屬性的怪獸。</p>
+                    </button>
+                    <button class="cultivation-location-card" id="location-sky" data-location="sky">
+                         <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationSky" alt="天空的怒火">
+                        <h5>天空的怒火 (能量系)</h5>
+                        <p>時而烈日曝曬、時而狂風呼嘯的高地，適合火、風、光屬性的怪獸。</p>
+                    </button>
+                    <button class="cultivation-location-card" id="location-crystal" data-location="crystal">
+                         <img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" data-asset-key="cultivation.locationCrystal" alt="人智的結晶">
+                        <h5>人智的結晶 (法則系)</h5>
+                        <p>被遺棄的古代鍊金都市，充滿了人造與形而上的法則元素，適合金、暗、混屬性。</p>
+                    </button>
+                </div>
+                
+                <p class="cultivation-hint text-xs mt-3 text-center" style="line-height: 1.7;">修煉時長上限為 <span id="max-cultivation-time">3600</span> 秒。修煉期間，怪獸將無法放生或出戰。</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="training-results-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="close-training-results-btn" data-modal-id="training-results-modal">&times;</span>
+            <h3 id="training-results-modal-title" class="modal-header">🎉 修煉成果 🎉</h3>
+            <div class="modal-body">
+                <div class="training-result-section">
+                    <h5>📜 冒險故事</h5>
+                    <p id="training-story-result"></p>
+                </div>
+                <div class="training-result-section">
+                    <h5>📈 成長紀錄</h5>
+                    <div id="training-growth-result"></div>
+                </div>
+                <div class="training-result-section">
+                    <h5>💎 拾獲物品</h5>
+                    <div id="training-items-result" class="mb-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="newbie-guide-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="newbie-guide-modal">&times;</span>
+            <h3 class="modal-header">📖 新手上路指南</h3>
+            <div class="modal-body">
+                <input type="text" id="newbie-guide-search-input" placeholder="搜尋指南內容..." class="mb-4">
+                <div id="newbie-guide-content-area" class="max-h-[50vh] overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reminder-modal" class="modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <h3 id="reminder-modal-title" class="modal-header text-center">溫馨提醒</h3>
+            <div id="reminder-modal-body" class="modal-body text-center">
+                <p>您有尚未加入背包的修煉拾獲物品，確定要關閉嗎？關閉後未加入的物品將會消失。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="reminder-confirm-close-btn" class="danger button">仍要關閉</button>
+                <button id="reminder-cancel-btn" class="secondary button" data-modal-id="reminder-modal">返回查看</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="friends-list-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="friends-list-modal">&times;</span>
+            <h3 class="modal-header">🧑‍🤝‍🧑 好友名單</h3>
+            <div class="modal-body">
+                <input type="text" id="friends-list-search-input" placeholder="搜尋玩家暱稱..." class="mb-3">
+                <div id="friends-list-container">
+                    <p class="text-center text-sm text-[var(--text-secondary)]">輸入暱稱搜尋其他玩家。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="battle-log-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="battle-log-modal">&times;</span>
+            <h3 class="modal-header">⚔️ 戰鬥記錄 ⚔️</h3>
+            <div id="battle-log-area" class="modal-body"></div>
+            <div class="modal-footer">
+                <button id="close-battle-log-btn" class="secondary button" data-modal-id="battle-log-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dna-draw-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="dna-draw-modal">&times;</span>
+            <h3 class="modal-header">🧬 DNA 抽取結果</h3>
+            <div class="modal-body">
+                <div id="dna-draw-results-grid"></div>
+                <p class="text-sm text-[var(--text-secondary)] mt-3 text-center">點擊物品可將其加入臨時背包。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="close-dna-draw-btn" class="secondary button" data-modal-id="dna-draw-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="selection-modal">&times;</span>
+            <h3 id="selection-modal-title" class="modal-header">天梯-排行榜</h3>
+            <div class="modal-body">
+                <div class="selection-container">
+                    <div id="open-monster-leaderboard-from-selection" class="selection-column" style="cursor: pointer;">
+                        <img class="selection-banner-placeholder" style="object-fit: cover;" data-asset-key="selectionBanners.monsterLeaderboard" alt="怪獸排行榜橫幅">
+                        <div class="selection-description-box" style="display: flex; align-items: center; justify-content: center;">
+                            <p class="text-lg font-bold" style="color: var(--rarity-legendary-text); text-align: center;">怪獸排行榜</p>
+                        </div>
+                    </div>
+                    <div id="open-player-leaderboard-from-selection" class="selection-column" style="cursor: pointer;">
+                        <img class="selection-banner-placeholder" style="object-fit: cover;" data-asset-key="selectionBanners.playerLeaderboard" alt="玩家英雄榜橫幅">
+                        <div class="selection-description-box" style="display: flex; align-items: center; justify-content: center;">
+                            <p class="text-lg font-bold" style="color: var(--rarity-legendary-text); text-align: center;">玩家英雄榜</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="banner-modal" class="modal">
+        <div class="modal-content banner-only">
+            <button class="banner-close-button modal-close" data-modal-id="banner-modal">&times;</button>
+            <div id="banner-modal-content" class="banner-placeholder">
+                </div>
+        </div>
+    </div>
+
+    <div id="mailbox-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" data-modal-id="mailbox-modal">&times;</span>
+            <div class="modal-header-container">
+                <h3 class="modal-header">📬 我的信箱</h3>
+                <button id="refresh-mailbox-btn" class="button secondary text-xs" title="刷新信箱">🔄</button>
+            </div>
+            <div class="modal-body" id="mailbox-list-container">
+                <p class="text-center text-sm text-[var(--text-secondary)] py-10">信箱空空如也...</p>
+            </div>
+            <div class="modal-footer">
+                <button id="delete-read-mails-btn" class="button danger text-sm">刪除已讀</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mail-reader-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close system-notification-close-btn" data-modal-id="mail-reader-modal">&times;</span>
+            <h3 id="mail-reader-title" class="modal-header">信件標題</h3>
+            <div id="mail-reader-meta" class="text-sm text-secondary text-center my-2">
+                <span>寄件人: <strong id="mail-reader-sender">系統</strong></span> | 
+                <span>時間: <span id="mail-reader-timestamp"></span></span>
+            </div>
+            <div id="mail-reader-body" class="modal-body">
+                <div class="mail-content-text">
+                    </div>
+                <div id="mail-reader-attachments" class="mt-4" style="display: none;">
+                    <h5 class="details-section-title">附件</h5>
+                    <div id="mail-attachments-container" class="mt-2">
+                        </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="button secondary" data-modal-id="mail-reader-modal">關閉</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="expedition-team-selection-modal" class="modal">
+        <div class="modal-content large">
+            <span class="modal-close" id="expedition-modal-close-x" data-modal-id="expedition-team-selection-modal">&times;</span>
+            <h3 id="team-selection-modal-title" class="modal-header">遠征隊伍編成</h3>
+            <div id="team-selection-modal-body" class="modal-body">
+                <div id="team-selection-facility-info" class="mb-4 p-3 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-md">
+                    </div>
+                <div class="mb-2">
+                    <p class="text-sm text-center">請選擇 1-3 隻怪獸加入您的遠征隊伍。</p>
+                </div>
+                <div id="team-selection-monster-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-expedition-start-btn" class="button primary" disabled>出發遠征</button>
+                </div>
+        </div>
+    </div>
+    
+    <div id="adventure-map-modal" class="modal">
+        <div class="modal-content xlarge"> <span class="modal-close" data-modal-id="adventure-map-modal">&times;</span>
+             <h3 id="adventure-map-title" class="modal-header">探索地圖</h3>
+             <div id="adventure-map-body" class="modal-body" style="height: 75vh; position: relative;">
+                <canvas id="adventure-map-canvas" style="position: absolute; top: 0; left: 0;"></canvas>
+                <div id="adventure-map-nodes-container"></div>
+             </div>
+        </div>
+    </div>
+
+    <div id="expedition-summary-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal-id="expedition-summary-modal">&times;</span>
+            <h3 class="modal-header">🧭 遠征總結</h3>
+            <div class="modal-body">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const gameVersion = '0.6.0'; 
+
+            const jsFiles = [
+                // 1. 核心設定與狀態管理
+                'js/api/firebase-config.js',
+                'js/core/config.js',
+                'js/core/game-state.js',
+                'js/api/api-client.js',
+                'js/api/auth.js',
+                'js/core/game-logic.js',
+                'js/core/utils.js',
+                'js/core/monster-part-assets.js',
+
+                // 2. 核心 UI 渲染與元件
+                'js/ui/ui.js',
+                'js/ui/shared/ui-modals.js',
+                'js/ui/shared/ui-result-modals.js',
+                'js/ui/monster/ui-inventory.js',
+                'js/ui/monster/ui-snapshot.js',
+                'js/ui/monster/ui-farm.js',
+                'js/ui/player/ui-player-modals.js',
+                'js/ui/monster/ui-monster-details.js',
+                'js/ui/battle/ui-battle-modals.js',
+                'js/ui/tournament/ui-leaderboard-modals.js',
+                'js/ui/tournament/ui-champions.js',
+                'js/ui/monster/ui-notes.js',
+                'js/ui/monster/ui-chat.js',
+                'js/ui/mailbox/ui-mailbox.js',
+                'js/ui/medical/ui-medical.js',
+                'js/ui/exchange/ui-exchange.js',
+                'js/ui/tournament/ui-tournament.js',
+                'js/ui/adventure/ui-adventure.js', 
+                'js/ui/adventure/ui-adventure-modals.js',
+
+                // 3. 所有事件處理器 (Handlers)
+                'js/handlers/ui-handlers.js',
+                'js/handlers/game-interaction-handlers.js',
+                'js/handlers/drag-drop-handlers.js',
+                'js/handlers/monster-handlers.js',
+                'js/handlers/adventure-handlers.js', 
+
+                // 4. 最後的主進入點
+                'js/main.js'
+            ];
+
+            jsFiles.forEach(path => {
+                document.write(`<script src="${path}?v=${gameVersion}" defer><\/script>`);
+            });
+        })();
+    </script>
 </body>
 </html>
