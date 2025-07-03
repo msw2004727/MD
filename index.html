@@ -24,7 +24,8 @@
             'css/champions.css',
             'css/mailbox.css',
             'css/adventure.css',
-            'css/exchange.css'
+            'css/exchange.css',
+            'css/medical.css'
         ];
         
         cssFiles.forEach(path => {
@@ -294,7 +295,56 @@
                     </div>
                 </div>
                 <div id="medical-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🚑 正在招募醫護人員中，敬請期待！</p>
+                    <div class="medical-grid">
+                        <!-- Card 1: 改造 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">改造</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 2: 強化 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">強化</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 3: 變種 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">變種</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 4: 摘除 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">摘除</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 5: 研究 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">研究</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                        <!-- Card 6: 進化 -->
+                        <div class="medical-card">
+                            <div>
+                                <div class="medical-card-image-placeholder"></div>
+                                <h3 class="medical-card-title">進化</h3>
+                            </div>
+                            <button class="button secondary">開始</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
@@ -708,36 +758,35 @@
 
             const jsFiles = [
                 // 1. 核心設定與狀態管理
-                'js/firebase-config.js',
-                'js/config.js',
-                'js/game-state.js',
-                'js/api-client.js',
-                'js/auth.js',
-                'js/game-logic.js',
-                'js/utils.js',
-                'js/monster-part-assets.js',
+                'js/api/firebase-config.js',
+                'js/core/config.js',
+                'js/core/game-state.js',
+                'js/api/api-client.js',
+                'js/api/auth.js',
+                'js/core/game-logic.js',
+                'js/core/utils.js',
+                'js/core/monster-part-assets.js',
 
-                // 2. 核心 UI 渲染與元件 (路徑已修正)
+                // 2. 核心 UI 渲染與元件
                 'js/ui/ui.js',
-                'js/ui/ui-modals.js',
-                'js/ui/ui-monster-modals.js',
-                'js/ui/ui-inventory.js',
-                'js/ui/ui-snapshot.js',
-                'js/ui/ui-farm.js',
-                'js/ui/ui-player-modals.js',
-                'js/ui/ui-monster-details.js',
-                'js/ui/ui-battle-modals.js',
-                'js/ui/ui-result-modals.js',
-                'js/ui/ui-leaderboard-modals.js',
-                'js/ui/ui-champions.js',
-                'js/ui/ui-notes.js',
-                'js/ui/ui-chat.js',
-                'js/ui/ui-mailbox.js',
-                'js/ui/ui-medical.js',
-                'js/ui/ui-exchange.js',
-                'js/ui/ui-tournament.js',
-                'js/ui/ui-adventure.js', 
-                'js/ui/ui-adventure-modals.js',
+                'js/ui/shared/ui-modals.js',
+                'js/ui/shared/ui-result-modals.js',
+                'js/ui/monster/ui-inventory.js',
+                'js/ui/monster/ui-snapshot.js',
+                'js/ui/monster/ui-farm.js',
+                'js/ui/player/ui-player-modals.js',
+                'js/ui/monster/ui-monster-details.js',
+                'js/ui/battle/ui-battle-modals.js',
+                'js/ui/tournament/ui-leaderboard-modals.js',
+                'js/ui/tournament/ui-champions.js',
+                'js/ui/monster/ui-notes.js',
+                'js/ui/monster/ui-chat.js',
+                'js/ui/mailbox/ui-mailbox.js',
+                'js/ui/medical/ui-medical.js',
+                'js/ui/exchange/ui-exchange.js',
+                'js/ui/tournament/ui-tournament.js',
+                'js/ui/adventure/ui-adventure.js', 
+                'js/ui/adventure/ui-adventure-modals.js',
 
                 // 3. 所有事件處理器 (Handlers)
                 'js/handlers/ui-handlers.js',
