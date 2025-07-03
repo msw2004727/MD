@@ -26,7 +26,8 @@
             'css/adventure.css',
             'css/exchange.css',
             'css/medical.css',
-            'css/homestead.css'
+            'css/homestead.css',
+            'css/training-ground.css'
         ];
         
         cssFiles.forEach(path => {
@@ -349,7 +350,35 @@
                 </div>
                 
                 <div id="training-ground-content" class="tab-content">
-                    <p class="text-center text-lg text-[var(--text-secondary)] py-10">🏋️ 訓練場器材進駐中，敬請期待！</p>
+                    <div class="training-container">
+                        <div class="training-header">
+                            <h2 class="title">🏋️ 訓練場</h2>
+                            <p class="subtitle">此處提供針對性的強化訓練，可以提升怪獸的技能熟練度、元素抗性或調整戰鬥風格，以應對更多樣的挑戰。</p>
+                        </div>
+                        <div class="training-options-grid">
+                            <!-- 技能熟練度訓練 -->
+                            <div class="training-card">
+                                <div class="icon">📚</div>
+                                <h4 class="name">技能熟練度</h4>
+                                <p class="description">選擇一隻怪獸和牠的一個技能進行集中特訓，可以比一般修煉更快地獲得技能經驗值，加速技能升級。</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                            <!-- 屬性抗性訓練 -->
+                            <div class="training-card">
+                                <div class="icon">🛡️</div>
+                                <h4 class="name">屬性抗性</h4>
+                                <p class="description">消耗特定的元素材料，對怪獸進行針對性強化，永久提升牠對某一屬性的防禦能力。</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                            <!-- 戰鬥風格模擬 -->
+                            <div class="training-card">
+                                <div class="icon">🎯</div>
+                                <h4 class="name">戰鬥風格</h4>
+                                <p class="description">透過與特定AI的模擬戰，調整怪獸的戰鬥AI。想讓膽小的怪獸變得勇敢嗎？從這裡開始！</p>
+                                <button class="button secondary" disabled>選擇怪獸</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="exchange-content" class="tab-content">
