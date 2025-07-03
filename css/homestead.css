@@ -44,6 +44,8 @@
     background-color: color-mix(in srgb, var(--bg-panel) 85%, transparent); /* 半透明面板背景 */
     border-radius: 12px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    overflow-x: auto; /* 當內容過寬時，允許水平滾動 */
+    max-width: 95vw; /* 確保容器不會完全貼齊螢幕邊緣 */
 }
 
 /* 主標題 */
@@ -53,6 +55,7 @@
     color: var(--rarity-legendary-text);
     text-shadow: 0 0 10px var(--rarity-legendary-text), 0 0 20px rgba(0,0,0,0.7);
     letter-spacing: 2px;
+    white-space: nowrap; /* 強制不換行 */
 }
 
 /* 副標題/描述 */
@@ -81,6 +84,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* 當螢幕寬度非常窄時 (例如 iPhone SE)，進一步縮小標題字體 */
+@media (max-width: 380px) {
+    .homestead-title {
+        font-size: 1.5rem; /* 縮小字體 */
+    }
+}
+
 
 
 /* 單個設施預覽卡片 */
